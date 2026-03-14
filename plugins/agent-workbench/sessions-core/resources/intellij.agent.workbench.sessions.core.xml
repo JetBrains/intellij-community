@@ -31,6 +31,10 @@
       interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptManualContextSourceBridge"
       dynamic="true"/>
     <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.promptSuggestionAiBackend"
+      interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSuggestionAiBackend"
+      dynamic="true"/>
+    <extensionPoint
       qualifiedName="com.intellij.agent.workbench.sessionLaunchSpecAugmenter"
       interface="com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecAugmenter"
       dynamic="true"/>

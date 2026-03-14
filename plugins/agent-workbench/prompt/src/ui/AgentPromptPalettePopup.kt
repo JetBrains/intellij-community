@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.prompt.ui
 
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-entry.spec.md
+// @spec community/plugins/agent-workbench/spec/actions/global-prompt-suggestions.spec.md
 // @spec community/plugins/agent-workbench/spec/agent-workbench-telemetry.spec.md
 
 import com.dynatrace.hash4j.hashing.HashValue128
@@ -29,6 +30,8 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptManualContex
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPaletteExtension
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPaletteExtensions
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSuggestionCandidate
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSuggestionRequest
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
@@ -135,6 +138,7 @@ internal class AgentPromptPalettePopup(
   private val sessionsMessageResolver = AgentPromptSessionsMessageResolver(AgentPromptPalettePopup::class.java.classLoader)
 
   private val promptArea = AgentPromptTextField(project)
+  private val suggestions = AgentPromptSuggestionsComponent(::applySuggestedPrompt)
   private val contextChips = AgentPromptContextChipsComponent(::removeContextEntry)
 
   private lateinit var tabbedPane: JBTabbedPane
@@ -160,16 +164,27 @@ internal class AgentPromptPalettePopup(
   private var activeExtensionTabs: List<ExtensionTabEntry> = emptyList()
   private var activeExtensionTab: ExtensionTabEntry? = null
   private var activeTaskKey: String? = null
-  private val taskPromptTexts: MutableMap<String, String> = HashMap()
+  private val taskPromptStates: MutableMap<String, AgentPromptTaskDraftState> = HashMap()
+  private var promptTextUpdateOrigin: PromptTextUpdateOrigin? = null
 
   @Suppress("RAW_SCOPE_CREATION")
   private val popupScope = CoroutineScope(SupervisorJob() + Dispatchers.UI)
+  private val suggestionController by lazy(LazyThreadSafetyMode.NONE) {
+    AgentPromptSuggestionController(
+      popupScope = popupScope,
+      onSuggestionsUpdated = suggestions::render,
+    )
+  }
 
   private class ExtensionTabEntry(
     @JvmField val extension: AgentPromptPaletteExtension,
     @JvmField val tabPanel: JPanel,
     @JvmField val taskKey: String,
   )
+
+  private enum class PromptTextUpdateOrigin {
+    PROGRAMMATIC,
+  }
 
   private fun resolveTaskKey(panel: JPanel?): String? {
     if (panel == null) return null
@@ -216,6 +231,7 @@ internal class AgentPromptPalettePopup(
         popupActive = false
         popup = null
         existingTaskController.dispose()
+        suggestionController.dispose()
         popupScope.cancel("Agent prompt popup closed")
         saveProviderPreferences()
         if (clearDraftOnClose) {
@@ -251,6 +267,7 @@ internal class AgentPromptPalettePopup(
     val promptProviderOptionsPanel = createProviderOptionsPanel()
     val view = createAgentPromptPaletteView(
       promptArea = promptArea,
+      suggestionsPanel = suggestions.component,
       contextChipsPanel = contextChips.component,
       providerOptionsPanel = promptProviderOptionsPanel,
       onProviderIconClicked = ::showProviderChooser,
@@ -314,7 +331,6 @@ internal class AgentPromptPalettePopup(
 
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(sources)
-      .setTitle(AgentPromptBundle.message("popup.context.source.chooser.title"))
       .setRenderer(object : ColoredListCellRenderer<AgentPromptManualContextSourceBridge>() {
         override fun customizeCellRenderer(
           list: JList<out AgentPromptManualContextSourceBridge>,
@@ -398,6 +414,14 @@ internal class AgentPromptPalettePopup(
   }
 
   private fun onPromptChanged() {
+    if (promptTextUpdateOrigin == null) {
+      updateActiveTaskPromptState { state ->
+        applyUserEditToDraftState(state, promptArea.text)
+      }
+    }
+    else {
+      syncLivePromptTextForSelectedTab(promptArea.text)
+    }
     updateSendAvailability()
     clearStatus()
   }
@@ -410,7 +434,33 @@ internal class AgentPromptPalettePopup(
       reloadExistingTasks()
     }
     updateProviderOptionsVisibility()
+    refreshSuggestions()
     refreshFooterHintForCurrentState()
+  }
+
+  private fun refreshSuggestions() {
+    if (activeExtensionTab != null) {
+      suggestionController.clearSuggestions()
+      return
+    }
+
+    val launcher = launcherProvider()
+    suggestionController.reloadSuggestions(
+      AgentPromptSuggestionRequest(
+        project = project,
+        projectPath = resolveWorkingProjectPath(launcher),
+        targetModeId = currentTargetMode().name,
+        contextItems = buildVisibleContextEntries(launcher).map(ContextEntry::item),
+      )
+    )
+  }
+
+  private fun applySuggestedPrompt(candidate: AgentPromptSuggestionCandidate) {
+    updateActiveTaskPromptState { state ->
+      applySuggestedPromptToDraftState(state, candidate.promptText)
+    }
+    setPromptAreaText(candidate.promptText)
+    IdeFocusManager.getInstance(project).requestFocusInProject(promptArea, project)
   }
 
   private fun currentTargetMode(): PromptTargetMode {
@@ -514,7 +564,7 @@ internal class AgentPromptPalettePopup(
       tabbedPane.removeTabAt(index)
     }
     activeExtensionTabs = activeExtensionTabs.filter { it !== entry }
-    taskPromptTexts.remove(entry.taskKey)
+    taskPromptStates.remove(entry.taskKey)
     if (activeExtensionTab === entry) {
       activeExtensionTab = null
       setTargetMode(PromptTargetMode.NEW_TASK)
@@ -535,20 +585,20 @@ internal class AgentPromptPalettePopup(
 
     // Built-in tabs: restore from taskDrafts, fall back to legacy promptText for NEW_TASK
     val newTaskKey = PromptTargetMode.NEW_TASK.name
-    taskPromptTexts[newTaskKey] = savedDrafts[newTaskKey] ?: draft.promptText
+    taskPromptStates[newTaskKey] = restoredTaskPromptDraftState(savedDrafts[newTaskKey] ?: draft.promptText)
     val existingTaskKey = PromptTargetMode.EXISTING_TASK.name
-    savedDrafts[existingTaskKey]?.let { taskPromptTexts[existingTaskKey] = it }
+    savedDrafts[existingTaskKey]?.let { taskPromptStates[existingTaskKey] = restoredTaskPromptDraftState(it) }
 
     // Extension tabs: restore from taskDrafts, fall back to extension's initial text
     for (entry in activeExtensionTabs) {
       val savedText = savedDrafts[entry.taskKey]
       if (!savedText.isNullOrBlank()) {
-        taskPromptTexts[entry.taskKey] = savedText
+        taskPromptStates[entry.taskKey] = restoredTaskPromptDraftState(savedText)
       }
       else {
         val initialText = entry.extension.getInitialPromptText(project)
         if (!initialText.isNullOrBlank()) {
-          taskPromptTexts[entry.taskKey] = initialText
+          taskPromptStates[entry.taskKey] = restoredTaskPromptDraftState(initialText)
         }
       }
     }
@@ -560,8 +610,7 @@ internal class AgentPromptPalettePopup(
   }
 
   private fun savePromptTextForSelectedTab() {
-    val key = activeTaskKey ?: return
-    taskPromptTexts[key] = promptArea.text
+    syncLivePromptTextForSelectedTab(promptArea.text)
   }
 
   private fun loadPromptTextForSelectedTab() {
@@ -569,7 +618,7 @@ internal class AgentPromptPalettePopup(
     val newKey = resolveTaskKey(newPanel)
     activeTaskKey = newKey
     activeExtensionTab = newPanel?.let { comp -> activeExtensionTabs.firstOrNull { it.tabPanel === comp } }
-    promptArea.text = newKey?.let { taskPromptTexts[it] } ?: ""
+    setPromptAreaText(newKey?.let { taskPromptStates[it]?.liveText } ?: "")
   }
 
   private fun removeContextEntry(entry: ContextEntry) {
@@ -894,7 +943,7 @@ internal class AgentPromptPalettePopup(
     val contextRestoreSnapshot = uiStateService.loadContextRestoreSnapshot()
     val launcher = launcherProvider()
 
-    promptArea.text = draft.promptText
+    setPromptAreaText(draft.promptText)
     val effectiveProviderOptions = providerPrefs.providerOptionsByProviderId.ifEmpty { draft.providerOptionsByProviderId }
     providerSelector.restoreProviderOptionSelections(effectiveProviderOptions)
     val persistedProvider = resolveRestoredPromptProvider(
@@ -953,7 +1002,10 @@ internal class AgentPromptPalettePopup(
     savePromptTextForSelectedTab()
 
     // Persist all tab texts so they survive popup close/reopen.
-    val allTaskDrafts = HashMap(taskPromptTexts)
+    val allTaskDrafts = LinkedHashMap<String, String>(taskPromptStates.size)
+    taskPromptStates.forEach { (taskKey, state) ->
+      allTaskDrafts[taskKey] = state.persistedUserText
+    }
 
     uiStateService.saveDraft(
       AgentPromptUiDraft(
@@ -980,6 +1032,28 @@ internal class AgentPromptPalettePopup(
         manualContextItemsBySourceId = copyManualContextItemsBySourceId(),
       )
     )
+  }
+
+  private fun syncLivePromptTextForSelectedTab(promptText: String) {
+    updateActiveTaskPromptState { state ->
+      syncLivePromptTextForDraftState(state, promptText)
+    }
+  }
+
+  private fun updateActiveTaskPromptState(update: (AgentPromptTaskDraftState) -> AgentPromptTaskDraftState) {
+    val taskKey = activeTaskKey ?: return
+    val currentState = taskPromptStates[taskKey] ?: restoredTaskPromptDraftState("")
+    taskPromptStates[taskKey] = update(currentState)
+  }
+
+  private fun setPromptAreaText(promptText: String) {
+    promptTextUpdateOrigin = PromptTextUpdateOrigin.PROGRAMMATIC
+    try {
+      promptArea.text = promptText
+    }
+    finally {
+      promptTextUpdateOrigin = null
+    }
   }
 
   private fun copyManualContextItemsBySourceId(): LinkedHashMap<String, List<AgentPromptContextItem>> {

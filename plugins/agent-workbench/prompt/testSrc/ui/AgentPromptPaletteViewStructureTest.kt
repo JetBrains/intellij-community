@@ -146,6 +146,27 @@ class AgentPromptPaletteViewStructureTest {
     }
   }
 
+  @Test
+  fun suggestionsPanelIsPlacedInsidePromptPanel() {
+    runInEdtAndWait {
+      val suggestionsPanel = JPanel()
+      val view = createAgentPromptPaletteView(
+        promptArea = EditorTextField(),
+        suggestionsPanel = suggestionsPanel,
+        contextChipsPanel = JPanel(),
+        onProviderIconClicked = {},
+        onExistingTaskSelected = {},
+      )
+
+      layoutPopupRoot(view.rootPanel)
+
+      assertThat(view.suggestionsPanel).isSameAs(suggestionsPanel)
+      assertThat(SwingUtilities.isDescendingFrom(suggestionsPanel, view.promptPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(suggestionsPanel, view.bottomPanel)).isFalse()
+      assertThat(SwingUtilities.isDescendingFrom(suggestionsPanel, view.composerContextPanel)).isFalse()
+    }
+  }
+
   private fun xInRoot(component: java.awt.Component, root: JPanel): Int {
     return SwingUtilities.convertPoint(component.parent, component.location, root).x
   }

@@ -5,6 +5,7 @@ targets:
   - ../../prompt/src/actions/AgentWorkbenchGlobalPromptAction.kt
   - ../../prompt/src/actions/AgentWorkbenchGlobalPromptAutoSelectAction.kt
   - ../../prompt/src/actions/AgentWorkbenchPromptShortcutActionPromoter.kt
+  - ../../prompt/src/ui/AgentPromptDraftPersistenceDecisions.kt
   - ../../prompt/src/ui/AgentPromptPalettePopup.kt
   - ../../prompt/src/ui/AgentPromptPaletteView.kt
   - ../../prompt/src/ui/AgentPromptPaletteModels.kt
@@ -20,6 +21,7 @@ targets:
   - ../../prompt/testSrc/ui/AgentPromptFooterHintDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptPlanModeDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptEnterHandlersTest.kt
+  - ../../prompt/testSrc/ui/AgentPromptDraftPersistenceDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptPaletteViewStructureTest.kt
   - ../../prompt/testSrc/ui/AgentPromptPaletteViewLayoutTest.kt
   - ../../prompt/testSrc/ui/AgentPromptUiSessionStateServiceTest.kt
@@ -31,12 +33,13 @@ targets:
 # Global Prompt Entry
 
 Status: Draft
-Date: 2026-03-11
+Date: 2026-03-14
 
 ## Summary
 Define the global prompt entrypoint opened by `Cmd+\\` (macOS) / `Ctrl+\\` (Windows/Linux), including popup behavior, target mode switching, submit validation, and launch handoff.
 
 Prompt-context collection and rendering contracts are specified separately in `spec/prompt-context/*.spec.md`.
+Suggested prompt generation, rendering, and Codex polishing are specified separately in `spec/actions/global-prompt-suggestions.spec.md`.
 
 ## Goals
 - Keep launch behavior consistent between `NEW_TASK` and `EXISTING_TASK` modes.
@@ -45,6 +48,7 @@ Prompt-context collection and rendering contracts are specified separately in `s
 
 ## Non-goals
 - Defining per-source prompt context payload/rendering details.
+- Defining context-based suggested prompt generation or AI polishing behavior.
 - Defining provider session discovery backend internals.
 - Defining command composition semantics (covered by `spec/agent-core-contracts.spec.md`).
 
@@ -158,6 +162,8 @@ Prompt-context collection and rendering contracts are specified separately in `s
 - Prompt draft persistence contract:
   - persisted `AgentPromptUiDraft` must not serialize manual context items,
   - runtime-only restore snapshot may keep manual context items keyed by source id for the current IDE session,
+  - applying a suggested prompt without later manual edits must not replace the persisted per-tab user draft; closing and reopening restores the last user-authored text for that tab, or empty text when none existed,
+    [@test] ../../prompt/testSrc/ui/AgentPromptDraftPersistenceDecisionsTest.kt
   - successful submit or explicit draft clear must clear both removed-auto context state and manual context state.
     [@test] ../../prompt/testSrc/ui/AgentPromptUiSessionStateServiceTest.kt
 
@@ -196,6 +202,7 @@ Prompt-context collection and rendering contracts are specified separately in `s
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest'`
 
 ## References
+- `global-prompt-suggestions.spec.md`
 - `../prompt-context/prompt-context-contracts.spec.md`
 - `../prompt-context/prompt-context-editor.spec.md`
 - `../prompt-context/prompt-context-files.spec.md`
