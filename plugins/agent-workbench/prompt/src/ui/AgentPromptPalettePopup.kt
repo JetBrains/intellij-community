@@ -571,34 +571,9 @@ internal class AgentPromptPalettePopup(
 
     // Extension tabs: restore from taskDrafts, fall back to extension's initial text
     for (entry in activeExtensionTabs) {
-      savedDrafts.forEach { (taskKey, savedText) ->
-        if (matchesExtensionTaskKey(entry, taskKey)) {
-          taskPromptStates[taskKey] = restoredTaskPromptDraftState(savedText)
-        }
-      }
-    }
-  }
-
-  private fun refreshExtensionTaskDraftsFromContext() {
-    val contextItems = currentContextItems()
-    for (entry in activeExtensionTabs) {
-      val taskKey = resolveExtensionTaskKey(entry, contextItems)
-      val updatedState = AgentPromptPaletteExtensionContext.withContextItems(project, contextItems) {
-        val initialPrompt = entry.extension.getInitialPrompt(project)
-        val currentState = taskPromptStates[taskKey]
-        if (currentState == null) {
-          initialPrompt
-            ?.let { initialPrompt -> restoredTaskPromptDraftState(initialPrompt.content) }
-        }
-        else {
-          synchronizeExtensionDraftState(currentState, initialPrompt?.kind) { prompt ->
-            entry.extension.synchronizePrompt(project, prompt)
-          }
-        }
-      }
-
-      if (updatedState == null) {
-        taskPromptStates.remove(taskKey)
+      val savedText = savedDrafts[entry.taskKey]
+      if (!savedText.isNullOrBlank()) {
+        taskPromptTexts[entry.taskKey] = savedText
       }
       else {
         taskPromptStates[taskKey] = updatedState
