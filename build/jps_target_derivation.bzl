@@ -254,7 +254,7 @@ def _camel_to_snake_case(s, replacement = "-"):
         result.append(c.lower())
     return "".join(result)
 
-def module_name_to_target(module_name, build_dir_parts, community_root_parts, ultimate_root_parts):
+def module_name_to_target(module_name, build_dir_parts, community_root_parts, ultimate_root_parts, community_root_dir_name = "community"):
     """Derive the Bazel target name from a JPS module name.
 
     Mirrors jpsModuleNameToBazelBuildName in BazelBuildFileGenerator.kt.
@@ -264,6 +264,8 @@ def module_name_to_target(module_name, build_dir_parts, community_root_parts, ul
         build_dir_parts: path segments of the BUILD directory relative to project root
         community_root_parts: path segments of the community root relative to project root (e.g., ["community"] or [])
         ultimate_root_parts: path segments of the ultimate root relative to project root (e.g., [] or None for community-only)
+        community_root_dir_name: filesystem directory name of the community root (used in community-only mode
+            where build_dir_parts are relative to community root and the parent dir name cannot be derived)
     """
     custom = CUSTOM_MODULES.get(module_name)
     if custom:
@@ -297,11 +299,14 @@ def module_name_to_target(module_name, build_dir_parts, community_root_parts, ul
             parent_dir_name = build_dir_parts[-2]
     else:
         # community-only mode: ultimateRoot is null in Kotlin
-        # baseBuildDir == null → false
-        # baseBuildDir.parent == null → false (for normal paths)
-        # → falls through to baseBuildDir.parent.fileName
+        # In Kotlin, baseBuildDir.parent.fileName gives the filesystem directory name.
+        # When build_dir_parts is relative to the community root and has >1 segments,
+        # build_dir_parts[-2] works. But when it has exactly 1 segment, the parent is
+        # the community root itself, so we use community_root_dir_name.
         if len(build_dir_parts) > 1:
             parent_dir_name = build_dir_parts[-2]
+        elif len(build_dir_parts) == 1:
+            parent_dir_name = community_root_dir_name
 
     if parent_dir_name != None:
         prefix = parent_dir_name + "."
