@@ -80,6 +80,10 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/sequence:kotlin-jvm-debugger-sequence-k1_test_lib",
     "//plugins/kotlin/jvm-debugger/testFramework",
     "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
+    "//plugins/stream-debugger:java-debugger-streams-tests",
+    "//plugins/stream-debugger:java-debugger-streams-tests_test_lib",
   ],
   runtime_deps = [
     ":testFramework",

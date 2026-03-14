@@ -46,10 +46,77 @@ jvm_library(
 
 jvm_library(
   name = "k1_test_lib",
+  module_name = "intellij.devkit.workspaceModel.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_k1",
+  runtime_deps = [
+    ":k1",
+    "//platform/workspace/storage:storage_test_lib",
+    "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "@lib//:kotlinc-kotlin-compiler-fe10-provided",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/plugin/k1",
+    "//plugins/kotlin/plugin/k1:k1_test_lib",
+    "//plugins/devkit/intellij.devkit.workspaceModel/tests",
+    "//plugins/devkit/intellij.devkit.workspaceModel/tests:tests_test_lib",
+    "//plugins/kotlin/test-framework",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/test",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
+  ]
+)
+### auto-generated section `build intellij.devkit.workspaceModel.k1` end
+
+### auto-generated section `iml intellij.devkit.workspaceModel.k1` start
+exports_files([
+  "intellij.devkit.workspaceModel.k1.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.workspaceModel.k1` end
+
+### auto-generated section `build intellij.devkit.workspaceModel.k1.tests` start
+create_kotlinc_options(
+  name = "custom_devkit-workspaceModel-k1-tests",
+  opt_in = [
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
+
+jvm_library(
+  name = "devkit-workspaceModel-k1-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "devkit-workspaceModel-k1-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_k1",
-  associates = [":k1"],
+  kotlinc_opts = ":custom_devkit-workspaceModel-k1-tests",
+  associates = [
+    "//plugins/devkit/intellij.devkit.workspaceModel/k1",
+    "//plugins/devkit/intellij.devkit.workspaceModel/k1:k1_test_lib",
+  ],
   deps = [
     "//platform/workspace/storage",
     "//platform/workspace/storage:storage_test_lib",
@@ -93,21 +160,22 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//plugins/kotlin/base/fe10/project-structure",
     "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
-  ]
+  ],
+  runtime_deps = [":devkit-workspaceModel-k1-tests"]
 )
-### auto-generated section `build intellij.devkit.workspaceModel.k1` end
+### auto-generated section `build intellij.devkit.workspaceModel.k1.tests` end
 
-### auto-generated section `iml intellij.devkit.workspaceModel.k1` start
+### auto-generated section `iml intellij.devkit.workspaceModel.k1.tests` start
 exports_files([
-  "intellij.devkit.workspaceModel.k1.iml",
+  "intellij.devkit.workspaceModel.k1.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.devkit.workspaceModel.k1` end
+### auto-generated section `iml intellij.devkit.workspaceModel.k1.tests` end
 
-### auto-generated section `test intellij.devkit.workspaceModel.k1` start
+### auto-generated section `test intellij.devkit.workspaceModel.k1.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "k1_test",
-  runtime_deps = [":k1_test_lib"]
+  name = "devkit-workspaceModel-k1-tests_test",
+  runtime_deps = [":devkit-workspaceModel-k1-tests_test_lib"]
 )
-### auto-generated section `test intellij.devkit.workspaceModel.k1` end
+### auto-generated section `test intellij.devkit.workspaceModel.k1.tests` end

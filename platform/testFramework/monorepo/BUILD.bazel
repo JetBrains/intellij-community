@@ -22,9 +22,62 @@ jvm_library(
 
 jvm_library(
   name = "monorepo_test_lib",
+  module_name = "intellij.platform.testFramework.monorepo",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":monorepo",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlinx/coroutines/test",
+    "//libraries/kotlinx/coroutines/test:test_test_lib",
+    "@lib//:jetbrains-annotations",
+    "//jps/model-api:model_test_lib",
+    "//tools/apiDump:apiDump_test_lib",
+    "//platform/util/diff",
+    "//platform/util/diff:diff_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "@lib//:junit5",
+    "//platform/util:util_test_lib",
+    "//platform/testFramework/core",
+    "//platform/testFramework/core:core_test_lib",
+    "//jps/jps-builders:build",
+    "//jps/jps-builders:build_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/devkit/runtimeModuleRepository/generator",
+    "//plugins/devkit/runtimeModuleRepository/generator:generator_test_lib",
+    "//java/java-runtime:rt",
+    "//java/java-runtime:rt_test_lib",
+    "//platform/runtime/repository",
+    "//platform/runtime/repository:repository_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.testFramework.monorepo` end
+
+### auto-generated section `iml intellij.platform.testFramework.monorepo` start
+exports_files([
+  "intellij.platform.testFramework.monorepo.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.testFramework.monorepo` end
+
+### auto-generated section `build intellij.platform.testFramework.monorepo.tests` start
+jvm_library(
+  name = "monorepo-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "monorepo-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
-  associates = [":monorepo"],
+  associates = [
+    "//platform/testFramework/monorepo",
+    "//platform/testFramework/monorepo:monorepo_test_lib",
+  ],
   deps = [
     "@lib//:junit5Jupiter",
     "//platform/testFramework/junit5",
@@ -62,21 +115,22 @@ jvm_library(
     "//java/java-runtime:rt_test_lib",
     "//platform/runtime/repository",
     "//platform/runtime/repository:repository_test_lib",
-  ]
+  ],
+  runtime_deps = [":monorepo-tests"]
 )
-### auto-generated section `build intellij.platform.testFramework.monorepo` end
+### auto-generated section `build intellij.platform.testFramework.monorepo.tests` end
 
-### auto-generated section `iml intellij.platform.testFramework.monorepo` start
+### auto-generated section `iml intellij.platform.testFramework.monorepo.tests` start
 exports_files([
-  "intellij.platform.testFramework.monorepo.iml",
+  "intellij.platform.testFramework.monorepo.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.platform.testFramework.monorepo` end
+### auto-generated section `iml intellij.platform.testFramework.monorepo.tests` end
 
-### auto-generated section `test intellij.platform.testFramework.monorepo` start
+### auto-generated section `test intellij.platform.testFramework.monorepo.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "monorepo_test",
-  runtime_deps = [":monorepo_test_lib"]
+  name = "monorepo-tests_test",
+  runtime_deps = [":monorepo-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.testFramework.monorepo` end
+### auto-generated section `test intellij.platform.testFramework.monorepo.tests` end

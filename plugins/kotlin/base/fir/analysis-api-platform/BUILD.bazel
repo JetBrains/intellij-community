@@ -219,6 +219,8 @@ jvm_library(
     "//plugins/kotlin/base/indices/tests:tests_test_lib",
     "//plugins/kotlin/base/fir/project-structure:kotlin-projectStructure-tests",
     "//plugins/kotlin/base/fir/project-structure:kotlin-projectStructure-tests_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
   ],
   runtime_deps = [":kotlin-analysis-platform-tests"]
 )

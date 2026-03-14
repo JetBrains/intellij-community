@@ -60,9 +60,73 @@ jvm_library(
 
 jvm_library(
   name = "backend_test_lib",
+  module_name = "intellij.editorconfig.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":backend",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/backend:backend_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/structure-view-impl:structureView-impl_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//libraries/gson:gson_test_lib",
+    "//platform/indexing-impl:indexing-impl_test_lib",
+    "//libraries/automaton:automaton_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/code-style-impl:codeStyle-impl_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/settings:settings_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//plugins/editorconfig/common:common_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+  ]
+)
+### auto-generated section `build intellij.editorconfig.backend` end
+
+### auto-generated section `iml intellij.editorconfig.backend` start
+exports_files([
+  "intellij.editorconfig.backend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.editorconfig.backend` end
+
+### auto-generated section `build intellij.editorconfig.backend.tests` start
+jvm_library(
+  name = "backend-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "backend-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":backend"],
+  associates = [
+    "//plugins/editorconfig/backend",
+    "//plugins/editorconfig/backend:backend_test_lib",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
@@ -133,23 +197,24 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   runtime_deps = [
+    ":backend-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
   ]
 )
-### auto-generated section `build intellij.editorconfig.backend` end
+### auto-generated section `build intellij.editorconfig.backend.tests` end
 
-### auto-generated section `iml intellij.editorconfig.backend` start
+### auto-generated section `iml intellij.editorconfig.backend.tests` start
 exports_files([
-  "intellij.editorconfig.backend.iml",
+  "intellij.editorconfig.backend.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.editorconfig.backend` end
+### auto-generated section `iml intellij.editorconfig.backend.tests` end
 
-### auto-generated section `test intellij.editorconfig.backend` start
+### auto-generated section `test intellij.editorconfig.backend.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "backend_test",
-  runtime_deps = [":backend_test_lib"]
+  name = "backend-tests_test",
+  runtime_deps = [":backend-tests_test_lib"]
 )
-### auto-generated section `test intellij.editorconfig.backend` end
+### auto-generated section `test intellij.editorconfig.backend.tests` end

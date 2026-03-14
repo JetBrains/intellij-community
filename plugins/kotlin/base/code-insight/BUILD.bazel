@@ -72,10 +72,98 @@ jvm_library(
 
 jvm_library(
   name = "code-insight_test_lib",
+  module_name = "intellij.kotlin.base.codeInsight",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_code-insight",
+  exports = [
+    "//plugins/kotlin/base/code-insight/minimal",
+    "//plugins/kotlin/base/code-insight/minimal:minimal_test_lib",
+  ],
+  runtime_deps = [
+    ":code-insight",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/project-model:project-model_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//plugins/kotlin/base/indices:indices_test_lib",
+    "//plugins/kotlin/base/platforms:platforms_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "//java/openapi:java_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//java/java-analysis-api:analysis_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//plugins/kotlin/formatter:formatter_test_lib",
+    "@lib//:junit4",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/test",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/base/code-insight/minimal:minimal_test_lib",
+    "@lib//:kotlin-test",
+    "//platform/util/concurrency:concurrency_test_lib",
+  ]
+)
+### auto-generated section `build intellij.kotlin.base.codeInsight` end
+
+### auto-generated section `iml intellij.kotlin.base.codeInsight` start
+exports_files([
+  "intellij.kotlin.base.codeInsight.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.base.codeInsight` end
+
+### auto-generated section `build intellij.kotlin.base.codeInsight.tests` start
+create_kotlinc_options(
+  name = "custom_kotlin-base-codeInsight-tests",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+  ],
+  x_context_parameters = True
+)
+
+jvm_library(
+  name = "kotlin-base-codeInsight-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["//plugins/kotlin/base/code-insight/minimal"]
+)
+
+jvm_library(
+  name = "kotlin-base-codeInsight-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_code-insight",
-  associates = [":code-insight"],
+  kotlinc_opts = ":custom_kotlin-base-codeInsight-tests",
+  associates = [
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+  ],
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
@@ -162,21 +250,24 @@ jvm_library(
     "//plugins/kotlin/base/code-insight/minimal",
     "//plugins/kotlin/base/code-insight/minimal:minimal_test_lib",
   ],
-  runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
+  runtime_deps = [
+    ":kotlin-base-codeInsight-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
 )
-### auto-generated section `build intellij.kotlin.base.codeInsight` end
+### auto-generated section `build intellij.kotlin.base.codeInsight.tests` end
 
-### auto-generated section `iml intellij.kotlin.base.codeInsight` start
+### auto-generated section `iml intellij.kotlin.base.codeInsight.tests` start
 exports_files([
-  "intellij.kotlin.base.codeInsight.iml",
+  "intellij.kotlin.base.codeInsight.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.kotlin.base.codeInsight` end
+### auto-generated section `iml intellij.kotlin.base.codeInsight.tests` end
 
-### auto-generated section `test intellij.kotlin.base.codeInsight` start
+### auto-generated section `test intellij.kotlin.base.codeInsight.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "code-insight_test",
-  runtime_deps = [":code-insight_test_lib"]
+  name = "kotlin-base-codeInsight-tests_test",
+  runtime_deps = [":kotlin-base-codeInsight-tests_test_lib"]
 )
-### auto-generated section `test intellij.kotlin.base.codeInsight` end
+### auto-generated section `test intellij.kotlin.base.codeInsight.tests` end

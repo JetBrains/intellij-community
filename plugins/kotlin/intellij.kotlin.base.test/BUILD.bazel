@@ -163,6 +163,8 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//jps/model-api:model",
     "//jps/model-api:model_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
   ],
   runtime_deps = [
     ":base-test",

@@ -42,9 +42,67 @@ jvm_library(
 
 jvm_library(
   name = "onboarding_test_lib",
+  module_name = "intellij.kotlin.onboarding",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":onboarding",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/feedback:feedback_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//libraries/kotlinx/datetime:datetime_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//libraries/kotlin/test:libraries-kotlinTest",
+    "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
+    "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
+    "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
+    "@lib//:kotlin-test-junit",
+    "@lib//:junit5",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "//platform/external-system-impl:externalSystem-impl_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/project-configuration:project-configuration_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//plugins/kotlin/preferences:preferences_test_lib",
+  ]
+)
+### auto-generated section `build intellij.kotlin.onboarding` end
+
+### auto-generated section `iml intellij.kotlin.onboarding` start
+exports_files([
+  "intellij.kotlin.onboarding.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.onboarding` end
+
+### auto-generated section `build intellij.kotlin.onboarding.tests` start
+jvm_library(
+  name = "onboarding-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "onboarding-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":onboarding"],
+  associates = [
+    "//plugins/kotlin/onboarding",
+    "//plugins/kotlin/onboarding:onboarding_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -100,21 +158,24 @@ jvm_library(
     "//plugins/kotlin/preferences",
     "//plugins/kotlin/preferences:preferences_test_lib",
   ],
-  runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
+  runtime_deps = [
+    ":onboarding-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
 )
-### auto-generated section `build intellij.kotlin.onboarding` end
+### auto-generated section `build intellij.kotlin.onboarding.tests` end
 
-### auto-generated section `iml intellij.kotlin.onboarding` start
+### auto-generated section `iml intellij.kotlin.onboarding.tests` start
 exports_files([
-  "intellij.kotlin.onboarding.iml",
+  "intellij.kotlin.onboarding.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.kotlin.onboarding` end
+### auto-generated section `iml intellij.kotlin.onboarding.tests` end
 
-### auto-generated section `test intellij.kotlin.onboarding` start
+### auto-generated section `test intellij.kotlin.onboarding.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "onboarding_test",
-  runtime_deps = [":onboarding_test_lib"]
+  name = "onboarding-tests_test",
+  runtime_deps = [":onboarding-tests_test_lib"]
 )
-### auto-generated section `test intellij.kotlin.onboarding` end
+### auto-generated section `test intellij.kotlin.onboarding.tests` end

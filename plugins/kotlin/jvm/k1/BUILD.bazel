@@ -276,6 +276,8 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/jvm/k1",
     "//plugins/kotlin/jvm/k1:k1_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
   ],
   runtime_deps = [
     ":kotlin-jvm-k1-tests",

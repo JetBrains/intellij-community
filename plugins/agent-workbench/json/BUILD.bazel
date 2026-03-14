@@ -25,9 +25,45 @@ jvm_library(
 
 jvm_library(
   name = "json_test_lib",
+  module_name = "intellij.agent.workbench.json",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":json",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//plugins/agent-workbench/filewatch:filewatch_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
+    "//libraries/assertj-core",
+    "//libraries/assertj-core:assertj-core_test_lib",
+  ]
+)
+### auto-generated section `build intellij.agent.workbench.json` end
+
+### auto-generated section `iml intellij.agent.workbench.json` start
+exports_files([
+  "intellij.agent.workbench.json.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.agent.workbench.json` end
+
+### auto-generated section `build intellij.agent.workbench.json.tests` start
+jvm_library(
+  name = "agent-workbench-json-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "agent-workbench-json-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":json"],
+  associates = [
+    "//plugins/agent-workbench/json",
+    "//plugins/agent-workbench/json:json_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
@@ -44,21 +80,22 @@ jvm_library(
     "//libraries/junit5:junit5_test_lib",
     "//libraries/assertj-core",
     "//libraries/assertj-core:assertj-core_test_lib",
-  ]
+  ],
+  runtime_deps = [":agent-workbench-json-tests"]
 )
-### auto-generated section `build intellij.agent.workbench.json` end
+### auto-generated section `build intellij.agent.workbench.json.tests` end
 
-### auto-generated section `iml intellij.agent.workbench.json` start
+### auto-generated section `iml intellij.agent.workbench.json.tests` start
 exports_files([
-  "intellij.agent.workbench.json.iml",
+  "intellij.agent.workbench.json.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.agent.workbench.json` end
+### auto-generated section `iml intellij.agent.workbench.json.tests` end
 
-### auto-generated section `test intellij.agent.workbench.json` start
+### auto-generated section `test intellij.agent.workbench.json.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "json_test",
-  runtime_deps = [":json_test_lib"]
+  name = "agent-workbench-json-tests_test",
+  runtime_deps = [":agent-workbench-json-tests_test_lib"]
 )
-### auto-generated section `test intellij.agent.workbench.json` end
+### auto-generated section `test intellij.agent.workbench.json.tests` end

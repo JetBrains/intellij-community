@@ -68,6 +68,8 @@ jvm_library(
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/idea/tests",
     "//plugins/kotlin/idea/tests:tests_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
   ],
   runtime_deps = [":tests"]
 )

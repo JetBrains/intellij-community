@@ -2146,6 +2146,13 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+jvm_import(
+  name = "execution-process-mediator-client-tests-grpc-inprocess",
+  jar = "@io_grpc-grpc-inprocess-1_65_1_http//file",
+  source_jar = "@io_grpc-grpc-inprocess-1_65_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
   name = "com.willowtreeapps.assertk/assertk-jvm-0.23.jar_copy",
   src = "@com_willowtreeapps_assertk-assertk-jvm-0_23_http//file",
@@ -2198,6 +2205,16 @@ jvm_import(
   source_jar = "@org_opentest4j-opentest4j-1_2_0-sources_http//file"
 )
 
+java_library(
+  name = "execution-process-mediator-common-tests-com-willowtreeapps-assertk-assertk-jvm",
+  exports = [
+    ":com_willowtreeapps_assertk-assertk-jvm-0_23_http_import",
+    ":com_willowtreeapps_opentest4k-opentest4k-jvm-1_2_1_http_import",
+    ":org_opentest4j-opentest4j-1_2_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
   name = "jetbrains.fleet/expects-compiler-plugin-2.3.20-RC2-0.1.jar_copy",
   src = "@jetbrains_fleet-expects-compiler-plugin-2_3_20-RC2-0_1_http//file",
@@ -2238,6 +2255,13 @@ copy_file(
 
 jvm_import(
   name = "file_prediction-file-prediction-model",
+  jar = "@org_jetbrains_intellij_deps_filePrediction_model-file-prediction-model-0_3_0_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_filePrediction_model-file-prediction-model-0_3_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "file_prediction-tests-file-prediction-model",
   jar = "@org_jetbrains_intellij_deps_filePrediction_model-file-prediction-model-0_3_0_http//file",
   source_jar = "@org_jetbrains_intellij_deps_filePrediction_model-file-prediction-model-0_3_0-sources_http//file",
   visibility = ["//visibility:public"]
@@ -3419,6 +3443,13 @@ copy_file(
 
 jvm_import(
   name = "gradle-jps-ant",
+  jar = "@org_apache_ant-ant-1_10_15_http//file",
+  source_jar = "@org_apache_ant-ant-1_10_15-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "gradle-jps-tests-ant",
   jar = "@org_apache_ant-ant-1_10_15_http//file",
   source_jar = "@org_apache_ant-ant-1_10_15-sources_http//file",
   visibility = ["//visibility:public"]
@@ -7176,6 +7207,27 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+jvm_import(
+  name = "java-aether_dependency_resolver-tests-org-apache-maven-resolver-maven-resolver-connector-basic",
+  jar = "@org_apache_maven_resolver-maven-resolver-connector-basic-1_9_22_http//file",
+  source_jar = "@org_apache_maven_resolver-maven-resolver-connector-basic-1_9_22-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "java-aether_dependency_resolver-tests-org-apache-maven-resolver-maven-resolver-transport-file",
+  jar = "@org_apache_maven_resolver-maven-resolver-transport-file-1_9_22_http//file",
+  source_jar = "@org_apache_maven_resolver-maven-resolver-transport-file-1_9_22-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "java-aether_dependency_resolver-tests-org-apache-maven-resolver-maven-resolver-transport-http",
+  jar = "@org_apache_maven_resolver-maven-resolver-transport-http-1_9_22_http//file",
+  source_jar = "@org_apache_maven_resolver-maven-resolver-transport-http-1_9_22-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
   name = "org.jacoco/org.jacoco.ant-0.8.14.jar_copy",
   src = "@org_jacoco-org_jacoco_ant-0_8_14_http//file",
@@ -7323,6 +7375,29 @@ jvm_import(
   name = "org_freemarker-freemarker-2_3_32_http_import",
   jar = "@org_freemarker-freemarker-2_3_32_http//file",
   source_jar = "@org_freemarker-freemarker-2_3_32-sources_http//file"
+)
+
+java_library(
+  name = "java-coverage-tests-_ja_co_co",
+  exports = [
+    ":org_jacoco-org_jacoco_ant-0_8_14_http_import",
+    ":org_jacoco-org_jacoco_core-0_8_14_http_import",
+    ":org_ow2_asm-asm-9_9_http_import",
+    ":org_ow2_asm-asm-commons-9_9_http_import",
+    ":org_ow2_asm-asm-tree-9_9_http_import",
+    ":org_jacoco-org_jacoco_report-0_8_14_http_import",
+    ":org_jacoco-org_jacoco_agent-0_8_14_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "java-coverage-tests-coverage-report",
+  exports = [
+    ":org_jetbrains_intellij_deps-coverage-report-1_0_25_http_import",
+    ":org_freemarker-freemarker-2_3_32_http_import",
+  ],
+  visibility = ["//visibility:public"]
 )
 
 copy_file(
@@ -14423,6 +14498,62 @@ java_library(
   visibility = ["//visibility:public"]
 )
 
+java_library(
+  name = "maven-server-event_listener-tests-com-google-inject-guice-no_aop-4-0",
+  exports = [
+    ":com_google_inject-guice-4_0_http_import",
+    ":javax_inject-javax_inject-1_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "maven-server-event_listener-tests-com-google-inject-guice-no_aop-4-0-provided",
+  exports = [":maven-server-event_listener-tests-com-google-inject-guice-no_aop-4-0"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "maven-server-event_listener-tests-org-apache-maven-maven-core-3-3-9",
+  exports = [
+    ":org_apache_maven-maven-core-3_3_9_http_import",
+    ":org_apache_maven-maven-model-3_3_9_http_import",
+    ":org_apache_maven-maven-settings-3_3_9_http_import",
+    ":org_apache_maven-maven-settings-builder-3_3_9_http_import",
+    ":org_apache_maven-maven-builder-support-3_3_9_http_import",
+    ":org_apache_maven-maven-repository-metadata-3_3_9_http_import",
+    ":org_apache_maven-maven-artifact-3_3_9_http_import",
+    ":org_apache_maven-maven-plugin-api-3_3_9_http_import",
+    ":org_apache_maven-maven-model-builder-3_3_9_http_import",
+    ":com_google_guava-guava-18_0_http_import",
+    ":org_apache_maven-maven-aether-provider-3_3_9_http_import",
+    ":org_eclipse_aether-aether-spi-1_0_2_v20150114_http_import",
+    ":org_eclipse_aether-aether-impl-1_0_2_v20150114_http_import",
+    ":org_eclipse_aether-aether-api-1_0_2_v20150114_http_import",
+    ":org_eclipse_aether-aether-util-1_0_2_v20150114_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2_http_import",
+    ":javax_enterprise-cdi-api-1_0_http_import",
+    ":javax_annotation-jsr250-api-1_0_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2_http_import",
+    ":org_codehaus_plexus-plexus-interpolation-1_21_http_import",
+    ":org_codehaus_plexus-plexus-utils-3_0_22_http_import",
+    ":org_codehaus_plexus-plexus-classworlds-2_5_2_http_import",
+    ":org_codehaus_plexus-plexus-component-annotations-1_6_http_import",
+    ":org_sonatype_plexus-plexus-sec-dispatcher-1_3_http_import",
+    ":org_sonatype_plexus-plexus-cipher-1_4_http_import",
+    ":org_apache_commons-commons-lang3-3_4_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "maven-server-event_listener-tests-org-apache-maven-maven-core-3-3-9-provided",
+  exports = [":maven-server-event_listener-tests-org-apache-maven-maven-core-3-3-9"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
   name = "org.apache.maven.archetype/archetype-catalog-3.2.1.jar_copy",
   src = "@org_apache_maven_archetype-archetype-catalog-3_2_1_http//file",
@@ -17242,6 +17373,13 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+jvm_import(
+  name = "maven-test_framework-tests-io-takari-maven-wrapper",
+  jar = "@io_takari-maven-wrapper-0_5_5_http//file",
+  source_jar = "@io_takari-maven-wrapper-0_5_5-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
   name = "com.moandjiezana.toml/toml4j-0.7.2.jar_copy",
   src = "@com_moandjiezana_toml-toml4j-0_7_2_http//file",
@@ -18692,6 +18830,15 @@ jvm_import(
 )
 
 java_library(
+  name = "platform-credential_store-impl-tests-dbus-java",
+  exports = [
+    ":com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_2_1_http_import",
+    ":com_github_hypfvieh-dbus-java-core-4_2_1_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
   name = "platform-eel_helper-jline-terminal",
   exports = [
     ":org_jline-jline-terminal-3_27_0_http_import",
@@ -18710,6 +18857,13 @@ copy_file(
 
 jvm_import(
   name = "platform-images-build-pngencoder",
+  jar = "@com_pngencoder-pngencoder-0_14_0_http//file",
+  source_jar = "@com_pngencoder-pngencoder-0_14_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-images-build-tests-pngencoder",
   jar = "@com_pngencoder-pngencoder-0_14_0_http//file",
   source_jar = "@com_pngencoder-pngencoder-0_14_0-sources_http//file",
   visibility = ["//visibility:public"]
@@ -19143,6 +19297,84 @@ java_library(
   visibility = ["//visibility:public"]
 )
 
+java_library(
+  name = "platform-jewel-detekt_plugin-tests-io-gitlab-arturbosch-detekt-api",
+  exports = [
+    ":io_gitlab_arturbosch_detekt-detekt-api-1_23_8_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-psi-utils-1_23_8_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-utils-1_23_8_http_import",
+    ":dev_drewhamilton_poko-poko-annotations-jvm-0_17_1_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "platform-jewel-detekt_plugin-tests-io-gitlab-arturbosch-detekt-core",
+  exports = [
+    ":io_gitlab_arturbosch_detekt-detekt-core-1_23_8_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-api-1_23_8_http_import",
+    ":dev_drewhamilton_poko-poko-annotations-jvm-0_17_1_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-parser-1_23_8_http_import",
+    ":io_github_davidburstrom_contester-contester-breakpoint-0_2_0_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-tooling-1_23_8_http_import",
+    ":org_snakeyaml-snakeyaml-engine-2_7_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-metrics-1_23_8_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-psi-utils-1_23_8_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-report-html-1_23_8_http_import",
+    ":org_jetbrains_kotlinx-kotlinx-html-jvm-0_8_1_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-report-md-1_23_8_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-report-txt-1_23_8_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-report-xml-1_23_8_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-report-sarif-1_23_8_http_import",
+    ":io_github_detekt_sarif4k-sarif4k-jvm-0_6_0_http_import",
+    ":org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_4_1_http_import",
+    ":org_jetbrains_kotlin-kotlin-stdlib-common-1_7_20_http_import",
+    ":org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_4_1_http_import",
+    ":org_jetbrains_kotlin-kotlin-stdlib-jdk8-1_7_20_http_import",
+    ":org_jetbrains_kotlin-kotlin-stdlib-jdk7-1_7_20_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-utils-1_23_8_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "platform-jewel-detekt_plugin-tests-io-gitlab-arturbosch-detekt-test",
+  exports = [
+    ":io_gitlab_arturbosch_detekt-detekt-test-1_23_8_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-api-1_23_8_http_import",
+    ":org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21_http_import",
+    ":org_jetbrains_kotlin-kotlin-script-runtime-2_0_21_http_import",
+    ":org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21_http_import",
+    ":org_jetbrains_intellij_deps-trove4j-1_0_20200330_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-psi-utils-1_23_8_http_import",
+    ":dev_drewhamilton_poko-poko-annotations-jvm-0_17_1_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-test-utils-1_23_8_http_import",
+    ":org_junit_jupiter-junit-jupiter-api-5_10_2_http_import",
+    ":org_opentest4j-opentest4j-1_3_0_http_import",
+    ":org_junit_platform-junit-platform-commons-1_10_2_http_import",
+    ":org_apiguardian-apiguardian-api-1_1_2_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-parser-1_23_8_http_import",
+    ":io_github_davidburstrom_contester-contester-breakpoint-0_2_0_http_import",
+    ":org_jetbrains_kotlin-kotlin-main-kts-2_0_21_http_import",
+    ":org_jetbrains_kotlin-kotlin-scripting-compiler-embeddable-2_0_21_http_import",
+    ":org_jetbrains_kotlin-kotlin-scripting-compiler-impl-embeddable-2_0_21_http_import",
+    ":org_jetbrains_kotlin-kotlin-scripting-common-2_0_21_http_import",
+    ":org_jetbrains_kotlin-kotlin-scripting-jvm-2_0_21_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-utils-1_23_8_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "platform-jewel-detekt_plugin-tests-jetbrains-kotlin-compiler-embeddable",
+  exports = [
+    ":org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21_http_import",
+    ":org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21_http_import",
+    ":org_jetbrains_intellij_deps-trove4j-1_0_20200330_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
   name = "org.commonmark/commonmark-0.24.0.jar_copy",
   src = "@org_commonmark-commonmark-0_24_0_http//file",
@@ -19153,6 +19385,13 @@ copy_file(
 
 jvm_import(
   name = "platform-jewel-markdown-core-org-commonmark-commonmark",
+  jar = "@org_commonmark-commonmark-0_24_0_http//file",
+  source_jar = "@org_commonmark-commonmark-0_24_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-jewel-markdown-core-tests-org-commonmark-commonmark",
   jar = "@org_commonmark-commonmark-0_24_0_http//file",
   source_jar = "@org_commonmark-commonmark-0_24_0-sources_http//file",
   visibility = ["//visibility:public"]
@@ -19193,6 +19432,15 @@ jvm_import(
   name = "org_nibor_autolink-autolink-0_11_0_http_import",
   jar = "@org_nibor_autolink-autolink-0_11_0_http//file",
   source_jar = "@org_nibor_autolink-autolink-0_11_0-sources_http//file"
+)
+
+java_library(
+  name = "platform-jewel-markdown-extensions-autolink-tests-commonmark-ext-autolink",
+  exports = [
+    ":org_commonmark-commonmark-ext-autolink-0_24_0_http_import",
+    ":org_nibor_autolink-autolink-0_11_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
 )
 
 copy_file(
@@ -19272,6 +19520,20 @@ copy_file(
 
 jvm_import(
   name = "platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
+  jar = "@org_jetbrains_compose_components-components-resources-desktop-1_10_0_http//file",
+  source_jar = "@org_jetbrains_compose_components-components-resources-desktop-1_10_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources",
+  jar = "@org_jetbrains_compose_components-components-resources-1_10_0_http//file",
+  source_jar = "@org_jetbrains_compose_components-components-resources-1_10_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources-desktop",
   jar = "@org_jetbrains_compose_components-components-resources-desktop-1_10_0_http//file",
   source_jar = "@org_jetbrains_compose_components-components-resources-desktop-1_10_0-sources_http//file",
   visibility = ["//visibility:public"]
@@ -19434,6 +19696,15 @@ jvm_import(
   source_jar = "@com_squareup_okhttp3-mockwebserver3-5_0_0-alpha_11-sources_http//file"
 )
 
+java_library(
+  name = "platform-test_framework-tests-okhttp3-mockwebserver",
+  exports = [
+    ":com_squareup_okhttp3-mockwebserver-5_0_0-alpha_11_http_import",
+    ":com_squareup_okhttp3-mockwebserver3-5_0_0-alpha_11_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
   name = "commons-collections/commons-collections-3.2.2.jar_copy",
   src = "@commons-collections-commons-collections-3_2_2_http//file",
@@ -19541,6 +19812,19 @@ copy_file(
 
 jvm_import(
   name = "python-community-impl-ml-completion-prev-exprs-models",
+  jar = "@completion_ml_python_features-ml-completion-prev-exprs-models-1_11_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "python-community-impl-tests-completion-ranking-python-with-full-line",
+  jar = "@org_jetbrains_intellij_deps_completion-completion-ranking-python-with-full-line-0_2_1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_completion-completion-ranking-python-with-full-line-0_2_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "python-community-impl-tests-ml-completion-prev-exprs-models",
   jar = "@completion_ml_python_features-ml-completion-prev-exprs-models-1_11_http//file",
   visibility = ["//visibility:public"]
 )
@@ -19796,7 +20080,70 @@ jvm_import(
 )
 
 jvm_import(
+  name = "search_everywhere_ml-ranking-core-tests-find-action-model",
+  jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-action-model-252_0_0_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-action-model-252_0_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "search_everywhere_ml-ranking-core-tests-find-action-model-experimental",
+  jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-action-model-252_0_1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-action-model-252_0_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "search_everywhere_ml-ranking-core-tests-find-all-model-experimental",
+  jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-all-model-252_0_1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-all-model-252_0_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "search_everywhere_ml-ranking-core-tests-find-classes-model",
+  jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_0_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "search_everywhere_ml-ranking-core-tests-find-classes-model-experimental",
+  jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "search_everywhere_ml-ranking-core-tests-find-ec-model-experimental",
+  jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-ec-model-252_0_1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-ec-model-252_0_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "search_everywhere_ml-ranking-core-tests-find-file-model",
+  jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-file-model-252_0_0_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-file-model-252_0_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "search_everywhere_ml-ranking-core-tests-find-file-model-experimental",
+  jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-file-model-252_0_1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-file-model-252_0_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
+  jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_122_http//file",
+  source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_122-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "search_everywhere_ml-typos-tests-ai-grazie-spell-gec-engine-local-jvm",
   jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_122_http//file",
   source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_122-sources_http//file",
   visibility = ["//visibility:public"]
@@ -20035,6 +20382,13 @@ copy_file(
 
 jvm_import(
   name = "terminal-completion-terminal-completion-spec",
+  jar = "@org_jetbrains_terminal-completion-spec-0_7_0_http//file",
+  source_jar = "@org_jetbrains_terminal-completion-spec-0_7_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "terminal-completion-tests-terminal-completion-spec",
   jar = "@org_jetbrains_terminal-completion-spec-0_7_0_http//file",
   source_jar = "@org_jetbrains_terminal-completion-spec-0_7_0-sources_http//file",
   visibility = ["//visibility:public"]
@@ -20418,6 +20772,16 @@ jvm_import(
   source_jar = "@com_apollographql_apollo-apollo-annotations-jvm-4_0_0-sources_http//file"
 )
 
+java_library(
+  name = "vcs-github-tests-apollographql-apollo-ast-jvm",
+  exports = [
+    ":com_apollographql_apollo-apollo-ast-jvm-4_0_0_http_import",
+    ":com_squareup_okio-okio-jvm-3_9_0_http_import",
+    ":com_apollographql_apollo-apollo-annotations-jvm-4_0_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
   name = "com.jetbrains.intellij.platform/workspace-model-codegen-0.0.9.jar_copy",
   src = "@com_jetbrains_intellij_platform-workspace-model-codegen-0_0_9_http//file",
@@ -20497,6 +20861,22 @@ jvm_import(
   name = "org_apache_logging_log4j-log4j-api-2_20_0_http_import",
   jar = "@org_apache_logging_log4j-log4j-api-2_20_0_http//file",
   source_jar = "@org_apache_logging_log4j-log4j-api-2_20_0-sources_http//file"
+)
+
+jvm_import(
+  name = "xml-xmlbeans-tests-_xml_beans",
+  jar = "@org_apache_xmlbeans-xmlbeans-5_1_1_http//file",
+  source_jar = "@org_apache_xmlbeans-xmlbeans-5_1_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "xml-xmlbeans-tests-apache-logging-log4j-to-slf4j",
+  exports = [
+    ":org_apache_logging_log4j-log4j-to-slf4j-2_20_0_http_import",
+    ":org_apache_logging_log4j-log4j-api-2_20_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
 )
 
 copy_file(

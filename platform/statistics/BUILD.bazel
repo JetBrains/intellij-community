@@ -56,9 +56,74 @@ jvm_library(
 
 jvm_library(
   name = "statistics_test_lib",
+  module_name = "intellij.platform.statistics",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:com-jetbrains-fus-reporting-fus-api",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+  ],
+  runtime_deps = [
+    ":statistics",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/statistics/uploader:uploader_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/runtime/product:product_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//libraries/caffeine:caffeine_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/ide-core/plugins:plugins_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/project-frame:project-frame_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+    "//libraries/jackson3/databind:databind_test_lib",
+    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "@lib//:junit5",
+    "@lib//:assert_j",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.statistics` end
+
+### auto-generated section `iml intellij.platform.statistics` start
+exports_files([
+  "intellij.platform.statistics.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.statistics` end
+
+### auto-generated section `build intellij.platform.statistics.tests` start
+jvm_library(
+  name = "statistics-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:com-jetbrains-fus-reporting-fus-api",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+  ]
+)
+
+jvm_library(
+  name = "statistics-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":statistics"],
+  associates = [
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+  ],
   deps = [
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
@@ -126,24 +191,25 @@ jvm_library(
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ],
   runtime_deps = [
+    ":statistics-tests",
     "//platform/platform-util-io:ide-util-io_test_lib",
     "//platform/ide-core:ide-core_test_lib",
     "//platform/ide-core/plugins:plugins_test_lib",
   ]
 )
-### auto-generated section `build intellij.platform.statistics` end
+### auto-generated section `build intellij.platform.statistics.tests` end
 
-### auto-generated section `iml intellij.platform.statistics` start
+### auto-generated section `iml intellij.platform.statistics.tests` start
 exports_files([
-  "intellij.platform.statistics.iml",
+  "intellij.platform.statistics.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.platform.statistics` end
+### auto-generated section `iml intellij.platform.statistics.tests` end
 
-### auto-generated section `test intellij.platform.statistics` start
+### auto-generated section `test intellij.platform.statistics.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "statistics_test",
-  runtime_deps = [":statistics_test_lib"]
+  name = "statistics-tests_test",
+  runtime_deps = [":statistics-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.statistics` end
+### auto-generated section `test intellij.platform.statistics.tests` end

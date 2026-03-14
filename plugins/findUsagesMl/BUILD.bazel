@@ -29,9 +29,50 @@ jvm_library(
 
 jvm_library(
   name = "findUsagesMl_test_lib",
+  module_name = "intellij.findUsagesMl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":findUsagesMl",
+    "//libraries/commons/text:text_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/ml-logs:ml-logs_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//libraries/kotlin/test:libraries-kotlinTest",
+    "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
+    "@lib//:junit5",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.findUsagesMl` end
+
+### auto-generated section `iml intellij.findUsagesMl` start
+exports_files([
+  "intellij.findUsagesMl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.findUsagesMl` end
+
+### auto-generated section `build intellij.findUsagesMl.tests` start
+jvm_library(
+  name = "findUsagesMl-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "findUsagesMl-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":findUsagesMl"],
+  associates = [
+    "//plugins/findUsagesMl",
+    "//plugins/findUsagesMl:findUsagesMl_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/commons/text",
@@ -57,21 +98,24 @@ jvm_library(
     "//platform/core-impl",
     "//platform/core-impl:core-impl_test_lib",
   ],
-  runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
+  runtime_deps = [
+    ":findUsagesMl-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
 )
-### auto-generated section `build intellij.findUsagesMl` end
+### auto-generated section `build intellij.findUsagesMl.tests` end
 
-### auto-generated section `iml intellij.findUsagesMl` start
+### auto-generated section `iml intellij.findUsagesMl.tests` start
 exports_files([
-  "intellij.findUsagesMl.iml",
+  "intellij.findUsagesMl.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.findUsagesMl` end
+### auto-generated section `iml intellij.findUsagesMl.tests` end
 
-### auto-generated section `test intellij.findUsagesMl` start
+### auto-generated section `test intellij.findUsagesMl.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "findUsagesMl_test",
-  runtime_deps = [":findUsagesMl_test_lib"]
+  name = "findUsagesMl-tests_test",
+  runtime_deps = [":findUsagesMl-tests_test_lib"]
 )
-### auto-generated section `test intellij.findUsagesMl` end
+### auto-generated section `test intellij.findUsagesMl.tests` end

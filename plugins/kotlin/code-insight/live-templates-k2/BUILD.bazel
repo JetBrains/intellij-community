@@ -131,6 +131,8 @@ jvm_library(
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared-tests",
+    "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared-tests_test_lib",
   ],
   runtime_deps = [":kotlin-codeInsight-liveTemplates-tests"]
 )

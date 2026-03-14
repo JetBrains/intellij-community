@@ -17,9 +17,45 @@ jvm_library(
 
 jvm_library(
   name = "threadDumpParser_test_lib",
+  module_name = "intellij.platform.threadDumpParser",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":threadDumpParser",
+    "//platform/util:util_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+    "//libraries/jackson3/databind:databind_test_lib",
+    "@lib//:junit4",
+  ]
+)
+### auto-generated section `build intellij.platform.threadDumpParser` end
+
+### auto-generated section `iml intellij.platform.threadDumpParser` start
+exports_files([
+  "intellij.platform.threadDumpParser.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.threadDumpParser` end
+
+### auto-generated section `build intellij.platform.threadDumpParser.tests` start
+jvm_library(
+  name = "threadDumpParser-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "threadDumpParser-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":threadDumpParser"],
+  associates = [
+    "//platform/threadDumpParser",
+    "//platform/threadDumpParser:threadDumpParser_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util",
@@ -35,21 +71,24 @@ jvm_library(
     "//libraries/jackson3/databind:databind_test_lib",
     "@lib//:junit4",
   ],
-  runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
+  runtime_deps = [
+    ":threadDumpParser-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
 )
-### auto-generated section `build intellij.platform.threadDumpParser` end
+### auto-generated section `build intellij.platform.threadDumpParser.tests` end
 
-### auto-generated section `iml intellij.platform.threadDumpParser` start
+### auto-generated section `iml intellij.platform.threadDumpParser.tests` start
 exports_files([
-  "intellij.platform.threadDumpParser.iml",
+  "intellij.platform.threadDumpParser.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.platform.threadDumpParser` end
+### auto-generated section `iml intellij.platform.threadDumpParser.tests` end
 
-### auto-generated section `test intellij.platform.threadDumpParser` start
+### auto-generated section `test intellij.platform.threadDumpParser.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "threadDumpParser_test",
-  runtime_deps = [":threadDumpParser_test_lib"]
+  name = "threadDumpParser-tests_test",
+  runtime_deps = [":threadDumpParser-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.threadDumpParser` end
+### auto-generated section `test intellij.platform.threadDumpParser.tests` end

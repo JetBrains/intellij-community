@@ -59,9 +59,136 @@ jvm_library(
 
 jvm_library(
   name = "javaFX_test_lib",
+  module_name = "intellij.javaFX",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":javaFX",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//java/execution/openapi:java-execution_test_lib",
+    "//java/execution/impl:impl_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//xml/impl:impl_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//java/openapi:java_test_lib",
+    "//java/compiler/openapi:java-compiler_test_lib",
+    "//java/compiler/impl:impl_test_lib",
+    "//plugins/javaFX/common:common_test_lib",
+    "//java/manifest:manifest_test_lib",
+    "//java/idea-ui:ui_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//java/typeMigration:typeMigration_test_lib",
+    "//platform/util/nanoxml:nanoxml_test_lib",
+    "//java/java-tests:tests",
+    "//java/java-tests:tests_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//platform/code-style-impl:codeStyle-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//spellchecker:spellchecker_test_lib",
+    "//java/java-impl-refactorings:impl-refactorings_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//xml/xml-analysis-api:analysis_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+  ]
+)
+### auto-generated section `build intellij.javaFX` end
+
+### auto-generated section `iml intellij.javaFX` start
+exports_files([
+  "intellij.javaFX.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.javaFX` end
+
+### auto-generated section `build intellij.javaFX.properties` start
+resourcegroup(
+  name = "javaFX-properties_resources",
+  srcs = glob(["properties/resources/**/*"]),
+  strip_prefix = "properties/resources"
+)
+
+jvm_library(
+  name = "javaFX-properties",
+  module_name = "intellij.javaFX.properties",
+  visibility = ["//visibility:public"],
+  srcs = glob(["properties/src/**/*.kt", "properties/src/**/*.java", "properties/src/**/*.form"], allow_empty = True),
+  resources = [":javaFX-properties_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/platform-impl:ide-impl",
+    "//xml/xml-psi-api:psi",
+    "//xml/xml-analysis-api:analysis",
+    "//xml/xml-psi-impl:psi-impl",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+    "//plugins/javaFX",
+    "//platform/analysis-api:analysis",
+    "//libraries/stream",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+
+jvm_library(
+  name = "javaFX-properties_test_lib",
+  module_name = "intellij.javaFX.properties",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":javaFX-properties",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//xml/xml-analysis-api:analysis_test_lib",
+    "//xml/xml-psi-impl:psi-impl_test_lib",
+    "//plugins/properties/properties-psi-impl:backend-psi_test_lib",
+    "//plugins/javaFX:javaFX_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+  ]
+)
+### auto-generated section `build intellij.javaFX.properties` end
+
+### auto-generated section `iml intellij.javaFX.properties` start
+exports_files([
+  "intellij.javaFX.properties.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.javaFX.properties` end
+
+### auto-generated section `build intellij.javaFX.tests` start
+jvm_library(
+  name = "javaFX-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "javaFX-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":javaFX"],
+  associates = [
+    "//plugins/javaFX",
+    "//plugins/javaFX:javaFX_test_lib",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
@@ -148,78 +275,25 @@ jvm_library(
     "//platform/util/concurrency:concurrency_test_lib",
   ],
   runtime_deps = [
+    ":javaFX-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
   ]
 )
-### auto-generated section `build intellij.javaFX` end
+### auto-generated section `build intellij.javaFX.tests` end
 
-### auto-generated section `iml intellij.javaFX` start
+### auto-generated section `iml intellij.javaFX.tests` start
 exports_files([
-  "intellij.javaFX.iml",
+  "intellij.javaFX.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.javaFX` end
+### auto-generated section `iml intellij.javaFX.tests` end
 
-### auto-generated section `test intellij.javaFX` start
+### auto-generated section `test intellij.javaFX.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "javaFX_test",
-  runtime_deps = [":javaFX_test_lib"]
+  name = "javaFX-tests_test",
+  runtime_deps = [":javaFX-tests_test_lib"]
 )
-### auto-generated section `test intellij.javaFX` end
-
-### auto-generated section `build intellij.javaFX.properties` start
-resourcegroup(
-  name = "javaFX-properties_resources",
-  srcs = glob(["properties/resources/**/*"]),
-  strip_prefix = "properties/resources"
-)
-
-jvm_library(
-  name = "javaFX-properties",
-  module_name = "intellij.javaFX.properties",
-  visibility = ["//visibility:public"],
-  srcs = glob(["properties/src/**/*.kt", "properties/src/**/*.java", "properties/src/**/*.form"], allow_empty = True),
-  resources = [":javaFX-properties_resources"],
-  deps = [
-    "//platform/core-api:core",
-    "//platform/platform-impl:ide-impl",
-    "//xml/xml-psi-api:psi",
-    "//xml/xml-analysis-api:analysis",
-    "//xml/xml-psi-impl:psi-impl",
-    "//plugins/properties/properties-psi-impl:backend-psi",
-    "//plugins/javaFX",
-    "//platform/analysis-api:analysis",
-    "//libraries/stream",
-    "//platform/forms_rt:java-guiForms-rt",
-  ]
-)
-
-jvm_library(
-  name = "javaFX-properties_test_lib",
-  module_name = "intellij.javaFX.properties",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":javaFX-properties",
-    "//platform/core-api:core_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//xml/xml-psi-api:psi_test_lib",
-    "//xml/xml-analysis-api:analysis_test_lib",
-    "//xml/xml-psi-impl:psi-impl_test_lib",
-    "//plugins/properties/properties-psi-impl:backend-psi_test_lib",
-    "//plugins/javaFX:javaFX_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//libraries/stream:stream_test_lib",
-    "//platform/forms_rt:java-guiForms-rt_test_lib",
-  ]
-)
-### auto-generated section `build intellij.javaFX.properties` end
-
-### auto-generated section `iml intellij.javaFX.properties` start
-exports_files([
-  "intellij.javaFX.properties.iml",
-], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.javaFX.properties` end
+### auto-generated section `test intellij.javaFX.tests` end

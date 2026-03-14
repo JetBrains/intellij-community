@@ -11,11 +11,12 @@ jvm_library(
 
 jvm_library(
   name = "protocol_test_lib",
+  module_name = "intellij.java.jshell.protocol",
   visibility = ["//visibility:public"],
-  srcs = glob(["testStrc/**/*.kt", "testStrc/**/*.java", "testStrc/**/*.form"], allow_empty = True),
+  srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k11",
-  associates = [":protocol"],
-  deps = [
+  runtime_deps = [
+    ":protocol",
     "@lib//:junit4",
     "@lib//:hamcrest",
   ]
@@ -28,11 +29,41 @@ exports_files([
 ], visibility = ["//visibility:public"])
 ### auto-generated section `iml intellij.java.jshell.protocol` end
 
-### auto-generated section `test intellij.java.jshell.protocol` start
+### auto-generated section `build intellij.java.jshell.protocol.tests` start
+jvm_library(
+  name = "java-jshell-protocol-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "java-jshell-protocol-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testStrc/**/*.kt", "testStrc/**/*.java", "testStrc/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  associates = [
+    "//plugins/jshell/protocol",
+    "//plugins/jshell/protocol:protocol_test_lib",
+  ],
+  deps = [
+    "@lib//:junit4",
+    "@lib//:hamcrest",
+  ],
+  runtime_deps = [":java-jshell-protocol-tests"]
+)
+### auto-generated section `build intellij.java.jshell.protocol.tests` end
+
+### auto-generated section `iml intellij.java.jshell.protocol.tests` start
+exports_files([
+  "intellij.java.jshell.protocol.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.jshell.protocol.tests` end
+
+### auto-generated section `test intellij.java.jshell.protocol.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "protocol_test",
-  runtime_deps = [":protocol_test_lib"]
+  name = "java-jshell-protocol-tests_test",
+  runtime_deps = [":java-jshell-protocol-tests_test_lib"]
 )
-### auto-generated section `test intellij.java.jshell.protocol` end
+### auto-generated section `test intellij.java.jshell.protocol.tests` end

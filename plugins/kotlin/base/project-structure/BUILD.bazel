@@ -71,10 +71,83 @@ jvm_library(
 
 jvm_library(
   name = "project-structure_test_lib",
+  module_name = "intellij.kotlin.base.projectStructure",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_project-structure",
+  runtime_deps = [
+    ":project-structure",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/project-model:project-model_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//plugins/kotlin/base/indices:indices_test_lib",
+    "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+    "//plugins/kotlin/base/platforms:platforms_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "//java/openapi:java_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//java/idea-ui:ui_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//libraries/caffeine:caffeine_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "@lib//:junit4",
+    "//libraries/fastutil:fastutil_test_lib",
+  ]
+)
+### auto-generated section `build intellij.kotlin.base.projectStructure` end
+
+### auto-generated section `iml intellij.kotlin.base.projectStructure` start
+exports_files([
+  "intellij.kotlin.base.projectStructure.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.base.projectStructure` end
+
+### auto-generated section `build intellij.kotlin.base.projectStructure.tests` start
+create_kotlinc_options(
+  name = "custom_kotlin-base-projectStructure-tests",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+    "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-base-projectStructure-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["@lib//:kotlinc-kotlin-compiler-fe10"]
+)
+
+jvm_library(
+  name = "kotlin-base-projectStructure-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_project-structure",
-  associates = [":project-structure"],
+  kotlinc_opts = ":custom_kotlin-base-projectStructure-tests",
+  associates = [
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -145,21 +218,24 @@ jvm_library(
     "//libraries/fastutil",
     "//libraries/fastutil:fastutil_test_lib",
   ],
-  runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
+  runtime_deps = [
+    ":kotlin-base-projectStructure-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
 )
-### auto-generated section `build intellij.kotlin.base.projectStructure` end
+### auto-generated section `build intellij.kotlin.base.projectStructure.tests` end
 
-### auto-generated section `iml intellij.kotlin.base.projectStructure` start
+### auto-generated section `iml intellij.kotlin.base.projectStructure.tests` start
 exports_files([
-  "intellij.kotlin.base.projectStructure.iml",
+  "intellij.kotlin.base.projectStructure.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.kotlin.base.projectStructure` end
+### auto-generated section `iml intellij.kotlin.base.projectStructure.tests` end
 
-### auto-generated section `test intellij.kotlin.base.projectStructure` start
+### auto-generated section `test intellij.kotlin.base.projectStructure.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "project-structure_test",
-  runtime_deps = [":project-structure_test_lib"]
+  name = "kotlin-base-projectStructure-tests_test",
+  runtime_deps = [":kotlin-base-projectStructure-tests_test_lib"]
 )
-### auto-generated section `test intellij.kotlin.base.projectStructure` end
+### auto-generated section `test intellij.kotlin.base.projectStructure.tests` end

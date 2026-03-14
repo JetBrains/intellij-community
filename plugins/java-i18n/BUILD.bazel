@@ -61,9 +61,99 @@ jvm_library(
 
 jvm_library(
   name = "java-i18n_test_lib",
+  module_name = "intellij.java.i18n",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//plugins/properties:properties-backend",
+    "//plugins/properties:properties-backend_test_lib",
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+  ],
+  runtime_deps = [
+    ":java-i18n",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/foldings:foldings_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//java/openapi:java_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//platform/usageView-impl:usageView-impl_test_lib",
+    "//plugins/properties:properties-backend_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//xml/impl:impl_test_lib",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src/test:grazie-tests",
+    "//plugins/grazie/src/test:grazie-tests_test_lib",
+    "//plugins/grazie/src:core",
+    "//plugins/grazie/src:core_test_lib",
+    "//plugins/grazie",
+    "//plugins/grazie:grazie_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/usageView:usageView_test_lib",
+    "//java/jsp-base-openapi:jsp-base_test_lib",
+    "//java/jsp-openapi:jsp_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//plugins/properties/properties-psi-api:psi_test_lib",
+    "//plugins/properties/properties-psi-impl:backend-psi_test_lib",
+    "//java/java-backend:backend_test_lib",
+    "//jvm/jvm-analysis-api:analysis_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//libraries/icu4j:icu4j_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//java/java-impl-refactorings:impl-refactorings_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/backend:backend_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+  ]
+)
+### auto-generated section `build intellij.java.i18n` end
+
+### auto-generated section `iml intellij.java.i18n` start
+exports_files([
+  "intellij.java.i18n.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.i18n` end
+
+### auto-generated section `build intellij.java.i18n.tests` start
+jvm_library(
+  name = "java-i18n-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//plugins/properties:properties-backend",
+    "//java/java-impl:impl",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+
+jvm_library(
+  name = "java-i18n-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":java-i18n"],
+  associates = [
+    "//plugins/java-i18n",
+    "//plugins/java-i18n:java-i18n_test_lib",
+  ],
   deps = [
     "//java/java-indexing-api:indexing",
     "//java/java-indexing-api:indexing_test_lib",
@@ -159,24 +249,25 @@ jvm_library(
     "//java/java-impl:impl_test_lib",
   ],
   runtime_deps = [
+    ":java-i18n-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/backend:backend_test_lib",
   ]
 )
-### auto-generated section `build intellij.java.i18n` end
+### auto-generated section `build intellij.java.i18n.tests` end
 
-### auto-generated section `iml intellij.java.i18n` start
+### auto-generated section `iml intellij.java.i18n.tests` start
 exports_files([
-  "intellij.java.i18n.iml",
+  "intellij.java.i18n.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.java.i18n` end
+### auto-generated section `iml intellij.java.i18n.tests` end
 
-### auto-generated section `test intellij.java.i18n` start
+### auto-generated section `test intellij.java.i18n.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "java-i18n_test",
-  runtime_deps = [":java-i18n_test_lib"]
+  name = "java-i18n-tests_test",
+  runtime_deps = [":java-i18n-tests_test_lib"]
 )
-### auto-generated section `test intellij.java.i18n` end
+### auto-generated section `test intellij.java.i18n.tests` end

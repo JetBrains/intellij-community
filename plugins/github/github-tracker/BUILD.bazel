@@ -31,9 +31,48 @@ jvm_library(
 
 jvm_library(
   name = "vcs-github-tracker_test_lib",
+  module_name = "intellij.vcs.github.tracker",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":vcs-github-tracker",
+    "//platform/core-api:core_test_lib",
+    "//platform/credential-store:credential-store_test_lib",
+    "//plugins/tasks/tasks-api:tasks_test_lib",
+    "//plugins/github/github-core:vcs-github_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/collaboration-tools:collaboration-tools_test_lib",
+    "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "@lib//:junit5",
+    "//libraries/fastutil:fastutil_test_lib",
+  ]
+)
+### auto-generated section `build intellij.vcs.github.tracker` end
+
+### auto-generated section `iml intellij.vcs.github.tracker` start
+exports_files([
+  "intellij.vcs.github.tracker.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.vcs.github.tracker` end
+
+### auto-generated section `build intellij.vcs.github.tracker.tests` start
+jvm_library(
+  name = "vcs-github-tracker-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "vcs-github-tracker-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":vcs-github-tracker"],
+  associates = [
+    "//plugins/github/github-tracker:vcs-github-tracker",
+    "//plugins/github/github-tracker:vcs-github-tracker_test_lib",
+  ],
   deps = [
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
@@ -59,21 +98,24 @@ jvm_library(
     "//libraries/fastutil",
     "//libraries/fastutil:fastutil_test_lib",
   ],
-  runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
+  runtime_deps = [
+    ":vcs-github-tracker-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
 )
-### auto-generated section `build intellij.vcs.github.tracker` end
+### auto-generated section `build intellij.vcs.github.tracker.tests` end
 
-### auto-generated section `iml intellij.vcs.github.tracker` start
+### auto-generated section `iml intellij.vcs.github.tracker.tests` start
 exports_files([
-  "intellij.vcs.github.tracker.iml",
+  "intellij.vcs.github.tracker.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.vcs.github.tracker` end
+### auto-generated section `iml intellij.vcs.github.tracker.tests` end
 
-### auto-generated section `test intellij.vcs.github.tracker` start
+### auto-generated section `test intellij.vcs.github.tracker.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "vcs-github-tracker_test",
-  runtime_deps = [":vcs-github-tracker_test_lib"]
+  name = "vcs-github-tracker-tests_test",
+  runtime_deps = [":vcs-github-tracker-tests_test_lib"]
 )
-### auto-generated section `test intellij.vcs.github.tracker` end
+### auto-generated section `test intellij.vcs.github.tracker.tests` end

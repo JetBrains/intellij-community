@@ -206,6 +206,8 @@ jvm_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move-tests_test_lib",
     "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename-tests",
     "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename-tests_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
   ],
   runtime_deps = [":tests"]
 )

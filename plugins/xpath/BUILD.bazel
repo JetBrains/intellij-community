@@ -7,12 +7,6 @@ resourcegroup(
   strip_prefix = "xpath-lang/resources"
 )
 
-resourcegroup(
-  name = "xpath_test_resources",
-  srcs = glob(["xpath-lang/testData/**/*"]),
-  strip_prefix = "xpath-lang/testData"
-)
-
 jvm_library(
   name = "xpath",
   module_name = "intellij.xpath",
@@ -60,10 +54,86 @@ jvm_library(
 
 jvm_library(
   name = "xpath_test_lib",
+  module_name = "intellij.xpath",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":xpath",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//xml/xml-analysis-api:analysis",
+    "//xml/xml-analysis-api:analysis_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/structure-view-impl:structureView-impl_test_lib",
+    "//platform/platform-impl/concurrency:concurrency_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//platform/indexing-impl:indexing-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/usageView:usageView_test_lib",
+    "//xml/xml-parser:parser_test_lib",
+    "//xml/impl:impl_test_lib",
+    "//platform/editor-ui-ex:editor-ex_test_lib",
+    "//RegExpSupport:regexp_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//plugins/xpath/xslt-rt:rt_test_lib",
+    "//libraries/jaxen:jaxen_test_lib",
+    "@lib//:junit4",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//xml/dom-impl:dom-impl_test_lib",
+    "//platform/util/nanoxml:nanoxml_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/code-style-impl:codeStyle-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+  ]
+)
+### auto-generated section `build intellij.xpath` end
+
+### auto-generated section `iml intellij.xpath` start
+exports_files([
+  "intellij.xpath.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.xpath` end
+
+### auto-generated section `build intellij.xpath.tests` start
+resourcegroup(
+  name = "xpath-tests_test_resources",
+  srcs = glob(["xpath-lang/testData/**/*"]),
+  strip_prefix = "xpath-lang/testData"
+)
+
+jvm_library(
+  name = "xpath-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//xml/dom-impl"]
+)
+
+jvm_library(
+  name = "xpath-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["xpath-lang/test/**/*.kt", "xpath-lang/test/**/*.java", "xpath-lang/test/**/*.form"], allow_empty = True),
-  resources = [":xpath_test_resources"],
-  associates = [":xpath"],
+  resources = [":xpath-tests_test_resources"],
+  associates = [
+    "//plugins/xpath",
+    "//plugins/xpath:xpath_test_lib",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
@@ -139,25 +209,26 @@ jvm_library(
     "//platform/util/concurrency:concurrency_test_lib",
   ],
   runtime_deps = [
+    ":xpath-tests",
     "//platform/platform-impl/concurrency:concurrency_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//xml/dom-impl:dom-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
   ]
 )
-### auto-generated section `build intellij.xpath` end
+### auto-generated section `build intellij.xpath.tests` end
 
-### auto-generated section `iml intellij.xpath` start
+### auto-generated section `iml intellij.xpath.tests` start
 exports_files([
-  "intellij.xpath.iml",
+  "intellij.xpath.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.xpath` end
+### auto-generated section `iml intellij.xpath.tests` end
 
-### auto-generated section `test intellij.xpath` start
+### auto-generated section `test intellij.xpath.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "xpath_test",
-  runtime_deps = [":xpath_test_lib"]
+  name = "xpath-tests_test",
+  runtime_deps = [":xpath-tests_test_lib"]
 )
-### auto-generated section `test intellij.xpath` end
+### auto-generated section `test intellij.xpath.tests` end

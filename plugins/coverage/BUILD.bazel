@@ -59,11 +59,91 @@ jvm_library(
 
 jvm_library(
   name = "coverage_test_lib",
+  module_name = "intellij.java.coverage",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//plugins/coverage-common:coverage",
+    "//plugins/coverage-common:coverage_test_lib",
+    "//java/execution/openapi:java-execution",
+    "//java/execution/openapi:java-execution_test_lib",
+    "//java/openapi:java",
+    "//java/openapi:java_test_lib",
+  ],
+  runtime_deps = [
+    ":coverage",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//plugins/coverage-common:coverage_test_lib",
+    "//java/execution/openapi:java-execution_test_lib",
+    "//java/openapi:java_test_lib",
+    "//java/execution/impl:impl_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//platform/testRunner:testRunner_test_lib",
+    "//plugins/testng_rt:testng-rt_test_lib",
+    "//plugins/junit_rt:junit-rt_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//java/compiler/openapi:java-compiler_test_lib",
+    "//plugins/coverage/coverage_rt:java-coverage-rt_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//platform/platform-impl/concurrency:concurrency_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//java/java-runtime:rt",
+    "//java/java-runtime:rt_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+  ]
+)
+### auto-generated section `build intellij.java.coverage` end
+
+### auto-generated section `iml intellij.java.coverage` start
+exports_files([
+  "intellij.java.coverage.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.coverage` end
+
+### auto-generated section `build intellij.java.coverage.tests` start
+jvm_library(
+  name = "java-coverage-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//plugins/coverage-common:coverage",
+    "//java/execution/openapi:java-execution",
+    "//java/openapi:java",
+  ]
+)
+
+jvm_library(
+  name = "java-coverage-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":coverage"],
+  associates = [
+    "//plugins/coverage",
+    "//plugins/coverage:coverage_test_lib",
+  ],
   deps = [
-    "@lib//:java-coverage-_ja_co_co",
+    "@lib//:java-coverage-tests-_ja_co_co",
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/code-style-api:codeStyle",
@@ -120,7 +200,7 @@ jvm_library(
     "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-util-io:ide-util-io",
     "@lib//:jetbrains-annotations",
-    "@lib//:java-coverage-coverage-report",
+    "@lib//:java-coverage-tests-coverage-report",
     "//platform/util/jdom",
     "//platform/util/jdom:jdom_test_lib",
     "//platform/platform-impl:ide-impl",
@@ -144,25 +224,26 @@ jvm_library(
     "//java/openapi:java_test_lib",
   ],
   runtime_deps = [
+    ":java-coverage-tests",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/platform-impl/concurrency:concurrency_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
   ]
 )
-### auto-generated section `build intellij.java.coverage` end
+### auto-generated section `build intellij.java.coverage.tests` end
 
-### auto-generated section `iml intellij.java.coverage` start
+### auto-generated section `iml intellij.java.coverage.tests` start
 exports_files([
-  "intellij.java.coverage.iml",
+  "intellij.java.coverage.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.java.coverage` end
+### auto-generated section `iml intellij.java.coverage.tests` end
 
-### auto-generated section `test intellij.java.coverage` start
+### auto-generated section `test intellij.java.coverage.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "coverage_test",
-  runtime_deps = [":coverage_test_lib"]
+  name = "java-coverage-tests_test",
+  runtime_deps = [":java-coverage-tests_test_lib"]
 )
-### auto-generated section `test intellij.java.coverage` end
+### auto-generated section `test intellij.java.coverage.tests` end

@@ -139,6 +139,8 @@ jvm_library(
     "//python/python-exec-service/execService.python:execService.python_test_lib",
     "//platform/testFramework/junit5/eel",
     "//platform/testFramework/junit5/eel:eel_test_lib",
+    "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests",
+    "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests_test_lib",
   ],
   exports = [
     "//python/services/shared",

@@ -7,12 +7,6 @@ resourcegroup(
   strip_prefix = "resources"
 )
 
-resourcegroup(
-  name = "plugin_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "plugin",
   module_name = "intellij.kotlin.base.plugin",
@@ -57,10 +51,83 @@ jvm_library(
 
 jvm_library(
   name = "plugin_test_lib",
+  module_name = "intellij.kotlin.base.plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":plugin",
+    "//libraries/commons/compress",
+    "//libraries/commons/compress:compress_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "@lib//:junit4",
+    "//jps/model-api:model_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/util/xmlDom:xmlDom_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//java/openapi:java_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//java/idea-ui:ui_test_lib",
+    "//aether-dependency-resolver:aether-dependency-resolver_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util/trove:trove_test_lib",
+    "//libraries/maven-resolver-provider",
+    "//libraries/maven-resolver-provider:maven-resolver-provider_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/build-scripts/downloader",
+    "//platform/build-scripts/downloader:downloader_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//plugins/kotlin/util/project-model-updater",
+    "//plugins/kotlin/util/project-model-updater:project-model-updater_test_lib",
+    "//platform/platform-impl/update-checker:update-checker_test_lib",
+    "//platform/eel-provider:eel-provider_test_lib",
+  ]
+)
+### auto-generated section `build intellij.kotlin.base.plugin` end
+
+### auto-generated section `iml intellij.kotlin.base.plugin` start
+exports_files([
+  "intellij.kotlin.base.plugin.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.base.plugin` end
+
+### auto-generated section `build intellij.kotlin.base.plugin.tests` start
+resourcegroup(
+  name = "kotlin-base-plugin-tests_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "kotlin-base-plugin-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/util/trove"]
+)
+
+jvm_library(
+  name = "kotlin-base-plugin-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  resources = [":plugin_test_resources"],
-  associates = [":plugin"],
+  resources = [":kotlin-base-plugin-tests_test_resources"],
+  associates = [
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+  ],
   deps = [
     "@lib//:jetbrains-annotations",
     "//libraries/commons/compress",
@@ -130,25 +197,26 @@ jvm_library(
     "//platform/eel-provider:eel-provider_test_lib",
   ],
   runtime_deps = [
+    ":kotlin-base-plugin-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core:ide-core_test_lib",
     "//platform/util/trove:trove_test_lib",
     "//platform/platform-impl/update-checker:update-checker_test_lib",
   ]
 )
-### auto-generated section `build intellij.kotlin.base.plugin` end
+### auto-generated section `build intellij.kotlin.base.plugin.tests` end
 
-### auto-generated section `iml intellij.kotlin.base.plugin` start
+### auto-generated section `iml intellij.kotlin.base.plugin.tests` start
 exports_files([
-  "intellij.kotlin.base.plugin.iml",
+  "intellij.kotlin.base.plugin.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.kotlin.base.plugin` end
+### auto-generated section `iml intellij.kotlin.base.plugin.tests` end
 
-### auto-generated section `test intellij.kotlin.base.plugin` start
+### auto-generated section `test intellij.kotlin.base.plugin.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "plugin_test",
-  runtime_deps = [":plugin_test_lib"]
+  name = "kotlin-base-plugin-tests_test",
+  runtime_deps = [":kotlin-base-plugin-tests_test_lib"]
 )
-### auto-generated section `test intellij.kotlin.base.plugin` end
+### auto-generated section `test intellij.kotlin.base.plugin.tests` end

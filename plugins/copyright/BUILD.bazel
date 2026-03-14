@@ -41,9 +41,69 @@ jvm_library(
 
 jvm_library(
   name = "copyright_test_lib",
+  module_name = "intellij.copyright",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":copyright",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//libraries/velocity:velocity_test_lib",
+    "//xml/impl:impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/testFramework/extensions:testExtensions",
+    "//platform/testFramework/extensions:testExtensions_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//platform/configuration-store-impl:configurationStore-impl_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "@lib//:assert_j",
+    "//platform/core-ui:core-ui_test_lib",
+    "@lib//:junit5",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/testFramework/junit5.jimfs",
+    "//platform/testFramework/junit5.jimfs:junit5.jimfs_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+  ]
+)
+### auto-generated section `build intellij.copyright` end
+
+### auto-generated section `iml intellij.copyright` start
+exports_files([
+  "intellij.copyright.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.copyright` end
+
+### auto-generated section `build intellij.copyright.tests` start
+jvm_library(
+  name = "copyright-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "copyright-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":copyright"],
+  associates = [
+    "//plugins/copyright",
+    "//plugins/copyright:copyright_test_lib",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
@@ -100,23 +160,24 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   runtime_deps = [
+    ":copyright-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
   ]
 )
-### auto-generated section `build intellij.copyright` end
+### auto-generated section `build intellij.copyright.tests` end
 
-### auto-generated section `iml intellij.copyright` start
+### auto-generated section `iml intellij.copyright.tests` start
 exports_files([
-  "intellij.copyright.iml",
+  "intellij.copyright.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.copyright` end
+### auto-generated section `iml intellij.copyright.tests` end
 
-### auto-generated section `test intellij.copyright` start
+### auto-generated section `test intellij.copyright.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "copyright_test",
-  runtime_deps = [":copyright_test_lib"]
+  name = "copyright-tests_test",
+  runtime_deps = [":copyright-tests_test_lib"]
 )
-### auto-generated section `test intellij.copyright` end
+### auto-generated section `test intellij.copyright.tests` end

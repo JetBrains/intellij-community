@@ -30,19 +30,17 @@ jvm_library(
 
 jvm_library(
   name = "extensions_test_lib",
+  module_name = "intellij.platform.syntax.extensions",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  srcs = glob([], allow_empty = True),
   kotlinc_opts = ":custom_extensions",
-  associates = [":extensions"],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
+  runtime_deps = [
+    ":extensions",
     "//platform/multiplatformSupport",
     "//platform/multiplatformSupport:multiplatformSupport_test_lib",
     "@lib//:junit5",
     "@lib//:kotlin-test",
     "@lib//:kotlin-test-junit",
-    "//platform/syntax/syntax-api:syntax",
     "//platform/syntax/syntax-api:syntax_test_lib",
   ]
 )
@@ -54,11 +52,55 @@ exports_files([
 ], visibility = ["//visibility:public"])
 ### auto-generated section `iml intellij.platform.syntax.extensions` end
 
-### auto-generated section `test intellij.platform.syntax.extensions` start
+### auto-generated section `build intellij.platform.syntax.extensions.tests` start
+create_kotlinc_options(
+  name = "custom_extensions-tests",
+  jvm_target = "8",
+  x_no_call_assertions = True,
+  x_no_param_assertions = True
+)
+
+jvm_library(
+  name = "extensions-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "extensions-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_extensions-tests",
+  associates = [
+    "//platform/syntax/syntax-extensions:extensions",
+    "//platform/syntax/syntax-extensions:extensions_test_lib",
+  ],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/multiplatformSupport",
+    "//platform/multiplatformSupport:multiplatformSupport_test_lib",
+    "@lib//:junit5",
+    "@lib//:kotlin-test",
+    "@lib//:kotlin-test-junit",
+    "//platform/syntax/syntax-api:syntax",
+    "//platform/syntax/syntax-api:syntax_test_lib",
+  ],
+  runtime_deps = [":extensions-tests"]
+)
+### auto-generated section `build intellij.platform.syntax.extensions.tests` end
+
+### auto-generated section `iml intellij.platform.syntax.extensions.tests` start
+exports_files([
+  "intellij.platform.syntax.extensions.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.syntax.extensions.tests` end
+
+### auto-generated section `test intellij.platform.syntax.extensions.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "extensions_test",
-  runtime_deps = [":extensions_test_lib"]
+  name = "extensions-tests_test",
+  runtime_deps = [":extensions-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.syntax.extensions` end
+### auto-generated section `test intellij.platform.syntax.extensions.tests` end

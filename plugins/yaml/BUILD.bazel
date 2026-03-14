@@ -41,9 +41,59 @@ jvm_library(
 
 jvm_library(
   name = "yaml_test_lib",
+  module_name = "intellij.yaml",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":yaml",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/code-style-impl:codeStyle-impl_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+  ]
+)
+### auto-generated section `build intellij.yaml` end
+
+### auto-generated section `iml intellij.yaml` start
+exports_files([
+  "intellij.yaml.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.yaml` end
+
+### auto-generated section `build intellij.yaml.tests` start
+jvm_library(
+  name = "yaml-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "yaml-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":yaml"],
+  associates = [
+    "//plugins/yaml",
+    "//plugins/yaml:yaml_test_lib",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
@@ -90,21 +140,24 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
-  runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
+  runtime_deps = [
+    ":yaml-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
 )
-### auto-generated section `build intellij.yaml` end
+### auto-generated section `build intellij.yaml.tests` end
 
-### auto-generated section `iml intellij.yaml` start
+### auto-generated section `iml intellij.yaml.tests` start
 exports_files([
-  "intellij.yaml.iml",
+  "intellij.yaml.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.yaml` end
+### auto-generated section `iml intellij.yaml.tests` end
 
-### auto-generated section `test intellij.yaml` start
+### auto-generated section `test intellij.yaml.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "yaml_test",
-  runtime_deps = [":yaml_test_lib"]
+  name = "yaml-tests_test",
+  runtime_deps = [":yaml-tests_test_lib"]
 )
-### auto-generated section `test intellij.yaml` end
+### auto-generated section `test intellij.yaml.tests` end

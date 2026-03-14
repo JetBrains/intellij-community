@@ -51,10 +51,71 @@ jvm_library(
 
 jvm_library(
   name = "visualization_test_lib",
+  module_name = "intellij.notebooks.visualization",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_visualization",
+  runtime_deps = [
+    ":visualization",
+    "//libraries/gson:gson_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/observable:observable_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//notebooks/notebook-ui:ui_test_lib",
+    "@lib//:assert_j",
+    "//platform/editor-ui-ex:editor-ex_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//plugins/markdown/core:markdown_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//jupyter:notebooks-jupyter-core_test_lib",
+  ]
+)
+### auto-generated section `build intellij.notebooks.visualization` end
+
+### auto-generated section `iml intellij.notebooks.visualization` start
+exports_files([
+  "intellij.notebooks.visualization.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.notebooks.visualization` end
+
+### auto-generated section `build intellij.notebooks.visualization.tests` start
+create_kotlinc_options(
+  name = "custom_visualization-tests",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi",
+  ]
+)
+
+jvm_library(
+  name = "visualization-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "visualization-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_visualization",
-  associates = [":visualization"],
+  kotlinc_opts = ":custom_visualization-tests",
+  associates = [
+    "//notebooks/visualization",
+    "//notebooks/visualization:visualization_test_lib",
+  ],
   deps = [
     "//libraries/gson",
     "//libraries/gson:gson_test_lib",
@@ -101,25 +162,26 @@ jvm_library(
     "//jupyter:notebooks-jupyter-core_test_lib",
   ],
   runtime_deps = [
+    ":visualization-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/observable:observable_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
   ]
 )
-### auto-generated section `build intellij.notebooks.visualization` end
+### auto-generated section `build intellij.notebooks.visualization.tests` end
 
-### auto-generated section `iml intellij.notebooks.visualization` start
+### auto-generated section `iml intellij.notebooks.visualization.tests` start
 exports_files([
-  "intellij.notebooks.visualization.iml",
+  "intellij.notebooks.visualization.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.notebooks.visualization` end
+### auto-generated section `iml intellij.notebooks.visualization.tests` end
 
-### auto-generated section `test intellij.notebooks.visualization` start
+### auto-generated section `test intellij.notebooks.visualization.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "visualization_test",
-  runtime_deps = [":visualization_test_lib"]
+  name = "visualization-tests_test",
+  runtime_deps = [":visualization-tests_test_lib"]
 )
-### auto-generated section `test intellij.notebooks.visualization` end
+### auto-generated section `test intellij.notebooks.visualization.tests` end

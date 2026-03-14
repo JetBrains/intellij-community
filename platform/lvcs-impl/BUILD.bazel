@@ -46,9 +46,69 @@ jvm_library(
 
 jvm_library(
   name = "lvcs-impl_test_lib",
+  module_name = "intellij.platform.lvcs.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":lvcs-impl",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/lvcs-api:lvcs_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/diff-api:diff_test_lib",
+    "//platform/diff-impl:diff-impl_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util/text-matching:text-matching_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:assert_j",
+    "@lib//:easymock",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/vcs-impl/shared:shared_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.lvcs.impl` end
+
+### auto-generated section `iml intellij.platform.lvcs.impl` start
+exports_files([
+  "intellij.platform.lvcs.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.lvcs.impl` end
+
+### auto-generated section `build intellij.platform.lvcs.impl.tests` start
+jvm_library(
+  name = "lvcs-impl-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "lvcs-impl-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":lvcs-impl"],
+  associates = [
+    "//platform/lvcs-impl",
+    "//platform/lvcs-impl:lvcs-impl_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -110,23 +170,24 @@ jvm_library(
     "//platform/lang-core:lang-core_test_lib",
   ],
   runtime_deps = [
+    ":lvcs-impl-tests",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
   ]
 )
-### auto-generated section `build intellij.platform.lvcs.impl` end
+### auto-generated section `build intellij.platform.lvcs.impl.tests` end
 
-### auto-generated section `iml intellij.platform.lvcs.impl` start
+### auto-generated section `iml intellij.platform.lvcs.impl.tests` start
 exports_files([
-  "intellij.platform.lvcs.impl.iml",
+  "intellij.platform.lvcs.impl.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.platform.lvcs.impl` end
+### auto-generated section `iml intellij.platform.lvcs.impl.tests` end
 
-### auto-generated section `test intellij.platform.lvcs.impl` start
+### auto-generated section `test intellij.platform.lvcs.impl.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "lvcs-impl_test",
-  runtime_deps = [":lvcs-impl_test_lib"]
+  name = "lvcs-impl-tests_test",
+  runtime_deps = [":lvcs-impl-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.lvcs.impl` end
+### auto-generated section `test intellij.platform.lvcs.impl.tests` end

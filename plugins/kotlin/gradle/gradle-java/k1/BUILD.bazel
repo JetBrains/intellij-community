@@ -272,6 +272,8 @@ jvm_library(
     "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
     "//platform/code-style-api:codeStyle",
     "//platform/code-style-api:codeStyle_test_lib",
+    "//plugins/groovy:groovy-tests",
+    "//plugins/groovy:groovy-tests_test_lib",
   ],
   exports = [
     "@lib//:kotlin-tooling-core",

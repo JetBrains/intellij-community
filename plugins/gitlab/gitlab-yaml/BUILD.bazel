@@ -25,9 +25,49 @@ jvm_library(
 
 jvm_library(
   name = "vcs-gitlab-yaml_test_lib",
+  module_name = "intellij.vcs.gitlab.yaml",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":vcs-gitlab-yaml",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//plugins/gitlab/gitlab-core:vcs-gitlab_test_lib",
+    "//plugins/yaml/backend:backend_test_lib",
+    "//platform/util/base:base_test_lib",
+    "//plugins/yaml:yaml_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//json/backend/tests",
+    "//json/backend/tests:tests_test_lib",
+  ]
+)
+### auto-generated section `build intellij.vcs.gitlab.yaml` end
+
+### auto-generated section `iml intellij.vcs.gitlab.yaml` start
+exports_files([
+  "intellij.vcs.gitlab.yaml.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.vcs.gitlab.yaml` end
+
+### auto-generated section `build intellij.vcs.gitlab.yaml.tests` start
+jvm_library(
+  name = "vcs-gitlab-yaml-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "vcs-gitlab-yaml-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":vcs-gitlab-yaml"],
+  associates = [
+    "//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml",
+    "//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml_test_lib",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
@@ -48,21 +88,22 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//json/backend/tests",
     "//json/backend/tests:tests_test_lib",
-  ]
+  ],
+  runtime_deps = [":vcs-gitlab-yaml-tests"]
 )
-### auto-generated section `build intellij.vcs.gitlab.yaml` end
+### auto-generated section `build intellij.vcs.gitlab.yaml.tests` end
 
-### auto-generated section `iml intellij.vcs.gitlab.yaml` start
+### auto-generated section `iml intellij.vcs.gitlab.yaml.tests` start
 exports_files([
-  "intellij.vcs.gitlab.yaml.iml",
+  "intellij.vcs.gitlab.yaml.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.vcs.gitlab.yaml` end
+### auto-generated section `iml intellij.vcs.gitlab.yaml.tests` end
 
-### auto-generated section `test intellij.vcs.gitlab.yaml` start
+### auto-generated section `test intellij.vcs.gitlab.yaml.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "vcs-gitlab-yaml_test",
-  runtime_deps = [":vcs-gitlab-yaml_test_lib"]
+  name = "vcs-gitlab-yaml-tests_test",
+  runtime_deps = [":vcs-gitlab-yaml-tests_test_lib"]
 )
-### auto-generated section `test intellij.vcs.gitlab.yaml` end
+### auto-generated section `test intellij.vcs.gitlab.yaml.tests` end

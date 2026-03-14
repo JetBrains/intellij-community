@@ -43,6 +43,8 @@ jvm_library(
     "@lib//:slf4j-api",
     "//java/java-runtime:rt",
     "//java/java-runtime:rt_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
   ],
   exports = [
     "//plugins/junit_rt:junit-rt",

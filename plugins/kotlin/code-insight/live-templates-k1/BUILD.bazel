@@ -140,6 +140,8 @@ jvm_library(
     "//platform/lang-api:lang_test_lib",
     "//java/java-psi-api:psi",
     "//java/java-psi-api:psi_test_lib",
+    "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared-tests",
+    "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared-tests_test_lib",
   ],
   runtime_deps = [":kotlin-code-insight-live-templates-k1-tests"]
 )

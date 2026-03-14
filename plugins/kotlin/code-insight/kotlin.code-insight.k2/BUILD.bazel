@@ -325,6 +325,8 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//plugins/kotlin/fir/testFramework",
     "//plugins/kotlin/fir/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/code-insight:kotlin-base-codeInsight-tests",
+    "//plugins/kotlin/base/code-insight:kotlin-base-codeInsight-tests_test_lib",
   ],
   runtime_deps = [
     ":kotlin-codeInsight-tests",

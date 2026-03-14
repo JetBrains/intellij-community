@@ -114,6 +114,8 @@ jvm_library(
     "//platform/statistics/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
   ],
   exports = [
     "//java/testFramework",

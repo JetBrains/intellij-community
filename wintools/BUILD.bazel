@@ -22,14 +22,12 @@ jvm_library(
 
 jvm_library(
   name = "wintools_test_lib",
+  module_name = "intellij.community.wintools",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
-  associates = [":wintools"],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/util",
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":wintools",
     "//platform/util:util_test_lib",
-    "@lib//:jna",
     "@lib//:junit5",
     "//libraries/hamcrest",
     "//libraries/hamcrest:hamcrest_test_lib",
@@ -43,11 +41,45 @@ exports_files([
 ], visibility = ["//visibility:public"])
 ### auto-generated section `iml intellij.community.wintools` end
 
-### auto-generated section `test intellij.community.wintools` start
+### auto-generated section `build intellij.community.wintools.tests` start
+jvm_library(
+  name = "wintools-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "wintools-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  associates = [
+    "//wintools",
+    "//wintools:wintools_test_lib",
+  ],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/util:util_test_lib",
+    "@lib//:jna",
+    "@lib//:junit5",
+    "//libraries/hamcrest",
+    "//libraries/hamcrest:hamcrest_test_lib",
+  ],
+  runtime_deps = [":wintools-tests"]
+)
+### auto-generated section `build intellij.community.wintools.tests` end
+
+### auto-generated section `iml intellij.community.wintools.tests` start
+exports_files([
+  "intellij.community.wintools.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.community.wintools.tests` end
+
+### auto-generated section `test intellij.community.wintools.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "wintools_test",
-  runtime_deps = [":wintools_test_lib"]
+  name = "wintools-tests_test",
+  runtime_deps = [":wintools-tests_test_lib"]
 )
-### auto-generated section `test intellij.community.wintools` end
+### auto-generated section `test intellij.community.wintools.tests` end

@@ -25,9 +25,45 @@ jvm_library(
 
 jvm_library(
   name = "proofreading_test_lib",
+  module_name = "intellij.maven.proofreading",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":proofreading",
+    "//plugins/grazie:grazie_test_lib",
+    "//plugins/grazie/src:core_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//plugins/maven:maven_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/grazie/src/test:grazie-tests",
+    "//plugins/grazie/src/test:grazie-tests_test_lib",
+  ]
+)
+### auto-generated section `build intellij.maven.proofreading` end
+
+### auto-generated section `iml intellij.maven.proofreading` start
+exports_files([
+  "intellij.maven.proofreading.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.maven.proofreading` end
+
+### auto-generated section `build intellij.maven.proofreading.tests` start
+jvm_library(
+  name = "proofreading-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "proofreading-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":proofreading"],
+  associates = [
+    "//plugins/maven/proofreading",
+    "//plugins/maven/proofreading:proofreading_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/grazie",
@@ -44,21 +80,22 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/grazie/src/test:grazie-tests",
     "//plugins/grazie/src/test:grazie-tests_test_lib",
-  ]
+  ],
+  runtime_deps = [":proofreading-tests"]
 )
-### auto-generated section `build intellij.maven.proofreading` end
+### auto-generated section `build intellij.maven.proofreading.tests` end
 
-### auto-generated section `iml intellij.maven.proofreading` start
+### auto-generated section `iml intellij.maven.proofreading.tests` start
 exports_files([
-  "intellij.maven.proofreading.iml",
+  "intellij.maven.proofreading.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.maven.proofreading` end
+### auto-generated section `iml intellij.maven.proofreading.tests` end
 
-### auto-generated section `test intellij.maven.proofreading` start
+### auto-generated section `test intellij.maven.proofreading.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "proofreading_test",
-  runtime_deps = [":proofreading_test_lib"]
+  name = "proofreading-tests_test",
+  runtime_deps = [":proofreading-tests_test_lib"]
 )
-### auto-generated section `test intellij.maven.proofreading` end
+### auto-generated section `test intellij.maven.proofreading.tests` end

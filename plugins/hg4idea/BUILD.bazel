@@ -49,9 +49,70 @@ jvm_library(
 
 jvm_library(
   name = "vcs-hg_test_lib",
+  module_name = "intellij.vcs.hg",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":vcs-hg",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/credential-store:credential-store_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/lvcs-api:lvcs_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
+    "//platform/vcs-log/api:vcs-log_test_lib",
+    "//platform/vcs-log/impl:impl_test_lib",
+    "//platform/dvcs-api:vcs-dvcs_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/vcs-tests:vcs-testFramework",
+    "//platform/vcs-tests:vcs-testFramework_test_lib",
+    "//libraries/miglayout-swing:miglayout-swing_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/dvcs-impl/shared:shared_test_lib",
+    "//platform/vcs-impl/shared:shared_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+  ]
+)
+### auto-generated section `build intellij.vcs.hg` end
+
+### auto-generated section `iml intellij.vcs.hg` start
+exports_files([
+  "intellij.vcs.hg.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.vcs.hg` end
+
+### auto-generated section `build intellij.vcs.hg.tests` start
+jvm_library(
+  name = "vcs-hg-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "vcs-hg-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":vcs-hg"],
+  associates = [
+    "//plugins/hg4idea:vcs-hg",
+    "//plugins/hg4idea:vcs-hg_test_lib",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
@@ -114,26 +175,29 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//platform/lang-core",
     "//platform/lang-core:lang-core_test_lib",
+    "//platform/vcs-log/impl:vcs-log-impl-tests",
+    "//platform/vcs-log/impl:vcs-log-impl-tests_test_lib",
   ],
   runtime_deps = [
+    ":vcs-hg-tests",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
   ]
 )
-### auto-generated section `build intellij.vcs.hg` end
+### auto-generated section `build intellij.vcs.hg.tests` end
 
-### auto-generated section `iml intellij.vcs.hg` start
+### auto-generated section `iml intellij.vcs.hg.tests` start
 exports_files([
-  "intellij.vcs.hg.iml",
+  "intellij.vcs.hg.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.vcs.hg` end
+### auto-generated section `iml intellij.vcs.hg.tests` end
 
-### auto-generated section `test intellij.vcs.hg` start
+### auto-generated section `test intellij.vcs.hg.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "vcs-hg_test",
-  runtime_deps = [":vcs-hg_test_lib"]
+  name = "vcs-hg-tests_test",
+  runtime_deps = [":vcs-hg-tests_test_lib"]
 )
-### auto-generated section `test intellij.vcs.hg` end
+### auto-generated section `test intellij.vcs.hg.tests` end

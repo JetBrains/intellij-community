@@ -57,9 +57,99 @@ jvm_library(
 
 jvm_library(
   name = "settingsSync-core_test_lib",
+  module_name = "intellij.settingsSync.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:jetbrains-intellij-deps-eclipse-jgit"],
+  runtime_deps = [
+    ":settingsSync-core",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/diff-api:diff_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/configuration-store-impl:configurationStore-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/service-container:service-container_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlin/reflect",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/util/progress:progress_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+    "//libraries/jackson3/databind:databind_test_lib",
+    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//libraries/kotlinx/coroutines/test",
+    "//libraries/kotlinx/coroutines/test:test_test_lib",
+    "//platform/testFramework/extensions:testExtensions",
+    "//platform/testFramework/extensions:testExtensions_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/editor-ui-ex:editor-ex_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//libraries/mockito",
+    "//libraries/mockito:mockito_test_lib",
+    "//platform/observable:observable_test_lib",
+    "//plugins/git4idea:vcs-git_test_lib",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
+    "//platform/vcs-log/impl:impl_test_lib",
+    "//platform/vcs-log/api:vcs-log_test_lib",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/diff-impl:diff-impl_test_lib",
+    "@lib//:assert_j",
+    "//platform/pluginSystem/testFramework",
+    "//platform/pluginSystem/testFramework:testFramework_test_lib",
+    "//platform/platform-tests:tests",
+    "//platform/platform-tests:tests_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
+    "//images:images-tests",
+    "//images:images-tests_test_lib",
+    "//RegExpSupport:regexp-tests",
+    "//RegExpSupport:regexp-tests_test_lib",
+    "//platform/xdebugger-impl:debugger-impl-tests",
+    "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+  ]
+)
+### auto-generated section `build intellij.settingsSync.core` end
+
+### auto-generated section `iml intellij.settingsSync.core` start
+exports_files([
+  "intellij.settingsSync.core.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.settingsSync.core` end
+
+### auto-generated section `build intellij.settingsSync.core.tests` start
+jvm_library(
+  name = "settingsSync-core-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:jetbrains-intellij-deps-eclipse-jgit"]
+)
+
+jvm_library(
+  name = "settingsSync-core-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
-  associates = [":settingsSync-core"],
+  associates = [
+    "//platform/settings-sync-core:settingsSync-core",
+    "//platform/settings-sync-core:settingsSync-core_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -159,24 +249,25 @@ jvm_library(
   ],
   exports = ["@lib//:jetbrains-intellij-deps-eclipse-jgit"],
   runtime_deps = [
+    ":settingsSync-core-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/observable:observable_test_lib",
   ]
 )
-### auto-generated section `build intellij.settingsSync.core` end
+### auto-generated section `build intellij.settingsSync.core.tests` end
 
-### auto-generated section `iml intellij.settingsSync.core` start
+### auto-generated section `iml intellij.settingsSync.core.tests` start
 exports_files([
-  "intellij.settingsSync.core.iml",
+  "intellij.settingsSync.core.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.settingsSync.core` end
+### auto-generated section `iml intellij.settingsSync.core.tests` end
 
-### auto-generated section `test intellij.settingsSync.core` start
+### auto-generated section `test intellij.settingsSync.core.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "settingsSync-core_test",
-  runtime_deps = [":settingsSync-core_test_lib"]
+  name = "settingsSync-core-tests_test",
+  runtime_deps = [":settingsSync-core-tests_test_lib"]
 )
-### auto-generated section `test intellij.settingsSync.core` end
+### auto-generated section `test intellij.settingsSync.core.tests` end

@@ -286,6 +286,10 @@ jvm_library(
     "//plugins/gradle/java/groovy/toml:toml_test_lib",
     "//plugins/gradle/java/properties",
     "//plugins/gradle/java/properties:properties_test_lib",
+    "//plugins/groovy:groovy-tests",
+    "//plugins/groovy:groovy-tests_test_lib",
+    "//platform/smRunner:smRunner-tests",
+    "//platform/smRunner:smRunner-tests_test_lib",
   ],
   runtime_deps = [
     ":java-tests",

@@ -38,9 +38,58 @@ jvm_library(
 
 jvm_library(
   name = "xmlbeans_test_lib",
+  module_name = "intellij.xml.xmlbeans",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":xmlbeans",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//xml/impl:impl_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "@lib//:assert_j",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//xml/xml-parser:parser_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+  ]
+)
+### auto-generated section `build intellij.xml.xmlbeans` end
+
+### auto-generated section `iml intellij.xml.xmlbeans` start
+exports_files([
+  "intellij.xml.xmlbeans.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.xml.xmlbeans` end
+
+### auto-generated section `build intellij.xml.xmlbeans.tests` start
+jvm_library(
+  name = "xmlbeans-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "xmlbeans-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":xmlbeans"],
+  associates = [
+    "//xml/xmlbeans",
+    "//xml/xmlbeans:xmlbeans_test_lib",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
@@ -50,8 +99,8 @@ jvm_library(
     "//platform/lang-api:lang_test_lib",
     "//xml/impl",
     "//xml/impl:impl_test_lib",
-    "@lib//:xml-xmlbeans-_xml_beans",
-    "@lib//:xml-xmlbeans-apache-logging-log4j-to-slf4j",
+    "@lib//:xml-xmlbeans-tests-_xml_beans",
+    "@lib//:xml-xmlbeans-tests-apache-logging-log4j-to-slf4j",
     "//platform/core-impl",
     "//platform/core-impl:core-impl_test_lib",
     "//platform/analysis-impl",
@@ -83,21 +132,24 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
   ],
-  runtime_deps = ["//platform/ide-core:ide-core_test_lib"]
+  runtime_deps = [
+    ":xmlbeans-tests",
+    "//platform/ide-core:ide-core_test_lib",
+  ]
 )
-### auto-generated section `build intellij.xml.xmlbeans` end
+### auto-generated section `build intellij.xml.xmlbeans.tests` end
 
-### auto-generated section `iml intellij.xml.xmlbeans` start
+### auto-generated section `iml intellij.xml.xmlbeans.tests` start
 exports_files([
-  "intellij.xml.xmlbeans.iml",
+  "intellij.xml.xmlbeans.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.xml.xmlbeans` end
+### auto-generated section `iml intellij.xml.xmlbeans.tests` end
 
-### auto-generated section `test intellij.xml.xmlbeans` start
+### auto-generated section `test intellij.xml.xmlbeans.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "xmlbeans_test",
-  runtime_deps = [":xmlbeans_test_lib"]
+  name = "xmlbeans-tests_test",
+  runtime_deps = [":xmlbeans-tests_test_lib"]
 )
-### auto-generated section `test intellij.xml.xmlbeans` end
+### auto-generated section `test intellij.xml.xmlbeans.tests` end

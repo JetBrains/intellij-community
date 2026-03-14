@@ -41,9 +41,58 @@ jvm_library(
 
 jvm_library(
   name = "vcs-git-featuresTrainer_test_lib",
+  module_name = "intellij.vcs.git.featuresTrainer",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":vcs-git-featuresTrainer",
+    "//plugins/ide-features-trainer:featuresTrainer_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/diff-impl:diff-impl_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/vcs-log/impl:impl_test_lib",
+    "//platform/vcs-log/api:vcs-log_test_lib",
+    "//plugins/git4idea:vcs-git_test_lib",
+    "//plugins/git4idea/shared:shared_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/dvcs-impl/shared:shared_test_lib",
+    "//platform/vcs-impl/shared:shared_test_lib",
+  ]
+)
+### auto-generated section `build intellij.vcs.git.featuresTrainer` end
+
+### auto-generated section `iml intellij.vcs.git.featuresTrainer` start
+exports_files([
+  "intellij.vcs.git.featuresTrainer.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.vcs.git.featuresTrainer` end
+
+### auto-generated section `build intellij.vcs.git.featuresTrainer.tests` start
+jvm_library(
+  name = "vcs-git-featuresTrainer-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "vcs-git-featuresTrainer-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":vcs-git-featuresTrainer"],
+  associates = [
+    "//plugins/git-features-trainer:vcs-git-featuresTrainer",
+    "//plugins/git-features-trainer:vcs-git-featuresTrainer_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:git-learning-project",
@@ -88,22 +137,27 @@ jvm_library(
     "//platform/dvcs-impl/shared:shared_test_lib",
     "//platform/vcs-impl/shared",
     "//platform/vcs-impl/shared:shared_test_lib",
+    "//plugins/ide-features-trainer:featuresTrainer-tests",
+    "//plugins/ide-features-trainer:featuresTrainer-tests_test_lib",
   ],
-  runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
+  runtime_deps = [
+    ":vcs-git-featuresTrainer-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
 )
-### auto-generated section `build intellij.vcs.git.featuresTrainer` end
+### auto-generated section `build intellij.vcs.git.featuresTrainer.tests` end
 
-### auto-generated section `iml intellij.vcs.git.featuresTrainer` start
+### auto-generated section `iml intellij.vcs.git.featuresTrainer.tests` start
 exports_files([
-  "intellij.vcs.git.featuresTrainer.iml",
+  "intellij.vcs.git.featuresTrainer.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.vcs.git.featuresTrainer` end
+### auto-generated section `iml intellij.vcs.git.featuresTrainer.tests` end
 
-### auto-generated section `test intellij.vcs.git.featuresTrainer` start
+### auto-generated section `test intellij.vcs.git.featuresTrainer.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "vcs-git-featuresTrainer_test",
-  runtime_deps = [":vcs-git-featuresTrainer_test_lib"]
+  name = "vcs-git-featuresTrainer-tests_test",
+  runtime_deps = [":vcs-git-featuresTrainer-tests_test_lib"]
 )
-### auto-generated section `test intellij.vcs.git.featuresTrainer` end
+### auto-generated section `test intellij.vcs.git.featuresTrainer.tests` end

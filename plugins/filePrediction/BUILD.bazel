@@ -7,12 +7,6 @@ resourcegroup(
   strip_prefix = "resources"
 )
 
-resourcegroup(
-  name = "filePrediction_test_resources",
-  srcs = glob(["testData/**/*"]),
-  strip_prefix = "testData"
-)
-
 jvm_library(
   name = "filePrediction",
   module_name = "intellij.filePrediction",
@@ -45,10 +39,70 @@ jvm_library(
 
 jvm_library(
   name = "filePrediction_test_lib",
+  module_name = "intellij.filePrediction",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":filePrediction",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/vcs-log/impl:impl_test_lib",
+    "//plugins/git4idea:vcs-git_test_lib",
+    "//uast/uast-common:uast_test_lib",
+    "//platform/platform-impl/internal:internal_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/statistics/uploader",
+    "//platform/statistics/uploader:uploader_test_lib",
+    "//platform/ml-impl:ml-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/statistics/testFramework",
+    "//platform/statistics/testFramework:testFramework_test_lib",
+  ]
+)
+### auto-generated section `build intellij.filePrediction` end
+
+### auto-generated section `iml intellij.filePrediction` start
+exports_files([
+  "intellij.filePrediction.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.filePrediction` end
+
+### auto-generated section `build intellij.filePrediction.tests` start
+resourcegroup(
+  name = "filePrediction-tests_test_resources",
+  srcs = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
+jvm_library(
+  name = "filePrediction-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "filePrediction-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  resources = [":filePrediction_test_resources"],
-  associates = [":filePrediction"],
+  resources = [":filePrediction-tests_test_resources"],
+  associates = [
+    "//plugins/filePrediction",
+    "//plugins/filePrediction:filePrediction_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -82,7 +136,7 @@ jvm_library(
     "//java/testFramework:testFramework_test_lib",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
-    "@lib//:file_prediction-file-prediction-model",
+    "@lib//:file_prediction-tests-file-prediction-model",
     "//platform/core-ui",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/statistics/uploader",
@@ -96,24 +150,25 @@ jvm_library(
     "//platform/statistics/testFramework:testFramework_test_lib",
   ],
   runtime_deps = [
+    ":filePrediction-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/platform-impl/internal:internal_test_lib",
   ]
 )
-### auto-generated section `build intellij.filePrediction` end
+### auto-generated section `build intellij.filePrediction.tests` end
 
-### auto-generated section `iml intellij.filePrediction` start
+### auto-generated section `iml intellij.filePrediction.tests` start
 exports_files([
-  "intellij.filePrediction.iml",
+  "intellij.filePrediction.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.filePrediction` end
+### auto-generated section `iml intellij.filePrediction.tests` end
 
-### auto-generated section `test intellij.filePrediction` start
+### auto-generated section `test intellij.filePrediction.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "filePrediction_test",
-  runtime_deps = [":filePrediction_test_lib"]
+  name = "filePrediction-tests_test",
+  runtime_deps = [":filePrediction-tests_test_lib"]
 )
-### auto-generated section `test intellij.filePrediction` end
+### auto-generated section `test intellij.filePrediction.tests` end

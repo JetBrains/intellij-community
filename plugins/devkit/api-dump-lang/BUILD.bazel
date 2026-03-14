@@ -36,9 +36,53 @@ jvm_library(
 
 jvm_library(
   name = "apiDump-lang_test_lib",
+  module_name = "intellij.devkit.apiDump.lang",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":apiDump-lang",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/usageView-impl:usageView-impl_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/usageView:usageView_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//plugins/devkit/api-dump:api-dump_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ]
+)
+### auto-generated section `build intellij.devkit.apiDump.lang` end
+
+### auto-generated section `iml intellij.devkit.apiDump.lang` start
+exports_files([
+  "intellij.devkit.apiDump.lang.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.apiDump.lang` end
+
+### auto-generated section `build intellij.devkit.apiDump.lang.tests` start
+jvm_library(
+  name = "apiDump-lang-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "apiDump-lang-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":apiDump-lang"],
+  associates = [
+    "//plugins/devkit/api-dump-lang:apiDump-lang",
+    "//plugins/devkit/api-dump-lang:apiDump-lang_test_lib",
+  ],
   deps = [
     "//java/java-indexing-api:indexing",
     "//java/java-indexing-api:indexing_test_lib",
@@ -74,21 +118,24 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ],
-  runtime_deps = ["//platform/ide-core:ide-core_test_lib"]
+  runtime_deps = [
+    ":apiDump-lang-tests",
+    "//platform/ide-core:ide-core_test_lib",
+  ]
 )
-### auto-generated section `build intellij.devkit.apiDump.lang` end
+### auto-generated section `build intellij.devkit.apiDump.lang.tests` end
 
-### auto-generated section `iml intellij.devkit.apiDump.lang` start
+### auto-generated section `iml intellij.devkit.apiDump.lang.tests` start
 exports_files([
-  "intellij.devkit.apiDump.lang.iml",
+  "intellij.devkit.apiDump.lang.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.devkit.apiDump.lang` end
+### auto-generated section `iml intellij.devkit.apiDump.lang.tests` end
 
-### auto-generated section `test intellij.devkit.apiDump.lang` start
+### auto-generated section `test intellij.devkit.apiDump.lang.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "apiDump-lang_test",
-  runtime_deps = [":apiDump-lang_test_lib"]
+  name = "apiDump-lang-tests_test",
+  runtime_deps = [":apiDump-lang-tests_test_lib"]
 )
-### auto-generated section `test intellij.devkit.apiDump.lang` end
+### auto-generated section `test intellij.devkit.apiDump.lang.tests` end

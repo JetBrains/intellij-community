@@ -27,9 +27,49 @@ jvm_library(
 
 jvm_library(
   name = "vcs-core_test_lib",
+  module_name = "intellij.platform.vcs.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":vcs-core",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/diff-api:diff_test_lib",
+    "//platform/util/diff:diff_test_lib",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
+    "//libraries/junit5-params",
+    "//libraries/junit5-params:junit5-params_test_lib",
+    "//libraries/assertj-core",
+    "//libraries/assertj-core:assertj-core_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.vcs.core` end
+
+### auto-generated section `iml intellij.platform.vcs.core` start
+exports_files([
+  "intellij.platform.vcs.core.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.vcs.core` end
+
+### auto-generated section `build intellij.platform.vcs.core.tests` start
+jvm_library(
+  name = "vcs-core-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "vcs-core-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":vcs-core"],
+  associates = [
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
+  ],
   deps = [
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
@@ -52,21 +92,24 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/core:core_test_lib",
   ],
-  runtime_deps = ["//platform/ide-core:ide-core_test_lib"]
+  runtime_deps = [
+    ":vcs-core-tests",
+    "//platform/ide-core:ide-core_test_lib",
+  ]
 )
-### auto-generated section `build intellij.platform.vcs.core` end
+### auto-generated section `build intellij.platform.vcs.core.tests` end
 
-### auto-generated section `iml intellij.platform.vcs.core` start
+### auto-generated section `iml intellij.platform.vcs.core.tests` start
 exports_files([
-  "intellij.platform.vcs.core.iml",
+  "intellij.platform.vcs.core.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.platform.vcs.core` end
+### auto-generated section `iml intellij.platform.vcs.core.tests` end
 
-### auto-generated section `test intellij.platform.vcs.core` start
+### auto-generated section `test intellij.platform.vcs.core.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "vcs-core_test",
-  runtime_deps = [":vcs-core_test_lib"]
+  name = "vcs-core-tests_test",
+  runtime_deps = [":vcs-core-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.vcs.core` end
+### auto-generated section `test intellij.platform.vcs.core.tests` end

@@ -41,6 +41,8 @@ jvm_library(
     "//plugins/kotlin/intellij.kotlin.base.test:base-test",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
     "@lib//:kotlinc-analysis-api-impl-base",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
   ],
   runtime_deps = [":kotlin-compilerPlugins-parcelize-tests"]
 )

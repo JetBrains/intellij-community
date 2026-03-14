@@ -29,10 +29,54 @@ jvm_library(
 
 jvm_library(
   name = "jps_test_lib",
+  module_name = "intellij.maven.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [
+    ":jps",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-impl:model-impl_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//jps/jps-builders:build_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//libraries/plexus-utils:plexus-utils_test_lib",
+    "//jps/model-serialization:model-serialization-tests",
+    "//jps/model-serialization:model-serialization-tests_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//jps/jps-builders:build-tests",
+    "//jps/jps-builders:build-tests_test_lib",
+    "//libraries/hash4j:hash4j_test_lib",
+    "@lib//:junit5",
+    "//libraries/fastutil:fastutil_test_lib",
+  ]
+)
+### auto-generated section `build intellij.maven.jps` end
+
+### auto-generated section `iml intellij.maven.jps` start
+exports_files([
+  "intellij.maven.jps.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.maven.jps` end
+
+### auto-generated section `build intellij.maven.jps.tests` start
+jvm_library(
+  name = "jps-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "jps-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k11",
-  associates = [":jps"],
+  associates = [
+    "//plugins/maven/jps-plugin:jps",
+    "//plugins/maven/jps-plugin:jps_test_lib",
+  ],
   deps = [
     "//jps/model-api:model",
     "//jps/model-api:model_test_lib",
@@ -59,21 +103,22 @@ jvm_library(
     "@lib//:junit5",
     "//libraries/fastutil",
     "//libraries/fastutil:fastutil_test_lib",
-  ]
+  ],
+  runtime_deps = [":jps-tests"]
 )
-### auto-generated section `build intellij.maven.jps` end
+### auto-generated section `build intellij.maven.jps.tests` end
 
-### auto-generated section `iml intellij.maven.jps` start
+### auto-generated section `iml intellij.maven.jps.tests` start
 exports_files([
-  "intellij.maven.jps.iml",
+  "intellij.maven.jps.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.maven.jps` end
+### auto-generated section `iml intellij.maven.jps.tests` end
 
-### auto-generated section `test intellij.maven.jps` start
+### auto-generated section `test intellij.maven.jps.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "jps_test",
-  runtime_deps = [":jps_test_lib"]
+  name = "jps-tests_test",
+  runtime_deps = [":jps-tests_test_lib"]
 )
-### auto-generated section `test intellij.maven.jps` end
+### auto-generated section `test intellij.maven.jps.tests` end

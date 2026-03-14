@@ -51,10 +51,69 @@ jvm_library(
 
 jvm_library(
   name = "completion_test_lib",
+  module_name = "intellij.gradle.completion",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_completion",
+  runtime_deps = [
+    ":completion",
+    "//plugins/gradle:gradle_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/repository-search/common:common_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/io:io_test_lib",
+    "//libraries/ktor/client:client_test_lib",
+    "//platform/eel:eel_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/eel-provider:eel-provider_test_lib",
+    "//platform/backend/observation:observation_test_lib",
+    "//platform/util/text-matching:text-matching_test_lib",
+  ]
+)
+### auto-generated section `build intellij.gradle.completion` end
+
+### auto-generated section `iml intellij.gradle.completion` start
+exports_files([
+  "intellij.gradle.completion.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.completion` end
+
+### auto-generated section `build intellij.gradle.completion.tests` start
+create_kotlinc_options(
+  name = "custom_completion-tests",
+  opt_in = [
+    "kotlinx.serialization.InternalSerializationApi",
+    "kotlinx.serialization.ExperimentalSerializationApi",
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+  ]
+)
+
+jvm_library(
+  name = "completion-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "completion-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_completion",
-  associates = [":completion"],
+  kotlinc_opts = ":custom_completion-tests",
+  associates = [
+    "//plugins/gradle/completion",
+    "//plugins/gradle/completion:completion_test_lib",
+  ],
   deps = [
     "//plugins/gradle",
     "//plugins/gradle:gradle_test_lib",
@@ -99,21 +158,24 @@ jvm_library(
     "//platform/util/text-matching",
     "//platform/util/text-matching:text-matching_test_lib",
   ],
-  runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
+  runtime_deps = [
+    ":completion-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
 )
-### auto-generated section `build intellij.gradle.completion` end
+### auto-generated section `build intellij.gradle.completion.tests` end
 
-### auto-generated section `iml intellij.gradle.completion` start
+### auto-generated section `iml intellij.gradle.completion.tests` start
 exports_files([
-  "intellij.gradle.completion.iml",
+  "intellij.gradle.completion.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.gradle.completion` end
+### auto-generated section `iml intellij.gradle.completion.tests` end
 
-### auto-generated section `test intellij.gradle.completion` start
+### auto-generated section `test intellij.gradle.completion.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "completion_test",
-  runtime_deps = [":completion_test_lib"]
+  name = "completion-tests_test",
+  runtime_deps = [":completion-tests_test_lib"]
 )
-### auto-generated section `test intellij.gradle.completion` end
+### auto-generated section `test intellij.gradle.completion.tests` end

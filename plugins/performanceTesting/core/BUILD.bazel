@@ -81,9 +81,92 @@ jvm_library(
 
 jvm_library(
   name = "performanceTesting_test_lib",
+  module_name = "intellij.performanceTesting",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":performanceTesting",
+    "//platform/remote-driver/model:model_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/indexing-impl:indexing-impl_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//libraries/cli-parser",
+    "//libraries/cli-parser:cli-parser_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/platform-impl/concurrency:concurrency_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/usageView:usageView_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//platform/editor-ui-ex:editor-ex_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/platform-impl/internal:internal_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/xdebugger-api:debugger_test_lib",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//libraries/caffeine:caffeine_test_lib",
+    "//platform/remote-driver/core:driver-impl_test_lib",
+    "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+    "//libraries/netty/buffer:buffer_test_lib",
+    "//platform/diagnostic/startUpPerformanceReporter:startUpPerformanceReporter_test_lib",
+    "//platform/service-container:service-container_test_lib",
+    "//platform/remote-driver/client:client_test_lib",
+    "//platform/usageView-impl:usageView-impl_test_lib",
+    "//plugins/performanceTesting/event-bus:tools-ide-starter-bus_test_lib",
+    "//platform/eel-provider:eel-provider_test_lib",
+    "//libraries/jbr:jbr_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//platform/xdebugger-impl/shared:shared_test_lib",
+    "//platform/xdebugger-impl/ui:ui_test_lib",
+    "//platform/structure-view-impl:structureView-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.performanceTesting` end
+
+### auto-generated section `iml intellij.performanceTesting` start
+exports_files([
+  "intellij.performanceTesting.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.performanceTesting` end
+
+### auto-generated section `build intellij.performanceTesting.tests` start
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":performanceTesting"],
+  associates = [
+    "//plugins/performanceTesting/core:performanceTesting",
+    "//plugins/performanceTesting/core:performanceTesting_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/remote-driver/model",
@@ -194,6 +277,7 @@ jvm_library(
     "//platform/structure-view-impl:structureView-impl_test_lib",
   ],
   runtime_deps = [
+    ":tests",
     "//platform/platform-impl/concurrency:concurrency_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline_test_lib",
@@ -201,19 +285,19 @@ jvm_library(
     "//platform/platform-impl:ide-impl_test_lib",
   ]
 )
-### auto-generated section `build intellij.performanceTesting` end
+### auto-generated section `build intellij.performanceTesting.tests` end
 
-### auto-generated section `iml intellij.performanceTesting` start
+### auto-generated section `iml intellij.performanceTesting.tests` start
 exports_files([
-  "intellij.performanceTesting.iml",
+  "intellij.performanceTesting.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.performanceTesting` end
+### auto-generated section `iml intellij.performanceTesting.tests` end
 
-### auto-generated section `test intellij.performanceTesting` start
+### auto-generated section `test intellij.performanceTesting.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "performanceTesting_test",
-  runtime_deps = [":performanceTesting_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `test intellij.performanceTesting` end
+### auto-generated section `test intellij.performanceTesting.tests` end

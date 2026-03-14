@@ -146,6 +146,8 @@ jvm_library(
     "//plugins/kotlin/base/statistics:statistics_test_lib",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
   ],
   runtime_deps = [
     ":tests",

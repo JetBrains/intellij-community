@@ -35,9 +35,55 @@ jvm_library(
 
 jvm_library(
   name = "external-process-auth-helper_test_lib",
+  module_name = "intellij.platform.externalProcessAuthHelper",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/built-in-server:builtInServer-impl",
+    "//platform/built-in-server:builtInServer-impl_test_lib",
+  ],
+  runtime_deps = [
+    ":external-process-auth-helper",
+    "//platform/core-api:core_test_lib",
+    "//platform/credential-store:credential-store_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/built-in-server-api:builtInServer_test_lib",
+    "//platform/external-process-auth-helper/rt:rt_test_lib",
+    "//platform/built-in-server:builtInServer-impl_test_lib",
+    "//platform/platform-util-netty:ide-util-netty_test_lib",
+    "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+    "//libraries/netty/buffer:buffer_test_lib",
+    "@lib//:junit5",
+    "//platform/eel:eel_test_lib",
+    "//platform/eel-provider:eel-provider_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.externalProcessAuthHelper` end
+
+### auto-generated section `iml intellij.platform.externalProcessAuthHelper` start
+exports_files([
+  "intellij.platform.externalProcessAuthHelper.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.externalProcessAuthHelper` end
+
+### auto-generated section `build intellij.platform.externalProcessAuthHelper.tests` start
+jvm_library(
+  name = "externalProcessAuthHelper-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["//platform/built-in-server:builtInServer-impl"]
+)
+
+jvm_library(
+  name = "externalProcessAuthHelper-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":external-process-auth-helper"],
+  associates = [
+    "//platform/external-process-auth-helper",
+    "//platform/external-process-auth-helper:external-process-auth-helper_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
@@ -72,23 +118,24 @@ jvm_library(
     "//platform/built-in-server:builtInServer-impl_test_lib",
   ],
   runtime_deps = [
+    ":externalProcessAuthHelper-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-util-netty:ide-util-netty_test_lib",
   ]
 )
-### auto-generated section `build intellij.platform.externalProcessAuthHelper` end
+### auto-generated section `build intellij.platform.externalProcessAuthHelper.tests` end
 
-### auto-generated section `iml intellij.platform.externalProcessAuthHelper` start
+### auto-generated section `iml intellij.platform.externalProcessAuthHelper.tests` start
 exports_files([
-  "intellij.platform.externalProcessAuthHelper.iml",
+  "intellij.platform.externalProcessAuthHelper.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.platform.externalProcessAuthHelper` end
+### auto-generated section `iml intellij.platform.externalProcessAuthHelper.tests` end
 
-### auto-generated section `test intellij.platform.externalProcessAuthHelper` start
+### auto-generated section `test intellij.platform.externalProcessAuthHelper.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "external-process-auth-helper_test",
-  runtime_deps = [":external-process-auth-helper_test_lib"]
+  name = "externalProcessAuthHelper-tests_test",
+  runtime_deps = [":externalProcessAuthHelper-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.externalProcessAuthHelper` end
+### auto-generated section `test intellij.platform.externalProcessAuthHelper.tests` end

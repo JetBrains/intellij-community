@@ -7,12 +7,6 @@ resourcegroup(
   strip_prefix = "resources"
 )
 
-resourcegroup(
-  name = "junit5_test_resources",
-  srcs = glob(["test-resources/**/*"]),
-  strip_prefix = "test-resources"
-)
-
 jvm_provided_library(
   name = "libraries_junit5-jupiter_provided",
   lib = "//libraries/junit5-jupiter"
@@ -67,10 +61,75 @@ jvm_library(
 
 jvm_library(
   name = "junit5_test_lib",
+  module_name = "intellij.platform.testFramework.junit5",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":junit5",
+    "//libraries/junit5-jupiter",
+    "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "@lib//:junit5Params",
+    "//community-resources:customization",
+    "//community-resources:customization_test_lib",
+    "//java/java-runtime:rt_test_lib",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
+    "//libraries/junit5-launcher",
+    "//libraries/junit5-launcher:junit5-launcher_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//libraries/assertj-core:assertj-core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/eel:eel_test_lib",
+    "//platform/eel-provider:eel-provider_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/main/intellij.platform.monolith.main:monolith-main",
+    "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/testFramework/common:common_test_lib",
+    "//platform/testFramework/core:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.testFramework.junit5` end
+
+### auto-generated section `iml intellij.platform.testFramework.junit5` start
+exports_files([
+  "intellij.platform.testFramework.junit5.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.testFramework.junit5` end
+
+### auto-generated section `build intellij.platform.testFramework.junit5.tests` start
+resourcegroup(
+  name = "junit5-tests_test_resources",
+  srcs = glob(["test-resources/**/*"]),
+  strip_prefix = "test-resources"
+)
+
+jvm_library(
+  name = "junit5-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "junit5-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  resources = [":junit5_test_resources"],
-  associates = [":junit5"],
+  resources = [":junit5-tests_test_resources"],
+  associates = [
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+  ],
   deps = [
     "//libraries/junit5-jupiter",
     "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
@@ -128,23 +187,24 @@ jvm_library(
     "//platform/util/jdom:jdom_test_lib",
   ],
   runtime_deps = [
+    ":junit5-tests",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
   ]
 )
-### auto-generated section `build intellij.platform.testFramework.junit5` end
+### auto-generated section `build intellij.platform.testFramework.junit5.tests` end
 
-### auto-generated section `iml intellij.platform.testFramework.junit5` start
+### auto-generated section `iml intellij.platform.testFramework.junit5.tests` start
 exports_files([
-  "intellij.platform.testFramework.junit5.iml",
+  "intellij.platform.testFramework.junit5.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.platform.testFramework.junit5` end
+### auto-generated section `iml intellij.platform.testFramework.junit5.tests` end
 
-### auto-generated section `test intellij.platform.testFramework.junit5` start
+### auto-generated section `test intellij.platform.testFramework.junit5.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "junit5_test",
-  runtime_deps = [":junit5_test_lib"]
+  name = "junit5-tests_test",
+  runtime_deps = [":junit5-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.testFramework.junit5` end
+### auto-generated section `test intellij.platform.testFramework.junit5.tests` end

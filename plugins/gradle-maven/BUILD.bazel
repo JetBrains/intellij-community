@@ -33,9 +33,52 @@ jvm_library(
 
 jvm_library(
   name = "gradle-java-maven_test_lib",
+  module_name = "intellij.gradle.java.maven",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":gradle-java-maven",
+    "//plugins/gradle/java:java_test_lib",
+    "//plugins/maven:maven_test_lib",
+    "//plugins/groovy:groovy_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/repository-search/common:common_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/gradle/java/groovy:groovy_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+  ]
+)
+### auto-generated section `build intellij.gradle.java.maven` end
+
+### auto-generated section `iml intellij.gradle.java.maven` start
+exports_files([
+  "intellij.gradle.java.maven.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.java.maven` end
+
+### auto-generated section `build intellij.gradle.java.maven.tests` start
+jvm_library(
+  name = "gradle-java-maven-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "gradle-java-maven-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
-  associates = [":gradle-java-maven"],
+  associates = [
+    "//plugins/gradle-maven:gradle-java-maven",
+    "//plugins/gradle-maven:gradle-java-maven_test_lib",
+  ],
   deps = [
     "//plugins/gradle/java",
     "//plugins/gradle/java:java_test_lib",
@@ -67,21 +110,24 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
   ],
-  runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
+  runtime_deps = [
+    ":gradle-java-maven-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
 )
-### auto-generated section `build intellij.gradle.java.maven` end
+### auto-generated section `build intellij.gradle.java.maven.tests` end
 
-### auto-generated section `iml intellij.gradle.java.maven` start
+### auto-generated section `iml intellij.gradle.java.maven.tests` start
 exports_files([
-  "intellij.gradle.java.maven.iml",
+  "intellij.gradle.java.maven.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.gradle.java.maven` end
+### auto-generated section `iml intellij.gradle.java.maven.tests` end
 
-### auto-generated section `test intellij.gradle.java.maven` start
+### auto-generated section `test intellij.gradle.java.maven.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "gradle-java-maven_test",
-  runtime_deps = [":gradle-java-maven_test_lib"]
+  name = "gradle-java-maven-tests_test",
+  runtime_deps = [":gradle-java-maven-tests_test_lib"]
 )
-### auto-generated section `test intellij.gradle.java.maven` end
+### auto-generated section `test intellij.gradle.java.maven.tests` end

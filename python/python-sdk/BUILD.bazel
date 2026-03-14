@@ -7,12 +7,6 @@ resourcegroup(
   strip_prefix = "resources"
 )
 
-resourcegroup(
-  name = "sdk_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "sdk",
   module_name = "intellij.python.sdk",
@@ -57,10 +51,76 @@ jvm_library(
 
 jvm_library(
   name = "sdk_test_lib",
+  module_name = "intellij.python.sdk",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":sdk",
+    "//libraries/gson:gson_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//python/openapi:community_test_lib",
+    "//python/python-psi-api:psi_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/remote-core:remote-core_test_lib",
+    "@lib//:junit4",
+    "//libraries/caffeine:caffeine_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
+    "@lib//:junit5",
+    "//platform/eel-provider:eel-provider_test_lib",
+    "//platform/backend:backend_test_lib",
+    "//python/impl.helperLocator:community-helpersLocator_test_lib",
+    "//python/common:common_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+  ]
+)
+### auto-generated section `build intellij.python.sdk` end
+
+### auto-generated section `iml intellij.python.sdk` start
+exports_files([
+  "intellij.python.sdk.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.sdk` end
+
+### auto-generated section `build intellij.python.sdk.tests` start
+resourcegroup(
+  name = "sdk-tests_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "sdk-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/backend"]
+)
+
+jvm_library(
+  name = "sdk-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
-  resources = [":sdk_test_resources"],
-  associates = [":sdk"],
+  resources = [":sdk-tests_test_resources"],
+  associates = [
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/gson",
@@ -123,25 +183,26 @@ jvm_library(
     "//platform/workspace/storage:storage_test_lib",
   ],
   runtime_deps = [
+    ":sdk-tests",
     "//platform/platform-util-io:ide-util-io_test_lib",
     "//platform/ide-core:ide-core_test_lib",
     "//platform/progress/shared:ide-progress_test_lib",
     "//platform/backend:backend_test_lib",
   ]
 )
-### auto-generated section `build intellij.python.sdk` end
+### auto-generated section `build intellij.python.sdk.tests` end
 
-### auto-generated section `iml intellij.python.sdk` start
+### auto-generated section `iml intellij.python.sdk.tests` start
 exports_files([
-  "intellij.python.sdk.iml",
+  "intellij.python.sdk.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.python.sdk` end
+### auto-generated section `iml intellij.python.sdk.tests` end
 
-### auto-generated section `test intellij.python.sdk` start
+### auto-generated section `test intellij.python.sdk.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "sdk_test",
-  runtime_deps = [":sdk_test_lib"]
+  name = "sdk-tests_test",
+  runtime_deps = [":sdk-tests_test_lib"]
 )
-### auto-generated section `test intellij.python.sdk` end
+### auto-generated section `test intellij.python.sdk.tests` end

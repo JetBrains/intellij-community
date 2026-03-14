@@ -41,9 +41,70 @@ jvm_library(
 
 jvm_library(
   name = "sessions_test_lib",
+  module_name = "intellij.agent.workbench.sessions",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":sessions",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/platform-impl/concurrency:concurrency_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//plugins/agent-workbench/common:common_test_lib",
+    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//plugins/agent-workbench/codex/common",
+    "//plugins/agent-workbench/codex/common:common_test_lib",
+    "//plugins/agent-workbench/chat:chat_test_lib",
+    "//plugins/terminal:terminal_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
+    "//libraries/junit5-params",
+    "//libraries/junit5-params:junit5-params_test_lib",
+    "//libraries/junit4",
+    "//libraries/junit4:junit4_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//libraries/assertj-core",
+    "//libraries/assertj-core:assertj-core_test_lib",
+    "//platform/project-frame:project-frame_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.agent.workbench.sessions` end
+
+### auto-generated section `iml intellij.agent.workbench.sessions` start
+exports_files([
+  "intellij.agent.workbench.sessions.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.agent.workbench.sessions` end
+
+### auto-generated section `build intellij.agent.workbench.sessions.tests` start
+jvm_library(
+  name = "agent-workbench-sessions-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "agent-workbench-sessions-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":sessions"],
+  associates = [
+    "//plugins/agent-workbench/sessions",
+    "//plugins/agent-workbench/sessions:sessions_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/fastutil",
@@ -99,25 +160,26 @@ jvm_library(
     "//platform/projectModel-impl:projectModel-impl_test_lib",
   ],
   runtime_deps = [
+    ":agent-workbench-sessions-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-impl/concurrency:concurrency_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
   ]
 )
-### auto-generated section `build intellij.agent.workbench.sessions` end
+### auto-generated section `build intellij.agent.workbench.sessions.tests` end
 
-### auto-generated section `iml intellij.agent.workbench.sessions` start
+### auto-generated section `iml intellij.agent.workbench.sessions.tests` start
 exports_files([
-  "intellij.agent.workbench.sessions.iml",
+  "intellij.agent.workbench.sessions.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.agent.workbench.sessions` end
+### auto-generated section `iml intellij.agent.workbench.sessions.tests` end
 
-### auto-generated section `test intellij.agent.workbench.sessions` start
+### auto-generated section `test intellij.agent.workbench.sessions.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "sessions_test",
-  runtime_deps = [":sessions_test_lib"]
+  name = "agent-workbench-sessions-tests_test",
+  runtime_deps = [":agent-workbench-sessions-tests_test_lib"]
 )
-### auto-generated section `test intellij.agent.workbench.sessions` end
+### auto-generated section `test intellij.agent.workbench.sessions.tests` end

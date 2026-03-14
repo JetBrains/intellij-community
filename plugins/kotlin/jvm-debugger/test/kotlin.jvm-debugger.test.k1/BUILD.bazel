@@ -171,6 +171,10 @@ jvm_library(
     "//platform/execution:execution_test_lib",
     "//plugins/kotlin/jvm-debugger/test/kotlin.jvm-debugger.test.k1/testFramework",
     "//plugins/kotlin/jvm-debugger/test/kotlin.jvm-debugger.test.k1/testFramework:testFramework_test_lib",
+    "//plugins/stream-debugger:java-debugger-streams-tests",
+    "//plugins/stream-debugger:java-debugger-streams-tests_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
   ],
   runtime_deps = [
     ":kotlin-jvm-debugger-test-k1",

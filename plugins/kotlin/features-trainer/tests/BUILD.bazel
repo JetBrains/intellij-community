@@ -49,6 +49,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/features-trainer",
     "//plugins/kotlin/features-trainer:features-trainer_test_lib",
+    "//plugins/ide-features-trainer:featuresTrainer-tests",
+    "//plugins/ide-features-trainer:featuresTrainer-tests_test_lib",
   ],
   runtime_deps = [
     ":tests",

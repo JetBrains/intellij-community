@@ -44,10 +44,66 @@ jvm_library(
 
 jvm_library(
   name = "images_test_lib",
+  module_name = "intellij.platform.jewel.markdown.extensions.images",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_images",
+  runtime_deps = [
+    ":images",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/jewel/markdown/core:core_test_lib",
+    "//platform/jewel/ui:ui_test_lib",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "//libraries/coil:coil_test_lib",
+    "//libraries/junit4",
+    "//libraries/junit4:junit4_test_lib",
+    "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
+    "//libraries/kotlinx/coroutines/test",
+    "//libraries/kotlinx/coroutines/test:test_test_lib",
+    "//libraries/compose-foundation-desktop-junit",
+    "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
+    "//libraries/ktor/client:client_test_lib",
+    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.platform.jewel.markdown.extensions.images` end
+
+### auto-generated section `iml intellij.platform.jewel.markdown.extensions.images` start
+exports_files([
+  "intellij.platform.jewel.markdown.extensions.images.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jewel.markdown.extensions.images` end
+
+### auto-generated section `build intellij.platform.jewel.markdown.extensions.images.tests` start
+create_kotlinc_options(
+  name = "custom_jewel-markdown-extensions-images-tests",
+  opt_in = [
+    "androidx.compose.ui.ExperimentalComposeUiApi",
+    "androidx.compose.foundation.ExperimentalFoundationApi",
+    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+    "org.jetbrains.jewel.foundation.InternalJewelApi",
+  ],
+  x_context_parameters = True,
+  x_explicit_api_mode = "strict"
+)
+
+jvm_library(
+  name = "jewel-markdown-extensions-images-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_library(
+  name = "jewel-markdown-extensions-images-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_images",
-  associates = [":images"],
+  kotlinc_opts = ":custom_jewel-markdown-extensions-images-tests",
+  associates = [
+    "//platform/jewel/markdown/extensions/images",
+    "//platform/jewel/markdown/extensions/images:images_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
@@ -74,21 +130,22 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
   ],
+  runtime_deps = [":jewel-markdown-extensions-images-tests"],
   plugins = ["@lib//:compose-plugin"]
 )
-### auto-generated section `build intellij.platform.jewel.markdown.extensions.images` end
+### auto-generated section `build intellij.platform.jewel.markdown.extensions.images.tests` end
 
-### auto-generated section `iml intellij.platform.jewel.markdown.extensions.images` start
+### auto-generated section `iml intellij.platform.jewel.markdown.extensions.images.tests` start
 exports_files([
-  "intellij.platform.jewel.markdown.extensions.images.iml",
+  "intellij.platform.jewel.markdown.extensions.images.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.platform.jewel.markdown.extensions.images` end
+### auto-generated section `iml intellij.platform.jewel.markdown.extensions.images.tests` end
 
-### auto-generated section `test intellij.platform.jewel.markdown.extensions.images` start
+### auto-generated section `test intellij.platform.jewel.markdown.extensions.images.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "images_test",
-  runtime_deps = [":images_test_lib"]
+  name = "jewel-markdown-extensions-images-tests_test",
+  runtime_deps = [":jewel-markdown-extensions-images-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.jewel.markdown.extensions.images` end
+### auto-generated section `test intellij.platform.jewel.markdown.extensions.images.tests` end

@@ -22,14 +22,12 @@ jvm_library(
 
 jvm_library(
   name = "common_test_lib",
+  module_name = "intellij.agent.workbench.common",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":common"],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/util",
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":common",
     "//platform/util:util_test_lib",
-    "//platform/util:util-ui",
     "//platform/util:util-ui_test_lib",
     "//libraries/junit5",
     "//libraries/junit5:junit5_test_lib",
@@ -45,11 +43,47 @@ exports_files([
 ], visibility = ["//visibility:public"])
 ### auto-generated section `iml intellij.agent.workbench.common` end
 
-### auto-generated section `test intellij.agent.workbench.common` start
+### auto-generated section `build intellij.agent.workbench.common.tests` start
+jvm_library(
+  name = "agent-workbench-common-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "agent-workbench-common-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [
+    "//plugins/agent-workbench/common",
+    "//plugins/agent-workbench/common:common_test_lib",
+  ],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/util:util_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
+    "//libraries/assertj-core",
+    "//libraries/assertj-core:assertj-core_test_lib",
+  ],
+  runtime_deps = [":agent-workbench-common-tests"]
+)
+### auto-generated section `build intellij.agent.workbench.common.tests` end
+
+### auto-generated section `iml intellij.agent.workbench.common.tests` start
+exports_files([
+  "intellij.agent.workbench.common.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.agent.workbench.common.tests` end
+
+### auto-generated section `test intellij.agent.workbench.common.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "common_test",
-  runtime_deps = [":common_test_lib"]
+  name = "agent-workbench-common-tests_test",
+  runtime_deps = [":agent-workbench-common-tests_test_lib"]
 )
-### auto-generated section `test intellij.agent.workbench.common` end
+### auto-generated section `test intellij.agent.workbench.common.tests` end

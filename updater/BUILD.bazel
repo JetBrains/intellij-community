@@ -22,13 +22,12 @@ jvm_library(
 
 jvm_library(
   name = "updater_test_lib",
+  module_name = "intellij.tools.updater",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k11",
-  associates = [":updater"],
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "@lib//:jna",
+  runtime_deps = [
+    ":updater",
     "@lib//:junit5",
     "@lib//:assert_j",
   ]
@@ -41,11 +40,43 @@ exports_files([
 ], visibility = ["//visibility:public"])
 ### auto-generated section `iml intellij.tools.updater` end
 
-### auto-generated section `test intellij.tools.updater` start
+### auto-generated section `build intellij.tools.updater.tests` start
+jvm_library(
+  name = "tools-updater-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "tools-updater-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  associates = [
+    "//updater",
+    "//updater:updater_test_lib",
+  ],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:jna",
+    "@lib//:junit5",
+    "@lib//:assert_j",
+  ],
+  runtime_deps = [":tools-updater-tests"]
+)
+### auto-generated section `build intellij.tools.updater.tests` end
+
+### auto-generated section `iml intellij.tools.updater.tests` start
+exports_files([
+  "intellij.tools.updater.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.tools.updater.tests` end
+
+### auto-generated section `test intellij.tools.updater.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "updater_test",
-  runtime_deps = [":updater_test_lib"]
+  name = "tools-updater-tests_test",
+  runtime_deps = [":tools-updater-tests_test_lib"]
 )
-### auto-generated section `test intellij.tools.updater` end
+### auto-generated section `test intellij.tools.updater.tests` end

@@ -35,6 +35,8 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/jvm-debugger/testFramework",
     "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
   ],
   runtime_deps = [":testFramework"]
 )

@@ -20,12 +20,6 @@ resourcegroup(
   strip_prefix = "src/main/resources"
 )
 
-resourcegroup(
-  name = "ui_test_resources",
-  srcs = glob(["src/test/resources/**/*"]),
-  strip_prefix = "src/test/resources"
-)
-
 jvm_library(
   name = "ui",
   module_name = "intellij.platform.jewel.ui",
@@ -55,11 +49,82 @@ jvm_library(
 
 jvm_library(
   name = "ui_test_lib",
+  module_name = "intellij.platform.jewel.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_ui",
+  exports = [
+    "//platform/jewel/foundation",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
+    "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
+    "//libraries/compose-foundation-desktop",
+    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+  ],
+  runtime_deps = [
+    ":ui",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/skiko:skiko_test_lib",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+    "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
+    "//libraries/junit4",
+    "//libraries/junit4:junit4_test_lib",
+    "//libraries/compose-foundation-desktop-junit",
+    "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.platform.jewel.ui` end
+
+### auto-generated section `iml intellij.platform.jewel.ui` start
+exports_files([
+  "intellij.platform.jewel.ui.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jewel.ui` end
+
+### auto-generated section `build intellij.platform.jewel.ui.tests` start
+create_kotlinc_options(
+  name = "custom_ui-tests",
+  opt_in = [
+    "androidx.compose.ui.ExperimentalComposeUiApi",
+    "androidx.compose.foundation.ExperimentalFoundationApi",
+    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+    "org.jetbrains.jewel.foundation.InternalJewelApi",
+  ],
+  x_context_parameters = True,
+  x_explicit_api_mode = "strict"
+)
+
+resourcegroup(
+  name = "ui-tests_test_resources",
+  srcs = glob(["src/test/resources/**/*"]),
+  strip_prefix = "src/test/resources"
+)
+
+jvm_library(
+  name = "ui-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/jewel/foundation",
+    "@lib//:platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources",
+    "@lib//:platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources-desktop",
+    "//libraries/compose-foundation-desktop",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_library(
+  name = "ui-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
-  resources = [":ui_test_resources"],
-  kotlinc_opts = ":custom_ui",
-  associates = [":ui"],
+  resources = [":ui-tests_test_resources"],
+  kotlinc_opts = ":custom_ui-tests",
+  associates = [
+    "//platform/jewel/ui",
+    "//platform/jewel/ui:ui_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
@@ -69,8 +134,8 @@ jvm_library(
     "//libraries/skiko:skiko_test_lib",
     "//platform/jewel/foundation",
     "//platform/jewel/foundation:foundation_test_lib",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
+    "@lib//:platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources",
+    "@lib//:platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources-desktop",
     "//libraries/compose-foundation-desktop",
     "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
     "//libraries/compose-runtime-desktop",
@@ -83,26 +148,27 @@ jvm_library(
   exports = [
     "//platform/jewel/foundation",
     "//platform/jewel/foundation:foundation_test_lib",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
+    "@lib//:platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources",
+    "@lib//:platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources-desktop",
     "//libraries/compose-foundation-desktop",
     "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
   ],
+  runtime_deps = [":ui-tests"],
   plugins = ["@lib//:compose-plugin"]
 )
-### auto-generated section `build intellij.platform.jewel.ui` end
+### auto-generated section `build intellij.platform.jewel.ui.tests` end
 
-### auto-generated section `iml intellij.platform.jewel.ui` start
+### auto-generated section `iml intellij.platform.jewel.ui.tests` start
 exports_files([
-  "intellij.platform.jewel.ui.iml",
+  "intellij.platform.jewel.ui.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.platform.jewel.ui` end
+### auto-generated section `iml intellij.platform.jewel.ui.tests` end
 
-### auto-generated section `test intellij.platform.jewel.ui` start
+### auto-generated section `test intellij.platform.jewel.ui.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "ui_test",
-  runtime_deps = [":ui_test_lib"]
+  name = "ui-tests_test",
+  runtime_deps = [":ui-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.jewel.ui` end
+### auto-generated section `test intellij.platform.jewel.ui.tests` end

@@ -83,6 +83,10 @@ jvm_library(
     "//plugins/kotlin/jvm/k1:k1_test_lib",
     "//plugins/kotlin/jvm/k1:kotlin-jvm-k1-tests",
     "//plugins/kotlin/jvm/k1:kotlin-jvm-k1-tests_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.k1:kotlin-base-scripting-k1-tests",
+    "//plugins/kotlin/base/scripting/scripting.k1:kotlin-base-scripting-k1-tests_test_lib",
   ],
   runtime_deps = [":test-generator-fe10"]
 )

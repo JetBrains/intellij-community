@@ -30,14 +30,12 @@ jvm_library(
 
 jvm_library(
   name = "syntax_test_lib",
+  module_name = "intellij.platform.syntax",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  srcs = glob([], allow_empty = True),
   kotlinc_opts = ":custom_syntax",
-  associates = [":syntax"],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//platform/util/multiplatform",
+  runtime_deps = [
+    ":syntax",
     "//platform/util/multiplatform:multiplatform_test_lib",
     "//platform/multiplatformSupport",
     "//platform/multiplatformSupport:multiplatformSupport_test_lib",
@@ -53,11 +51,54 @@ exports_files([
 ], visibility = ["//visibility:public"])
 ### auto-generated section `iml intellij.platform.syntax` end
 
-### auto-generated section `test intellij.platform.syntax` start
+### auto-generated section `build intellij.platform.syntax.tests` start
+create_kotlinc_options(
+  name = "custom_tests",
+  jvm_target = "8",
+  x_no_call_assertions = True,
+  x_no_param_assertions = True
+)
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_tests",
+  associates = [
+    "//platform/syntax/syntax-api:syntax",
+    "//platform/syntax/syntax-api:syntax_test_lib",
+  ],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/multiplatform",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+    "//platform/multiplatformSupport",
+    "//platform/multiplatformSupport:multiplatformSupport_test_lib",
+    "@lib//:junit5",
+    "@lib//:kotlin-test",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.platform.syntax.tests` end
+
+### auto-generated section `iml intellij.platform.syntax.tests` start
+exports_files([
+  "intellij.platform.syntax.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.syntax.tests` end
+
+### auto-generated section `test intellij.platform.syntax.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "syntax_test",
-  runtime_deps = [":syntax_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.syntax` end
+### auto-generated section `test intellij.platform.syntax.tests` end

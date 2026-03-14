@@ -36,6 +36,8 @@ jvm_library(
     "//platform/util/jdom:jdom_test_lib",
     "//java/java-runtime:rt",
     "//java/java-runtime:rt_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
   ],
   runtime_deps = [":test-generator-api"]
 )

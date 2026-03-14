@@ -33,9 +33,52 @@ jvm_library(
 
 jvm_library(
   name = "client_test_lib",
+  module_name = "intellij.execution.process.mediator.client",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":client",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//libraries/protobuf:protobuf_test_lib",
+    "//platform/execution-process-mediator/daemon:daemon_test_lib",
+    "//platform/execution-process-mediator/common:common_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "@lib//:junit5",
+    "@lib//:jetbrains-annotations",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//libraries/grpc:grpc_test_lib",
+    "//libraries/grpc-netty-shaded:grpc-netty-shaded_test_lib",
+  ]
+)
+### auto-generated section `build intellij.execution.process.mediator.client` end
+
+### auto-generated section `iml intellij.execution.process.mediator.client` start
+exports_files([
+  "intellij.execution.process.mediator.client.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.execution.process.mediator.client` end
+
+### auto-generated section `build intellij.execution.process.mediator.client.tests` start
+jvm_library(
+  name = "execution-process-mediator-client-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "execution-process-mediator-client-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":client"],
+  associates = [
+    "//platform/execution-process-mediator/client",
+    "//platform/execution-process-mediator/client:client_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
@@ -60,30 +103,31 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
-    "@lib//:execution-process-mediator-client-grpc-inprocess",
+    "@lib//:execution-process-mediator-client-tests-grpc-inprocess",
     "//libraries/grpc",
     "//libraries/grpc:grpc_test_lib",
     "//libraries/grpc-netty-shaded",
     "//libraries/grpc-netty-shaded:grpc-netty-shaded_test_lib",
   ],
   runtime_deps = [
+    ":execution-process-mediator-client-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
   ]
 )
-### auto-generated section `build intellij.execution.process.mediator.client` end
+### auto-generated section `build intellij.execution.process.mediator.client.tests` end
 
-### auto-generated section `iml intellij.execution.process.mediator.client` start
+### auto-generated section `iml intellij.execution.process.mediator.client.tests` start
 exports_files([
-  "intellij.execution.process.mediator.client.iml",
+  "intellij.execution.process.mediator.client.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.execution.process.mediator.client` end
+### auto-generated section `iml intellij.execution.process.mediator.client.tests` end
 
-### auto-generated section `test intellij.execution.process.mediator.client` start
+### auto-generated section `test intellij.execution.process.mediator.client.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "client_test",
-  runtime_deps = [":client_test_lib"]
+  name = "execution-process-mediator-client-tests_test",
+  runtime_deps = [":execution-process-mediator-client-tests_test_lib"]
 )
-### auto-generated section `test intellij.execution.process.mediator.client` end
+### auto-generated section `test intellij.execution.process.mediator.client.tests` end

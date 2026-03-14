@@ -39,10 +39,68 @@ jvm_library(
 
 jvm_library(
   name = "product-dsl_test_lib",
+  module_name = "intellij.platform.buildScripts.productDsl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_product-dsl",
+  runtime_deps = [
+    ":product-dsl",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/pluginSystem/parser/impl:impl_test_lib",
+    "//platform/build-scripts/api:api_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/util/xmlDom:xmlDom_test_lib",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
+    "//libraries/assertj-core",
+    "//libraries/assertj-core:assertj-core_test_lib",
+    "//jps/model-impl",
+    "//jps/model-impl:model-impl_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/aalto-xml:aalto-xml_test_lib",
+    "//libraries/androidx-collections:androidx-collections_test_lib",
+    "//platform/build-scripts/product-dsl/plugin-graph:plugin-graph_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.buildScripts.productDsl` end
+
+### auto-generated section `iml intellij.platform.buildScripts.productDsl` start
+exports_files([
+  "intellij.platform.buildScripts.productDsl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.buildScripts.productDsl` end
+
+### auto-generated section `build intellij.platform.buildScripts.productDsl.tests` start
+create_kotlinc_options(
+  name = "custom_buildScripts-productDsl-tests",
+  opt_in = [
+    "kotlin.RequiresOptIn",
+    "kotlinx.serialization.ExperimentalSerializationApi",
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+  ]
+)
+
+jvm_library(
+  name = "buildScripts-productDsl-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "buildScripts-productDsl-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_product-dsl",
-  associates = [":product-dsl"],
+  kotlinc_opts = ":custom_buildScripts-productDsl-tests",
+  associates = [
+    "//platform/build-scripts/product-dsl",
+    "//platform/build-scripts/product-dsl:product-dsl_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/fastutil",
@@ -81,21 +139,22 @@ jvm_library(
     "//libraries/androidx-collections:androidx-collections_test_lib",
     "//platform/build-scripts/product-dsl/plugin-graph",
     "//platform/build-scripts/product-dsl/plugin-graph:plugin-graph_test_lib",
-  ]
+  ],
+  runtime_deps = [":buildScripts-productDsl-tests"]
 )
-### auto-generated section `build intellij.platform.buildScripts.productDsl` end
+### auto-generated section `build intellij.platform.buildScripts.productDsl.tests` end
 
-### auto-generated section `iml intellij.platform.buildScripts.productDsl` start
+### auto-generated section `iml intellij.platform.buildScripts.productDsl.tests` start
 exports_files([
-  "intellij.platform.buildScripts.productDsl.iml",
+  "intellij.platform.buildScripts.productDsl.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.platform.buildScripts.productDsl` end
+### auto-generated section `iml intellij.platform.buildScripts.productDsl.tests` end
 
-### auto-generated section `test intellij.platform.buildScripts.productDsl` start
+### auto-generated section `test intellij.platform.buildScripts.productDsl.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "product-dsl_test",
-  runtime_deps = [":product-dsl_test_lib"]
+  name = "buildScripts-productDsl-tests_test",
+  runtime_deps = [":buildScripts-productDsl-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.buildScripts.productDsl` end
+### auto-generated section `test intellij.platform.buildScripts.productDsl.tests` end

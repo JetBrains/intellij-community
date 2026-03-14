@@ -313,6 +313,8 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//platform/locking-impl",
     "//platform/locking-impl:locking-impl_test_lib",
+    "//platform/smRunner:smRunner-tests",
+    "//platform/smRunner:smRunner-tests_test_lib",
   ],
   exports = [
     "//plugins/java-i18n",

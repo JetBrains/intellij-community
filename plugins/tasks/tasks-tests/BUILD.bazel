@@ -104,6 +104,10 @@ jvm_library(
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/lang-core",
     "//platform/lang-core:lang-core_test_lib",
+    "//plugins/git4idea:vcs-git-tests",
+    "//plugins/git4idea:vcs-git-tests_test_lib",
+    "//plugins/hg4idea:vcs-hg-tests",
+    "//plugins/hg4idea:vcs-hg-tests_test_lib",
   ],
   runtime_deps = [
     ":tests",

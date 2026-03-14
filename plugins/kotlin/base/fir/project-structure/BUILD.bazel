@@ -184,6 +184,8 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
   ],
   runtime_deps = [":kotlin-projectStructure-tests"]
 )

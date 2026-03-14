@@ -26,9 +26,48 @@ jvm_library(
 
 jvm_library(
   name = "ijent_test_lib",
+  module_name = "intellij.platform.ijent",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/eel",
+    "//platform/eel:eel_test_lib",
+  ],
+  runtime_deps = [
+    ":ijent",
+    "@lib//:junit5",
+    "@lib//:kotlin-test-assertions-core-jvm",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/eel:eel_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.ijent` end
+
+### auto-generated section `iml intellij.platform.ijent` start
+exports_files([
+  "intellij.platform.ijent.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.ijent` end
+
+### auto-generated section `build intellij.platform.ijent.tests` start
+jvm_library(
+  name = "ijent-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["//platform/eel"]
+)
+
+jvm_library(
+  name = "ijent-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
-  associates = [":ijent"],
+  associates = [
+    "//platform/ijent",
+    "//platform/ijent:ijent_test_lib",
+  ],
   deps = [
     "@lib//:junit5",
     "@lib//:kotlin-stdlib",
@@ -47,21 +86,22 @@ jvm_library(
   exports = [
     "//platform/eel",
     "//platform/eel:eel_test_lib",
-  ]
+  ],
+  runtime_deps = [":ijent-tests"]
 )
-### auto-generated section `build intellij.platform.ijent` end
+### auto-generated section `build intellij.platform.ijent.tests` end
 
-### auto-generated section `iml intellij.platform.ijent` start
+### auto-generated section `iml intellij.platform.ijent.tests` start
 exports_files([
-  "intellij.platform.ijent.iml",
+  "intellij.platform.ijent.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.platform.ijent` end
+### auto-generated section `iml intellij.platform.ijent.tests` end
 
-### auto-generated section `test intellij.platform.ijent` start
+### auto-generated section `test intellij.platform.ijent.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "ijent_test",
-  runtime_deps = [":ijent_test_lib"]
+  name = "ijent-tests_test",
+  runtime_deps = [":ijent-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.ijent` end
+### auto-generated section `test intellij.platform.ijent.tests` end

@@ -47,9 +47,65 @@ jvm_library(
 
 jvm_library(
   name = "devkit_test_lib",
+  module_name = "intellij.platform.statistics.devkit",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":devkit",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/util/progress:progress_test_lib",
+    "//json/backend:backend_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/statistics/uploader:uploader_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+    "//libraries/jackson3/databind:databind_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.statistics.devkit` end
+
+### auto-generated section `iml intellij.platform.statistics.devkit` start
+exports_files([
+  "intellij.platform.statistics.devkit.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.statistics.devkit` end
+
+### auto-generated section `build intellij.platform.statistics.devkit.tests` start
+jvm_library(
+  name = "devkit-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "devkit-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":devkit"],
+  associates = [
+    "//platform/statistics/devkit",
+    "//platform/statistics/devkit:devkit_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -108,21 +164,24 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
   ],
-  runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
+  runtime_deps = [
+    ":devkit-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
 )
-### auto-generated section `build intellij.platform.statistics.devkit` end
+### auto-generated section `build intellij.platform.statistics.devkit.tests` end
 
-### auto-generated section `iml intellij.platform.statistics.devkit` start
+### auto-generated section `iml intellij.platform.statistics.devkit.tests` start
 exports_files([
-  "intellij.platform.statistics.devkit.iml",
+  "intellij.platform.statistics.devkit.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.platform.statistics.devkit` end
+### auto-generated section `iml intellij.platform.statistics.devkit.tests` end
 
-### auto-generated section `test intellij.platform.statistics.devkit` start
+### auto-generated section `test intellij.platform.statistics.devkit.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "devkit_test",
-  runtime_deps = [":devkit_test_lib"]
+  name = "devkit-tests_test",
+  runtime_deps = [":devkit-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.statistics.devkit` end
+### auto-generated section `test intellij.platform.statistics.devkit.tests` end

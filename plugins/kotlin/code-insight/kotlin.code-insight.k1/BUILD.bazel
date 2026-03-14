@@ -131,6 +131,8 @@ jvm_library(
     "//platform/lang-impl:lang-impl_test_lib",
     "//plugins/kotlin/kotlin.ide",
     "//plugins/kotlin/kotlin.ide:kotlin.ide_test_lib",
+    "//plugins/kotlin/base/code-insight:kotlin-base-codeInsight-tests",
+    "//plugins/kotlin/base/code-insight:kotlin-base-codeInsight-tests_test_lib",
   ],
   runtime_deps = [":kotlin-code-insight-k1-tests"]
 )

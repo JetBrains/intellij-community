@@ -190,6 +190,8 @@ jvm_library(
     "//plugins/kotlin/util/test-generator-fir:test-generator-fir_test_lib",
     "//plugins/kotlin/jvm/k2:kotlin-jvm-tests",
     "//plugins/kotlin/jvm/k2:kotlin-jvm-tests_test_lib",
+    "//plugins/kotlin/project-wizard/core:kotlin-projectWizard-core-tests",
+    "//plugins/kotlin/project-wizard/core:kotlin-projectWizard-core-tests_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.fir-all-tests` end

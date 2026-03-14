@@ -159,6 +159,8 @@ jvm_library(
     "//platform/execution:execution_test_lib",
     "//plugins/junit",
     "//plugins/junit:junit_test_lib",
+    "//plugins/groovy:groovy-tests",
+    "//plugins/groovy:groovy-tests_test_lib",
   ],
   exports = ["@lib//:kotlin-gradle-plugin-idea"],
   runtime_deps = [

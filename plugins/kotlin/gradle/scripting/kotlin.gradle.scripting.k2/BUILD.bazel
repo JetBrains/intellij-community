@@ -293,6 +293,8 @@ jvm_library(
     "//plugins/kotlin/base/fir/project-structure:kotlin-projectStructure-tests",
     "//plugins/kotlin/base/fir/project-structure:kotlin-projectStructure-tests_test_lib",
     "@lib//:junit5Pioneer",
+    "//plugins/groovy:groovy-tests",
+    "//plugins/groovy:groovy-tests_test_lib",
   ],
   runtime_deps = [
     ":kotlin-gradle-scripting-tests",

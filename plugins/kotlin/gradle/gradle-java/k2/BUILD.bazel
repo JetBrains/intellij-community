@@ -115,6 +115,8 @@ jvm_library(
     "//plugins/kotlin/fir/testFramework:testFramework_test_lib",
     "//jps/model-api:model",
     "//jps/model-api:model_test_lib",
+    "//plugins/groovy:groovy-tests",
+    "//plugins/groovy:groovy-tests_test_lib",
   ],
   runtime_deps = [":kotlin-gradle-java-tests"]
 )

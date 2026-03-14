@@ -36,15 +36,11 @@ jvm_library(
 
 jvm_library(
   name = "selfContainedProjects_test_lib",
+  module_name = "intellij.platform.testFramework.selfContainedProjects",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":selfContainedProjects"],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlinx-coroutines-core",
-    "@lib//:slf4j-api",
-    "@lib//:guava",
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":selfContainedProjects",
     "@lib//:junit5",
     "//platform/build-scripts/downloader",
     "//platform/build-scripts/downloader:downloader_test_lib",
@@ -63,3 +59,53 @@ exports_files([
   "intellij.platform.testFramework.selfContainedProjects.iml",
 ], visibility = ["//visibility:public"])
 ### auto-generated section `iml intellij.platform.testFramework.selfContainedProjects` end
+
+### auto-generated section `build intellij.platform.testFramework.selfContainedProjects.tests` start
+jvm_library(
+  name = "selfContainedProjects-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "selfContainedProjects-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [
+    "//platform/testFramework/selfContainedProjects",
+    "//platform/testFramework/selfContainedProjects:selfContainedProjects_test_lib",
+  ],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:slf4j-api",
+    "@lib//:guava",
+    "@lib//:junit5",
+    "//platform/build-scripts/downloader",
+    "//platform/build-scripts/downloader:downloader_test_lib",
+    "@lib//:kotlin-test",
+    "@lib//:kotlin-test-junit5",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/java-runtime:rt",
+    "//java/java-runtime:rt_test_lib",
+  ],
+  runtime_deps = [":selfContainedProjects-tests"]
+)
+### auto-generated section `build intellij.platform.testFramework.selfContainedProjects.tests` end
+
+### auto-generated section `iml intellij.platform.testFramework.selfContainedProjects.tests` start
+exports_files([
+  "intellij.platform.testFramework.selfContainedProjects.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.testFramework.selfContainedProjects.tests` end
+
+### auto-generated section `test intellij.platform.testFramework.selfContainedProjects.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "selfContainedProjects-tests_test",
+  runtime_deps = [":selfContainedProjects-tests_test_lib"]
+)
+### auto-generated section `test intellij.platform.testFramework.selfContainedProjects.tests` end

@@ -40,9 +40,61 @@ jvm_library(
 
 jvm_library(
   name = "java-rareRefactorings_test_lib",
+  module_name = "intellij.java.rareRefactorings",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":java-rareRefactorings",
+    "//java/java-impl:impl_test_lib",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//platform/code-style-impl:codeStyle-impl_test_lib",
+    "//java/openapi:java_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//platform/usageView:usageView_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/java-impl-refactorings:impl-refactorings_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//jps/model-api:model_test_lib",
+  ]
+)
+### auto-generated section `build intellij.java.rareRefactorings` end
+
+### auto-generated section `iml intellij.java.rareRefactorings` start
+exports_files([
+  "intellij.java.rareRefactorings.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.rareRefactorings` end
+
+### auto-generated section `build intellij.java.rareRefactorings.tests` start
+jvm_library(
+  name = "java-rareRefactorings-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "java-rareRefactorings-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":java-rareRefactorings"],
+  associates = [
+    "//plugins/rareJavaRefactorings:java-rareRefactorings",
+    "//plugins/rareJavaRefactorings:java-rareRefactorings_test_lib",
+  ],
   deps = [
     "//java/java-impl:impl",
     "//java/java-impl:impl_test_lib",
@@ -90,21 +142,24 @@ jvm_library(
     "//jps/model-api:model",
     "//jps/model-api:model_test_lib",
   ],
-  runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
+  runtime_deps = [
+    ":java-rareRefactorings-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
 )
-### auto-generated section `build intellij.java.rareRefactorings` end
+### auto-generated section `build intellij.java.rareRefactorings.tests` end
 
-### auto-generated section `iml intellij.java.rareRefactorings` start
+### auto-generated section `iml intellij.java.rareRefactorings.tests` start
 exports_files([
-  "intellij.java.rareRefactorings.iml",
+  "intellij.java.rareRefactorings.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.java.rareRefactorings` end
+### auto-generated section `iml intellij.java.rareRefactorings.tests` end
 
-### auto-generated section `test intellij.java.rareRefactorings` start
+### auto-generated section `test intellij.java.rareRefactorings.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "java-rareRefactorings_test",
-  runtime_deps = [":java-rareRefactorings_test_lib"]
+  name = "java-rareRefactorings-tests_test",
+  runtime_deps = [":java-rareRefactorings-tests_test_lib"]
 )
-### auto-generated section `test intellij.java.rareRefactorings` end
+### auto-generated section `test intellij.java.rareRefactorings.tests` end

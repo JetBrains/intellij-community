@@ -128,6 +128,10 @@ jvm_library(
     "@lib//:mockito",
     "@lib//:mockito-kotlin",
     "@lib//:commons-lang3",
+    "//plugins/terminal/completion:completion-tests",
+    "//plugins/terminal/completion:completion-tests_test_lib",
+    "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests",
+    "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests_test_lib",
   ],
   runtime_deps = [
     ":tests",

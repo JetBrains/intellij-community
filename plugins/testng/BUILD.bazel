@@ -13,12 +13,6 @@ resourcegroup(
   strip_prefix = "compatibilityResources"
 )
 
-resourcegroup(
-  name = "testng_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "testng",
   module_name = "intellij.testng",
@@ -69,10 +63,87 @@ jvm_library(
 
 jvm_library(
   name = "testng_test_lib",
+  module_name = "intellij.testng",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":testng",
+    "//java/openapi:java_test_lib",
+    "//java/execution/impl:impl_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//xml/xml-analysis-api:analysis",
+    "//xml/xml-analysis-api:analysis_test_lib",
+    "//java/debugger/impl:impl_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/debugger/openapi:java-debugger_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/testRunner:testRunner_test_lib",
+    "//java/java-runtime:rt_test_lib",
+    "//plugins/testng_rt:testng-rt_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//java/execution/openapi:java-execution_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//java/jsp-openapi:jsp_test_lib",
+    "//libraries/testng:testng_test_lib",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//xml/impl",
+    "//xml/impl:impl_test_lib",
+    "//platform/smRunner:smRunner_test_lib",
+    "//java/typeMigration:typeMigration_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "@lib//:junit4",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//java/java-impl-refactorings:impl-refactorings_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//libraries/jgoodies/forms:forms_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//jps/model-api:model_test_lib",
+  ]
+)
+### auto-generated section `build intellij.testng` end
+
+### auto-generated section `iml intellij.testng` start
+exports_files([
+  "intellij.testng.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.testng` end
+
+### auto-generated section `build intellij.testng.tests` start
+resourcegroup(
+  name = "testng-tests_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "testng-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "testng-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
-  resources = [":testng_test_resources"],
-  associates = [":testng"],
+  resources = [":testng-tests_test_resources"],
+  associates = [
+    "//plugins/testng",
+    "//plugins/testng:testng_test_lib",
+  ],
   deps = [
     "//java/openapi:java",
     "//java/openapi:java_test_lib",
@@ -152,24 +223,25 @@ jvm_library(
     "//jps/model-api:model_test_lib",
   ],
   runtime_deps = [
+    ":testng-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
   ]
 )
-### auto-generated section `build intellij.testng` end
+### auto-generated section `build intellij.testng.tests` end
 
-### auto-generated section `iml intellij.testng` start
+### auto-generated section `iml intellij.testng.tests` start
 exports_files([
-  "intellij.testng.iml",
+  "intellij.testng.tests.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.testng` end
+### auto-generated section `iml intellij.testng.tests` end
 
-### auto-generated section `test intellij.testng` start
+### auto-generated section `test intellij.testng.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "testng_test",
-  runtime_deps = [":testng_test_lib"]
+  name = "testng-tests_test",
+  runtime_deps = [":testng-tests_test_lib"]
 )
-### auto-generated section `test intellij.testng` end
+### auto-generated section `test intellij.testng.tests` end
