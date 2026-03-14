@@ -14,7 +14,6 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayloadValue
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JTree
 
 private const val MAX_INCLUDED_NODES = 10
@@ -40,8 +39,8 @@ internal class AgentPromptTreeSelectionContextContributor : AgentPromptContextCo
 
     val texts = LinkedHashSet<String>()
     for (path in selectionPaths) {
-      val userObject = TreeUtil.getLastUserObject(path) ?: continue
-      val text = userObject.toString().trim()
+      val node = path.lastPathComponent ?: continue
+      val text = node.toString().trim()
       if (text.isBlank()) continue
       texts.add(text)
     }
