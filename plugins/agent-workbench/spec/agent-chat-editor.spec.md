@@ -56,7 +56,14 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Restore metadata must be persisted in app-level cache-file-backed `AgentChatTabsStateService` keyed by `tabKey`.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Persisted tab-state payload must include project hash/path, thread identity/sub-agent, thread id, shell command, title, activity, and updated timestamp.
+- Persisted tab-state payload must include:
+  - project hash/path,
+  - thread identity/sub-agent and thread id,
+  - shell command, title, activity,
+  - pending Codex metadata (`pendingCreatedAtMs`, `pendingFirstInputAtMs`, `pendingLaunchMode`),
+  - concrete Codex `/new` rebinding metadata (`newThreadRebindRequestedAtMs`),
+  - initial prompt dispatch metadata (`initialMessageDispatchSteps`, `initialMessageDispatchStepIndex`, `initialMessageToken`, `initialMessageSent`),
+  - updated timestamp.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
 - Chat restore must restore all previously open Agent chat tabs, not only the selected one.
@@ -80,7 +87,34 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Reopening an already-open tab with a newer thread title must update existing tab presentation.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Editor tab icon must be provider-specific using canonical identity; `READY` is unbadged, non-`READY` activities use the activity badge mapping, unknown provider uses the default chat icon, and unknown activity defaults to `READY`.
+- Pending Codex tabs must capture first user-input timestamp once (on first terminal key event) and persist it for later rebind matching.
+  [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
+
+- Concrete top-level Codex tabs must detect execution of exact terminal command `/new`, persist a single rebind anchor timestamp (`newThreadRebindRequestedAtMs`), and request scoped refresh for the tab path.
+- `/new` detection must track the typed command line, handle backspace/delete and escape reset, and must not arm on partial commands or incidental `/new` substrings.
+  [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+
+- Concrete top-level Codex tabs armed by `/new` may be rebound to a newly discovered concrete thread for the same normalized path; rebinding must update tab identity, resume command, title, activity, and persisted snapshot, then clear the `/new` anchor.
+- Concrete `/new` rebinding must validate the persisted anchor timestamp before applying so stale refresh work cannot rebind after a newer `/new` request.
+- Concrete `/new` rebinding must skip if the target identity is already open, require a unique in-window target candidate, and clear stale anchors without rebinding.
+  [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
+  [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
+
+- Chat open requests may carry one initial-message dispatch plan with both optional startup launch override and optional ordered post-start dispatch steps.
+- On new-tab opens, startup launch override (when present) is transient and must suppress immediate post-start step persistence on creation.
+- On existing-tab opens, startup launch override is not applicable and post-start dispatch steps must update the existing tab state for readiness-gated delivery.
+- Post-start initial prompt steps must be dispatched only after terminal session state reaches `Running` and terminal output indicates startup readiness (first meaningful output plus idle stabilization window), not eagerly at editor initialization.
+- Readiness stabilization defaults: 250ms output-idle window after first meaningful output; if no readiness signal appears within 2s after `Running`, timeout fallback dispatch is allowed for non-plan messages.
+- Codex `/plan <prompt>` startup must dispatch as sequenced steps: first `/plan`, then stripped prompt body after the `/plan` step completes.
+- The Codex `/plan` step must not dispatch on readiness timeout and must continue waiting for explicit readiness until session termination/editor disposal.
+- After sending Codex `/plan`, chat must inspect new terminal output only since that send attempt; if Codex emits `'/plan' is disabled while a task is in progress.`, the same `/plan` step must remain pending, back off briefly, and retry before any prompt-body step is sent.
+- If the Codex `/plan` step produces no such rejection within the post-send observation window, it is treated as complete even if Codex emitted no explicit success text.
+- If terminal session reaches `Terminated` before `Running`, or the editor is disposed before `Running`, pending initial prompt metadata must remain unsent.
+- If initial prompt metadata is updated while waiting for `Running`, dispatch must use the latest metadata and stale in-flight dispatch attempts must not mark metadata as sent.
+  [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+
+- Editor tab icon must be provider-specific using canonical identity; every normalized `AgentThreadActivity` state is represented by an activity badge, unknown provider uses the default chat icon as the base icon, and unknown activity defaults to `READY`.
+- Pending YOLO-mode tabs must overlay a red error-dot badge on the provider icon (via `withYoloModeBadge`) to visually distinguish YOLO sessions from standard ones.
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
 - Provider icon lookup in chat/editor tab providers must use shared typed icon holder (`AgentWorkbenchCommonIcons`), not inline path-based icon loading.

@@ -5,6 +5,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -15,7 +16,36 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
-import kotlinx.coroutines.cancel
+import com.intellij.terminal.frontend.view.TerminalKeyEvent
+import com.intellij.terminal.frontend.view.TerminalView
+import com.intellij.terminal.frontend.view.TerminalViewSessionState
+import com.intellij.util.asDisposable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.yield
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
+import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
+import org.jetbrains.plugins.terminal.view.TerminalOffset
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import java.awt.BorderLayout
 import java.awt.event.KeyEvent
 import java.beans.PropertyChangeListener
@@ -195,25 +225,38 @@ internal class AgentChatFileEditor(
       if (state != TerminalViewSessionState.Running) {
         return@launch
       }
+      var readinessCheckpoint: AgentChatTerminalOutputCheckpoint? = null
       while (true) {
         when (createdTab.awaitInitialMessageReadiness(
           timeoutMs = INITIAL_MESSAGE_READINESS_TIMEOUT_MS,
           idleMs = INITIAL_MESSAGE_OUTPUT_IDLE_MS,
+          checkpoint = readinessCheckpoint,
         )) {
-          AgentChatTerminalInputReadiness.READY -> {
-            sendInitialMessageIfReady(createdTab)
-            return@launch
-          }
+          AgentChatTerminalInputReadiness.READY -> Unit
           AgentChatTerminalInputReadiness.TIMEOUT -> {
             if (file.shouldDelayInitialMessageOnReadinessTimeout()) {
               yield()
               continue
             }
-            sendInitialMessageIfReady(createdTab)
-            return@launch
           }
           AgentChatTerminalInputReadiness.TERMINATED -> return@launch
         }
+
+        val sendResult = sendInitialMessageIfReady(createdTab)
+        if (sendResult.nextReadinessCheckpoint != null) {
+          readinessCheckpoint = sendResult.nextReadinessCheckpoint
+        }
+        if (!sendResult.progressed) {
+          if (createdTab.sessionState.value != TerminalViewSessionState.Running || !file.hasPendingInitialMessageForDispatch()) {
+            return@launch
+          }
+          yield()
+          continue
+        }
+        if (!file.hasPendingInitialMessageForDispatch()) {
+          return@launch
+        }
+        yield()
       }
     }.also { job ->
       job.invokeOnCompletion {
@@ -224,11 +267,12 @@ internal class AgentChatFileEditor(
     }
   }
 
-  private suspend fun sendInitialMessageIfReady(createdTab: AgentChatTerminalTab): Boolean {
+  private suspend fun sendInitialMessageIfReady(createdTab: AgentChatTerminalTab): AgentChatInitialMessageSendResult {
     if (createdTab.sessionState.value != TerminalViewSessionState.Running) {
-      return false
+      return AgentChatInitialMessageSendResult.NO_PROGRESS
     }
-    val dispatch = file.acquireInitialMessageDispatch() ?: return false
+    val dispatch = file.acquireInitialMessageDispatch() ?: return AgentChatInitialMessageSendResult.NO_PROGRESS
+    val readinessCheckpoint = createdTab.captureOutputCheckpoint()
     try {
       createdTab.sendText(dispatch.message, shouldExecute = true)
     }
@@ -238,13 +282,47 @@ internal class AgentChatFileEditor(
     }
     catch (_: Throwable) {
       file.cancelInitialMessageDispatch(dispatch)
-      return false
+      return AgentChatInitialMessageSendResult.NO_PROGRESS
+    }
+    if (dispatch.completionPolicy == AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY) {
+      val observation = createdTab.awaitOutputObservation(
+        checkpoint = readinessCheckpoint,
+        timeoutMs = INITIAL_MESSAGE_POST_SEND_OBSERVATION_TIMEOUT_MS,
+        idleMs = INITIAL_MESSAGE_POST_SEND_OUTPUT_IDLE_MS,
+      )
+      if (observation.readiness == AgentChatTerminalInputReadiness.TERMINATED) {
+        file.cancelInitialMessageDispatch(dispatch)
+        return AgentChatInitialMessageSendResult.NO_PROGRESS
+      }
+      if (observation.text.contains(CODEX_PLAN_MODE_BUSY_MESSAGE)) {
+        file.cancelInitialMessageDispatch(dispatch)
+        delay(CODEX_PLAN_MODE_RETRY_BACKOFF_MS.milliseconds)
+        return AgentChatInitialMessageSendResult(
+          progressed = false,
+          nextReadinessCheckpoint = createdTab.captureOutputCheckpoint(),
+        )
+      }
     }
     if (!file.completeInitialMessageDispatch(dispatch)) {
-      return false
+      return AgentChatInitialMessageSendResult(
+        progressed = false,
+        nextReadinessCheckpoint = readinessCheckpoint.takeIf { file.hasPendingInitialMessageForDispatch() },
+      )
     }
     tabSnapshotWriter.upsert(file.toSnapshot())
-    return true
+    return AgentChatInitialMessageSendResult(
+      progressed = true,
+      nextReadinessCheckpoint = readinessCheckpoint.takeIf { file.hasPendingInitialMessageForDispatch() },
+    )
+  }
+}
+
+private data class AgentChatInitialMessageSendResult(
+  @JvmField val progressed: Boolean,
+  @JvmField val nextReadinessCheckpoint: AgentChatTerminalOutputCheckpoint? = null,
+) {
+  companion object {
+    val NO_PROGRESS: AgentChatInitialMessageSendResult = AgentChatInitialMessageSendResult(progressed = false)
   }
 }
 
@@ -270,10 +348,32 @@ internal interface AgentChatTerminalTab {
   val terminalView: TerminalView?
     get() = null
 
-  suspend fun awaitInitialMessageReadiness(timeoutMs: Long, idleMs: Long): AgentChatTerminalInputReadiness
+  suspend fun captureOutputCheckpoint(): AgentChatTerminalOutputCheckpoint
+
+  suspend fun awaitOutputObservation(
+    checkpoint: AgentChatTerminalOutputCheckpoint,
+    timeoutMs: Long,
+    idleMs: Long,
+  ): AgentChatTerminalOutputObservation
+
+  suspend fun awaitInitialMessageReadiness(
+    timeoutMs: Long,
+    idleMs: Long,
+    checkpoint: AgentChatTerminalOutputCheckpoint? = null,
+  ): AgentChatTerminalInputReadiness
 
   fun sendText(text: String, shouldExecute: Boolean)
 }
+
+internal data class AgentChatTerminalOutputCheckpoint(
+  @JvmField val regularEndOffset: Long,
+  @JvmField val alternativeEndOffset: Long,
+)
+
+internal data class AgentChatTerminalOutputObservation(
+  @JvmField val readiness: AgentChatTerminalInputReadiness,
+  @JvmField val text: String,
+)
 
 internal enum class AgentChatTerminalInputReadiness {
   READY,
@@ -350,12 +450,48 @@ private class ToolWindowAgentChatTerminalTab(
   override val terminalView: TerminalView
     get() = delegate.view
 
-  override suspend fun awaitInitialMessageReadiness(timeoutMs: Long, idleMs: Long): AgentChatTerminalInputReadiness {
+  override suspend fun awaitInitialMessageReadiness(
+    timeoutMs: Long,
+    idleMs: Long,
+    checkpoint: AgentChatTerminalOutputCheckpoint?,
+  ): AgentChatTerminalInputReadiness {
     val outputModels = delegate.view.outputModels
     return awaitTerminalInitialMessageReadiness(
       sessionState = delegate.view.sessionState,
       regularOutputModel = outputModels.regular,
       alternativeOutputModel = outputModels.alternative,
+      timeoutMs = timeoutMs,
+      idleMs = idleMs,
+      checkpoint = checkpoint,
+      onMeaningfulOutput = {
+        if (provider != null && AgentSessionProviders.find(provider)?.emitsScopedRefreshSignals == true) {
+          notifyAgentChatTerminalOutputForRefresh(provider = provider, projectPath = projectPath)
+        }
+      },
+    )
+  }
+
+  override suspend fun captureOutputCheckpoint(): AgentChatTerminalOutputCheckpoint {
+    val outputModels = delegate.view.outputModels
+    return withContext(Dispatchers.EDT) {
+      AgentChatTerminalOutputCheckpoint(
+        regularEndOffset = outputModels.regular.endOffset.toAbsolute(),
+        alternativeEndOffset = outputModels.alternative.endOffset.toAbsolute(),
+      )
+    }
+  }
+
+  override suspend fun awaitOutputObservation(
+    checkpoint: AgentChatTerminalOutputCheckpoint,
+    timeoutMs: Long,
+    idleMs: Long,
+  ): AgentChatTerminalOutputObservation {
+    val outputModels = delegate.view.outputModels
+    return awaitTerminalOutputObservation(
+      sessionState = delegate.view.sessionState,
+      regularOutputModel = outputModels.regular,
+      alternativeOutputModel = outputModels.alternative,
+      checkpoint = checkpoint,
       timeoutMs = timeoutMs,
       idleMs = idleMs,
       onMeaningfulOutput = {
@@ -426,7 +562,57 @@ internal suspend fun awaitTerminalInitialMessageReadiness(
   alternativeOutputModel: TerminalOutputModel,
   timeoutMs: Long,
   idleMs: Long,
+  checkpoint: AgentChatTerminalOutputCheckpoint? = null,
   onMeaningfulOutput: () -> Unit = {},
+): AgentChatTerminalInputReadiness {
+  return awaitTerminalOutputReadiness(
+    sessionState = sessionState,
+    regularOutputModel = regularOutputModel,
+    alternativeOutputModel = alternativeOutputModel,
+    timeoutMs = timeoutMs,
+    idleMs = idleMs,
+    onMeaningfulOutput = onMeaningfulOutput,
+    checkpoint = checkpoint,
+  )
+}
+
+internal suspend fun awaitTerminalOutputObservation(
+  sessionState: StateFlow<TerminalViewSessionState>,
+  regularOutputModel: TerminalOutputModel,
+  alternativeOutputModel: TerminalOutputModel,
+  checkpoint: AgentChatTerminalOutputCheckpoint,
+  timeoutMs: Long,
+  idleMs: Long,
+  onMeaningfulOutput: () -> Unit = {},
+): AgentChatTerminalOutputObservation {
+  val readiness = awaitTerminalOutputReadiness(
+    sessionState = sessionState,
+    regularOutputModel = regularOutputModel,
+    alternativeOutputModel = alternativeOutputModel,
+    timeoutMs = timeoutMs,
+    idleMs = idleMs,
+    onMeaningfulOutput = onMeaningfulOutput,
+    checkpoint = checkpoint,
+  )
+  val text = withContext(Dispatchers.EDT) {
+    readTerminalOutputSince(
+      regularOutputModel = regularOutputModel,
+      alternativeOutputModel = alternativeOutputModel,
+      checkpoint = checkpoint,
+    )
+  }
+  return AgentChatTerminalOutputObservation(readiness = readiness, text = text)
+}
+
+@OptIn(FlowPreview::class)
+private suspend fun awaitTerminalOutputReadiness(
+  sessionState: StateFlow<TerminalViewSessionState>,
+  regularOutputModel: TerminalOutputModel,
+  alternativeOutputModel: TerminalOutputModel,
+  timeoutMs: Long,
+  idleMs: Long,
+  onMeaningfulOutput: () -> Unit,
+  checkpoint: AgentChatTerminalOutputCheckpoint? = null,
 ): AgentChatTerminalInputReadiness {
   if (sessionState.value == TerminalViewSessionState.Terminated) {
     return AgentChatTerminalInputReadiness.TERMINATED
@@ -437,6 +623,7 @@ internal suspend fun awaitTerminalInitialMessageReadiness(
       regularOutputModel = regularOutputModel,
       alternativeOutputModel = alternativeOutputModel,
       onMeaningfulOutput = onMeaningfulOutput,
+      checkpoint = checkpoint,
     )
       .debounce(idleMs.milliseconds)
       .map { AgentChatTerminalInputReadiness.READY },
@@ -454,6 +641,7 @@ private fun meaningfulTerminalOutputFlow(
   regularOutputModel: TerminalOutputModel,
   alternativeOutputModel: TerminalOutputModel,
   onMeaningfulOutput: () -> Unit,
+  checkpoint: AgentChatTerminalOutputCheckpoint? = null,
 ): Flow<Unit> = callbackFlow {
   val scope = this
   val outputModels = listOf(regularOutputModel, alternativeOutputModel)
@@ -475,7 +663,18 @@ private fun meaningfulTerminalOutputFlow(
       model.addListener(listenerDisposable, listener)
     }
 
-    if (scope.isActive && outputModels.any(::hasAnyMeaningfulTerminalOutput)) {
+    if (
+      scope.isActive && outputModels.any { model ->
+        hasMeaningfulTerminalOutput(
+          model = model,
+          checkpointOffset = when (model) {
+            regularOutputModel -> checkpoint?.regularEndOffset
+            alternativeOutputModel -> checkpoint?.alternativeEndOffset
+            else -> null
+          },
+        )
+      }
+    ) {
       onMeaningfulOutput()
       scope.trySend(Unit)
     }
@@ -484,11 +683,46 @@ private fun meaningfulTerminalOutputFlow(
   awaitClose()
 }
 
-private fun hasAnyMeaningfulTerminalOutput(model: TerminalOutputModel): Boolean {
+private fun hasMeaningfulTerminalOutput(model: TerminalOutputModel, checkpointOffset: Long? = null): Boolean {
   val end = model.endOffset
-  val availableChars = end - model.startOffset
-  val start = if (availableChars > READINESS_SCAN_LIMIT_CHARS) end - READINESS_SCAN_LIMIT_CHARS else model.startOffset
+  val availableStart = maxTerminalOffset(
+    model.startOffset,
+    checkpointOffset?.let(TerminalOffset::of) ?: model.startOffset,
+  )
+  val availableChars = end - availableStart
+  if (availableChars <= 0) {
+    return false
+  }
+  val start = if (availableChars > READINESS_SCAN_LIMIT_CHARS) end - READINESS_SCAN_LIMIT_CHARS else availableStart
   return model.getText(start, end).any(::isMeaningfulTerminalOutputChar)
+}
+
+private fun readTerminalOutputSince(
+  regularOutputModel: TerminalOutputModel,
+  alternativeOutputModel: TerminalOutputModel,
+  checkpoint: AgentChatTerminalOutputCheckpoint,
+): String {
+  return listOf(
+    readTerminalOutputChunk(regularOutputModel, checkpoint.regularEndOffset),
+    readTerminalOutputChunk(alternativeOutputModel, checkpoint.alternativeEndOffset),
+  )
+    .filter { it.isNotEmpty() }
+    .joinToString(separator = "\n")
+}
+
+private fun readTerminalOutputChunk(model: TerminalOutputModel, checkpointOffset: Long): String {
+  val end = model.endOffset
+  val availableStart = maxTerminalOffset(model.startOffset, TerminalOffset.of(checkpointOffset))
+  val availableChars = end - availableStart
+  if (availableChars <= 0) {
+    return ""
+  }
+  val boundedStart = if (availableChars > POST_SEND_SCAN_LIMIT_CHARS) end - POST_SEND_SCAN_LIMIT_CHARS else availableStart
+  return model.getText(boundedStart, end).toString()
+}
+
+private fun maxTerminalOffset(first: TerminalOffset, second: TerminalOffset): TerminalOffset {
+  return if (first.toAbsolute() >= second.toAbsolute()) first else second
 }
 
 internal fun isMeaningfulTerminalOutputChange(event: TerminalContentChangeEvent): Boolean {
@@ -501,4 +735,9 @@ private fun isMeaningfulTerminalOutputChar(char: Char): Boolean {
 
 private const val INITIAL_MESSAGE_READINESS_TIMEOUT_MS: Long = 2_000
 private const val INITIAL_MESSAGE_OUTPUT_IDLE_MS: Long = 250
+private const val INITIAL_MESSAGE_POST_SEND_OBSERVATION_TIMEOUT_MS: Long = 750
+private const val INITIAL_MESSAGE_POST_SEND_OUTPUT_IDLE_MS: Long = 150
+private const val CODEX_PLAN_MODE_RETRY_BACKOFF_MS: Long = 250
+private const val POST_SEND_SCAN_LIMIT_CHARS: Long = 8_192
 private const val READINESS_SCAN_LIMIT_CHARS: Long = 8_192
+private const val CODEX_PLAN_MODE_BUSY_MESSAGE: String = "'/plan' is disabled while a task is in progress."
