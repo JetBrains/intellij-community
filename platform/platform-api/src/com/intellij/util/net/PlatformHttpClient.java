@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.HttpRequests.HttpStatusException;
 import com.intellij.util.net.ssl.CertificateManager;
@@ -131,6 +132,7 @@ public final class PlatformHttpClient {
       response = client.send(request, bodyHandler);
     }
     catch (IOException e) {
+      ProgressManager.checkCanceled();
       var cause = e.getCause();
       if (cause instanceof IOException && e.getMessage().contains("too many authentication attempts")) {
         var stack = cause.getStackTrace();
