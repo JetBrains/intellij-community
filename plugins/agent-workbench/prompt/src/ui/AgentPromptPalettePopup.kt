@@ -551,7 +551,7 @@ internal class AgentPromptPalettePopup(
     // Extension tabs: restore from taskDrafts, fall back to extension's initial text
     for (entry in activeExtensionTabs) {
       val savedText = savedDrafts[entry.taskKey]
-      if (savedText != null) {
+      if (!savedText.isNullOrBlank()) {
         taskPromptTexts[entry.taskKey] = savedText
       }
       else {
