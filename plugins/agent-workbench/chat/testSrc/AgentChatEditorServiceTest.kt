@@ -2,7 +2,10 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.service
@@ -87,6 +90,33 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
+  fun testNewTabPersistsMultiStepInitialMessageMetadata(): Unit = timeoutRunBlocking {
+    val steps = codexPlanDispatchSteps("Refactor selected code")
+    openChatInModal(
+      threadIdentity = "CODEX:thread-multi-step-new",
+      shellCommand = codexCommand,
+      threadId = "thread-multi-step-new",
+      threadTitle = "Multi-step new thread",
+      subAgentId = null,
+      postStartDispatchSteps = steps,
+      initialMessageToken = "multi-step-new-token",
+    )
+
+    val file = openedChatFiles().single()
+    assertThat(file.initialMessageDispatchSteps).containsExactlyElementsOf(steps)
+    assertThat(file.initialMessageDispatchStepIndex).isZero()
+    assertThat(file.initialComposedMessage).isEqualTo("/plan")
+    assertThat(file.initialMessageToken).isEqualTo("multi-step-new-token")
+    assertThat(file.initialMessageSent).isFalse()
+
+    val persisted = checkNotNull(service<AgentChatTabsService>().load(file.tabKey))
+    assertThat(persisted.runtime.initialMessageDispatchSteps).containsExactlyElementsOf(steps)
+    assertThat(persisted.runtime.initialMessageDispatchStepIndex).isZero()
+    assertThat(persisted.runtime.initialMessageToken).isEqualTo("multi-step-new-token")
+    assertThat(persisted.runtime.initialMessageSent).isFalse()
+  }
+
+  @Test
   fun testNewTabStartupCommandOverrideDoesNotPersistInitialMessageMetadata(): Unit = timeoutRunBlocking {
     openChatInModal(
       threadIdentity = "CODEX:thread-startup-1",
@@ -163,6 +193,41 @@ class AgentChatEditorServiceTest {
     assertThat(file.initialComposedMessage).isEqualTo("Send through open-tab flow")
     assertThat(file.initialMessageToken).isEqualTo("startup-token-2")
     assertThat(file.initialMessageSent).isFalse()
+  }
+
+  @Test
+  fun testExistingTabReusePersistsMultiStepInitialMessageMetadata(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CODEX:thread-existing-multi-step",
+      shellCommand = codexCommand,
+      threadId = "thread-existing-multi-step",
+      threadTitle = "Existing multi-step thread",
+      subAgentId = null,
+    )
+
+    val steps = codexPlanDispatchSteps("Follow-up prompt")
+    openChatInModal(
+      threadIdentity = "CODEX:thread-existing-multi-step",
+      shellCommand = codexCommand,
+      threadId = "thread-existing-multi-step",
+      threadTitle = "Existing multi-step thread",
+      subAgentId = null,
+      postStartDispatchSteps = steps,
+      initialMessageToken = "existing-multi-step-token",
+    )
+
+    val file = openedChatFiles().single()
+    assertThat(file.initialMessageDispatchSteps).containsExactlyElementsOf(steps)
+    assertThat(file.initialMessageDispatchStepIndex).isZero()
+    assertThat(file.initialComposedMessage).isEqualTo("/plan")
+    assertThat(file.initialMessageToken).isEqualTo("existing-multi-step-token")
+    assertThat(file.initialMessageSent).isFalse()
+
+    val persisted = checkNotNull(service<AgentChatTabsService>().load(file.tabKey))
+    assertThat(persisted.runtime.initialMessageDispatchSteps).containsExactlyElementsOf(steps)
+    assertThat(persisted.runtime.initialMessageDispatchStepIndex).isZero()
+    assertThat(persisted.runtime.initialMessageToken).isEqualTo("existing-multi-step-token")
+    assertThat(persisted.runtime.initialMessageSent).isFalse()
   }
 
   @Test
@@ -990,6 +1055,48 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
+  fun testResolveFromPathRestoresMultiStepInitialMessageProgress(): Unit = timeoutRunBlocking {
+    val tabsService = service<AgentChatTabsService>()
+    val steps = listOf(
+      AgentInitialMessageDispatchStep(text = "step one"),
+      AgentInitialMessageDispatchStep(text = "step two"),
+    )
+    val snapshot = AgentChatTabSnapshot.create(
+      projectHash = project.locationHash,
+      projectPath = projectPath,
+      threadIdentity = "CODEX:multi-step-restore",
+      threadId = "multi-step-restore",
+      threadTitle = "Multi-step restore",
+      subAgentId = null,
+      shellCommand = codexCommand,
+      initialMessageDispatchSteps = steps,
+      initialMessageDispatchStepIndex = 1,
+      initialMessageToken = "token-multi-step-restore",
+      initialMessageSent = false,
+    )
+    tabsService.upsert(snapshot)
+    try {
+      val restored = tabsService.resolveFromPath(snapshot.tabKey.toPath()) as AgentChatTabResolution.Resolved
+      assertThat(restored.snapshot.runtime.initialMessageDispatchSteps).containsExactlyElementsOf(steps)
+      assertThat(restored.snapshot.runtime.initialMessageDispatchStepIndex).isEqualTo(1)
+      assertThat(restored.snapshot.runtime.initialMessageToken).isEqualTo("token-multi-step-restore")
+      assertThat(restored.snapshot.runtime.initialMessageSent).isFalse()
+
+      val file = checkNotNull(runInUi {
+        agentChatVirtualFileSystem().findFileByPath(snapshot.tabKey.toPath())
+      }) as AgentChatVirtualFile
+      assertThat(file.initialMessageDispatchSteps).containsExactlyElementsOf(steps)
+      assertThat(file.initialMessageDispatchStepIndex).isEqualTo(1)
+      assertThat(file.initialComposedMessage).isEqualTo("step two")
+      assertThat(file.initialMessageToken).isEqualTo("token-multi-step-restore")
+      assertThat(file.initialMessageSent).isFalse()
+    }
+    finally {
+      tabsService.forget(snapshot.tabKey)
+    }
+  }
+
+  @Test
   fun testFirstWriteAfterVersionMismatchPurgesLegacyEntries(): Unit = timeoutRunBlocking {
     val tabsService = service<AgentChatTabsService>()
     val stateService = service<AgentChatTabsStateService>()
@@ -1076,13 +1183,21 @@ class AgentChatEditorServiceTest {
     pendingFirstInputAtMs: Long? = null,
     pendingLaunchMode: String? = null,
     initialComposedMessage: String? = null,
+    postStartDispatchSteps: List<AgentInitialMessageDispatchStep> = emptyList(),
     initialMessageToken: String? = null,
   ) {
+    val effectivePostStartDispatchSteps = postStartDispatchSteps.ifEmpty {
+      initialComposedMessage
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { message -> listOf(AgentInitialMessageDispatchStep(text = message)) }
+        .orEmpty()
+    }
     val initialMessageDispatchPlan = AgentInitialMessageDispatchPlan(
       startupLaunchSpecOverride = startupShellCommandOverride?.let { command ->
         AgentSessionTerminalLaunchSpec(command = command, envVariables = startupShellEnvOverride.orEmpty())
       },
-      initialComposedMessage = initialComposedMessage,
+      postStartDispatchSteps = effectivePostStartDispatchSteps,
       initialMessageToken = initialMessageToken,
     )
     openChat(
@@ -1099,7 +1214,7 @@ class AgentChatEditorServiceTest {
       pendingLaunchMode = pendingLaunchMode,
       initialMessageDispatchPlan = initialMessageDispatchPlan,
     )
-    waitForCondition {
+    waitForCondition(timeoutMs = 10_000) {
       openedChatFiles().any { file ->
         file.threadIdentity == threadIdentity &&
         file.subAgentId == subAgentId &&
@@ -1108,6 +1223,20 @@ class AgentChatEditorServiceTest {
         file.shellCommand == shellCommand
       }
     }
+  }
+
+  private fun codexPlanDispatchSteps(prompt: String): List<AgentInitialMessageDispatchStep> {
+    return listOf(
+      AgentInitialMessageDispatchStep(
+        text = "/plan",
+        timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+        completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
+      ),
+      AgentInitialMessageDispatchStep(
+        text = prompt,
+        timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+      ),
+    )
   }
 
   private suspend fun editorTabTitle(file: AgentChatVirtualFile): String {

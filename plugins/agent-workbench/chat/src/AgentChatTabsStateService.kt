@@ -5,6 +5,8 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.SerializablePersistentStateComponent
@@ -207,11 +209,20 @@ internal data class PersistedAgentChatTabState(
   @JvmField val pendingFirstInputAtMs: Long? = null,
   @JvmField val pendingLaunchMode: String? = null,
   @JvmField val newThreadRebindRequestedAtMs: Long? = null,
+  @JvmField val initialMessageDispatchSteps: List<PersistedAgentChatInitialMessageDispatchStep> = emptyList(),
+  @JvmField val initialMessageDispatchStepIndex: Int = 0,
   @JvmField val initialComposedMessage: String? = null,
   @JvmField val initialMessageToken: String? = null,
   @JvmField val initialMessageSent: Boolean = false,
   @JvmField val initialMessageTimeoutPolicy: String = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK.name,
   @JvmField val updatedAt: Long,
+)
+
+@Serializable
+internal data class PersistedAgentChatInitialMessageDispatchStep(
+  @JvmField val text: String,
+  @JvmField val timeoutPolicy: String = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK.name,
+  @JvmField val completionPolicy: String = AgentInitialMessageDispatchCompletionPolicy.IMMEDIATE.name,
 )
 
 private fun deleteLegacyMetadataDirectory() {
@@ -249,6 +260,29 @@ private fun isExpired(updatedAt: Long, now: Long): Boolean {
 private fun PersistedAgentChatTabState.toSnapshot(tabKey: AgentChatTabKey): AgentChatTabSnapshot {
   val resolvedPendingCreatedAtMs = pendingCreatedAtMs
     ?: updatedAt.takeIf { it > 0L && isPersistedPendingThreadIdentity(threadIdentity) }
+  val runtimeSteps = if (initialMessageDispatchSteps.isNotEmpty()) {
+    initialMessageDispatchSteps.mapNotNull(PersistedAgentChatInitialMessageDispatchStep::toRuntime)
+  }
+  else {
+    initialComposedMessage
+      ?.trim()
+      ?.takeIf { it.isNotEmpty() }
+      ?.let { message ->
+        listOf(
+          AgentInitialMessageDispatchStep(
+            text = message,
+            timeoutPolicy = parseInitialMessageTimeoutPolicy(initialMessageTimeoutPolicy),
+          )
+        )
+      }
+      .orEmpty()
+  }
+  val runtimeStepIndex = when {
+    runtimeSteps.isEmpty() -> 0
+    initialMessageSent -> runtimeSteps.size
+    initialMessageDispatchSteps.isEmpty() -> 0
+    else -> initialMessageDispatchStepIndex.coerceIn(0, runtimeSteps.size)
+  }
   return AgentChatTabSnapshot(
     tabKey = tabKey,
     identity = AgentChatTabIdentity(
@@ -267,15 +301,20 @@ private fun PersistedAgentChatTabState.toSnapshot(tabKey: AgentChatTabKey): Agen
       pendingFirstInputAtMs = pendingFirstInputAtMs,
       pendingLaunchMode = pendingLaunchMode,
       newThreadRebindRequestedAtMs = newThreadRebindRequestedAtMs,
-      initialComposedMessage = initialComposedMessage,
+      initialMessageDispatchSteps = runtimeSteps,
+      initialMessageDispatchStepIndex = runtimeStepIndex,
       initialMessageToken = initialMessageToken,
       initialMessageSent = initialMessageSent,
-      initialMessageTimeoutPolicy = parseInitialMessageTimeoutPolicy(initialMessageTimeoutPolicy),
     ),
   )
 }
 
 private fun AgentChatTabSnapshot.toPersisted(updatedAt: Long): PersistedAgentChatTabState {
+  val legacySingleStep = runtime.initialMessageDispatchSteps.singleOrNull()
+    ?.takeIf { step ->
+      runtime.initialMessageDispatchStepIndex == 0 &&
+      step.completionPolicy == AgentInitialMessageDispatchCompletionPolicy.IMMEDIATE
+    }
   return PersistedAgentChatTabState(
     projectHash = identity.projectHash,
     projectPath = identity.projectPath,
@@ -290,11 +329,33 @@ private fun AgentChatTabSnapshot.toPersisted(updatedAt: Long): PersistedAgentCha
     pendingFirstInputAtMs = runtime.pendingFirstInputAtMs,
     pendingLaunchMode = runtime.pendingLaunchMode,
     newThreadRebindRequestedAtMs = runtime.newThreadRebindRequestedAtMs,
-    initialComposedMessage = runtime.initialComposedMessage,
+    initialMessageDispatchSteps = runtime.initialMessageDispatchSteps.map(AgentInitialMessageDispatchStep::toPersisted),
+    initialMessageDispatchStepIndex = runtime.initialMessageDispatchStepIndex,
+    initialComposedMessage = legacySingleStep?.text,
     initialMessageToken = runtime.initialMessageToken,
     initialMessageSent = runtime.initialMessageSent,
-    initialMessageTimeoutPolicy = runtime.initialMessageTimeoutPolicy.name,
+    initialMessageTimeoutPolicy = legacySingleStep?.timeoutPolicy?.name ?: AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK.name,
     updatedAt = updatedAt,
+  )
+}
+
+private fun PersistedAgentChatInitialMessageDispatchStep.toRuntime(): AgentInitialMessageDispatchStep? {
+  val normalizedText = text.trim()
+  if (normalizedText.isEmpty()) {
+    return null
+  }
+  return AgentInitialMessageDispatchStep(
+    text = normalizedText,
+    timeoutPolicy = parseInitialMessageTimeoutPolicy(timeoutPolicy),
+    completionPolicy = parseInitialMessageDispatchCompletionPolicy(completionPolicy),
+  )
+}
+
+private fun AgentInitialMessageDispatchStep.toPersisted(): PersistedAgentChatInitialMessageDispatchStep {
+  return PersistedAgentChatInitialMessageDispatchStep(
+    text = text,
+    timeoutPolicy = timeoutPolicy.name,
+    completionPolicy = completionPolicy.name,
   )
 }
 
@@ -314,4 +375,9 @@ private fun parseThreadActivity(value: String): AgentThreadActivity {
 private fun parseInitialMessageTimeoutPolicy(value: String): AgentInitialMessageTimeoutPolicy {
   return runCatching { AgentInitialMessageTimeoutPolicy.valueOf(value) }
     .getOrDefault(AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK)
+}
+
+private fun parseInitialMessageDispatchCompletionPolicy(value: String): AgentInitialMessageDispatchCompletionPolicy {
+  return runCatching { AgentInitialMessageDispatchCompletionPolicy.valueOf(value) }
+    .getOrDefault(AgentInitialMessageDispatchCompletionPolicy.IMMEDIATE)
 }

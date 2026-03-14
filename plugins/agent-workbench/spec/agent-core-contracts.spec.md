@@ -70,12 +70,12 @@ Define the single source of truth for cross-feature behavior that must stay cons
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
 
-- Provider bridge policy may explicitly disable startup prompt command usage for a launch request (for example Codex Plan mode), forcing post-start message send path.
+- Provider bridge policy may explicitly disable startup prompt command usage for a launch request (for example Codex Plan mode), forcing post-start dispatch.
   [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Initial prompt handoff from Sessions to Chat must use one dispatch plan carrying:
   - optional startup launch-spec override,
-  - optional post-start metadata (`initialComposedMessage`, `initialMessageToken`, `initialMessageTimeoutPolicy`).
+  - optional ordered post-start dispatch steps (`postStartDispatchSteps`) plus `initialMessageToken`.
   [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
@@ -83,12 +83,14 @@ Define the single source of truth for cross-feature behavior that must stay cons
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
-- If startup command support is unavailable, inapplicable for the open target (for example existing-tab reuse), or exceeds command-size guard, post-start send-once initial message metadata must be used.
+- If startup command support is unavailable, inapplicable for the open target (for example existing-tab reuse), or exceeds command-size guard, post-start dispatch steps must be used.
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Post-start initial message fallback must be terminal-readiness-gated for all providers: dispatch only after terminal session reaches `Running` and startup output readiness heuristic, never before process readiness.
-- If readiness signal is missing, timeout fallback dispatch may proceed after bounded timeout except for Codex plan-mode command messages (`/plan` command form), which must continue waiting for explicit readiness.
+- If readiness signal is missing, timeout fallback dispatch may proceed after bounded timeout except for Codex `/plan` dispatch steps, which must continue waiting for explicit readiness.
+- Codex `/plan <prompt>` must not use startup prompt injection: Workbench must keep it on post-start dispatch as two steps (`/plan`, then stripped prompt body), because the Codex TUI startup prompt is plain input text rather than slash-command parsing.
+- The Codex `/plan` step must retry when post-send terminal output contains `'/plan' is disabled while a task is in progress.` and must not advance to the prompt-body step until that retry condition clears.
   [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
 
 - Editor-tab popup contract for a selected Agent chat tab must expose exactly these actions with this placement:

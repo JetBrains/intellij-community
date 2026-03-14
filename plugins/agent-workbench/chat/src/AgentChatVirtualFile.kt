@@ -3,6 +3,8 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.diagnostic.debug
@@ -75,16 +77,19 @@ internal class AgentChatVirtualFile internal constructor(
   var newThreadRebindRequestedAtMs: Long? = null
     private set
 
-  var initialComposedMessage: String? = null
+  var initialMessageDispatchSteps: List<AgentInitialMessageDispatchStep> = emptyList()
     private set
+
+  var initialMessageDispatchStepIndex: Int = 0
+    private set
+
+  val initialComposedMessage: String?
+    get() = currentPendingInitialMessageStep()?.text
 
   var initialMessageToken: String? = null
     private set
 
   var initialMessageSent: Boolean = false
-    private set
-
-  var initialMessageTimeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK
     private set
 
   private var initialMessageDispatchInFlight: AgentChatInitialMessageDispatch? = null
@@ -215,57 +220,79 @@ internal class AgentChatVirtualFile internal constructor(
 
   @Synchronized
   fun updateInitialMessageMetadata(
-    initialComposedMessage: String?,
+    initialMessageDispatchSteps: List<AgentInitialMessageDispatchStep>,
+    initialMessageDispatchStepIndex: Int,
     initialMessageToken: String?,
     initialMessageSent: Boolean,
-    initialMessageTimeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
   ): Boolean {
-    val normalizedMessage = initialComposedMessage?.takeIf { it.isNotBlank() }
+    val normalizedSteps = initialMessageDispatchSteps.filter { step -> step.text.isNotBlank() }
+    val normalizedStepIndex = initialMessageDispatchStepIndex.coerceIn(0, normalizedSteps.size)
     if (
-      this.initialComposedMessage == normalizedMessage &&
+      this.initialMessageDispatchSteps == normalizedSteps &&
+      this.initialMessageDispatchStepIndex == normalizedStepIndex &&
       this.initialMessageToken == initialMessageToken &&
-      this.initialMessageSent == initialMessageSent &&
-      this.initialMessageTimeoutPolicy == initialMessageTimeoutPolicy
+      this.initialMessageSent == initialMessageSent
     ) {
       return false
     }
-    this.initialComposedMessage = normalizedMessage
+    this.initialMessageDispatchSteps = normalizedSteps
+    this.initialMessageDispatchStepIndex = normalizedStepIndex
     this.initialMessageToken = initialMessageToken
     this.initialMessageSent = initialMessageSent
-    this.initialMessageTimeoutPolicy = initialMessageTimeoutPolicy
     initialMessageDispatchInFlight = null
     return true
   }
 
   @Synchronized
+  fun updateInitialMessageMetadata(
+    initialComposedMessage: String?,
+    initialMessageToken: String?,
+    initialMessageSent: Boolean,
+    initialMessageTimeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
+  ): Boolean {
+    val steps = initialComposedMessage
+      ?.trim()
+      ?.takeIf { it.isNotEmpty() }
+      ?.let { message -> listOf(AgentInitialMessageDispatchStep(text = message, timeoutPolicy = initialMessageTimeoutPolicy)) }
+      .orEmpty()
+    val stepIndex = if (steps.isEmpty() || !initialMessageSent) 0 else steps.size
+    return updateInitialMessageMetadata(
+      initialMessageDispatchSteps = steps,
+      initialMessageDispatchStepIndex = stepIndex,
+      initialMessageToken = initialMessageToken,
+      initialMessageSent = initialMessageSent,
+    )
+  }
+
+  @Synchronized
   fun hasPendingInitialMessageForDispatch(): Boolean {
-    return !initialMessageSent && !initialComposedMessage.isNullOrBlank()
+    return currentPendingInitialMessageStep() != null
   }
 
   @Synchronized
   fun shouldDelayInitialMessageOnReadinessTimeout(): Boolean {
-    if (initialMessageSent || initialMessageTimeoutPolicy != AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS) {
-      return false
-    }
-    val message = initialComposedMessage?.trim().orEmpty()
-    return message.isNotEmpty()
+    return currentPendingInitialMessageStep()?.timeoutPolicy == AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS
   }
 
   @Synchronized
   fun acquireInitialMessageDispatch(): AgentChatInitialMessageDispatch? {
-    if (initialMessageSent) {
-      return null
-    }
-    val message = initialComposedMessage?.trim().orEmpty()
+    val stepIndex = initialMessageDispatchStepIndex
+    val currentStep = currentPendingInitialMessageStep() ?: return null
+    val message = currentStep.text.trim()
     if (message.isEmpty()) {
       return null
     }
     val token = initialMessageToken
     val inFlight = initialMessageDispatchInFlight
-    if (inFlight != null && inFlight.message == message && inFlight.token == token) {
+    if (inFlight != null && inFlight.message == message && inFlight.token == token && inFlight.stepIndex == stepIndex) {
       return null
     }
-    return AgentChatInitialMessageDispatch(message = message, token = token).also {
+    return AgentChatInitialMessageDispatch(
+      message = message,
+      token = token,
+      stepIndex = stepIndex,
+      completionPolicy = currentStep.completionPolicy,
+    ).also {
       initialMessageDispatchInFlight = it
     }
   }
@@ -275,12 +302,20 @@ internal class AgentChatVirtualFile internal constructor(
     if (initialMessageDispatchInFlight !== dispatch) {
       return false
     }
-    val currentMessage = initialComposedMessage?.trim().orEmpty()
-    if (currentMessage.isEmpty() || initialMessageSent || initialMessageToken != dispatch.token || currentMessage != dispatch.message) {
+    val currentStep = currentPendingInitialMessageStep()
+    val currentMessage = currentStep?.text?.trim().orEmpty()
+    if (
+      currentMessage.isEmpty() ||
+      initialMessageSent ||
+      initialMessageToken != dispatch.token ||
+      currentMessage != dispatch.message ||
+      initialMessageDispatchStepIndex != dispatch.stepIndex
+    ) {
       initialMessageDispatchInFlight = null
       return false
     }
-    initialMessageSent = true
+    initialMessageDispatchStepIndex += 1
+    initialMessageSent = initialMessageDispatchStepIndex >= initialMessageDispatchSteps.size
     initialMessageDispatchInFlight = null
     return true
   }
@@ -290,6 +325,14 @@ internal class AgentChatVirtualFile internal constructor(
     if (initialMessageDispatchInFlight === dispatch) {
       initialMessageDispatchInFlight = null
     }
+  }
+
+  @Synchronized
+  private fun currentPendingInitialMessageStep(): AgentInitialMessageDispatchStep? {
+    if (initialMessageSent) {
+      return null
+    }
+    return initialMessageDispatchSteps.getOrNull(initialMessageDispatchStepIndex)
   }
 
   fun markPendingFirstInputAtMsIfAbsent(timestampMs: Long): Boolean {
@@ -379,10 +422,10 @@ internal class AgentChatVirtualFile internal constructor(
       changed = true
     }
     if (updateInitialMessageMetadata(
-        initialComposedMessage = null,
+        initialMessageDispatchSteps = emptyList(),
+        initialMessageDispatchStepIndex = 0,
         initialMessageToken = null,
         initialMessageSent = false,
-        initialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
       )) {
       changed = true
     }
@@ -432,10 +475,10 @@ internal class AgentChatVirtualFile internal constructor(
     )
     updateNewThreadRebindRequestedAtMs(snapshot.runtime.newThreadRebindRequestedAtMs)
     updateInitialMessageMetadata(
-      initialComposedMessage = snapshot.runtime.initialComposedMessage,
+      initialMessageDispatchSteps = snapshot.runtime.initialMessageDispatchSteps,
+      initialMessageDispatchStepIndex = snapshot.runtime.initialMessageDispatchStepIndex,
       initialMessageToken = snapshot.runtime.initialMessageToken,
       initialMessageSent = snapshot.runtime.initialMessageSent,
-      initialMessageTimeoutPolicy = snapshot.runtime.initialMessageTimeoutPolicy,
     )
   }
 
@@ -465,10 +508,10 @@ internal class AgentChatVirtualFile internal constructor(
         pendingFirstInputAtMs = pendingFirstInputAtMs,
         pendingLaunchMode = pendingLaunchMode,
         newThreadRebindRequestedAtMs = newThreadRebindRequestedAtMs,
-        initialComposedMessage = initialComposedMessage,
+        initialMessageDispatchSteps = initialMessageDispatchSteps,
+        initialMessageDispatchStepIndex = initialMessageDispatchStepIndex,
         initialMessageToken = initialMessageToken,
         initialMessageSent = initialMessageSent,
-        initialMessageTimeoutPolicy = initialMessageTimeoutPolicy,
       ),
     )
   }
@@ -477,6 +520,8 @@ internal class AgentChatVirtualFile internal constructor(
 internal class AgentChatInitialMessageDispatch internal constructor(
   val message: String,
   val token: String?,
+  val stepIndex: Int,
+  val completionPolicy: AgentInitialMessageDispatchCompletionPolicy,
 )
 
 private fun resolveFileName(tabKey: String): String {

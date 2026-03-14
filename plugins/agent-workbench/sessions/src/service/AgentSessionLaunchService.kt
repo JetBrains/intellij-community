@@ -20,12 +20,16 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessa
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchError
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchResult
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.isPlanModeCommand
+import com.intellij.agent.workbench.sessions.core.providers.stripPlanModePrefix
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTargetKind
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetry
@@ -513,26 +517,27 @@ private fun buildCreateSessionActionKey(path: String, provider: AgentSessionProv
   return "$CREATE_SESSION_ACTION_KEY_PREFIX:$path:$provider:mode=$mode"
 }
 
-private fun buildInitialMessageToken(identity: String, message: String): String {
-  return "$identity:${message.hashCode()}:${System.nanoTime()}"
-}
-
 private fun buildInitialMessageDispatchPlan(
     descriptor: AgentSessionProviderDescriptor,
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,
     identity: String,
     initialMessagePlan: AgentInitialMessagePlan,
 ): AgentInitialMessageDispatchPlan {
-  val initialComposedMessage = initialMessagePlan.message ?: return AgentInitialMessageDispatchPlan.EMPTY
+  val postStartDispatchSteps = buildPostStartDispatchSteps(
+    provider = descriptor.provider,
+    initialMessagePlan = initialMessagePlan,
+  )
+  if (postStartDispatchSteps.isEmpty()) {
+    return AgentInitialMessageDispatchPlan.EMPTY
+  }
   return AgentInitialMessageDispatchPlan(
     startupLaunchSpecOverride = buildStartupLaunchSpecOverride(
       descriptor = descriptor,
       baseLaunchSpec = baseLaunchSpec,
       initialMessagePlan = initialMessagePlan,
     ),
-    initialComposedMessage = initialComposedMessage,
-    initialMessageToken = buildInitialMessageToken(identity = identity, message = initialComposedMessage),
-    initialMessageTimeoutPolicy = initialMessagePlan.timeoutPolicy,
+    postStartDispatchSteps = postStartDispatchSteps,
+    initialMessageToken = buildInitialMessageToken(identity = identity, steps = postStartDispatchSteps),
   )
 }
 
@@ -545,6 +550,12 @@ private fun buildStartupLaunchSpecOverride(
     return null
   }
   val prompt = initialMessagePlan.message ?: return null
+  if (descriptor.provider == AgentSessionProvider.CODEX && prompt.isPlanModeCommand()) {
+    LOG.debug {
+      "Skipped startup prompt command override for ${descriptor.provider.value}: plan-mode commands must stay on post-start dispatch"
+    }
+    return null
+  }
   val startupLaunchSpec = descriptor.buildLaunchSpecWithInitialPrompt(baseLaunchSpec = baseLaunchSpec, prompt = prompt) ?: return null
   val estimatedCommandSize = estimateCommandSizeBytes(startupLaunchSpec.command)
   if (estimatedCommandSize <= MAX_STARTUP_COMMAND_BYTES) {
@@ -558,6 +569,44 @@ private fun buildStartupLaunchSpecOverride(
 
 private fun estimateCommandSizeBytes(command: List<String>): Int {
   return command.sumOf { part -> part.toByteArray().size + 1 }
+}
+
+private fun buildPostStartDispatchSteps(
+  provider: AgentSessionProvider,
+  initialMessagePlan: AgentInitialMessagePlan,
+): List<AgentInitialMessageDispatchStep> {
+  val message = initialMessagePlan.message ?: return emptyList()
+  if (provider != AgentSessionProvider.CODEX || !message.isPlanModeCommand()) {
+    return listOf(
+      AgentInitialMessageDispatchStep(
+        text = message,
+        timeoutPolicy = initialMessagePlan.timeoutPolicy,
+      )
+    )
+  }
+
+  val steps = mutableListOf(
+    AgentInitialMessageDispatchStep(
+      text = "/plan",
+      timeoutPolicy = initialMessagePlan.timeoutPolicy,
+      completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
+    )
+  )
+  val strippedPrompt = message.stripPlanModePrefix()
+  if (strippedPrompt.isNotEmpty()) {
+    steps += AgentInitialMessageDispatchStep(
+      text = strippedPrompt,
+      timeoutPolicy = initialMessagePlan.timeoutPolicy,
+    )
+  }
+  return steps
+}
+
+private fun buildInitialMessageToken(identity: String, steps: List<AgentInitialMessageDispatchStep>): String {
+  val sequenceKey = steps.joinToString(separator = "\u0000") { step ->
+    listOf(step.text, step.timeoutPolicy.name, step.completionPolicy.name).joinToString(separator = "\u0001")
+  }
+  return "$identity:${sequenceKey.hashCode()}:${System.nanoTime()}"
 }
 
 private suspend fun resolvePromptInitialMessageDispatchPlan(

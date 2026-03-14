@@ -63,7 +63,7 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
   - shell command, title, activity,
   - pending Codex metadata (`pendingCreatedAtMs`, `pendingFirstInputAtMs`, `pendingLaunchMode`),
   - concrete Codex `/new` rebinding metadata (`newThreadRebindRequestedAtMs`),
-  - initial prompt metadata (`initialComposedMessage`, `initialMessageToken`, `initialMessageSent`, `initialMessageTimeoutPolicy`),
+  - initial prompt dispatch metadata (`initialMessageDispatchSteps`, `initialMessageDispatchStepIndex`, `initialMessageToken`, `initialMessageSent`),
   - updated timestamp.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
@@ -108,12 +108,15 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
-- Chat open requests may carry a single initial-message dispatch plan that includes both optional startup launch override and optional post-start metadata.
-- On new-tab opens, startup launch override (when present) is transient and must suppress immediate post-start metadata persistence on creation.
-- On existing-tab opens, startup launch override is not applicable and post-start metadata must update the existing tab state for readiness-gated dispatch.
-- Post-start initial prompt metadata (`initialComposedMessage`, `initialMessageToken`) must be dispatched only after terminal session state reaches `Running` and terminal output indicates startup readiness (first meaningful output plus idle stabilization window), not eagerly at editor initialization.
+- Chat open requests may carry one initial-message dispatch plan with both optional startup launch override and optional ordered post-start dispatch steps.
+- On new-tab opens, startup launch override (when present) is transient and must suppress immediate post-start step persistence on creation.
+- On existing-tab opens, startup launch override is not applicable and post-start dispatch steps must update the existing tab state for readiness-gated delivery.
+- Post-start initial prompt steps must be dispatched only after terminal session state reaches `Running` and terminal output indicates startup readiness (first meaningful output plus idle stabilization window), not eagerly at editor initialization.
 - Readiness stabilization defaults: 250ms output-idle window after first meaningful output; if no readiness signal appears within 2s after `Running`, timeout fallback dispatch is allowed for non-plan messages.
-- Codex plan-mode command messages (`/plan` command form) must not dispatch on readiness timeout and must continue waiting for explicit readiness until session termination/editor disposal.
+- Codex `/plan <prompt>` startup must dispatch as sequenced steps: first `/plan`, then stripped prompt body after the `/plan` step completes.
+- The Codex `/plan` step must not dispatch on readiness timeout and must continue waiting for explicit readiness until session termination/editor disposal.
+- After sending Codex `/plan`, chat must inspect new terminal output only since that send attempt; if Codex emits `'/plan' is disabled while a task is in progress.`, the same `/plan` step must remain pending, back off briefly, and retry before any prompt-body step is sent.
+- If the Codex `/plan` step produces no such rejection within the post-send observation window, it is treated as complete even if Codex emitted no explicit success text.
 - If terminal session reaches `Terminated` before `Running`, or the editor is disposed before `Running`, pending initial prompt metadata must remain unsent.
 - If initial prompt metadata is updated while waiting for `Running`, dispatch must use the latest metadata and stale in-flight dispatch attempts must not mark metadata as sent.
   [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt

@@ -10,7 +10,6 @@ import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecs
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.application.ApplicationManager
@@ -172,15 +171,9 @@ suspend fun openChat(
   val existing = findExistingChatByTabKey(manager.openFiles, tabKey.value)
                  ?: findExistingChat(manager.openFiles, threadIdentity, subAgentId)
   val startupOverrideForNewTab = if (existing == null) initialMessageDispatchPlan.startupLaunchSpecOverride else null
-  val snapshotInitialComposedMessage = if (startupOverrideForNewTab != null) null else initialMessageDispatchPlan.initialComposedMessage
+  val snapshotInitialMessageDispatchSteps = if (startupOverrideForNewTab != null) emptyList() else initialMessageDispatchPlan.postStartDispatchSteps
   val snapshotInitialMessageToken = if (startupOverrideForNewTab != null) null else initialMessageDispatchPlan.initialMessageToken
   val snapshotInitialMessageSent = false
-  val snapshotInitialMessageTimeoutPolicy = if (startupOverrideForNewTab != null) {
-    AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK
-  }
-  else {
-    initialMessageDispatchPlan.initialMessageTimeoutPolicy
-  }
   val snapshot = AgentChatTabSnapshot.create(
     projectHash = project.locationHash,
     projectPath = projectPath,
@@ -195,10 +188,9 @@ suspend fun openChat(
     pendingFirstInputAtMs = pendingFirstInputAtMs,
     pendingLaunchMode = pendingLaunchMode,
     newThreadRebindRequestedAtMs = existing?.newThreadRebindRequestedAtMs,
-    initialComposedMessage = snapshotInitialComposedMessage,
+    initialMessageDispatchSteps = snapshotInitialMessageDispatchSteps,
     initialMessageToken = snapshotInitialMessageToken,
     initialMessageSent = snapshotInitialMessageSent,
-    initialMessageTimeoutPolicy = snapshotInitialMessageTimeoutPolicy,
   )
   LOG.debug {
     "openChat(project=${project.name}, path=$projectPath, identity=$threadIdentity, " +
@@ -228,15 +220,14 @@ suspend fun openChat(
       false
     }
     val initialMessageUpdated = if (
-      initialMessageDispatchPlan.initialComposedMessage != null ||
-      initialMessageDispatchPlan.initialMessageToken != null ||
-      initialMessageDispatchPlan.initialMessageTimeoutPolicy != AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK
+      initialMessageDispatchPlan.postStartDispatchSteps.isNotEmpty() ||
+      initialMessageDispatchPlan.initialMessageToken != null
     ) {
       existing.updateInitialMessageMetadata(
-        initialComposedMessage = initialMessageDispatchPlan.initialComposedMessage,
+        initialMessageDispatchSteps = initialMessageDispatchPlan.postStartDispatchSteps,
+        initialMessageDispatchStepIndex = 0,
         initialMessageToken = initialMessageDispatchPlan.initialMessageToken,
         initialMessageSent = false,
-        initialMessageTimeoutPolicy = initialMessageDispatchPlan.initialMessageTimeoutPolicy,
       )
     }
     else {

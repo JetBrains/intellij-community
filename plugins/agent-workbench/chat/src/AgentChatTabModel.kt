@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 
 internal data class AgentChatTabIdentity(
@@ -21,10 +22,10 @@ internal data class AgentChatTabRuntime(
   @JvmField val pendingFirstInputAtMs: Long? = null,
   @JvmField val pendingLaunchMode: String? = null,
   @JvmField val newThreadRebindRequestedAtMs: Long? = null,
-  @JvmField val initialComposedMessage: String? = null,
+  @JvmField val initialMessageDispatchSteps: List<AgentInitialMessageDispatchStep> = emptyList(),
+  @JvmField val initialMessageDispatchStepIndex: Int = 0,
   @JvmField val initialMessageToken: String? = null,
   @JvmField val initialMessageSent: Boolean = false,
-  @JvmField val initialMessageTimeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
 )
 
 internal data class AgentChatTabSnapshot(
@@ -47,11 +48,18 @@ internal data class AgentChatTabSnapshot(
       pendingFirstInputAtMs: Long? = null,
       pendingLaunchMode: String? = null,
       newThreadRebindRequestedAtMs: Long? = null,
-      initialComposedMessage: String? = null,
       initialMessageToken: String? = null,
       initialMessageSent: Boolean = false,
       initialMessageTimeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
+      initialMessageDispatchSteps: List<AgentInitialMessageDispatchStep> = emptyList(),
+      initialMessageDispatchStepIndex: Int = 0,
+      initialComposedMessage: String? = null,
     ): AgentChatTabSnapshot {
+      val normalizedDispatchSteps = normalizeInitialMessageDispatchSteps(
+        initialMessageDispatchSteps = initialMessageDispatchSteps,
+        initialComposedMessage = initialComposedMessage,
+        initialMessageTimeoutPolicy = initialMessageTimeoutPolicy,
+      )
       val identity = AgentChatTabIdentity(
         projectHash = projectHash,
         projectPath = projectPath,
@@ -71,14 +79,34 @@ internal data class AgentChatTabSnapshot(
           pendingFirstInputAtMs = pendingFirstInputAtMs,
           pendingLaunchMode = pendingLaunchMode,
           newThreadRebindRequestedAtMs = newThreadRebindRequestedAtMs,
-          initialComposedMessage = initialComposedMessage,
+          initialMessageDispatchSteps = normalizedDispatchSteps,
+          initialMessageDispatchStepIndex = initialMessageDispatchStepIndex.coerceIn(0, normalizedDispatchSteps.size),
           initialMessageToken = initialMessageToken,
           initialMessageSent = initialMessageSent,
-          initialMessageTimeoutPolicy = initialMessageTimeoutPolicy,
         ),
       )
     }
   }
+}
+
+private fun normalizeInitialMessageDispatchSteps(
+  initialMessageDispatchSteps: List<AgentInitialMessageDispatchStep>,
+  initialComposedMessage: String?,
+  initialMessageTimeoutPolicy: AgentInitialMessageTimeoutPolicy,
+): List<AgentInitialMessageDispatchStep> {
+  if (initialMessageDispatchSteps.isNotEmpty()) {
+    return initialMessageDispatchSteps.filter { step -> step.text.isNotBlank() }
+  }
+  val normalizedMessage = initialComposedMessage?.trim().orEmpty()
+  if (normalizedMessage.isEmpty()) {
+    return emptyList()
+  }
+  return listOf(
+    AgentInitialMessageDispatchStep(
+      text = normalizedMessage,
+      timeoutPolicy = initialMessageTimeoutPolicy,
+    )
+  )
 }
 
 internal sealed interface AgentChatTabResolution {

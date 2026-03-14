@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -220,10 +222,10 @@ class AgentChatFileEditorLifecycleTest {
     terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
     val file = testFile().also {
       it.updateInitialMessageMetadata(
-        initialComposedMessage = "/plan Send only after explicit readiness",
+        initialMessageDispatchSteps = codexPlanDispatchSteps("Send only after explicit readiness"),
+        initialMessageDispatchStepIndex = 0,
         initialMessageToken = "token-plan-timeout",
         initialMessageSent = false,
-        initialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
       )
     }
     val editor = testEditor(file = file, terminalTabs = terminalTabs)
@@ -238,29 +240,126 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
-  fun codexPlanModeTimeoutThenReadySendsInitialMessageOnce() {
+  fun codexPlanModeTimeoutThenFreshReadySignalsSendPlanStepThenPrompt() {
     val terminalTabs = FakeAgentChatTerminalTabs()
-    terminalTabs.tab.enqueueReadiness(
-      AgentChatTerminalInputReadiness.TIMEOUT,
-      AgentChatTerminalInputReadiness.READY,
-    )
+    terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
     val file = testFile().also {
       it.updateInitialMessageMetadata(
-        initialComposedMessage = "/plan Send after retry",
+        initialMessageDispatchSteps = codexPlanDispatchSteps("Send after retry"),
+        initialMessageDispatchStepIndex = 0,
         initialMessageToken = "token-plan-timeout-ready",
         initialMessageSent = false,
-        initialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
       )
     }
     val editor = testEditor(file = file, terminalTabs = terminalTabs)
 
     editor.selectNotify()
     terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
-    waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
+    Thread.sleep(100)
+    assertThat(terminalTabs.tab.sentTexts).isEmpty()
+
+    terminalTabs.tab.emitMeaningfulOutput("ready for /plan")
+    waitForCondition {
+      file.initialMessageDispatchStepIndex == 1 &&
+      terminalTabs.tab.sentTexts.size == 1
+    }
+
+    assertThat(file.initialMessageSent).isFalse()
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(SentTerminalText("/plan", shouldExecute = true))
+
+    terminalTabs.tab.emitMeaningfulOutput("ready for prompt")
+    waitForCondition { terminalTabs.tab.sentTexts.size == 2 }
 
     assertThat(file.initialMessageSent).isTrue()
     assertThat(terminalTabs.tab.sentTexts)
-      .containsExactly(SentTerminalText("/plan Send after retry", shouldExecute = true))
+      .containsExactly(
+        SentTerminalText("/plan", shouldExecute = true),
+        SentTerminalText("Send after retry", shouldExecute = true),
+      )
+  }
+
+  @Test
+  fun codexPlanModeBusyResponseRetriesPlanStepBeforePrompt() {
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
+    terminalTabs.tab.enqueuePostSendOutput("'/plan' is disabled while a task is in progress.")
+    val file = testFile().also {
+      it.updateInitialMessageMetadata(
+        initialMessageDispatchSteps = codexPlanDispatchSteps("Retry after busy output"),
+        initialMessageDispatchStepIndex = 0,
+        initialMessageToken = "token-plan-busy",
+        initialMessageSent = false,
+      )
+    }
+    val editor = testEditor(file = file, terminalTabs = terminalTabs)
+
+    editor.selectNotify()
+    terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
+    terminalTabs.tab.emitMeaningfulOutput("ready for first /plan")
+    waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
+
+    Thread.sleep(400)
+    assertThat(file.initialMessageSent).isFalse()
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(SentTerminalText("/plan", shouldExecute = true))
+
+    terminalTabs.tab.emitMeaningfulOutput("ready for retry")
+    waitForCondition {
+      file.initialMessageDispatchStepIndex == 1 &&
+      terminalTabs.tab.sentTexts.size == 2
+    }
+
+    assertThat(file.initialMessageSent).isFalse()
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(
+        SentTerminalText("/plan", shouldExecute = true),
+        SentTerminalText("/plan", shouldExecute = true),
+      )
+
+    terminalTabs.tab.emitMeaningfulOutput("ready for prompt")
+    waitForCondition { terminalTabs.tab.sentTexts.size == 3 }
+
+    assertThat(file.initialMessageSent).isTrue()
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(
+        SentTerminalText("/plan", shouldExecute = true),
+        SentTerminalText("/plan", shouldExecute = true),
+        SentTerminalText("Retry after busy output", shouldExecute = true),
+      )
+  }
+
+  @Test
+  fun codexPlanModeSuccessfulPlanStepPersistsPartialProgress() {
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
+    val snapshotWriter = RecordingSnapshotWriter()
+    val file = testFile().also {
+      it.updateInitialMessageMetadata(
+        initialMessageDispatchSteps = codexPlanDispatchSteps(
+          prompt = "Wait for explicit readiness",
+          promptTimeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+        ),
+        initialMessageDispatchStepIndex = 0,
+        initialMessageToken = "token-plan-partial",
+        initialMessageSent = false,
+      )
+    }
+    val editor = testEditor(file = file, terminalTabs = terminalTabs, snapshotWriter = snapshotWriter)
+
+    editor.selectNotify()
+    terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
+    terminalTabs.tab.emitMeaningfulOutput("ready for /plan")
+    waitForCondition { snapshotWriter.snapshots.isNotEmpty() }
+
+    assertThat(file.initialMessageDispatchStepIndex).isEqualTo(1)
+    assertThat(file.initialMessageSent).isFalse()
+    assertThat(file.initialComposedMessage).isEqualTo("Wait for explicit readiness")
+    assertThat(snapshotWriter.snapshots.last().runtime.initialMessageDispatchStepIndex).isEqualTo(1)
+    assertThat(snapshotWriter.snapshots.last().runtime.initialMessageSent).isFalse()
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(SentTerminalText("/plan", shouldExecute = true))
+    Disposer.dispose(editor)
   }
 
   @Test
@@ -383,26 +482,91 @@ private class FakeAgentChatTerminalTab : AgentChatTerminalTab {
   override val sessionState: StateFlow<TerminalViewSessionState> = mutableSessionState
   override val keyEventsFlow: Flow<TerminalKeyEvent> = emptyFlow()
   var readinessResult: AgentChatTerminalInputReadiness = AgentChatTerminalInputReadiness.READY
-  private val readinessQueue: ArrayDeque<AgentChatTerminalInputReadiness> = ArrayDeque()
+  private val postSendOutputQueue: ArrayDeque<String> = ArrayDeque()
+  private val emittedOutputChunks: MutableList<EmittedOutputChunk> = mutableListOf()
+  private var outputVersion: Long = 0
 
   @JvmField val sentTexts: MutableList<SentTerminalText> = mutableListOf()
 
-  fun enqueueReadiness(vararg readiness: AgentChatTerminalInputReadiness) {
-    readinessQueue.addAll(readiness.asList())
+  fun enqueuePostSendOutput(vararg outputs: String) {
+    postSendOutputQueue.addAll(outputs.asList())
+  }
+
+  fun emitMeaningfulOutput(text: String = "ready") {
+    val normalizedText = text.trim()
+    if (normalizedText.isEmpty()) {
+      return
+    }
+    outputVersion += 1
+    emittedOutputChunks += EmittedOutputChunk(version = outputVersion, text = normalizedText)
   }
 
   fun setSessionState(state: TerminalViewSessionState) {
     mutableSessionState.value = state
   }
 
-  override fun sendText(text: String, shouldExecute: Boolean) {
-    sentTexts += SentTerminalText(text, shouldExecute)
+  override suspend fun captureOutputCheckpoint(): AgentChatTerminalOutputCheckpoint {
+    return AgentChatTerminalOutputCheckpoint(
+      regularEndOffset = outputVersion,
+      alternativeEndOffset = outputVersion,
+    )
   }
 
-  override suspend fun awaitInitialMessageReadiness(timeoutMs: Long, idleMs: Long): AgentChatTerminalInputReadiness {
-    return if (readinessQueue.isEmpty()) readinessResult else readinessQueue.removeFirst()
+  override suspend fun awaitOutputObservation(
+    checkpoint: AgentChatTerminalOutputCheckpoint,
+    timeoutMs: Long,
+    idleMs: Long,
+  ): AgentChatTerminalOutputObservation {
+    if (sessionState.value == TerminalViewSessionState.Terminated) {
+      return AgentChatTerminalOutputObservation(
+        readiness = AgentChatTerminalInputReadiness.TERMINATED,
+        text = readOutputSince(checkpoint),
+      )
+    }
+    val text = readOutputSince(checkpoint)
+    return AgentChatTerminalOutputObservation(
+      readiness = if (text.isEmpty()) AgentChatTerminalInputReadiness.TIMEOUT else AgentChatTerminalInputReadiness.READY,
+      text = text,
+    )
+  }
+
+  override fun sendText(text: String, shouldExecute: Boolean) {
+    sentTexts += SentTerminalText(text, shouldExecute)
+    if (postSendOutputQueue.isNotEmpty()) {
+      emitMeaningfulOutput(postSendOutputQueue.removeFirst())
+    }
+  }
+
+  override suspend fun awaitInitialMessageReadiness(
+    timeoutMs: Long,
+    idleMs: Long,
+    checkpoint: AgentChatTerminalOutputCheckpoint?,
+  ): AgentChatTerminalInputReadiness {
+    if (sessionState.value == TerminalViewSessionState.Terminated) {
+      return AgentChatTerminalInputReadiness.TERMINATED
+    }
+    if (hasMeaningfulOutputSince(checkpoint)) {
+      return AgentChatTerminalInputReadiness.READY
+    }
+    return readinessResult
+  }
+
+  private fun hasMeaningfulOutputSince(checkpoint: AgentChatTerminalOutputCheckpoint?): Boolean {
+    val baseline = checkpoint?.regularEndOffset ?: Long.MIN_VALUE
+    return emittedOutputChunks.any { chunk -> chunk.version > baseline }
+  }
+
+  private fun readOutputSince(checkpoint: AgentChatTerminalOutputCheckpoint): String {
+    return emittedOutputChunks
+      .filter { chunk -> chunk.version > checkpoint.regularEndOffset }
+      .joinToString(separator = "\n") { chunk -> chunk.text }
   }
 }
+
+private data class EmittedOutputChunk(
+  @JvmField val version: Long,
+  @JvmField val text: String,
+)
 
 private data class SentTerminalText(
   @JvmField val text: String,
@@ -427,13 +591,39 @@ private fun testFile(
 private fun testEditor(
   file: AgentChatVirtualFile = testFile(),
   terminalTabs: AgentChatTerminalTabs = FakeAgentChatTerminalTabs(),
+  snapshotWriter: AgentChatTabSnapshotWriter = AgentChatTabSnapshotWriter { },
 ): AgentChatFileEditor {
   return AgentChatFileEditor(
     project = testProject(),
     file = file,
     terminalTabs = terminalTabs,
-    tabSnapshotWriter = AgentChatTabSnapshotWriter { },
+    tabSnapshotWriter = snapshotWriter,
   )
+}
+
+private fun codexPlanDispatchSteps(
+  prompt: String,
+  promptTimeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+): List<AgentInitialMessageDispatchStep> {
+  return listOf(
+    AgentInitialMessageDispatchStep(
+      text = "/plan",
+      timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+      completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
+    ),
+    AgentInitialMessageDispatchStep(
+      text = prompt,
+      timeoutPolicy = promptTimeoutPolicy,
+    ),
+  )
+}
+
+private class RecordingSnapshotWriter : AgentChatTabSnapshotWriter {
+  val snapshots: MutableList<AgentChatTabSnapshot> = mutableListOf()
+
+  override suspend fun upsert(snapshot: AgentChatTabSnapshot) {
+    snapshots += snapshot
+  }
 }
 
 private fun testProject(): Project {

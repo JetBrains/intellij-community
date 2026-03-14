@@ -19,6 +19,11 @@ enum class AgentInitialMessageTimeoutPolicy {
   REQUIRE_EXPLICIT_READINESS,
 }
 
+enum class AgentInitialMessageDispatchCompletionPolicy {
+  IMMEDIATE,
+  RETRY_ON_CODEX_PLAN_BUSY,
+}
+
 data class AgentInitialMessagePlan(
   @JvmField val message: String?,
   @JvmField val startupPolicy: AgentInitialMessageStartupPolicy = AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND,
@@ -39,15 +44,20 @@ data class AgentInitialMessagePlan(
 
 data class AgentInitialMessageDispatchPlan(
   @JvmField val startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
-  @JvmField val initialComposedMessage: String? = null,
+  @JvmField val postStartDispatchSteps: List<AgentInitialMessageDispatchStep> = emptyList(),
   @JvmField val initialMessageToken: String? = null,
-  @JvmField val initialMessageTimeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
 ) {
   companion object {
     @JvmField
     val EMPTY: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan()
   }
 }
+
+data class AgentInitialMessageDispatchStep(
+  @JvmField val text: String,
+  @JvmField val timeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
+  @JvmField val completionPolicy: AgentInitialMessageDispatchCompletionPolicy = AgentInitialMessageDispatchCompletionPolicy.IMMEDIATE,
+)
 
 data class AgentPendingSessionMetadata(
   @JvmField val createdAtMs: Long,
