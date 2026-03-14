@@ -205,7 +205,22 @@ def _resolve_module_dir_path(url, iml_dir_rel, iml_path):
 
     return _normalize_path(full_path, "module-library URL in %s" % iml_path)
 
-def parse_library_xml(lib_xml_content, lib_xml_path):
+def _get_library_element(lib_xml_content, lib_xml_path):
+    """Parse library XML and return the top-level <library> element."""
+    doc = xml.parse(lib_xml_content, strict = True)
+    lib_els = xml.find_elements_by_tag_name(doc, "library")
+    if not lib_els:
+        fail("No <library> element found in %s" % lib_xml_path)
+    return lib_els[0]
+
+def _get_library_name(lib_el, lib_xml_path):
+    """Read the required library name attribute from a parsed <library> element."""
+    lib_name = xml.get_attribute(lib_el, "name")
+    if not lib_name:
+        fail("<library> missing required 'name' attribute in %s" % lib_xml_path)
+    return lib_name
+
+def _parse_library_element(lib_el, lib_xml_path):
     """Parse a .idea/libraries/*.xml file in a single pass.
 
     Extracts the library name and all jar URL references from one XML parse.
@@ -216,16 +231,7 @@ def parse_library_xml(lib_xml_content, lib_xml_path):
       - local_urls: list of $PROJECT_DIR$ URLs (for local jar targets, non-directory)
       - jar_directory_urls: list of $PROJECT_DIR$ directory URLs (need expansion via ctx)
     """
-    doc = xml.parse(lib_xml_content, strict = True)
-    lib_els = xml.find_elements_by_tag_name(doc, "library")
-    if not lib_els:
-        fail("No <library> element found in %s" % lib_xml_path)
-
-    lib_el = lib_els[0]
-
-    lib_name = xml.get_attribute(lib_el, "name")
-    if not lib_name:
-        fail("<library> missing required 'name' attribute in %s" % lib_xml_path)
+    lib_name = _get_library_name(lib_el, lib_xml_path)
 
     classes_els = xml.find_elements_by_tag_name(lib_el, "CLASSES")
     if not classes_els:
@@ -335,17 +341,20 @@ def derive_library_targets(ctx, project_root, library_xmls, iml_data_list,
             if not is_community_only and iml_data.is_community:
                 lib_community_status[lib_ref] = True
 
-    # Project-level libraries: parse XML once per file, extract name + URLs, filter by reference
+    # Project-level libraries: parse XML once to discover the library name, and
+    # only validate CLASSES roots for libraries actually referenced from .iml files.
     for lib_xml in library_xmls:
-        parsed = parse_library_xml(lib_xml.xml_content, lib_xml.xml_rel_path)
-
-        if parsed.name not in all_referenced_libs:
+        lib_el = _get_library_element(lib_xml.xml_content, lib_xml.xml_rel_path)
+        lib_name = _get_library_name(lib_el, lib_xml.xml_rel_path)
+        if lib_name not in all_referenced_libs:
             continue
+
+        parsed = _parse_library_element(lib_el, lib_xml.xml_rel_path)
 
         # Determine repo for Maven URLs
         if project_lib_repo != None:
             repo = project_lib_repo
-        elif parsed.name in lib_community_status:
+        elif lib_name in lib_community_status:
             repo = "@lib"
         else:
             repo = "@ultimate_lib"
