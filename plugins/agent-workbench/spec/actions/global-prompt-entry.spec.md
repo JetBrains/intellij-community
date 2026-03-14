@@ -72,8 +72,8 @@ Prompt-context collection and rendering contracts are specified separately in `s
   [@test] ../../prompt/testSrc/ui/AgentPromptPaletteViewStructureTest.kt
   [@test] ../../prompt/testSrc/ui/AgentPromptPaletteViewLayoutTest.kt
 
-- Context row must show an `Add Context` affordance only when at least one manual context source is available for the current project.
-- When shown, `Add Context` must be rendered once, after existing context chips, in the context row rather than the header.
+- Prompt composer must show an `Add Context` affordance only when at least one manual context source is available for the current project.
+- When shown, `Add Context` must be rendered once as a fixed control inside the prompt composer. Existing context chips must render in the same composer-integrated context cluster without repositioning that control.
 - `Add Context` must expose inline mnemonic activation consistent with other prompt controls.
   [@test] ../../prompt/testSrc/ui/AgentPromptPaletteViewStructureTest.kt
   [@test] ../../prompt/testSrc/ui/AgentPromptPaletteViewLayoutTest.kt
@@ -165,11 +165,11 @@ Prompt-context collection and rendering contracts are specified separately in `s
 - Popup opens as a project-scoped launcher for both new and existing task targets.
 - Existing-task mode exposes provider-scoped thread list with loading/empty/error states.
 - Context chips are removable before submit.
-- Context row is shown when at least one context chip is present or when `Add Context` is available; it collapses only when both chips and the `Add Context` affordance are absent.
+- Composer context cluster is shown when at least one context chip is present or when `Add Context` is available; it collapses only when both chips and the `Add Context` affordance are absent.
 - Chip-removal hierarchy is provider-defined via context item relations (`itemId`/`parentItemId`); removing a parent chip may remove all descendant chips recursively.
-- The context row exposes `Add Context` as the single entry point for adding source-specific context.
+- The composer-integrated context cluster exposes `Add Context` as the single entry point for adding source-specific context.
 - `Files and Folders…` is the default manual context source for any resolved project and may be accompanied by source-specific additions such as VCS commits.
-- Manual context chips share the same row and submit path as auto context chips.
+- Manual context chips share the same composer-integrated context cluster and submit path as auto context chips.
 
 ## Data & Backend
 - Existing-task list comes from launcher `observeExistingThreads(...)` stream with background refresh.

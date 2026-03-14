@@ -15,10 +15,12 @@ private const val CONTEXT_CHIP_GAP = 6
 internal class AgentPromptContextChipsComponent(
   private val onRemove: (ContextEntry) -> Unit,
 ) {
+  private var renderedEntries: List<ContextEntry> = emptyList()
+
   val component: JPanel = JPanel(
     WrapLayout(
       FlowLayout.LEFT,
-      JBUI.scale(CONTEXT_CHIP_GAP),
+      0,
       JBUI.scale(CONTEXT_CHIP_GAP),
     )
   ).apply {
@@ -28,20 +30,26 @@ internal class AgentPromptContextChipsComponent(
   var trailingComponent: JComponent? = null
     set(value) {
       field = value
-      if (value != null && value.parent !== component) {
-        component.add(value)
-        component.revalidate()
-      }
+      render(renderedEntries)
     }
 
   fun render(entries: List<ContextEntry>) {
+    renderedEntries = entries
     component.removeAll()
     entries.forEach { entry ->
-      component.add(createContextChip(entry))
+      component.add(wrapRowComponent(createContextChip(entry)))
     }
-    trailingComponent?.let { component.add(it) }
+    trailingComponent?.let { component.add(wrapRowComponent(it)) }
     component.revalidate()
     component.repaint()
+  }
+
+  private fun wrapRowComponent(content: JComponent): JComponent {
+    return JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
+      isOpaque = false
+      border = JBUI.Borders.emptyRight(CONTEXT_CHIP_GAP)
+      add(content)
+    }
   }
 
   private fun createContextChip(entry: ContextEntry): JComponent {

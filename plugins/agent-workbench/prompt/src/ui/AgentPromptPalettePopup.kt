@@ -51,11 +51,9 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.LanguageTextField
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTabbedPane
-import com.intellij.util.ui.DialogUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
@@ -65,6 +63,7 @@ import kotlinx.coroutines.cancel
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.jetbrains.annotations.Nls
 import java.awt.FlowLayout
+import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.event.ChangeListener
@@ -250,8 +249,6 @@ internal class AgentPromptPalettePopup(
 
   private fun createContentPanel(): JPanel {
     val promptProviderOptionsPanel = createProviderOptionsPanel()
-    val promptAddContextLink = createAddContextLink()
-    contextChips.trailingComponent = promptAddContextLink
     val view = createAgentPromptPaletteView(
       promptArea = promptArea,
       contextChipsPanel = contextChips.component,
@@ -259,6 +256,15 @@ internal class AgentPromptPalettePopup(
       onProviderIconClicked = ::showProviderChooser,
       onExistingTaskSelected = ::onExistingTaskSelected,
     )
+    val availability = resolveManualContextAvailability()
+    if (availability != null && availability.sources.isNotEmpty()) {
+      view.addContextButton.addActionListener {
+        showManualContextSourceChooser(anchorComponent = view.addContextButton)
+      }
+    }
+    else {
+      view.addContextButton.isVisible = false
+    }
     tabbedPane = view.tabbedPane
     providerIconLabel = view.providerIconLabel
     existingTaskScrollPane = view.existingTaskScrollPane
@@ -288,24 +294,6 @@ internal class AgentPromptPalettePopup(
     }
   }
 
-  private fun createAddContextLink(): ActionLink? {
-    val availability = resolveManualContextAvailability() ?: return null
-    if (availability.sources.isEmpty()) {
-      return null
-    }
-
-    lateinit var link: ActionLink
-    link = ActionLink(AgentPromptBundle.message("popup.context.add")) {
-      showManualContextSourceChooser(anchorComponent = link)
-    }.apply {
-      autoHideOnDisable = false
-      isFocusable = false
-      setDropDownLinkIcon()
-      DialogUtil.registerMnemonic(this)
-    }
-    return link
-  }
-
   private fun resolveManualContextAvailability(launcher: AgentPromptLauncherBridge? = launcherProvider()): ManualContextAvailability? {
     return resolveManualContextAvailability(
       hostProject = project,
@@ -315,7 +303,7 @@ internal class AgentPromptPalettePopup(
     )
   }
 
-  private fun showManualContextSourceChooser(anchorComponent: ActionLink) {
+  private fun showManualContextSourceChooser(anchorComponent: JComponent) {
     val launcher = launcherProvider()
     val availability = resolveManualContextAvailability(launcher) ?: return
     val sourceProject = availability.sourceProject
