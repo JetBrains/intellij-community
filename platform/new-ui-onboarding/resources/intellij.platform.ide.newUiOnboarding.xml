@@ -1,6 +1,8 @@
 <idea-plugin visibility="internal" package="com.intellij.platform.ide.newUiOnboarding">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.execution"/>

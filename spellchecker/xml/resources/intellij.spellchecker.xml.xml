@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.spellchecker"/>

@@ -1,11 +1,12 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.kernel.backend"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.rpc.topics"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.rpc.topics.backend.BackendRemoteTopicApiProvider"/>
   </extensions>

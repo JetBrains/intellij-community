@@ -1,20 +1,20 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <module name="intellij.java.guiForms.compiler" />
-    <module name="intellij.platform.jps.build.javac.rt" />
-    <module name="intellij.platform.jps.build.dependencyGraph" />
-    <module name="intellij.java.compiler.instrumentationUtil" />
-    <module name="intellij.java.compiler.instrumentationUtil.java8" />
-    <module name="intellij.java.aetherDependencyResolver" />
-    <module name="intellij.libraries.jgoodies.forms" />
-    <module name="intellij.libraries.protobuf" />
-    <module name="intellij.libraries.gson" />
-    <module name="intellij.libraries.fastutil" />
-    <module name="intellij.libraries.caffeine" />
-    <module name="intellij.libraries.maven.resolver.provider" />
-    <module name="intellij.libraries.kotlinx.coroutines.core" />
-
+    <module name="intellij.java.guiForms.compiler"/>
+    <module name="intellij.platform.jps.build.javac.rt"/>
+    <module name="intellij.java.compiler.instrumentationUtil"/>
+    <module name="intellij.java.compiler.instrumentationUtil.java8"/>
+    <module name="intellij.libraries.jgoodies.forms"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.aetherDependencyResolver"/>
+    <module name="intellij.libraries.maven.resolver.provider"/>
+    <module name="intellij.platform.jps.build.dependencyGraph"/>
+    <!-- endregion -->
   </dependencies>
 
 </idea-plugin>

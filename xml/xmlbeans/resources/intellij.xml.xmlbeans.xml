@@ -1,7 +1,8 @@
 <idea-plugin package="com.intellij.xml.tools">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
     <module name="intellij.platform.core"/>
@@ -15,8 +16,8 @@
     <module name="intellij.xml.impl"/>
     <module name="intellij.xml.parser"/>
     <module name="intellij.xml.psi"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <actions>
     <group id="ToolsXmlGroupEx">
