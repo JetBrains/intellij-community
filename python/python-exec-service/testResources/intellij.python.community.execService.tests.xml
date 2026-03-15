@@ -1,7 +1,7 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.testFramework.junit5.eel._test"/>
+    <module name="intellij.platform.testFramework.junit5.eel.tests"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>

@@ -2,8 +2,8 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.python.community.services.systemPython"/>
-    <module name="intellij.platform.testFramework.junit5.eel._test"/>
-    <module name="intellij.platform.testFramework.junit5._test"/>
+    <module name="intellij.platform.testFramework.junit5.eel.tests"/>
+    <module name="intellij.platform.testFramework.junit5.tests"/>
     <module name="intellij.python.community.junit5Tests.framework._test"/>
     <module name="intellij.libraries.assertj.core"/>
     <module name="intellij.libraries.junit5"/>

@@ -360,8 +360,8 @@ object CommunityModuleSets {
     module("intellij.platform.testFramework.junit5")
     module("intellij.platform.testFramework.junit5.projectStructure")
     module("intellij.platform.testFramework.junit5.codeInsight")
-    module("intellij.platform.testFramework.junit5._test")
-    module("intellij.platform.testFramework.junit5.eel._test")
+    module("intellij.platform.testFramework.junit5.tests")
+    module("intellij.platform.testFramework.junit5.eel.tests")
     module("intellij.platform.testFramework.junit5.wsl._test")
   }
 

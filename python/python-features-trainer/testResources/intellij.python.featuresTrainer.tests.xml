@@ -1,7 +1,7 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.featuresTrainer._test"/>
+    <module name="intellij.featuresTrainer.tests"/>
     <module name="intellij.libraries.junit5.params"/>
     <module name="intellij.python.community.junit5Tests.framework._test"/>
     <module name="intellij.python.featuresTrainer"/>
