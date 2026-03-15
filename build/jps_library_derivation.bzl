@@ -230,6 +230,7 @@ def _parse_library_element(lib_el, lib_xml_path):
       - maven_urls: list of $MAVEN_REPOSITORY$ URLs (for Maven jar targets)
       - local_urls: list of $PROJECT_DIR$ URLs (for local jar targets, non-directory)
       - jar_directory_urls: list of $PROJECT_DIR$ directory URLs (need expansion via ctx)
+      - unsupported_urls: list of CLASSES root URLs that this derivation does not understand
     """
     lib_name = _get_library_name(lib_el, lib_xml_path)
 
@@ -249,6 +250,7 @@ def _parse_library_element(lib_el, lib_xml_path):
     maven_urls = []
     local_urls = []
     jar_directory_urls = []
+    unsupported_urls = []
 
     for root_el in xml.find_elements_by_tag_name(classes_els[0], "root"):
         url = xml.get_attribute(root_el, "url")
@@ -265,13 +267,14 @@ def _parse_library_element(lib_el, lib_xml_path):
             else:
                 local_urls.append(url)
         else:
-            fail("Unsupported CLASSES root URL in library '%s' (%s): %s" % (lib_name, lib_xml_path, url))
+            unsupported_urls.append(url)
 
     return struct(
         name = lib_name,
         maven_urls = maven_urls,
         local_urls = local_urls,
         jar_directory_urls = jar_directory_urls,
+        unsupported_urls = unsupported_urls,
     )
 
 def _expand_jar_directory(ctx, project_root, url, context):
@@ -350,6 +353,9 @@ def derive_library_targets(ctx, project_root, library_xmls, iml_data_list,
             continue
 
         parsed = _parse_library_element(lib_el, lib_xml.xml_rel_path)
+
+        if parsed.unsupported_urls:
+            fail("Unsupported CLASSES root URL in library '%s' (%s): %s" % (parsed.name, lib_xml.xml_rel_path, parsed.unsupported_urls[0]))
 
         # Determine repo for Maven URLs
         if project_lib_repo != None:

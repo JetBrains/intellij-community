@@ -171,6 +171,7 @@ internal class CompareJpsWithBazel {
     @Serializable
     data class TargetsFile(
       val modules: Map<String, TargetsFileModuleDescription>,
+      val imlTargets: List<String> = emptyList(),
       val projectLibraries: Map<String, String>,
     )
   }

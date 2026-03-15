@@ -28,5 +28,8 @@
       }
     }
   },
+  "imlTargets": [
+    "@community//module:module.iml"
+  ],
   "projectLibraries": {}
 }

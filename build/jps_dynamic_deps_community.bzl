@@ -38,7 +38,7 @@ This repository is invalidated on changes to `.idea/modules.xml` via ctx.watch()
 """
 
 load(":jps_model.bzl", "read_project_model")
-load(":jps_target_derivation.bzl", "SKIPPED_MODULES", "compute_build_dir", "compute_module_targets", "module_name_to_target", "parse_iml")
+load(":jps_target_derivation.bzl", "SKIPPED_MODULES", "compute_build_dir", "compute_iml_target", "compute_module_targets", "module_name_to_target", "parse_iml")
 load(":jps_library_derivation.bzl", "derive_library_targets")
 
 def _format_target_list(name, targets):
@@ -52,12 +52,13 @@ def _format_target_list(name, targets):
     lines.append("]\n")
     return "\n".join(lines)
 
-def _generate_targets_bzl(production_targets, test_targets, library_targets):
+def _generate_targets_bzl(production_targets, test_targets, library_targets, iml_targets):
     """Generate the content for targets.bzl file."""
     content = []
     content.append(_format_target_list("ALL_PRODUCTION_COMMUNITY_TARGETS", production_targets))
     content.append(_format_target_list("ALL_TEST_COMMUNITY_TARGETS", test_targets))
     content.append(_format_target_list("ALL_LIBRARY_COMMUNITY_TARGETS", library_targets))
+    content.append(_format_target_list("ALL_COMMUNITY_IML_TARGETS", iml_targets))
     content.append("ALL_COMMUNITY_TARGETS = ALL_PRODUCTION_COMMUNITY_TARGETS + ALL_TEST_COMMUNITY_TARGETS + ALL_LIBRARY_COMMUNITY_TARGETS")
     return "\n".join(content)
 
@@ -75,6 +76,7 @@ def _derive_targets_from_model(ctx, project_root, model):
     all_production = []
     all_test = []
     iml_data_list = []
+    all_iml = []
 
     # community-only: community_root_parts is [] (project root IS community root)
     community_root_parts = []
@@ -82,12 +84,22 @@ def _derive_targets_from_model(ctx, project_root, model):
     ultimate_root_parts = None
 
     for mod in model.modules:
+        iml_dir_parts = mod.iml_dir_rel.split("/") if mod.iml_dir_rel else []
+        parsed = parse_iml(mod.iml_content, mod.iml_rel_path)
+        build_dir_parts = compute_build_dir(iml_dir_parts, parsed.content_root_urls, mod.iml_rel_path)
+        iml_target = compute_iml_target(
+            module_name = mod.module_name,
+            build_dir_parts = build_dir_parts,
+            iml_rel_path = mod.iml_rel_path,
+            is_community = True,
+            community_root_parts = community_root_parts,
+        )
+        if iml_target not in all_iml:
+            all_iml.append(iml_target)
+
         # Skip modules that the converter also skips (standalone Bazel projects)
         if mod.module_name in SKIPPED_MODULES:
             continue
-
-        iml_dir_parts = mod.iml_dir_rel.split("/") if mod.iml_dir_rel else []
-        parsed = parse_iml(mod.iml_content, mod.iml_rel_path)
 
         iml_data_list.append(struct(
             module_name = mod.module_name,
@@ -96,8 +108,6 @@ def _derive_targets_from_model(ctx, project_root, model):
             parsed_iml = parsed,
             is_community = True,
         ))
-
-        build_dir_parts = compute_build_dir(iml_dir_parts, parsed.content_root_urls, mod.iml_rel_path)
 
         target_name = module_name_to_target(
             module_name = mod.module_name,
@@ -134,6 +144,7 @@ def _derive_targets_from_model(ctx, project_root, model):
         production = all_production,
         test = all_test,
         library = library_targets,
+        iml = all_iml,
     )
 
 def _extract_targets_from_json(targets_data):
@@ -172,6 +183,7 @@ def _extract_targets_from_json(targets_data):
         production = all_production_targets,
         test = all_test_targets,
         library = sorted(all_library_targets.keys()),
+        iml = sorted(targets_data.get("imlTargets", [])),
     )
 
 def _assert_targets_equal(kind, starlark_targets, json_targets):
@@ -226,9 +238,10 @@ def _targets_repo_impl(ctx):
     _assert_targets_equal("production", sorted(starlark.production), sorted(json_targets.production))
     _assert_targets_equal("test", sorted(starlark.test), sorted(json_targets.test))
     _assert_targets_equal("library", starlark.library, json_targets.library)
+    _assert_targets_equal("iml", sorted(starlark.iml), sorted(json_targets.iml))
 
     # ── STEP 4: Use JSON-derived targets (authoritative until Starlark is proven) ──
-    content = _generate_targets_bzl(json_targets.production, json_targets.test, json_targets.library)
+    content = _generate_targets_bzl(json_targets.production, json_targets.test, json_targets.library, json_targets.iml)
     ctx.file("targets.bzl", content)
 
     # Expose it

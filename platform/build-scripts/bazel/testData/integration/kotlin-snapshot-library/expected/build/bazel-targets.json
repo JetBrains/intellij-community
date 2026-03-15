@@ -17,6 +17,9 @@
       "moduleLibraries": {}
     }
   },
+  "imlTargets": [
+    "@community//module:module.iml"
+  ],
   "projectLibraries": {
     "kotlinc.analysis-api": {
       "target": "@lib//:kotlinc-analysis-api",

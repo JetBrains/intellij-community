@@ -17,6 +17,9 @@
       "moduleLibraries": {}
     }
   },
+  "imlTargets": [
+    "@community//module:module.iml"
+  ],
   "projectLibraries": {
     "dokka": {
       "target": "@lib//:dokka-core-1-4-10-2-dev-52-snapshot",

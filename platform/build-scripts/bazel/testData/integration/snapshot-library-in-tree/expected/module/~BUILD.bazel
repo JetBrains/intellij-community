@@ -16,3 +16,9 @@ jvm_library(
   runtime_deps = [":module"]
 )
 ### auto-generated section `build module` end
+
+### auto-generated section `iml module` start
+exports_files([
+  "module.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml module` end

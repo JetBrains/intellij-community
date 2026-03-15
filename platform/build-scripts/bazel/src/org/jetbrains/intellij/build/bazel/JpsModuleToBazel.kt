@@ -253,8 +253,52 @@ internal class JpsModuleToBazel {
       @Serializable
       data class TargetsFile(
         val modules: Map<String, TargetsFileModuleDescription>,
+        val imlTargets: List<String>,
         val projectLibraries: Map<String, LibraryDescription>,
       )
+
+      data class ImlPackageDescription(
+        val packagePrefix: String,
+      )
+
+      fun makePackagePrefix(repoName: String, relativePath: String): String {
+        return when {
+          repoName.isEmpty() && relativePath.isEmpty() -> "//"
+          repoName.isEmpty() -> "//$relativePath"
+          relativePath.isEmpty() -> "$repoName//"
+          else -> "$repoName//$relativePath"
+        }
+      }
+
+      fun computeImlPackage(module: ModuleDescriptor): ImlPackageDescription {
+        if (ultimateRoot != null && module.isCommunity) {
+          val standaloneRepoRoot = when {
+            module.bazelBuildFileDir.startsWith(communityRoot.resolve("platform/build-scripts/bazel")) -> communityRoot.resolve("platform/build-scripts/bazel") to "@jps_to_bazel"
+            module.bazelBuildFileDir.startsWith(communityRoot.resolve("build/jvm-rules")) -> communityRoot.resolve("build/jvm-rules") to "@rules_jvm"
+            else -> null
+          }
+          if (standaloneRepoRoot != null) {
+            val (repoRoot, repoName) = standaloneRepoRoot
+            val relativePackagePath = module.bazelBuildFileDir.relativeTo(repoRoot).invariantSeparatorsPathString
+            return ImlPackageDescription(
+              packagePrefix = makePackagePrefix(repoName, relativePackagePath),
+            )
+          }
+        }
+
+        val repoRoot = if (module.isCommunity) communityRoot else ultimateRoot ?: error("Ultimate root is not available")
+        val repoName = if (module.isCommunity) "@community" else ""
+        val relativePackagePath = module.bazelBuildFileDir.relativeTo(repoRoot).invariantSeparatorsPathString
+        return ImlPackageDescription(
+          packagePrefix = makePackagePrefix(repoName, relativePackagePath),
+        )
+      }
+
+      fun makeImlTarget(module: ModuleDescriptor): String {
+        val imlPackage = computeImlPackage(module)
+        val relativeImlPath = module.imlFile.relativeTo(module.bazelBuildFileDir).invariantSeparatorsPathString
+        return "${imlPackage.packagePrefix}:$relativeImlPath"
+      }
 
       fun makeJarPath(library: Library, file: MavenFileDescription): String {
         val path = "external/" +
@@ -401,6 +445,11 @@ internal class JpsModuleToBazel {
               }
             }
           } + skippedModules.associateWith { emptyModule },
+          imlTargets = moduleList.allModules.asSequence()
+            .map { makeImlTarget(it) }
+            .distinct()
+            .sorted()
+            .toList(),
           projectLibraries = libs.asSequence().mapNotNull {
             if (it.target.moduleLibraryModuleName != null) return@mapNotNull null
             return@mapNotNull it.target.jpsName to makeLibraryDescription(it)
