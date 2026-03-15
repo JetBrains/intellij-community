@@ -7,6 +7,7 @@
     <module name="fleet.util.logging.api"/>
     <module name="fleet.util.serialization"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
   </dependencies>

@@ -2,6 +2,7 @@
   <module value="com.intellij.modules.relaxng"/>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>

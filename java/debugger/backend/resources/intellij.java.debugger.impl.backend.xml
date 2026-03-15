@@ -7,7 +7,6 @@
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.debugger"/>
     <module name="intellij.platform.debugger.impl"/>
-    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.debugger.impl.shared"/>
     <module name="intellij.java.debugger"/>
     <module name="intellij.java.debugger.impl"/>

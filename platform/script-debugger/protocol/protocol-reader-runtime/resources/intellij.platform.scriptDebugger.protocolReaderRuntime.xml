@@ -1,10 +1,11 @@
 <idea-plugin visibility="public">
   <module value="com.intellij.modules.scriptDebugger.protocolReaderRuntime"/>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.fastutil"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.ide.impl"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   
 </idea-plugin>

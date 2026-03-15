@@ -6,6 +6,7 @@
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.structureView.impl"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.xml.parser"/>
     <module name="intellij.xml.psi.impl"/>
     <module name="intellij.xml.structureView"/>

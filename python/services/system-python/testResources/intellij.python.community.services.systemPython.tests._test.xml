@@ -7,6 +7,7 @@
     <module name="intellij.python.community.junit5Tests.framework._test"/>
     <module name="intellij.libraries.assertj.core"/>
     <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.coroutines"/>

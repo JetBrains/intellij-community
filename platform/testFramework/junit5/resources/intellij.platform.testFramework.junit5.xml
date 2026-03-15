@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.junit5.launcher"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.execution"/>

@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.testFramework.common"/>
     <module name="intellij.tools.ide.starter"/>
     <module name="intellij.tools.ide.util.common"/>

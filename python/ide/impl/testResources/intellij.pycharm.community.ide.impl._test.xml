@@ -5,6 +5,7 @@
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>

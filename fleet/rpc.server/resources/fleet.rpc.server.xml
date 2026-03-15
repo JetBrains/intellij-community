@@ -6,6 +6,7 @@
     <module name="fleet.reporting.shared"/>
     <module name="fleet.rpc"/>
     <module name="fleet.util.core"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
   </dependencies>

@@ -7,6 +7,7 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs.impl.shared"/>
   </dependencies>
   <!-- endregion -->

@@ -3,6 +3,7 @@
     <dependencies>
       <module name="intellij.platform.jewel.markdown.extensions.gfmAlerts"/>
       <module name="intellij.platform.jewel.markdown.extensions.gfmTables"/>
+      <module name="intellij.libraries.kotlinx.coroutines.core"/>
       <module name="intellij.platform.core"/>
       <module name="intellij.platform.ide"/>
       <module name="intellij.platform.ide.core"/>

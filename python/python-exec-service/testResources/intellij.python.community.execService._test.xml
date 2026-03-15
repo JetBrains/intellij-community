@@ -4,6 +4,7 @@
     <module name="intellij.platform.testFramework.junit5.eel._test"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.platform.core"/>

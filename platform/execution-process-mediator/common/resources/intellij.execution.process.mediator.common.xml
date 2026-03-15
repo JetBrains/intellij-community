@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.grpc"/>
     <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.protobuf"/>
   </dependencies>
   <!-- endregion -->
