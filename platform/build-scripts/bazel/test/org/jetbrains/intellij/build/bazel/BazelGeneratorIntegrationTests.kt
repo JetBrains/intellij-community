@@ -87,8 +87,8 @@ class BazelGeneratorIntegrationTests {
     assertAndRemoveSameFiles(projectDataPath, tempDir)
     compareDirectories(expectedDataPath, tempDir)
 
-    if (!softly.wasSuccess()) {
-      // do not delete tempDir on tests failure, it is used in IDE to update expected file
+    // do not delete tempDir on tests failure, it is used in IDE to update expected file
+    if (softly.wasSuccess()) {
       tempDir.deleteRecursively()
     }
   }
@@ -121,17 +121,16 @@ class BazelGeneratorIntegrationTests {
       )
     )
 
-    softly.assertThatCharSequence(tempCommunityDir.resolve("BUILD.bazel").readText().trimEnd())
-      .withFailMessage {
-        "Actual file ${tempCommunityDir.resolve("BUILD.bazel")} is different from initial project file at " +
-        "${normalizedProjectDir.resolve("BUILD.bazel")}. Generator should not modify existing project model files"
-      }
-      .isEqualTo(normalizedProjectDir.resolve("BUILD.bazel").readText().trimEnd())
+    assertFilesEqual(
+      tempCommunityDir.resolve("BUILD.bazel"),
+      normalizedProjectDir.resolve("BUILD.bazel"),
+      "Generator should not modify existing project model files"
+    )
 
-    normalizedProjectDir.deleteRecursively()
-    if (!softly.wasSuccess()) {
-      // do not delete tempDir on tests failure, it is used in IDE to update expected file
+    // do not delete tempDir on tests failure, it is used in IDE to update expected file
+    if (softly.wasSuccess()) {
       tempWorkspaceBaseDir.deleteRecursively()
+      normalizedProjectDir.deleteRecursively()
     }
   }
 
@@ -154,6 +153,66 @@ class BazelGeneratorIntegrationTests {
     }
   }
 
+  private fun assertFilesEqual(actualPath: Path, expectedPath: Path, messagePrefix: String) {
+    val actualText = actualPath.readText()
+    val expectedText = expectedPath.readText()
+    if (actualText == expectedText) {
+      return
+    }
+
+    softly.assertThat(false)
+      .withFailMessage(buildFileMismatchMessage(messagePrefix, actualPath, expectedPath, actualText, expectedText))
+      .isTrue()
+  }
+
+  private fun buildFileMismatchMessage(
+    messagePrefix: String,
+    actualPath: Path,
+    expectedPath: Path,
+    actualText: String,
+    expectedText: String,
+  ): String {
+    val firstDifference = findFirstDifference(expectedText, actualText)
+    return buildString {
+      appendLine(messagePrefix)
+      appendLine("Expected file: $expectedPath")
+      appendLine("Actual file: $actualPath")
+      appendLine(firstDifference)
+      appendLine("Expected length=${expectedText.length}, trailing newline=${expectedText.endsWith('\n')}")
+      appendLine("Actual length=${actualText.length}, trailing newline=${actualText.endsWith('\n')}")
+      appendLine("--- Expected content ---")
+      appendLine(renderTextWithLineNumbers(expectedText))
+      appendLine("--- Actual content ---")
+      append(renderTextWithLineNumbers(actualText))
+    }
+  }
+
+  private fun findFirstDifference(expectedText: String, actualText: String): String {
+    val firstDifferentIndex = expectedText.indices.firstOrNull { index -> expectedText[index] != actualText.getOrNull(index) }
+                              ?: if (expectedText.length != actualText.length) minOf(expectedText.length, actualText.length) else null
+    if (firstDifferentIndex == null) {
+      return "First difference: none found"
+    }
+
+    val line = expectedText.take(firstDifferentIndex).count { it == '\n' } + 1
+    val column = firstDifferentIndex - (expectedText.lastIndexOf('\n', firstDifferentIndex - 1).takeIf { it >= 0 } ?: -1)
+    val expectedChar = expectedText.getOrNull(firstDifferentIndex).debugDisplay()
+    val actualChar = actualText.getOrNull(firstDifferentIndex).debugDisplay()
+    return "First difference at line $line, column $column: expected $expectedChar, actual $actualChar"
+  }
+
+  private fun renderTextWithLineNumbers(text: String): String {
+    return text.lineSequence().mapIndexed { index, line -> "${index + 1}: $line" }.joinToString("\n").ifEmpty { "<empty>" }
+  }
+
+  private fun Char?.debugDisplay(): String = when (this) {
+    null -> "<EOF>"
+    '\n' -> "\\n"
+    '\r' -> "\\r"
+    '\t' -> "\\t"
+    else -> "'$this'"
+  }
+
   private fun assertAndRemoveSameFiles(initialProjectDir: Path, testOutputDir: Path) {
     for (initialProjectChildPath in initialProjectDir.listDirectoryEntries()) {
       val outputChildPath = testOutputDir.resolve(initialProjectChildPath.name)
@@ -168,12 +227,8 @@ class BazelGeneratorIntegrationTests {
         outputChildPath.deleteExisting()
       }
       else {
-        softly.assertThatCharSequence(outputChildPath.readText())
-          .withFailMessage {
-            "Actual file $outputChildPath is different from initial project file at $initialProjectChildPath. " +
-            "Generator should not modify existing project model files"
-          }
-          .isEqualTo(initialProjectChildPath.readText())
+        assertFilesEqual(outputChildPath, initialProjectChildPath,
+                         "Generator should not modify existing project model files")
       }
     }
   }
@@ -217,11 +272,8 @@ class BazelGeneratorIntegrationTests {
         compareDirectories(expectedChildPath, actualChildPath)
       }
       else {
-        softly.assertThatCharSequence(actualChildPath.readText())
-          .withFailMessage {
-            "Actual file $actualChildPath is different from expected file at $expectedChildPath"
-          }
-          .isEqualTo(expectedChildPath.readText())
+        assertFilesEqual(actualChildPath, expectedChildPath,
+                         "Generated output differs from expected snapshot")
       }
     }
   }
