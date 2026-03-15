@@ -19,6 +19,24 @@ Run a single test class (use FQN or wildcard - simple names don't work):
 ./tests.cmd -Dintellij.build.test.patterns=*MyTest
 ```
 
+## Separate Bazel Modules
+
+Some parts of the repository are standalone Bazel modules and must not use `tests.cmd` or `community/tests.cmd`.
+
+### `community/platform/build-scripts/bazel`
+
+- This directory is a separate Bazel module.
+- Tests in this module **must be run via Bazel from that directory**.
+- Use the command documented in `community/platform/build-scripts/bazel/README.md`:
+
+```bash
+cd community/platform/build-scripts/bazel
+../../../../bazel.cmd test //:bazel-generator-integration-tests --test_output=all
+```
+
+- Do **not** use `./tests.cmd` for `org.jetbrains.intellij.build.bazel.BazelGeneratorIntegrationTests` or other tests in that module.
+- If a request touches files under `community/platform/build-scripts/bazel`, prefer that module-local `../../../../bazel.cmd test` flow for verification.
+
 ## Pattern Matching (CRITICAL)
 
 **Simple class names like `MyTest` do NOT work.** You must use FQN or wildcard.
@@ -344,6 +362,7 @@ With `idea.include.unconventionally.named.tests=true`:
 - Verify pattern uses class name, not file path: `-Dintellij.build.test.patterns=com.example.MyTest`
 - Check that class name ends with `Test` (or use `-Dpass.idea.include.unconventionally.named.tests=true`)
 - Ensure test module is part of the build classpath
+- Before changing `main.module`, check whether the test lives in a separate Bazel module such as `community/platform/build-scripts/bazel`; those tests must be run with module-local `../../../../bazel.cmd test`, not `tests.cmd`
 - For performance tests, add `-Dpass.idea.performance.tests=true` or `-Dpass.idea.include.performance.tests=true`
 
 **Tests pass locally but fail in CI:**
