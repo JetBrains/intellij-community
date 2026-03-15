@@ -52,3 +52,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.debugger.streams.shared` end
+
+### auto-generated section `iml intellij.debugger.streams.shared` start
+exports_files([
+  "intellij.debugger.streams.shared.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.debugger.streams.shared` end

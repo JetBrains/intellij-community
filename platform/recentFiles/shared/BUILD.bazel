@@ -57,3 +57,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.recentFiles` end
+
+### auto-generated section `iml intellij.platform.recentFiles` start
+exports_files([
+  "intellij.platform.recentFiles.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.recentFiles` end

@@ -35,3 +35,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.distributionContent.testFramework` end
+
+### auto-generated section `iml intellij.platform.distributionContent.testFramework` start
+exports_files([
+  "intellij.platform.distributionContent.testFramework.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.distributionContent.testFramework` end

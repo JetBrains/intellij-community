@@ -43,3 +43,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.statistics.config` end
+
+### auto-generated section `iml intellij.platform.statistics.config` start
+exports_files([
+  "intellij.platform.statistics.config.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.statistics.config` end

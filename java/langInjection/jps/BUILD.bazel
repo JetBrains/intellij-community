@@ -46,3 +46,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.java.langInjection.jps` end
+
+### auto-generated section `iml intellij.java.langInjection.jps` start
+exports_files([
+  "intellij.java.langInjection.jps.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.langInjection.jps` end

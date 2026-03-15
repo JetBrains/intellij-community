@@ -126,3 +126,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.ide.internal` end
+
+### auto-generated section `iml intellij.platform.ide.internal` start
+exports_files([
+  "intellij.platform.ide.internal.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.ide.internal` end

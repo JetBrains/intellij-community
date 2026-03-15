@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":color-scheme-github"]
 )
 ### auto-generated section `build intellij.color.scheme.github` end
+
+### auto-generated section `iml intellij.color.scheme.github` start
+exports_files([
+  "intellij.color.scheme.github.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.color.scheme.github` end

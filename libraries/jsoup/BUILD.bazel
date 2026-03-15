@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":jsoup"]
 )
 ### auto-generated section `build intellij.libraries.jsoup` end
+
+### auto-generated section `iml intellij.libraries.jsoup` start
+exports_files([
+  "intellij.libraries.jsoup.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.jsoup` end

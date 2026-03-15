@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":lz4"]
 )
 ### auto-generated section `build intellij.libraries.lz4` end
+
+### auto-generated section `iml intellij.libraries.lz4` start
+exports_files([
+  "intellij.libraries.lz4.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.lz4` end

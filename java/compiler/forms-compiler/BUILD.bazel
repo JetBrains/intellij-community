@@ -54,6 +54,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.java.guiForms.compiler` end
 
+### auto-generated section `iml intellij.java.guiForms.compiler` start
+exports_files([
+  "intellij.java.guiForms.compiler.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.guiForms.compiler` end
+
 ### auto-generated section `test intellij.java.guiForms.compiler` start
 load("@community//build:tests-options.bzl", "jps_test")
 

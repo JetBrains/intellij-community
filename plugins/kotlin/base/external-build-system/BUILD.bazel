@@ -47,3 +47,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.externalSystem` end
+
+### auto-generated section `iml intellij.kotlin.base.externalSystem` start
+exports_files([
+  "intellij.kotlin.base.externalSystem.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.base.externalSystem` end

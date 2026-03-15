@@ -23,6 +23,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.devkit` end
 
+### auto-generated section `iml intellij.devkit` start
+exports_files([
+  "intellij.devkit.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit` end
+
 ### auto-generated section `build intellij.devkit.plugin.main` start
 jvm_library(
   name = "devkit-plugin-main",
@@ -58,6 +64,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.devkit.plugin.main` end
+
+### auto-generated section `iml intellij.devkit.plugin.main` start
+exports_files([
+  "intellij.devkit.plugin.main.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.plugin.main` end
 
 ### auto-generated section `build intellij.devkit.plugin.main.noKotlin` start
 jvm_library(
@@ -108,3 +120,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.devkit.plugin.main.noKotlin` end
+
+### auto-generated section `iml intellij.devkit.plugin.main.noKotlin` start
+exports_files([
+  "intellij.devkit.plugin.main.noKotlin.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.plugin.main.noKotlin` end

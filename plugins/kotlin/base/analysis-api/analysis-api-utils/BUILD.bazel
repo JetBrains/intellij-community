@@ -68,3 +68,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.analysis.utils` end
+
+### auto-generated section `iml intellij.kotlin.base.analysis.utils` start
+exports_files([
+  "intellij.kotlin.base.analysis.utils.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.base.analysis.utils` end

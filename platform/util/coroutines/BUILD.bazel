@@ -36,6 +36,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.util.coroutines` end
 
+### auto-generated section `iml intellij.platform.util.coroutines` start
+exports_files([
+  "intellij.platform.util.coroutines.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.coroutines` end
+
 ### auto-generated section `build intellij.platform.util.coroutines.tests` start
 jvm_library(
   name = "coroutines-tests",
@@ -64,6 +70,12 @@ jvm_library(
   runtime_deps = [":coroutines-tests"]
 )
 ### auto-generated section `build intellij.platform.util.coroutines.tests` end
+
+### auto-generated section `iml intellij.platform.util.coroutines.tests` start
+exports_files([
+  "intellij.platform.util.coroutines.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.coroutines.tests` end
 
 ### auto-generated section `test intellij.platform.util.coroutines.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

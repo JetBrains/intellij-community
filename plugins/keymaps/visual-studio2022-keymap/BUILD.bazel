@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":keymap-visualStudio2022"]
 )
 ### auto-generated section `build intellij.keymap.visualStudio2022` end
+
+### auto-generated section `iml intellij.keymap.visualStudio2022` start
+exports_files([
+  "intellij.keymap.visualStudio2022.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.keymap.visualStudio2022` end

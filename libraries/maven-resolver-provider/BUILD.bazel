@@ -32,3 +32,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.libraries.maven.resolver.provider` end
+
+### auto-generated section `iml intellij.libraries.maven.resolver.provider` start
+exports_files([
+  "intellij.libraries.maven.resolver.provider.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.maven.resolver.provider` end

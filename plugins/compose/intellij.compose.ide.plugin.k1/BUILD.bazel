@@ -74,6 +74,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.compose.ide.plugin.k1` end
 
+### auto-generated section `iml intellij.compose.ide.plugin.k1` start
+exports_files([
+  "intellij.compose.ide.plugin.k1.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.compose.ide.plugin.k1` end
+
 ### auto-generated section `build intellij.compose.ide.plugin.k1.tests` start
 create_kotlinc_options(
   name = "custom_ide-plugin-k1-tests",
@@ -139,6 +145,12 @@ jvm_library(
   runtime_deps = [":ide-plugin-k1-tests"]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.k1.tests` end
+
+### auto-generated section `iml intellij.compose.ide.plugin.k1.tests` start
+exports_files([
+  "intellij.compose.ide.plugin.k1.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.compose.ide.plugin.k1.tests` end
 
 ### auto-generated section `test intellij.compose.ide.plugin.k1.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

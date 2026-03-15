@@ -42,3 +42,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.driver.impl` end
+
+### auto-generated section `iml intellij.driver.impl` start
+exports_files([
+  "intellij.driver.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.driver.impl` end

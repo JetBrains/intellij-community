@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":cli-parser"]
 )
 ### auto-generated section `build intellij.libraries.cli.parser` end
+
+### auto-generated section `iml intellij.libraries.cli.parser` start
+exports_files([
+  "intellij.libraries.cli.parser.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.cli.parser` end

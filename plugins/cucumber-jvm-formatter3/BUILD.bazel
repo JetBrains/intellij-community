@@ -26,3 +26,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.cucumber.jvmFormatter3` end
+
+### auto-generated section `iml intellij.cucumber.jvmFormatter3` start
+exports_files([
+  "intellij.cucumber.jvmFormatter3.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.cucumber.jvmFormatter3` end

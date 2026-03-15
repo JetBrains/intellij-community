@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":plugin"]
 )
 ### auto-generated section `build intellij.mcpserver.tests.plugin` end
+
+### auto-generated section `iml intellij.mcpserver.tests.plugin` start
+exports_files([
+  "intellij.mcpserver.tests.plugin.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.mcpserver.tests.plugin` end

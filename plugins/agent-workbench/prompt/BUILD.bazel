@@ -92,6 +92,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.agent.workbench.prompt` end
 
+### auto-generated section `iml intellij.agent.workbench.prompt` start
+exports_files([
+  "intellij.agent.workbench.prompt.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.agent.workbench.prompt` end
+
 ### auto-generated section `test intellij.agent.workbench.prompt` start
 load("@community//build:tests-options.bzl", "jps_test")
 

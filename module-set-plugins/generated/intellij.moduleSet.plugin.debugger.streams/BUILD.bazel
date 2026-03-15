@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":moduleSet-plugin-debugger-streams"]
 )
 ### auto-generated section `build intellij.moduleSet.plugin.debugger.streams` end
+
+### auto-generated section `iml intellij.moduleSet.plugin.debugger.streams` start
+exports_files([
+  "intellij.moduleSet.plugin.debugger.streams.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.moduleSet.plugin.debugger.streams` end

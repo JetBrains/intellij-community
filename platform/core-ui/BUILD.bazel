@@ -36,3 +36,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.core.ui` end
+
+### auto-generated section `iml intellij.platform.core.ui` start
+exports_files([
+  "intellij.platform.core.ui.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.core.ui` end

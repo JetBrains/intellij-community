@@ -40,3 +40,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.debugger.streams.core.testFramework` end
+
+### auto-generated section `iml intellij.debugger.streams.core.testFramework` start
+exports_files([
+  "intellij.debugger.streams.core.testFramework.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.debugger.streams.core.testFramework` end

@@ -145,6 +145,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.debugger.impl` end
 
+### auto-generated section `iml intellij.platform.debugger.impl` start
+exports_files([
+  "intellij.platform.debugger.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.debugger.impl` end
+
 ### auto-generated section `build intellij.platform.debugger.impl.tests` start
 create_kotlinc_options(
   name = "custom_debugger-impl-tests",
@@ -280,6 +286,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.tests` end
+
+### auto-generated section `iml intellij.platform.debugger.impl.tests` start
+exports_files([
+  "intellij.platform.debugger.impl.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.debugger.impl.tests` end
 
 ### auto-generated section `test intellij.platform.debugger.impl.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

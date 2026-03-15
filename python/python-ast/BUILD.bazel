@@ -40,3 +40,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.python.ast` end
+
+### auto-generated section `iml intellij.python.ast` start
+exports_files([
+  "intellij.python.ast.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.ast` end

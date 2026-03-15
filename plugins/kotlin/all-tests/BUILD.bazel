@@ -164,3 +164,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build kotlin.all-tests` end
+
+### auto-generated section `iml kotlin.all-tests` start
+exports_files([
+  "kotlin.all-tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.all-tests` end

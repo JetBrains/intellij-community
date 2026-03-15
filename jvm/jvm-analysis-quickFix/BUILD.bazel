@@ -44,3 +44,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.jvm.analysis.quickFix` end
+
+### auto-generated section `iml intellij.jvm.analysis.quickFix` start
+exports_files([
+  "intellij.jvm.analysis.quickFix.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.jvm.analysis.quickFix` end

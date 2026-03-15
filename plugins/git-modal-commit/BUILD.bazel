@@ -44,3 +44,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.vcs.git.commit.modal` end
+
+### auto-generated section `iml intellij.vcs.git.commit.modal` start
+exports_files([
+  "intellij.vcs.git.commit.modal.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.vcs.git.commit.modal` end

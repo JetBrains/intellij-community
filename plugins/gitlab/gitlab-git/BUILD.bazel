@@ -70,3 +70,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.vcs.gitlab.git` end
+
+### auto-generated section `iml intellij.vcs.gitlab.git` start
+exports_files([
+  "intellij.vcs.gitlab.git.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.vcs.gitlab.git` end

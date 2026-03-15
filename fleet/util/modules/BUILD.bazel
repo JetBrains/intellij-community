@@ -41,3 +41,9 @@ jvm_library(
   runtime_deps = [":modules"]
 )
 ### auto-generated section `build fleet.util.modules` end
+
+### auto-generated section `iml fleet.util.modules` start
+exports_files([
+  "fleet.util.modules.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.util.modules` end

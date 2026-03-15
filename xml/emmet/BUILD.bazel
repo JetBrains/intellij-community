@@ -186,3 +186,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.xml.emmet` end
+
+### auto-generated section `iml intellij.xml.emmet` start
+exports_files([
+  "intellij.xml.emmet.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.xml.emmet` end

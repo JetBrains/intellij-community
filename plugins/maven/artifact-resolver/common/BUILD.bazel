@@ -22,3 +22,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.maven.artifactResolver.common` end
+
+### auto-generated section `iml intellij.maven.artifactResolver.common` start
+exports_files([
+  "intellij.maven.artifactResolver.common.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.maven.artifactResolver.common` end

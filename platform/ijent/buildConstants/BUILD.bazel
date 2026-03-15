@@ -20,3 +20,9 @@ jvm_library(
   runtime_deps = [":buildConstants"]
 )
 ### auto-generated section `build intellij.platform.ijent.community.buildConstants` end
+
+### auto-generated section `iml intellij.platform.ijent.community.buildConstants` start
+exports_files([
+  "intellij.platform.ijent.community.buildConstants.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.ijent.community.buildConstants` end

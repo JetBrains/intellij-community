@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":ide-resources"]
 )
 ### auto-generated section `build intellij.java.ide.resources` end
+
+### auto-generated section `iml intellij.java.ide.resources` start
+exports_files([
+  "intellij.java.ide.resources.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.ide.resources` end

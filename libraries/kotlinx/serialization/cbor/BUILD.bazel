@@ -32,3 +32,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.libraries.kotlinx.serialization.cbor` end
+
+### auto-generated section `iml intellij.libraries.kotlinx.serialization.cbor` start
+exports_files([
+  "intellij.libraries.kotlinx.serialization.cbor.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.kotlinx.serialization.cbor` end

@@ -67,6 +67,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.lambda.sampleTests` end
 
+### auto-generated section `iml intellij.lambda.sampleTests` start
+exports_files([
+  "intellij.lambda.sampleTests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.lambda.sampleTests` end
+
 ### auto-generated section `test intellij.lambda.sampleTests` start
 load("@community//build:tests-options.bzl", "jps_test")
 

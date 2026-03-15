@@ -51,6 +51,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.fixes.tests` end
 
+### auto-generated section `iml intellij.kotlin.codeInsight.fixes.tests` start
+exports_files([
+  "intellij.kotlin.codeInsight.fixes.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.codeInsight.fixes.tests` end
+
 ### auto-generated section `test intellij.kotlin.codeInsight.fixes.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 

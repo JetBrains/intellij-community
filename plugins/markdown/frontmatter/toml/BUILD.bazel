@@ -48,3 +48,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.markdown.frontmatter.toml` end
+
+### auto-generated section `iml intellij.markdown.frontmatter.toml` start
+exports_files([
+  "intellij.markdown.frontmatter.toml.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.markdown.frontmatter.toml` end

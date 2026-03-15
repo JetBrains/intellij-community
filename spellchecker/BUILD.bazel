@@ -88,3 +88,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.spellchecker` end
+
+### auto-generated section `iml intellij.spellchecker` start
+exports_files([
+  "intellij.spellchecker.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.spellchecker` end

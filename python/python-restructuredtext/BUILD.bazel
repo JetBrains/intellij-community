@@ -106,3 +106,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.restructuredtext.python` end
+
+### auto-generated section `iml intellij.restructuredtext.python` start
+exports_files([
+  "intellij.restructuredtext.python.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.restructuredtext.python` end

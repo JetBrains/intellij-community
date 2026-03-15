@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":color-scheme-vibrant_ink"]
 )
 ### auto-generated section `build intellij.color.scheme.vibrant_ink` end
+
+### auto-generated section `iml intellij.color.scheme.vibrant_ink` start
+exports_files([
+  "intellij.color.scheme.vibrant_ink.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.color.scheme.vibrant_ink` end

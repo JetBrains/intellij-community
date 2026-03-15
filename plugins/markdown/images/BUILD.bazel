@@ -60,3 +60,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.markdown.images` end
+
+### auto-generated section `iml intellij.markdown.images` start
+exports_files([
+  "intellij.markdown.images.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.markdown.images` end

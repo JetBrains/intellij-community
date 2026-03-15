@@ -25,3 +25,9 @@ jvm_library(
   runtime_deps = [":xerces"]
 )
 ### auto-generated section `build intellij.libraries.xerces` end
+
+### auto-generated section `iml intellij.libraries.xerces` start
+exports_files([
+  "intellij.libraries.xerces.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.xerces` end

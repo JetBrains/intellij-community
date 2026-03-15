@@ -30,3 +30,9 @@ jvm_library(
   runtime_deps = [":execution"]
 )
 ### auto-generated section `build intellij.java.jshell.execution` end
+
+### auto-generated section `iml intellij.java.jshell.execution` start
+exports_files([
+  "intellij.java.jshell.execution.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.jshell.execution` end

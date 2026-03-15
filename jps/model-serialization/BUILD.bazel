@@ -42,6 +42,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.jps.model.serialization` end
 
+### auto-generated section `iml intellij.platform.jps.model.serialization` start
+exports_files([
+  "intellij.platform.jps.model.serialization.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jps.model.serialization` end
+
 ### auto-generated section `build intellij.platform.jps.model.serialization.tests` start
 resourcegroup(
   name = "model-serialization-tests_test_resources",
@@ -94,6 +100,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.jps.model.serialization.tests` end
+
+### auto-generated section `iml intellij.platform.jps.model.serialization.tests` start
+exports_files([
+  "intellij.platform.jps.model.serialization.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jps.model.serialization.tests` end
 
 ### auto-generated section `test intellij.platform.jps.model.serialization.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

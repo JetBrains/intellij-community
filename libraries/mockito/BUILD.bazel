@@ -21,3 +21,9 @@ jvm_library(
   runtime_deps = [":mockito"]
 )
 ### auto-generated section `build intellij.libraries.mockito` end
+
+### auto-generated section `iml intellij.libraries.mockito` start
+exports_files([
+  "intellij.libraries.mockito.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.mockito` end

@@ -70,3 +70,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.compilerPlugins.parcelize.common` end
+
+### auto-generated section `iml intellij.kotlin.compilerPlugins.parcelize.common` start
+exports_files([
+  "intellij.kotlin.compilerPlugins.parcelize.common.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.compilerPlugins.parcelize.common` end

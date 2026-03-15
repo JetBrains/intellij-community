@@ -104,3 +104,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.maven` end
+
+### auto-generated section `iml intellij.kotlin.maven` start
+exports_files([
+  "intellij.kotlin.maven.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.maven` end

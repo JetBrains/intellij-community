@@ -53,3 +53,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build kotlin.compose-all-tests.k2` end
+
+### auto-generated section `iml kotlin.compose-all-tests.k2` start
+exports_files([
+  "kotlin.compose-all-tests.k2.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.compose-all-tests.k2` end

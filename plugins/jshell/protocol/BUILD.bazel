@@ -22,6 +22,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.java.jshell.protocol` end
 
+### auto-generated section `iml intellij.java.jshell.protocol` start
+exports_files([
+  "intellij.java.jshell.protocol.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.jshell.protocol` end
+
 ### auto-generated section `test intellij.java.jshell.protocol` start
 load("@community//build:tests-options.bzl", "jps_test")
 

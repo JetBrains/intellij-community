@@ -43,3 +43,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.terminal.cloud` end
+
+### auto-generated section `iml intellij.terminal.cloud` start
+exports_files([
+  "intellij.terminal.cloud.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.terminal.cloud` end

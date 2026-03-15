@@ -126,6 +126,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.kotlin.testFramework` end
 
+### auto-generated section `iml intellij.kotlin.testFramework` start
+exports_files([
+  "intellij.kotlin.testFramework.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.testFramework` end
+
 ### auto-generated section `test intellij.kotlin.testFramework` start
 load("@community//build:tests-options.bzl", "jps_test")
 

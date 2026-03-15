@@ -26,3 +26,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.jps.model.testFramework` end
+
+### auto-generated section `iml intellij.platform.jps.model.testFramework` start
+exports_files([
+  "intellij.platform.jps.model.testFramework.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jps.model.testFramework` end

@@ -50,3 +50,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.gradle.toolingExtension` end
+
+### auto-generated section `iml intellij.gradle.toolingExtension` start
+exports_files([
+  "intellij.gradle.toolingExtension.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.toolingExtension` end

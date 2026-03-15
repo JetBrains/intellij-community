@@ -89,3 +89,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.j2k` end
+
+### auto-generated section `iml intellij.kotlin.j2k` start
+exports_files([
+  "intellij.kotlin.j2k.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.j2k` end

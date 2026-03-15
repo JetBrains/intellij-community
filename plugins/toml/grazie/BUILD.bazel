@@ -38,3 +38,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.toml.grazie` end
+
+### auto-generated section `iml intellij.toml.grazie` start
+exports_files([
+  "intellij.toml.grazie.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.toml.grazie` end

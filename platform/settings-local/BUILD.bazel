@@ -80,6 +80,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.settings.local` end
 
+### auto-generated section `iml intellij.platform.settings.local` start
+exports_files([
+  "intellij.platform.settings.local.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.settings.local` end
+
 ### auto-generated section `build intellij.platform.settings.local.tests` start
 create_kotlinc_options(
   name = "custom_settings-local-tests",
@@ -164,6 +170,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.settings.local.tests` end
+
+### auto-generated section `iml intellij.platform.settings.local.tests` start
+exports_files([
+  "intellij.platform.settings.local.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.settings.local.tests` end
 
 ### auto-generated section `test intellij.platform.settings.local.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

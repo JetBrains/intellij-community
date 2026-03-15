@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":swingx"]
 )
 ### auto-generated section `build intellij.libraries.swingx` end
+
+### auto-generated section `iml intellij.libraries.swingx` start
+exports_files([
+  "intellij.libraries.swingx.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.swingx` end

@@ -80,6 +80,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.gradle.toolingExtension.impl` end
 
+### auto-generated section `iml intellij.gradle.toolingExtension.impl` start
+exports_files([
+  "intellij.gradle.toolingExtension.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.toolingExtension.impl` end
+
 ### auto-generated section `build intellij.gradle.toolingExtension.tests` start
 resourcegroup(
   name = "toolingExtension-tests_test_resources",
@@ -142,6 +148,12 @@ jvm_library(
   runtime_deps = [":toolingExtension-tests"]
 )
 ### auto-generated section `build intellij.gradle.toolingExtension.tests` end
+
+### auto-generated section `iml intellij.gradle.toolingExtension.tests` start
+exports_files([
+  "intellij.gradle.toolingExtension.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.toolingExtension.tests` end
 
 ### auto-generated section `test intellij.gradle.toolingExtension.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

@@ -42,3 +42,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.builtInServer` end
+
+### auto-generated section `iml intellij.platform.builtInServer` start
+exports_files([
+  "intellij.platform.builtInServer.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.builtInServer` end

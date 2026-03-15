@@ -46,6 +46,12 @@ jvm_library(
 )
 ### auto-generated section `build kotlin.fir.testFramework` end
 
+### auto-generated section `iml kotlin.fir.testFramework` start
+exports_files([
+  "kotlin.fir.testFramework.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.fir.testFramework` end
+
 ### auto-generated section `test kotlin.fir.testFramework` start
 load("@community//build:tests-options.bzl", "jps_test")
 

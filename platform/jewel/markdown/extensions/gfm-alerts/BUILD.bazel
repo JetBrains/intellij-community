@@ -70,6 +70,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmAlerts` end
 
+### auto-generated section `iml intellij.platform.jewel.markdown.extensions.gfmAlerts` start
+exports_files([
+  "intellij.platform.jewel.markdown.extensions.gfmAlerts.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jewel.markdown.extensions.gfmAlerts` end
+
 ### auto-generated section `test intellij.platform.jewel.markdown.extensions.gfmAlerts` start
 load("@community//build:tests-options.bzl", "jps_test")
 

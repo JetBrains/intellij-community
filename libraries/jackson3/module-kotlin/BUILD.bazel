@@ -32,3 +32,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.libraries.jackson3.module.kotlin` end
+
+### auto-generated section `iml intellij.libraries.jackson3.module.kotlin` start
+exports_files([
+  "intellij.libraries.jackson3.module.kotlin.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.jackson3.module.kotlin` end

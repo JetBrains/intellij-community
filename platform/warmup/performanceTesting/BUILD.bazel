@@ -44,3 +44,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.warmup.performanceTesting` end
+
+### auto-generated section `iml intellij.platform.warmup.performanceTesting` start
+exports_files([
+  "intellij.platform.warmup.performanceTesting.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.warmup.performanceTesting` end

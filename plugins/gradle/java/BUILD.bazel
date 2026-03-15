@@ -141,6 +141,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.gradle.java` end
 
+### auto-generated section `iml intellij.gradle.java` start
+exports_files([
+  "intellij.gradle.java.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.java` end
+
 ### auto-generated section `build intellij.gradle.java.tests` start
 resourcegroup(
   name = "java-tests_test_resources",
@@ -288,6 +294,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.gradle.java.tests` end
+
+### auto-generated section `iml intellij.gradle.java.tests` start
+exports_files([
+  "intellij.gradle.java.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.java.tests` end
 
 ### auto-generated section `test intellij.gradle.java.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

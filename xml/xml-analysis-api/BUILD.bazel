@@ -44,3 +44,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.xml.analysis` end
+
+### auto-generated section `iml intellij.xml.analysis` start
+exports_files([
+  "intellij.xml.analysis.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.xml.analysis` end

@@ -31,3 +31,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.tools.launcherGenerator` end
+
+### auto-generated section `iml intellij.tools.launcherGenerator` start
+exports_files([
+  "intellij.tools.launcherGenerator.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.tools.launcherGenerator` end

@@ -56,6 +56,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.groovy.jps` end
 
+### auto-generated section `iml intellij.groovy.jps` start
+exports_files([
+  "intellij.groovy.jps.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.groovy.jps` end
+
 ### auto-generated section `build intellij.groovy.jps.tests` start
 jvm_library(
   name = "jps-tests",
@@ -85,6 +91,12 @@ jvm_library(
   runtime_deps = [":jps-tests"]
 )
 ### auto-generated section `build intellij.groovy.jps.tests` end
+
+### auto-generated section `iml intellij.groovy.jps.tests` start
+exports_files([
+  "intellij.groovy.jps.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.groovy.jps.tests` end
 
 ### auto-generated section `test intellij.groovy.jps.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

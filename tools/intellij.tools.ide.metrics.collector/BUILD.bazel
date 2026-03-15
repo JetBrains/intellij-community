@@ -88,6 +88,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.tools.ide.metrics.collector` end
 
+### auto-generated section `iml intellij.tools.ide.metrics.collector` start
+exports_files([
+  "intellij.tools.ide.metrics.collector.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.tools.ide.metrics.collector` end
+
 ### auto-generated section `test intellij.tools.ide.metrics.collector` start
 load("@community//build:tests-options.bzl", "jps_test")
 

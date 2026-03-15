@@ -37,3 +37,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.compilation.charts.jps` end
+
+### auto-generated section `iml intellij.compilation.charts.jps` start
+exports_files([
+  "intellij.compilation.charts.jps.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.compilation.charts.jps` end

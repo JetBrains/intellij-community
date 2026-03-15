@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":proxy-vole"]
 )
 ### auto-generated section `build intellij.libraries.proxy.vole` end
+
+### auto-generated section `iml intellij.libraries.proxy.vole` start
+exports_files([
+  "intellij.libraries.proxy.vole.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.proxy.vole` end

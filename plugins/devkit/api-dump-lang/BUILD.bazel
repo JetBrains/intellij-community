@@ -78,6 +78,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.devkit.apiDump.lang` end
 
+### auto-generated section `iml intellij.devkit.apiDump.lang` start
+exports_files([
+  "intellij.devkit.apiDump.lang.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.apiDump.lang` end
+
 ### auto-generated section `test intellij.devkit.apiDump.lang` start
 load("@community//build:tests-options.bzl", "jps_test")
 

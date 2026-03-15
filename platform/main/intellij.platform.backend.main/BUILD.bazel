@@ -65,3 +65,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.backend.main` end
+
+### auto-generated section `iml intellij.platform.backend.main` start
+exports_files([
+  "intellij.platform.backend.main.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.backend.main` end

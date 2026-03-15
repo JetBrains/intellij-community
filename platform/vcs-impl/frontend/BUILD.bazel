@@ -73,6 +73,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.vcs.impl.frontend` end
 
+### auto-generated section `iml intellij.platform.vcs.impl.frontend` start
+exports_files([
+  "intellij.platform.vcs.impl.frontend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.vcs.impl.frontend` end
+
 ### auto-generated section `build intellij.platform.vcs.impl.frontend.tests` start
 jvm_library(
   name = "vcs-impl-frontend-tests",
@@ -142,6 +148,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.frontend.tests` end
+
+### auto-generated section `iml intellij.platform.vcs.impl.frontend.tests` start
+exports_files([
+  "intellij.platform.vcs.impl.frontend.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.vcs.impl.frontend.tests` end
 
 ### auto-generated section `test intellij.platform.vcs.impl.frontend.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

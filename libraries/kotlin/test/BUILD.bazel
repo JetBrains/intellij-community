@@ -25,3 +25,9 @@ jvm_library(
   runtime_deps = [":libraries-kotlinTest"]
 )
 ### auto-generated section `build intellij.libraries.kotlinTest` end
+
+### auto-generated section `iml intellij.libraries.kotlinTest` start
+exports_files([
+  "intellij.libraries.kotlinTest.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.kotlinTest` end

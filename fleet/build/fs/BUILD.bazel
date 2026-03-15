@@ -65,6 +65,12 @@ jvm_library(
 )
 ### auto-generated section `build fleet.build.fs` end
 
+### auto-generated section `iml fleet.build.fs` start
+exports_files([
+  "fleet.build.fs.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.build.fs` end
+
 ### auto-generated section `test fleet.build.fs` start
 load("@community//build:tests-options.bzl", "jps_test")
 

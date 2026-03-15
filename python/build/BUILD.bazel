@@ -92,6 +92,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.pycharm.community.build` end
 
+### auto-generated section `iml intellij.pycharm.community.build` start
+exports_files([
+  "intellij.pycharm.community.build.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.pycharm.community.build` end
+
 ### auto-generated section `test intellij.pycharm.community.build` start
 load("@community//build:tests-options.bzl", "jps_test")
 

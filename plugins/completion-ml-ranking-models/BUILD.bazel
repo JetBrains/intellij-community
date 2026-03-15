@@ -54,6 +54,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.completionMlRankingModels` end
 
+### auto-generated section `iml intellij.completionMlRankingModels` start
+exports_files([
+  "intellij.completionMlRankingModels.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.completionMlRankingModels` end
+
 ### auto-generated section `build intellij.completionMlRankingModels.tests` start
 jvm_library(
   name = "completionMlRankingModels-tests",
@@ -82,6 +88,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.completionMlRankingModels.tests` end
+
+### auto-generated section `iml intellij.completionMlRankingModels.tests` start
+exports_files([
+  "intellij.completionMlRankingModels.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.completionMlRankingModels.tests` end
 
 ### auto-generated section `test intellij.completionMlRankingModels.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

@@ -65,3 +65,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.usageView` end
+
+### auto-generated section `iml intellij.platform.usageView` start
+exports_files([
+  "intellij.platform.usageView.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.usageView` end

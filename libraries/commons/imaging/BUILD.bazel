@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":imaging"]
 )
 ### auto-generated section `build intellij.libraries.commons.imaging` end
+
+### auto-generated section `iml intellij.libraries.commons.imaging` start
+exports_files([
+  "intellij.libraries.commons.imaging.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.commons.imaging` end

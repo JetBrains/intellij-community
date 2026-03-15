@@ -87,3 +87,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build fleet.util.network` end
+
+### auto-generated section `iml fleet.util.network` start
+exports_files([
+  "fleet.util.network.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.util.network` end

@@ -39,3 +39,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.util.base` end
+
+### auto-generated section `iml intellij.platform.util.base` start
+exports_files([
+  "intellij.platform.util.base.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.base` end

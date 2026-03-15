@@ -50,3 +50,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.searchEverywhere.testFramework` end
+
+### auto-generated section `iml intellij.platform.searchEverywhere.testFramework` start
+exports_files([
+  "intellij.platform.searchEverywhere.testFramework.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.searchEverywhere.testFramework` end

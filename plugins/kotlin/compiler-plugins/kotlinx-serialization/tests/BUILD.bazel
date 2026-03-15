@@ -73,6 +73,12 @@ jvm_library(
 )
 ### auto-generated section `build kotlin.compiler-plugins.kotlinx-serialization.tests` end
 
+### auto-generated section `iml kotlin.compiler-plugins.kotlinx-serialization.tests` start
+exports_files([
+  "kotlin.compiler-plugins.kotlinx-serialization.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.compiler-plugins.kotlinx-serialization.tests` end
+
 ### auto-generated section `test kotlin.compiler-plugins.kotlinx-serialization.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 

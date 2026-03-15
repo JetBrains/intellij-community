@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":color-scheme-warmNeon"]
 )
 ### auto-generated section `build intellij.color.scheme.warmNeon` end
+
+### auto-generated section `iml intellij.color.scheme.warmNeon` start
+exports_files([
+  "intellij.color.scheme.warmNeon.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.color.scheme.warmNeon` end

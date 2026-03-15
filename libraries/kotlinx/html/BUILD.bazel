@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":html"]
 )
 ### auto-generated section `build intellij.libraries.kotlinx.html` end
+
+### auto-generated section `iml intellij.libraries.kotlinx.html` start
+exports_files([
+  "intellij.libraries.kotlinx.html.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.kotlinx.html` end

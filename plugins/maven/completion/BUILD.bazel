@@ -50,3 +50,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.maven.completion` end
+
+### auto-generated section `iml intellij.maven.completion` start
+exports_files([
+  "intellij.maven.completion.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.maven.completion` end

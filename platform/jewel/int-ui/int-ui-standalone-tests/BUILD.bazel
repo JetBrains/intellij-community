@@ -48,6 +48,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.jewel.intUi.standalone.tests` end
 
+### auto-generated section `iml intellij.platform.jewel.intUi.standalone.tests` start
+exports_files([
+  "intellij.platform.jewel.intUi.standalone.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jewel.intUi.standalone.tests` end
+
 ### auto-generated section `test intellij.platform.jewel.intUi.standalone.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 

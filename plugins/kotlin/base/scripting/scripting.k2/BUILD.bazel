@@ -124,6 +124,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.kotlin.base.scripting` end
 
+### auto-generated section `iml intellij.kotlin.base.scripting` start
+exports_files([
+  "intellij.kotlin.base.scripting.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.base.scripting` end
+
 ### auto-generated section `build intellij.kotlin.base.scripting.tests` start
 jvm_library(
   name = "kotlin-base-scripting-tests",
@@ -262,6 +268,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.scripting.tests` end
+
+### auto-generated section `iml intellij.kotlin.base.scripting.tests` start
+exports_files([
+  "intellij.kotlin.base.scripting.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.base.scripting.tests` end
 
 ### auto-generated section `test intellij.kotlin.base.scripting.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

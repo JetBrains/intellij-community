@@ -79,6 +79,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.kotlin.projectStructure` end
 
+### auto-generated section `iml intellij.kotlin.projectStructure` start
+exports_files([
+  "intellij.kotlin.projectStructure.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.projectStructure` end
+
 ### auto-generated section `build intellij.kotlin.projectStructure.tests` start
 create_kotlinc_options(
   name = "custom_kotlin-projectStructure-tests",
@@ -182,6 +188,12 @@ jvm_library(
   runtime_deps = [":kotlin-projectStructure-tests"]
 )
 ### auto-generated section `build intellij.kotlin.projectStructure.tests` end
+
+### auto-generated section `iml intellij.kotlin.projectStructure.tests` start
+exports_files([
+  "intellij.kotlin.projectStructure.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.projectStructure.tests` end
 
 ### auto-generated section `test intellij.kotlin.projectStructure.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

@@ -38,3 +38,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.vcs.github.ultimatePromo` end
+
+### auto-generated section `iml intellij.vcs.github.ultimatePromo` start
+exports_files([
+  "intellij.vcs.github.ultimatePromo.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.vcs.github.ultimatePromo` end

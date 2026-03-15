@@ -83,3 +83,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.impl` end
+
+### auto-generated section `iml intellij.platform.diagnostic.telemetry.impl` start
+exports_files([
+  "intellij.platform.diagnostic.telemetry.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.diagnostic.telemetry.impl` end

@@ -36,3 +36,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.util.base.multiplatform` end
+
+### auto-generated section `iml intellij.platform.util.base.multiplatform` start
+exports_files([
+  "intellij.platform.util.base.multiplatform.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.base.multiplatform` end

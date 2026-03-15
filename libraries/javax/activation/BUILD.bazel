@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":activation"]
 )
 ### auto-generated section `build intellij.libraries.javax.activation` end
+
+### auto-generated section `iml intellij.libraries.javax.activation` start
+exports_files([
+  "intellij.libraries.javax.activation.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.javax.activation` end

@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":keymap-resharper"]
 )
 ### auto-generated section `build intellij.keymap.resharper` end
+
+### auto-generated section `iml intellij.keymap.resharper` start
+exports_files([
+  "intellij.keymap.resharper.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.keymap.resharper` end

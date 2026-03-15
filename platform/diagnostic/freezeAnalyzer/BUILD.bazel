@@ -44,6 +44,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.diagnostic.freezeAnalyzer` end
 
+### auto-generated section `iml intellij.platform.diagnostic.freezeAnalyzer` start
+exports_files([
+  "intellij.platform.diagnostic.freezeAnalyzer.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.diagnostic.freezeAnalyzer` end
+
 ### auto-generated section `test intellij.platform.diagnostic.freezeAnalyzer` start
 load("@community//build:tests-options.bzl", "jps_test")
 

@@ -64,3 +64,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.workspace.jps` end
+
+### auto-generated section `iml intellij.platform.workspace.jps` start
+exports_files([
+  "intellij.platform.workspace.jps.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.workspace.jps` end

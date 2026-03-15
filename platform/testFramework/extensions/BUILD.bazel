@@ -64,3 +64,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.testExtensions` end
+
+### auto-generated section `iml intellij.platform.testExtensions` start
+exports_files([
+  "intellij.platform.testExtensions.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.testExtensions` end

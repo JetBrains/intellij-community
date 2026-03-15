@@ -56,3 +56,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build fleet.util.logging.api` end
+
+### auto-generated section `iml fleet.util.logging.api` start
+exports_files([
+  "fleet.util.logging.api.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.util.logging.api` end

@@ -32,3 +32,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.libraries.xstream` end
+
+### auto-generated section `iml intellij.libraries.xstream` start
+exports_files([
+  "intellij.libraries.xstream.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.xstream` end

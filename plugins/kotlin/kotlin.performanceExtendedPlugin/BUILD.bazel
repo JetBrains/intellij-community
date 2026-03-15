@@ -91,3 +91,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.performanceExtendedPlugin` end
+
+### auto-generated section `iml intellij.kotlin.performanceExtendedPlugin` start
+exports_files([
+  "intellij.kotlin.performanceExtendedPlugin.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.performanceExtendedPlugin` end

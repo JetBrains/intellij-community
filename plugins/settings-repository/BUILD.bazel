@@ -91,6 +91,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.settingsRepository` end
 
+### auto-generated section `iml intellij.settingsRepository` start
+exports_files([
+  "intellij.settingsRepository.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.settingsRepository` end
+
 ### auto-generated section `build intellij.settingsRepository.tests` start
 jvm_library(
   name = "settingsRepository-tests",
@@ -167,6 +173,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.settingsRepository.tests` end
+
+### auto-generated section `iml intellij.settingsRepository.tests` start
+exports_files([
+  "intellij.settingsRepository.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.settingsRepository.tests` end
 
 ### auto-generated section `test intellij.settingsRepository.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

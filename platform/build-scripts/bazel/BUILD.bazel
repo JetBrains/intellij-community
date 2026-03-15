@@ -3,6 +3,8 @@ load("@rules_java//toolchains:default_java_toolchain.bzl", "default_java_toolcha
 load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+exports_files(["intellij.platform.buildScripts.bazel.iml"], visibility = ["//visibility:public"])
+
 # see usage in .bazelrc
 # this toolchain prevents dependency on C++ toolchain through proguard_allowlister tool
 default_java_toolchain(

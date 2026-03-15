@@ -18,3 +18,9 @@ jvm_library(
   runtime_deps = [":rt"]
 )
 ### auto-generated section `build intellij.xpath.rt` end
+
+### auto-generated section `iml intellij.xpath.rt` start
+exports_files([
+  "intellij.xpath.rt.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.xpath.rt` end

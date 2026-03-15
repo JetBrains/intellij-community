@@ -38,3 +38,9 @@ jvm_library(
   runtime_deps = [":api"]
 )
 ### auto-generated section `build fleet.reporting.api` end
+
+### auto-generated section `iml fleet.reporting.api` start
+exports_files([
+  "fleet.reporting.api.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.reporting.api` end

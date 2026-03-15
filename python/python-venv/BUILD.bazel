@@ -50,6 +50,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.python.venv` end
 
+### auto-generated section `iml intellij.python.venv` start
+exports_files([
+  "intellij.python.venv.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.venv` end
+
 ### auto-generated section `build intellij.python.venv.tests` start
 resourcegroup(
   name = "venv-tests_test_resources",
@@ -115,3 +121,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.python.venv.tests` end
+
+### auto-generated section `iml intellij.python.venv.tests` start
+exports_files([
+  "intellij.python.venv.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.venv.tests` end

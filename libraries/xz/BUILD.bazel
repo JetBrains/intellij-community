@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":xz"]
 )
 ### auto-generated section `build intellij.libraries.xz` end
+
+### auto-generated section `iml intellij.libraries.xz` start
+exports_files([
+  "intellij.libraries.xz.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.xz` end

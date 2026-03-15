@@ -39,6 +39,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.agent.workbench.common` end
 
+### auto-generated section `iml intellij.agent.workbench.common` start
+exports_files([
+  "intellij.agent.workbench.common.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.agent.workbench.common` end
+
 ### auto-generated section `test intellij.agent.workbench.common` start
 load("@community//build:tests-options.bzl", "jps_test")
 

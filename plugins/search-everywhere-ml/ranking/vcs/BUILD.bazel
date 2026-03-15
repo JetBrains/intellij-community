@@ -44,3 +44,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.vcs` end
+
+### auto-generated section `iml intellij.searchEverywhereMl.ranking.vcs` start
+exports_files([
+  "intellij.searchEverywhereMl.ranking.vcs.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.searchEverywhereMl.ranking.vcs` end

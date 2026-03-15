@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":moduleSet-plugin-grid-core"]
 )
 ### auto-generated section `build intellij.moduleSet.plugin.grid.core` end
+
+### auto-generated section `iml intellij.moduleSet.plugin.grid.core` start
+exports_files([
+  "intellij.moduleSet.plugin.grid.core.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.moduleSet.plugin.grid.core` end

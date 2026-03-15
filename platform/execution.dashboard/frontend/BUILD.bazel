@@ -72,3 +72,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.execution.dashboard.frontend` end
+
+### auto-generated section `iml intellij.platform.execution.dashboard.frontend` start
+exports_files([
+  "intellij.platform.execution.dashboard.frontend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.execution.dashboard.frontend` end

@@ -23,6 +23,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.editorconfig.plugin` end
 
+### auto-generated section `iml intellij.editorconfig.plugin` start
+exports_files([
+  "intellij.editorconfig.plugin.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.editorconfig.plugin` end
+
 ### auto-generated section `build intellij.editorconfig.plugin.main` start
 jvm_library(
   name = "editorconfig-plugin-main",
@@ -50,3 +56,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.editorconfig.plugin.main` end
+
+### auto-generated section `iml intellij.editorconfig.plugin.main` start
+exports_files([
+  "intellij.editorconfig.plugin.main.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.editorconfig.plugin.main` end

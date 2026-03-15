@@ -41,3 +41,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.libraries.compose.runtime.desktop` end
+
+### auto-generated section `iml intellij.libraries.compose.runtime.desktop` start
+exports_files([
+  "intellij.libraries.compose.runtime.desktop.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.compose.runtime.desktop` end

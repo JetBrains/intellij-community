@@ -70,6 +70,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.java.ide.customization` end
 
+### auto-generated section `iml intellij.java.ide.customization` start
+exports_files([
+  "intellij.java.ide.customization.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.ide.customization` end
+
 ### auto-generated section `test intellij.java.ide.customization` start
 load("@community//build:tests-options.bzl", "jps_test")
 

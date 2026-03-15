@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":coverage-agent"]
 )
 ### auto-generated section `build intellij.platform.coverage.agent` end
+
+### auto-generated section `iml intellij.platform.coverage.agent` start
+exports_files([
+  "intellij.platform.coverage.agent.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.coverage.agent` end

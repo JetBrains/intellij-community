@@ -56,3 +56,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build fleet.build.codecache` end
+
+### auto-generated section `iml fleet.build.codecache` start
+exports_files([
+  "fleet.build.codecache.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.build.codecache` end

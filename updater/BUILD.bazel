@@ -35,6 +35,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.tools.updater` end
 
+### auto-generated section `iml intellij.tools.updater` start
+exports_files([
+  "intellij.tools.updater.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.tools.updater` end
+
 ### auto-generated section `test intellij.tools.updater` start
 load("@community//build:tests-options.bzl", "jps_test")
 

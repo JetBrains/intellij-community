@@ -19,3 +19,9 @@ jvm_library(
   runtime_deps = [":build-launcher"]
 )
 ### auto-generated section `build intellij.platform.jps.build.launcher` end
+
+### auto-generated section `iml intellij.platform.jps.build.launcher` start
+exports_files([
+  "intellij.platform.jps.build.launcher.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jps.build.launcher` end

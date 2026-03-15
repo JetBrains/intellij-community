@@ -67,3 +67,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.json` end
+
+### auto-generated section `iml intellij.json` start
+exports_files([
+  "intellij.json.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.json` end

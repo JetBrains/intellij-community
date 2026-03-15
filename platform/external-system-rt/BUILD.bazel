@@ -25,3 +25,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.externalSystem.rt` end
+
+### auto-generated section `iml intellij.platform.externalSystem.rt` start
+exports_files([
+  "intellij.platform.externalSystem.rt.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.externalSystem.rt` end

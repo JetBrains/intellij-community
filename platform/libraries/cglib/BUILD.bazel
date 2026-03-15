@@ -44,3 +44,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.libraries.cglib` end
+
+### auto-generated section `iml intellij.libraries.cglib` start
+exports_files([
+  "intellij.libraries.cglib.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.cglib` end

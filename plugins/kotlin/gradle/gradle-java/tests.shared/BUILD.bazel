@@ -168,6 +168,12 @@ jvm_library(
 )
 ### auto-generated section `build kotlin.gradle.gradle-java.tests.shared` end
 
+### auto-generated section `iml kotlin.gradle.gradle-java.tests.shared` start
+exports_files([
+  "kotlin.gradle.gradle-java.tests.shared.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.gradle.gradle-java.tests.shared` end
+
 ### auto-generated section `test kotlin.gradle.gradle-java.tests.shared` start
 load("@community//build:tests-options.bzl", "jps_test")
 

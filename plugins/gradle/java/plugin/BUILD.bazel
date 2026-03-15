@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":plugin"]
 )
 ### auto-generated section `build intellij.gradle.java.plugin` end
+
+### auto-generated section `iml intellij.gradle.java.plugin` start
+exports_files([
+  "intellij.gradle.java.plugin.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.java.plugin` end

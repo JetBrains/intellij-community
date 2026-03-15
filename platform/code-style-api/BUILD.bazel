@@ -44,3 +44,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.codeStyle` end
+
+### auto-generated section `iml intellij.platform.codeStyle` start
+exports_files([
+  "intellij.platform.codeStyle.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.codeStyle` end

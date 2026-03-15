@@ -29,3 +29,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.tools.ide.performanceTesting.commands` end
+
+### auto-generated section `iml intellij.tools.ide.performanceTesting.commands` start
+exports_files([
+  "intellij.tools.ide.performanceTesting.commands.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.tools.ide.performanceTesting.commands` end

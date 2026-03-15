@@ -48,6 +48,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.java.terminal` end
 
+### auto-generated section `iml intellij.java.terminal` start
+exports_files([
+  "intellij.java.terminal.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.terminal` end
+
 ### auto-generated section `build intellij.java.terminal.tests` start
 jvm_library(
   name = "terminal-tests",
@@ -83,6 +89,12 @@ jvm_library(
   runtime_deps = [":terminal-tests"]
 )
 ### auto-generated section `build intellij.java.terminal.tests` end
+
+### auto-generated section `iml intellij.java.terminal.tests` start
+exports_files([
+  "intellij.java.terminal.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.terminal.tests` end
 
 ### auto-generated section `test intellij.java.terminal.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

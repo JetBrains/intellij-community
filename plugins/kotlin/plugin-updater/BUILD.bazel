@@ -64,3 +64,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.plugin.updater` end
+
+### auto-generated section `iml intellij.kotlin.plugin.updater` start
+exports_files([
+  "intellij.kotlin.plugin.updater.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.plugin.updater` end

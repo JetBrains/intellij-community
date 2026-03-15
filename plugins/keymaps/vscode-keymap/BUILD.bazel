@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":keymap-vscode"]
 )
 ### auto-generated section `build intellij.keymap.vscode` end
+
+### auto-generated section `iml intellij.keymap.vscode` start
+exports_files([
+  "intellij.keymap.vscode.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.keymap.vscode` end

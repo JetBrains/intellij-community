@@ -139,6 +139,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.yaml.backend` end
 
+### auto-generated section `iml intellij.yaml.backend` start
+exports_files([
+  "intellij.yaml.backend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.yaml.backend` end
+
 ### auto-generated section `test intellij.yaml.backend` start
 load("@community//build:tests-options.bzl", "jps_test")
 

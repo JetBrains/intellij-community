@@ -48,6 +48,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.maven.proofreading` end
 
+### auto-generated section `iml intellij.maven.proofreading` start
+exports_files([
+  "intellij.maven.proofreading.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.maven.proofreading` end
+
 ### auto-generated section `test intellij.maven.proofreading` start
 load("@community//build:tests-options.bzl", "jps_test")
 

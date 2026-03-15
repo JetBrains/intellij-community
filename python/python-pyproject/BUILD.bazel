@@ -78,6 +78,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.python.pyproject` end
 
+### auto-generated section `iml intellij.python.pyproject` start
+exports_files([
+  "intellij.python.pyproject.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.pyproject` end
+
 ### auto-generated section `build intellij.python.pyproject.tests` start
 resourcegroup(
   name = "pyproject-tests_test_resources",
@@ -167,6 +173,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.python.pyproject.tests` end
+
+### auto-generated section `iml intellij.python.pyproject.tests` start
+exports_files([
+  "intellij.python.pyproject.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.pyproject.tests` end
 
 ### auto-generated section `test intellij.python.pyproject.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

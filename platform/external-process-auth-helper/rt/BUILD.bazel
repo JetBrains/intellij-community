@@ -17,3 +17,9 @@ jvm_library(
   runtime_deps = [":rt"]
 )
 ### auto-generated section `build intellij.platform.externalProcessAuthHelper.rt` end
+
+### auto-generated section `iml intellij.platform.externalProcessAuthHelper.rt` start
+exports_files([
+  "intellij.platform.externalProcessAuthHelper.rt.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.externalProcessAuthHelper.rt` end

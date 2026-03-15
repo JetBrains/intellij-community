@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":xml-rpc"]
 )
 ### auto-generated section `build intellij.libraries.xml.rpc` end
+
+### auto-generated section `iml intellij.libraries.xml.rpc` start
+exports_files([
+  "intellij.libraries.xml.rpc.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.xml.rpc` end

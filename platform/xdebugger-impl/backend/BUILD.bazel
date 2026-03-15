@@ -90,3 +90,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.backend` end
+
+### auto-generated section `iml intellij.platform.debugger.impl.backend` start
+exports_files([
+  "intellij.platform.debugger.impl.backend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.debugger.impl.backend` end

@@ -46,3 +46,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.clouds` end
+
+### auto-generated section `iml intellij.platform.clouds` start
+exports_files([
+  "intellij.platform.clouds.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.clouds` end

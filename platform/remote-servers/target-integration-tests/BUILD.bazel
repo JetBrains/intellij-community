@@ -70,6 +70,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.remoteServers.targetsIntegrationTests` end
 
+### auto-generated section `iml intellij.platform.remoteServers.targetsIntegrationTests` start
+exports_files([
+  "intellij.platform.remoteServers.targetsIntegrationTests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.remoteServers.targetsIntegrationTests` end
+
 ### auto-generated section `test intellij.platform.remoteServers.targetsIntegrationTests` start
 load("@community//build:tests-options.bzl", "jps_test")
 

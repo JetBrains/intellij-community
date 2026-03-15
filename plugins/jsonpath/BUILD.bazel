@@ -84,6 +84,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.jsonpath` end
 
+### auto-generated section `iml intellij.jsonpath` start
+exports_files([
+  "intellij.jsonpath.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.jsonpath` end
+
 ### auto-generated section `test intellij.jsonpath` start
 load("@community//build:tests-options.bzl", "jps_test")
 

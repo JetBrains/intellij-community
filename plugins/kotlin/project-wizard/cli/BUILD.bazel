@@ -41,3 +41,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.projectWizard.cli` end
+
+### auto-generated section `iml intellij.kotlin.projectWizard.cli` start
+exports_files([
+  "intellij.kotlin.projectWizard.cli.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.projectWizard.cli` end

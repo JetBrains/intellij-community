@@ -109,6 +109,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.grazie.tests.pro` end
 
+### auto-generated section `iml intellij.grazie.tests.pro` start
+exports_files([
+  "intellij.grazie.tests.pro.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.grazie.tests.pro` end
+
 ### auto-generated section `test intellij.grazie.tests.pro` start
 load("@community//build:tests-options.bzl", "jps_test")
 

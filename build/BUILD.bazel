@@ -101,6 +101,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.idea.community.build` end
 
+### auto-generated section `iml intellij.idea.community.build` start
+exports_files([
+  "intellij.idea.community.build.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.idea.community.build` end
+
 ### auto-generated section `build intellij.idea.community.build.zip` start
 jvm_library(
   name = "zip",
@@ -128,6 +134,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.idea.community.build.zip` end
+
+### auto-generated section `iml intellij.idea.community.build.zip` start
+exports_files([
+  "jvm-rules/zip/intellij.idea.community.build.zip.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.idea.community.build.zip` end
 
 ### auto-generated section `build intellij.platform.jps.build.dependencyGraph` start
 jvm_library(
@@ -167,6 +179,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.jps.build.dependencyGraph` end
 
+### auto-generated section `iml intellij.platform.jps.build.dependencyGraph` start
+exports_files([
+  "jvm-rules/dependency-graph/intellij.platform.jps.build.dependencyGraph.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jps.build.dependencyGraph` end
+
 ### auto-generated section `build intellij.platform.jps.build.javac.rt` start
 jvm_library(
   name = "build-javac-rt",
@@ -201,3 +219,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.jps.build.javac.rt` end
+
+### auto-generated section `iml intellij.platform.jps.build.javac.rt` start
+exports_files([
+  "jvm-rules/jps-builders-6/intellij.platform.jps.build.javac.rt.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jps.build.javac.rt` end

@@ -16,3 +16,9 @@ jvm_library(
   runtime_deps = [":java-debugger-agent-holder"]
 )
 ### auto-generated section `build intellij.java.debugger.agent.holder` end
+
+### auto-generated section `iml intellij.java.debugger.agent.holder` start
+exports_files([
+  "intellij.java.debugger.agent.holder.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.debugger.agent.holder` end

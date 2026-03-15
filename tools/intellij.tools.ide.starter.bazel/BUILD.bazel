@@ -42,3 +42,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.tools.ide.starter.bazel` end
+
+### auto-generated section `iml intellij.tools.ide.starter.bazel` start
+exports_files([
+  "intellij.tools.ide.starter.bazel.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.tools.ide.starter.bazel` end

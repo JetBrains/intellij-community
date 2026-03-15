@@ -18,3 +18,9 @@ jvm_library(
   runtime_deps = [":java-guiForms-rt"]
 )
 ### auto-generated section `build intellij.java.guiForms.rt` end
+
+### auto-generated section `iml intellij.java.guiForms.rt` start
+exports_files([
+  "intellij.java.guiForms.rt.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.guiForms.rt` end

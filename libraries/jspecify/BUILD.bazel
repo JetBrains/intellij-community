@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":jspecify"]
 )
 ### auto-generated section `build intellij.libraries.jspecify` end
+
+### auto-generated section `iml intellij.libraries.jspecify` start
+exports_files([
+  "intellij.libraries.jspecify.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.jspecify` end

@@ -44,3 +44,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.compilerPlugins.noarg.maven` end
+
+### auto-generated section `iml intellij.kotlin.compilerPlugins.noarg.maven` start
+exports_files([
+  "intellij.kotlin.compilerPlugins.noarg.maven.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.compilerPlugins.noarg.maven` end

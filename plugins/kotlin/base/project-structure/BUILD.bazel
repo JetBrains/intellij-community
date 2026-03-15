@@ -149,6 +149,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.kotlin.base.projectStructure` end
 
+### auto-generated section `iml intellij.kotlin.base.projectStructure` start
+exports_files([
+  "intellij.kotlin.base.projectStructure.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.base.projectStructure` end
+
 ### auto-generated section `test intellij.kotlin.base.projectStructure` start
 load("@community//build:tests-options.bzl", "jps_test")
 

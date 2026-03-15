@@ -56,3 +56,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.gradle.dependencyUpdater` end
+
+### auto-generated section `iml intellij.gradle.dependencyUpdater` start
+exports_files([
+  "intellij.gradle.dependencyUpdater.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.dependencyUpdater` end

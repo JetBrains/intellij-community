@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":moduleSet-plugin-recentFiles"]
 )
 ### auto-generated section `build intellij.moduleSet.plugin.recentFiles` end
+
+### auto-generated section `iml intellij.moduleSet.plugin.recentFiles` start
+exports_files([
+  "intellij.moduleSet.plugin.recentFiles.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.moduleSet.plugin.recentFiles` end

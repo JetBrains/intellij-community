@@ -85,6 +85,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.java.byteCodeViewer` end
 
+### auto-generated section `iml intellij.java.byteCodeViewer` start
+exports_files([
+  "intellij.java.byteCodeViewer.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.byteCodeViewer` end
+
 ### auto-generated section `test intellij.java.byteCodeViewer` start
 load("@community//build:tests-options.bzl", "jps_test")
 

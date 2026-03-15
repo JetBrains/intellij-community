@@ -58,6 +58,12 @@ jvm_library(
 )
 ### auto-generated section `build kotlin.base.analysis.analysis-api.k2.tests` end
 
+### auto-generated section `iml kotlin.base.analysis.analysis-api.k2.tests` start
+exports_files([
+  "kotlin.base.analysis.analysis-api.k2.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.base.analysis.analysis-api.k2.tests` end
+
 ### auto-generated section `test kotlin.base.analysis.analysis-api.k2.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 

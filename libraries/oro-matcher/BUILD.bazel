@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":oro-matcher"]
 )
 ### auto-generated section `build intellij.libraries.oro.matcher` end
+
+### auto-generated section `iml intellij.libraries.oro.matcher` start
+exports_files([
+  "intellij.libraries.oro.matcher.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.oro.matcher` end

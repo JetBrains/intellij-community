@@ -157,6 +157,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.markdown.tests` end
 
+### auto-generated section `iml intellij.markdown.tests` start
+exports_files([
+  "intellij.markdown.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.markdown.tests` end
+
 ### auto-generated section `test intellij.markdown.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 

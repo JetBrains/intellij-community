@@ -30,3 +30,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.groovy.spock.rt` end
+
+### auto-generated section `iml intellij.groovy.spock.rt` start
+exports_files([
+  "intellij.groovy.spock.rt.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.groovy.spock.rt` end

@@ -72,3 +72,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.python.community.aliasProvider` end
+
+### auto-generated section `iml intellij.python.community.aliasProvider` start
+exports_files([
+  "intellij.python.community.aliasProvider.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.community.aliasProvider` end

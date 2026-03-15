@@ -103,6 +103,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.filePrediction` end
 
+### auto-generated section `iml intellij.filePrediction` start
+exports_files([
+  "intellij.filePrediction.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.filePrediction` end
+
 ### auto-generated section `test intellij.filePrediction` start
 load("@community//build:tests-options.bzl", "jps_test")
 

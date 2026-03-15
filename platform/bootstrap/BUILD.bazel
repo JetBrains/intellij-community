@@ -56,3 +56,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.bootstrap` end
+
+### auto-generated section `iml intellij.platform.bootstrap` start
+exports_files([
+  "intellij.platform.bootstrap.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.bootstrap` end

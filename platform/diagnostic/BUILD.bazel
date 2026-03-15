@@ -28,3 +28,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.diagnostic` end
+
+### auto-generated section `iml intellij.platform.diagnostic` start
+exports_files([
+  "intellij.platform.diagnostic.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.diagnostic` end

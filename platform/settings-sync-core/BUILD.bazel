@@ -166,6 +166,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.settingsSync.core` end
 
+### auto-generated section `iml intellij.settingsSync.core` start
+exports_files([
+  "intellij.settingsSync.core.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.settingsSync.core` end
+
 ### auto-generated section `test intellij.settingsSync.core` start
 load("@community//build:tests-options.bzl", "jps_test")
 

@@ -25,3 +25,9 @@ jvm_library(
   runtime_deps = [":opentelemetry-sdk-autoconfigure-spi"]
 )
 ### auto-generated section `build intellij.libraries.opentelemetry.sdk.autoconfigure.spi` end
+
+### auto-generated section `iml intellij.libraries.opentelemetry.sdk.autoconfigure.spi` start
+exports_files([
+  "intellij.libraries.opentelemetry.sdk.autoconfigure.spi.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.opentelemetry.sdk.autoconfigure.spi` end

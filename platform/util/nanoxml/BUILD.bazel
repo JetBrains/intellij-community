@@ -18,3 +18,9 @@ jvm_library(
   runtime_deps = [":nanoxml"]
 )
 ### auto-generated section `build intellij.platform.util.nanoxml` end
+
+### auto-generated section `iml intellij.platform.util.nanoxml` start
+exports_files([
+  "intellij.platform.util.nanoxml.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.nanoxml` end

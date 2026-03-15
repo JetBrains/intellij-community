@@ -64,3 +64,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.structureView.backend` end
+
+### auto-generated section `iml intellij.platform.structureView.backend` start
+exports_files([
+  "intellij.platform.structureView.backend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.structureView.backend` end

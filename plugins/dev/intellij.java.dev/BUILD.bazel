@@ -76,3 +76,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.java.dev` end
+
+### auto-generated section `iml intellij.java.dev` start
+exports_files([
+  "intellij.java.dev.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.dev` end

@@ -43,3 +43,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.foldings` end
+
+### auto-generated section `iml intellij.platform.foldings` start
+exports_files([
+  "intellij.platform.foldings.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.foldings` end

@@ -81,6 +81,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.postfixTemplates` end
 
+### auto-generated section `iml intellij.kotlin.codeInsight.postfixTemplates` start
+exports_files([
+  "intellij.kotlin.codeInsight.postfixTemplates.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.codeInsight.postfixTemplates` end
+
 ### auto-generated section `build intellij.kotlin.codeInsight.postfixTemplates.tests` start
 create_kotlinc_options(
   name = "custom_kotlin-codeInsight-postfixTemplates-tests",
@@ -164,6 +170,12 @@ jvm_library(
   runtime_deps = [":kotlin-codeInsight-postfixTemplates-tests"]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.postfixTemplates.tests` end
+
+### auto-generated section `iml intellij.kotlin.codeInsight.postfixTemplates.tests` start
+exports_files([
+  "intellij.kotlin.codeInsight.postfixTemplates.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.codeInsight.postfixTemplates.tests` end
 
 ### auto-generated section `test intellij.kotlin.codeInsight.postfixTemplates.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

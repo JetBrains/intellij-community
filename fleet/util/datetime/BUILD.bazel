@@ -38,3 +38,9 @@ jvm_library(
   runtime_deps = [":datetime"]
 )
 ### auto-generated section `build fleet.util.datetime` end
+
+### auto-generated section `iml fleet.util.datetime` start
+exports_files([
+  "fleet.util.datetime.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.util.datetime` end

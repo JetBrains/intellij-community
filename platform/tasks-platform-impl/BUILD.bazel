@@ -84,3 +84,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.tasks.impl` end
+
+### auto-generated section `iml intellij.platform.tasks.impl` start
+exports_files([
+  "intellij.platform.tasks.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.tasks.impl` end

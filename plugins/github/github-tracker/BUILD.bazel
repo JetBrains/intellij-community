@@ -63,6 +63,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.vcs.github.tracker` end
 
+### auto-generated section `iml intellij.vcs.github.tracker` start
+exports_files([
+  "intellij.vcs.github.tracker.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.vcs.github.tracker` end
+
 ### auto-generated section `test intellij.vcs.github.tracker` start
 load("@community//build:tests-options.bzl", "jps_test")
 

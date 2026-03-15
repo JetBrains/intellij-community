@@ -64,6 +64,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.html.tools` end
 
+### auto-generated section `iml intellij.html.tools` start
+exports_files([
+  "intellij.html.tools.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.html.tools` end
+
 ### auto-generated section `build intellij.html.tools.tests` start
 jvm_library(
   name = "html-tools-tests",
@@ -132,6 +138,12 @@ jvm_library(
   runtime_deps = [":html-tools-tests"]
 )
 ### auto-generated section `build intellij.html.tools.tests` end
+
+### auto-generated section `iml intellij.html.tools.tests` start
+exports_files([
+  "intellij.html.tools.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.html.tools.tests` end
 
 ### auto-generated section `test intellij.html.tools.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

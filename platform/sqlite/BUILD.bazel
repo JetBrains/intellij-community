@@ -33,6 +33,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.sqlite` end
 
+### auto-generated section `iml intellij.platform.sqlite` start
+exports_files([
+  "intellij.platform.sqlite.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.sqlite` end
+
 ### auto-generated section `test intellij.platform.sqlite` start
 load("@community//build:tests-options.bzl", "jps_test")
 

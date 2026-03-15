@@ -79,6 +79,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.java.manifest` end
 
+### auto-generated section `iml intellij.java.manifest` start
+exports_files([
+  "intellij.java.manifest.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.manifest` end
+
 ### auto-generated section `test intellij.java.manifest` start
 load("@community//build:tests-options.bzl", "jps_test")
 

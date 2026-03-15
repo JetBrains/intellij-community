@@ -41,3 +41,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.ide.rpc` end
+
+### auto-generated section `iml intellij.platform.ide.rpc` start
+exports_files([
+  "intellij.platform.ide.rpc.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.ide.rpc` end

@@ -59,6 +59,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry` end
 
+### auto-generated section `iml intellij.platform.diagnostic.telemetry` start
+exports_files([
+  "intellij.platform.diagnostic.telemetry.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.diagnostic.telemetry` end
+
 ### auto-generated section `test intellij.platform.diagnostic.telemetry` start
 load("@community//build:tests-options.bzl", "jps_test")
 

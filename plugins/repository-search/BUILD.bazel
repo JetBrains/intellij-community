@@ -88,3 +88,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.repository.search` end
+
+### auto-generated section `iml intellij.repository.search` start
+exports_files([
+  "intellij.repository.search.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.repository.search` end

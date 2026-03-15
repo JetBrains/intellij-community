@@ -80,6 +80,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.searchEverywhereMl.typos` end
 
+### auto-generated section `iml intellij.searchEverywhereMl.typos` start
+exports_files([
+  "intellij.searchEverywhereMl.typos.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.searchEverywhereMl.typos` end
+
 ### auto-generated section `test intellij.searchEverywhereMl.typos` start
 load("@community//build:tests-options.bzl", "jps_test")
 

@@ -34,6 +34,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.java.decompiler.engine` end
 
+### auto-generated section `iml intellij.java.decompiler.engine` start
+exports_files([
+  "intellij.java.decompiler.engine.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.decompiler.engine` end
+
 ### auto-generated section `test intellij.java.decompiler.engine` start
 load("@community//build:tests-options.bzl", "jps_test")
 

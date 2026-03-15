@@ -56,3 +56,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.pycharm.community.ide.impl.promotion` end
+
+### auto-generated section `iml intellij.pycharm.community.ide.impl.promotion` start
+exports_files([
+  "intellij.pycharm.community.ide.impl.promotion.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.pycharm.community.ide.impl.promotion` end

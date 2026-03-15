@@ -32,6 +32,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.runtime.repository.tests` end
 
+### auto-generated section `iml intellij.platform.runtime.repository.tests` start
+exports_files([
+  "intellij.platform.runtime.repository.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.runtime.repository.tests` end
+
 ### auto-generated section `test intellij.platform.runtime.repository.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 

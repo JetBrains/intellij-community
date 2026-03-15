@@ -97,3 +97,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.java.frontback.impl` end
+
+### auto-generated section `iml intellij.java.frontback.impl` start
+exports_files([
+  "intellij.java.frontback.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.frontback.impl` end

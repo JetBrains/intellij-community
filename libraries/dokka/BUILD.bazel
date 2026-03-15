@@ -22,3 +22,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.libraries.dokka` end
+
+### auto-generated section `iml intellij.libraries.dokka` start
+exports_files([
+  "intellij.libraries.dokka.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.dokka` end

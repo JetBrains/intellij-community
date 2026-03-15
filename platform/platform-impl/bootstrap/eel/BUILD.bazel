@@ -37,3 +37,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.ide.bootstrap.eel` end
+
+### auto-generated section `iml intellij.platform.ide.bootstrap.eel` start
+exports_files([
+  "intellij.platform.ide.bootstrap.eel.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.ide.bootstrap.eel` end

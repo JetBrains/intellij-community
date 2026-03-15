@@ -107,6 +107,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.agent.workbench.sessions` end
 
+### auto-generated section `iml intellij.agent.workbench.sessions` start
+exports_files([
+  "intellij.agent.workbench.sessions.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.agent.workbench.sessions` end
+
 ### auto-generated section `test intellij.agent.workbench.sessions` start
 load("@community//build:tests-options.bzl", "jps_test")
 

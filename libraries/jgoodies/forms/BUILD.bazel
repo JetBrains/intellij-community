@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":forms"]
 )
 ### auto-generated section `build intellij.libraries.jgoodies.forms` end
+
+### auto-generated section `iml intellij.libraries.jgoodies.forms` start
+exports_files([
+  "intellij.libraries.jgoodies.forms.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.jgoodies.forms` end

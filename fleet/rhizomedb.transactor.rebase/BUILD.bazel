@@ -82,3 +82,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build fleet.rhizomedb.transactor.rebase` end
+
+### auto-generated section `iml fleet.rhizomedb.transactor.rebase` start
+exports_files([
+  "fleet.rhizomedb.transactor.rebase.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.rhizomedb.transactor.rebase` end

@@ -160,6 +160,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.kotlin.codeInsight` end
 
+### auto-generated section `iml intellij.kotlin.codeInsight` start
+exports_files([
+  "intellij.kotlin.codeInsight.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.codeInsight` end
+
 ### auto-generated section `build intellij.kotlin.codeInsight.tests` start
 create_kotlinc_options(
   name = "custom_kotlin-codeInsight-tests",
@@ -327,6 +333,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.tests` end
+
+### auto-generated section `iml intellij.kotlin.codeInsight.tests` start
+exports_files([
+  "intellij.kotlin.codeInsight.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.codeInsight.tests` end
 
 ### auto-generated section `test intellij.kotlin.codeInsight.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

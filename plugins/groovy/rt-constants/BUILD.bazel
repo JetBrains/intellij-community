@@ -18,3 +18,9 @@ jvm_library(
   runtime_deps = [":constants-rt"]
 )
 ### auto-generated section `build intellij.groovy.constants.rt` end
+
+### auto-generated section `iml intellij.groovy.constants.rt` start
+exports_files([
+  "intellij.groovy.constants.rt.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.groovy.constants.rt` end

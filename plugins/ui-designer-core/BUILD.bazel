@@ -67,3 +67,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.uiDesigner` end
+
+### auto-generated section `iml intellij.uiDesigner` start
+exports_files([
+  "intellij.uiDesigner.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.uiDesigner` end

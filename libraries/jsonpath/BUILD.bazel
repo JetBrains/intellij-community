@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":jsonpath"]
 )
 ### auto-generated section `build intellij.libraries.jsonpath` end
+
+### auto-generated section `iml intellij.libraries.jsonpath` start
+exports_files([
+  "intellij.libraries.jsonpath.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.jsonpath` end

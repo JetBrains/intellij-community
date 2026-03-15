@@ -85,3 +85,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.lang` end
+
+### auto-generated section `iml intellij.platform.vcs.impl.lang` start
+exports_files([
+  "intellij.platform.vcs.impl.lang.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.vcs.impl.lang` end

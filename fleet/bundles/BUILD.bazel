@@ -52,3 +52,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build fleet.bundles` end
+
+### auto-generated section `iml fleet.bundles` start
+exports_files([
+  "fleet.bundles.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.bundles` end

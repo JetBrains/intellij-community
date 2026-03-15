@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":jaxen"]
 )
 ### auto-generated section `build intellij.libraries.jaxen` end
+
+### auto-generated section `iml intellij.libraries.jaxen` start
+exports_files([
+  "intellij.libraries.jaxen.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.jaxen` end

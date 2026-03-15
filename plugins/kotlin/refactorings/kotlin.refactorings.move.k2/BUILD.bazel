@@ -106,6 +106,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.kotlin.refactorings.move` end
 
+### auto-generated section `iml intellij.kotlin.refactorings.move` start
+exports_files([
+  "intellij.kotlin.refactorings.move.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.refactorings.move` end
+
 ### auto-generated section `build intellij.kotlin.refactorings.move.tests` start
 create_kotlinc_options(
   name = "custom_kotlin-refactorings-move-tests",
@@ -227,6 +233,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.refactorings.move.tests` end
+
+### auto-generated section `iml intellij.kotlin.refactorings.move.tests` start
+exports_files([
+  "intellij.kotlin.refactorings.move.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.refactorings.move.tests` end
 
 ### auto-generated section `test intellij.kotlin.refactorings.move.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

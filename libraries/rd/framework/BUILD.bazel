@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":framework"]
 )
 ### auto-generated section `build intellij.libraries.rd.framework` end
+
+### auto-generated section `iml intellij.libraries.rd.framework` start
+exports_files([
+  "intellij.libraries.rd.framework.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.rd.framework` end

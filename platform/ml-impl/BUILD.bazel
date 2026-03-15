@@ -98,6 +98,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.ml.impl` end
 
+### auto-generated section `iml intellij.platform.ml.impl` start
+exports_files([
+  "intellij.platform.ml.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.ml.impl` end
+
 ### auto-generated section `test intellij.platform.ml.impl` start
 load("@community//build:tests-options.bzl", "jps_test")
 

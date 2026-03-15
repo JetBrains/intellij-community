@@ -35,3 +35,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.idea.android.customization` end
+
+### auto-generated section `iml intellij.idea.android.customization` start
+exports_files([
+  "intellij.idea.android.customization.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.idea.android.customization` end

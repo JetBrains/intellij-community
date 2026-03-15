@@ -91,6 +91,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.kotlin.jvm` end
 
+### auto-generated section `iml intellij.kotlin.jvm` start
+exports_files([
+  "intellij.kotlin.jvm.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.jvm` end
+
 ### auto-generated section `build intellij.kotlin.jvm.tests` start
 jvm_library(
   name = "kotlin-jvm-tests",
@@ -145,6 +151,12 @@ jvm_library(
   runtime_deps = [":kotlin-jvm-tests"]
 )
 ### auto-generated section `build intellij.kotlin.jvm.tests` end
+
+### auto-generated section `iml intellij.kotlin.jvm.tests` start
+exports_files([
+  "intellij.kotlin.jvm.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.jvm.tests` end
 
 ### auto-generated section `test intellij.kotlin.jvm.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

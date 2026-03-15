@@ -60,3 +60,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.maven.performanceTesting` end
+
+### auto-generated section `iml intellij.maven.performanceTesting` start
+exports_files([
+  "intellij.maven.performanceTesting.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.maven.performanceTesting` end

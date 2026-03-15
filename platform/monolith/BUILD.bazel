@@ -30,3 +30,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.monolith` end
+
+### auto-generated section `iml intellij.platform.monolith` start
+exports_files([
+  "intellij.platform.monolith.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.monolith` end

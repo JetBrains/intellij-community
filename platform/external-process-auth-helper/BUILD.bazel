@@ -78,6 +78,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.externalProcessAuthHelper` end
 
+### auto-generated section `iml intellij.platform.externalProcessAuthHelper` start
+exports_files([
+  "intellij.platform.externalProcessAuthHelper.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.externalProcessAuthHelper` end
+
 ### auto-generated section `test intellij.platform.externalProcessAuthHelper` start
 load("@community//build:tests-options.bzl", "jps_test")
 

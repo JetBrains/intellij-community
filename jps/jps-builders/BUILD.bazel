@@ -101,6 +101,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.jps.build` end
 
+### auto-generated section `iml intellij.platform.jps.build` start
+exports_files([
+  "intellij.platform.jps.build.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jps.build` end
+
 ### auto-generated section `build intellij.platform.jps.build.tests` start
 resourcegroup(
   name = "build-tests_test_resources",
@@ -175,6 +181,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.jps.build.tests` end
+
+### auto-generated section `iml intellij.platform.jps.build.tests` start
+exports_files([
+  "intellij.platform.jps.build.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jps.build.tests` end
 
 ### auto-generated section `test intellij.platform.jps.build.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

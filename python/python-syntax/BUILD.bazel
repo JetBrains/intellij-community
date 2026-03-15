@@ -69,3 +69,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.python.syntax` end
+
+### auto-generated section `iml intellij.python.syntax` start
+exports_files([
+  "intellij.python.syntax.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.syntax` end

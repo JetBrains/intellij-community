@@ -42,3 +42,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.agent.workbench.codex.common` end
+
+### auto-generated section `iml intellij.agent.workbench.codex.common` start
+exports_files([
+  "intellij.agent.workbench.codex.common.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.agent.workbench.codex.common` end

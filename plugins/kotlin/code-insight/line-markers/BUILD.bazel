@@ -91,6 +91,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.lineMarkers` end
 
+### auto-generated section `iml intellij.kotlin.codeInsight.lineMarkers` start
+exports_files([
+  "intellij.kotlin.codeInsight.lineMarkers.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.codeInsight.lineMarkers` end
+
 ### auto-generated section `build intellij.kotlin.codeInsight.lineMarkers.tests` start
 create_kotlinc_options(
   name = "custom_kotlin-codeInsight-lineMarkers-tests",
@@ -194,6 +200,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.lineMarkers.tests` end
+
+### auto-generated section `iml intellij.kotlin.codeInsight.lineMarkers.tests` start
+exports_files([
+  "intellij.kotlin.codeInsight.lineMarkers.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.codeInsight.lineMarkers.tests` end
 
 ### auto-generated section `test intellij.kotlin.codeInsight.lineMarkers.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

@@ -87,6 +87,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.evaluationPlugin` end
 
+### auto-generated section `iml intellij.evaluationPlugin` start
+exports_files([
+  "intellij.evaluationPlugin.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.evaluationPlugin` end
+
 ### auto-generated section `build intellij.evaluationPlugin.tests` start
 jvm_library(
   name = "evaluationPlugin-tests",
@@ -127,6 +133,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.evaluationPlugin.tests` end
+
+### auto-generated section `iml intellij.evaluationPlugin.tests` start
+exports_files([
+  "intellij.evaluationPlugin.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.evaluationPlugin.tests` end
 
 ### auto-generated section `test intellij.evaluationPlugin.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

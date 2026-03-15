@@ -36,6 +36,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.testFramework.junit5.jimfs` end
 
+### auto-generated section `iml intellij.platform.testFramework.junit5.jimfs` start
+exports_files([
+  "intellij.platform.testFramework.junit5.jimfs.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.testFramework.junit5.jimfs` end
+
 ### auto-generated section `test intellij.platform.testFramework.junit5.jimfs` start
 load("@community//build:tests-options.bzl", "jps_test")
 

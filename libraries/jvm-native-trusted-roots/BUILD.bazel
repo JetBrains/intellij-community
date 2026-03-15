@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":jvm-native-trusted-roots"]
 )
 ### auto-generated section `build intellij.libraries.jvm.native.trusted.roots` end
+
+### auto-generated section `iml intellij.libraries.jvm.native.trusted.roots` start
+exports_files([
+  "intellij.libraries.jvm.native.trusted.roots.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.jvm.native.trusted.roots` end

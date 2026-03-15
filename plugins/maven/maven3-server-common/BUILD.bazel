@@ -42,3 +42,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.maven.server.m3.common` end
+
+### auto-generated section `iml intellij.maven.server.m3.common` start
+exports_files([
+  "intellij.maven.server.m3.common.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.maven.server.m3.common` end

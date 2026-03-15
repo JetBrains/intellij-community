@@ -121,3 +121,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.textmate.backend` end
+
+### auto-generated section `iml intellij.textmate.backend` start
+exports_files([
+  "intellij.textmate.backend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.textmate.backend` end

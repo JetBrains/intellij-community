@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":plexus-utils"]
 )
 ### auto-generated section `build intellij.libraries.plexus.utils` end
+
+### auto-generated section `iml intellij.libraries.plexus.utils` start
+exports_files([
+  "intellij.libraries.plexus.utils.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.plexus.utils` end

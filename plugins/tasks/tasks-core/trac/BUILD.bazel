@@ -43,3 +43,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.tasks.trac` end
+
+### auto-generated section `iml intellij.tasks.trac` start
+exports_files([
+  "intellij.tasks.trac.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.tasks.trac` end

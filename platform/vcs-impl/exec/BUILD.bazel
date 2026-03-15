@@ -36,3 +36,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.exec` end
+
+### auto-generated section `iml intellij.platform.vcs.impl.exec` start
+exports_files([
+  "intellij.platform.vcs.impl.exec.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.vcs.impl.exec` end

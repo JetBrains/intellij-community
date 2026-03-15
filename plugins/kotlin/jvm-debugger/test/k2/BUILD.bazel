@@ -129,3 +129,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test` end
+
+### auto-generated section `iml intellij.kotlin.jvm.debugger.test` start
+exports_files([
+  "intellij.kotlin.jvm.debugger.test.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.jvm.debugger.test` end

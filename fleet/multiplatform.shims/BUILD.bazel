@@ -48,3 +48,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build fleet.multiplatform.shims` end
+
+### auto-generated section `iml fleet.multiplatform.shims` start
+exports_files([
+  "fleet.multiplatform.shims.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.multiplatform.shims` end

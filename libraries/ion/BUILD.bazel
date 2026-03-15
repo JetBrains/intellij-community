@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":ion"]
 )
 ### auto-generated section `build intellij.libraries.ion` end
+
+### auto-generated section `iml intellij.libraries.ion` start
+exports_files([
+  "intellij.libraries.ion.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.ion` end

@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":gson"]
 )
 ### auto-generated section `build intellij.libraries.gson` end
+
+### auto-generated section `iml intellij.libraries.gson` start
+exports_files([
+  "intellij.libraries.gson.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.gson` end

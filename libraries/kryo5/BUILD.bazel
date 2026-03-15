@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":kryo5"]
 )
 ### auto-generated section `build intellij.libraries.kryo5` end
+
+### auto-generated section `iml intellij.libraries.kryo5` start
+exports_files([
+  "intellij.libraries.kryo5.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.kryo5` end

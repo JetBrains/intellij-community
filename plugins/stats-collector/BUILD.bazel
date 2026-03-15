@@ -58,6 +58,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.statsCollector` end
 
+### auto-generated section `iml intellij.statsCollector` start
+exports_files([
+  "intellij.statsCollector.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.statsCollector` end
+
 ### auto-generated section `build intellij.statsCollector.tests` start
 jvm_library(
   name = "statsCollector-tests",
@@ -96,6 +102,12 @@ jvm_library(
   runtime_deps = [":statsCollector-tests"]
 )
 ### auto-generated section `build intellij.statsCollector.tests` end
+
+### auto-generated section `iml intellij.statsCollector.tests` start
+exports_files([
+  "intellij.statsCollector.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.statsCollector.tests` end
 
 ### auto-generated section `test intellij.statsCollector.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

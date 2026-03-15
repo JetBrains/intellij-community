@@ -42,3 +42,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.tracing.ide` end
+
+### auto-generated section `iml intellij.platform.tracing.ide` start
+exports_files([
+  "intellij.platform.tracing.ide.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.tracing.ide` end

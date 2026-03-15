@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":winp"]
 )
 ### auto-generated section `build intellij.libraries.winp` end
+
+### auto-generated section `iml intellij.libraries.winp` start
+exports_files([
+  "intellij.libraries.winp.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.winp` end

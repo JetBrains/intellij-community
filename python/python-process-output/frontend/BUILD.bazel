@@ -130,6 +130,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.python.processOutput.frontend` end
 
+### auto-generated section `iml intellij.python.processOutput.frontend` start
+exports_files([
+  "intellij.python.processOutput.frontend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.processOutput.frontend` end
+
 ### auto-generated section `test intellij.python.processOutput.frontend` start
 load("@community//build:tests-options.bzl", "jps_test")
 

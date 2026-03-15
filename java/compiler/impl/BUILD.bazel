@@ -169,3 +169,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.java.compiler.impl` end
+
+### auto-generated section `iml intellij.java.compiler.impl` start
+exports_files([
+  "intellij.java.compiler.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.compiler.impl` end

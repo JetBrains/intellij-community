@@ -88,6 +88,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.relaxng` end
 
+### auto-generated section `iml intellij.relaxng` start
+exports_files([
+  "intellij.relaxng.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.relaxng` end
+
 ### auto-generated section `build intellij.relaxng.tests` start
 jvm_library(
   name = "relaxng-tests",
@@ -169,6 +175,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.relaxng.tests` end
+
+### auto-generated section `iml intellij.relaxng.tests` start
+exports_files([
+  "intellij.relaxng.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.relaxng.tests` end
 
 ### auto-generated section `test intellij.relaxng.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

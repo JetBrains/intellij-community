@@ -39,3 +39,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.markdown.spellchecker` end
+
+### auto-generated section `iml intellij.markdown.spellchecker` start
+exports_files([
+  "intellij.markdown.spellchecker.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.markdown.spellchecker` end

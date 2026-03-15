@@ -92,6 +92,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.compose` end
 
+### auto-generated section `iml intellij.platform.compose` start
+exports_files([
+  "intellij.platform.compose.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.compose` end
+
 ### auto-generated section `test intellij.platform.compose` start
 load("@community//build:tests-options.bzl", "jps_test")
 

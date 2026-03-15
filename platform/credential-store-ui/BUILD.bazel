@@ -46,3 +46,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.credentialStore.ui` end
+
+### auto-generated section `iml intellij.platform.credentialStore.ui` start
+exports_files([
+  "intellij.platform.credentialStore.ui.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.credentialStore.ui` end

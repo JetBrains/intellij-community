@@ -32,3 +32,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.settings` end
+
+### auto-generated section `iml intellij.platform.settings` start
+exports_files([
+  "intellij.platform.settings.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.settings` end

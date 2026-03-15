@@ -87,6 +87,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.agent.workbench.chat` end
 
+### auto-generated section `iml intellij.agent.workbench.chat` start
+exports_files([
+  "intellij.agent.workbench.chat.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.agent.workbench.chat` end
+
 ### auto-generated section `test intellij.agent.workbench.chat` start
 load("@community//build:tests-options.bzl", "jps_test")
 

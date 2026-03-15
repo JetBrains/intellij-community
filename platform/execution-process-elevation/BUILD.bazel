@@ -49,3 +49,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.execution.process.elevation` end
+
+### auto-generated section `iml intellij.execution.process.elevation` start
+exports_files([
+  "intellij.execution.process.elevation.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.execution.process.elevation` end

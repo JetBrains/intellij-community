@@ -43,3 +43,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.java.structureView` end
+
+### auto-generated section `iml intellij.java.structureView` start
+exports_files([
+  "intellij.java.structureView.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.structureView` end

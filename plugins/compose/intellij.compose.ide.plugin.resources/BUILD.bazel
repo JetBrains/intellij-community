@@ -149,6 +149,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.compose.ide.plugin.resources` end
 
+### auto-generated section `iml intellij.compose.ide.plugin.resources` start
+exports_files([
+  "intellij.compose.ide.plugin.resources.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.compose.ide.plugin.resources` end
+
 ### auto-generated section `test intellij.compose.ide.plugin.resources` start
 load("@community//build:tests-options.bzl", "jps_test")
 

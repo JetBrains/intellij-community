@@ -32,3 +32,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.libraries.kotlinx.coroutines.test` end
+
+### auto-generated section `iml intellij.libraries.kotlinx.coroutines.test` start
+exports_files([
+  "intellij.libraries.kotlinx.coroutines.test.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.kotlinx.coroutines.test` end

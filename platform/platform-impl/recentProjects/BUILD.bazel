@@ -26,3 +26,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.ide.recentProjects` end
+
+### auto-generated section `iml intellij.platform.ide.recentProjects` start
+exports_files([
+  "intellij.platform.ide.recentProjects.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.ide.recentProjects` end

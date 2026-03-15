@@ -46,3 +46,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build kotlin.compiler-plugins.lombok.gradle` end
+
+### auto-generated section `iml kotlin.compiler-plugins.lombok.gradle` start
+exports_files([
+  "kotlin.compiler-plugins.lombok.gradle.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.compiler-plugins.lombok.gradle` end

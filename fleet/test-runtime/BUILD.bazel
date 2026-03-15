@@ -42,3 +42,9 @@ jvm_library(
   runtime_deps = [":test-runtime"]
 )
 ### auto-generated section `build fleet.test.runtime` end
+
+### auto-generated section `iml fleet.test.runtime` start
+exports_files([
+  "fleet.test.runtime.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.test.runtime` end

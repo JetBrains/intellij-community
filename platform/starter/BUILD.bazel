@@ -33,3 +33,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.starter` end
+
+### auto-generated section `iml intellij.platform.starter` start
+exports_files([
+  "intellij.platform.starter.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.starter` end

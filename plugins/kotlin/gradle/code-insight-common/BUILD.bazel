@@ -104,3 +104,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.common` end
+
+### auto-generated section `iml intellij.kotlin.gradle.codeInsight.common` start
+exports_files([
+  "intellij.kotlin.gradle.codeInsight.common.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.gradle.codeInsight.common` end

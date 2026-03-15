@@ -56,3 +56,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.ide.codeinsight.inline` end
+
+### auto-generated section `iml intellij.platform.ide.codeinsight.inline` start
+exports_files([
+  "intellij.platform.ide.codeinsight.inline.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.ide.codeinsight.inline` end

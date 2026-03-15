@@ -198,3 +198,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.devkit.core` end
+
+### auto-generated section `iml intellij.devkit.core` start
+exports_files([
+  "intellij.devkit.core.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.core` end

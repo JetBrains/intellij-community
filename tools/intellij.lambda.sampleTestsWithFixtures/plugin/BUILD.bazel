@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":plugin"]
 )
 ### auto-generated section `build intellij.lambda.sampleTestsWithFixtures.plugin` end
+
+### auto-generated section `iml intellij.lambda.sampleTestsWithFixtures.plugin` start
+exports_files([
+  "intellij.lambda.sampleTestsWithFixtures.plugin.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.lambda.sampleTestsWithFixtures.plugin` end

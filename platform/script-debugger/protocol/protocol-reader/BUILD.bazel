@@ -34,3 +34,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.javascript.protocolReader` end
+
+### auto-generated section `iml intellij.javascript.protocolReader` start
+exports_files([
+  "intellij.javascript.protocolReader.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.javascript.protocolReader` end

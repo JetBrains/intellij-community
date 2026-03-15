@@ -32,3 +32,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.libraries.netty.codec.http` end
+
+### auto-generated section `iml intellij.libraries.netty.codec.http` start
+exports_files([
+  "intellij.libraries.netty.codec.http.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.netty.codec.http` end

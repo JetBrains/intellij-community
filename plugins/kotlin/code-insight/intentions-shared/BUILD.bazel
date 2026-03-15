@@ -106,3 +106,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build kotlin.code-insight.intentions.shared` end
+
+### auto-generated section `iml kotlin.code-insight.intentions.shared` start
+exports_files([
+  "kotlin.code-insight.intentions.shared.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.code-insight.intentions.shared` end

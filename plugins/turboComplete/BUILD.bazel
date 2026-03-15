@@ -55,6 +55,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.turboComplete` end
 
+### auto-generated section `iml intellij.turboComplete` start
+exports_files([
+  "intellij.turboComplete.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.turboComplete` end
+
 ### auto-generated section `build intellij.turboComplete.tests` start
 jvm_library(
   name = "turboComplete-tests",
@@ -80,6 +86,12 @@ jvm_library(
   runtime_deps = [":turboComplete-tests"]
 )
 ### auto-generated section `build intellij.turboComplete.tests` end
+
+### auto-generated section `iml intellij.turboComplete.tests` start
+exports_files([
+  "intellij.turboComplete.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.turboComplete.tests` end
 
 ### auto-generated section `test intellij.turboComplete.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

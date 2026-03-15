@@ -97,6 +97,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.images.build` end
 
+### auto-generated section `iml intellij.platform.images.build` start
+exports_files([
+  "intellij.platform.images.build.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.images.build` end
+
 ### auto-generated section `test intellij.platform.images.build` start
 load("@community//build:tests-options.bzl", "jps_test")
 

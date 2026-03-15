@@ -15,3 +15,9 @@ jvm_library(
   runtime_deps = [":pycharm-community-build-debugBinaries"]
 )
 ### auto-generated section `build intellij.pycharm.community.build.debugBinaries` end
+
+### auto-generated section `iml intellij.pycharm.community.build.debugBinaries` start
+exports_files([
+  "intellij.pycharm.community.build.debugBinaries.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.pycharm.community.build.debugBinaries` end

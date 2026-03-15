@@ -23,3 +23,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.util.commonsLangV2Shim` end
+
+### auto-generated section `iml intellij.platform.util.commonsLangV2Shim` start
+exports_files([
+  "intellij.platform.util.commonsLangV2Shim.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.commonsLangV2Shim` end

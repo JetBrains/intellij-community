@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":mvstore"]
 )
 ### auto-generated section `build intellij.libraries.mvstore` end
+
+### auto-generated section `iml intellij.libraries.mvstore` start
+exports_files([
+  "intellij.libraries.mvstore.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.mvstore` end

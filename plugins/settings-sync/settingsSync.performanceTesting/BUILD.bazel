@@ -38,3 +38,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.settingsSync.performanceTesting` end
+
+### auto-generated section `iml intellij.settingsSync.performanceTesting` start
+exports_files([
+  "intellij.settingsSync.performanceTesting.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.settingsSync.performanceTesting` end

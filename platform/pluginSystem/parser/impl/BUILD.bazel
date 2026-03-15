@@ -35,6 +35,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.pluginSystem.parser.impl` end
 
+### auto-generated section `iml intellij.platform.pluginSystem.parser.impl` start
+exports_files([
+  "intellij.platform.pluginSystem.parser.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.pluginSystem.parser.impl` end
+
 ### auto-generated section `test intellij.platform.pluginSystem.parser.impl` start
 load("@community//build:tests-options.bzl", "jps_test")
 

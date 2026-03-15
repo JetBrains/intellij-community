@@ -26,3 +26,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.lvcs` end
+
+### auto-generated section `iml intellij.platform.lvcs` start
+exports_files([
+  "intellij.platform.lvcs.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.lvcs` end

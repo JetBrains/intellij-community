@@ -59,3 +59,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.eel.impl` end
+
+### auto-generated section `iml intellij.platform.eel.impl` start
+exports_files([
+  "intellij.platform.eel.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.eel.impl` end

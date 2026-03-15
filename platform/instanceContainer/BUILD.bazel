@@ -30,6 +30,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.instanceContainer` end
 
+### auto-generated section `iml intellij.platform.instanceContainer` start
+exports_files([
+  "intellij.platform.instanceContainer.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.instanceContainer` end
+
 ### auto-generated section `build intellij.platform.instanceContainer.tests` start
 jvm_library(
   name = "instanceContainer-tests",
@@ -58,6 +64,12 @@ jvm_library(
   runtime_deps = [":instanceContainer-tests"]
 )
 ### auto-generated section `build intellij.platform.instanceContainer.tests` end
+
+### auto-generated section `iml intellij.platform.instanceContainer.tests` start
+exports_files([
+  "intellij.platform.instanceContainer.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.instanceContainer.tests` end
 
 ### auto-generated section `test intellij.platform.instanceContainer.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

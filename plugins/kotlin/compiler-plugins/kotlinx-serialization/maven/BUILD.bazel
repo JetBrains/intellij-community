@@ -42,3 +42,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.compilerPlugins.serialization.maven` end
+
+### auto-generated section `iml intellij.kotlin.compilerPlugins.serialization.maven` start
+exports_files([
+  "intellij.kotlin.compilerPlugins.serialization.maven.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.compilerPlugins.serialization.maven` end

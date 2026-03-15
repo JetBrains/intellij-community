@@ -69,6 +69,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.polySymbols` end
 
+### auto-generated section `iml intellij.platform.polySymbols` start
+exports_files([
+  "intellij.platform.polySymbols.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.polySymbols` end
+
 ### auto-generated section `build intellij.platform.polySymbols.testFramework` start
 jvm_library(
   name = "polySymbols-testFramework",
@@ -135,6 +141,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.polySymbols.testFramework` end
+
+### auto-generated section `iml intellij.platform.polySymbols.testFramework` start
+exports_files([
+  "intellij.platform.polySymbols.testFramework.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.polySymbols.testFramework` end
 
 ### auto-generated section `build intellij.platform.polySymbols.tests` start
 resourcegroup(
@@ -230,6 +242,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.polySymbols.tests` end
+
+### auto-generated section `iml intellij.platform.polySymbols.tests` start
+exports_files([
+  "intellij.platform.polySymbols.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.polySymbols.tests` end
 
 ### auto-generated section `test intellij.platform.polySymbols.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

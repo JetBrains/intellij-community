@@ -32,3 +32,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.libraries.ktor.utils` end
+
+### auto-generated section `iml intellij.libraries.ktor.utils` start
+exports_files([
+  "intellij.libraries.ktor.utils.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.ktor.utils` end

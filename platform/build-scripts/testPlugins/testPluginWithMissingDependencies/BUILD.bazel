@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":testPluginWithMissingDependencies"]
 )
 ### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` end
+
+### auto-generated section `iml intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` start
+exports_files([
+  "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` end

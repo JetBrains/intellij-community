@@ -58,3 +58,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.java.execution` end
+
+### auto-generated section `iml intellij.java.execution` start
+exports_files([
+  "intellij.java.execution.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.execution` end

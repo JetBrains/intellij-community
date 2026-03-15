@@ -64,6 +64,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.java.aetherDependencyResolver` end
 
+### auto-generated section `iml intellij.java.aetherDependencyResolver` start
+exports_files([
+  "intellij.java.aetherDependencyResolver.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.aetherDependencyResolver` end
+
 ### auto-generated section `test intellij.java.aetherDependencyResolver` start
 load("@community//build:tests-options.bzl", "jps_test")
 

@@ -99,3 +99,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.gradle.java.groovy` end
+
+### auto-generated section `iml intellij.gradle.java.groovy` start
+exports_files([
+  "intellij.gradle.java.groovy.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.java.groovy` end

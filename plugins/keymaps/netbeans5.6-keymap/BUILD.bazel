@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":keymap-netbeans"]
 )
 ### auto-generated section `build intellij.keymap.netbeans` end
+
+### auto-generated section `iml intellij.keymap.netbeans` start
+exports_files([
+  "intellij.keymap.netbeans.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.keymap.netbeans` end

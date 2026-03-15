@@ -48,3 +48,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.sh.terminal` end
+
+### auto-generated section `iml intellij.sh.terminal` start
+exports_files([
+  "intellij.sh.terminal.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.sh.terminal` end

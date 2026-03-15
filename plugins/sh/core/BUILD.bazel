@@ -76,6 +76,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.sh.core` end
 
+### auto-generated section `iml intellij.sh.core` start
+exports_files([
+  "intellij.sh.core.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.sh.core` end
+
 ### auto-generated section `build intellij.sh.tests` start
 jvm_library(
   name = "tests",
@@ -152,6 +158,12 @@ jvm_library(
   runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.sh.tests` end
+
+### auto-generated section `iml intellij.sh.tests` start
+exports_files([
+  "intellij.sh.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.sh.tests` end
 
 ### auto-generated section `test intellij.sh.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

@@ -51,6 +51,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.util.progress` end
 
+### auto-generated section `iml intellij.platform.util.progress` start
+exports_files([
+  "intellij.platform.util.progress.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.progress` end
+
 ### auto-generated section `build intellij.platform.util.progress.tests` start
 jvm_library(
   name = "progress-tests",
@@ -81,6 +87,12 @@ jvm_library(
   runtime_deps = [":progress-tests"]
 )
 ### auto-generated section `build intellij.platform.util.progress.tests` end
+
+### auto-generated section `iml intellij.platform.util.progress.tests` start
+exports_files([
+  "intellij.platform.util.progress.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.progress.tests` end
 
 ### auto-generated section `test intellij.platform.util.progress.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

@@ -39,3 +39,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.managed.cache` end
+
+### auto-generated section `iml intellij.platform.managed.cache` start
+exports_files([
+  "intellij.platform.managed.cache.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.managed.cache` end

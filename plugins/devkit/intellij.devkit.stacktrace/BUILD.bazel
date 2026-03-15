@@ -56,3 +56,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.devkit.stacktrace` end
+
+### auto-generated section `iml intellij.devkit.stacktrace` start
+exports_files([
+  "intellij.devkit.stacktrace.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.stacktrace` end

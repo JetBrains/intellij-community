@@ -37,3 +37,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.webp` end
+
+### auto-generated section `iml intellij.webp` start
+exports_files([
+  "intellij.webp.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.webp` end

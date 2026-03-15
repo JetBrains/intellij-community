@@ -112,6 +112,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.statistics.devkit` end
 
+### auto-generated section `iml intellij.platform.statistics.devkit` start
+exports_files([
+  "intellij.platform.statistics.devkit.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.statistics.devkit` end
+
 ### auto-generated section `test intellij.platform.statistics.devkit` start
 load("@community//build:tests-options.bzl", "jps_test")
 

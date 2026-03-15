@@ -82,3 +82,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.compilation.charts` end
+
+### auto-generated section `iml intellij.compilation.charts` start
+exports_files([
+  "intellij.compilation.charts.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.compilation.charts` end

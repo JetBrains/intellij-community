@@ -319,6 +319,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.vcs.git` end
 
+### auto-generated section `iml intellij.vcs.git` start
+exports_files([
+  "intellij.vcs.git.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.vcs.git` end
+
 ### auto-generated section `test intellij.vcs.git` start
 load("@community//build:tests-options.bzl", "jps_test")
 

@@ -50,3 +50,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.ide.newUsersOnboarding` end
+
+### auto-generated section `iml intellij.platform.ide.newUsersOnboarding` start
+exports_files([
+  "intellij.platform.ide.newUsersOnboarding.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.ide.newUsersOnboarding` end

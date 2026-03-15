@@ -44,3 +44,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.project` end
+
+### auto-generated section `iml intellij.platform.project` start
+exports_files([
+  "intellij.platform.project.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.project` end

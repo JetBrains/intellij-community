@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":imgscalr"]
 )
 ### auto-generated section `build intellij.libraries.imgscalr` end
+
+### auto-generated section `iml intellij.libraries.imgscalr` start
+exports_files([
+  "intellij.libraries.imgscalr.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.imgscalr` end

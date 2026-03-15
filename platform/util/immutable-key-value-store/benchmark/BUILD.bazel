@@ -29,6 +29,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.util.immutableKeyValueStore.benchmark` end
 
+### auto-generated section `iml intellij.platform.util.immutableKeyValueStore.benchmark` start
+exports_files([
+  "intellij.platform.util.immutableKeyValueStore.benchmark.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.immutableKeyValueStore.benchmark` end
+
 ### auto-generated section `test intellij.platform.util.immutableKeyValueStore.benchmark` start
 load("@community//build:tests-options.bzl", "jps_test")
 

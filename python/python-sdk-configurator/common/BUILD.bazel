@@ -64,3 +64,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.python.sdkConfigurator.common` end
+
+### auto-generated section `iml intellij.python.sdkConfigurator.common` start
+exports_files([
+  "intellij.python.sdkConfigurator.common.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.sdkConfigurator.common` end

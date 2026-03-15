@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":keymap-qtcreator"]
 )
 ### auto-generated section `build intellij.keymap.qtcreator` end
+
+### auto-generated section `iml intellij.keymap.qtcreator` start
+exports_files([
+  "intellij.keymap.qtcreator.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.keymap.qtcreator` end

@@ -88,6 +88,12 @@ jvm_library(
 )
 ### auto-generated section `build kotlin.compiler-plugins.allopen.tests.k1` end
 
+### auto-generated section `iml kotlin.compiler-plugins.allopen.tests.k1` start
+exports_files([
+  "kotlin.compiler-plugins.allopen.tests.k1.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.compiler-plugins.allopen.tests.k1` end
+
 ### auto-generated section `test kotlin.compiler-plugins.allopen.tests.k1` start
 load("@community//build:tests-options.bzl", "jps_test")
 

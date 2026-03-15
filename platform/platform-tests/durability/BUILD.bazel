@@ -61,6 +61,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.durability` end
 
+### auto-generated section `iml intellij.platform.durability` start
+exports_files([
+  "intellij.platform.durability.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.durability` end
+
 ### auto-generated section `test intellij.platform.durability` start
 load("@community//build:tests-options.bzl", "jps_test")
 

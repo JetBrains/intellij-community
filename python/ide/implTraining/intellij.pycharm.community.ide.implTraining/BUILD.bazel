@@ -40,3 +40,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.pycharm.community.ide.implTraining` end
+
+### auto-generated section `iml intellij.pycharm.community.ide.implTraining` start
+exports_files([
+  "intellij.pycharm.community.ide.implTraining.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.pycharm.community.ide.implTraining` end

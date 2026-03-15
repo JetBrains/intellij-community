@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":bouncy-castle-pgp"]
 )
 ### auto-generated section `build intellij.libraries.bouncy.castle.pgp` end
+
+### auto-generated section `iml intellij.libraries.bouncy.castle.pgp` start
+exports_files([
+  "intellij.libraries.bouncy.castle.pgp.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.bouncy.castle.pgp` end

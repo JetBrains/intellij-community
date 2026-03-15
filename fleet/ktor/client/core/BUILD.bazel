@@ -68,3 +68,9 @@ jvm_library(
   runtime_deps = [":core"]
 )
 ### auto-generated section `build fleet.ktor.client.core` end
+
+### auto-generated section `iml fleet.ktor.client.core` start
+exports_files([
+  "fleet.ktor.client.core.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.ktor.client.core` end

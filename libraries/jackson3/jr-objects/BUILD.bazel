@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":libraries-jackson3-jr-objects"]
 )
 ### auto-generated section `build intellij.libraries.jackson3.jr.objects` end
+
+### auto-generated section `iml intellij.libraries.jackson3.jr.objects` start
+exports_files([
+  "intellij.libraries.jackson3.jr.objects.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.jackson3.jr.objects` end

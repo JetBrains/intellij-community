@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":buffer"]
 )
 ### auto-generated section `build intellij.libraries.netty.buffer` end
+
+### auto-generated section `iml intellij.libraries.netty.buffer` start
+exports_files([
+  "intellij.libraries.netty.buffer.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.netty.buffer` end

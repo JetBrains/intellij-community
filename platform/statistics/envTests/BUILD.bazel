@@ -48,6 +48,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.statistics.envTests` end
 
+### auto-generated section `iml intellij.platform.statistics.envTests` start
+exports_files([
+  "intellij.platform.statistics.envTests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.statistics.envTests` end
+
 ### auto-generated section `test intellij.platform.statistics.envTests` start
 load("@community//build:tests-options.bzl", "jps_test")
 

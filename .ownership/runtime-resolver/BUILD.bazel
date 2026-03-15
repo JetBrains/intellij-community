@@ -34,3 +34,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.codeowners.runtime.resolver` end
+
+### auto-generated section `iml intellij.codeowners.runtime.resolver` start
+exports_files([
+  "intellij.codeowners.runtime.resolver.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.codeowners.runtime.resolver` end

@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":keymap-eclipse"]
 )
 ### auto-generated section `build intellij.keymap.eclipse` end
+
+### auto-generated section `iml intellij.keymap.eclipse` start
+exports_files([
+  "intellij.keymap.eclipse.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.keymap.eclipse` end

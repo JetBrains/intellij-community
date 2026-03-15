@@ -45,3 +45,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.commandInterface` end
+
+### auto-generated section `iml intellij.commandInterface` start
+exports_files([
+  "intellij.commandInterface.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.commandInterface` end

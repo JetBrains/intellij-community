@@ -74,3 +74,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.builtInHelp` end
+
+### auto-generated section `iml intellij.builtInHelp` start
+exports_files([
+  "intellij.builtInHelp.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.builtInHelp` end

@@ -133,6 +133,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.kotlin.gradle.scripting` end
 
+### auto-generated section `iml intellij.kotlin.gradle.scripting` start
+exports_files([
+  "intellij.kotlin.gradle.scripting.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.gradle.scripting` end
+
 ### auto-generated section `build intellij.kotlin.gradle.scripting.tests` start
 create_kotlinc_options(
   name = "custom_kotlin-gradle-scripting-tests",
@@ -295,6 +301,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.scripting.tests` end
+
+### auto-generated section `iml intellij.kotlin.gradle.scripting.tests` start
+exports_files([
+  "intellij.kotlin.gradle.scripting.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.gradle.scripting.tests` end
 
 ### auto-generated section `test intellij.kotlin.gradle.scripting.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

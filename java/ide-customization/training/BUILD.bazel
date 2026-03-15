@@ -39,3 +39,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.java.ide.customization.training` end
+
+### auto-generated section `iml intellij.java.ide.customization.training` start
+exports_files([
+  "intellij.java.ide.customization.training.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.ide.customization.training` end

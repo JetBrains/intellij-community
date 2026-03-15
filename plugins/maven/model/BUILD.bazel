@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":model"]
 )
 ### auto-generated section `build intellij.maven.model` end
+
+### auto-generated section `iml intellij.maven.model` start
+exports_files([
+  "intellij.maven.model.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.maven.model` end

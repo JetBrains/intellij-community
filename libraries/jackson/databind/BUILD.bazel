@@ -41,3 +41,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.libraries.jackson.databind` end
+
+### auto-generated section `iml intellij.libraries.jackson.databind` start
+exports_files([
+  "intellij.libraries.jackson.databind.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.jackson.databind` end

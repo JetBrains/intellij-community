@@ -42,3 +42,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.featuresTrainer.onboarding` end
+
+### auto-generated section `iml intellij.featuresTrainer.onboarding` start
+exports_files([
+  "intellij.featuresTrainer.onboarding.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.featuresTrainer.onboarding` end

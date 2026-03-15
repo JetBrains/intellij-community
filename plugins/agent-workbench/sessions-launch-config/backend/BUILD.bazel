@@ -71,6 +71,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.agent.workbench.sessions.launch.config.backend` end
 
+### auto-generated section `iml intellij.agent.workbench.sessions.launch.config.backend` start
+exports_files([
+  "intellij.agent.workbench.sessions.launch.config.backend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.agent.workbench.sessions.launch.config.backend` end
+
 ### auto-generated section `test intellij.agent.workbench.sessions.launch.config.backend` start
 load("@community//build:tests-options.bzl", "jps_test")
 

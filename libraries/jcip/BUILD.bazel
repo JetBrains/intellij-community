@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":jcip"]
 )
 ### auto-generated section `build intellij.libraries.jcip` end
+
+### auto-generated section `iml intellij.libraries.jcip` start
+exports_files([
+  "intellij.libraries.jcip.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.jcip` end

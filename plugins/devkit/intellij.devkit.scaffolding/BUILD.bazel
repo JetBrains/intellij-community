@@ -60,3 +60,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.devkit.scaffolding` end
+
+### auto-generated section `iml intellij.devkit.scaffolding` start
+exports_files([
+  "intellij.devkit.scaffolding.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.scaffolding` end

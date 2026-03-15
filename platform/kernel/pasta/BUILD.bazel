@@ -54,3 +54,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.pasta` end
+
+### auto-generated section `iml intellij.platform.pasta` start
+exports_files([
+  "intellij.platform.pasta.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.pasta` end

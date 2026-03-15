@@ -44,3 +44,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.buildScripts.usages` end
+
+### auto-generated section `iml intellij.platform.buildScripts.usages` start
+exports_files([
+  "intellij.platform.buildScripts.usages.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.buildScripts.usages` end

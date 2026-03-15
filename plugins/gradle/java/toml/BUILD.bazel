@@ -59,3 +59,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.gradle.java.toml` end
+
+### auto-generated section `iml intellij.gradle.java.toml` start
+exports_files([
+  "intellij.gradle.java.toml.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.java.toml` end

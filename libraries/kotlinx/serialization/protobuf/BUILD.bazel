@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":protobuf"]
 )
 ### auto-generated section `build intellij.libraries.kotlinx.serialization.protobuf` end
+
+### auto-generated section `iml intellij.libraries.kotlinx.serialization.protobuf` start
+exports_files([
+  "intellij.libraries.kotlinx.serialization.protobuf.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.kotlinx.serialization.protobuf` end

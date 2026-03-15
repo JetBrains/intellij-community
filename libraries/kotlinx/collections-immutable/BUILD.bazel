@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":libraries-kotlinx-collections-immutable"]
 )
 ### auto-generated section `build intellij.libraries.kotlinx.collections.immutable` end
+
+### auto-generated section `iml intellij.libraries.kotlinx.collections.immutable` start
+exports_files([
+  "intellij.libraries.kotlinx.collections.immutable.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.kotlinx.collections.immutable` end

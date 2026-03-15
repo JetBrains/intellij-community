@@ -64,3 +64,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.resources` end
+
+### auto-generated section `iml intellij.kotlin.base.resources` start
+exports_files([
+  "intellij.kotlin.base.resources.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.base.resources` end

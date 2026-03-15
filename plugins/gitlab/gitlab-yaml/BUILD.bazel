@@ -52,6 +52,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.vcs.gitlab.yaml` end
 
+### auto-generated section `iml intellij.vcs.gitlab.yaml` start
+exports_files([
+  "intellij.vcs.gitlab.yaml.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.vcs.gitlab.yaml` end
+
 ### auto-generated section `test intellij.vcs.gitlab.yaml` start
 load("@community//build:tests-options.bzl", "jps_test")
 

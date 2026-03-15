@@ -28,3 +28,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.bootstrap.coroutine` end
+
+### auto-generated section `iml intellij.platform.bootstrap.coroutine` start
+exports_files([
+  "intellij.platform.bootstrap.coroutine.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.bootstrap.coroutine` end

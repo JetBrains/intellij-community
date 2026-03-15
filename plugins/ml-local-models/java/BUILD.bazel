@@ -46,3 +46,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.ml.models.local.java` end
+
+### auto-generated section `iml intellij.ml.models.local.java` start
+exports_files([
+  "intellij.ml.models.local.java.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.ml.models.local.java` end

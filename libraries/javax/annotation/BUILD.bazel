@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":annotation"]
 )
 ### auto-generated section `build intellij.libraries.javax.annotation` end
+
+### auto-generated section `iml intellij.libraries.javax.annotation` start
+exports_files([
+  "intellij.libraries.javax.annotation.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.javax.annotation` end

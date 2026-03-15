@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":intelliLang"]
 )
 ### auto-generated section `build intellij.devkit.intelliLang` end
+
+### auto-generated section `iml intellij.devkit.intelliLang` start
+exports_files([
+  "intellij.devkit.intelliLang.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.intelliLang` end

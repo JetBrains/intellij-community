@@ -91,6 +91,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.devkit.kotlin.tests` end
 
+### auto-generated section `iml intellij.devkit.kotlin.tests` start
+exports_files([
+  "intellij.devkit.kotlin.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.kotlin.tests` end
+
 ### auto-generated section `test intellij.devkit.kotlin.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 

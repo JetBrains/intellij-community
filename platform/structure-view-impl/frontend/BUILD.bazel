@@ -66,3 +66,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.structureView.frontend` end
+
+### auto-generated section `iml intellij.platform.structureView.frontend` start
+exports_files([
+  "intellij.platform.structureView.frontend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.structureView.frontend` end

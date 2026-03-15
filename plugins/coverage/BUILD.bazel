@@ -152,6 +152,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.java.coverage` end
 
+### auto-generated section `iml intellij.java.coverage` start
+exports_files([
+  "intellij.java.coverage.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.coverage` end
+
 ### auto-generated section `test intellij.java.coverage` start
 load("@community//build:tests-options.bzl", "jps_test")
 

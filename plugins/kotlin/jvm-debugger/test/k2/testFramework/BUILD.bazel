@@ -38,3 +38,9 @@ jvm_library(
   runtime_deps = [":testFramework"]
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test.testFramework` end
+
+### auto-generated section `iml intellij.kotlin.jvm.debugger.test.testFramework` start
+exports_files([
+  "intellij.kotlin.jvm.debugger.test.testFramework.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.jvm.debugger.test.testFramework` end

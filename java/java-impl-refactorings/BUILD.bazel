@@ -109,3 +109,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.java.impl.refactorings` end
+
+### auto-generated section `iml intellij.java.impl.refactorings` start
+exports_files([
+  "intellij.java.impl.refactorings.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.impl.refactorings` end

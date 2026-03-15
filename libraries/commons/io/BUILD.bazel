@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":io"]
 )
 ### auto-generated section `build intellij.libraries.commons.io` end
+
+### auto-generated section `iml intellij.libraries.commons.io` start
+exports_files([
+  "intellij.libraries.commons.io.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.commons.io` end

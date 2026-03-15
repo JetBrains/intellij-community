@@ -34,3 +34,9 @@ jvm_library(
   runtime_deps = [":batik"]
 )
 ### auto-generated section `build intellij.libraries.batik` end
+
+### auto-generated section `iml intellij.libraries.batik` start
+exports_files([
+  "intellij.libraries.batik.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.batik` end

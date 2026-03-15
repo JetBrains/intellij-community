@@ -43,6 +43,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.python.markdown` end
 
+### auto-generated section `iml intellij.python.markdown` start
+exports_files([
+  "intellij.python.markdown.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.markdown` end
+
 ### auto-generated section `build intellij.python.markdown.tests` start
 jvm_library(
   name = "markdown-tests",
@@ -86,6 +92,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.python.markdown.tests` end
+
+### auto-generated section `iml intellij.python.markdown.tests` start
+exports_files([
+  "intellij.python.markdown.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.markdown.tests` end
 
 ### auto-generated section `test intellij.python.markdown.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

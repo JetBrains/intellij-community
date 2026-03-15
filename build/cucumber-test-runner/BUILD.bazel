@@ -31,3 +31,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.cucumber.testRunner` end
+
+### auto-generated section `iml intellij.cucumber.testRunner` start
+exports_files([
+  "intellij.cucumber.testRunner.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.cucumber.testRunner` end

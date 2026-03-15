@@ -41,3 +41,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.gradle.analysis` end
+
+### auto-generated section `iml intellij.gradle.analysis` start
+exports_files([
+  "intellij.gradle.analysis.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.analysis` end

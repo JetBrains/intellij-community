@@ -103,6 +103,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.gradle.completion` end
 
+### auto-generated section `iml intellij.gradle.completion` start
+exports_files([
+  "intellij.gradle.completion.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.completion` end
+
 ### auto-generated section `test intellij.gradle.completion` start
 load("@community//build:tests-options.bzl", "jps_test")
 

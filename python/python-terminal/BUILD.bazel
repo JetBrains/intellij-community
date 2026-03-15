@@ -78,6 +78,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.python.terminal` end
 
+### auto-generated section `iml intellij.python.terminal` start
+exports_files([
+  "intellij.python.terminal.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.terminal` end
+
 ### auto-generated section `test intellij.python.terminal` start
 load("@community//build:tests-options.bzl", "jps_test")
 

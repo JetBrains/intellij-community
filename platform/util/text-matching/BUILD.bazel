@@ -33,6 +33,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.util.text.matching` end
 
+### auto-generated section `iml intellij.platform.util.text.matching` start
+exports_files([
+  "intellij.platform.util.text.matching.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.text.matching` end
+
 ### auto-generated section `test intellij.platform.util.text.matching` start
 load("@community//build:tests-options.bzl", "jps_test")
 

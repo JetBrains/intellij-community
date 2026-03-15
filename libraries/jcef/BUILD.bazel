@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":jcef"]
 )
 ### auto-generated section `build intellij.libraries.jcef` end
+
+### auto-generated section `iml intellij.libraries.jcef` start
+exports_files([
+  "intellij.libraries.jcef.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.jcef` end

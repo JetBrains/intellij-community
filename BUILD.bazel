@@ -463,6 +463,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.idea.community.main` end
 
+### auto-generated section `iml intellij.idea.community.main` start
+exports_files([
+  "intellij.idea.community.main.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.idea.community.main` end
+
 ### auto-generated section `build intellij.idea.community.main.android` start
 jvm_library(
   name = "main-android",
@@ -500,6 +506,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.idea.community.main.android` end
+
+### auto-generated section `iml intellij.idea.community.main.android` start
+exports_files([
+  "intellij.idea.community.main.android.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.idea.community.main.android` end
 
 ### auto-generated section `build intellij.idea.community.main.tests` start
 jvm_library(
@@ -766,3 +778,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.idea.community.main.tests` end
+
+### auto-generated section `iml intellij.idea.community.main.tests` start
+exports_files([
+  "intellij.idea.community.main.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.idea.community.main.tests` end

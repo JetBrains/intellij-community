@@ -65,3 +65,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.xml.ui.common` end
+
+### auto-generated section `iml intellij.xml.ui.common` start
+exports_files([
+  "intellij.xml.ui.common.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.xml.ui.common` end

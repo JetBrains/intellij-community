@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":snakeyaml-engine"]
 )
 ### auto-generated section `build intellij.libraries.snakeyaml.engine` end
+
+### auto-generated section `iml intellij.libraries.snakeyaml.engine` start
+exports_files([
+  "intellij.libraries.snakeyaml.engine.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.snakeyaml.engine` end

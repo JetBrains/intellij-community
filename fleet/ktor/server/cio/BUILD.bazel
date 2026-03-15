@@ -70,3 +70,9 @@ jvm_library(
   runtime_deps = [":cio"]
 )
 ### auto-generated section `build fleet.ktor.server.cio` end
+
+### auto-generated section `iml fleet.ktor.server.cio` start
+exports_files([
+  "fleet.ktor.server.cio.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.ktor.server.cio` end

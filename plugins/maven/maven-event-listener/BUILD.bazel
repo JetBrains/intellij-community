@@ -34,6 +34,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.maven.server.eventListener` end
 
+### auto-generated section `iml intellij.maven.server.eventListener` start
+exports_files([
+  "intellij.maven.server.eventListener.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.maven.server.eventListener` end
+
 ### auto-generated section `test intellij.maven.server.eventListener` start
 load("@community//build:tests-options.bzl", "jps_test")
 

@@ -44,3 +44,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build fleet.bifurcan` end
+
+### auto-generated section `iml fleet.bifurcan` start
+exports_files([
+  "fleet.bifurcan.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.bifurcan` end

@@ -265,6 +265,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.lang.impl` end
 
+### auto-generated section `iml intellij.platform.lang.impl` start
+exports_files([
+  "intellij.platform.lang.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.lang.impl` end
+
 ### auto-generated section `build intellij.platform.lang.tests` start
 jvm_library(
   name = "lang-tests",
@@ -483,6 +489,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.lang.tests` end
+
+### auto-generated section `iml intellij.platform.lang.tests` start
+exports_files([
+  "intellij.platform.lang.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.lang.tests` end
 
 ### auto-generated section `test intellij.platform.lang.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

@@ -23,3 +23,9 @@ jvm_library(
   runtime_deps = [":microba"]
 )
 ### auto-generated section `build intellij.libraries.microba` end
+
+### auto-generated section `iml intellij.libraries.microba` start
+exports_files([
+  "intellij.libraries.microba.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.microba` end

@@ -43,3 +43,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.devkit.apiDump` end
+
+### auto-generated section `iml intellij.devkit.apiDump` start
+exports_files([
+  "intellij.devkit.apiDump.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.apiDump` end

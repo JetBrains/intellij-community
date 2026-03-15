@@ -48,3 +48,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.toml.backend` end
+
+### auto-generated section `iml intellij.toml.backend` start
+exports_files([
+  "intellij.toml.backend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.toml.backend` end

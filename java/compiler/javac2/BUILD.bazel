@@ -41,3 +41,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.java.compiler.antTasks` end
+
+### auto-generated section `iml intellij.java.compiler.antTasks` start
+exports_files([
+  "intellij.java.compiler.antTasks.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.compiler.antTasks` end

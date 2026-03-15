@@ -41,3 +41,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.gradleTooling.rt` end
+
+### auto-generated section `iml intellij.compose.ide.plugin.gradleTooling.rt` start
+exports_files([
+  "intellij.compose.ide.plugin.gradleTooling.rt.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.compose.ide.plugin.gradleTooling.rt` end

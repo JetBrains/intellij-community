@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":opencsv"]
 )
 ### auto-generated section `build intellij.libraries.opencsv` end
+
+### auto-generated section `iml intellij.libraries.opencsv` start
+exports_files([
+  "intellij.libraries.opencsv.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.opencsv` end

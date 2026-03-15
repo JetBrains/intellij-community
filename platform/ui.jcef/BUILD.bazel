@@ -79,3 +79,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.ui.jcef` end
+
+### auto-generated section `iml intellij.platform.ui.jcef` start
+exports_files([
+  "intellij.platform.ui.jcef.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.ui.jcef` end

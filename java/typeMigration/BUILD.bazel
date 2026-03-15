@@ -85,6 +85,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.java.typeMigration` end
 
+### auto-generated section `iml intellij.java.typeMigration` start
+exports_files([
+  "intellij.java.typeMigration.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.typeMigration` end
+
 ### auto-generated section `test intellij.java.typeMigration` start
 load("@community//build:tests-options.bzl", "jps_test")
 

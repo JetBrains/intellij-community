@@ -122,3 +122,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.langInjection.backend` end
+
+### auto-generated section `iml intellij.platform.langInjection.backend` start
+exports_files([
+  "intellij.platform.langInjection.backend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.langInjection.backend` end

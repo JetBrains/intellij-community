@@ -126,3 +126,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.grid.impl` end
+
+### auto-generated section `iml intellij.grid.impl` start
+exports_files([
+  "intellij.grid.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.grid.impl` end

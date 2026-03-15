@@ -72,3 +72,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.dev.psiViewer` end
+
+### auto-generated section `iml intellij.dev.psiViewer` start
+exports_files([
+  "intellij.dev.psiViewer.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.dev.psiViewer` end

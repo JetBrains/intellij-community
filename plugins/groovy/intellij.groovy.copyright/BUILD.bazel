@@ -42,3 +42,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.groovy.copyright` end
+
+### auto-generated section `iml intellij.groovy.copyright` start
+exports_files([
+  "intellij.groovy.copyright.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.groovy.copyright` end

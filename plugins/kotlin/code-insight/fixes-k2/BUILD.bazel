@@ -120,3 +120,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.fixes` end
+
+### auto-generated section `iml intellij.kotlin.codeInsight.fixes` start
+exports_files([
+  "intellij.kotlin.codeInsight.fixes.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.codeInsight.fixes` end

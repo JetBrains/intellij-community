@@ -69,3 +69,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build kotlin.inspections-fe10` end
+
+### auto-generated section `iml kotlin.inspections-fe10` start
+exports_files([
+  "kotlin.inspections-fe10.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.inspections-fe10` end

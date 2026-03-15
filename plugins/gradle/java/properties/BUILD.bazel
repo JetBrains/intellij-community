@@ -55,3 +55,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.gradle.java.properties` end
+
+### auto-generated section `iml intellij.gradle.java.properties` start
+exports_files([
+  "intellij.gradle.java.properties.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.java.properties` end

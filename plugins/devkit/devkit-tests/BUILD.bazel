@@ -76,6 +76,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.devkit.testFramework` end
 
+### auto-generated section `iml intellij.devkit.testFramework` start
+exports_files([
+  "intellij.devkit.testFramework.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.testFramework` end
+
 ### auto-generated section `test intellij.devkit.testFramework` start
 load("@community//build:tests-options.bzl", "jps_test")
 

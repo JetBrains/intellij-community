@@ -29,3 +29,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.testFramework.eelJava` end
+
+### auto-generated section `iml intellij.platform.testFramework.eelJava` start
+exports_files([
+  "intellij.platform.testFramework.eelJava.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.testFramework.eelJava` end

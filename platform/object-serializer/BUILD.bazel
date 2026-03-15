@@ -65,6 +65,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.objectSerializer` end
 
+### auto-generated section `iml intellij.platform.objectSerializer` start
+exports_files([
+  "intellij.platform.objectSerializer.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.objectSerializer` end
+
 ### auto-generated section `test intellij.platform.objectSerializer` start
 load("@community//build:tests-options.bzl", "jps_test")
 
@@ -92,6 +98,12 @@ jvm_library(
   runtime_deps = [":objectSerializer-annotations"]
 )
 ### auto-generated section `build intellij.platform.objectSerializer.annotations` end
+
+### auto-generated section `iml intellij.platform.objectSerializer.annotations` start
+exports_files([
+  "intellij.platform.objectSerializer.annotations.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.objectSerializer.annotations` end
 
 ### auto-generated section `build intellij.platform.objectSerializer.tests` start
 jvm_library(
@@ -133,6 +145,12 @@ jvm_library(
   runtime_deps = [":objectSerializer-tests"]
 )
 ### auto-generated section `build intellij.platform.objectSerializer.tests` end
+
+### auto-generated section `iml intellij.platform.objectSerializer.tests` start
+exports_files([
+  "intellij.platform.objectSerializer.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.objectSerializer.tests` end
 
 ### auto-generated section `test intellij.platform.objectSerializer.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

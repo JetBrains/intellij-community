@@ -105,3 +105,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.analysis.impl` end
+
+### auto-generated section `iml intellij.platform.analysis.impl` start
+exports_files([
+  "intellij.platform.analysis.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.analysis.impl` end

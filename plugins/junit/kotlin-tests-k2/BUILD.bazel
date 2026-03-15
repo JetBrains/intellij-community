@@ -40,6 +40,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.junit.kotlin.tests.k2` end
 
+### auto-generated section `iml intellij.junit.kotlin.tests.k2` start
+exports_files([
+  "intellij.junit.kotlin.tests.k2.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.junit.kotlin.tests.k2` end
+
 ### auto-generated section `test intellij.junit.kotlin.tests.k2` start
 load("@community//build:tests-options.bzl", "jps_test")
 

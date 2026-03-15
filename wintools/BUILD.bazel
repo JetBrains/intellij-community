@@ -37,6 +37,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.community.wintools` end
 
+### auto-generated section `iml intellij.community.wintools` start
+exports_files([
+  "intellij.community.wintools.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.community.wintools` end
+
 ### auto-generated section `test intellij.community.wintools` start
 load("@community//build:tests-options.bzl", "jps_test")
 

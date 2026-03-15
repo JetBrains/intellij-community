@@ -34,3 +34,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.debugger` end
+
+### auto-generated section `iml intellij.platform.vcs.impl.debugger` start
+exports_files([
+  "intellij.platform.vcs.impl.debugger.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.vcs.impl.debugger` end

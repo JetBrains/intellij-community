@@ -27,3 +27,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.bootstrap.dev` end
+
+### auto-generated section `iml intellij.platform.bootstrap.dev` start
+exports_files([
+  "intellij.platform.bootstrap.dev.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.bootstrap.dev` end

@@ -84,6 +84,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.javaFX.community` end
 
+### auto-generated section `iml intellij.javaFX.community` start
+exports_files([
+  "intellij.javaFX.community.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.javaFX.community` end
+
 ### auto-generated section `test intellij.javaFX.community` start
 load("@community//build:tests-options.bzl", "jps_test")
 

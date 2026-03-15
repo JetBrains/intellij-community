@@ -18,3 +18,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.compose.compilerPlugin` end
+
+### auto-generated section `iml intellij.platform.compose.compilerPlugin` start
+exports_files([
+  "intellij.platform.compose.compilerPlugin.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.compose.compilerPlugin` end

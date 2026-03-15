@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":hamcrest"]
 )
 ### auto-generated section `build intellij.libraries.hamcrest` end
+
+### auto-generated section `iml intellij.libraries.hamcrest` start
+exports_files([
+  "intellij.libraries.hamcrest.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.hamcrest` end

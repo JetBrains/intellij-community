@@ -29,3 +29,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.runtime.loader` end
+
+### auto-generated section `iml intellij.platform.runtime.loader` start
+exports_files([
+  "intellij.platform.runtime.loader.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.runtime.loader` end

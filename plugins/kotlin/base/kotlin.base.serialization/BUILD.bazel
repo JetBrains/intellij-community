@@ -40,3 +40,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.serialization` end
+
+### auto-generated section `iml intellij.kotlin.base.serialization` start
+exports_files([
+  "intellij.kotlin.base.serialization.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.base.serialization` end

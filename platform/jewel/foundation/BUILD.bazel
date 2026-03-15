@@ -69,6 +69,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.jewel.foundation` end
 
+### auto-generated section `iml intellij.platform.jewel.foundation` start
+exports_files([
+  "intellij.platform.jewel.foundation.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jewel.foundation` end
+
 ### auto-generated section `test intellij.platform.jewel.foundation` start
 load("@community//build:tests-options.bzl", "jps_test")
 

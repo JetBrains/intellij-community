@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":ini4j"]
 )
 ### auto-generated section `build intellij.libraries.ini4j` end
+
+### auto-generated section `iml intellij.libraries.ini4j` start
+exports_files([
+  "intellij.libraries.ini4j.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.ini4j` end

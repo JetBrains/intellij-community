@@ -97,6 +97,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.devkit.workspaceModel.k1` end
 
+### auto-generated section `iml intellij.devkit.workspaceModel.k1` start
+exports_files([
+  "intellij.devkit.workspaceModel.k1.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.workspaceModel.k1` end
+
 ### auto-generated section `test intellij.devkit.workspaceModel.k1` start
 load("@community//build:tests-options.bzl", "jps_test")
 

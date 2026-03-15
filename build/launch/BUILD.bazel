@@ -53,6 +53,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.idea.tools.launch` end
 
+### auto-generated section `iml intellij.idea.tools.launch` start
+exports_files([
+  "intellij.idea.tools.launch.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.idea.tools.launch` end
+
 ### auto-generated section `test intellij.idea.tools.launch` start
 load("@community//build:tests-options.bzl", "jps_test")
 

@@ -61,3 +61,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.indexing` end
+
+### auto-generated section `iml intellij.platform.indexing` start
+exports_files([
+  "intellij.platform.indexing.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.indexing` end

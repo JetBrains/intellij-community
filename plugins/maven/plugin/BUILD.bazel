@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":plugin"]
 )
 ### auto-generated section `build intellij.maven.plugin` end
+
+### auto-generated section `iml intellij.maven.plugin` start
+exports_files([
+  "intellij.maven.plugin.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.maven.plugin` end

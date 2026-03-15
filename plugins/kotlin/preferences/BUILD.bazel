@@ -48,3 +48,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.preferences` end
+
+### auto-generated section `iml intellij.kotlin.preferences` start
+exports_files([
+  "intellij.kotlin.preferences.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.preferences` end

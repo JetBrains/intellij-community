@@ -32,3 +32,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.groovy.rt.classLoader` end
+
+### auto-generated section `iml intellij.groovy.rt.classLoader` start
+exports_files([
+  "intellij.groovy.rt.classLoader.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.groovy.rt.classLoader` end

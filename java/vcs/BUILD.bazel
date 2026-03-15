@@ -47,3 +47,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.java.vcs` end
+
+### auto-generated section `iml intellij.java.vcs` start
+exports_files([
+  "intellij.java.vcs.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.vcs` end

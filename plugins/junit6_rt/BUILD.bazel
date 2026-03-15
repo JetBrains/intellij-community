@@ -28,3 +28,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.junit.v6.rt` end
+
+### auto-generated section `iml intellij.junit.v6.rt` start
+exports_files([
+  "intellij.junit.v6.rt.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.junit.v6.rt` end

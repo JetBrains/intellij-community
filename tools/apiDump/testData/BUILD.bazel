@@ -20,3 +20,9 @@ jvm_library(
   runtime_deps = [":testData"]
 )
 ### auto-generated section `build intellij.tools.apiDump.testData` end
+
+### auto-generated section `iml intellij.tools.apiDump.testData` start
+exports_files([
+  "intellij.tools.apiDump.testData.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.tools.apiDump.testData` end

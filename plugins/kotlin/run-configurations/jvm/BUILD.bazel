@@ -94,3 +94,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.runConfigurations.jvm` end
+
+### auto-generated section `iml intellij.kotlin.runConfigurations.jvm` start
+exports_files([
+  "intellij.kotlin.runConfigurations.jvm.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.runConfigurations.jvm` end

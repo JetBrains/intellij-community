@@ -104,6 +104,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.devkit.themes` end
 
+### auto-generated section `iml intellij.devkit.themes` start
+exports_files([
+  "intellij.devkit.themes.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.themes` end
+
 ### auto-generated section `test intellij.devkit.themes` start
 load("@community//build:tests-options.bzl", "jps_test")
 

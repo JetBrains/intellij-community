@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":jsvg"]
 )
 ### auto-generated section `build intellij.libraries.jsvg` end
+
+### auto-generated section `iml intellij.libraries.jsvg` start
+exports_files([
+  "intellij.libraries.jsvg.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.jsvg` end

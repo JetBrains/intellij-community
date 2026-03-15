@@ -35,3 +35,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.maven.server.telemetry` end
+
+### auto-generated section `iml intellij.maven.server.telemetry` start
+exports_files([
+  "intellij.maven.server.telemetry.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.maven.server.telemetry` end

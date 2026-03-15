@@ -51,3 +51,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.extensions` end
+
+### auto-generated section `iml intellij.platform.extensions` start
+exports_files([
+  "intellij.platform.extensions.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.extensions` end

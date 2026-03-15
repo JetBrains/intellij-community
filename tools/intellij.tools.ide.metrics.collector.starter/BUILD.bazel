@@ -54,3 +54,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.tools.ide.metrics.collector.starter` end
+
+### auto-generated section `iml intellij.tools.ide.metrics.collector.starter` start
+exports_files([
+  "intellij.tools.ide.metrics.collector.starter.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.tools.ide.metrics.collector.starter` end

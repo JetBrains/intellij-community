@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":min"]
 )
 ### auto-generated section `build intellij.platform.customization.min` end
+
+### auto-generated section `iml intellij.platform.customization.min` start
+exports_files([
+  "intellij.platform.customization.min.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.customization.min` end

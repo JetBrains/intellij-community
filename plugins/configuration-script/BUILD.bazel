@@ -97,6 +97,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.configurationScript` end
 
+### auto-generated section `iml intellij.configurationScript` start
+exports_files([
+  "intellij.configurationScript.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.configurationScript` end
+
 ### auto-generated section `test intellij.configurationScript` start
 load("@community//build:tests-options.bzl", "jps_test")
 
@@ -143,6 +149,12 @@ jvm_library(
   runtime_deps = [":configurationScript-test-java"]
 )
 ### auto-generated section `build intellij.configurationScript.test.java` end
+
+### auto-generated section `iml intellij.configurationScript.test.java` start
+exports_files([
+  "intellij.configurationScript.test.java.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.configurationScript.test.java` end
 
 ### auto-generated section `test intellij.configurationScript.test.java` start
 load("@community//build:tests-options.bzl", "jps_test")

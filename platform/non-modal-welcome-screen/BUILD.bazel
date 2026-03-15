@@ -94,6 +94,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen` end
 
+### auto-generated section `iml intellij.platform.ide.nonModalWelcomeScreen` start
+exports_files([
+  "intellij.platform.ide.nonModalWelcomeScreen.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.ide.nonModalWelcomeScreen` end
+
 ### auto-generated section `test intellij.platform.ide.nonModalWelcomeScreen` start
 load("@community//build:tests-options.bzl", "jps_test")
 

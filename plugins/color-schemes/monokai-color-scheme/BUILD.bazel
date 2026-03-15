@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":color-scheme-monokai"]
 )
 ### auto-generated section `build intellij.color.scheme.monokai` end
+
+### auto-generated section `iml intellij.color.scheme.monokai` start
+exports_files([
+  "intellij.color.scheme.monokai.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.color.scheme.monokai` end

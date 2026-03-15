@@ -43,3 +43,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.markdown.xml` end
+
+### auto-generated section `iml intellij.markdown.xml` start
+exports_files([
+  "intellij.markdown.xml.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.markdown.xml` end

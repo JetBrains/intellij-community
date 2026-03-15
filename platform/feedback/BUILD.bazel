@@ -60,3 +60,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.feedback` end
+
+### auto-generated section `iml intellij.platform.feedback` start
+exports_files([
+  "intellij.platform.feedback.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.feedback` end

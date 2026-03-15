@@ -116,6 +116,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.credentialStore.impl` end
 
+### auto-generated section `iml intellij.platform.credentialStore.impl` start
+exports_files([
+  "intellij.platform.credentialStore.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.credentialStore.impl` end
+
 ### auto-generated section `test intellij.platform.credentialStore.impl` start
 load("@community//build:tests-options.bzl", "jps_test")
 

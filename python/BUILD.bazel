@@ -50,6 +50,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.pycharm.community` end
 
+### auto-generated section `iml intellij.pycharm.community` start
+exports_files([
+  "intellij.pycharm.community.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.pycharm.community` end
+
 ### auto-generated section `build intellij.pycharm.community.customization` start
 resourcegroup(
   name = "pycharm-community-customization_resources",
@@ -85,6 +91,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.pycharm.community.customization` end
+
+### auto-generated section `iml intellij.pycharm.community.customization` start
+exports_files([
+  "intellij.pycharm.community.customization.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.pycharm.community.customization` end
 
 ### auto-generated section `build intellij.pycharm.community.main` start
 jvm_library(
@@ -196,6 +208,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.pycharm.community.main` end
 
+### auto-generated section `iml intellij.pycharm.community.main` start
+exports_files([
+  "intellij.pycharm.community.main.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.pycharm.community.main` end
+
 ### auto-generated section `build intellij.python.commonTests` start
 jvm_library(
   name = "python-commonTests",
@@ -250,6 +268,12 @@ jvm_library(
   runtime_deps = [":python-commonTests"]
 )
 ### auto-generated section `build intellij.python.commonTests` end
+
+### auto-generated section `iml intellij.python.commonTests` start
+exports_files([
+  "intellij.python.commonTests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.commonTests` end
 
 ### auto-generated section `test intellij.python.commonTests` start
 load("@community//build:tests-options.bzl", "jps_test")
@@ -569,6 +593,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.python.community.impl` end
 
+### auto-generated section `iml intellij.python.community.impl` start
+exports_files([
+  "intellij.python.community.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.community.impl` end
+
 ### auto-generated section `build intellij.python.community.plugin.main` start
 jvm_library(
   name = "python-community-plugin-main",
@@ -603,6 +633,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.python.community.plugin.main` end
 
+### auto-generated section `iml intellij.python.community.plugin.main` start
+exports_files([
+  "intellij.python.community.plugin.main.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.community.plugin.main` end
+
 ### auto-generated section `build intellij.python.community.plugin.modules` start
 jvm_library(
   name = "python-community-plugin-modules",
@@ -634,6 +670,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.python.community.plugin.modules` end
+
+### auto-generated section `iml intellij.python.community.plugin.modules` start
+exports_files([
+  "intellij.python.community.plugin.modules.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.community.plugin.modules` end
 
 ### auto-generated section `build intellij.python.community.tests` start
 resourcegroup(
@@ -875,6 +917,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.python.community.tests` end
 
+### auto-generated section `iml intellij.python.community.tests` start
+exports_files([
+  "intellij.python.community.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.community.tests` end
+
 ### auto-generated section `test intellij.python.community.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
@@ -906,6 +954,12 @@ jvm_library(
   runtime_deps = [":python-helpers"]
 )
 ### auto-generated section `build intellij.python.helpers` end
+
+### auto-generated section `iml intellij.python.helpers` start
+exports_files([
+  "intellij.python.helpers.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.helpers` end
 
 ### auto-generated section `build intellij.python.helpers.tests` start
 resourcegroup(
@@ -944,6 +998,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.python.helpers.tests` end
+
+### auto-generated section `iml intellij.python.helpers.tests` start
+exports_files([
+  "intellij.python.helpers.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.helpers.tests` end
 
 ### auto-generated section `build intellij.python.pydev` start
 resourcegroup(
@@ -1009,3 +1069,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.python.pydev` end
+
+### auto-generated section `iml intellij.python.pydev` start
+exports_files([
+  "intellij.python.pydev.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.pydev` end

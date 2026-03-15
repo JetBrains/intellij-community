@@ -102,3 +102,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.lambda.testFramework` end
+
+### auto-generated section `iml intellij.lambda.testFramework` start
+exports_files([
+  "intellij.lambda.testFramework.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.lambda.testFramework` end

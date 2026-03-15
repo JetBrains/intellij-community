@@ -37,3 +37,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.uast.base` end
+
+### auto-generated section `iml intellij.kotlin.uast.base` start
+exports_files([
+  "intellij.kotlin.uast.base.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.uast.base` end

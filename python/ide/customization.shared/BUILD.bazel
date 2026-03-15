@@ -34,3 +34,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.pycharm.community.customization.shared` end
+
+### auto-generated section `iml intellij.pycharm.community.customization.shared` start
+exports_files([
+  "intellij.pycharm.community.customization.shared.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.pycharm.community.customization.shared` end

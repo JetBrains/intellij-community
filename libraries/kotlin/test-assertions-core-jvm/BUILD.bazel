@@ -25,3 +25,9 @@ jvm_library(
   runtime_deps = [":libraries-kotlinTestAssertionsCoreJvm"]
 )
 ### auto-generated section `build intellij.libraries.kotlinTestAssertionsCoreJvm` end
+
+### auto-generated section `iml intellij.libraries.kotlinTestAssertionsCoreJvm` start
+exports_files([
+  "intellij.libraries.kotlinTestAssertionsCoreJvm.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.kotlinTestAssertionsCoreJvm` end

@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":automaton"]
 )
 ### auto-generated section `build intellij.libraries.automaton` end
+
+### auto-generated section `iml intellij.libraries.automaton` start
+exports_files([
+  "intellij.libraries.automaton.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.automaton` end

@@ -74,6 +74,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.kotlin.gradle.tooling.impl` end
 
+### auto-generated section `iml intellij.kotlin.gradle.tooling.impl` start
+exports_files([
+  "intellij.kotlin.gradle.tooling.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.gradle.tooling.impl` end
+
 ### auto-generated section `test intellij.kotlin.gradle.tooling.impl` start
 load("@community//build:tests-options.bzl", "jps_test")
 

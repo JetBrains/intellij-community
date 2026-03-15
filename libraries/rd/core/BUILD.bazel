@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":core"]
 )
 ### auto-generated section `build intellij.libraries.rd.core` end
+
+### auto-generated section `iml intellij.libraries.rd.core` start
+exports_files([
+  "intellij.libraries.rd.core.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.rd.core` end

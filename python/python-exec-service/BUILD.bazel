@@ -99,6 +99,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.python.community.execService` end
 
+### auto-generated section `iml intellij.python.community.execService` start
+exports_files([
+  "intellij.python.community.execService.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.community.execService` end
+
 ### auto-generated section `test intellij.python.community.execService` start
 load("@community//build:tests-options.bzl", "jps_test")
 

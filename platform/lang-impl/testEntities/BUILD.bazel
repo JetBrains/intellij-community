@@ -29,6 +29,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.lang.testEntities` end
 
+### auto-generated section `iml intellij.platform.lang.testEntities` start
+exports_files([
+  "intellij.platform.lang.testEntities.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.lang.testEntities` end
+
 ### auto-generated section `test intellij.platform.lang.testEntities` start
 load("@community//build:tests-options.bzl", "jps_test")
 

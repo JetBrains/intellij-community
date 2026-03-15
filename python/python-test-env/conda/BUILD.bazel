@@ -59,6 +59,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.python.test.env.conda` end
 
+### auto-generated section `iml intellij.python.test.env.conda` start
+exports_files([
+  "intellij.python.test.env.conda.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.test.env.conda` end
+
 ### auto-generated section `test intellij.python.test.env.conda` start
 load("@community//build:tests-options.bzl", "jps_test")
 

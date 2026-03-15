@@ -66,6 +66,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.regexp` end
 
+### auto-generated section `iml intellij.regexp` start
+exports_files([
+  "intellij.regexp.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.regexp` end
+
 ### auto-generated section `build intellij.regexp.tests` start
 jvm_library(
   name = "regexp-tests",
@@ -131,6 +137,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.regexp.tests` end
+
+### auto-generated section `iml intellij.regexp.tests` start
+exports_files([
+  "intellij.regexp.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.regexp.tests` end
 
 ### auto-generated section `test intellij.regexp.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

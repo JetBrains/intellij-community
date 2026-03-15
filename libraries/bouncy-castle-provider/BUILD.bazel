@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":bouncy-castle-provider"]
 )
 ### auto-generated section `build intellij.libraries.bouncy.castle.provider` end
+
+### auto-generated section `iml intellij.libraries.bouncy.castle.provider` start
+exports_files([
+  "intellij.libraries.bouncy.castle.provider.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.bouncy.castle.provider` end

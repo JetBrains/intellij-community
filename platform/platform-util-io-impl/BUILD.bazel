@@ -45,3 +45,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.ide.util.io.impl` end
+
+### auto-generated section `iml intellij.platform.ide.util.io.impl` start
+exports_files([
+  "intellij.platform.ide.util.io.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.ide.util.io.impl` end

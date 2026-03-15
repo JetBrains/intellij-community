@@ -57,3 +57,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build kotlin.jvm-debugger.sequence.k1` end
+
+### auto-generated section `iml kotlin.jvm-debugger.sequence.k1` start
+exports_files([
+  "kotlin.jvm-debugger.sequence.k1.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.jvm-debugger.sequence.k1` end

@@ -121,6 +121,12 @@ jvm_library(
 )
 ### auto-generated section `build kotlin.jvm.k1` end
 
+### auto-generated section `iml kotlin.jvm.k1` start
+exports_files([
+  "kotlin.jvm.k1.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.jvm.k1` end
+
 ### auto-generated section `build kotlin.jvm.k1.tests` start
 create_kotlinc_options(
   name = "custom_kotlin-jvm-k1-tests",
@@ -276,6 +282,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build kotlin.jvm.k1.tests` end
+
+### auto-generated section `iml kotlin.jvm.k1.tests` start
+exports_files([
+  "kotlin.jvm.k1.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.jvm.k1.tests` end
 
 ### auto-generated section `test kotlin.jvm.k1.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

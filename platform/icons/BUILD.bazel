@@ -31,3 +31,9 @@ jvm_library(
   runtime_deps = [":icons"]
 )
 ### auto-generated section `build intellij.platform.icons` end
+
+### auto-generated section `iml intellij.platform.icons` start
+exports_files([
+  "intellij.platform.icons.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.icons` end

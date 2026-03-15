@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":libraries-kotlinx-document-store-mvstore"]
 )
 ### auto-generated section `build intellij.libraries.kotlinx.document.store.mvstore` end
+
+### auto-generated section `iml intellij.libraries.kotlinx.document.store.mvstore` start
+exports_files([
+  "intellij.libraries.kotlinx.document.store.mvstore.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.kotlinx.document.store.mvstore` end

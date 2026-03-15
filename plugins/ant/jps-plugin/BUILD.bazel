@@ -42,6 +42,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.ant.jps` end
 
+### auto-generated section `iml intellij.ant.jps` start
+exports_files([
+  "intellij.ant.jps.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.ant.jps` end
+
 ### auto-generated section `build intellij.ant.jps.tests` start
 jvm_library(
   name = "jps-tests",
@@ -76,6 +82,12 @@ jvm_library(
   runtime_deps = [":jps-tests"]
 )
 ### auto-generated section `build intellij.ant.jps.tests` end
+
+### auto-generated section `iml intellij.ant.jps.tests` start
+exports_files([
+  "intellij.ant.jps.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.ant.jps.tests` end
 
 ### auto-generated section `test intellij.ant.jps.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

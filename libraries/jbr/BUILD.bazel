@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":jbr"]
 )
 ### auto-generated section `build intellij.libraries.jbr` end
+
+### auto-generated section `iml intellij.libraries.jbr` start
+exports_files([
+  "intellij.libraries.jbr.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.jbr` end

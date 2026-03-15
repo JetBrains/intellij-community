@@ -30,3 +30,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.python.community.communityOnly` end
+
+### auto-generated section `iml intellij.python.community.communityOnly` start
+exports_files([
+  "intellij.python.community.communityOnly.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.community.communityOnly` end

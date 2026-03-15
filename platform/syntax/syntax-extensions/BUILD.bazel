@@ -48,6 +48,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.syntax.extensions` end
 
+### auto-generated section `iml intellij.platform.syntax.extensions` start
+exports_files([
+  "intellij.platform.syntax.extensions.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.syntax.extensions` end
+
 ### auto-generated section `test intellij.platform.syntax.extensions` start
 load("@community//build:tests-options.bzl", "jps_test")
 

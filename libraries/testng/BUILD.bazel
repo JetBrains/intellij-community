@@ -25,3 +25,9 @@ jvm_library(
   runtime_deps = [":testng"]
 )
 ### auto-generated section `build intellij.libraries.testng` end
+
+### auto-generated section `iml intellij.libraries.testng` start
+exports_files([
+  "intellij.libraries.testng.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.testng` end

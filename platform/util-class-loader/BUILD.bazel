@@ -25,3 +25,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.util.classLoader` end
+
+### auto-generated section `iml intellij.platform.util.classLoader` start
+exports_files([
+  "intellij.platform.util.classLoader.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.classLoader` end

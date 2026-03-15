@@ -37,3 +37,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.ide.util.netty` end
+
+### auto-generated section `iml intellij.platform.ide.util.netty` start
+exports_files([
+  "intellij.platform.ide.util.netty.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.ide.util.netty` end

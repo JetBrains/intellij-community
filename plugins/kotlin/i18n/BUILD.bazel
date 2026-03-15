@@ -42,3 +42,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.i18n` end
+
+### auto-generated section `iml intellij.kotlin.i18n` start
+exports_files([
+  "intellij.kotlin.i18n.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.i18n` end

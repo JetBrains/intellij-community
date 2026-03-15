@@ -59,3 +59,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.navigation` end
+
+### auto-generated section `iml intellij.kotlin.navigation` start
+exports_files([
+  "intellij.kotlin.navigation.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.navigation` end

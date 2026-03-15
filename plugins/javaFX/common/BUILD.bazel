@@ -33,3 +33,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.javaFX.common` end
+
+### auto-generated section `iml intellij.javaFX.common` start
+exports_files([
+  "intellij.javaFX.common.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.javaFX.common` end

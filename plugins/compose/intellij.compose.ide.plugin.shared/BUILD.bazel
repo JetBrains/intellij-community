@@ -82,6 +82,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.compose.ide.plugin.shared` end
 
+### auto-generated section `iml intellij.compose.ide.plugin.shared` start
+exports_files([
+  "intellij.compose.ide.plugin.shared.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.compose.ide.plugin.shared` end
+
 ### auto-generated section `build intellij.compose.ide.plugin.shared.tests` start
 create_kotlinc_options(
   name = "custom_ide-plugin-shared-tests",
@@ -158,6 +164,12 @@ jvm_library(
   runtime_deps = [":ide-plugin-shared-tests"]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.shared.tests` end
+
+### auto-generated section `iml intellij.compose.ide.plugin.shared.tests` start
+exports_files([
+  "intellij.compose.ide.plugin.shared.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.compose.ide.plugin.shared.tests` end
 
 ### auto-generated section `test intellij.compose.ide.plugin.shared.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

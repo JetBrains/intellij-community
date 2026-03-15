@@ -65,6 +65,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.textmate.tests` end
 
+### auto-generated section `iml intellij.textmate.tests` start
+exports_files([
+  "intellij.textmate.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.textmate.tests` end
+
 ### auto-generated section `test intellij.textmate.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 

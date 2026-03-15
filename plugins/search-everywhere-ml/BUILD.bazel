@@ -55,6 +55,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.searchEverywhereMl` end
 
+### auto-generated section `iml intellij.searchEverywhereMl` start
+exports_files([
+  "intellij.searchEverywhereMl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.searchEverywhereMl` end
+
 ### auto-generated section `test intellij.searchEverywhereMl` start
 load("@community//build:tests-options.bzl", "jps_test")
 

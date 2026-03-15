@@ -34,3 +34,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.ide.designer` end
+
+### auto-generated section `iml intellij.platform.ide.designer` start
+exports_files([
+  "intellij.platform.ide.designer.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.ide.designer` end

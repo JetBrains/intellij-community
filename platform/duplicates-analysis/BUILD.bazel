@@ -49,3 +49,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.duplicates.analysis` end
+
+### auto-generated section `iml intellij.platform.duplicates.analysis` start
+exports_files([
+  "intellij.platform.duplicates.analysis.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.duplicates.analysis` end

@@ -44,3 +44,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.libraries.ai.grazie.spell.gec.engine.local` end
+
+### auto-generated section `iml intellij.libraries.ai.grazie.spell.gec.engine.local` start
+exports_files([
+  "intellij.libraries.ai.grazie.spell.gec.engine.local.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.ai.grazie.spell.gec.engine.local` end

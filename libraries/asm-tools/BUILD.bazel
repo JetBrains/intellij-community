@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":asm-tools"]
 )
 ### auto-generated section `build intellij.libraries.asm.tools` end
+
+### auto-generated section `iml intellij.libraries.asm.tools` start
+exports_files([
+  "intellij.libraries.asm.tools.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.asm.tools` end

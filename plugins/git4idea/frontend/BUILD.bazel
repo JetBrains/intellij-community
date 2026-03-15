@@ -58,3 +58,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.vcs.git.frontend` end
+
+### auto-generated section `iml intellij.vcs.git.frontend` start
+exports_files([
+  "intellij.vcs.git.frontend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.vcs.git.frontend` end

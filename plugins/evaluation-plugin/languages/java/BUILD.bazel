@@ -91,6 +91,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.evaluationPlugin.languages.java` end
 
+### auto-generated section `iml intellij.evaluationPlugin.languages.java` start
+exports_files([
+  "intellij.evaluationPlugin.languages.java.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.evaluationPlugin.languages.java` end
+
 ### auto-generated section `test intellij.evaluationPlugin.languages.java` start
 load("@community//build:tests-options.bzl", "jps_test")
 

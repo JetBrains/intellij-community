@@ -87,6 +87,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.xml.xmlbeans` end
 
+### auto-generated section `iml intellij.xml.xmlbeans` start
+exports_files([
+  "intellij.xml.xmlbeans.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.xml.xmlbeans` end
+
 ### auto-generated section `test intellij.xml.xmlbeans` start
 load("@community//build:tests-options.bzl", "jps_test")
 

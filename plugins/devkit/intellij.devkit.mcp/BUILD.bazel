@@ -46,3 +46,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.devkit.mcp` end
+
+### auto-generated section `iml intellij.devkit.mcp` start
+exports_files([
+  "intellij.devkit.mcp.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.mcp` end

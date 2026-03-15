@@ -42,3 +42,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.java.uast.ide` end
+
+### auto-generated section `iml intellij.java.uast.ide` start
+exports_files([
+  "intellij.java.uast.ide.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.uast.ide` end

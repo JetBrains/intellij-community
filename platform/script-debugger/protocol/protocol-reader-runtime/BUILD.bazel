@@ -42,3 +42,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.scriptDebugger.protocolReaderRuntime` end
+
+### auto-generated section `iml intellij.platform.scriptDebugger.protocolReaderRuntime` start
+exports_files([
+  "intellij.platform.scriptDebugger.protocolReaderRuntime.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.scriptDebugger.protocolReaderRuntime` end

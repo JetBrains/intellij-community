@@ -46,3 +46,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build fleet.modules.jvm` end
+
+### auto-generated section `iml fleet.modules.jvm` start
+exports_files([
+  "fleet.modules.jvm.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.modules.jvm` end

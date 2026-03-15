@@ -94,6 +94,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.java.rareRefactorings` end
 
+### auto-generated section `iml intellij.java.rareRefactorings` start
+exports_files([
+  "intellij.java.rareRefactorings.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.rareRefactorings` end
+
 ### auto-generated section `test intellij.java.rareRefactorings` start
 load("@community//build:tests-options.bzl", "jps_test")
 

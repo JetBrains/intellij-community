@@ -139,6 +139,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.editorconfig.backend` end
 
+### auto-generated section `iml intellij.editorconfig.backend` start
+exports_files([
+  "intellij.editorconfig.backend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.editorconfig.backend` end
+
 ### auto-generated section `test intellij.editorconfig.backend` start
 load("@community//build:tests-options.bzl", "jps_test")
 

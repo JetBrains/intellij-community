@@ -58,3 +58,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.codeInsight.minimal` end
+
+### auto-generated section `iml intellij.kotlin.base.codeInsight.minimal` start
+exports_files([
+  "intellij.kotlin.base.codeInsight.minimal.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.base.codeInsight.minimal` end

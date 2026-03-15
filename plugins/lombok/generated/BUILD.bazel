@@ -23,3 +23,9 @@ jvm_library(
   runtime_deps = [":generated"]
 )
 ### auto-generated section `build intellij.lombok.generated` end
+
+### auto-generated section `iml intellij.lombok.generated` start
+exports_files([
+  "intellij.lombok.generated.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.lombok.generated` end

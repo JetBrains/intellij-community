@@ -86,6 +86,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.python.community` end
 
+### auto-generated section `iml intellij.python.community` start
+exports_files([
+  "intellij.python.community.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.community` end
+
 ### auto-generated section `test intellij.python.community` start
 load("@community//build:tests-options.bzl", "jps_test")
 

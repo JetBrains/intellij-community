@@ -41,6 +41,12 @@ jvm_library(
 )
 ### auto-generated section `build kotlin.util.test-generator-api` end
 
+### auto-generated section `iml kotlin.util.test-generator-api` start
+exports_files([
+  "kotlin.util.test-generator-api.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.util.test-generator-api` end
+
 ### auto-generated section `test kotlin.util.test-generator-api` start
 load("@community//build:tests-options.bzl", "jps_test")
 

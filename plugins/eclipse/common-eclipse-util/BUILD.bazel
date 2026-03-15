@@ -28,3 +28,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.eclipse.common` end
+
+### auto-generated section `iml intellij.eclipse.common` start
+exports_files([
+  "intellij.eclipse.common.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.eclipse.common` end

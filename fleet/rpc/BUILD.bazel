@@ -58,3 +58,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build fleet.rpc` end
+
+### auto-generated section `iml fleet.rpc` start
+exports_files([
+  "fleet.rpc.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.rpc` end

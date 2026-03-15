@@ -46,3 +46,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.editorconfig.common` end
+
+### auto-generated section `iml intellij.editorconfig.common` start
+exports_files([
+  "intellij.editorconfig.common.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.editorconfig.common` end

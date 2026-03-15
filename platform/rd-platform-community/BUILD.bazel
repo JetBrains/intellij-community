@@ -41,3 +41,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.rd.community` end
+
+### auto-generated section `iml intellij.platform.rd.community` start
+exports_files([
+  "intellij.platform.rd.community.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.rd.community` end

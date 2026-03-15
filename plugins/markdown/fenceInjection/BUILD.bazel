@@ -42,3 +42,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.markdown.fenceInjection` end
+
+### auto-generated section `iml intellij.markdown.fenceInjection` start
+exports_files([
+  "intellij.markdown.fenceInjection.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.markdown.fenceInjection` end

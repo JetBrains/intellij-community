@@ -25,3 +25,9 @@ jvm_library(
   runtime_deps = [":assertj-core"]
 )
 ### auto-generated section `build intellij.libraries.assertj.core` end
+
+### auto-generated section `iml intellij.libraries.assertj.core` start
+exports_files([
+  "intellij.libraries.assertj.core.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.assertj.core` end

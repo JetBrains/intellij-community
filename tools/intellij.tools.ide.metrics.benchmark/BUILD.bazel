@@ -77,6 +77,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.tools.ide.metrics.benchmark` end
 
+### auto-generated section `iml intellij.tools.ide.metrics.benchmark` start
+exports_files([
+  "intellij.tools.ide.metrics.benchmark.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.tools.ide.metrics.benchmark` end
+
 ### auto-generated section `test intellij.tools.ide.metrics.benchmark` start
 load("@community//build:tests-options.bzl", "jps_test")
 

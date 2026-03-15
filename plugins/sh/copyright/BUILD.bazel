@@ -42,6 +42,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.sh.copyright` end
 
+### auto-generated section `iml intellij.sh.copyright` start
+exports_files([
+  "intellij.sh.copyright.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.sh.copyright` end
+
 ### auto-generated section `build intellij.sh.copyright.tests` start
 jvm_library(
   name = "copyright-tests",
@@ -77,6 +83,12 @@ jvm_library(
   runtime_deps = [":copyright-tests"]
 )
 ### auto-generated section `build intellij.sh.copyright.tests` end
+
+### auto-generated section `iml intellij.sh.copyright.tests` start
+exports_files([
+  "intellij.sh.copyright.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.sh.copyright.tests` end
 
 ### auto-generated section `test intellij.sh.copyright.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

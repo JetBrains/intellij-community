@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":toml"]
 )
 ### auto-generated section `build intellij.toml` end
+
+### auto-generated section `iml intellij.toml` start
+exports_files([
+  "intellij.toml.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.toml` end

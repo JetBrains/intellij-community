@@ -141,6 +141,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.execution.impl` end
 
+### auto-generated section `iml intellij.platform.execution.impl` start
+exports_files([
+  "intellij.platform.execution.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.execution.impl` end
+
 ### auto-generated section `build intellij.platform.execution.tests` start
 jvm_library(
   name = "execution-tests",
@@ -197,6 +203,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.execution.tests` end
+
+### auto-generated section `iml intellij.platform.execution.tests` start
+exports_files([
+  "intellij.platform.execution.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.execution.tests` end
 
 ### auto-generated section `test intellij.platform.execution.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

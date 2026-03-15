@@ -56,3 +56,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.java.codeserver.highlighting` end
+
+### auto-generated section `iml intellij.java.codeserver.highlighting` start
+exports_files([
+  "intellij.java.codeserver.highlighting.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.codeserver.highlighting` end

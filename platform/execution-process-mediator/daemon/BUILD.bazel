@@ -42,3 +42,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.execution.process.mediator.daemon` end
+
+### auto-generated section `iml intellij.execution.process.mediator.daemon` start
+exports_files([
+  "intellij.execution.process.mediator.daemon.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.execution.process.mediator.daemon` end

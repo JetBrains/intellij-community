@@ -54,3 +54,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.grazie.xml` end
+
+### auto-generated section `iml intellij.grazie.xml` start
+exports_files([
+  "intellij.grazie.xml.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.grazie.xml` end

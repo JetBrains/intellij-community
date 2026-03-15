@@ -49,3 +49,9 @@ jvm_library(
   runtime_deps = [":tls"]
 )
 ### auto-generated section `build fleet.ktor.network.tls` end
+
+### auto-generated section `iml fleet.ktor.network.tls` start
+exports_files([
+  "fleet.ktor.network.tls.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.ktor.network.tls` end

@@ -20,3 +20,9 @@ jvm_library(
   runtime_deps = [":scripts"]
 )
 ### auto-generated section `build intellij.platform.syntax.scripts` end
+
+### auto-generated section `iml intellij.platform.syntax.scripts` start
+exports_files([
+  "intellij.platform.syntax.scripts.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.syntax.scripts` end

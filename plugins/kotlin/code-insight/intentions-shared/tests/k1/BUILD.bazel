@@ -66,6 +66,12 @@ jvm_library(
 )
 ### auto-generated section `build kotlin.code-insight.intentions-shared.tests.k1` end
 
+### auto-generated section `iml kotlin.code-insight.intentions-shared.tests.k1` start
+exports_files([
+  "kotlin.code-insight.intentions-shared.tests.k1.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.code-insight.intentions-shared.tests.k1` end
+
 ### auto-generated section `test kotlin.code-insight.intentions-shared.tests.k1` start
 load("@community//build:tests-options.bzl", "jps_test")
 

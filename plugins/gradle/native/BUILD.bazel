@@ -51,3 +51,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.gradle.native` end
+
+### auto-generated section `iml intellij.gradle.native` start
+exports_files([
+  "intellij.gradle.native.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.native` end

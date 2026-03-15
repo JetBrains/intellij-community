@@ -25,3 +25,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.testng.rt` end
+
+### auto-generated section `iml intellij.testng.rt` start
+exports_files([
+  "intellij.testng.rt.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.testng.rt` end

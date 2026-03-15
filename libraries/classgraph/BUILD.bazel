@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":classgraph"]
 )
 ### auto-generated section `build intellij.libraries.classgraph` end
+
+### auto-generated section `iml intellij.libraries.classgraph` start
+exports_files([
+  "intellij.libraries.classgraph.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.classgraph` end

@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":fastutil"]
 )
 ### auto-generated section `build intellij.libraries.fastutil` end
+
+### auto-generated section `iml intellij.libraries.fastutil` start
+exports_files([
+  "intellij.libraries.fastutil.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.fastutil` end

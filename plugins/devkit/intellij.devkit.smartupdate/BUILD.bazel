@@ -42,3 +42,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.devkit.smartupdate` end
+
+### auto-generated section `iml intellij.devkit.smartupdate` start
+exports_files([
+  "intellij.devkit.smartupdate.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.smartupdate` end

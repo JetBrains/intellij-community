@@ -154,3 +154,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build kotlin.fir` end
+
+### auto-generated section `iml kotlin.fir` start
+exports_files([
+  "kotlin.fir.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.fir` end

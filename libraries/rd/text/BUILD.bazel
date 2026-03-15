@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":text"]
 )
 ### auto-generated section `build intellij.libraries.rd.text` end
+
+### auto-generated section `iml intellij.libraries.rd.text` start
+exports_files([
+  "intellij.libraries.rd.text.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.rd.text` end

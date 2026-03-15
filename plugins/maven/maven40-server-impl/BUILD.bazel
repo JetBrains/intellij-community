@@ -43,3 +43,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.maven.server.m40` end
+
+### auto-generated section `iml intellij.maven.server.m40` start
+exports_files([
+  "intellij.maven.server.m40.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.maven.server.m40` end

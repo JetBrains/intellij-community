@@ -207,6 +207,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.java.debugger.impl` end
 
+### auto-generated section `iml intellij.java.debugger.impl` start
+exports_files([
+  "intellij.java.debugger.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.debugger.impl` end
+
 ### auto-generated section `test intellij.java.debugger.impl` start
 load("@community//build:tests-options.bzl", "jps_test")
 

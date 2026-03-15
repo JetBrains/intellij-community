@@ -23,3 +23,9 @@ jvm_library(
   runtime_deps = [":multiplatformSupport"]
 )
 ### auto-generated section `build intellij.platform.multiplatformSupport` end
+
+### auto-generated section `iml intellij.platform.multiplatformSupport` start
+exports_files([
+  "intellij.platform.multiplatformSupport.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.multiplatformSupport` end

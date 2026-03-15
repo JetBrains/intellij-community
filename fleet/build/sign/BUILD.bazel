@@ -42,3 +42,9 @@ jvm_library(
   runtime_deps = [":sign"]
 )
 ### auto-generated section `build fleet.build.sign` end
+
+### auto-generated section `iml fleet.build.sign` start
+exports_files([
+  "fleet.build.sign.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.build.sign` end

@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":miglayout-swing"]
 )
 ### auto-generated section `build intellij.libraries.miglayout.swing` end
+
+### auto-generated section `iml intellij.libraries.miglayout.swing` start
+exports_files([
+  "intellij.libraries.miglayout.swing.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.miglayout.swing` end

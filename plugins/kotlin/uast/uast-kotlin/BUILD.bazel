@@ -40,3 +40,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build kotlin.uast.uast-kotlin` end
+
+### auto-generated section `iml kotlin.uast.uast-kotlin` start
+exports_files([
+  "kotlin.uast.uast-kotlin.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.uast.uast-kotlin` end

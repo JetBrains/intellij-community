@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":xtext-xbase"]
 )
 ### auto-generated section `build intellij.libraries.xtext.xbase` end
+
+### auto-generated section `iml intellij.libraries.xtext.xbase` start
+exports_files([
+  "intellij.libraries.xtext.xbase.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.xtext.xbase` end

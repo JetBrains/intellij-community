@@ -38,3 +38,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.tools.ide.util.common` end
+
+### auto-generated section `iml intellij.tools.ide.util.common` start
+exports_files([
+  "intellij.tools.ide.util.common.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.tools.ide.util.common` end

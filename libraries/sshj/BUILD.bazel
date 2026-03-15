@@ -25,3 +25,9 @@ jvm_library(
   runtime_deps = [":sshj"]
 )
 ### auto-generated section `build intellij.libraries.sshj` end
+
+### auto-generated section `iml intellij.libraries.sshj` start
+exports_files([
+  "intellij.libraries.sshj.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.sshj` end

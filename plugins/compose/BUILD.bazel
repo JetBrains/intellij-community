@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":compose-ide-plugin"]
 )
 ### auto-generated section `build intellij.compose.ide.plugin` end
+
+### auto-generated section `iml intellij.compose.ide.plugin` start
+exports_files([
+  "intellij.compose.ide.plugin.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.compose.ide.plugin` end

@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":aalto-xml"]
 )
 ### auto-generated section `build intellij.libraries.aalto.xml` end
+
+### auto-generated section `iml intellij.libraries.aalto.xml` start
+exports_files([
+  "intellij.libraries.aalto.xml.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.aalto.xml` end

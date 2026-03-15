@@ -166,6 +166,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.java.i18n` end
 
+### auto-generated section `iml intellij.java.i18n` start
+exports_files([
+  "intellij.java.i18n.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.i18n` end
+
 ### auto-generated section `test intellij.java.i18n` start
 load("@community//build:tests-options.bzl", "jps_test")
 

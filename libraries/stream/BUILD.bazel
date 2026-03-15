@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":stream"]
 )
 ### auto-generated section `build intellij.libraries.stream` end
+
+### auto-generated section `iml intellij.libraries.stream` start
+exports_files([
+  "intellij.libraries.stream.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.stream` end

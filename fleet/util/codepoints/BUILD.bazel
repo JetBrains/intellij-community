@@ -47,3 +47,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build fleet.util.codepoints` end
+
+### auto-generated section `iml fleet.util.codepoints` start
+exports_files([
+  "fleet.util.codepoints.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.util.codepoints` end

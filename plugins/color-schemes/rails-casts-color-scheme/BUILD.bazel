@@ -22,3 +22,9 @@ jvm_library(
   runtime_deps = [":color-scheme-rails_casts"]
 )
 ### auto-generated section `build intellij.color.scheme.rails_casts` end
+
+### auto-generated section `iml intellij.color.scheme.rails_casts` start
+exports_files([
+  "intellij.color.scheme.rails_casts.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.color.scheme.rails_casts` end

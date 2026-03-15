@@ -57,3 +57,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.java.unscramble` end
+
+### auto-generated section `iml intellij.java.unscramble` start
+exports_files([
+  "intellij.java.unscramble.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.unscramble` end

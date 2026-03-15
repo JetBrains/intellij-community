@@ -31,3 +31,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.credentialStore` end
+
+### auto-generated section `iml intellij.platform.credentialStore` start
+exports_files([
+  "intellij.platform.credentialStore.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.credentialStore` end

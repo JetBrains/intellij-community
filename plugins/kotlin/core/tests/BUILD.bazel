@@ -123,6 +123,12 @@ jvm_library(
 )
 ### auto-generated section `build kotlin.core.tests` end
 
+### auto-generated section `iml kotlin.core.tests` start
+exports_files([
+  "kotlin.core.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.core.tests` end
+
 ### auto-generated section `test kotlin.core.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 

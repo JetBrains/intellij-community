@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":protobuf"]
 )
 ### auto-generated section `build intellij.libraries.protobuf` end
+
+### auto-generated section `iml intellij.libraries.protobuf` start
+exports_files([
+  "intellij.libraries.protobuf.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.protobuf` end

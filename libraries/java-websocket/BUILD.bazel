@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":java-websocket"]
 )
 ### auto-generated section `build intellij.libraries.java.websocket` end
+
+### auto-generated section `iml intellij.libraries.java.websocket` start
+exports_files([
+  "intellij.libraries.java.websocket.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.java.websocket` end

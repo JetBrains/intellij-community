@@ -44,3 +44,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.groovy.live.templates` end
+
+### auto-generated section `iml intellij.groovy.live.templates` start
+exports_files([
+  "intellij.groovy.live.templates.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.groovy.live.templates` end

@@ -89,3 +89,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.java.impl.inspections` end
+
+### auto-generated section `iml intellij.java.impl.inspections` start
+exports_files([
+  "intellij.java.impl.inspections.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.impl.inspections` end

@@ -57,3 +57,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.testFramework.selfContainedProjects` end
+
+### auto-generated section `iml intellij.platform.testFramework.selfContainedProjects` start
+exports_files([
+  "intellij.platform.testFramework.selfContainedProjects.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.testFramework.selfContainedProjects` end

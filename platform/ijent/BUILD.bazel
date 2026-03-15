@@ -51,6 +51,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.ijent` end
 
+### auto-generated section `iml intellij.platform.ijent` start
+exports_files([
+  "intellij.platform.ijent.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.ijent` end
+
 ### auto-generated section `test intellij.platform.ijent` start
 load("@community//build:tests-options.bzl", "jps_test")
 

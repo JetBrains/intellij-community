@@ -33,3 +33,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.libraries.junit5.vintage` end
+
+### auto-generated section `iml intellij.libraries.junit5.vintage` start
+exports_files([
+  "intellij.libraries.junit5.vintage.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.junit5.vintage` end

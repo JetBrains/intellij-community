@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":blockmap"]
 )
 ### auto-generated section `build intellij.libraries.blockmap` end
+
+### auto-generated section `iml intellij.libraries.blockmap` start
+exports_files([
+  "intellij.libraries.blockmap.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.blockmap` end

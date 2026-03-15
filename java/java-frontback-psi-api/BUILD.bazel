@@ -43,3 +43,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.java.frontback.psi` end
+
+### auto-generated section `iml intellij.java.frontback.psi` start
+exports_files([
+  "intellij.java.frontback.psi.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.frontback.psi` end

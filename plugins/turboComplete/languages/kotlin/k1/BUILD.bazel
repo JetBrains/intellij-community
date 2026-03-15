@@ -47,3 +47,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.turboComplete.languages.kotlin.k1` end
+
+### auto-generated section `iml intellij.turboComplete.languages.kotlin.k1` start
+exports_files([
+  "intellij.turboComplete.languages.kotlin.k1.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.turboComplete.languages.kotlin.k1` end

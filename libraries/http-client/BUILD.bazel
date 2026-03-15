@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":http-client"]
 )
 ### auto-generated section `build intellij.libraries.http.client` end
+
+### auto-generated section `iml intellij.libraries.http.client` start
+exports_files([
+  "intellij.libraries.http.client.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.http.client` end

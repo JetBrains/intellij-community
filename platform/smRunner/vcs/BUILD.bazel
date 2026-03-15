@@ -62,3 +62,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.smRunner.vcs` end
+
+### auto-generated section `iml intellij.platform.smRunner.vcs` start
+exports_files([
+  "intellij.platform.smRunner.vcs.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.smRunner.vcs` end

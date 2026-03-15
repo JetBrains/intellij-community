@@ -99,3 +99,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build kotlin.base.fe10.code-insight` end
+
+### auto-generated section `iml kotlin.base.fe10.code-insight` start
+exports_files([
+  "kotlin.base.fe10.code-insight.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.base.fe10.code-insight` end

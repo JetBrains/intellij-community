@@ -50,3 +50,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.remote.core` end
+
+### auto-generated section `iml intellij.platform.remote.core` start
+exports_files([
+  "intellij.platform.remote.core.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.remote.core` end

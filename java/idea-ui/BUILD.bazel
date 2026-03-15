@@ -136,6 +136,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.java.ui` end
 
+### auto-generated section `iml intellij.java.ui` start
+exports_files([
+  "intellij.java.ui.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.ui` end
+
 ### auto-generated section `build intellij.java.ui.tests` start
 jvm_library(
   name = "ui-tests",
@@ -231,6 +237,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.java.ui.tests` end
+
+### auto-generated section `iml intellij.java.ui.tests` start
+exports_files([
+  "intellij.java.ui.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.ui.tests` end
 
 ### auto-generated section `test intellij.java.ui.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

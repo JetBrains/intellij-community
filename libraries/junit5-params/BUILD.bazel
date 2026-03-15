@@ -31,3 +31,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.libraries.junit5.params` end
+
+### auto-generated section `iml intellij.libraries.junit5.params` start
+exports_files([
+  "intellij.libraries.junit5.params.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.junit5.params` end

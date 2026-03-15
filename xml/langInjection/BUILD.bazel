@@ -61,3 +61,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.xml.langInjection` end
+
+### auto-generated section `iml intellij.xml.langInjection` start
+exports_files([
+  "intellij.xml.langInjection.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.xml.langInjection` end

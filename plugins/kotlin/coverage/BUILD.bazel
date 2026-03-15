@@ -60,3 +60,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.coverage` end
+
+### auto-generated section `iml intellij.kotlin.coverage` start
+exports_files([
+  "intellij.kotlin.coverage.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.coverage` end

@@ -73,3 +73,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.gradle.java.performance` end
+
+### auto-generated section `iml intellij.gradle.java.performance` start
+exports_files([
+  "intellij.gradle.java.performance.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.java.performance` end

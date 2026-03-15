@@ -34,3 +34,9 @@ jvm_library(
   runtime_deps = [":lucene.common"]
 )
 ### auto-generated section `build intellij.libraries.lucene.common` end
+
+### auto-generated section `iml intellij.libraries.lucene.common` start
+exports_files([
+  "intellij.libraries.lucene.common.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.lucene.common` end

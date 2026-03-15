@@ -99,6 +99,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.configurationStore.impl` end
 
+### auto-generated section `iml intellij.platform.configurationStore.impl` start
+exports_files([
+  "intellij.platform.configurationStore.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.configurationStore.impl` end
+
 ### auto-generated section `build intellij.platform.configurationStore.tests` start
 resourcegroup(
   name = "configurationStore-tests_test_resources",
@@ -177,6 +183,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.configurationStore.tests` end
+
+### auto-generated section `iml intellij.platform.configurationStore.tests` start
+exports_files([
+  "intellij.platform.configurationStore.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.configurationStore.tests` end
 
 ### auto-generated section `test intellij.platform.configurationStore.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

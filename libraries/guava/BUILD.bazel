@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":guava"]
 )
 ### auto-generated section `build intellij.libraries.guava` end
+
+### auto-generated section `iml intellij.libraries.guava` start
+exports_files([
+  "intellij.libraries.guava.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.guava` end

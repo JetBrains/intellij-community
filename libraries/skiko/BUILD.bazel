@@ -34,3 +34,9 @@ jvm_library(
   runtime_deps = [":skiko"]
 )
 ### auto-generated section `build intellij.libraries.skiko` end
+
+### auto-generated section `iml intellij.libraries.skiko` start
+exports_files([
+  "intellij.libraries.skiko.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.skiko` end

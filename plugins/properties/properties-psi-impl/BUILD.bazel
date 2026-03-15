@@ -91,3 +91,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.properties.backend.psi` end
+
+### auto-generated section `iml intellij.properties.backend.psi` start
+exports_files([
+  "intellij.properties.backend.psi.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.properties.backend.psi` end

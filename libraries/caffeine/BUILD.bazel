@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":caffeine"]
 )
 ### auto-generated section `build intellij.libraries.caffeine` end
+
+### auto-generated section `iml intellij.libraries.caffeine` start
+exports_files([
+  "intellij.libraries.caffeine.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.caffeine` end

@@ -34,3 +34,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.codeowners.monorepo.resolver` end
+
+### auto-generated section `iml intellij.codeowners.monorepo.resolver` start
+exports_files([
+  "intellij.codeowners.monorepo.resolver.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.codeowners.monorepo.resolver` end

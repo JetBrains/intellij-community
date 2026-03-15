@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":markdown"]
 )
 ### auto-generated section `build intellij.libraries.markdown` end
+
+### auto-generated section `iml intellij.libraries.markdown` start
+exports_files([
+  "intellij.libraries.markdown.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.markdown` end

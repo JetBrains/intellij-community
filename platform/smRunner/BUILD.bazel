@@ -111,6 +111,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.smRunner` end
 
+### auto-generated section `iml intellij.platform.smRunner` start
+exports_files([
+  "intellij.platform.smRunner.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.smRunner` end
+
 ### auto-generated section `test intellij.platform.smRunner` start
 load("@community//build:tests-options.bzl", "jps_test")
 

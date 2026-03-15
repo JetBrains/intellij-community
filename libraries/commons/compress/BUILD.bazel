@@ -26,3 +26,9 @@ jvm_library(
   runtime_deps = [":compress"]
 )
 ### auto-generated section `build intellij.libraries.commons.compress` end
+
+### auto-generated section `iml intellij.libraries.commons.compress` start
+exports_files([
+  "intellij.libraries.commons.compress.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.commons.compress` end

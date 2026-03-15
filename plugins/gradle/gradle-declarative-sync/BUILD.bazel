@@ -54,6 +54,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.gradle.declarativeSync` end
 
+### auto-generated section `iml intellij.gradle.declarativeSync` start
+exports_files([
+  "intellij.gradle.declarativeSync.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.declarativeSync` end
+
 ### auto-generated section `build intellij.gradle.declarativeSync.tests` start
 jvm_library(
   name = "declarativeSync-tests",
@@ -111,6 +117,12 @@ jvm_library(
   runtime_deps = [":declarativeSync-tests"]
 )
 ### auto-generated section `build intellij.gradle.declarativeSync.tests` end
+
+### auto-generated section `iml intellij.gradle.declarativeSync.tests` start
+exports_files([
+  "intellij.gradle.declarativeSync.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.declarativeSync.tests` end
 
 ### auto-generated section `test intellij.gradle.declarativeSync.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

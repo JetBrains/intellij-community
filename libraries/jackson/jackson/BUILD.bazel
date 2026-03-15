@@ -39,3 +39,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.libraries.jackson` end
+
+### auto-generated section `iml intellij.libraries.jackson` start
+exports_files([
+  "intellij.libraries.jackson.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.jackson` end

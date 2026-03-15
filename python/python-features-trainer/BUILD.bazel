@@ -120,6 +120,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.python.featuresTrainer` end
 
+### auto-generated section `iml intellij.python.featuresTrainer` start
+exports_files([
+  "intellij.python.featuresTrainer.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.featuresTrainer` end
+
 ### auto-generated section `test intellij.python.featuresTrainer` start
 load("@community//build:tests-options.bzl", "jps_test")
 

@@ -63,3 +63,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.workspace.storage` end
+
+### auto-generated section `iml intellij.platform.workspace.storage` start
+exports_files([
+  "intellij.platform.workspace.storage.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.workspace.storage` end

@@ -164,6 +164,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.vcs.impl` end
 
+### auto-generated section `iml intellij.platform.vcs.impl` start
+exports_files([
+  "intellij.platform.vcs.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.vcs.impl` end
+
 ### auto-generated section `build intellij.platform.vcs.impl.tests` start
 jvm_library(
   name = "vcs-impl-tests",
@@ -332,6 +338,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.tests` end
+
+### auto-generated section `iml intellij.platform.vcs.impl.tests` start
+exports_files([
+  "intellij.platform.vcs.impl.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.vcs.impl.tests` end
 
 ### auto-generated section `test intellij.platform.vcs.impl.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

@@ -30,3 +30,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.kdoc` end
+
+### auto-generated section `iml intellij.kotlin.base.kdoc` start
+exports_files([
+  "intellij.kotlin.base.kdoc.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.base.kdoc` end

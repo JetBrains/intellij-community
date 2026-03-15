@@ -81,6 +81,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.core` end
 
+### auto-generated section `iml intellij.platform.jewel.markdown.core` start
+exports_files([
+  "intellij.platform.jewel.markdown.core.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jewel.markdown.core` end
+
 ### auto-generated section `test intellij.platform.jewel.markdown.core` start
 load("@community//build:tests-options.bzl", "jps_test")
 

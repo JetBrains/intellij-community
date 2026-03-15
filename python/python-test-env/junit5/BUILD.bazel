@@ -86,6 +86,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.python.test.env.junit5` end
 
+### auto-generated section `iml intellij.python.test.env.junit5` start
+exports_files([
+  "intellij.python.test.env.junit5.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.test.env.junit5` end
+
 ### auto-generated section `test intellij.python.test.env.junit5` start
 load("@community//build:tests-options.bzl", "jps_test")
 

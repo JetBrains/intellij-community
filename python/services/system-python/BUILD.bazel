@@ -63,6 +63,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.python.community.services.systemPython` end
 
+### auto-generated section `iml intellij.python.community.services.systemPython` start
+exports_files([
+  "intellij.python.community.services.systemPython.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.community.services.systemPython` end
+
 ### auto-generated section `build intellij.python.community.services.systemPython.tests` start
 resourcegroup(
   name = "python-community-services-systemPython-tests_test_resources",
@@ -141,6 +147,12 @@ jvm_library(
   runtime_deps = [":python-community-services-systemPython-tests"]
 )
 ### auto-generated section `build intellij.python.community.services.systemPython.tests` end
+
+### auto-generated section `iml intellij.python.community.services.systemPython.tests` start
+exports_files([
+  "intellij.python.community.services.systemPython.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.community.services.systemPython.tests` end
 
 ### auto-generated section `test intellij.python.community.services.systemPython.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

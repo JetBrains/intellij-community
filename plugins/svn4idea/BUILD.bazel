@@ -97,6 +97,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.vcs.svn` end
 
+### auto-generated section `iml intellij.vcs.svn` start
+exports_files([
+  "intellij.vcs.svn.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.vcs.svn` end
+
 ### auto-generated section `build intellij.vcs.svn.tests` start
 jvm_library(
   name = "vcs-svn-tests",
@@ -171,6 +177,12 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.vcs.svn.tests` end
+
+### auto-generated section `iml intellij.vcs.svn.tests` start
+exports_files([
+  "intellij.vcs.svn.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.vcs.svn.tests` end
 
 ### auto-generated section `test intellij.vcs.svn.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

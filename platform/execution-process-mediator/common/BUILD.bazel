@@ -48,6 +48,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.execution.process.mediator.common` end
 
+### auto-generated section `iml intellij.execution.process.mediator.common` start
+exports_files([
+  "intellij.execution.process.mediator.common.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.execution.process.mediator.common` end
+
 ### auto-generated section `test intellij.execution.process.mediator.common` start
 load("@community//build:tests-options.bzl", "jps_test")
 
