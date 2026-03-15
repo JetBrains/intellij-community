@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Lombok Tests" type="JUnit" factoryName="JUnit">
-    <module name="intellij.lombok" />
+    <module name="intellij.lombok.tests" />
     <option name="PACKAGE_NAME" value="de.plushnikov.intellij.plugin" />
     <option name="MAIN_CLASS_NAME" value="" />
     <option name="METHOD_NAME" value="" />
