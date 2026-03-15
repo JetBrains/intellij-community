@@ -60,6 +60,11 @@ public abstract class CommonNativeJvmK2HighlightingMetaInfoTestGenerated extends
             runTest("../../idea/tests/testData/highlighterMetaInfo/diagnostics/mppIsNotEnabled.kt");
         }
 
+        @TestMetadata("redundantOpenFunctionInInterfaceDiagnostic.kt")
+        public void testRedundantOpenFunctionInInterfaceDiagnostic() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/diagnostics/redundantOpenFunctionInInterfaceDiagnostic.kt");
+        }
+
         @TestMetadata("uselessCast.kt")
         public void testUselessCast() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/diagnostics/uselessCast.kt");
