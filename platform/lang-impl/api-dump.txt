@@ -801,6 +801,11 @@ com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter
 - a:shouldShow(com.intellij.psi.PsiFileSystemItem):Z
 a:com.intellij.ide.scratch.LRUPopupBuilder
 - withPinnedId(java.lang.String):com.intellij.ide.scratch.LRUPopupBuilder
+a:com.intellij.ide.scratch.ScratchFileCreationHelper
+- afterCreate(com.intellij.openapi.project.Project,com.intellij.ide.scratch.ScratchFileCreationHelper$Context,com.intellij.psi.PsiFile):V
+f:com.intellij.ide.scratch.ScratchFileCreationHelper$Context
+- selectionRange:com.intellij.openapi.util.TextRange
+- sourceFile:com.intellij.psi.PsiFile
 com.intellij.ide.structureView.StructureViewExtension
 - filterChildren(java.util.Collection,java.util.List):V
 - a:getChildren(com.intellij.psi.PsiElement):com.intellij.ide.structureView.StructureViewTreeElement[]

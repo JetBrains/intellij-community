@@ -62,6 +62,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//platform/execution",
     "//platform/lang-api:lang",
+    "//plugins/kotlin/base/statistics",
   ]
 )
 
@@ -117,6 +118,7 @@ jvm_library(
     "//plugins/kotlin/intellij.kotlin.base.test:base-test",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/base/statistics:statistics_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.jvm.k1` end
