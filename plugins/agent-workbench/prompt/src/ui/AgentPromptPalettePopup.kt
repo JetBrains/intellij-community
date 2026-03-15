@@ -9,6 +9,8 @@ import com.intellij.agent.workbench.prompt.AgentPromptBundle
 import com.intellij.agent.workbench.prompt.context.AgentPromptContextResolverService
 import com.intellij.agent.workbench.prompt.context.dataContextOrNull
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
+import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_INITIAL_TEXT_DATA_KEY
+import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvelopeSummary
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
@@ -151,6 +153,11 @@ internal class AgentPromptPalettePopup(
     restoreTaskDrafts(draft)
     if (activeExtensionTabs.isNotEmpty()) {
       selectFirstExtensionTab()
+    }
+    val initialText = invocationData.dataContextOrNull()?.getData(AGENT_PROMPT_INITIAL_TEXT_DATA_KEY)
+    if (!initialText.isNullOrBlank()) {
+      val newTaskKey = PromptTargetMode.NEW_TASK.name
+      taskPromptStates[newTaskKey] = restoredTaskPromptDraftState(initialText)
     }
     loadPromptTextForSelectedTab()
     clearStatus()
