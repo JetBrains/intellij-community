@@ -59,7 +59,6 @@ resourcegroup = rule(
         "strip_prefix": attr.label(
             doc = """The path prefix to remove from Java resources""",
             allow_single_file = True,
-            providers = ["FileProvider"],
         ),
         "add_prefix": attr.string(
             doc = """The path prefix to prepend to Java resources, after applying `strip_prefix` (if any) to each file's relative path""",

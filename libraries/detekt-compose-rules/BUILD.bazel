@@ -1,3 +1,5 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+
 # Build detekt-compose-rules-binary_deploy.jar to get plugin binary
 java_binary(
     name = "detekt-compose-rules-binary",

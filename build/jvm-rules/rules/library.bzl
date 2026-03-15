@@ -64,7 +64,7 @@ _jvm_library_jps = rule(
             Deps listed here will be made available to other rules, as if the parents explicitly depended on
             these deps. This is not true for regular (non-exported) deps.""",
             default = [],
-            providers = [JavaInfo],
+            providers = [_JavaInfo],
         ),
         "neverlink": attr.bool(
             doc = """If true only use this library for compilation and not at runtime.""",

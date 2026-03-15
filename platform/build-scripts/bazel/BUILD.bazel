@@ -1,4 +1,5 @@
 load("@rules_java//java:defs.bzl", "java_binary", "java_test", "java_import")
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("@rules_java//toolchains:default_java_toolchain.bzl", "default_java_toolchain")
 load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
@@ -34,9 +35,9 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-sh_binary(
+native_binary(
     name = "noop_proguard_allowlister",
-    srcs = ["noop_proguard_allowlister.sh"],
+    src = "noop_proguard_allowlister.sh",
 )
 
 kt_compiler_plugin(

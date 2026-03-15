@@ -1,3 +1,5 @@
+load("@rules_java//java/common:java_common.bzl", "java_common")
+
 HAVEN_CLI_ATTR = {
     "_haven_cli_launcher": attr.label(
         default = "@rules_jvm//:rules/impl/MemoryLauncher.java",
