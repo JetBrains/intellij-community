@@ -92,5 +92,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.test.parcelize" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.util.test-generator-fir" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectWizard.core.tests" scope="TEST" />
   </component>
 </module>
