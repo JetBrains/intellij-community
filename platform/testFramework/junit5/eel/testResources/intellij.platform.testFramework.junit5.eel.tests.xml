@@ -2,17 +2,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.junit5.pioneer"/>
-    <module name="intellij.libraries.junit5"/>
-    <module name="intellij.libraries.junit5.jupiter"/>
-    <module name="intellij.libraries.junit5.params"/>
-    <module name="intellij.libraries.kotlinx.coroutines.core"/>
-    <module name="intellij.platform.core"/>
-    <module name="intellij.platform.execution"/>
-    <module name="intellij.platform.ide.core"/>
-    <module name="intellij.platform.projectModel"/>
-    <module name="intellij.platform.testFramework.junit5"/>
-    <module name="intellij.platform.util.coroutines"/>
-    <module name="intellij.platform.util.ex"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>
