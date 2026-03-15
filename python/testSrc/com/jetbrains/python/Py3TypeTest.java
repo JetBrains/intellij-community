@@ -5394,6 +5394,18 @@ public class Py3TypeTest extends PyTestCase {
       expr = [float]
     """);
   }
+  
+  // PY-88234
+  public void testQualifiedAttributeTypeNotConfusedWithSameNameParameter() {
+    doTest( "int | str", """    
+      class Beta:
+          x: int
+      
+          def doit(self, x: str):
+              expr = self.x and x
+              #           ^ - should not be str"""
+    );
+  }
 
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);

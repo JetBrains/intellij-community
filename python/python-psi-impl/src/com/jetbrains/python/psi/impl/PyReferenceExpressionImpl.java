@@ -477,7 +477,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (target instanceof PyFile) {
       return Ref.create(new PyModuleType((PyFile)target));
     }
-    if (target instanceof PyElement && context.allowDataFlow(anchor)) {
+    // If it is qualified, we already tried inferring by CFG in getQualifiedReferenceTypeByControlFlow
+    if (!anchor.isQualified() && target instanceof PyElement && context.allowDataFlow(anchor)) {
       final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(anchor);
       final String name = ((PyElement)target).getName();
       if (scopeOwner != null && name != null) {
