@@ -3631,6 +3631,45 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/contextParameterWithoutName")
+    public static class ContextParameterWithoutName extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("firstPosition.kt")
+        public void testFirstPosition() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/contextParameterWithoutName/firstPosition.kt");
+        }
+
+        @TestMetadata("lastPosition.kt")
+        public void testLastPosition() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/contextParameterWithoutName/lastPosition.kt");
+        }
+
+        @TestMetadata("middlePosition.kt")
+        public void testMiddlePosition() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/contextParameterWithoutName/middlePosition.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/contextParameterWithoutName/simple.kt");
+        }
+
+        @TestMetadata("withComments.kt")
+        public void testWithComments() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/contextParameterWithoutName/withComments.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/createFromUsage/createClass")
     public abstract static class CreateClass extends AbstractHighLevelQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)

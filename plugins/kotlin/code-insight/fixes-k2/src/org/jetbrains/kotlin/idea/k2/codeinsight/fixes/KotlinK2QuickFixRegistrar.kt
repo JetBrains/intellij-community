@@ -623,6 +623,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ConvertExtensionFunctionInExternalDeclarationFixFactory.extensionFunctionInExternalDeclarationFactory)
 
         registerFactory(RenameUnderscoreFixFactory.renameUnderscore)
+        registerFactory(ContextParameterWithoutNameFixFactory.addUnderscoreToContextParameter)
         registerFactory(NamedContextParameterInFunctionTypeFixFactory.removeParameterName)
         registerFactory(ReceiverShadowedByContextParameterFactory.addReceiverFactory)
 
