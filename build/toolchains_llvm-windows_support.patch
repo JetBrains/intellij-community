@@ -1,5 +1,5 @@
 Subject: [PATCH] Fix include filegroup to allow empty glob
-Add an alias for llvm-rc tool in order to be able to reuse LLVM to compile .rc files
+Add an alias for `llvm-rc` and `clang` tool in order to be able to reuse LLVM to compile .rc files
 Add TODO
 Do not set `-no-canonical-prefixes` when cross-compiling to Windows
 Fix typo in passed Windows compiler args
@@ -1081,8 +1081,15 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/aliases.bzl b/toolchain/aliases.bzl
 --- a/toolchain/aliases.bzl	(revision 27c0bc7378a3f0bce997f582b5d94ec84af606c7)
-+++ b/toolchain/aliases.bzl	(revision 1ac340f92f1ebe3df5ef81053da458bf8a18de9d)
-@@ -27,4 +27,5 @@
++++ b/toolchain/aliases.bzl	(revision 632544de4a6f69ecfdcecf727c52626ac57aaa62)
+@@ -21,10 +21,12 @@
+
+ aliased_tools = [
+     "clang-apply-replacements",
++    "clang",
+     "clang-format",
+     "clang-tidy",
+     "clangd",
      "llvm-cov",
      "llvm-profdata",
      "llvm-symbolizer",
