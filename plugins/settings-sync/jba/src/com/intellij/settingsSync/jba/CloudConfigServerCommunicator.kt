@@ -103,7 +103,7 @@ open class CloudConfigServerCommunicator(private val serverUrl: String?, private
     else {
       LOG.error(e)
     }
-    return customizeErrorMessage(e) ?: defaultMessage
+    return e.message ?: defaultMessage
   }
 
   fun downloadSnapshot(filePath: String, version: FileVersionInfo): InputStream? {
