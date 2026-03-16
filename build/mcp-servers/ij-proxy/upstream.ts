@@ -36,7 +36,8 @@ function normalizeToolResult(result: unknown): unknown {
 export class UpstreamConnection {
   readonly client: Client
   private readonly _transport: McpStreamTransport
-  private readonly _projectPathManager: ReturnType<typeof createProjectPathManager>
+  private _projectPathManager: ReturnType<typeof createProjectPathManager>
+  private readonly _defaultProjectPathKey: 'project_path' | 'projectPath'
   private readonly _toolCallTimeoutMs: number
   private readonly _warn: (message: string) => void
 
@@ -54,6 +55,7 @@ export class UpstreamConnection {
     this._transport = options.transport
     this._toolCallTimeoutMs = options.toolCallTimeoutMs
     this._warn = options.warn
+    this._defaultProjectPathKey = options.defaultProjectPathKey
     this._projectPathManager = createProjectPathManager({
       projectPath: options.projectPath,
       defaultProjectPathKey: options.defaultProjectPathKey
@@ -67,6 +69,13 @@ export class UpstreamConnection {
       this.reset()
       this._warn('Upstream client connection closed; will reconnect on next request')
     }
+  }
+
+  updateProjectPath(newProjectPath: string): void {
+    this._projectPathManager = createProjectPathManager({
+      projectPath: newProjectPath,
+      defaultProjectPathKey: this._defaultProjectPathKey
+    })
   }
 
   async connect(): Promise<void> {
