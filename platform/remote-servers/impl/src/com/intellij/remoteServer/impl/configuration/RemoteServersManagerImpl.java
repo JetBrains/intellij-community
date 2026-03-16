@@ -10,6 +10,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServerListener;
@@ -89,6 +90,19 @@ public final class RemoteServersManagerImpl extends RemoteServersManager impleme
   public @Nullable <C extends ServerConfiguration> RemoteServer<C> findByName(@NotNull String name, @NotNull ServerType<C> type) {
     for (RemoteServer<?> server : myServers) {
       if (server.getType().equals(type) && server.getName().equals(name)) {
+        //noinspection unchecked
+        return (RemoteServer<C>)server;
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public @Nullable <C extends ServerConfiguration> RemoteServer<C> findByName(@NotNull Project project,
+                                                                              @NotNull String name,
+                                                                              @NotNull ServerType<C> type) {
+    for (RemoteServer<?> server : myServers) {
+      if (server.getType().equals(type) && server.getName().equals(name) && server.getConfiguration().isVisibleInProject(project)) {
         //noinspection unchecked
         return (RemoteServer<C>)server;
       }
