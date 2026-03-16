@@ -5,13 +5,11 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.InlineTextContent
@@ -20,10 +18,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withCompositionLocal
 import androidx.compose.ui.Alignment
@@ -36,13 +38,26 @@ import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.onFirstVisible
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection.Ltr
 import androidx.compose.ui.unit.dp
 import org.jetbrains.annotations.ApiStatus
@@ -69,6 +84,7 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.ListItem
 import org.jetbrains.jewel.markdown.MarkdownBlock.Paragraph
 import org.jetbrains.jewel.markdown.MarkdownBlock.ThematicBreak
 import org.jetbrains.jewel.markdown.WithInlineMarkdown
+import org.jetbrains.jewel.markdown.extensions.ImageRenderResult
 import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered.BulletCharStyles
@@ -145,6 +161,7 @@ public open class DefaultMarkdownBlockRenderer(
             ThematicBreak -> RenderThematicBreak(rootStyling.thematicBreak, enabled, modifier)
             is MarkdownBlock.HtmlBlockWithAttributes ->
                 RenderHtmlBlockWithAttributes(block, enabled, onUrlClick, modifier)
+
             is CustomBlock -> {
                 rendererExtensions
                     .find { it.blockRenderer?.canRender(block) == true }
@@ -206,31 +223,48 @@ public open class DefaultMarkdownBlockRenderer(
         softWrap: Boolean,
         maxLines: Int,
     ) {
-        val onlyImages = remember(block) { block.inlineContent.all { it is InlineMarkdown.Image } }
-        val images = renderedImages(block)
+        RenderBlockWithInlines(
+            block,
+            styling.inlinesStyling,
+            enabled,
+            onUrlClick,
+            onTextLayout,
+            modifier,
+            overflow,
+            softWrap,
+            maxLines,
+        )
+    }
 
-        if (onlyImages) {
-            RenderImages(images, modifier)
-        } else {
-            val renderedContent = rememberRenderedContent(block, styling.inlinesStyling, enabled, onUrlClick)
-            val textColor =
-                styling.inlinesStyling.textStyle.color
-                    .takeOrElse { LocalContentColor.current }
-                    .takeOrElse { styling.inlinesStyling.textStyle.color }
-            val mergedStyle = styling.inlinesStyling.textStyle.merge(TextStyle(color = textColor))
+    @Composable
+    private fun RenderBlockWithInlines(
+        block: WithInlineMarkdown,
+        inlinesStyling: InlinesStyling,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
+        onTextLayout: (TextLayoutResult) -> Unit,
+        modifier: Modifier = Modifier,
+        overflow: TextOverflow = TextOverflow.Clip,
+        softWrap: Boolean = true,
+        maxLines: Int = Int.MAX_VALUE,
+    ) {
+        val (loadedImages, renderedContent) = rememberRenderedContent(block, inlinesStyling, enabled, onUrlClick)
+        val textColor = inlinesStyling.textStyle.color.takeOrElse { LocalContentColor.current }
+        val mergedStyle = inlinesStyling.textStyle.merge(TextStyle(color = textColor))
+        val density = LocalDensity.current
 
-            Text(
-                modifier = modifier,
-                text = renderedContent,
-                overflow = overflow,
-                softWrap = softWrap,
-                maxLines = maxLines,
-                onTextLayout = onTextLayout,
-                inlineContent = images,
-                style = mergedStyle,
-                textAlign = LocalTextAlignment.current,
-            )
-        }
+        TextWithScalableInlineContent(
+            text = renderedContent,
+            inlineContent = loadedImages,
+            density = density,
+            modifier = modifier,
+            overflow = overflow,
+            softWrap = softWrap,
+            maxLines = maxLines,
+            onTextLayout = onTextLayout,
+            style = mergedStyle,
+            textAlign = LocalTextAlignment.current,
+        )
     }
 
     @Composable
@@ -284,30 +318,15 @@ public open class DefaultMarkdownBlockRenderer(
         onUrlClick: (String) -> Unit,
         modifier: Modifier,
     ) {
-        val onlyImages = remember(block) { block.inlineContent.all { it is InlineMarkdown.Image } }
-        val images = renderedImages(block)
-
-        if (onlyImages && images.isEmpty()) return
-
         Column(modifier = modifier.padding(styling.padding)) {
-            if (onlyImages) {
-                RenderImages(images)
-            } else {
-                val renderedContent = rememberRenderedContent(block, styling.inlinesStyling, enabled, onUrlClick)
-
-                val textColor =
-                    styling.inlinesStyling.textStyle.color.takeOrElse {
-                        LocalContentColor.current.takeOrElse { styling.inlinesStyling.textStyle.color }
-                    }
-                val mergedStyle = styling.inlinesStyling.textStyle.merge(TextStyle(color = textColor))
-                Text(
-                    text = renderedContent,
-                    style = mergedStyle,
-                    modifier = Modifier.focusProperties { this.canFocus = false },
-                    inlineContent = images,
-                    textAlign = LocalTextAlignment.current,
-                )
-            }
+            RenderBlockWithInlines(
+                block,
+                styling.inlinesStyling,
+                enabled,
+                onUrlClick,
+                {},
+                Modifier.focusProperties { this.canFocus = false },
+            )
 
             if (styling.underlineWidth > 0.dp && styling.underlineColor.isSpecified) {
                 Spacer(Modifier.height(styling.underlineGap))
@@ -751,27 +770,61 @@ public open class DefaultMarkdownBlockRenderer(
         styling: InlinesStyling,
         enabled: Boolean,
         onUrlClick: ((String) -> Unit)? = null,
-    ) =
-        remember(block.inlineContent, styling, enabled) {
-            inlineRenderer.renderAsAnnotatedString(block.inlineContent, styling, enabled, onUrlClick)
-        }
+    ): Pair<Map<String, InlineTextContent>, AnnotatedString> {
+        val (originalImages, failedImages) = resolveImages(block)
+        val original =
+            remember(block.inlineContent, styling, enabled, onUrlClick) {
+                inlineRenderer.renderAsAnnotatedString(block.inlineContent, styling, enabled, onUrlClick)
+            }
+        // Note: failedImages is a SnapshotStateSet, so we use derivedStateOf to properly track
+        // changes to its contents.
+        val renderedContent by
+            remember(original, block, styling, enabled, onUrlClick) {
+                derivedStateOf {
+                    if (failedImages.isEmpty()) {
+                        original
+                    } else {
+                        rebuildWithFailedImagesAsLinks(original, failedImages, block, styling, enabled, onUrlClick)
+                    }
+                }
+            }
+        return originalImages to renderedContent
+    }
 
     @Composable
-    private fun renderedImages(blockInlineContent: WithInlineMarkdown): Map<String, InlineTextContent> {
+    private fun resolveImages(blockInlineContent: WithInlineMarkdown): ResolvedImages {
         val map = remember(blockInlineContent) { mutableStateMapOf<String, InlineTextContent>() }
-
+        val failedSources = remember(blockInlineContent) { mutableStateSetOf<String>() }
         val imagesRenderer = rendererExtensions.firstNotNullOfOrNull { it.imageRendererExtension }
+        val images = remember(blockInlineContent) { getImages(blockInlineContent) }
 
-        for (image in getImages(blockInlineContent)) {
-            val renderedImage = imagesRenderer?.renderImageContent(image)
-            if (renderedImage == null) {
-                map.remove(image.source)
-            } else {
-                map[image.source] = renderedImage
+        for (image in images) {
+            val imageSource = image.source
+            when (val result = imagesRenderer?.renderImage(image)) {
+                is ImageRenderResult.Success -> {
+                    map[imageSource] = result.content
+                    failedSources.remove(imageSource)
+                }
+
+                is ImageRenderResult.Loading -> {
+                    // Show loading indicator if provided
+                    if (result.content != null) {
+                        map[imageSource] = result.content
+                    }
+                }
+
+                is ImageRenderResult.Failed -> {
+                    failedSources.add(imageSource)
+                    map.remove(imageSource)
+                }
+
+                null -> {
+                    // No renderer available, skip
+                }
             }
         }
 
-        return map
+        return map to failedSources
     }
 
     @Composable
@@ -820,23 +873,149 @@ public open class DefaultMarkdownBlockRenderer(
         }
     }
 
-    @Composable
-    private fun RenderImages(images: Map<String, InlineTextContent>, modifier: Modifier = Modifier) {
-        if (images.isEmpty()) return
-
-        val density = LocalDensity.current
-        FlowRow(modifier) {
-            images.map { (text, inlineBlock) ->
-                Box(
-                    modifier =
-                        with(density) {
-                            Modifier.size(inlineBlock.placeholder.width.toDp(), inlineBlock.placeholder.height.toDp())
-                        }
-                ) {
-                    inlineBlock.children(text)
-                }
+    /** Scales the inline content placeholders by the given scale factor. */
+    private fun scaleInlineContent(
+        content: Map<String, InlineTextContent>,
+        availableWidth: Int,
+        density: Density,
+    ): Map<String, InlineTextContent> {
+        return content.mapValues { (_, inlineContent) ->
+            val width = with(density) { inlineContent.placeholder.width.roundToPx() }
+            if (width == 0 || availableWidth >= width) {
+                inlineContent
+            } else {
+                val scale = availableWidth.toFloat() / width
+                InlineTextContent(
+                    placeholder =
+                        Placeholder(
+                            width = inlineContent.placeholder.width * scale,
+                            height = inlineContent.placeholder.height * scale,
+                            placeholderVerticalAlign = inlineContent.placeholder.placeholderVerticalAlign,
+                        ),
+                    children = inlineContent.children,
+                )
             }
         }
+    }
+
+    /**
+     * A Text composable that automatically scales inline content when there's insufficient horizontal space. Uses
+     * TextMeasurer to pre-measure and determine the appropriate scale factor.
+     */
+    @Composable
+    private fun TextWithScalableInlineContent(
+        text: AnnotatedString,
+        inlineContent: Map<String, InlineTextContent>,
+        density: Density,
+        modifier: Modifier = Modifier,
+        overflow: TextOverflow = TextOverflow.Clip,
+        softWrap: Boolean = true,
+        maxLines: Int = Int.MAX_VALUE,
+        onTextLayout: (TextLayoutResult) -> Unit = {},
+        style: TextStyle = TextStyle.Default,
+        textAlign: TextAlign = LocalTextAlignment.current,
+    ) {
+        val placeholderWidths = inlineContent.values.map { it.placeholder.width.value }
+
+        if (placeholderWidths.sum() <= 0.01f) {
+            Text(
+                text = text,
+                overflow = overflow,
+                softWrap = softWrap,
+                maxLines = maxLines,
+                onTextLayout = onTextLayout,
+                style = style,
+                textAlign = textAlign,
+            )
+            return
+        }
+
+        var maxAvailableWidth by remember { mutableStateOf(Int.MAX_VALUE) }
+
+        val scaledContent =
+            remember(placeholderWidths, maxAvailableWidth) {
+                scaleInlineContent(inlineContent, maxAvailableWidth, density)
+            }
+
+        // Measure text with unscaled inline content to get intrinsic width
+        // (useful for grid-based containers to preserve proportions, i.e., tables)
+        val textMeasurer = rememberTextMeasurer()
+
+        val intrinsicWidth =
+            remember(text, placeholderWidths, style, textMeasurer) {
+                val mergedStyle = style.merge(TextStyle(textAlign = textAlign))
+
+                val placeholders =
+                    text.getStringAnnotations(0, text.length).mapNotNull { annotation ->
+                        inlineContent[annotation.item]?.let { content ->
+                            AnnotatedString.Range(content.placeholder, annotation.start, annotation.end)
+                        }
+                    }
+
+                // Measure with unconstrained width
+                val measured =
+                    textMeasurer.measure(
+                        text = text,
+                        style = mergedStyle,
+                        softWrap = false,
+                        maxLines = 1,
+                        placeholders = placeholders,
+                    )
+
+                measured.size.width
+            }
+
+        val measurePolicy =
+            remember(intrinsicWidth) {
+                object : MeasurePolicy {
+                    override fun MeasureScope.measure(
+                        measurables: List<Measurable>,
+                        constraints: Constraints,
+                    ): MeasureResult {
+                        // Note that this causes recomposition. It's not recommended to use this trick deliberately,
+                        // but I couldn't find a better way to update the available width dynamically.
+                        // The text layout phase happens before measurement, so, to lay the text out properly,
+                        // placeholders are designed to have a static, fixed (hardcoded, if you will) size,
+                        // defined during composition.
+                        // This leaves us with (seemingly) no other option but to scale the placeholder manually,
+                        // and, to know the scale factor, we must pass the measured width back to composition.
+                        if (constraints.maxWidth != maxAvailableWidth && constraints.maxWidth != Constraints.Infinity) {
+                            maxAvailableWidth = constraints.maxWidth
+                        }
+
+                        val placeable = measurables.firstOrNull()?.measure(constraints)
+
+                        return layout(
+                            width = placeable?.width ?: constraints.minWidth,
+                            height = placeable?.height ?: constraints.minHeight,
+                        ) {
+                            placeable?.place(0, 0)
+                        }
+                    }
+
+                    override fun IntrinsicMeasureScope.maxIntrinsicWidth(
+                        measurables: List<IntrinsicMeasurable>,
+                        height: Int,
+                    ): Int = intrinsicWidth
+                }
+            }
+
+        Layout(
+            modifier = modifier,
+            measurePolicy = measurePolicy,
+            content = {
+                Text(
+                    text = text,
+                    overflow = overflow,
+                    softWrap = softWrap,
+                    maxLines = maxLines,
+                    onTextLayout = onTextLayout,
+                    inlineContent = scaledContent,
+                    style = style,
+                    textAlign = textAlign,
+                )
+            },
+        )
     }
 
     public override fun createCopy(
@@ -882,6 +1061,60 @@ private fun getImages(input: WithInlineMarkdown): List<InlineMarkdown.Image> = b
         }
     }
     collectImagesRecursively(input.inlineContent)
+}
+
+internal const val INLINE_CONTENT_TAG = "androidx.compose.foundation.text.inlineContent"
+
+/** Unicode picture frame character followed by a non-breaking space, used to indicate a failed image link. */
+internal const val BROKEN_IMAGE_INDICATOR = "\uD83D\uDDBC\u00A0" // 🖼 + NBSP
+
+private fun rebuildWithFailedImagesAsLinks(
+    old: AnnotatedString,
+    failedImages: Set<String>,
+    block: WithInlineMarkdown,
+    styling: InlinesStyling,
+    enabled: Boolean,
+    onUrlClick: ((String) -> Unit)?,
+): AnnotatedString {
+    val imagesBySource = getImages(block).associateBy { it.source }
+    val inlineContentAnnotations = old.getStringAnnotations(0, old.length).filter { it.tag == INLINE_CONTENT_TAG }
+    val failedImageRanges = inlineContentAnnotations.filter { it.item in failedImages }.sortedBy { it.start }
+
+    if (failedImageRanges.isEmpty()) {
+        return old
+    }
+
+    return buildAnnotatedString {
+        var currentPos = 0
+        for (annotation in failedImageRanges) {
+            if (currentPos < annotation.start) {
+                append(old.subSequence(currentPos, annotation.start))
+            }
+            val image = imagesBySource[annotation.item]
+            val imageSource = image?.source.orEmpty()
+            val altText = image?.alt?.ifEmpty { null } ?: imageSource
+
+            val index =
+                if (enabled) {
+                    val link =
+                        LinkAnnotation.Clickable(
+                            tag = imageSource,
+                            linkInteractionListener = { onUrlClick?.invoke(imageSource) },
+                            styles = styling.textLinkStyles,
+                        )
+                    pushLink(link)
+                } else {
+                    pushStyle(styling.linkDisabled)
+                }
+            append(BROKEN_IMAGE_INDICATOR)
+            append(altText)
+            pop(index)
+            currentPos = annotation.end
+        }
+        if (currentPos < old.length) {
+            append(old.subSequence(currentPos, old.length))
+        }
+    }
 }
 
 @Deprecated(
@@ -935,3 +1168,5 @@ private fun MimeType.Known.fromMimeTypeString(mimeType: String): MimeType =
 
         else -> UNKNOWN
     }
+
+private typealias ResolvedImages = Pair<Map<String, InlineTextContent>, Set<String>>
