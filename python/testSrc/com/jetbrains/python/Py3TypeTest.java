@@ -4618,6 +4618,21 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  @TestFor(issues = "PY-81651")
+  public void testEqWithNewAny() {
+    withNewAnyTypeEnabled(() -> {
+      doTest("Any", """
+        from typing import Any
+        
+        class A:
+            def __eq__(self, other) -> Any:
+              return "hello :)"
+        
+        expr = A() == 1
+        """);
+    });
+  }
+
   @TestFor(issues = "PY-84524")
   public void testBuiltinsCallable() {
     doTest("(...) -> object", """

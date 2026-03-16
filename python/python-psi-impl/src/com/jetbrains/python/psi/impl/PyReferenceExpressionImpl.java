@@ -56,6 +56,7 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -86,6 +87,7 @@ import java.util.function.Predicate;
 
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType;
 import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 /**
  * Implements reference expression PSI.
@@ -232,7 +234,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final boolean qualified = isQualified();
 
     final PyType providedType = getTypeFromProviders(context);
-    if (providedType != null) {
+    if (!isUnknown(providedType)) {
       return providedType;
     }
 
@@ -246,9 +248,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     // null means no result; Ref(null) here can mean that a variable is annotated
     // like `var: Any` earlier, so we know not to use __getattr__ later
     final Ref<PyType> typeFromTargetsRef = getTypeFromTargets(context);
-    final PyType typeFromTargets = Ref.deref(typeFromTargetsRef);
+    final PyType typeFromTargets = PyTypeUtil.derefOrUnknown(typeFromTargetsRef);
     if (qualified && isNoneType(typeFromTargets)) {
-      return null;
+      return PyAnyType.getUnknown();
     }
 
     final Ref<PyType> descriptorType = PyDescriptorTypeUtil.getDunderGetReturnType(this, typeFromTargets, context);
@@ -264,7 +266,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return getTypeFromDunderGetAttr(context);
     }
 
-    return Ref.deref(typeFromTargetsRef);
+    return typeFromTargets;
   }
 
   private @Nullable PyType getCallableType(@NotNull TypeEvalContext context) {
@@ -422,7 +424,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         LOG.info(PluginException.createByClass("Failed to get expression type via " + provider.getClass(), e, provider.getClass()));
       }
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   private static @Nullable Ref<PyType> getTypeFromTarget(@NotNull PsiElement target,
@@ -485,7 +487,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         if (!ScopeUtil.getElementsOfAccessType(name, scopeOwner, ReadWriteInstruction.ACCESS.ASSERTTYPE).isEmpty() ||
             (target instanceof PyTargetExpression || target instanceof PyNamedParameter) && ScopeUtil.getScopeOwner(target) == scopeOwner) {
           final PyType type = getTypeByControlFlow(name, context, anchor, scopeOwner);
-          if (type != null) {
+          if (!isUnknown(type)) {
             return Ref.create(type);
           }
         }
@@ -572,7 +574,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                 if (narrowedType.getTypeIs()) {
                   return PyTypeAssertionEvaluator.createAssertionType(initial, type, positive, false, context);
                 }
-                return Ref.create((positive) ? type : initial);
+                return Ref.create(positive ? type : initial);
               }
             }
           }
@@ -581,7 +583,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       })
       .nonNull()
       .collect(PyTypeUtil.toUnionFromRef());
-    return Ref.deref(combinedType);
+    return PyTypeUtil.derefOrUnknown(combinedType);
   }
 
   public static @Nullable Ref<PyType> getReferenceTypeFromProviders(@NotNull PsiElement target,

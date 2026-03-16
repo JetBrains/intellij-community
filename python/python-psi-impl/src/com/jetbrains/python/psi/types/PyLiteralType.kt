@@ -96,7 +96,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
 
     private class TypePromoter(private val context: TypeEvalContext, private val inferLiteralTypes: Boolean) {
       fun promoteToType(expectedType: PyType?, expression: PyExpression): PyType? {
-        val value = PyUtil.peelArgument(expression) ?: return null
+        val value = PyUtil.peelArgument(expression) ?: return PyAnyType.unknown
         return when (value) {
           is PyDictLiteralExpression -> {
             promoteDictLiteral(expectedType, value)
@@ -121,7 +121,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
           }
           else -> {
             val type = if (inferLiteralTypes) getLiteralOrLiteralStringType(value, context) else null
-            return type ?: context.getType(value)
+            type ?: context.getType(value)
           }
         }
       }
@@ -202,7 +202,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
     ): PyType? {
       val substitution = if (substitutions != null) PyTypeChecker.substitute(expected, substitutions, context) else expected
       val substitutionOrBound = if (substitution is PyTypeVarType) substitution.getEffectiveBound() else substitution
-      if (substitutionOrBound == null) return null
+      if (substitutionOrBound == null) return PyAnyType.unknown
       return TypePromoter(context, containsLiteral(substitutionOrBound)).promoteToType(substitutionOrBound, expression)
     }
 

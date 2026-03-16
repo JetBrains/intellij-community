@@ -45,6 +45,7 @@ import com.jetbrains.python.psi.types.PyLiteralStringType.Companion.match
 import com.jetbrains.python.psi.types.PyLiteralType.Companion.match
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
 import com.jetbrains.python.psi.types.PyTypeChecker.match
+import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.getEffectiveBound
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.pyi.PyiFile
@@ -177,7 +178,7 @@ object PyTypeChecker {
       return Optional.of(match(expected, actual, context))
     }
 
-    if (expected == null || actual == null || isUnknown(actual, context.context)) {
+    if (expected.isAnyOrUnknown || actual.isAnyOrUnknown || isUnknown(actual, context.context)) {
       return Optional.of(true)
     }
 
@@ -358,13 +359,13 @@ object PyTypeChecker {
       }
     }
 
-    if (safeActual != null) {
+    if (!safeActual.isUnknown) {
       val type = if (constraints.isEmpty()) safeActual else constraints[matchedConstraintIndex]
       context.mySubstitutions.putTypeVar(expected, Ref(type), KeyImpl)
     }
     else {
       val effectiveBound = expected.getEffectiveBound()
-      if (effectiveBound != null) {
+      if (!effectiveBound.isUnknown) {
         context.mySubstitutions.putTypeVar(expected, Ref(PyUnionType.createWeakType(effectiveBound)), KeyImpl)
       }
     }
@@ -1392,7 +1393,7 @@ object PyTypeChecker {
           return typeVarType
         }
         val substitutionRef = substitutions.typeVars[typeVarType]
-        var substitution = Ref.deref(substitutionRef)
+        var substitution = substitutionRef.derefOrUnknown()
         if (substitutionRef == null) {
           val invertedTypeVar: PyInstantiableType<*> = typeVarType.invert()
           val invertedSubstitution = Ref.deref(substitutions.typeVars[invertedTypeVar]) as? PyInstantiableType<*>
@@ -1762,7 +1763,7 @@ object PyTypeChecker {
       }
       receiverType.toStream()
         .select(PyClassType::class.java)
-        .map { type: PyClassType? -> collectTypeSubstitutions(type!!, context) }
+        .map { collectTypeSubstitutions(it, context) }
         .forEach { newSubstitutions ->
           for (typeVarMapping in newSubstitutions.typeVars.entries) {
             substitutions.putTypeVar(typeVarMapping.key, typeVarMapping.value, KeyImpl, true)

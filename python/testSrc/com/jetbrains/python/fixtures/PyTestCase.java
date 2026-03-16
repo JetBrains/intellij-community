@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -676,6 +677,18 @@ public abstract class PyTestCase extends UsefulTestCase {
     }
     // the fix-me test passed -> the bug/feature was fixed!
     fail("Test " + comment + " was previously failing and was suppressed, but now it passes");
+  }
+
+  protected static void withNewAnyTypeEnabled(@NotNull Runnable test) {
+    var key = Registry.get("python.type.any");
+    var previousValue = key.asBoolean();
+    try {
+      key.setValue(true);
+      test.run();
+    }
+    finally {
+      key.setValue(previousValue);
+    }
   }
 }
 
