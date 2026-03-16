@@ -1,3 +1,9 @@
+filegroup(
+  name = "textmate_bundle_files",
+  srcs = glob(["lib/bundles/**"]),
+  visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `build intellij.textmate` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
