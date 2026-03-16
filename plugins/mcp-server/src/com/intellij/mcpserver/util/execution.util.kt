@@ -590,8 +590,7 @@ else {
 
 /**
  * Collects run points (executable entry points) in a file by iterating leaf PSI elements
- * and calling [RunLineMarkerContributor.getInfo] for each, same approach as
- * [com.intellij.execution.lineMarker.RunLineMarkerProvider.getLineMarkerInfo].
+ * and querying both [RunLineMarkerContributor.getInfo] and [RunLineMarkerContributor.getSlowInfo].
  */
 fun collectRunPoints(psiFile: PsiFile, document: Document, project: Project): List<RunPoint> {
   val result = mutableMapOf<Int, RunPoint>()
@@ -604,7 +603,9 @@ fun collectRunPoints(psiFile: PsiFile, document: Document, project: Project): Li
 
     var bestInfo: Info? = null
     for (contributor in contributors) {
-      val info = contributor.getInfo(element) ?: continue
+      val info = contributor.getInfo(element)
+                 ?: contributor.getSlowInfo(element)
+                 ?: continue
       if (bestInfo == null || info.shouldReplace(bestInfo)) {
         bestInfo = info
       }

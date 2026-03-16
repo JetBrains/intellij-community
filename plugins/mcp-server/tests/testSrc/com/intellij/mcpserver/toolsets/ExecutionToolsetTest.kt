@@ -35,6 +35,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Conditions
 import com.intellij.testFramework.common.waitUntilAssertSucceedsBlocking
+import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import com.intellij.util.ui.EmptyIcon
 import io.kotest.common.runBlocking
 import kotlinx.serialization.json.Json
@@ -57,6 +58,15 @@ import kotlin.time.Duration.Companion.seconds
 import javax.swing.JPanel
 
 class ExecutionToolsetTest : McpToolsetTestBase() {
+  private val mainKotlinFileFixture = sourceRootFixture.virtualFileFixture(
+    "Main.kt",
+    """
+      suspend fun main() {
+      }
+    """.trimIndent(),
+  )
+  private val mainKotlinFile by mainKotlinFileFixture
+
   @Test
   fun get_run_configurations() = runBlocking {
     val runManager = RunManager.getInstance(project)
@@ -90,6 +100,25 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
       assertFalse("commandLine" in nonEditable)
       assertFalse("workingDirectory" in nonEditable)
       assertFalse("environment" in nonEditable)
+    }
+  }
+
+  @Test
+  fun get_run_configurations_collects_run_points_from_slow_markers() = runBlocking {
+    val mainKotlinPath = Path.of(requireNotNull(project.basePath)).relativizeIfPossible(mainKotlinFile)
+
+    testMcpTool(
+      ExecutionToolset::get_run_configurations.name,
+      buildJsonObject {
+        put("filePath", JsonPrimitive(mainKotlinPath))
+      },
+    ) { result ->
+      val response = Json.parseToJsonElement(result.textContent.text).jsonObject
+      assertEquals(mainKotlinPath, response.getValue("filePath").jsonPrimitive.content)
+
+      val runPoints = response.getValue("runPoints").jsonArray
+      assertEquals(1, runPoints.size)
+      assertEquals(1, runPoints.single().jsonObject.getValue("line").jsonPrimitive.content.toInt())
     }
   }
 
