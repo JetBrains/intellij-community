@@ -69,6 +69,7 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     return psiFile;
   }
 
+  @ApiStatus.Internal
   @Override
   public @Nullable PsiFile getPsiFile(@NotNull Document document, @NotNull CodeInsightContext context) {
     if (myUiPsiSupport.isUiDocument(document)) {
@@ -79,18 +80,21 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     return psiFile;
   }
 
+  @ApiStatus.Internal
   @Override
   public @Nullable Document getDocument(@NotNull PsiFile psiFile) {
     Document uiDocument = myUiPsiSupport.getDocument(psiFile);
     return uiDocument != null ? uiDocument : super.getDocument(psiFile);
   }
 
+  @ApiStatus.Internal
   @Override
   public @Nullable Document getCachedDocument(@NotNull PsiFile psiFile) {
     Document uiDocument = myUiPsiSupport.getDocument(psiFile);
     return uiDocument != null ? uiDocument : super.getCachedDocument(psiFile);
   }
 
+  @ApiStatus.Internal
   @Override
   public void commitDocument(@NotNull Document document) {
     if (myUiPsiSupport.isUiDocument(document)) {
@@ -100,6 +104,7 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     super.commitDocument(document);
   }
 
+  @ApiStatus.Internal
   @Override
   public @NotNull DocumentEx getLastCommittedDocument(@NotNull Document document) {
     if (myUiPsiSupport.isUiDocument(document)) {
@@ -108,6 +113,7 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     return super.getLastCommittedDocument(document);
   }
 
+  @ApiStatus.Internal
   @Override
   public boolean isCommitted(@NotNull Document document) {
     if (myUiPsiSupport.isUiDocument(document)) {
