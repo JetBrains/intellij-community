@@ -32,23 +32,29 @@ class AssertModuleJdkVersionCommand(text: String, line: Int) : PerformanceComman
 
     val actualJdk = ModuleRootManager.getInstance(module).sdk
     if (actualJdk == null) {
-      throw IllegalArgumentException("Actual jdk is null")
+      throw IllegalArgumentException(
+        "Incorrect JDK in the '${options.moduleName}' module:\n" +
+        "Actual jdk is null"
+      )
     }
     when (options.mode) {
       Mode.CONTAINS -> {
         if (actualJdk.versionString?.contains(options.jdkVersion) == false) {
-          throw IllegalStateException("${actualJdk.versionString} does not contain ${options.jdkVersion}")
+          throw IllegalStateException(
+            "Incorrect JDK in the '${options.moduleName}' module:\n" +
+            "${actualJdk.versionString} does not contain ${options.jdkVersion}"
+          )
         }
       }
       Mode.EQUALS -> {
         if (actualJdk.versionString != options.jdkVersion) {
-          throw IllegalStateException("Expected jdk version ${options.jdkVersion}, but got ${actualJdk.versionString}")
+          throw IllegalStateException(
+            "Incorrect JDK in the '${options.moduleName}' module:\n" +
+            "Expected jdk version ${options.jdkVersion}, but got ${actualJdk.versionString}"
+          )
         }
       }
-      else -> throw IllegalArgumentException("Mode should be CONTAINS or EQUALS")
     }
-
-
   }
 
   override fun getName(): String {
