@@ -463,14 +463,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   }
 
   private static void disposeEvictedInfos(@NotNull HighlightingSession session, @NotNull WhatTool predicate) {
-    // first, visit all weak maps to call their processQueue() to induce `psiFileEvictionListener` to be called
     Document document = session.getDocument();
-    Map<FileViewProvider, Map<Object, ToolHighlights>> hostMap = getOrCreateHostMap(document);
-    ((ReferenceQueueable)hostMap).processQueue();
-    hostMap.values()
-      .stream()
-      .flatMap(m -> m.values().stream())
-      .forEach(toolHighlights -> ((ReferenceQueueable)toolHighlights.elementHighlights).processQueue());
 
     HighlightInfo[] evictedInfos;
     List<HighlightInfo> newEvictedInfos;
@@ -497,6 +490,16 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       }
       UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(info, session);
     }
+  }
+
+  private static void processQueues(@NotNull Document document) {
+    // first, visit all weak maps to call their processQueue() to induce `psiFileEvictionListener` to be called
+    Map<FileViewProvider, Map<Object, ToolHighlights>> hostMap = getOrCreateHostMap(document);
+    ((ReferenceQueueable)hostMap).processQueue();
+    hostMap.values()
+      .stream()
+      .flatMap(m -> m.values().stream())
+      .forEach(toolHighlights -> ((ReferenceQueueable)toolHighlights.elementHighlights).processQueue());
   }
 
   @ApiStatus.Internal
@@ -1038,6 +1041,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                                         @NotNull WhatTool toolIdPredicate,
                                         @NotNull Consumer<? super ManagedHighlighterRecycler> invalidPsiRecyclerConsumer) {
     ManagedHighlighterRecycler.runWithRecycler(session, invalidPsiRecycler -> {
+      processQueues(session.getDocument());
       recycleInvalidPsiElements(session.getPsiFile(), this, session, invalidPsiRecycler, toolIdPredicate);
       ScheduledFuture<?> future;
       if (invalidPsiRecycler.forAllInGarbageBin().isEmpty()) {

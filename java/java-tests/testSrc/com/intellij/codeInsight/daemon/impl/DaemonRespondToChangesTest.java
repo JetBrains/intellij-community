@@ -2113,6 +2113,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       try {
         myTestDaemonCodeAnalyzer.runPasses(myFile, myEditor.getDocument(), textEditor, new int[0], false, true,checkHighlighted);
       }
+      catch (Exception e) {
+        MyVerySlowAnnotator.wait.set(false);
+        throw new RuntimeException(e);
+      }
       finally {
         MyVerySlowAnnotator.wait.set(false);
       }
