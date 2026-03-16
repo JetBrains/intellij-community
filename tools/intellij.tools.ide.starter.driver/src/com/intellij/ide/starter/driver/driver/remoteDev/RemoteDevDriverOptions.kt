@@ -26,4 +26,12 @@ class RemoteDevDriverOptions {
       "apple.laf.useScreenMenuBar" to "false",
       "jbScreenMenuBar.enabled" to "false",
     )
+
+  /**
+   * Returns all ports used by backend and frontend driver configurations.
+   * This is useful for waiting for port release after the IDE processes are killed.
+   */
+  fun getUsedPorts(): List<Int> {
+    return backendOptions.getUsedPorts() + frontendOptions.getUsedPorts() + listOf(backendDebugPort, debugPort)
+  }
 }
