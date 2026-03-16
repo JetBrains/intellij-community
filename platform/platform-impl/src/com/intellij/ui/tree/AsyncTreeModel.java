@@ -1240,6 +1240,16 @@ public final class AsyncTreeModel extends AbstractTreeModel
 
   @ApiStatus.Internal
   @Override
+  public void applyAlreadyLoadedNodes(@NotNull CachedTreePresentation cachedPresentation) {
+    if (tree.root != null) {
+      cachedPresentation.rootLoaded(tree.root);
+      // Applying other nodes isn't implemented yet, but with existing AsyncTreeModel usages
+      // the presentation is typically applied when there are no nodes at all or just root.
+    }
+  }
+
+  @ApiStatus.Internal
+  @Override
   public @Nullable CachedTreePresentation getCachedPresentation() {
     return tree.cachedPresentation;
   }

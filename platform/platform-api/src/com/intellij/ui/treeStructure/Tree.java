@@ -1523,16 +1523,19 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         return;
       }
       cachedPresentation = presentation == null ? null : new CachedPresentationImpl(presentation);
+      var model = getModel();
+      if (model instanceof CachedTreePresentationSupport cps && presentation != null) {
+        cps.applyAlreadyLoadedNodes(presentation);
+      }
       if (cachedPresentation != null) {
         var rootPath = getRootPath();
         if (rootPath != null) {
-          presentation.rootLoaded(rootPath.getLastPathComponent()); // in case the root managed to load very quickly
           cachedPresentation.updateExpandedNodes(rootPath);
         }
       }
       // The order is important here because the model may immediately fire an event
       // that must be handled by expandImpl, so the model has to be updated last.
-      if (getModel() instanceof CachedTreePresentationSupport cps) {
+      if (model instanceof CachedTreePresentationSupport cps) {
         cps.setCachedPresentation(presentation);
       }
     }

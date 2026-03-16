@@ -18,9 +18,9 @@ import javax.swing.tree.TreePath
 
 @Internal
 interface CachedTreePresentationSupport {
-  @get:Internal
-  @set:Internal
   var cachedPresentation: CachedTreePresentation?
+
+  fun applyAlreadyLoadedNodes(cachedPresentation: CachedTreePresentation) { }
 }
 
 @Internal
