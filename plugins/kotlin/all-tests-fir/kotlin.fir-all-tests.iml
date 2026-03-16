@@ -93,5 +93,13 @@
     <orderEntry type="module" module-name="kotlin.util.test-generator-fir" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.core.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.util.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectWizard.compose.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.shared.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests" scope="RUNTIME" />
   </component>
 </module>

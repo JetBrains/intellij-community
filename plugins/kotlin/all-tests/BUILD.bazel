@@ -78,6 +78,19 @@ jvm_library(
     "//plugins/kotlin/code-insight/live-templates-k1:kotlin-code-insight-live-templates-k1-tests",
     "//plugins/kotlin/gradle/gradle-java/k1:kotlin-gradle-gradle-java-k1-tests",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1-tests",
+    "//plugins/kotlin/base/code-insight:kotlin-base-codeInsight-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
+    "//plugins/kotlin/base/project-structure:kotlin-base-projectStructure-tests",
+    "//plugins/kotlin/base/util:kotlin-base-util-tests",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:kotlin-gradle-tooling-impl-tests",
+    "//plugins/kotlin/jvm-debugger/eval4j:kotlin-jvm-debugger-eval4j-tests",
+    "//plugins/kotlin/onboarding-gradle:onboarding-gradle-tests",
+    "//plugins/kotlin/onboarding:onboarding-tests",
+    "//plugins/kotlin/project-wizard/compose:kotlin-projectWizard-compose-tests",
+    "//plugins/kotlin/project-wizard/core:kotlin-projectWizard-core-tests",
+    "//plugins/kotlin/base/scripting/scripting.k1:kotlin-base-scripting-k1-tests",
+    "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared-tests",
+    "//plugins/kotlin/gradle/gradle-java:kotlin-gradle-gradle-java-tests",
   ]
 )
 
@@ -161,6 +174,19 @@ jvm_library(
     "//plugins/kotlin/code-insight/live-templates-k1:kotlin-code-insight-live-templates-k1-tests_test_lib",
     "//plugins/kotlin/gradle/gradle-java/k1:kotlin-gradle-gradle-java-k1-tests_test_lib",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1-tests_test_lib",
+    "//plugins/kotlin/base/code-insight:kotlin-base-codeInsight-tests_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
+    "//plugins/kotlin/base/project-structure:kotlin-base-projectStructure-tests_test_lib",
+    "//plugins/kotlin/base/util:kotlin-base-util-tests_test_lib",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:kotlin-gradle-tooling-impl-tests_test_lib",
+    "//plugins/kotlin/jvm-debugger/eval4j:kotlin-jvm-debugger-eval4j-tests_test_lib",
+    "//plugins/kotlin/onboarding-gradle:onboarding-gradle-tests_test_lib",
+    "//plugins/kotlin/onboarding:onboarding-tests_test_lib",
+    "//plugins/kotlin/project-wizard/compose:kotlin-projectWizard-compose-tests_test_lib",
+    "//plugins/kotlin/project-wizard/core:kotlin-projectWizard-core-tests_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.k1:kotlin-base-scripting-k1-tests_test_lib",
+    "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared-tests_test_lib",
+    "//plugins/kotlin/gradle/gradle-java:kotlin-gradle-gradle-java-tests_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.all-tests` end
