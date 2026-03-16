@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 
 // used only to check the old parser
 // new features are not supported
-@Deprecated
+@Deprecated(forRemoval = true)
 public class OldDeclarationParserTest extends AbstractBasicDeclarationParserTest {
 
   public OldDeclarationParserTest() {

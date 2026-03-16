@@ -5,7 +5,7 @@ import com.intellij.java.parser.OldJavaParsingTestConfigurator;
 
 // used only to check the old parser
 // new features are not supported
-@Deprecated
+@Deprecated(forRemoval = true)
 public class OldCodeBlockParsingTest extends AbstractBasicCodeBlockParsingTest {
   public OldCodeBlockParsingTest() {
     super(new OldJavaParsingTestConfigurator("java.FILE"));

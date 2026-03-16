@@ -17,6 +17,6 @@ package com.intellij.java.parser;
 
 public class ImportParsingTest extends AbstractBasicImportParsingTest {
   public ImportParsingTest() {
-    super(new OldJavaParsingTestConfigurator("java.FILE"));
+    super(new JavaParsingTestConfigurator());
   }
 }

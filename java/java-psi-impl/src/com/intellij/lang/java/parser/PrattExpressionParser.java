@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.OldParserWhiteSpaceAndCommentSetHolder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.BitUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -128,6 +129,7 @@ import static com.intellij.psi.impl.source.tree.ElementType.TYPE_CAST_EXPRESSION
  * See {@link com.intellij.java.syntax.parser.JavaParser}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public final class PrattExpressionParser {
   static final int CONDITIONAL_EXPR_PRECEDENCE = 12;
   private static final TokenSet THIS_OR_SUPER = TokenSet.create(THIS_KEYWORD, SUPER_KEYWORD);
