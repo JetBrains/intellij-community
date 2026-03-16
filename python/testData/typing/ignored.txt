@@ -33,7 +33,6 @@ protocols_explicit.py
 protocols_generic.py
 protocols_variance.py
 qualifiers_annotated.py
-specialtypes_any.py
 specialtypes_never.py
 specialtypes_promotions.py
 specialtypes_type.py
