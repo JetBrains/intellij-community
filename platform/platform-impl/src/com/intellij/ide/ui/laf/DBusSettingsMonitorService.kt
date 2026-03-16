@@ -2,9 +2,11 @@
 package com.intellij.ide.ui.laf
 
 import com.intellij.ide.AppLifecycleListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -67,7 +69,10 @@ internal class DBusSettingsMonitorService(private val scope: CoroutineScope) {
   private var dbusMonitorProcess = AtomicReference<Process?>(null)
 
   val isServiceAllowed: Boolean
-    get() = SystemInfoRt.isLinux && !UNSUPPORTED_DESKTOPS.contains(UnixDesktopEnv.CURRENT)
+    get() = SystemInfoRt.isLinux
+            && !UNSUPPORTED_DESKTOPS.contains(UnixDesktopEnv.CURRENT)
+            && !ApplicationManager.getApplication().isUnitTestMode()
+            && !ApplicationManagerEx.isInIntegrationTest()
 
   val darkScheme: StateFlow<Boolean?> = darkSchemeFlow.asStateFlow()
 
