@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWithBrowseButton implements UserActivityProviderComponent {
   private static final Comparator<RemoteServer<?>> SERVERS_COMPARATOR =
@@ -196,7 +197,7 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
     }
 
     for (RemoteServer<S> nextServer : getSortedServers()) {
-      ServerItem nextServerItem = new ServerItemImpl(nextServer.getName());
+      ServerItem nextServerItem = new ServerItemImpl(nextServer.getUniqueId(), nextServer.getName());
       if (itemToSelect == null && nextServer.getName().equals(nameToSelect)) {
         itemToSelect = nextServerItem;
       }
@@ -281,10 +282,10 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
     }
   }
 
-  public class ServerItemImpl implements ServerItem {
+  public abstract class NamedServerItemImpl implements ServerItem {
     private final @NlsSafe String myServerName;
 
-    public ServerItemImpl(@NlsSafe String serverName) {
+    protected NamedServerItemImpl(@NlsSafe String serverName) {
       myServerName = serverName;
     }
 
@@ -304,11 +305,6 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
     }
 
     @Override
-    public @Nullable RemoteServer<S> findRemoteServer() {
-      return myServerName == null ? null : RemoteServersManager.getInstance().findByName(myServerName, myServerType);
-    }
-
-    @Override
     public void render(@NotNull SimpleColoredComponent ui) {
       RemoteServer<?> server = findRemoteServer();
       SimpleTextAttributes attributes = server == null ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
@@ -317,7 +313,21 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
     }
   }
 
-  protected class MissingServerItem extends ServerItemImpl {
+  public class ServerItemImpl extends NamedServerItemImpl {
+    private final @NotNull UUID myId;
+
+    public ServerItemImpl(@NotNull UUID id, @NlsSafe String serverName) {
+      super(serverName);
+      myId = id;
+    }
+
+    @Override
+    public @Nullable RemoteServer<S> findRemoteServer() {
+      return RemoteServersManager.getInstance().findById(myId);
+    }
+  }
+
+  protected class MissingServerItem extends NamedServerItemImpl {
 
     public MissingServerItem(@NotNull String serverName) {
       super(serverName);
@@ -335,9 +345,14 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
       ui.setIcon(myServerType.getIcon());
       ui.append(getServerName(), SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
+
+    @Override
+    public @Nullable RemoteServer<?> findRemoteServer() {
+      return null;
+    }
   }
 
-  protected class NoServersItem extends ServerItemImpl {
+  protected class NoServersItem extends NamedServerItemImpl {
     public NoServersItem() {
       super(null);
     }
@@ -346,6 +361,11 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
     public void render(@NotNull SimpleColoredComponent ui) {
       ui.setIcon(null);
       ui.append(CloudBundle.message("remote.server.combo.no.servers"), SimpleTextAttributes.ERROR_ATTRIBUTES);
+    }
+
+    @Override
+    public @Nullable RemoteServer<?> findRemoteServer() {
+      return null;
     }
   }
 }
