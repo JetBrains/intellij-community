@@ -43,7 +43,7 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
             false
 
     fun dumpCoroutinesInfo(context: DefaultExecutionContext): List<MirrorOfDebugCoroutineInfo> {
-        instance ?: return emptyList()
+        if (instance == null) return emptyList()
         val referenceList = dumpMethod.mirror(instance, context) ?: return emptyList()
         return referenceList.values.mapNotNull { debugCoroutineInfo.mirror(it, context) }
     }

@@ -44,7 +44,7 @@ internal fun JBTable.installRowsHeightUpdater() {
   updateRowsHeight()
   model.addTableModelListener(object : TableModelListener {
     override fun tableChanged(e: TableModelEvent?) {
-      e ?: return
+      if (e == null) return
       updateRowsHeight(e.firstRow, e.lastRow)
     }
   })

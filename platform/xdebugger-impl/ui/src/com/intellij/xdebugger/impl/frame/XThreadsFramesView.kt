@@ -101,7 +101,7 @@ class XThreadsFramesView(tabDisposable: Disposable, private val sessionProxy: XD
 
     val coloredStringBuilder = TextTransferable.ColoredStringBuilder()
     fun getPresentation(element: Any?): String? {
-      element ?: return null
+      if (element == null) return null
 
       return myFramesPresentationCache.getOrPut(element) {
         when (element) {
@@ -244,7 +244,7 @@ class XThreadsFramesView(tabDisposable: Disposable, private val sessionProxy: XD
       // not mousePressed here, otherwise click in an unfocused frames list transfers focus to the new opened editor
       override fun mouseReleased(e: MouseEvent) {
         processMouseEvent(e) { session, stack, frame ->
-          frame ?: return@processMouseEvent
+          if (frame == null) return@processMouseEvent
           session.setCurrentStackFrame(stack, frame)
         }
       }

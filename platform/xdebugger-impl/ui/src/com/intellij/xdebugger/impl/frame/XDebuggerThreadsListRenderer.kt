@@ -65,7 +65,7 @@ internal class XDebuggerThreadsListRendererWithDescription : JPanel(VerticalLayo
   override fun getListCellRendererComponent(list: JList<out StackInfo?>?, value: StackInfo?, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component? {
     threadNameLabel.clear()
     threadDescriptionLabel.clear()
-    value ?: return this
+    if (value == null) return this
 
     this.background = null
     threadNameLabel.background = null
