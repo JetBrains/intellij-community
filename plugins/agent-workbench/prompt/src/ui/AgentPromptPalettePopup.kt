@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.prompt.context.dataContextOrNull
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_INITIAL_TEXT_DATA_KEY
 import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY
+import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_SELECTED_PROVIDER_ID_DATA_KEY
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvelopeSummary
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
@@ -30,6 +31,9 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.EditorEx
@@ -60,6 +64,16 @@ import javax.swing.JPanel
 import javax.swing.event.ChangeListener
 
 private const val CONTEXT_SOFT_CAP_CHARS = AgentPromptContextEnvelopeFormatter.DEFAULT_SOFT_CAP_CHARS
+
+internal fun buildExtensionActionDataContext(baseDataContext: DataContext, selectedProviderId: String?): DataContext {
+  if (selectedProviderId.isNullOrBlank()) {
+    return baseDataContext
+  }
+
+  return CustomizedDataContext.withSnapshot(baseDataContext) { sink: DataSink ->
+    sink[AGENT_PROMPT_SELECTED_PROVIDER_ID_DATA_KEY] = selectedProviderId
+  }
+}
 
 private class AgentPromptTextField(project: Project) : LanguageTextField(
   MarkdownFileType.INSTANCE.language, project, "", false,
@@ -480,7 +494,11 @@ internal class AgentPromptPalettePopup(
       if (actionId != null) {
         val action = ActionManager.getInstance().getAction(actionId)
         if (action != null) {
-          val dataContext = invocationData.dataContextOrNull() ?: DataManager.getInstance().getDataContext(promptArea)
+          val baseDataContext = invocationData.dataContextOrNull() ?: DataManager.getInstance().getDataContext(promptArea)
+          val dataContext = buildExtensionActionDataContext(
+            baseDataContext = baseDataContext,
+            selectedProviderId = providerSelector.selectedProvider?.bridge?.provider?.value,
+          )
           val event = AnActionEvent.createEvent(action, dataContext, null, invocationData.actionPlace ?: "", ActionUiKind.NONE, null)
           action.actionPerformed(event)
           clearDraftOnClose = true
