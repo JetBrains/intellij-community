@@ -23,7 +23,9 @@ import com.intellij.platform.project.findProjectOrNull
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.PsiTodoSearchHelper
 import com.intellij.psi.search.TodoAttributesUtil
+import com.intellij.psi.search.TodoItem
 import com.intellij.psi.search.TodoPattern
+import com.intellij.util.text.CharArrayUtil
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 
@@ -51,7 +53,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
         val (line, preview) = if (document != null) {
           val startOffset = todoItem.textRange.startOffset
           val line = document.getLineNumber(startOffset)
-          val previewChunks = buildPreviewChunks(document, line)
+          val previewChunks = buildPreviewChunks(document, todoItem, line)
           line to previewChunks
         } else 0 to emptyList()
 
@@ -167,11 +169,33 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     }
   }
 
-  private fun buildPreviewChunks(document: Document?, line: Int) : List<SerializableTextChunk> {
+  private fun buildPreviewChunks(document: Document?, todoItem : TodoItem, line: Int) : List<SerializableTextChunk> {
     if (document == null || document.lineCount == 0) return emptyList()
+
+    val chars = document.charsSequence
+
     val lineStart = document.getLineStartOffset(line)
     val lineEnd = document.getLineEndOffset(line)
-    val text = document.charsSequence.subSequence(lineStart, lineEnd).toString()
-    return listOf(SerializableTextChunk(text))
+    val lineStartNonWs = CharArrayUtil.shiftForward(chars, lineStart, " \t")
+
+    val text = chars.subSequence(lineStartNonWs, lineEnd).toString()
+
+    val startInLine = todoItem.textRange.startOffset - lineStartNonWs
+    val endInLine = todoItem.textRange.endOffset - lineStartNonWs
+    if (startInLine < 0 || endInLine <= startInLine || endInLine > text.length) {
+      return listOf(SerializableTextChunk(text))
+    }
+
+    val attrs = todoItem.pattern?.attributes?.textAttributes ?: TodoAttributesUtil.getDefaultColorSchemeTextAttributes()
+
+    return buildList {
+      if (startInLine > 0) {
+        add(SerializableTextChunk(text.substring(0, startInLine)))
+      }
+      add(SerializableTextChunk(text.substring(startInLine, endInLine), attrs))
+      if (endInLine < text.length) {
+        add(SerializableTextChunk(text.substring(endInLine)))
+      }
+    }
   }
 }

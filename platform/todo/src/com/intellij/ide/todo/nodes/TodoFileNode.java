@@ -70,8 +70,7 @@ public final class TodoFileNode extends PsiFileNode {
 
         List<TodoRemoteItemNode> children = new ArrayList<>(results.size());
         for (TodoResult result : results) {
-          String lineText = result.getPresentation().isEmpty() ? "" : result.getPresentation().getFirst().getText();
-          TodoRemoteItemNode.Value value = new TodoRemoteItemNode.Value(virtualFile, result.getNavigationOffset(), result.getLength(), result.getLine(), lineText);
+          TodoRemoteItemNode.Value value = new TodoRemoteItemNode.Value(virtualFile, result.getNavigationOffset(), result.getLength(), result.getLine(), result.getPresentation());
           children.add(new TodoRemoteItemNode(getProject(), value, myBuilder));
         }
         return Collections.unmodifiableList(children);

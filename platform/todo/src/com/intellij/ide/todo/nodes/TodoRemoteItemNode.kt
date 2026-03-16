@@ -3,12 +3,14 @@ package com.intellij.ide.todo.nodes
 
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.todo.TodoTreeBuilder
+import com.intellij.ide.ui.SerializableTextChunk
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.usageView.UsageTreeColors
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Font
 
 @ApiStatus.Internal
 class TodoRemoteItemNode(
@@ -22,10 +24,10 @@ class TodoRemoteItemNode(
     val navigationOffset: Int,
     val length: Int,
     val line: Int,
-    val lineText: String
+    val presentation: List<SerializableTextChunk>,
   )
 
-  override fun createPresentation(): PresentationData = PresentationData()
+  override fun createPresentation(): PresentationData = TodoItemNodePresentationData()
 
   override fun getFileCount(`val`: Value?): Int { return 1 }
 
@@ -34,10 +36,29 @@ class TodoRemoteItemNode(
   override fun getChildren(): Collection<AbstractTreeNode<*>> = emptyList()
 
   override fun update(presentation: PresentationData) {
+    val data = presentation as TodoItemNodePresentationData
+    data.highlightedRegions.clear()
     val v = value ?: return
-    @NlsSafe val text = "${v.line + 1} : ${v.lineText}"
-    presentation.presentableText = text
-    // TODO add icons, parsing, highlighting...
+
+    val prefix = "${v.line + 1} "
+    val lineText = v.presentation.joinToString("") { it.text }
+    data.presentableText = prefix + lineText
+    data.highlightedRegions.add(
+      HighlightedRegion(0, prefix.length, UsageTreeColors.NUMBER_OF_USAGES_ATTRIBUTES.toTextAttributes())
+    )
+
+    var offset = prefix.length
+    for (chunk in v.presentation) {
+      if (chunk.foregroundColorId != null ||
+          chunk.fontType != Font.PLAIN ||
+          chunk.effectType != null ||
+          chunk.effectColor != null) {
+        data.highlightedRegions.add(
+          HighlightedRegion(offset, offset + chunk.text.length, chunk.toTextChunk().attributes)
+        )
+      }
+      offset += chunk.text.length
+    }
   }
 
   override fun canNavigate(): Boolean = true
@@ -46,5 +67,4 @@ class TodoRemoteItemNode(
     val v = value ?: return
     OpenFileDescriptor(project, v.file, v.navigationOffset).navigate(requestFocus)
   }
-
 }
