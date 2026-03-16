@@ -9757,17 +9757,17 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-dist-for-ide-2.3.10.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-dist-for-ide-2_3_10_http//file",
-  out = "org.jetbrains.kotlin/kotlin-dist-for-ide-2.3.10.jar",
+  name = "org.jetbrains.kotlin/kotlin-dist-for-ide-2.3.20.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-dist-for-ide-2_3_20_http//file",
+  out = "org.jetbrains.kotlin/kotlin-dist-for-ide-2.3.20.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-dist",
-  jar = "@org_jetbrains_kotlin-kotlin-dist-for-ide-2_3_10_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-dist-for-ide-2_3_10-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-dist-for-ide-2_3_20_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-dist-for-ide-2_3_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9823,17 +9823,17 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-jps-plugin-classpath-2.3.10.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_3_10_http//file",
-  out = "org.jetbrains.kotlin/kotlin-jps-plugin-classpath-2.3.10.jar",
+  name = "org.jetbrains.kotlin/kotlin-jps-plugin-classpath-2.3.20.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_3_20_http//file",
+  out = "org.jetbrains.kotlin/kotlin-jps-plugin-classpath-2.3.20.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-jps-plugin-classpath",
-  jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_3_10_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_3_10-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_3_20_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_3_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9867,17 +9867,17 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-jps-plugin-tests-for-ide-2.3.10.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-jps-plugin-tests-for-ide-2_3_10_http//file",
-  out = "org.jetbrains.kotlin/kotlin-jps-plugin-tests-for-ide-2.3.10.jar",
+  name = "org.jetbrains.kotlin/kotlin-jps-plugin-tests-for-ide-2.3.20.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-jps-plugin-tests-for-ide-2_3_20_http//file",
+  out = "org.jetbrains.kotlin/kotlin-jps-plugin-tests-for-ide-2.3.20.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-jps-plugin-tests",
-  jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-tests-for-ide-2_3_10_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-tests-for-ide-2_3_10-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-tests-for-ide-2_3_20_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-tests-for-ide-2_3_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

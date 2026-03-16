@@ -7693,17 +7693,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_kotlin-kotlin-dist-for-ide-2_3_10_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dist-for-ide/2.3.10/kotlin-dist-for-ide-2.3.10.jar",
-  sha256 = "9e6e4dad76dcd4fca65ef1e04d6837c5874a16aaa1b1c36ef7a7fcb256c9a6d4",
-  downloaded_file_path = "kotlin-dist-for-ide-2.3.10.jar"
+  name = "org_jetbrains_kotlin-kotlin-dist-for-ide-2_3_20_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dist-for-ide/2.3.20/kotlin-dist-for-ide-2.3.20.jar",
+  sha256 = "74eabb16163c4575b5dc4b2038268026f389849200f466870714342ccc3792d3",
+  downloaded_file_path = "kotlin-dist-for-ide-2.3.20.jar"
 )
 
 http_file(
-  name = "org_jetbrains_kotlin-kotlin-dist-for-ide-2_3_10-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dist-for-ide/2.3.10/kotlin-dist-for-ide-2.3.10-sources.jar",
+  name = "org_jetbrains_kotlin-kotlin-dist-for-ide-2_3_20-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dist-for-ide/2.3.20/kotlin-dist-for-ide-2.3.20-sources.jar",
   sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
-  downloaded_file_path = "kotlin-dist-for-ide-2.3.10-sources.jar"
+  downloaded_file_path = "kotlin-dist-for-ide-2.3.20-sources.jar"
 )
 
 http_file(
@@ -7735,17 +7735,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_3_10_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.3.10/kotlin-jps-plugin-classpath-2.3.10.jar",
-  sha256 = "cf910288eaadbdf897d2fe739821d07489727b63e169d648531baa95cef50e01",
-  downloaded_file_path = "kotlin-jps-plugin-classpath-2.3.10.jar"
+  name = "org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_3_20_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.3.20/kotlin-jps-plugin-classpath-2.3.20.jar",
+  sha256 = "0d6103ec6a0eb9c36e856c04d3478099ab86437dd5f19a22a69d9e80b4cff2cb",
+  downloaded_file_path = "kotlin-jps-plugin-classpath-2.3.20.jar"
 )
 
 http_file(
-  name = "org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_3_10-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.3.10/kotlin-jps-plugin-classpath-2.3.10-sources.jar",
-  sha256 = "478298dc90547796ba3b67db0273d3d382bb0991df2b54657f594966da493821",
-  downloaded_file_path = "kotlin-jps-plugin-classpath-2.3.10-sources.jar"
+  name = "org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_3_20-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.3.20/kotlin-jps-plugin-classpath-2.3.20-sources.jar",
+  sha256 = "01ddaa5e0828f793753f9161edc7773862605fc32fa316f89cb8a98ad4af2fdc",
+  downloaded_file_path = "kotlin-jps-plugin-classpath-2.3.20-sources.jar"
 )
 
 http_file(
@@ -7763,17 +7763,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_kotlin-kotlin-jps-plugin-tests-for-ide-2_3_10_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/2.3.10/kotlin-jps-plugin-tests-for-ide-2.3.10.jar",
-  sha256 = "f49a98bf974f0ec47616a66018667e4159070aeeb0f25bcdeb97d5ba2cbb4057",
-  downloaded_file_path = "kotlin-jps-plugin-tests-for-ide-2.3.10.jar"
+  name = "org_jetbrains_kotlin-kotlin-jps-plugin-tests-for-ide-2_3_20_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/2.3.20/kotlin-jps-plugin-tests-for-ide-2.3.20.jar",
+  sha256 = "fb351eeb8e11fae3096c43241611f686e8d1940d0f3b6ba6befe71ef908426ce",
+  downloaded_file_path = "kotlin-jps-plugin-tests-for-ide-2.3.20.jar"
 )
 
 http_file(
-  name = "org_jetbrains_kotlin-kotlin-jps-plugin-tests-for-ide-2_3_10-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/2.3.10/kotlin-jps-plugin-tests-for-ide-2.3.10-sources.jar",
-  sha256 = "3f512bf2249e583f963e09a15cfb5b43565d6342da72905dae3c2d5a12d7021d",
-  downloaded_file_path = "kotlin-jps-plugin-tests-for-ide-2.3.10-sources.jar"
+  name = "org_jetbrains_kotlin-kotlin-jps-plugin-tests-for-ide-2_3_20-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/2.3.20/kotlin-jps-plugin-tests-for-ide-2.3.20-sources.jar",
+  sha256 = "0be6017e4a37346df78c14ec9cd54805b52d5ad5a4be7789d085256b75b6e2b5",
+  downloaded_file_path = "kotlin-jps-plugin-tests-for-ide-2.3.20-sources.jar"
 )
 
 http_file(
