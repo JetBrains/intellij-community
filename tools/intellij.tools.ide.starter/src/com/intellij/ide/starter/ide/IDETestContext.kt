@@ -31,6 +31,7 @@ import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.tools.ide.performanceTesting.commands.CommandChain
 import com.intellij.tools.ide.performanceTesting.commands.MarshallableCommand
 import com.intellij.tools.ide.performanceTesting.commands.SdkObject
+import com.intellij.tools.ide.performanceTesting.commands.setupProjectSdk
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.ui.NewUiValue
@@ -96,8 +97,9 @@ open class IDETestContext(
     )
   }
 
-  fun copy(ide: InstalledIde? = null, resolvedProjectHome: Path? = null): IDETestContext {
-    return IDETestContext(paths, ide ?: this.ide, testCase, testName, resolvedProjectHome ?: this._resolvedProjectHome, profilerType,
+  open fun copy(ide: InstalledIde? = null, resolvedProjectHome: Path? = null, sdk: SdkObject? = null): IDETestContext {
+    require(sdk == null || testCase.projectInfo != NoProject) { "project must be specified to setup project SDK" }
+    return IDETestContext(paths, ide ?: this.ide, testCase.copy(sdk = sdk), testName, resolvedProjectHome ?: this._resolvedProjectHome, profilerType,
                           publishers, isReportPublishingEnabled, preserveSystemDir)
   }
 
@@ -467,11 +469,12 @@ open class IDETestContext(
     configure: suspend IDERunContext.() -> Unit = {},
   ): IDEStartResult {
     val span = TestTelemetryService.spanBuilder("runIDE").setAttribute("launchName", launchName).startSpan()
+    val finalCommands = if (testCase.sdk != null) CommandChain().setupProjectSdk(testCase.sdk).addCommands(commands.toList()) else commands
     span.makeCurrent().use {
       val runContext = IDERunContext(
         testContext = this,
         commandLine = commandLine,
-        commands = commands,
+        commands = finalCommands,
         runTimeout = runTimeout,
         useStartupScript = useStartupScript,
         launchName = launchName,
@@ -738,6 +741,8 @@ open class IDETestContext(
     pluginPath.copyToRecursively(paths.pluginsDir, followLinks = false, overwrite = true)
     return this
   }
+
+  fun withProjectSdk(sdkObject: SdkObject) = copy(sdk = sdkObject)
 
   fun setupSdk(sdkObjects: SdkObject?, cleanDirs: Boolean = true): IDETestContext = computeWithSpan("setupSdk") {
     if (sdkObjects == null) return this
