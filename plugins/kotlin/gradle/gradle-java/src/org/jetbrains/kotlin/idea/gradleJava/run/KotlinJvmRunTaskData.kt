@@ -17,11 +17,11 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 class KotlinJvmRunTaskData(
     val targetName: String,
     val taskName: String,
-    val gradlePluginType: KotlinGradlePluginType,
+    val isComposeJvm: Boolean,
 ) {
     companion object {
         private const val KOTLIN_KMP_JVM_RUN_CLASS_NAME = "org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmRun"
-        private const val KOTLIN_JVM_RUN_CLASS_NAME = "org.gradle.api.tasks.JavaExec"
+        private const val JAVA_EXEC_RUN_CLASS_NAME = "org.gradle.api.tasks.JavaExec"
 
         /**
          * Will return the *first* suitable KotlinJvmRun task that is suitable for this module.
@@ -36,26 +36,23 @@ class KotlinJvmRunTaskData(
             val mainModuleDataNode = module.getModuleDataNode() ?: return null
 
             val kotlinGradlePluginType = KotlinGradlePluginType.getPluginType(mainModuleDataNode) ?: return null
-            val kotlinRunClassName = when (kotlinGradlePluginType) {
-                KotlinGradlePluginType.Jvm -> {
-                    KOTLIN_JVM_RUN_CLASS_NAME.takeIf {
-                        // For modules using jvm plugin, only continue if CMP plugin is also used,
-                        // since CMP plugin adds the required Gradle tasks
-                        usesCmpGradlePlugin(mainModuleDataNode)
-                    } ?: return null
-                }
-
-                KotlinGradlePluginType.Multiplatform -> KOTLIN_KMP_JVM_RUN_CLASS_NAME
+            val usesCmpGradlePlugin = usesCmpGradlePlugin(mainModuleDataNode)
+            val usesKmpPlugin = kotlinGradlePluginType == KotlinGradlePluginType.Multiplatform
+            val runClassName = when {
+                usesCmpGradlePlugin -> JAVA_EXEC_RUN_CLASS_NAME
+                usesKmpPlugin -> KOTLIN_KMP_JVM_RUN_CLASS_NAME
+                else -> return null
             }
 
             /* Find all run carrier tasks (tasks implementing KotlinJvmRun */
             val allKotlinJvmRunTasks = ExternalSystemApiUtil.findAll(mainModuleDataNode, ProjectKeys.TASK)
-                .filter { it.data.type == kotlinRunClassName }
+                .filter { it.data.type == runClassName }
                 .ifEmpty { return null }
 
-            return when (kotlinGradlePluginType) {
-                KotlinGradlePluginType.Multiplatform -> getKmpPluginRunTask(module, mainModuleDataNode, allKotlinJvmRunTasks)
-                KotlinGradlePluginType.Jvm -> getJvmPluginRunTask(allKotlinJvmRunTasks)
+            return when {
+                usesCmpGradlePlugin -> getCmpPluginRunTask(allKotlinJvmRunTasks)
+                usesKmpPlugin -> getKmpPluginRunTask(module, mainModuleDataNode, allKotlinJvmRunTasks)
+                else -> null
             }
 
         }
@@ -103,16 +100,16 @@ class KotlinJvmRunTaskData(
                     .filter { target -> taskNameWithoutLocation.equals("${target.data.externalName}Run", ignoreCase = true) }
                     .firstOrNull { target -> target.data.moduleIds.any { targetModuleId -> targetModuleId in sourceSetModuleIds } }
                     ?: return@firstNotNullOfOrNull null
-                KotlinJvmRunTaskData(target.data.externalName, taskName, KotlinGradlePluginType.Multiplatform)
+                KotlinJvmRunTaskData(target.data.externalName, taskName, isComposeJvm = false)
             }
         }
 
-        private fun getJvmPluginRunTask(allKotlinJvmRunTasks: List<DataNode<TaskData>>): KotlinJvmRunTaskData? =
+        private fun getCmpPluginRunTask(allKotlinJvmRunTasks: List<DataNode<TaskData>>): KotlinJvmRunTaskData? =
             allKotlinJvmRunTasks.firstNotNullOfOrNull { runTask ->
                 val taskName = runTask.data.name.let { if (it.startsWith(':')) it else ":$it" }
                 val taskNameWithoutLocation = taskName.substringAfterLast(':')
                 if (taskNameWithoutLocation != "run") return@firstNotNullOfOrNull null
-                return KotlinJvmRunTaskData("jvm", taskName, KotlinGradlePluginType.Jvm)
+                return KotlinJvmRunTaskData("jvm", taskName, isComposeJvm = true)
             }
 
     }

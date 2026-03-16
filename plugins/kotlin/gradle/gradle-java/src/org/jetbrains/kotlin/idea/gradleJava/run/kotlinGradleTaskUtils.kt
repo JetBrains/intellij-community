@@ -194,15 +194,15 @@ fun configureKmpJvmRunConfigurationFromMainFunction(
     configuration.isDebugAllEnabled = false
     configuration.isDebugServerProcess = false
 
-    val scriptParameterList = when (runTask.gradlePluginType) {
-        KotlinGradlePluginType.Jvm -> {
-            configuration.isComposeJvm = true
+    configuration.isComposeJvm = runTask.isComposeJvm
+    val scriptParameterList = when {
+        runTask.isComposeJvm -> {
             val mainFunctionClassFqn = ReadAction.compute<String, Throwable> { function.containingKtFile.javaFileFacadeFqName.asString() }
             configuration.mainFunctionClassFqn = mainFunctionClassFqn
             listOf(quietParameter)
         }
 
-        KotlinGradlePluginType.Multiplatform ->{
+        else -> {
             val mainClassParameter = ReadAction.compute<String, Throwable> { mainClassScriptParameter(function) }
             listOf(mainClassParameter, quietParameter)
         }
