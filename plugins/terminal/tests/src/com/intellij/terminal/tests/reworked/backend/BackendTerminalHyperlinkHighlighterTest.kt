@@ -567,11 +567,18 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
 
     suspend fun assertLinks(vararg expectedLinks: Link) {
       awaitEventProcessing()
-      val actualLinks = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalHyperlinkInfo>().map { link ->
-        ActualLinkWrapper(
-          outputModel.getText(TerminalOffset.of(link.absoluteStartOffset), TerminalOffset.of(link.absoluteEndOffset)).toString(),
-          link,
-        )
+      val actualLinks = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalHyperlinkInfo>().mapNotNull { link ->
+        val start = TerminalOffset.of(link.absoluteStartOffset)
+        val end = TerminalOffset.of(link.absoluteEndOffset)
+        if (start < outputModel.startOffset && end >= outputModel.startOffset) {
+          null // partially trimmed links are allowed
+        }
+        else {
+          ActualLinkWrapper(
+            outputModel.getText(start, end).toString(),
+            link,
+          )
+        }
       }
       assertThat(actualLinks).hasSameSizeAs(expectedLinks)
       for (i in actualLinks.indices) {
