@@ -55,6 +55,8 @@ public class IntBasedStorage implements DataStorage {
 
   @Override
   public int packData(@NotNull IElementType tokenType, int state, boolean isRestartableState) {
+    if (tokenType.getIndex() < 0)
+      throw new IllegalArgumentException("Token type " + tokenType + " is not registered and cannot be used in a lexer editor highlighter.");
     return ((state & 0xFFFF) << 16) | (tokenType.getIndex() & 0xffff);
   }
 
