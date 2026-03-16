@@ -1,5 +1,6 @@
 package com.intellij.ide.starter.process.exec
 
+import com.intellij.execution.process.realDescendants
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.logEnvVariables
 import com.intellij.ide.starter.coroutine.CommonScope.scopeForProcesses
@@ -77,7 +78,7 @@ class ProcessExecutor(
       .forEach { root ->
         logOutput("  ... skipping update-related process and its children: PID=${root.pid()} cmd=${root.info().command().getOrNull()}")
         updateProcesses.add(root)
-        root.descendants().forEach { child ->
+        root.realDescendants().forEach { child ->
           logOutput("  ... skipping child of update-related process: PID=${child.pid()} cmd=${child.info().command().getOrNull()}")
           updateProcesses.add(child)
         }
@@ -246,7 +247,7 @@ class ProcessExecutor(
     fun killProcess() {
       catchAll { runBlocking(Dispatchers.IO) { onProcessCreatedJob.cancelAndJoin() } }
       catchAll { runBlocking(Dispatchers.IO) { withTimeout(1.minutes) { onBeforeKilled(process, processId) } } }
-      process.descendants().forEach { catchAll { killProcessGracefully(it) } }
+      process.realDescendants().forEach { catchAll { killProcessGracefully(it) } }
       catchAll { killProcessGracefully(process.toHandle()) }
       catchAll { ioThreads.forEach { it.interrupt() } }
       finishedGracefully = true
@@ -293,7 +294,7 @@ class ProcessExecutor(
         killProcess()
       }
       process.destroyForcibly()
-      val descendants = process.descendants().toList()
+      val descendants = process.realDescendants().toList()
       val skipProcesses = collectUpdateRelatedProcesses(descendants)
       descendants.filter { it !in skipProcesses }.forEach { it.destroyForcibly() }
 
