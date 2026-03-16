@@ -45,6 +45,7 @@ interface FakeServerOptions {
   responseMode?: 'json' | 'sse'
   sessionId?: string
   port?: number
+  serverName?: string
 }
 
 type ProxyEnvFactory = (context: {fakeServer: FakeServerInstance}) => Record<string, string>
@@ -147,7 +148,7 @@ export const defaultUpstreamTools = [...DEFAULT_UPSTREAM_TOOL_NAMES].map((name) 
 )
 
 export async function startFakeMcpServer(
-  {tools = defaultUpstreamTools, onToolCall, responseMode = 'json', sessionId = 'test-session', port: requestedPort}: FakeServerOptions = {}
+  {tools = defaultUpstreamTools, onToolCall, responseMode = 'json', sessionId = 'test-session', port: requestedPort, serverName}: FakeServerOptions = {}
 ): Promise<FakeServerInstance> {
   const toolCallQueue: ToolCall[] = []
   const toolCallWaiters: Array<(call: ToolCall) => void> = []
@@ -175,7 +176,7 @@ export async function startFakeMcpServer(
     return result
   }
 
-  const mcpServer = new Server({name: 'fake-mcp-server', version: '1.0.0'})
+  const mcpServer = new Server({name: serverName ?? 'fake-mcp-server', version: '1.0.0'})
   mcpServer.registerCapabilities({tools: {}})
   mcpServer.setRequestHandler(ListToolsRequestSchema, () => ({tools}))
   mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -318,6 +319,7 @@ export async function withProxy(
     tools?: ToolSpecLike[]
     onToolCall?: ToolCallHandler
     responseMode?: 'json' | 'sse'
+    serverName?: string
   } = {},
   run: (context: {fakeServer: FakeServerInstance; proxyClient: McpTestClient; testDir: string}) => Promise<void>
 ): Promise<void> {
@@ -329,7 +331,8 @@ export async function withProxy(
   const serverOptions = {
     tools: options?.tools,
     onToolCall: options?.onToolCall,
-    responseMode: options?.responseMode
+    responseMode: options?.responseMode,
+    serverName: options?.serverName
   }
 
   try {

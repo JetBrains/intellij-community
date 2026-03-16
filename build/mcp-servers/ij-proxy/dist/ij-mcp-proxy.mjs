@@ -6531,7 +6531,7 @@ var require_picomatch2 = __commonJS((exports, module) => {
 });
 
 // ij-mcp-proxy.ts
-import path7 from "path";
+import path8 from "path";
 import { cwd, env } from "process";
 import { fileURLToPath } from "url";
 
@@ -24537,6 +24537,7 @@ class UpstreamConnection {
   client;
   _transport;
   _projectPathManager;
+  _defaultProjectPathKey;
   _toolCallTimeoutMs;
   _warn;
   _connectedPromise = null;
@@ -24546,7 +24547,7 @@ class UpstreamConnection {
   ideVersion = null;
   onStateChange;
   constructor(options) {
-    this._transport = options.transport, this._toolCallTimeoutMs = options.toolCallTimeoutMs, this._warn = options.warn, this._projectPathManager = createProjectPathManager({
+    this._transport = options.transport, this._toolCallTimeoutMs = options.toolCallTimeoutMs, this._warn = options.warn, this._defaultProjectPathKey = options.defaultProjectPathKey, this._projectPathManager = createProjectPathManager({
       projectPath: options.projectPath,
       defaultProjectPathKey: options.defaultProjectPathKey
     }), this.client = new Client({ name: "ij-mcp-proxy", version: "1.0.0" }), this.client.onerror = (error48) => {
@@ -24554,6 +24555,12 @@ class UpstreamConnection {
     }, this.client.onclose = () => {
       this.reset(), this._warn("Upstream client connection closed; will reconnect on next request");
     };
+  }
+  updateProjectPath(newProjectPath) {
+    this._projectPathManager = createProjectPathManager({
+      projectPath: newProjectPath,
+      defaultProjectPathKey: this._defaultProjectPathKey
+    });
   }
   async connect() {
     if (!this.client.transport)
@@ -24630,6 +24637,109 @@ class UpstreamConnection {
   }
 }
 
+// discovery.ts
+function buildCandidateList(preferredPorts, portScanStart, portScanLimit) {
+  let seen = /* @__PURE__ */ new Set, candidates = [];
+  for (let port of preferredPorts) {
+    if (!Number.isFinite(port) || port <= 0 || seen.has(port))
+      continue;
+    seen.add(port), candidates.push(port);
+  }
+  let limit = Number.isFinite(portScanLimit) && portScanLimit > 0 ? portScanLimit : 0, start = Number.isFinite(portScanStart) && portScanStart > 0 ? portScanStart : 0;
+  for (let i = 0;i < limit; i++) {
+    let port = start + i;
+    if (port <= 0 || seen.has(port))
+      continue;
+    seen.add(port), candidates.push(port);
+  }
+  return candidates;
+}
+async function findReachablePorts(options) {
+  let { preferredPorts, portScanStart, portScanLimit, scanTimeoutMs, buildUrl, probeHost = "127.0.0.1", warn } = options, candidates = buildCandidateList(preferredPorts, portScanStart, portScanLimit);
+  if (candidates.length === 0)
+    return [];
+  let probeResults = await Promise.allSettled(candidates.map(async (port) => {
+    let reachable = await isPortReachable(port, {
+      host: probeHost,
+      timeout: scanTimeoutMs > 0 ? scanTimeoutMs : void 0
+    });
+    return { port, reachable };
+  })), result = [];
+  for (let probeResult of probeResults)
+    if (probeResult.status === "fulfilled" && probeResult.value.reachable) {
+      let port = probeResult.value.port;
+      result.push({ port, url: buildUrl(port) });
+    }
+  if (result.length === 0 && warn)
+    warn(`No reachable MCP stream ports found. Probed: ${candidates.join(", ")}`);
+  return result;
+}
+
+// routing.ts
+import path7 from "path";
+var RIDER_PROJECT_SUBPATH = "dotnet", MERGE_TOOL_NAMES = /* @__PURE__ */ new Set([
+  "search_text",
+  "search_regex",
+  "search_file",
+  "search_symbol"
+]);
+function resolveRoute(toolName, args, projectRoot) {
+  if (MERGE_TOOL_NAMES.has(toolName))
+    return "merge";
+  return resolveIdeForPath(args, projectRoot) === "rider" ? "target-rider" : "primary";
+}
+function rewriteArgsForTarget(route, args) {
+  if (route !== "target-rider")
+    return { ...args };
+  let rewritten = { ...args };
+  for (let key of PATH_ARG_KEYS) {
+    let value = rewritten[key];
+    if (typeof value === "string" && value.length > 0)
+      rewritten[key] = stripRiderPrefix(value);
+  }
+  return rewritten;
+}
+function stripRiderPrefix(filePath) {
+  if (filePath.startsWith(RIDER_PROJECT_SUBPATH + "/"))
+    return filePath.slice(RIDER_PROJECT_SUBPATH.length + 1);
+  if (filePath.startsWith(RIDER_PROJECT_SUBPATH + "\\"))
+    return filePath.slice(RIDER_PROJECT_SUBPATH.length + 1);
+  if (filePath === RIDER_PROJECT_SUBPATH)
+    return "";
+  return filePath;
+}
+function isMergeTool(toolName) {
+  return MERGE_TOOL_NAMES.has(toolName);
+}
+function createPathPrefixTransformer(prefix) {
+  return (items) => items.map((item) => ({
+    ...item,
+    filePath: prefix + "/" + item.filePath
+  }));
+}
+var riderItemTransformer = createPathPrefixTransformer(RIDER_PROJECT_SUBPATH);
+function resolveIdeForPath(args, projectRoot) {
+  let filePath = extractPathArg(args);
+  return filePath != null && isRiderPath(filePath, projectRoot) ? "rider" : "idea";
+}
+function isRiderPath(filePath, projectRoot) {
+  if (!filePath)
+    return !1;
+  let absolute = path7.isAbsolute(filePath) ? path7.normalize(filePath) : path7.resolve(projectRoot, filePath), relative = path7.relative(projectRoot, absolute);
+  if (relative.startsWith("..") || path7.isAbsolute(relative))
+    return !1;
+  return relative === RIDER_PROJECT_SUBPATH || relative.startsWith(RIDER_PROJECT_SUBPATH + path7.sep);
+}
+var PATH_ARG_KEYS = ["pathInProject", "file_path", "dir_path", "directoryPath", "filePath"];
+function extractPathArg(args) {
+  for (let key of PATH_ARG_KEYS) {
+    let value = args[key];
+    if (typeof value === "string" && value.length > 0)
+      return value;
+  }
+  return;
+}
+
 // ij-mcp-proxy.ts
 var explicitMcpUrl = env.JETBRAINS_MCP_STREAM_URL || env.MCP_STREAM_URL || env.JETBRAINS_MCP_URL || env.MCP_URL, defaultHost = "127.0.0.1", defaultPort = 64342, defaultPath = "/stream", defaultScanLimit = 10, portScanStartEnv = env.JETBRAINS_MCP_PORT_START, portScanStart = parseEnvInt("JETBRAINS_MCP_PORT_START", defaultPort), portScanLimit = parseEnvInt("JETBRAINS_MCP_PORT_SCAN_LIMIT", defaultScanLimit), preferredPorts = portScanStartEnv ? [portScanStart] : [defaultPort, 64344], connectTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_CONNECT_TIMEOUT_S", 10), scanTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_SCAN_TIMEOUT_S", 1), queueLimit = parseEnvNonNegativeInt("JETBRAINS_MCP_QUEUE_LIMIT", 100), toolCallTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S", 60), queueWaitTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S", toolCallTimeoutMs > 0 ? Math.round(toolCallTimeoutMs / 1000) : 0), STREAM_RETRY_ATTEMPTS = 3, STREAM_RETRY_BASE_DELAY_MS = 200;
 function parseEnvInt(name, fallback) {
@@ -24658,18 +24768,18 @@ function buildStreamUrl(port) {
 }
 function resolveProjectPath(rawValue) {
   if (!rawValue)
-    return { projectPath: path7.resolve(cwd()) };
+    return { projectPath: path8.resolve(cwd()) };
   if (rawValue.startsWith("file://"))
     try {
-      return { projectPath: path7.resolve(fileURLToPath(new URL(rawValue))) };
+      return { projectPath: path8.resolve(fileURLToPath(new URL(rawValue))) };
     } catch (error48) {
       let message = error48 instanceof Error ? error48.message : String(error48);
       return {
-        projectPath: path7.resolve(rawValue),
+        projectPath: path8.resolve(rawValue),
         warning: `Failed to parse JETBRAINS_MCP_PROJECT_PATH as a file URI (${message}); falling back to path resolution.`
       };
     }
-  return { projectPath: path7.resolve(rawValue) };
+  return { projectPath: path8.resolve(rawValue) };
 }
 var explicitProjectPath = env.JETBRAINS_MCP_PROJECT_PATH, projectPathResolution = resolveProjectPath(explicitProjectPath), projectPath = projectPathResolution.projectPath, defaultProjectPathKey = "project_path", REPLACED_TOOL_NAMES = getReplacedToolNames(), BASE_BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES]);
 function blockedToolMessage(toolName) {
@@ -24677,18 +24787,39 @@ function blockedToolMessage(toolName) {
     return `Tool '${toolName}' is not exposed by ij-proxy. Use 'apply_patch' instead.`;
   return `Tool '${toolName}' is not exposed by ij-proxy.`;
 }
-var proxyToolSpecs = [], proxyToolNames = /* @__PURE__ */ new Set, runProxyToolCall = async () => {
-  throw Error("Proxy tooling not initialized");
-};
+var ideaUpstream = null, riderUpstream = null, discoveryPromise = null, proxyToolSpecs = [], proxyToolNames = /* @__PURE__ */ new Set, ideaProxyToolCall = null, riderProxyToolCall = null;
+function primaryUpstream() {
+  let upstream = ideaUpstream ?? riderUpstream;
+  if (!upstream)
+    throw Error("No upstream connection available");
+  return upstream;
+}
 function updateProxyTooling() {
-  let tooling = createProxyTooling({
-    projectPath,
-    callUpstreamTool: (name, args) => upstream.callTool(name, args),
-    searchCapabilities: upstream.searchCapabilities,
-    readCapabilities: upstream.readCapabilities,
-    ideVersion: upstream.ideVersion
-  });
-  proxyToolSpecs = tooling.proxyToolSpecs, proxyToolNames = tooling.proxyToolNames, runProxyToolCall = tooling.runProxyToolCall;
+  let ideaSpecs = [], ideaNames = /* @__PURE__ */ new Set;
+  if (ideaUpstream) {
+    let tooling = createProxyTooling({
+      projectPath,
+      callUpstreamTool: (name, args) => ideaUpstream.callTool(name, args),
+      searchCapabilities: ideaUpstream.searchCapabilities,
+      readCapabilities: ideaUpstream.readCapabilities,
+      ideVersion: ideaUpstream.ideVersion
+    });
+    ideaSpecs = tooling.proxyToolSpecs, ideaNames = tooling.proxyToolNames, ideaProxyToolCall = tooling.runProxyToolCall;
+  } else
+    ideaProxyToolCall = null;
+  let riderSpecs = [], riderNames = /* @__PURE__ */ new Set;
+  if (riderUpstream) {
+    let riderProjectPath = path8.join(projectPath, RIDER_PROJECT_SUBPATH), tooling = createProxyTooling({
+      projectPath: riderProjectPath,
+      callUpstreamTool: (name, args) => riderUpstream.callTool(name, args),
+      searchCapabilities: riderUpstream.searchCapabilities,
+      readCapabilities: riderUpstream.readCapabilities,
+      ideVersion: riderUpstream.ideVersion
+    });
+    riderSpecs = tooling.proxyToolSpecs, riderNames = tooling.proxyToolNames, riderProxyToolCall = tooling.runProxyToolCall;
+  } else
+    riderProxyToolCall = null;
+  proxyToolSpecs = mergeToolLists(ideaSpecs, riderSpecs, /* @__PURE__ */ new Set), proxyToolNames = /* @__PURE__ */ new Set([...ideaNames, ...riderNames]);
 }
 function note(message) {
   logToFile(message), logProgress(message);
@@ -24699,29 +24830,107 @@ function warn(message) {
 clearLogFile();
 if (projectPathResolution.warning)
   warn(projectPathResolution.warning);
-var streamTransport = createStreamTransport({
-  explicitUrl: explicitMcpUrl,
-  preferredPorts,
-  portScanStart,
-  portScanLimit,
-  connectTimeoutMs,
-  scanTimeoutMs,
-  queueLimit,
-  queueWaitTimeoutMs,
-  retryAttempts: STREAM_RETRY_ATTEMPTS,
-  retryBaseDelayMs: STREAM_RETRY_BASE_DELAY_MS,
-  buildUrl: buildStreamUrl,
-  note,
-  warn
-}), upstream = new UpstreamConnection({
-  transport: streamTransport,
-  projectPath,
-  defaultProjectPathKey,
-  toolCallTimeoutMs,
-  warn
-});
-upstream.onStateChange = () => updateProxyTooling();
-updateProxyTooling();
+function createUpstreamForUrl(url2) {
+  let transport = createStreamTransport({
+    explicitUrl: url2,
+    preferredPorts: [],
+    portScanStart: 0,
+    portScanLimit: 0,
+    connectTimeoutMs,
+    scanTimeoutMs,
+    queueLimit,
+    queueWaitTimeoutMs,
+    retryAttempts: STREAM_RETRY_ATTEMPTS,
+    retryBaseDelayMs: STREAM_RETRY_BASE_DELAY_MS,
+    buildUrl: buildStreamUrl,
+    note,
+    warn
+  }), conn = new UpstreamConnection({
+    transport,
+    projectPath,
+    defaultProjectPathKey,
+    toolCallTimeoutMs,
+    warn
+  });
+  return conn.onStateChange = () => updateProxyTooling(), conn;
+}
+function setupUpstreamClientHandlers(conn) {
+  conn.client.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
+    try {
+      await conn.refreshTools(), await proxyServer.sendToolListChanged();
+    } catch (error48) {
+      let message = error48 instanceof Error ? error48.message : String(error48);
+      warn(`Failed to refresh tool list after upstream change: ${message}`);
+    }
+  }), conn.client.fallbackRequestHandler = async (request) => {
+    return await proxyServer.request({ method: request.method, params: request.params }, ResultSchema);
+  }, conn.client.fallbackNotificationHandler = async (notification) => {
+    try {
+      await proxyServer.notification(notification);
+    } catch (error48) {
+      let message = error48 instanceof Error ? error48.message : String(error48);
+      warn(`Failed to forward upstream notification: ${message}`);
+    }
+  };
+}
+function isRiderServerName(name) {
+  return /rider/i.test(name);
+}
+async function ensureDiscovered() {
+  if (ideaUpstream || riderUpstream)
+    return;
+  if (discoveryPromise)
+    return discoveryPromise;
+  return discoveryPromise = performDiscovery(), discoveryPromise;
+}
+async function performDiscovery() {
+  try {
+    if (explicitMcpUrl) {
+      let conn = createUpstreamForUrl(explicitMcpUrl);
+      await conn.connect();
+      let name = conn.client.getServerVersion()?.name ?? "";
+      if (isRiderServerName(name))
+        conn.updateProjectPath(path8.join(projectPath, RIDER_PROJECT_SUBPATH)), riderUpstream = conn;
+      else
+        ideaUpstream = conn;
+      setupUpstreamClientHandlers(conn), updateProxyTooling();
+      return;
+    }
+    let reachable = await findReachablePorts({
+      preferredPorts,
+      portScanStart,
+      portScanLimit,
+      scanTimeoutMs,
+      buildUrl: buildStreamUrl,
+      warn
+    });
+    for (let { url: url2 } of reachable) {
+      let conn = createUpstreamForUrl(url2);
+      try {
+        await conn.connect();
+        let name = conn.client.getServerVersion()?.name ?? "";
+        if (isRiderServerName(name) && !riderUpstream)
+          conn.updateProjectPath(path8.join(projectPath, RIDER_PROJECT_SUBPATH)), riderUpstream = conn, setupUpstreamClientHandlers(conn), note(`Rider upstream: ${url2} (${name})`);
+        else if (!isRiderServerName(name) && !ideaUpstream)
+          ideaUpstream = conn, setupUpstreamClientHandlers(conn), note(`IDEA upstream: ${url2} (${name})`);
+        else
+          try {
+            await conn.client.close();
+          } catch {}
+      } catch (error48) {
+        let message = error48 instanceof Error ? error48.message : String(error48);
+        warn(`Failed to connect to ${url2}: ${message}`);
+      }
+    }
+    if (!ideaUpstream && !riderUpstream)
+      throw Error(`No IDE found. Install the "MCP Server" plugin and ensure it is enabled. Probed ports: ${preferredPorts.join(", ")} + scan ${portScanStart}..${portScanStart + portScanLimit - 1}`);
+    if (ideaUpstream && riderUpstream)
+      note("Multi-IDE mode: routing between IDEA and Rider");
+    updateProxyTooling();
+  } finally {
+    discoveryPromise = null;
+  }
+}
 var proxyServer = new Server({ name: "ij-mcp-proxy", version: "1.0.0" }, {
   capabilities: {
     tools: { listChanged: !0 },
@@ -24731,9 +24940,10 @@ var proxyServer = new Server({ name: "ij-mcp-proxy", version: "1.0.0" }, {
   }
 });
 proxyServer.setRequestHandler(ListToolsRequestSchema, async () => {
-  let upstreamTools = await upstream.getTools();
+  await ensureDiscovered();
+  let ideaTools = ideaUpstream ? await ideaUpstream.getTools() : [], riderTools = riderUpstream ? await riderUpstream.getTools() : [], allUpstreamTools = mergeToolLists(ideaTools, riderTools, /* @__PURE__ */ new Set);
   return {
-    tools: mergeToolLists(proxyToolSpecs, upstreamTools, BASE_BLOCKED_TOOL_NAMES)
+    tools: mergeToolLists(proxyToolSpecs, allUpstreamTools, BASE_BLOCKED_TOOL_NAMES)
   };
 });
 proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -24742,45 +24952,58 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
     return makeToolError("Tool name is required");
   if (BASE_BLOCKED_TOOL_NAMES.has(toolName))
     return makeToolError(blockedToolMessage(toolName));
-  if (proxyToolNames.has(toolName))
-    try {
-      let output = await runProxyToolCall(toolName, args);
-      return makeToolOutput(output);
-    } catch (error48) {
-      let message = error48 instanceof Error ? error48.message : String(error48);
-      return makeToolError(message);
+  if (await ensureDiscovered(), proxyToolNames.has(toolName)) {
+    if (ideaProxyToolCall && riderProxyToolCall) {
+      if (isMergeTool(toolName))
+        return await callMergedProxyTool(toolName, args);
+      let ide = resolveIdeForPath(args, projectPath), proxyCall2 = ide === "rider" ? riderProxyToolCall : ideaProxyToolCall, rewrittenArgs = rewriteArgsForTarget(ide === "rider" ? "target-rider" : "target-idea", args);
+      try {
+        return makeToolOutput(await proxyCall2(toolName, rewrittenArgs));
+      } catch (error48) {
+        let message = error48 instanceof Error ? error48.message : String(error48);
+        return makeToolError(message);
+      }
     }
+    let proxyCall = ideaProxyToolCall ?? riderProxyToolCall;
+    if (proxyCall)
+      try {
+        return makeToolOutput(await proxyCall(toolName, args));
+      } catch (error48) {
+        let message = error48 instanceof Error ? error48.message : String(error48);
+        return makeToolError(message);
+      }
+  }
+  if (ideaUpstream && riderUpstream) {
+    let route = resolveRoute(toolName, args, projectPath);
+    switch (route) {
+      case "merge":
+        return await callMergedPassthroughTool(toolName, args);
+      case "target-idea":
+      case "target-rider": {
+        let target = route === "target-rider" ? riderUpstream : ideaUpstream;
+        try {
+          return await target.callToolForClient(toolName, rewriteArgsForTarget(route, args));
+        } catch (error48) {
+          let message = error48 instanceof Error ? error48.message : String(error48);
+          return makeToolError(message);
+        }
+      }
+      case "primary":
+        break;
+    }
+  }
   try {
-    return await upstream.callToolForClient(toolName, args);
+    return await primaryUpstream().callToolForClient(toolName, args);
   } catch (error48) {
     let message = error48 instanceof Error ? error48.message : String(error48);
     return makeToolError(message);
   }
 });
 proxyServer.fallbackRequestHandler = async (request) => {
-  return await upstream.forwardRequest(request.method, request.params);
+  return await ensureDiscovered(), await primaryUpstream().forwardRequest(request.method, request.params);
 };
 proxyServer.fallbackNotificationHandler = async (notification) => {
-  await upstream.forwardNotification(notification);
-};
-upstream.client.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
-  try {
-    await upstream.refreshTools(), await proxyServer.sendToolListChanged();
-  } catch (error48) {
-    let message = error48 instanceof Error ? error48.message : String(error48);
-    warn(`Failed to refresh tool list after upstream change: ${message}`);
-  }
-});
-upstream.client.fallbackRequestHandler = async (request) => {
-  return await proxyServer.request({ method: request.method, params: request.params }, ResultSchema);
-};
-upstream.client.fallbackNotificationHandler = async (notification) => {
-  try {
-    await proxyServer.notification(notification);
-  } catch (error48) {
-    let message = error48 instanceof Error ? error48.message : String(error48);
-    warn(`Failed to forward upstream notification: ${message}`);
-  }
+  await ensureDiscovered(), await primaryUpstream().forwardNotification(notification);
 };
 var stdioTransport = new StdioServerTransport;
 stdioTransport.onerror = (error48) => {
@@ -24790,6 +25013,58 @@ proxyServer.connect(stdioTransport).catch((error48) => {
   let message = error48 instanceof Error ? error48.message : String(error48);
   warn(`Failed to start stdio transport: ${message}`);
 });
+async function callMergedProxyTool(toolName, args) {
+  let results = await Promise.allSettled([
+    ideaProxyToolCall(toolName, { ...args }),
+    riderProxyToolCall(toolName, { ...args })
+  ]);
+  return mergeSettledResults(results, "proxy", [void 0, riderItemTransformer]);
+}
+async function callMergedPassthroughTool(toolName, args) {
+  let results = await Promise.allSettled([
+    ideaUpstream.callToolForClient(toolName, { ...args }),
+    riderUpstream.callToolForClient(toolName, { ...args })
+  ]);
+  return mergeSettledResults(results, "passthrough", [void 0, riderItemTransformer]);
+}
+function logSettledErrors(results) {
+  for (let r of results)
+    if (r.status === "rejected")
+      warn(`Merge: one upstream failed: ${r.reason instanceof Error ? r.reason.message : String(r.reason)}`);
+}
+function settledErrorOutput(results) {
+  for (let r of results)
+    if (r.status === "rejected") {
+      let message = r.reason instanceof Error ? r.reason.message : String(r.reason);
+      return makeToolError(message);
+    }
+  return makeToolError("All upstreams failed");
+}
+function extractItemsFromResult(value, mode) {
+  if (mode === "proxy")
+    return extractItems(value);
+  let text = extractTextFromResult(value);
+  if (!text)
+    return [];
+  return extractItems({ content: [{ type: "text", text }] });
+}
+function mergeSettledResults(results, mode, transformers = []) {
+  logSettledErrors(results);
+  let allItems = [];
+  for (let i = 0;i < results.length; i++) {
+    let r = results[i];
+    if (r.status !== "fulfilled")
+      continue;
+    let value = r.value;
+    if (value == null)
+      continue;
+    let items = extractItemsFromResult(value, mode), transformer = transformers[i];
+    allItems.push(...transformer ? transformer(items) : items);
+  }
+  if (allItems.length > 0)
+    return makeToolOutput(JSON.stringify({ items: allItems }));
+  return settledErrorOutput(results);
+}
 function makeToolOutput(text) {
   return {
     content: [
@@ -24811,9 +25086,9 @@ function makeToolError(text) {
     isError: !0
   };
 }
-function mergeToolLists(proxyTools, upstreamTools, blockedNames) {
+function mergeToolLists(listA, listB, blockedNames) {
   let blocked = blockedNames instanceof Set ? blockedNames : new Set(blockedNames || []), result = [], seen = /* @__PURE__ */ new Set;
-  for (let tool of proxyTools || []) {
+  for (let tool of listA || []) {
     if (!tool || typeof tool.name !== "string")
       continue;
     if (blocked.has(tool.name))
@@ -24822,8 +25097,8 @@ function mergeToolLists(proxyTools, upstreamTools, blockedNames) {
       continue;
     seen.add(tool.name), result.push(tool);
   }
-  if (Array.isArray(upstreamTools))
-    for (let tool of upstreamTools) {
+  if (Array.isArray(listB))
+    for (let tool of listB) {
       let name = tool?.name;
       if (typeof name !== "string" || !name)
         continue;
