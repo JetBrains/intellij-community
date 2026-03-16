@@ -1129,7 +1129,7 @@
       "Button": {
         "preferredSize": "40,40",
         "preferredSize.compact": "40,30",
-        "hoverBackground": "#FFFFFF1A"
+        "hoverBackground": "toolbar-bg-hovered"
       }
     },
 
