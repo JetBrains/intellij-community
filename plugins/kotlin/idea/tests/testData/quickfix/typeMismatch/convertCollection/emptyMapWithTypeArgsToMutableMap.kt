@@ -1,0 +1,10 @@
+// "Replace 'emptyMap<String, Int>()' with 'mutableMapOf<String, Int>()'" "true"
+// PRIORITY: HIGH
+// K2_ERROR: Return type mismatch: expected 'MutableMap<String, Int>', actual 'Map<String, Int>'.
+
+fun foo(): MutableMap<String, Int> {
+    return emptyMap<String, Int><caret>()
+}
+
+// IGNORE_K1
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ReplaceWithMutableCollectionFactoryFix
