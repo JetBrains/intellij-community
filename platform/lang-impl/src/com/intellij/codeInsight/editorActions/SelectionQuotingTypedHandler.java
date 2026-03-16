@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -30,6 +30,7 @@ public final class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
 
   @Override
   public @NotNull Result beforeSelectionRemoved(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    Document document = editor.getUiDocument();
     SelectionModel selectionModel = editor.getSelectionModel();
     if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE && selectionModel.hasSelection() && isQuote(c)) {
       String selectedText = selectionModel.getSelectedText();
@@ -68,11 +69,11 @@ public final class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
         boolean ltrSelection = selectionModel.getLeadSelectionOffset() != selectionModel.getSelectionEnd();
         boolean restoreStickySelection = editor instanceof EditorEx && ((EditorEx)editor).isStickySelection();
         selectionModel.removeSelection();
-        editor.getDocument().replaceString(selectionStart, selectionEnd, newText);
+        document.replaceString(selectionStart, selectionEnd, newText);
 
         int startOffset = caretOffset + 1;
         int endOffset = caretOffset + newText.length() - 1;
-        int length = editor.getDocument().getTextLength();
+        int length = document.getTextLength();
 
         // selection is removed here
         if (endOffset <= length) {
@@ -170,7 +171,7 @@ public final class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
       if (textRange != null && textRange.getLength() >= 2 &&
           (selectionStart == textRange.getStartOffset() || textRange.getEndOffset() == selectionStart + 1)) {
         int matchingCharOffset = selectionStart == textRange.getStartOffset() ? textRange.getEndOffset() - 1 : textRange.getStartOffset();
-        Document document = editor.getDocument();
+        Document document = editor.getUiDocument();
         CharSequence charsSequence = document.getCharsSequence();
         if (matchingCharOffset < charsSequence.length()) {
           char matchingChar = charsSequence.charAt(matchingCharOffset);
