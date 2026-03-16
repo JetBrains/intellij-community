@@ -44,6 +44,7 @@ jvm_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinc-kotlin-compiler-tests-provided",
     "//platform/statistics",
   ]
 )
@@ -104,7 +105,7 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-tests_test_lib",
     "//platform/external-system-api/testFramework",
     "//platform/external-system-api/testFramework:testFramework_test_lib",
-    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:kotlinc-kotlin-compiler-tests-provided",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
     "//platform/statistics:statistics_test_lib",
