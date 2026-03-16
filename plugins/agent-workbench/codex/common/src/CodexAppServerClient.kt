@@ -519,14 +519,18 @@ class CodexAppServerClient(
       ?.trim()
       ?.takeIf { it.isNotEmpty() }
     val executable = configuredExecutable ?: CodexCliUtils.CODEX_COMMAND
+    val requestedWorkingDirectory = workingDirectoryPath
+    val effectiveWorkingDirectory = requestedWorkingDirectory?.takeIf(Files::isDirectory)
+    LOG.debug {
+      "Starting Codex app-server(executable=$executable, executableSource=${if (configuredExecutable != null) "configured" else "default"}, requestedWorkingDirectory=${requestedWorkingDirectory ?: "<none>"}, effectiveWorkingDirectory=${effectiveWorkingDirectory ?: "<none>"}, environmentOverrideCount=${environmentOverrides.size})"
+    }
     val process = try {
       GeneralCommandLine(executable, "-c", CODEX_AUTO_UPDATE_CONFIG, "app-server")
         .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
         .withEnvironment(environmentOverrides)
         .apply {
-          val directory = workingDirectoryPath
-          if (directory != null && Files.isDirectory(directory)) {
-            withWorkingDirectory(directory)
+          if (effectiveWorkingDirectory != null) {
+            withWorkingDirectory(effectiveWorkingDirectory)
           }
         }
         .createProcess()

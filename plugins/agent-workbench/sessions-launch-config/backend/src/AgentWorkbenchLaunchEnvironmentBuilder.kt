@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.launch.config.backend
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.expandPathEnvVar
@@ -94,6 +95,9 @@ private fun ensureCommandShimDirectory(
     if (!osFamily.isWindows) {
       NioFiles.setExecutable(shimPath)
     }
+  }
+  AGENT_WORKBENCH_PROJECT_LAUNCH_CONFIG_LOG.debug {
+    "Prepared Agent Workbench command shims for provider=${provider.value}, shimDirectory=${targetPathStringResolver(shimDirectory)}, shimNames=${commandShims.keys.map { commandShimFileName(it, osFamily) }.sorted()}"
   }
   return shimDirectory
 }
