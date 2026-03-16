@@ -8,7 +8,21 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.EditorTextField
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import javax.swing.JTabbedPane
 import javax.swing.KeyStroke
+
+internal fun selectAdjacentPromptTab(tabbedPane: JTabbedPane, direction: Int) {
+  val offset = when {
+    direction > 0 -> 1
+    direction < 0 -> -1
+    else -> return
+  }
+  val tabCount = tabbedPane.tabCount
+  if (tabCount <= 1) return
+
+  val currentIndex = tabbedPane.selectedIndex.takeIf { it >= 0 } ?: 0
+  tabbedPane.selectedIndex = (currentIndex + offset + tabCount) % tabCount
+}
 
 internal fun installPromptEnterHandlers(
   promptArea: EditorTextField,

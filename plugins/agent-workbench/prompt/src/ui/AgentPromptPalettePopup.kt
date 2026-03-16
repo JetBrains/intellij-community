@@ -375,9 +375,12 @@ internal class AgentPromptPalettePopup(
         isTabQueueShortcutEnabled(
           targetMode = currentTargetMode(),
           selectedProvider = providerSelector.selectedProvider?.bridge,
+          hasNextPromptTab = tabbedPane.selectedIndex in 0 until tabbedPane.tabCount - 1,
         )
       },
       onSubmit = ::submit,
+      onTabFocusTransfer = { selectAdjacentPromptTab(tabbedPane, 1) },
+      onTabBackwardFocusTransfer = { selectAdjacentPromptTab(tabbedPane, -1) },
     )
 
     tabbedPane.addChangeListener(ChangeListener {
@@ -997,6 +1000,7 @@ internal class AgentPromptPalettePopup(
         resolveDefaultFooterHintMessageKey(
           targetMode = currentTargetMode(),
           selectedProvider = providerSelector.selectedProvider?.bridge,
+          hasNextPromptTab = tabbedPane.selectedIndex in 0 until tabbedPane.tabCount - 1,
         )
       )
     }

@@ -29,6 +29,21 @@ class AgentPromptFooterHintDecisionsTest {
   }
 
   @Test
+  fun existingTaskWithNextPromptTabUsesDefaultFooterHintEvenForCodex() {
+    val selectedProvider = testPromptProviderBridge(
+      provider = AgentSessionProvider.CODEX,
+      supportsTabQueueShortcut = true,
+    )
+    assertThat(
+      resolveDefaultFooterHintMessageKey(
+        targetMode = PromptTargetMode.EXISTING_TASK,
+        selectedProvider = selectedProvider,
+        hasNextPromptTab = true,
+      )
+    ).isEqualTo("popup.footer.hint")
+  }
+
+  @Test
   fun nonCodexOrNonExistingModeUsesDefaultFooterHint() {
     val codexProvider = testPromptProviderBridge(
       provider = AgentSessionProvider.CODEX,

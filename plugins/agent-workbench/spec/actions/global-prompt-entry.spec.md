@@ -103,15 +103,15 @@ Prompt-context collection and rendering contracts are specified separately in `s
 - Keyboard behavior contract:
   - `Enter` runs submit action,
   - `Shift+Enter` inserts line break,
-  - `Tab` submits only when tab-queue shortcut is enabled,
-  - otherwise `Tab` / `Shift+Tab` perform forward/backward focus traversal.
+  - `Tab` submits only when tab-queue shortcut is enabled; otherwise it selects the next available prompt tab and wraps around,
+  - `Shift+Tab` selects the previous available prompt tab and wraps around.
   [@test] ../../prompt/testSrc/ui/AgentPromptEnterHandlersTest.kt
 
-- Tab-queue shortcut must be enabled only when target mode is `EXISTING_TASK` and selected provider is `CODEX`.
+- Tab-queue shortcut must be enabled only when target mode is `EXISTING_TASK`, selected provider is `CODEX`, and there is no next prompt tab to select.
   [@test] ../../prompt/testSrc/ui/AgentPromptFooterHintDecisionsTest.kt
 
 - Footer hint contract:
-  - existing-task Codex mode uses Codex-specific hint key,
+  - existing-task Codex mode uses Codex-specific hint key only when the tab-queue shortcut is enabled,
   - all other states use default hint key,
   - explicit existing-task selection hint is shown only when mode is `EXISTING_TASK`, selection is empty, and provider is non-Codex.
   [@test] ../../prompt/testSrc/ui/AgentPromptFooterHintDecisionsTest.kt
