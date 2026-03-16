@@ -203,7 +203,7 @@ class ExecutionToolset : McpToolset {
     @property:McpDescription("Captured process output snapshot. The snapshot includes up to the first ${Constants.RUN_CONFIGURATION_PREVIEW_MAX_LENGTH} characters of process output; when additional output exists, `<truncated>` is appended to the preview.")
     val output: String,
 
-    @property:McpDescription("Path to a temp file containing the full raw output. The file may continue growing while the process is still running.")
+    @property:McpDescription("Path to a temp file containing the full raw output. The file may continue growing while the process is still running and remains available while the IDE is running.")
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val fullOutputPath: String? = null,
 
