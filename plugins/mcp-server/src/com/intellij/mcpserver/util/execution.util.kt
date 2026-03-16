@@ -3,6 +3,7 @@ package com.intellij.mcpserver.util
 import com.intellij.execution.CommonProgramRunConfigurationParameters
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.Executor
+import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
@@ -378,9 +379,6 @@ private suspend fun startResolvedRunConfiguration(
   val startedDeferred = CompletableDeferred<StartedRunConfigurationExecution>()
 
   withContext(Dispatchers.EDT) {
-    val runner: ProgramRunner<*>? = ProgramRunner.getRunner(executor.id, resolvedConfiguration.runConfiguration)
-    if (runner == null) mcpFail("No suitable runner found for configuration '${resolvedConfiguration.settings.name}'")
-
     val environment = createExecutionEnvironment(
       project = project,
       executor = executor,
@@ -388,13 +386,13 @@ private suspend fun startResolvedRunConfiguration(
       useOriginalSettings = resolvedConfiguration.useOriginalSettings,
       runnerAndConfigurationSettings = resolvedConfiguration.settings,
     )
-    environment.callback = createProcessCallback(
+    val callback = createProcessCallback(
       project = project,
       executorId = executor.id,
       sessionName = resolvedConfiguration.settings.name,
       startedDeferred = startedDeferred,
     )
-    runner.execute(environment)
+    ProgramRunnerUtil.executeConfigurationAsync(environment, false, true, callback)
   }
 
   return try {
@@ -419,7 +417,11 @@ private fun createProcessCallback(
       error ?: IllegalStateException("Process not started by some reasons. Probably build process failed."))
   }
 
-  override fun processStarted(descriptor: RunContentDescriptor) {
+  override fun processStarted(descriptor: RunContentDescriptor?) {
+    if (descriptor == null) {
+      startedDeferred.completeExceptionally(IllegalStateException("The process has failed to start."))
+      return
+    }
     val processHandler = descriptor.processHandler
     if (processHandler == null) {
       startedDeferred.completeExceptionally(
