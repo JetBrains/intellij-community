@@ -663,6 +663,10 @@ public final class HttpRequests {
         ProgressManager.checkCanceled();
         throw !NetUtils.isSniEnabled() ? new SSLException("SSL error probably caused by disabled SNI", e) : e;
       }
+      catch (SSLException e) {
+        ProgressManager.checkCanceled();
+        throw e;
+      }
 
       if (LOG.isDebugEnabled()) {
         LOG.debug("response from " + url + ": " + responseCode);
