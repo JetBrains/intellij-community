@@ -498,9 +498,8 @@ private suspend fun awaitExitCode(exitCodeDeferred: CompletableDeferred<Int>, ti
 }
 
 private fun createRunConfigurationOutputFile(runConfigName: String): Path {
-  logger
   return try {
-    Files.createTempFile(PathManager.getTempDir().createDirectories(), "ij_run_" + sanitizeFileName(runConfigName), ".log")
+    Files.createTempFile(PathManager.getTempDir().createDirectories(), "ij_run__" + sanitizeFileName(runConfigName) {c -> c.isWhitespace() } + "_", ".log")
   }
   catch (e: Exception) {
     rethrowControlFlowException(e)
