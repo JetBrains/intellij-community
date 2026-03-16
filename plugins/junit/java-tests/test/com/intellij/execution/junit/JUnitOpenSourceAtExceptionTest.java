@@ -28,8 +28,11 @@ public class JUnitOpenSourceAtExceptionTest extends LightJavaCodeInsightFixtureT
   public void testStackTraceParserAcceptsInnerClassStacktrace() {
     final SMTestProxy testProxy = new SMTestProxy("testMe", false, "java:test://org.example.Outer1Test$Outer2Test$InnerTest/testMe");
     testProxy.setTestFailed("failure", """
-      \tat junit.framework.Assert.fail(Assert.java:57)
-      \tat org.example.Outer1Test$Outer2Test$InnerTest.testMe(Dummy.java:9)
+      \tat junit.framework.Assert.fail(Assert.java:55)
+      \tat junit.framework.Assert.fail(Assert.java:64)
+      \tat junit.framework.TestCase.fail(TestCase.java:230)
+      \tat org.example.Outer1Test$Outer2Test$InnerTest.testMe(Dummy.java:8)
+      \tat java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
       """, true);
 
     doTest("""
@@ -40,11 +43,68 @@ public class JUnitOpenSourceAtExceptionTest extends LightJavaCodeInsightFixtureT
                  public static class InnerTest extends junit.framework.TestCase {
                    public void testMe() {
                      int i = 0;
-                     fail();
+                     fail(); // here
                    }
                  }
                }
-             }""", testProxy, 8);
+             }""", testProxy, 7);
+  }
+
+  public void testStackTraceParserAcceptsLocalClassStacktrace() {
+    final SMTestProxy testProxy = new SMTestProxy("testMe", false, "java:test://org.example.MyTest$InnerTest/testMe");
+    testProxy.setTestFailed("failure", """
+      \tat junit.framework.Assert.fail(Assert.java:55)
+      \tat junit.framework.Assert.fail(Assert.java:64)
+      \tat junit.framework.TestCase.fail(TestCase.java:230)
+      \tat org.example.MyTest$InnerTest$1LocalClass.myFail(Dummy.java:9)
+      \tat org.example.MyTest$InnerTest.testMe(Dummy.java:13)
+      \tat java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+      """, true);
+
+    doTest("""
+             package org.example;
+             
+             final class MyTest {
+                 public static class InnerTest extends junit.framework.TestCase {
+                   public void testMe() {
+                     class LocalClass {
+                       public void myFail() {
+                         int i = 0;
+                         fail();
+                       }
+                     }
+                     LocalClass cls = new LocalClass();
+                     cls.myFail(); // here
+                   }
+                 }
+             }
+             """, testProxy, 12);
+  }
+
+  public void testStackTraceParserAcceptsAnnonymousClassStacktrace() {
+    final SMTestProxy testProxy = new SMTestProxy("testMe", false, "java:test://org.example.MyTest$InnerTest/testMe");
+    testProxy.setTestFailed("failure", """
+      \tat junit.framework.Assert.fail(Assert.java:57)
+      \tat junit.framework.TestCase.fail(TestCase.java:223)
+      \tat org.example.MyTest$InnerTest.lambda$testMe$0(Dummy.java:7)
+      \tat org.example.MyTest$InnerTest.testMe(Dummy.java:9)
+      \tat java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+      """, true);
+
+    doTest("""
+             package org.example;
+             
+             final class MyTest {
+               public static class InnerTest extends junit.framework.TestCase {
+                 public void testMe() {
+                   java.util.function.Consumer<String> check = str -> {
+                     fail(str);
+                   };
+                   check.accept("test failed"); // here
+                 }
+               }
+             }
+             """, testProxy, 8);
   }
 
   public void testStackTraceParserAcceptsJavaStacktrace() {
