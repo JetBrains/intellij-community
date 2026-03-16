@@ -9,9 +9,17 @@ import os
 import sys
 
 def is_safe_path(basedir, path):
-    base = os.path.abspath(basedir)
-    target = os.path.abspath(path)
+    base = os.path.realpath(basedir)
+    target = os.path.realpath(path)
     return os.path.commonpath([base]) == os.path.commonpath([base, target])
+def is_safe_link(basedir, tarinfo):
+    if not (tarinfo.issym() or tarinfo.islnk()):
+        return True
+    if os.path.isabs(tarinfo.linkname):
+        return False
+    link_dir = os.path.dirname(os.path.join(basedir, tarinfo.name))
+    target_path = os.path.normpath(os.path.join(link_dir, tarinfo.linkname))
+    return is_safe_path(basedir, target_path)
 def main():
     if len(sys.argv) < 3:
         print("Usage: python docker-image-extract.py <image.tar> <destination_dir>")
@@ -20,6 +28,7 @@ def main():
     extracted_path = sys.argv[2]
     if not os.path.exists(extracted_path):
         os.makedirs(extracted_path)
+    extracted_path = os.path.realpath(extracted_path)
     try:
         image = tarfile.open(image_path)
     except Exception as e:
@@ -43,7 +52,10 @@ def main():
         for tarinfo in layer_tar:
             dest = os.path.normpath(os.path.join(extracted_path, tarinfo.name))
             if not is_safe_path(extracted_path, dest):
-                print(f"  [!] SECURITY WARNING: Skipping unsafe file (Path Traversal): {tarinfo.name}")
+                print(f"  [!] SECURITY WARNING: Skipping unsafe path: {tarinfo.name}")
+                continue
+            if not is_safe_link(extracted_path, tarinfo):
+                print(f"  [!] SECURITY WARNING: Skipping unsafe link: {tarinfo.name} -> {tarinfo.linkname}")
                 continue
             print(f"  ... {tarinfo.name}")
             if tarinfo.isdev():
