@@ -48,24 +48,24 @@ public final class BinaryFileTypeDecompilers extends FileTypeExtension<BinaryFil
    */
   @ApiStatus.Internal
   @Deprecated
-  public <T> T allowDecompileOnEDT(@NotNull Computable<T> computation) {
-    isAllowDecompileOnEDT(true);
+  public <T> T allowDecompilerSlowOperation(@NotNull Computable<T> computation) {
+    allowDecompilerSlowOperation(true);
     try {
       return computation.compute();
     }
     finally {
-      isAllowDecompileOnEDT(false);
+      allowDecompilerSlowOperation(false);
     }
   }
 
   private final ThreadLocal<Boolean> myAllowDecompileOnEDT = ThreadLocal.withInitial(() -> false);
 
   @ApiStatus.Internal
-  public boolean isAllowDecompileOnEDT() {
+  public boolean isAllowedDecompilerSlowOperation() {
     return myAllowDecompileOnEDT.get();
   }
 
-  private void isAllowDecompileOnEDT(boolean enabled) {
+  private void allowDecompilerSlowOperation(boolean enabled) {
     boolean oldValue = myAllowDecompileOnEDT.get();
     assert oldValue != enabled : "Non-paired myAllowDecompileOnEDT mode";
     myAllowDecompileOnEDT.set(enabled);

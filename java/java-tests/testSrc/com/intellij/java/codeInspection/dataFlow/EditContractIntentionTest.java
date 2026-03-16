@@ -40,7 +40,7 @@ public final class EditContractIntentionTest extends LightJavaCodeInsightFixture
       stringClass.getConstructors(), ctr -> ctr.getParameterList().getParametersCount() == 3 &&
                                             PsiTypes.intType().equals(ctr.getParameterList().getParameter(1).getType()));
     assertNotNull(constructor);
-    int offset = BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> constructor.getTextOffset());
+    int offset = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> constructor.getTextOffset());
     ActionContext ctx = new ActionContext(getProject(), constructor.getContainingFile(), offset, TextRange.create(offset, offset), null);
     Presentation presentation = intention.getPresentation(ctx);
     assertNotNull(presentation);

@@ -468,7 +468,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     Runnable runnable = () -> {
       BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
       Document document =
-        BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> PsiDocumentManager.getInstance(myProject).getDocument(file));
+        BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> PsiDocumentManager.getInstance(myProject).getDocument(file));
       assert document != null;
       String text = document.getText();
 

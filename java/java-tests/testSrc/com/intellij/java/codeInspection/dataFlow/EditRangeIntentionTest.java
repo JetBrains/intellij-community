@@ -42,7 +42,7 @@ public final class EditRangeIntentionTest extends LightJavaCodeInsightFixtureTes
                                             PsiTypes.intType().equals(ctr.getParameterList().getParameter(1).getType()));
     assertNotNull(constructor);
     PsiParameter parameter = constructor.getParameterList().getParameters()[1];
-    int offset = BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> parameter.getTextRange().getStartOffset());
+    int offset = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> parameter.getTextRange().getStartOffset());
     ActionContext ctx = new ActionContext(getProject(), parameter.getContainingFile(), offset, TextRange.create(offset, offset), null);
     Presentation presentation = intention.getPresentation(ctx);
     assertNotNull(presentation);

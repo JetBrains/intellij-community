@@ -18,7 +18,7 @@ public abstract class PredefinedConfigurationsTestCase extends StructuralSearchT
 
   protected void doTest(Configuration template, String source, LanguageFileType fileType, String... results) {
     doTest(template, source, fileType,
-           e -> BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> StructuralSearchUtil.getPresentableElement(e).getText()),
+           e -> BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> StructuralSearchUtil.getPresentableElement(e).getText()),
            results);
   }
 

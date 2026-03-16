@@ -935,7 +935,7 @@ public final class PlatformTestUtil {
   }
 
   public static void assertFilesEqual(@NotNull VirtualFile fileExpected, @NotNull VirtualFile fileActual) throws IOException {
-    var actual = BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> {
+    var actual = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> {
       try {
         return fileText(fileActual);
       }
@@ -943,7 +943,7 @@ public final class PlatformTestUtil {
         throw new RuntimeException(e);
       }
     });
-    var expected = BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> {
+    var expected = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> {
       try {
         return fileText(fileExpected);
       }

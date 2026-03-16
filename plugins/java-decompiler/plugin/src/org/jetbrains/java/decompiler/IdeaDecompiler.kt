@@ -123,7 +123,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     val application = ApplicationManager.getApplication()
 
     if (application.isEAP && application.isInternal && Registry.`is`("decompiler.assert.thread")) {
-      if ((application.isDispatchThread || application.isWriteAccessAllowed) && !BinaryFileTypeDecompilers.getInstance().isAllowDecompileOnEDT) {
+      if ((application.isDispatchThread || application.isWriteAccessAllowed) && !BinaryFileTypeDecompilers.getInstance().isAllowedDecompilerSlowOperation) {
         logger.error(DECOMPILER_MUST_NOT_BE_CALLED_WITH_WRITE_ACCESS)
       }
     }

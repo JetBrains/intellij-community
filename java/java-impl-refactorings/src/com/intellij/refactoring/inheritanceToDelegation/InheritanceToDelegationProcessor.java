@@ -833,7 +833,7 @@ public final class InheritanceToDelegationProcessor extends BaseRefactoringProce
             if (outerMethod == null) {
               String visibility = checkOuterClassAbstractMethod(signature);
               //todo fix IDEA-387050
-              PsiMethod newOuterMethod = BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> (PsiMethod)myClass.add(myMethod));
+              PsiMethod newOuterMethod = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> (PsiMethod)myClass.add(myMethod));
               PsiUtil.setModifierProperty(newOuterMethod, visibility, true);
               if (containingClass.isInterface() &&
                   !innerClass.isInterface() &&

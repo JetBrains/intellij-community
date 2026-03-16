@@ -538,7 +538,7 @@ public final class GenerateMembersUtil {
     }
     //todo fix IDEA-387050
     final PsiElement copy =
-      BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() ->
+      BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() ->
                                                                     ObjectUtils.notNull(typeParameter instanceof PsiCompiledElement
                                                                                         ? ((PsiCompiledElement)typeParameter).getMirror()
                                                                                         : typeParameter, typeParameter).copy());

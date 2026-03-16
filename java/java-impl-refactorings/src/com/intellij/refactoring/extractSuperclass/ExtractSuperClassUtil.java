@@ -166,7 +166,7 @@ public final class ExtractSuperClassUtil {
       body.add(statement);
       //todo fix IDEA-387050
       BinaryFileTypeDecompilers.getInstance()
-        .allowDecompileOnEDT(() -> constructor.getThrowsList().replace(baseConstructor.getThrowsList()));
+        .allowDecompilerSlowOperation(() -> constructor.getThrowsList().replace(baseConstructor.getThrowsList()));
     }
   }
 

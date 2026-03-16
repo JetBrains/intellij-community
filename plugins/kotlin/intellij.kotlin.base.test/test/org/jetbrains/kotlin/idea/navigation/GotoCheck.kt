@@ -127,7 +127,7 @@ object GotoCheck {
                 |    presentableText: ${presentation?.presentableText}
                 |    locationString: ${presentation?.locationString}
                 |    icon: ${presentation?.getIcon(false)}
-                |TargetElement: ${BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT{ psiTarget?.text?.lines()?.first()?.trim()}}
+                |TargetElement: ${BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation{ psiTarget?.text?.lines()?.first()?.trim()}}
                 |QualifiedName: ${model.getFullName(element)}
             """.trimMargin()
         }

@@ -35,7 +35,7 @@ fun PsiElement.renderAsGotoImplementation(renderModule: Boolean = false): String
     val presentation = (navigationElement as NavigationItem).presentation
 
     if (presentation == null) {
-        return BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT {
+        return BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation {
             val elementText = text
             elementText ?: navigationElement.text
         }

@@ -302,7 +302,7 @@ public final class GenerationUtil {
         // todo fix IDEA-387059
         PsiParameter finalParameter = parameter;
         parameter =
-          BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> (PsiParameter)((PsiCompiledElement)finalParameter).getMirror());
+          BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> (PsiParameter)((PsiCompiledElement)finalParameter).getMirror());
       }
 
       if (i > 0) text.append(", ");  //append ','

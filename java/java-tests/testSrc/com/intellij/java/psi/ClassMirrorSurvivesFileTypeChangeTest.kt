@@ -16,7 +16,7 @@ internal class ClassMirrorSurvivesFileTypeChangeTest : LightJavaCodeInsightTestC
     val scope = GlobalSearchScope.allScope(project)
     val clazz = JavaPsiFacade.getInstance(project).findClass(fqn, scope) as ClsClassImpl
 
-    BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT {
+    BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation {
       assertTrue(clazz.isValid)
       assertTrue(clazz.mirror.isValid)
 

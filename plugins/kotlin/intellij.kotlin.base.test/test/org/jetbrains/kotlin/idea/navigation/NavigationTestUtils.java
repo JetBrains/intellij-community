@@ -100,7 +100,7 @@ public final class NavigationTestUtils {
         int refNumber = 1;
         for (PsiElement navigationElement : navigableElements) {
             Pair<Integer, Integer> numberAndOffset = new Pair<>(refNumber++, BinaryFileTypeDecompilers.getInstance()
-                    .allowDecompileOnEDT(() -> navigationElement.getTextOffset()));
+                    .allowDecompilerSlowOperation(() -> navigationElement.getTextOffset()));
             filesToNumbersAndOffsets.putValue(navigationElement.getContainingFile().getVirtualFile(), numberAndOffset);
         }
 

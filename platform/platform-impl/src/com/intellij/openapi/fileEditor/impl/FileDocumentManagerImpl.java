@@ -845,7 +845,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       project,
       null,
       indicator -> {
-        decompiledText[0] = BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> LoadTextUtil.loadText(file));
+        decompiledText[0] = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> LoadTextUtil.loadText(file));
       }
     );
 

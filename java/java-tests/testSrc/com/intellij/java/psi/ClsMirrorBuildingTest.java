@@ -87,7 +87,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     assertNotNull(clsPath, file);
 
     DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
-      BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(()->{
+      BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(()->{
         assertSameLinesWithFile(txtPath, ClsFileImpl.decompile(file).toString());
         PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
         if (psiFile instanceof PsiCompiledElement compiledElement) {
@@ -163,7 +163,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     FileUtil.copy(new File(testDir, "pkg/ReuseTestV1.class"), classFile);
     vFile.refresh(false, false);
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    String text1 = BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> psiFile.getText());
+    String text1 = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> psiFile.getText());
     assertTrue(text1, text1.contains("private int f1"));
     assertFalse(text1, text1.contains("private int f2"));
     Document doc1 = FileDocumentManager.getInstance().getCachedDocument(vFile);
@@ -187,7 +187,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     assertNotNull(path, vFile);
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
     assertNotNull(path, psiFile);
-    int length = BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> psiFile.getTextLength());
+    int length = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> psiFile.getTextLength());
     for (int i = 0; i < length; i++) {
       PsiElement element = psiFile.findElementAt(i);
       assertTrue(i + ":" + element, element != null && !(element instanceof ClsElementImpl));

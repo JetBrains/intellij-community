@@ -76,7 +76,7 @@ sealed interface PsiElementModel {
         fun create(psi: PsiElement): PsiElementModel {
             val rangeResult = runCatching {
                 //todo fix KTIJ-37984
-                BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT{ psi.textRange } // some elements cannot provide their range, e.g., they cannot be properly decompiled due to obfuscation
+                BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation{ psi.textRange } // some elements cannot provide their range, e.g., they cannot be properly decompiled due to obfuscation
             }
             val range = rangeResult.getOrNull()
             if (range != null) {

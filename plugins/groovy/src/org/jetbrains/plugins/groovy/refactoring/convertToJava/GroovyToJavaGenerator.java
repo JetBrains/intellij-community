@@ -55,7 +55,7 @@ public final class GroovyToJavaGenerator {
   public static String generateMethodStub(@NotNull PsiMethod method) {
     if (!(method instanceof GroovyPsiElement)) {
       //todo fix IDEA-387059
-      return BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> method.getText());
+      return BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> method.getText());
     }
 
     final ClassItemGenerator generator = new StubGenerator(new StubClassNameProvider(Collections.emptySet()));

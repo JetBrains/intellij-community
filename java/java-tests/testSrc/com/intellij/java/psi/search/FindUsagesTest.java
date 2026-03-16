@@ -147,7 +147,7 @@ public class FindUsagesTest extends JavaPsiTestCase {
 
   public void testLibraryClassUsageFromDecompiledSource() {
     PsiElement decompiled =
-      BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() ->
+      BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() ->
         ((PsiCompiledElement)myJavaFacade.findClass("javax.swing.JLabel", GlobalSearchScope.allScope(myProject))).getMirror());
     assertEquals(2, ReferencesSearch.search(decompiled, GlobalSearchScope.projectScope(myProject)).findAll().size());
   }
