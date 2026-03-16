@@ -5,7 +5,7 @@ import java.util.*;
 public class NullabilityJdk11 {
 
   void test(List<String> input) {
-    List<String> listArray = List.of(new String[]{"x", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x", <warning descr="'null' is stored to an array of non-null elements">null</warning>});
+    List<String> listArray = List.of(new String[]{"x", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x", <warning descr="'null' is stored to an array of non-null annotated elements">null</warning>});
     if (<warning descr="Condition 'List.copyOf(input).get(12) == null' is always 'false'">List.copyOf(input).get(12) == null</warning>) {}
     
     List<Integer> list = List.of(1,2,3,<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
