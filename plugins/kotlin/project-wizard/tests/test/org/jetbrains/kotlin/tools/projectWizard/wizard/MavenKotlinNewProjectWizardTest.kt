@@ -17,9 +17,9 @@ internal class MavenKotlinNewProjectWizardTest : MavenKotlinNewProjectWizardTest
 
     override fun setUp() {
         super.setUp()
-        overrideKotlinPluginVersion("2.3.10")
+        overrideKotlinPluginVersion("2.3.20")
     }
 
     @Test
-    fun testSimpleProjectKotlin_2_3_10() = runNewProjectTestCase()
+    fun testSimpleProjectKotlin_2_3_20() = runNewProjectTestCase()
 }
