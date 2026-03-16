@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class JpsMavenModuleSerializationTest {
   @Test
   public void testLoadProject() {
-    JpsProjectData projectData = JpsProjectData.loadFromTestData("plugins/maven/jps-plugin/testData/compiler/classpathTest", getClass());
+    JpsProjectData projectData = JpsProjectData.loadFromTestData("plugins/maven/jps/testData/compiler/classpathTest", getClass());
     List<JpsModule> modules = projectData.getProject().getModules();
     assertEquals(3, modules.size());
     JpsModule dep = modules.get(0);

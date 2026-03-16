@@ -367,20 +367,6 @@ object MavenImportUtil {
     }
   }
 
-  internal fun getModuleNames(project: Project, pomXml: VirtualFile): List<String> {
-    return getModuleEntities(project, pomXml)
-      .map { it.name }
-      .toList()
-  }
-
-  internal fun getModuleEntities(project: Project, pomXml: VirtualFile): List<ModuleEntity> {
-    val storage = project.workspaceModel.currentSnapshot
-    val pomXmlPath = pomXml.toNioPath()
-    return storage.entities<ModuleEntity>()
-      .filter { it.exModuleOptions?.linkedProjectId?.toNioPathOrNull() == pomXmlPath }
-      .toList()
-  }
-
   internal fun createPreviewModule(project: Project, contentRoot: VirtualFile): Module? {
     return WriteAction.compute<Module?, RuntimeException?>(ThrowableComputable {
       val modulePath = contentRoot.toNioPath().resolve(project.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION)

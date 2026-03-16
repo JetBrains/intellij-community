@@ -1121,8 +1121,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/groovy/intellij.maven.groovy.iml" filepath="$PROJECT_DIR$/plugins/maven/groovy/intellij.maven.groovy.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/groovy/intellij.maven.groovy.tests.iml" filepath="$PROJECT_DIR$/plugins/maven/groovy/intellij.maven.groovy.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/jps/intellij.maven.jps.iml" filepath="$PROJECT_DIR$/plugins/maven/jps/intellij.maven.jps.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/maven/jps/intellij.maven.jps.tests.iml" filepath="$PROJECT_DIR$/plugins/maven/jps/intellij.maven.jps.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/jps/ide/intellij.maven.jps.ide.iml" filepath="$PROJECT_DIR$/plugins/maven/jps/ide/intellij.maven.jps.ide.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/maven/jps/intellij.maven.jps.tests.iml" filepath="$PROJECT_DIR$/plugins/maven/jps/intellij.maven.jps.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/model/intellij.maven.model.iml" filepath="$PROJECT_DIR$/plugins/maven/model/intellij.maven.model.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/performanceTesting/intellij.maven.performanceTesting.iml" filepath="$PROJECT_DIR$/plugins/maven/performanceTesting/intellij.maven.performanceTesting.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/plugin/intellij.maven.plugin.iml" filepath="$PROJECT_DIR$/plugins/maven/plugin/intellij.maven.plugin.iml" />

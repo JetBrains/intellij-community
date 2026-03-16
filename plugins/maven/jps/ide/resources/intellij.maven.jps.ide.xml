@@ -1,2 +1,17 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.compiler"/>
+    <module name="intellij.maven.jps"/>
+    <module name="intellij.platform.jps.build"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <compiler.task execute="BEFORE" implementation="com.intellij.maven.jps.ide.compilation.MavenResourceConfigurationGeneratorCompileTask"/>
+
+    <compiler.updateResourcesBuildContributor implementation="com.intellij.maven.jps.ide.execution.MavenUpdateResourcesBuildContributor"/>
+
+    <junitPatcher implementation="com.intellij.maven.jps.ide.execution.MavenJUnitPatcher"/>
+  </extensions>
 </idea-plugin>

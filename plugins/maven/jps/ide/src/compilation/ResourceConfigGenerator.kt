@@ -1,13 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.project.compilation
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.maven.jps.ide.compilation
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.exModuleOptions
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.util.io.UnsyncByteArrayOutputStream
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import org.jdom.Element
@@ -15,7 +21,6 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getMavenModuleType
-import org.jetbrains.idea.maven.importing.MavenImportUtil.getModuleEntities
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.model.MavenResource
 import org.jetbrains.idea.maven.project.MavenProject
@@ -385,6 +390,14 @@ internal class ResourceConfigGenerator(
       if (!ejbClientCfg.isEmpty) {
         projectCfg.ejbClientArtifactConfigs.put(MavenUtil.getEjbClientArtifactName(moduleName, true), ejbClientCfg)
       }
+    }
+
+    internal fun getModuleEntities(project: Project, pomXml: VirtualFile): List<ModuleEntity> {
+      val storage = project.workspaceModel.currentSnapshot
+      val pomXmlPath = pomXml.toNioPath()
+      return storage.entities<ModuleEntity>()
+        .filter { it.exModuleOptions?.linkedProjectId?.toNioPathOrNull() == pomXmlPath }
+        .toList()
     }
   }
 }

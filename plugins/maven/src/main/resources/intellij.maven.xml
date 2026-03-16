@@ -11,8 +11,6 @@
     <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.ui"/>
-    <module name="intellij.maven.jps"/>
-    <module name="intellij.platform.jps.build"/>
     <module name="intellij.properties.backend"/>
     <module name="intellij.properties.backend.psi"/>
     <module name="intellij.spellchecker"/>
@@ -127,7 +125,6 @@
     <configuration.ModuleStructureExtension
       implementation="org.jetbrains.idea.maven.project.projectRoot.MavenModuleStructureExtension"/>
 
-    <compiler.task execute="BEFORE" implementation="org.jetbrains.idea.maven.project.MavenResourceConfigurationGeneratorCompileTask"/>
     <compiler.task execute="BEFORE" implementation="org.jetbrains.idea.maven.tasks.MavenTasksManager$MavenBeforeCompileTask"/>
     <compiler.task execute="AFTER" implementation="org.jetbrains.idea.maven.tasks.MavenTasksManager$MavenAfterCompileTask"/>
 
@@ -161,8 +158,6 @@
     <runConfigurationProducer implementation="org.jetbrains.idea.maven.execution.MavenConfigurationProducer"/>
     <orderEnumerationHandlerFactory implementation="org.jetbrains.idea.maven.execution.MavenOrderEnumeratorHandler$FactoryImpl"/>
     <executionTargetLanguageRuntimeType implementation="org.jetbrains.idea.maven.execution.target.MavenRuntimeType"/>
-
-    <junitPatcher implementation="org.jetbrains.idea.maven.execution.MavenJUnitPatcher"/>
 
     <programRunner implementation="org.jetbrains.idea.maven.execution.build.DelegateBuildRunner" id="mavenDelegateBuildRunner"/>
 
@@ -364,8 +359,6 @@
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectSettings"/>
 
     <projectModelModifier implementation="org.jetbrains.idea.maven.importing.MavenProjectModelModifier"/>
-
-    <compiler.updateResourcesBuildContributor implementation="org.jetbrains.idea.maven.execution.MavenUpdateResourcesBuildContributor"/>
 
     <projectTaskRunner implementation="org.jetbrains.idea.maven.execution.build.MavenProjectTaskRunner"/>
     <runAnything.executionProvider implementation="org.jetbrains.idea.maven.execution.MavenRunAnythingProvider"/>

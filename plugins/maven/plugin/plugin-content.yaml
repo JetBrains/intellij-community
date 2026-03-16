@@ -105,6 +105,9 @@
 - name: lib/modules/intellij.maven.groovy.jar
   contentModules:
   - name: intellij.maven.groovy
+- name: lib/modules/intellij.maven.jps.ide.jar
+  contentModules:
+  - name: intellij.maven.jps.ide
 - name: lib/modules/intellij.maven.jps.jar
   contentModules:
   - name: intellij.maven.jps

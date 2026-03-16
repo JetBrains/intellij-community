@@ -27,7 +27,7 @@ import java.io.IOException;
 
 public class JpsMavenJavaBuildingTest extends JpsBuildTestCase {
   public void testCompileJava() throws IOException {
-    File srcDir = PathManagerEx.findFileUnderProjectHome("plugins/maven/jps-plugin/testData/compiler/classpathTest", getClass());
+    File srcDir = PathManagerEx.findFileUnderProjectHome("plugins/maven/jps/testData/compiler/classpathTest", getClass());
     File workDir = FileUtil.createTempDirectory("mavenJavaBuild", null);
     FileUtil.copyDir(srcDir, workDir);
     addJdk("1.6");

@@ -46,7 +46,6 @@
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
-    <orderEntry type="module" module-name="intellij.maven.jps" />
     <orderEntry type="module" module-name="intellij.maven.artifactResolver.m31" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
@@ -74,10 +73,8 @@
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="slf4j-jdk14" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
-    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.maven.model" />

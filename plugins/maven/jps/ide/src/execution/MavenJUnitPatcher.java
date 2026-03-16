@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.execution;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.maven.jps.ide.execution;
 
 import com.intellij.execution.JUnitPatcher;
 import com.intellij.execution.configurations.JavaParameters;
@@ -14,7 +14,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +27,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenTestRunningSettings;
-import org.jetbrains.idea.maven.utils.MavenFilteredJarUtils;
+import com.intellij.maven.jps.ide.utils.MavenFilteredJarUtils;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.jps.maven.model.impl.MavenFilteredJarConfiguration;
 
@@ -372,20 +371,34 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
     if (excludesElement == null) {
       return Collections.emptyList();
     }
+
     String rawText = excludesElement.getTextTrim();
     List<String> excludes = new ArrayList<>();
+
     if (!rawText.isEmpty()) {
-      StreamEx.split(rawText, ',').map(String::trim).into(excludes);
+      for (String part : rawText.split(",")) {
+        String trimmed = part.trim();
+        if (!trimmed.isEmpty()) {
+          excludes.add(trimmed);
+        }
+      }
     }
+
     for (Element child : excludesElement.getChildren()) {
       String name = child.getName();
       if (name != null && EXCLUDE_SUBTAG_NAMES.contains(name)) {
         String excludeItem = child.getTextTrim();
         if (!excludeItem.isEmpty()) {
-          StreamEx.split(excludeItem, ',').map(String::trim).into(excludes);
+          for (String part : excludeItem.split(",")) {
+            String trimmed = part.trim();
+            if (!trimmed.isEmpty()) {
+              excludes.add(trimmed);
+            }
+          }
         }
       }
     }
+
     return excludes;
   }
 

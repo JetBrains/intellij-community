@@ -1425,7 +1425,8 @@ plugins/maven/artifact-resolver-m31
 plugins/maven/artifact-resolver/common
 plugins/maven/completion
 plugins/maven/groovy
-plugins/maven/jps-plugin
+plugins/maven/jps
+plugins/maven/jps/ide
 plugins/maven/maven-event-listener
 plugins/maven/maven-server-indexer
 plugins/maven/maven-server-telemetry

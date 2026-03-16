@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.execution
 
 import com.intellij.execution.configurations.JavaParameters
+import com.intellij.maven.jps.ide.execution.MavenJUnitPatcher
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module

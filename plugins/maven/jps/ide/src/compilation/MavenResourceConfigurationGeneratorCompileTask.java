@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.project;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.maven.jps.ide.compilation;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
@@ -28,8 +28,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenResource;
-import org.jetbrains.idea.maven.project.compilation.FilteredJarConfigGenerator;
-import org.jetbrains.idea.maven.project.compilation.ResourceConfigGenerator;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory;
 import org.jetbrains.jps.maven.model.impl.MavenModuleResourceConfiguration;
 import org.jetbrains.jps.maven.model.impl.MavenProjectConfiguration;

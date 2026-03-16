@@ -73,8 +73,8 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [
-    "//plugins/maven/jps-plugin:jps",
-    "//plugins/maven/jps-plugin:jps_test_lib",
+    "//plugins/maven/jps",
+    "//plugins/maven/jps:jps_test_lib",
   ],
   deps = [
     "//jps/model-api:model",
