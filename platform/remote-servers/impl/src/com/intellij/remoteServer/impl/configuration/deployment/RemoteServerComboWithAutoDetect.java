@@ -74,7 +74,7 @@ public class RemoteServerComboWithAutoDetect<S extends ServerConfiguration> exte
     public abstract void validateConnection() throws RuntimeConfigurationException;
   }
 
-  private class AutoDetectedItem extends RemoteServerCombo.ServerItemImpl {
+  private class AutoDetectedItem extends NamedServerItemImpl {
     private final AtomicReference<TestConnectionState> myTestConnectionStateA = new AtomicReference<>(TestConnectionState.INITIAL);
     private volatile RemoteServer<S> myServerInstance;
     private volatile long myLastStartedTestConnectionMillis = -1;
