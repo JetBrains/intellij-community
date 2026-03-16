@@ -12,6 +12,7 @@ import com.intellij.ide.starter.ide.asRemDevContext
 import com.intellij.ide.starter.ide.isRemDevContext
 import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.models.VMOptions
+import com.intellij.ide.starter.models.VMOptions.Companion.TEST_SCRIPT_FILE_OPTION
 import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.process.collectJavaThreadDumpSuspendable
 import com.intellij.ide.starter.process.collectMemoryDump
@@ -79,7 +80,6 @@ data class IDERunContext(
   val snapshotsDir: Path = testContext.paths.testHome.resolve(launchName).resolve("snapshots").createDirectoriesIfNotExist()
   val launchDir: Path = testContext.paths.testHome.resolve(launchName).createDirectoriesIfNotExist()
   val logsDir: Path = testContext.paths.testHome.resolve(launchName).resolve("log").createDirectoriesIfNotExist()
-
   private val patchesForVMOptions: ConcurrentList<VMOptions.() -> Unit> = ContainerUtil.createConcurrentList()
 
   var artifactsPublishingEnabled: Boolean = true
@@ -193,7 +193,7 @@ data class IDERunContext(
         require(commands.count() > 0) { "script builder is not allowed when useStartupScript is disabled" }
       }
       // Allow an overridden script file, required for migration of Rider performance tests
-      else if (commands.count() > 0)
+      else if (!this.hasOption(TEST_SCRIPT_FILE_OPTION))
         installTestScript(testName = contextName, paths = testContext.paths, commands = commands)
     }
   }
