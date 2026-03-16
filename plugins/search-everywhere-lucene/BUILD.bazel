@@ -23,6 +23,12 @@ jvm_library(
 )
 ### auto-generated section `build intellij.searchEverywhereLucene.plugin` end
 
+### auto-generated section `iml intellij.searchEverywhereLucene.plugin` start
+exports_files([
+  "intellij.searchEverywhereLucene.plugin.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.searchEverywhereLucene.plugin` end
+
 ### auto-generated section `build intellij.searchEverywhereLucene.plugin.main` start
 jvm_library(
   name = "searchEverywhereLucene-plugin-main",
@@ -50,3 +56,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.searchEverywhereLucene.plugin.main` end
+
+### auto-generated section `iml intellij.searchEverywhereLucene.plugin.main` start
+exports_files([
+  "intellij.searchEverywhereLucene.plugin.main.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.searchEverywhereLucene.plugin.main` end
