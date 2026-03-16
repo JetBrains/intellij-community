@@ -77,8 +77,14 @@
     <extensionPoint qualifiedName="com.intellij.editor.interLineBreakpointConfigurationProvider"
                     interface="com.intellij.openapi.editor.impl.InterLineBreakpointConfigurationProvider"
                     dynamic="true"/>
+    <extensionPoint name="imageReaderWriterSpi"
+                    beanClass="com.intellij.util.imageio.ImageReaderWriterSpiBean"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="javax.imageio.spi.IIOServiceProvider"/>
+    </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
+    <ApplicationLoadListener implementation="com.intellij.util.imageio.ImageReaderWriterSpiRegistrar"/>
     <registryKey
       key="ide.project.frame.auto.fix.size.windows.interval"
       defaultValue="60"
