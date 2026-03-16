@@ -652,6 +652,7 @@ platform/jewel/int-ui/int-ui-standalone
 platform/jewel/int-ui/int-ui-standalone-tests
 platform/jewel/markdown/core
 platform/jewel/markdown/extensions/autolink
+platform/jewel/markdown/extensions/front-matter
 platform/jewel/markdown/extensions/gfm-alerts
 platform/jewel/markdown/extensions/gfm-strikethrough
 platform/jewel/markdown/extensions/gfm-tables

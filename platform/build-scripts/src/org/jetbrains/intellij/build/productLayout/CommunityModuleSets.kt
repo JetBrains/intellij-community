@@ -320,6 +320,7 @@ object CommunityModuleSets {
     module("intellij.platform.jewel.markdown.extensions.gfmAlerts")
     module("intellij.platform.jewel.markdown.extensions.gfmTables")
     module("intellij.platform.jewel.markdown.extensions.gfmStrikethrough")
+    module("intellij.platform.jewel.markdown.extensions.frontMatter")
     module("intellij.platform.jewel.markdown.extensions.images")
     module("intellij.platform.jewel.markdown.core")
   }

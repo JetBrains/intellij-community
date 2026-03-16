@@ -15,7 +15,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.layout.BasicTableLayout
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock
 import org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension
 import org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer
@@ -56,8 +55,8 @@ internal class GitHubTableBlockRenderer(
                 val semiboldInlinesStyling =
                     rootStyling.paragraph.inlinesStyling.withFontWeight(tableStyling.headerBaseFontWeight)
 
-                // Given cells can only contain inlines, and not block-level nodes, we are ok with
-                // only overriding the Paragraph styling.
+                // Header cells produced by table parsing are represented as Paragraph blocks,
+                // so overriding Paragraph styling is enough here.
                 MarkdownStyling(
                     rootStyling.blockVerticalSpacing,
                     MarkdownStyling.Paragraph(semiboldInlinesStyling),
@@ -75,52 +74,17 @@ internal class GitHubTableBlockRenderer(
 
         val rows =
             remember(tableBlock, blockRenderer, inlineRenderer, tableStyling) {
-                val headerCells =
-                    tableBlock.header.cells.map<TableCell, @Composable () -> Unit> { cell ->
-                        {
-                            Cell(
-                                cell = cell,
-                                backgroundColor = tableStyling.colors.rowBackgroundColor,
-                                padding = tableStyling.metrics.cellPadding,
-                                defaultAlignment = tableStyling.metrics.headerDefaultCellContentAlignment,
-                                blockRenderer = headerRenderer,
-                                enabled = enabled,
-                                paragraphStyling = headerRenderer.rootStyling.paragraph,
-                                onUrlClick = onUrlClick,
-                            )
-                        }
+                buildList<List<@Composable () -> Unit>> {
+                    if (tableBlock.header != null) {
+                        add(headerCells(tableBlock.header, headerRenderer, enabled, onUrlClick))
                     }
 
-                val rowsCells =
-                    tableBlock.rows.map<TableRow, List<@Composable () -> Unit>> { row ->
-                        row.cells.map<TableCell, @Composable () -> Unit> { cell ->
-                            {
-                                val backgroundColor =
-                                    if (tableStyling.colors.rowBackgroundStyle == RowBackgroundStyle.Striped) {
-                                        if (cell.rowIndex % 2 == 0) {
-                                            tableStyling.colors.alternateRowBackgroundColor
-                                        } else {
-                                            tableStyling.colors.rowBackgroundColor
-                                        }
-                                    } else {
-                                        tableStyling.colors.rowBackgroundColor
-                                    }
-
-                                Cell(
-                                    cell = cell,
-                                    backgroundColor = backgroundColor,
-                                    padding = tableStyling.metrics.cellPadding,
-                                    defaultAlignment = tableStyling.metrics.defaultCellContentAlignment,
-                                    blockRenderer = blockRenderer,
-                                    enabled = enabled,
-                                    paragraphStyling = rootStyling.paragraph,
-                                    onUrlClick = onUrlClick,
-                                )
-                            }
+                    val rowsCells =
+                        tableBlock.rows.map<TableRow, List<@Composable () -> Unit>> { row ->
+                            rowCells(row, blockRenderer, enabled, onUrlClick)
                         }
-                    }
-
-                listOf(headerCells) + rowsCells
+                    addAll(rowsCells)
+                }
             }
 
         BasicTableLayout(
@@ -132,6 +96,57 @@ internal class GitHubTableBlockRenderer(
             modifier = modifier,
         )
     }
+
+    private fun headerCells(
+        header: TableHeader,
+        headerRenderer: MarkdownBlockRenderer,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
+    ): List<@Composable (() -> Unit)> =
+        header.cells.map {
+            {
+                Cell(
+                    cell = it,
+                    backgroundColor = tableStyling.colors.rowBackgroundColor,
+                    padding = tableStyling.metrics.cellPadding,
+                    defaultAlignment = tableStyling.metrics.headerDefaultCellContentAlignment,
+                    blockRenderer = headerRenderer,
+                    enabled = enabled,
+                    onUrlClick = onUrlClick,
+                )
+            }
+        }
+
+    private fun rowCells(
+        row: TableRow,
+        blockRenderer: MarkdownBlockRenderer,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
+    ): List<@Composable (() -> Unit)> =
+        row.cells.map<TableCell, @Composable () -> Unit> { cell ->
+            {
+                val backgroundColor =
+                    if (tableStyling.colors.rowBackgroundStyle == RowBackgroundStyle.Striped) {
+                        if (cell.rowIndex % 2 == 1) {
+                            tableStyling.colors.alternateRowBackgroundColor
+                        } else {
+                            tableStyling.colors.rowBackgroundColor
+                        }
+                    } else {
+                        tableStyling.colors.rowBackgroundColor
+                    }
+
+                Cell(
+                    cell = cell,
+                    backgroundColor = backgroundColor,
+                    padding = tableStyling.metrics.cellPadding,
+                    defaultAlignment = tableStyling.metrics.defaultCellContentAlignment,
+                    blockRenderer = blockRenderer,
+                    enabled = enabled,
+                    onUrlClick = onUrlClick,
+                )
+            }
+        }
 
     private fun InlinesStyling.withFontWeight(newFontWeight: FontWeight) =
         InlinesStyling(
@@ -156,20 +171,13 @@ internal class GitHubTableBlockRenderer(
         defaultAlignment: Alignment.Horizontal,
         blockRenderer: MarkdownBlockRenderer,
         enabled: Boolean,
-        paragraphStyling: MarkdownStyling.Paragraph,
         onUrlClick: (String) -> Unit,
     ) {
         Box(
             modifier = Modifier.background(backgroundColor).padding(padding).clipToBounds(),
             contentAlignment = (cell.alignment ?: defaultAlignment).asContentAlignment(),
         ) {
-            blockRenderer.RenderParagraph(
-                block = MarkdownBlock.Paragraph(cell.content),
-                styling = paragraphStyling,
-                enabled = enabled,
-                onUrlClick = onUrlClick,
-                modifier = Modifier,
-            )
+            blockRenderer.RenderBlock(cell.content, enabled, onUrlClick, Modifier)
         }
     }
 

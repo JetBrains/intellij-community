@@ -43,6 +43,7 @@ include(
     ":markdown:extensions:autolink",
     ":markdown:extensions:gfm-alerts",
     ":markdown:extensions:gfm-strikethrough",
+    ":markdown:extensions:front-matter",
     ":markdown:extensions:gfm-tables",
     ":markdown:extensions:images",
     ":markdown:int-ui-standalone-styling",
