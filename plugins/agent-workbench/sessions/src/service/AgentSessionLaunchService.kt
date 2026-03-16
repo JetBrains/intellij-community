@@ -321,6 +321,14 @@ internal class AgentSessionLaunchService(
           identity = identity,
           initialMessagePlan = initialMessagePlan,
         )
+        logPreparedNewSessionLaunch(
+          provider = provider,
+          projectPath = normalizedPath,
+          identity = identity,
+          baseLaunchSpec = createSpec.launchSpec,
+          resolvedLaunchSpec = launchSpec,
+          initialMessageDispatchPlan = initialMessageDispatchPlan,
+        )
 
         AgentWorkbenchTelemetry.logThreadCreateRequested(entryPoint, provider, mode)
         chatOpenExecutor.openNewChat(
@@ -588,6 +596,26 @@ private fun buildStartupLaunchSpecOverride(
     "Skipped startup prompt command override for ${descriptor.provider.value}: estimatedCommandSize=$estimatedCommandSize exceeds $MAX_STARTUP_COMMAND_BYTES"
   }
   return null
+}
+
+private fun logPreparedNewSessionLaunch(
+  provider: AgentSessionProvider,
+  projectPath: String,
+  identity: String,
+  baseLaunchSpec: AgentSessionTerminalLaunchSpec,
+  resolvedLaunchSpec: AgentSessionTerminalLaunchSpec,
+  initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
+) {
+  val commandHead = resolvedLaunchSpec.command.firstOrNull() ?: "<empty>"
+  val commandArgumentCount = (resolvedLaunchSpec.command.size - 1).coerceAtLeast(0)
+  val hasPathKey = resolvedLaunchSpec.envVariables.keys.any(::isPathEnvironmentVariableName)
+  LOG.debug {
+    "Prepared new session launch(provider=${provider.value}, path=$projectPath, identity=$identity, commandHead=$commandHead, commandArgumentCount=$commandArgumentCount, envKeyCount=${resolvedLaunchSpec.envVariables.size}, hasPathKey=$hasPathKey, envAugmented=${resolvedLaunchSpec.envVariables != baseLaunchSpec.envVariables}, startupOverride=${initialMessageDispatchPlan.startupLaunchSpecOverride != null}, postStartDispatchSteps=${initialMessageDispatchPlan.postStartDispatchSteps.size})"
+  }
+}
+
+private fun isPathEnvironmentVariableName(name: String): Boolean {
+  return name.equals("PATH", ignoreCase = true)
 }
 
 private fun estimateCommandSizeBytes(command: List<String>): Int {

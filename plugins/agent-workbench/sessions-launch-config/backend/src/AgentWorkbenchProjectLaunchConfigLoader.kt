@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.openapi.diagnostic.debug
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -32,6 +33,9 @@ internal class AgentWorkbenchProjectLaunchConfigCache {
 private fun loadAgentWorkbenchProjectLaunchConfig(projectRoot: Path): AgentWorkbenchProjectLaunchConfig {
   val configPath = projectRoot.resolve(AGENT_WORKBENCH_PROJECT_CONFIG_FILE_NAME)
   if (!Files.isRegularFile(configPath)) {
+    AGENT_WORKBENCH_PROJECT_LAUNCH_CONFIG_LOG.debug {
+      "No Agent Workbench config found for projectRoot=$projectRoot at $configPath"
+    }
     return AgentWorkbenchProjectLaunchConfig.EMPTY
   }
 
@@ -76,12 +80,21 @@ private fun loadAgentWorkbenchProjectLaunchConfig(projectRoot: Path): AgentWorkb
     }
   }
 
-  return if (sharedConfig.isEmpty() && providerConfigs.isEmpty()) {
+  val config = if (sharedConfig.isEmpty() && providerConfigs.isEmpty()) {
     AgentWorkbenchProjectLaunchConfig.EMPTY
   }
   else {
     AgentWorkbenchProjectLaunchConfig(sharedConfig = sharedConfig, providers = providerConfigs)
   }
+  AGENT_WORKBENCH_PROJECT_LAUNCH_CONFIG_LOG.debug {
+    if (config.sharedConfig.isEmpty() && config.providers.isEmpty()) {
+      "Loaded Agent Workbench config $configPath but it does not define any valid launch augmentation entries"
+    }
+    else {
+      "Loaded Agent Workbench config $configPath: ${config.toDebugSummary()}"
+    }
+  }
+  return config
 }
 
 private fun readLaunchConfig(
@@ -206,6 +219,10 @@ internal data class AgentWorkbenchProjectLaunchConfig(
   }
 }
 
+private fun AgentWorkbenchProjectLaunchConfig.toDebugSummary(): String {
+  return "shared={${sharedConfig.toDebugSummary()}}, providers=${providers.keys.sorted()}"
+}
+
 internal data class AgentWorkbenchLaunchConfig(
   val pathPrepend: List<Path>,
   val commandShims: Map<String, Path>,
@@ -236,4 +253,8 @@ internal data class AgentWorkbenchLaunchConfig(
   companion object {
     val EMPTY: AgentWorkbenchLaunchConfig = AgentWorkbenchLaunchConfig(emptyList(), emptyMap())
   }
+}
+
+internal fun AgentWorkbenchLaunchConfig.toDebugSummary(): String {
+  return "pathPrependCount=${pathPrepend.size}, commandShims=${commandShims.keys.sorted()}"
 }

@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecAugmenter
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelOsFamily
@@ -32,8 +33,20 @@ internal class AgentWorkbenchProjectLaunchConfigAugmenter(
     launchSpec: AgentSessionTerminalLaunchSpec,
   ): AgentSessionTerminalLaunchSpec {
     return try {
-      val context = executionContextResolver.resolve(projectPath) ?: return launchSpec
-      val config = projectConfigCache.getProviderConfig(projectRoot = context.projectRoot, provider = provider) ?: return launchSpec
+      val context = executionContextResolver.resolve(projectPath)
+      if (context == null) {
+        AGENT_WORKBENCH_PROJECT_LAUNCH_CONFIG_LOG.debug {
+          "Skipped Agent Workbench launch augmentation for provider=${provider.value}: execution context unavailable for projectPath=$projectPath"
+        }
+        return launchSpec
+      }
+      val config = projectConfigCache.getProviderConfig(projectRoot = context.projectRoot, provider = provider)
+      if (config == null) {
+        AGENT_WORKBENCH_PROJECT_LAUNCH_CONFIG_LOG.debug {
+          "No Agent Workbench launch augmentation resolved for provider=${provider.value}, projectRoot=${context.projectRoot}"
+        }
+        return launchSpec
+      }
       val envVariables = buildAugmentedLaunchEnvironment(
         baseEnvVariables = launchSpec.envVariables,
         targetEnvironmentVariables = context.environmentVariables,
@@ -43,7 +56,11 @@ internal class AgentWorkbenchProjectLaunchConfigAugmenter(
         config = config,
         targetPathStringResolver = context::toTargetPathString,
       )
-      if (envVariables == launchSpec.envVariables) launchSpec else launchSpec.copy(envVariables = envVariables)
+      val envChanged = envVariables != launchSpec.envVariables
+      AGENT_WORKBENCH_PROJECT_LAUNCH_CONFIG_LOG.debug {
+        "Resolved Agent Workbench launch augmentation for provider=${provider.value}, projectRoot=${context.projectRoot}, envChanged=$envChanged, ${config.toDebugSummary()}"
+      }
+      if (!envChanged) launchSpec else launchSpec.copy(envVariables = envVariables)
     }
     catch (t: Throwable) {
       AGENT_WORKBENCH_PROJECT_LAUNCH_CONFIG_LOG.warn("Failed to resolve Agent Workbench launch config for $provider:$projectPath", t)
