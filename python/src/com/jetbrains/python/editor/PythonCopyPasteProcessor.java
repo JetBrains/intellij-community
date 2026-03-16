@@ -52,7 +52,8 @@ public final class PythonCopyPasteProcessor implements CopyPastePreProcessor {
                                                                     "with",
                                                                     "if", "elif", "else",
                                                                     "while", "for",
-                                                                    "try", "except", "finally");
+                                                                    "try", "except", "finally",
+                                                                    "match", "case");
 
   @Override
   public @Nullable String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {

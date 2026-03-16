@@ -465,4 +465,14 @@ public class PyCopyPasteTest extends PyTestCase {
   public void testBeginningOfIndentedLinePrecededByPastedWord() {
     doTest();
   }
+
+  // PY-49081
+  public void testCaseClause() {
+    doTest();
+  }
+
+  // PY-49081
+  public void testCaseClauseWithBadSelection() {
+    doTest();
+  }
 }
