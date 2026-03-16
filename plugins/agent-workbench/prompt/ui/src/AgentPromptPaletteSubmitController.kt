@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.prompt.ui.context.dataContextOrNull
+import com.intellij.agent.workbench.prompt.ui.context.buildExtensionActionDataContext
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -91,7 +92,11 @@ internal class AgentPromptPaletteSubmitController(
       if (actionId != null) {
         val action = ActionManager.getInstance().getAction(actionId)
         if (action != null) {
-          val dataContext = invocationData.dataContextOrNull() ?: DataManager.getInstance().getDataContext(promptArea)
+          val baseDataContext = invocationData.dataContextOrNull() ?: DataManager.getInstance().getDataContext(promptArea)
+          val dataContext = buildExtensionActionDataContext(
+            baseDataContext = baseDataContext,
+            selectedProviderId = providerSelector.selectedProvider?.bridge?.provider?.value,
+          )
           val event = AnActionEvent.createEvent(action, dataContext, null, invocationData.actionPlace ?: "", ActionUiKind.NONE, null)
           action.actionPerformed(event)
           launchState.clearDraftOnClose = true
