@@ -118,7 +118,11 @@ class KtScratchExecutionSession(
     ) {
         val tempDir = DumbService.getInstance(project).runReadActionInSmartMode(Computable {
             compileFileToTempDir(modifiedScratchSourceFile, expressions)
-        }) ?: return
+        })
+        if (tempDir == null) {
+            callback()
+            return
+        }
 
         try {
             val (environmentRequest, commandLine) = createCommandLine(psiFile, file.currentModule, result.mainClassName, tempDir.path)
