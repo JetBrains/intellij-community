@@ -8,4 +8,7 @@ interface NotebookEditorInfoService {
   fun getSelectedCellOrdinal(editor: Editor): Int?
 
   fun getCellsSize(editor: Editor): Int
+
+  // returns "Ok" if the cell is executed successfully, "Error" if execution failed, and null for any other state
+  fun getCellExecutionState(cellIndex: Int): String?
 }

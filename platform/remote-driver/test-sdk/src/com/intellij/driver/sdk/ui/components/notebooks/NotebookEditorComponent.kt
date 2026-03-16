@@ -42,6 +42,9 @@ import kotlin.time.Duration.Companion.seconds
  * We need to choose an editor with an actual file, skipping the artificial one created for wrappers.
  */
 private const val topLevelEditorSearchPattern = "//div[@class='EditorComponentImpl' and not(@accessiblename='Editor')]"
+private const val SUCCESSFUL_EXECUTION_ICON = "greenCheckmark.svg"
+private const val FAILED_EXECUTION_ICON = "resultIncorrect.svg"
+private const val RUNNING_EXECUTION_ICON = "history.svg"
 
 fun Finder.notebookEditor(@Language("xpath") xpath: String? = null): NotebookEditorUiComponent =
   x(xpath ?: "//div[@class='EditorCompositePanel' and .//div[@class='JupyterFileEditorToolbar']]",
@@ -93,7 +96,8 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
   val notebookCellExecutionInfos: List<JLabelUiComponent>
     get() = xx("//div[@accessiblename='ExecutionLabel']", JLabelUiComponent::class.java).list()
   val notebookTables: List<NotebookTableOutputUi>
-    get() = xx("//div[@class='LoadingDecoratorLayeredPaneImpl']/div[@class='JPanel'][descendant::div[@class='TableResultView']][descendant::div[@class='TwoSideComponent']]", NotebookTableOutputUi::class.java).list()
+    get() = xx("//div[@class='LoadingDecoratorLayeredPaneImpl']/div[@class='JPanel'][descendant::div[@class='TableResultView']][descendant::div[@class='TwoSideComponent']]",
+               NotebookTableOutputUi::class.java).list()
   val notebookPlots: List<LetsPlotComponent>
     get() = xx("//div[@class='LetsPlotComponent']", LetsPlotComponent::class.java).list()
   val toolbar: UiComponent
@@ -125,6 +129,17 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
   val selectedCellOrdinal: Int?
     get() = driver.service<NotebookEditorInfoService>(driver.singleProject())
       .getSelectedCellOrdinal(editor)
+
+  fun getCellExecutionState(cellIndex: Int): CellExecutionState? =
+    when (driver.service<NotebookEditorInfoService>(driver.singleProject()).getCellExecutionState(cellIndex)) {
+      "Ok" -> CellExecutionState.OK
+      "Error" -> CellExecutionState.FAILED
+      else -> null
+    }
+
+  enum class CellExecutionState {
+    OK, FAILED
+  }
 
   override val editorComponent: EditorComponentImpl
     get() = when {
@@ -217,23 +232,19 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
    * Checks if there are exactly [expectedFinalExecutionCount] finished cells with green checkmark
    * in the current notebook editor.
    */
-  fun areAllExecutionsFinishedSuccessfully(
+  fun areAllExecutionsFinished(
     expectedFinalExecutionCount: Int,
   ): Boolean {
     val infos = notebookCellExecutionInfos
     return infos.isNotEmpty() &&
            infos.size == expectedFinalExecutionCount &&
-           infos.all {
-             it.getParent().x { contains(byAttribute("defaulticon", "greenCheckmark.svg")) }.present()
-           }
+           infos.all { it.hasSuccessfulExecutionIcon() || it.hasFailedExecutionIcon() }
   }
 
   fun areTheCellStartExecuting(cellNumber: Int): Boolean {
     val infos = notebookCellExecutionInfos
     return infos.isNotEmpty() &&
-           infos[cellNumber].getParent().x {
-             contains(byAttribute("defaulticon", "history.svg"))
-           }.notPresent()
+           !infos[cellNumber].hasRunningExecutionIcon()
   }
 
   fun clickOnCell(cellSelector: CellSelector) {
@@ -291,6 +302,18 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
       ]
     """.trimIndent()
     ).list()
+}
+
+fun JLabelUiComponent.hasSuccessfulExecutionIcon(): Boolean = hasExecutionIcon(SUCCESSFUL_EXECUTION_ICON)
+
+fun JLabelUiComponent.hasFailedExecutionIcon(): Boolean = hasExecutionIcon(FAILED_EXECUTION_ICON)
+
+fun JLabelUiComponent.hasRunningExecutionIcon(): Boolean = hasExecutionIcon(RUNNING_EXECUTION_ICON)
+
+private fun JLabelUiComponent.hasExecutionIcon(icon: String): Boolean {
+  return getParent().x {
+    contains(byAttribute("defaulticon", icon))
+  }.present()
 }
 
 enum class NotebookType(val typeName: String, val newNotebookActionId: String) {
@@ -364,7 +387,7 @@ fun Driver.closeRightToolWindow(stripeButtonName: String) {
 fun Driver.openLeftToolWindow(stripeButtonName: String) {
   ideFrame {
     val leftToolbar = xx(ToolWindowLeftToolbarUi::class.java) { byClass("ToolWindowLeftToolbar") }.list().firstOrNull()
-                       ?: return@ideFrame
+                      ?: return@ideFrame
     val varsButton = leftToolbar.stripeButton(stripeButtonName)
     if (varsButton.notPresent()) {
       varsButton.open()
