@@ -217,7 +217,7 @@ try { ^
         $tempExtract = '%CACHE_BASE%\kotlin\kotlin-extract-tmp'; ^
         if (Test-Path $tempExtract) { Remove-Item $tempExtract -Recurse -Force; } ^
         [IO.Compression.ZipFile]::ExtractToDirectory('%KOTLIN_TEMP_FILE%', $tempExtract); ^
-        Get-ChildItem "$tempExtract\kotlinc\*" | Move-Item -Destination '%KOTLIN_HOME%'; ^
+        Get-ChildItem "$tempExtract\kotlinc\*" ^| Move-Item -Destination '%KOTLIN_HOME%'; ^
         Remove-Item $tempExtract -Recurse -Force; ^
         Remove-Item '%KOTLIN_TEMP_FILE%' -Force; ^
  ^
@@ -229,7 +229,10 @@ finally { ^
     $lock.ReleaseMutex(); ^
 }
 
-"%POWERSHELL%" -nologo -noprofile -Command %DOWNLOAD_KOTLIN_PS1% 1>&2
+:: If present, get rid of PowerShell Core environment preventing PowerShell 5 from loading Get-FileHash properly: 
+set PSModulePath=
+
+"%POWERSHELL%" -nologo -noprofile -Command "%DOWNLOAD_KOTLIN_PS1%" 1>&2
 if errorlevel 1 goto fail
 
 :executeKotlin
