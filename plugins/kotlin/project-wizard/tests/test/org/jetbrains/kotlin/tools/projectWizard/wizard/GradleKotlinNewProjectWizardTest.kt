@@ -48,7 +48,6 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     private fun Project.compileModules(vararg moduleNames: String) {
         assertModules(this, *moduleNames)
         compileModules(this, true, *moduleNames)
-        assertNoCompilationErrors()
     }
 
     private fun lookupAndRegisterExternalSystemJdk(project: Project) {

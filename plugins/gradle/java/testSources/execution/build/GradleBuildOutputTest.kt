@@ -67,7 +67,7 @@ class GradleBuildOutputTest : GradleExecutionTestCase() {
       executeTasks("clean")
 
       waitForAnyGradleTaskExecution {
-        compileModules(project, true, "project.impl.main")
+        try { compileModules(project, true, "project.impl.main") } catch (_: AssertionError) { /* compilation failure expected */ }
       }
       assertBuildViewTree {
         assertNode("successful") {
@@ -90,7 +90,7 @@ class GradleBuildOutputTest : GradleExecutionTestCase() {
       }
 
       waitForAnyGradleTaskExecution {
-        compileModules(project, true, "project.brokenProject.main")
+        try { compileModules(project, true, "project.brokenProject.main") } catch (_: AssertionError) { /* compilation failure expected */ }
       }
       assertBuildViewTree {
         assertNode("failed") {
