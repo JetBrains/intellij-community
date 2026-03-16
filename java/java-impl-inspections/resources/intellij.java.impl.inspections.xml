@@ -3,7 +3,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.java-capable"/>
-    <module name="intellij.platform.analysis"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.java"/>

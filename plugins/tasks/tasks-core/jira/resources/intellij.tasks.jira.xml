@@ -1,8 +1,9 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <module name="intellij.libraries.gson"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.xml.rpc"/>
     <module name="intellij.platform.tasks.impl"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

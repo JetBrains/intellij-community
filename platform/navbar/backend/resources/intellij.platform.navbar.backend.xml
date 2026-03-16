@@ -1,6 +1,7 @@
 <idea-plugin visibility="public" package="com.intellij.platform.navbar.backend">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.ide"/>

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <idea-plugin  visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.analysis"/>
+    <plugin id="com.intellij.modules.java-capable"/>
     <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.builtInServer.impl"/>
     <module name="intellij.platform.externalSystem"/>
@@ -9,8 +10,6 @@
     <module name="intellij.platform.jps.build.javac.rt"/>
     <module name="intellij.java.compiler.instrumentationUtil"/>
     <module name="intellij.platform.backend"/>
-    <plugin id="com.intellij.modules.java-capable"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java"/>
     <module name="intellij.java.analysis.impl"/>
     <module name="intellij.java.compiler"/>
@@ -19,8 +18,8 @@
     <module name="intellij.jsp"/>
     <module name="intellij.platform.jps.build"/>
     <module name="intellij.platform.vcs.impl"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.languageCompilerRefAdapter"

@@ -572,11 +572,9 @@ private fun computeJpsDeps(
             if (c.moduleName.value.startsWith(LIB_MODULE_PREFIX) && !libraryModuleFilter(c.moduleName.value)) {
               return@dependsOn
             }
-            // Skip globally embedded modules for plugin-only source modules.
-            val depModuleId = contentModule(c.moduleName)?.id ?: -1
-            if (depModuleId >= 0 &&
-                isPluginOnlySource &&
-                shouldSkipEmbeddedPluginDependency(depModuleId, embeddedCheckProductNames)) {
+            // skip globally embedded modules for plugin-only source modules
+            val depModuleId = contentModule(c.moduleName)
+            if (depModuleId != null && isPluginOnlySource && shouldSkipEmbeddedPluginDependency(depModuleId, embeddedCheckProductNames)) {
               filteredEmbeddedModuleDeps.add(c.moduleName)
               debug("missingDeps") {
                 "embeddedSkip source=${moduleName.value} dep=${c.moduleName.value} includeTestScope=$includeTestScope"

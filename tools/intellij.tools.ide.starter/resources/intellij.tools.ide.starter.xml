@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.commons.compress"/>
     <module name="intellij.libraries.commons.io"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide.impl"/>
