@@ -2156,6 +2156,8 @@
 
     <listener class="com.intellij.ide.file.XdgTrashBinPreloader" topic="com.intellij.ide.AppLifecycleListener"
               os="unix" activeInTestMode="false" activeInHeadlessMode="false"/>
+
+    <listener class="com.intellij.ide.actions.IdeScaleAppLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"/>
   </applicationListeners>
 
   <projectListeners>
