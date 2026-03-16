@@ -184,39 +184,7 @@ enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>)
     IDES_INSTALLED(ConcatenatedAllowedListValuesStringFusMetric("IDES_INSTALLED",listOf("AS", "OC", "CL", "IU", "IC", "WC"))),
 
     // Build script
-    MPP_PLATFORMS(
-        ConcatenatedAllowedListValuesStringFusMetric("MPP_PLATFORMS",
-    listOf(
-    "common",
-    "native",
-    "jvm",
-    "js",
-    "android_x64",
-    "android_x86",
-    "androidJvm",
-    "android_arm32",
-    "android_arm64",
-    "ios_arm64",
-    "ios_simulator_arm64",
-    "ios_x64",
-    "watchos_arm32",
-    "watchos_arm64",
-    "watchos_x64",
-    "watchos_simulator_arm64",
-    "watchos_device_arm64",
-    "tvos_arm64",
-    "tvos_x64",
-    "tvos_simulator_arm64",
-    "linux_arm32_hfp",
-    "linux_arm64",
-    "linux_x64",
-    "macos_x64",
-    "macos_arm64",
-    "mingw_x64",
-    "wasm"
-    )
-    )
-    ),
+    MPP_PLATFORMS(JoinedListValuesStringFusMetric("MPP_PLATFORMS")),
 
     // Component versions
     LIBRARY_SPRING_VERSION(IgnoreDefaultVersionStringFusMetric("LIBRARY_SPRING_VERSION")),
