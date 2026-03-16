@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
@@ -45,11 +46,24 @@ sealed class PyAnyType private constructor(override val name: String) : PyType {
     is Unknown -> visitor.visitUnknownType()
   }
 
+  override fun toString(): String = name
+
   companion object {
     @JvmStatic
     val isEnabled: Boolean get() = Registry.`is`("python.type.any")
 
+    fun validate(it: PyType?) {
+      if (!ApplicationManager.getApplication().isInternal) return
+
+      if (isEnabled && it == null)
+        throw AssertionError("a type with a value of `null` was encountered while `PyAnyType` was enabled")
+      if (!isEnabled && it is PyAnyType)
+        throw AssertionError("a type with a value of `PyAnyType` was encountered while `PyAnyType` was disabled")
+    }
+
+    @JvmStatic
     val any: Any? get() = if (isEnabled) Any else null
+    @JvmStatic
     val unknown: Unknown? get() = if (isEnabled) Unknown else null
   }
 }

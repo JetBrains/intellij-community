@@ -177,6 +177,12 @@ object PyTypeUtil {
   fun PyType?.notNullToRef(): Ref<PyType>? =
     if (this == null) null else Ref(this)
 
+  @JvmStatic
+  @ApiStatus.Experimental
+  fun Ref<out PyType?>?.derefOrUnknown(): PyType? =
+    if (this == null) PyAnyType.unknown
+    else this.get()
+
   /**
    * Returns a collector that combines a stream of `Ref<PyType>` back into a single `Ref<PyType>`
    * using [PyUnionType.union].
@@ -389,7 +395,7 @@ val PyType?.isAny: Boolean get() {
     returns(true) implies (this@isAny is PyAnyType.Any?)
     returns(false) implies (this@isAny is PyType)
   }
-
+  PyAnyType.validate(this)
   return if (PyAnyType.isEnabled) this is PyAnyType.Any else this == null
 }
 
@@ -400,6 +406,7 @@ val PyType?.isUnknown: Boolean get() {
     returns(false) implies (this@isUnknown is PyType)
   }
 
+  PyAnyType.validate(this)
   return if (PyAnyType.isEnabled) this is PyAnyType.Unknown else this == null
 }
 
