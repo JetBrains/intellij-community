@@ -209,9 +209,8 @@ open class TypeEvalContextImpl internal constructor(
       PyAnyType.validate(type)
       myEvaluated[element] = type ?: PyNullType
       type
-    }
+    } ?: PyAnyType.unknown
   }
-
 
   override fun getReturnType(callable: PyCallable): PyType? {
     if (canDelegateToLibraryContext(callable)) {

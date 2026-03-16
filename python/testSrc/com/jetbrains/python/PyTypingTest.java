@@ -5,7 +5,6 @@ import com.intellij.idea.TestFor;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -6959,6 +6958,64 @@ public class PyTypingTest extends PyTestCase {
     });
   }
 
+  public void testTypeVarDefaultAny() {
+    withNewAnyTypeEnabled(() -> {
+      doTest("Any", """
+        from typing import Any
+        
+        def f[T=Any]() -> T: ...
+        
+        expr = f()
+        """);
+    });
+  }
+
+  public void testUnsolvedTypeVar() {
+    withNewAnyTypeEnabled(() -> {
+      doTest("Unknown", """
+        def f[T]() -> T: ...
+        
+        expr = f()
+        """);
+    });
+  }
+
+  public void testPsiStubbedAny() {
+    withNewAnyTypeEnabled(() -> {
+      runWithAdditionalFileInLibDir("other.py", """
+        from typing import Any
+        
+        x: Any
+        """, x -> {
+        myFixture.configureByText(PythonFileType.INSTANCE, """
+          from other import x
+          
+          expr = x
+          """);
+        final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+        final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
+        assertType("Failed in code analysis context", "Any", expr, codeAnalysis);
+      });
+    });
+  }
+
+  public void testPsiStubbedUnknown() {
+    withNewAnyTypeEnabled(() -> {
+      runWithAdditionalFileInLibDir("other.py", """
+        x = asdf
+        """, x -> {
+        myFixture.configureByText(PythonFileType.INSTANCE, """
+          from other import x
+          
+          expr = x
+          """);
+        final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+        final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
+        assertType("Failed in code analysis context", "Unknown", expr, codeAnalysis);
+      });
+    });
+  }
+
   @TestFor(issues = "PY-84430")
   public void testQuotedAny() {
     fixme("quoted Any", AssertionError.class, "Failed in code analysis context expected:<[Any]> but was:<[Literal[0]]>", () ->
@@ -7021,17 +7078,5 @@ public class PyTypingTest extends PyTestCase {
 
     final TypeEvalContext userInitiated = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()).withTracing();
     assertType("Failed in user initiated context", expectedType, expr, userInitiated);
-  }
-
-  private static void withNewAnyTypeEnabled(@NotNull Runnable test) {
-    var key = Registry.get("python.type.any");
-    var previousValue = key.asBoolean();
-    try {
-      key.setValue(true);
-      test.run();
-    }
-    finally {
-      key.setValue(previousValue);
-    }
   }
 }

@@ -75,10 +75,10 @@ object PyTypeInferenceCspFactory {
     val builder = CspBuilder(context)
 
 
-    for (typeVarEntry in substitutions.typeVars.entries) {
-      ensureInferenceVariables(builder, receiverType, typeVarEntry.key, context)
-      if (typeVarEntry.value != null) {
-        builder.addConstraint(typeVarEntry.key, typeVarEntry.value!!.get(), Variance.INVARIANT, ConstraintPriority.HIGH)
+    for ((key, value) in substitutions.typeVars) {
+      ensureInferenceVariables(builder, receiverType, key, context)
+      if (value != null) {
+        builder.addConstraint(key, value.get(), Variance.INVARIANT, ConstraintPriority.HIGH)
       }
     }
 
@@ -89,9 +89,7 @@ object PyTypeInferenceCspFactory {
     }
 
     // arguments
-    for (entry in mappedParameters) {
-      val argument = entry.key
-      val parameter: PyCallableParameter = entry.value
+    for ((argument, parameter) in mappedParameters) {
       if (parameter.isPositionalContainer || parameter.isKeywordContainer) {
         throw NotSupportedException()
       }
@@ -99,7 +97,7 @@ object PyTypeInferenceCspFactory {
       val expectedParameterType = parameter.getArgumentType(context)
       val passedArgumentType = getArgumentType(parameter, argument, expectedParameterType, substitutions, context)
 
-      if (expectedParameterType != null
+      if (!expectedParameterType.isUnknown
           && (expectedParameterType.hasGenerics(context) || passedArgumentType.hasGenerics(context))
       ) {
         ensureInferenceVariables(builder, receiverType, expectedParameterType, context)
@@ -113,7 +111,7 @@ object PyTypeInferenceCspFactory {
     if (declaredReturn.hasGenerics(context)) {
       ensureInferenceVariables(builder, receiverType, declaredReturn, context)
       val expectedReturnType = getExpectedType(callSite, context)
-      if (expectedReturnType != null) {
+      if (!expectedReturnType.isUnknown) {
         val declaredReturn_selfBounded = substituteSelfTypes(declaredReturn, receiverType, context)
         // semantics: RT <: ExpectedReturnType
         builder.addConstraint(declaredReturn_selfBounded, expectedReturnType, Variance.COVARIANT, ConstraintPriority.LOW)

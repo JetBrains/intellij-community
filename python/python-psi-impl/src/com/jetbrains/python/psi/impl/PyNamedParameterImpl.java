@@ -49,11 +49,11 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyAnnotationOwnerStub;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyFunctionType;
-import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PySelfType;
 import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.PyTupleType;
@@ -299,7 +299,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         }
       }
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   @Override

@@ -10,9 +10,9 @@ import com.intellij.psi.ResolveResult
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
+import com.jetbrains.python.ProtectionLevel
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
-import com.jetbrains.python.ProtectionLevel
 import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
@@ -54,6 +54,7 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult
 import com.jetbrains.python.psi.resolve.RatedResolveResult
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableType
@@ -80,6 +81,7 @@ import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.PyUnsafeUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isNoneType
+import com.jetbrains.python.psi.types.isUnknown
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.toolbox.Maybe
 import org.jetbrains.annotations.ApiStatus
@@ -374,9 +376,9 @@ object PyCallExpressionHelper {
         getImplicitArgumentCount(clarifiedResolved, resolvedModifier, isConstructorCall, isByInstance, isByClass)
 
       val clarifiedConstructorCallType =
-        if (PyUtil.isInitOrNewMethod(clarifiedResolved)) clarifyConstructorCallType(resolveResult, expression, context) else null
+        if (PyUtil.isInitOrNewMethod(clarifiedResolved)) clarifyConstructorCallType(resolveResult, expression, context) else PyAnyType.unknown
 
-      if (callableType.modifier == resolvedModifier && callableType.implicitOffset == resolvedImplicitOffset && clarifiedConstructorCallType == null) {
+      if (callableType.modifier == resolvedModifier && callableType.implicitOffset == resolvedImplicitOffset && clarifiedConstructorCallType.isUnknown) {
         return callableType
       }
 
@@ -619,14 +621,14 @@ object PyCallExpressionHelper {
       return matchingOverloads[0].getCallType(context, callSite)
     }
     val someArgumentsHaveUnknownType = arguments.any {
-      context.getType(it) == null
+      context.getType(it).isUnknown
     }
     if (someArgumentsHaveUnknownType) {
       return matchingOverloads
         .map { it.getCallType(context, callSite) }
         .let { PyUnionType.union(it) }
     }
-    return matchingOverloads.firstOrNull()?.getCallType(context, callSite)
+    return matchingOverloads.firstOrNull()?.getCallType(context, callSite) ?: PyAnyType.unknown
   }
 
   private fun clarifyConstructorCallType(
@@ -656,12 +658,12 @@ object PyCallExpressionHelper {
     if (initOrNewCallType is PyCollectionType) {
       return initOrNewCallType
     }
-    if (initOrNewCallType == null) {
+    if (initOrNewCallType.isUnknown) {
       // TODO requires weak union. See PyUnresolvedReferencesInspectionTest.testCustomNewReturnInAnotherModule
       return PyUnionType.createWeakType(PyClassTypeImpl(receiverClass, false))
     }
 
-    return null
+    return PyAnyType.unknown
   }
 
   private fun getSuperCallType(expression: PyCallExpression, context: TypeEvalContext): Maybe<PyType?> {

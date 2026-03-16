@@ -212,7 +212,7 @@ object PyTypeUtil {
   }
 
   private fun toUnionFromRef(unionReduction: (PyType?, PyType?) -> PyType?): Collector<Ref<PyType?>?, *, Ref<PyType?>?> {
-    return Collectors.reducing(null) { accType, hintType ->
+    return Collectors.reducing<Ref<PyType?>?>(null) { accType, hintType ->
       when {
         hintType == null -> accType
         accType == null -> hintType
@@ -386,6 +386,7 @@ val PyType?.isAnyOrUnknown: Boolean
     returns(false) implies (this@isAnyOrUnknown is PyType)
   }
 
+  PyAnyType.validate(this)
   return if (PyAnyType.isEnabled) this is PyAnyType else this == null
 }
 

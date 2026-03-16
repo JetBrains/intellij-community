@@ -8,6 +8,7 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyYieldExpression;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -72,6 +73,6 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
       }
       return PyBuiltinCache.getInstance(this).getNoneType();
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 }
