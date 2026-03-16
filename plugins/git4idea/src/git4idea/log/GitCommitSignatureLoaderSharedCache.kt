@@ -18,7 +18,7 @@ internal class GitCommitSignatureLoaderSharedCache : Disposable {
     .maximumSize(1000)
     .build<CommitId, GitCommitSignature>()
 
-  fun wrapWithCaching(loader: GitCommitSignatureLoaderBase) =
+  fun wrapWithCaching(loader: VcsCommitsDataLoader<GitCommitSignature>) =
     object : VcsCommitsDataLoader<GitCommitSignature> {
       override fun loadData(commits: List<CommitId>, onChange: (Map<CommitId, GitCommitSignature>) -> Unit) {
         val cached = cache.getAllPresent(commits)
