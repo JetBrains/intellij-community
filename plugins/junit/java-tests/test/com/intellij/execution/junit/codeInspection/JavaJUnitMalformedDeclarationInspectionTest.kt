@@ -521,6 +521,29 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       )
     }
 
+    fun `test malformed inherited parameterized class`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        abstract class ParentTest {
+        }
+        
+        @org.junit.jupiter.params.provider.ValueSource(strings = { "1" })
+        class OkChildTest extends ParentTest {
+          @org.junit.jupiter.params.Parameter
+          String value;
+        
+          @org.junit.jupiter.api.Test
+          void test() { }
+        }
+        
+        class <error descr="No sources are provided, the suite would be empty">FailChildTest</error> extends ParentTest {
+          @org.junit.jupiter.api.Test
+          void test() { }
+        }
+      """.trimIndent())
+    }
+
     fun `test malformed parameterized inner class should be nested highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
         class OuterClass {
