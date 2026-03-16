@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
@@ -8,7 +8,6 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -22,16 +21,9 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
 import java.util.StringJoiner;
 
-import static com.intellij.util.ObjectUtils.tryCast;
-
 public final class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
-  @Override
-  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
-    return Set.of(JavaFeature.TEXT_BLOCKS);
-  }
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -57,8 +49,7 @@ public final class TextBlockBackwardMigrationInspection extends AbstractBaseJava
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      PsiLiteralExpression literalExpression = tryCast(element, PsiLiteralExpression.class);
-      if (literalExpression == null || !literalExpression.isTextBlock()) return;
+      if (!(element instanceof PsiLiteralExpression literalExpression) || !literalExpression.isTextBlock()) return;
       String text = PsiLiteralUtil.getTextBlockText(literalExpression);
       if (text == null) return;
       String replacement = convertToConcatenation(text);
