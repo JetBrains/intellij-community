@@ -4050,45 +4050,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/quickfix/contextParameterWithoutName")
-    public static class ContextParameterWithoutName extends AbstractK1QuickFixTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("firstPosition.kt")
-        public void testFirstPosition() throws Exception {
-            runTest("testData/quickfix/contextParameterWithoutName/firstPosition.kt");
-        }
-
-        @TestMetadata("lastPosition.kt")
-        public void testLastPosition() throws Exception {
-            runTest("testData/quickfix/contextParameterWithoutName/lastPosition.kt");
-        }
-
-        @TestMetadata("middlePosition.kt")
-        public void testMiddlePosition() throws Exception {
-            runTest("testData/quickfix/contextParameterWithoutName/middlePosition.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/quickfix/contextParameterWithoutName/simple.kt");
-        }
-
-        @TestMetadata("withComments.kt")
-        public void testWithComments() throws Exception {
-            runTest("testData/quickfix/contextParameterWithoutName/withComments.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/convertCollectionLiteralToIntArrayOf")
     public static class ConvertCollectionLiteralToIntArrayOf extends AbstractK1QuickFixTest {
         @java.lang.Override
