@@ -15,6 +15,9 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
   parser = GradleCompatibilityDataParser,
   defaultState = DEFAULT_DATA
 ) {
+  /**
+   * This list only contains the latest patch of each supported Gradle version.
+   */
   @Volatile
   private var supportedGradleVersions: List<GradleVersion> = emptyList()
 
@@ -59,15 +62,15 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
   }
 
   private fun isJavaSupportedByIdeaImpl(javaVersion: JavaVersion): Boolean {
-    return suggestOldestSupportedJavaVersionByIdeaImpl() <= javaVersion
+    return getAllSupportedJavaVersionsByIdeaImpl().min() <= javaVersion
   }
 
   private fun isGradleSupportedByIdeaImpl(gradleVersion: GradleVersion): Boolean {
-    return suggestOldestSupportedGradleVersionByIdeaImpl().takeMajorMinor() <= gradleVersion.baseVersion
+    return getAllSupportedGradleVersionsByIdeaImpl().min().takeMajorMinor() <= gradleVersion.baseVersion
   }
 
   private fun isGradleDeprecatedByIdeaImpl(gradleVersion: GradleVersion): Boolean {
-    return gradleVersion.baseVersion < suggestOldestNonDeprecatedGradleVersionByIdeaImpl()
+    return gradleVersion.baseVersion < GradleVersion.version(OLDEST_NON_DEPRECATED_GRADLE_VERSION_STRING)
   }
 
   private fun getSupportedGradleVersionsImpl(javaVersion: JavaVersion): List<GradleVersion> {
@@ -115,7 +118,7 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
   }
 
   private fun suggestOldestNonDeprecatedGradleVersionByIdeaImpl(): GradleVersion {
-    return GradleVersion.version(OLDEST_NON_DEPRECATED_GRADLE_VERSION_STRING)
+    return getAllSupportedGradleVersionsByIdeaImpl().filterNot { isGradleDeprecatedByIdeaImpl(it) }.min()
   }
 
   private fun suggestRecommendedGradleVersionByIdeaImpl(): GradleVersion {
@@ -224,8 +227,7 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
     }
 
     fun suggestOldestNonDeprecatedGradleVersionByIdea(): GradleVersion {
-      val withoutPatch = getInstance().suggestOldestNonDeprecatedGradleVersionByIdeaImpl()
-      return getInstance().getAllSupportedGradleVersionsByIdeaImpl().lastOrNull { it.takeMajorMinor() == withoutPatch } ?: withoutPatch
+      return getInstance().suggestOldestNonDeprecatedGradleVersionByIdeaImpl()
     }
 
     fun suggestOldestSupportedJavaVersionByIdea(): JavaVersion {
