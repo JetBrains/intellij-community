@@ -58,6 +58,8 @@ public class ShortBasedStorage implements DataStorage {
   @Override
   public int packData(@NotNull IElementType tokenType, int state, boolean isRestartableState) {
     final short idx = tokenType.getIndex();
+    if (tokenType.getIndex() < 0)
+      throw new IllegalArgumentException("Token type " + tokenType + " is not registered and cannot be used in a lexer editor highlighter.");
     return isRestartableState ? idx : -idx;
   }
 
