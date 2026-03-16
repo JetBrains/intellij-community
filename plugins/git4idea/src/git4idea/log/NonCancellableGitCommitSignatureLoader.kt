@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
  *
  * This is because we can't properly cancel the git log process on windows bc it may leave the gpg.exe alive and deadlocked on something
  */
-internal class NonCancellableGitCommitSignatureLoader(project: Project) : GitCommitSignatureLoaderBase(project) {
+internal class NonCancellableGitCommitSignatureLoader(private val project: Project) : GitCommitSignatureLoaderBase(project) {
 
   private val executor = ThreadPoolExecutor(1, 1, 10, TimeUnit.MILLISECONDS,
                                             LinkedBlockingDeque(1), NamingThreadFactory(), ThreadPoolExecutor.DiscardOldestPolicy())
@@ -29,7 +29,7 @@ internal class NonCancellableGitCommitSignatureLoader(project: Project) : GitCom
     executor.execute {
       for ((root, hashes) in commits) {
         try {
-          val signatures = loadCommitSignatures(root, hashes)
+          val signatures = GitCommitSignatureLoader.loadSignatures(project, root, hashes)
 
           val result = signatures.mapKeys { CommitId(it.key, root) }
           runInEdt {

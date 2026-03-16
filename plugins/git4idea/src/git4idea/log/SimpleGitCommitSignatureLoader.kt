@@ -23,7 +23,7 @@ internal class SimpleGitCommitSignatureLoader(private val project: Project) : Gi
           for ((root, hashes) in commits) {
             try {
               indicator.checkCanceled()
-              val signatures = loadCommitSignatures(root, hashes)
+              val signatures = GitCommitSignatureLoader.loadSignatures(project, root, hashes)
 
               val result = signatures.mapKeys { CommitId(it.key, root) }
               runInEdt {
