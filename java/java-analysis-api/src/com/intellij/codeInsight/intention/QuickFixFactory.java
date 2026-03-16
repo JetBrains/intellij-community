@@ -420,7 +420,7 @@ public abstract class QuickFixFactory {
 
   public abstract @Nullable IntentionAction createCreateClassInPackageInModuleFix(@NotNull Module module, @Nullable String packageName);
 
-  public abstract @NotNull IntentionAction createPushDownMethodFix();
+  public abstract @Nullable IntentionAction createPushDownMethodFix();
 
   public abstract @NotNull IntentionAction createSameErasureButDifferentMethodsFix(@NotNull PsiMethod method, @NotNull PsiMethod superMethod);
 
