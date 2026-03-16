@@ -47,6 +47,7 @@ jvm_library(
     "//platform/runtime/repository",
     "//libraries/commons/compress",
     "//libraries/commons/io",
+    "//platform/platform-util-io:ide-util-io",
   ],
   exports = [
     "//plugins/performanceTesting/commands-model:tools-ide-performanceTesting-commands",
@@ -85,6 +86,7 @@ jvm_library(
     "//platform/runtime/repository:repository_test_lib",
     "//libraries/commons/compress:compress_test_lib",
     "//libraries/commons/io:io_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
   ]
 )
 ### auto-generated section `build intellij.tools.ide.starter` end

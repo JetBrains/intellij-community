@@ -62,6 +62,7 @@ dependencies {
   implementation('com.jetbrains.intellij.platform:eel:LATEST-TRUNK-SNAPSHOT')
   implementation('com.jetbrains.intellij.platform:lang-impl:LATEST-TRUNK-SNAPSHOT')
   implementation('com.jetbrains.intellij.platform:core:LATEST-TRUNK-SNAPSHOT')
+  implementation('com.jetbrains.intellij.platform:ide-util-io:LATEST-TRUNK-SNAPSHOT')
   implementation('com.jetbrains.intellij.platform:runtime-repository:LATEST-TRUNK-SNAPSHOT')
   implementation('com.github.oshi:oshi-core:6.9.2')
   implementation('org.apache.commons:commons-compress:1.27.1')
