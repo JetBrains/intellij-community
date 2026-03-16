@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
@@ -10,20 +9,21 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.system.OS;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,9 +32,8 @@ import java.util.Objects;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/**
- * Use {@link com.intellij.execution.process.OSProcessUtil} wherever possible.
- */
+/// Do not call this class directly - use [OSProcessUtil] or [Process] API instead.
+@ApiStatus.Internal
 public final class UnixProcessManager {
   private static final Logger LOG = Logger.getInstance(UnixProcessManager.class);
 
@@ -68,7 +67,9 @@ public final class UnixProcessManager {
 
   private UnixProcessManager() { }
 
-  @ReviseWhenPortedToJDK("9")
+  /// @deprecated use `Process#pid`
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static int getProcessId(@NotNull Process process) {
     try {
       if (CurrentJavaVersion.currentJavaVersion().feature >= 9 &&
@@ -87,6 +88,9 @@ public final class UnixProcessManager {
     }
   }
 
+  /// @deprecated use `ProcessHandle.current().pid()`
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static int getCurrentProcessId() {
     return Java8Helper.C_LIB != null ? Java8Helper.C_LIB.getpid() : 0;
   }
@@ -224,12 +228,8 @@ public final class UnixProcessManager {
     return result;
   }
 
-  private static void findChildProcesses(final int our_pid,
-                                         final int process_pid,
-                                         final Ref<? super Integer> foundPid,
-                                         final ProcessInfo processInfo,
-                                         final List<? super Integer> childrenPids) {
-    final Ref<Boolean> ourPidFound = Ref.create(false);
+  private static void findChildProcesses(int our_pid, int process_pid, Ref<Integer> foundPid, ProcessInfo processInfo, List<Integer> childrenPids) {
+    Ref<Boolean> ourPidFound = Ref.create(false);
     processPSOutput(getPSCmd(false), s -> {
       StringTokenizer st = new StringTokenizer(s, " ");
 
@@ -283,7 +283,7 @@ public final class UnixProcessManager {
         if (skipFirstLine) {
           stdOutput.readLine(); //ps output header
         }
-        @NonNls String s;
+        String s;
         while ((s = stdOutput.readLine()) != null) {
           processor.process(s);
         }
@@ -308,14 +308,14 @@ public final class UnixProcessManager {
 
   public static String[] getPSCmd(boolean commandLineOnly, boolean isShortenCommand) {
     String psCommand = "/bin/ps";
-    if (!new File(psCommand).isFile()) {
+    if (!Files.isRegularFile(Paths.get(psCommand))) {
       psCommand = "ps";
     }
-    if (SystemInfo.isLinux) {
+    if (OS.CURRENT == OS.Linux) {
       return new String[]{psCommand, "-e", "--format", commandLineOnly ? "%a" : "%P%p%a"};
     }
-    else if (SystemInfo.isMac || SystemInfo.isFreeBSD) {
-      @NonNls String command = isShortenCommand ? "comm" : "command";
+    else if (OS.CURRENT == OS.macOS || OS.CURRENT == OS.FreeBSD) {
+      String command = isShortenCommand ? "comm" : "command";
       return new String[]{psCommand, "-ax", "-o", commandLineOnly ? command : "ppid,pid," + command};
     }
     else {

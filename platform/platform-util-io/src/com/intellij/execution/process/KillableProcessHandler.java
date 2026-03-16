@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.google.common.base.Ascii;
@@ -176,14 +176,14 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
       if (canTerminateGracefullyWithWinP() && !Registry.is("disable.winp")) {
         try {
           if (!myProcess.isAlive()) {
-            OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLineForLog());
+            LOG.info("Cannot destroy already terminated process (PID: " + myProcess.pid() + ", command: " + getCommandLineForLog() + ")");
             return true;
           }
           return WinProcessTerminator.terminateWinProcessGracefully(this, processService);
         }
         catch (Throwable e) {
           if (!myProcess.isAlive()) {
-            OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLineForLog());
+            LOG.info("Cannot destroy already terminated process (PID: " + myProcess.pid() + ", command: " + getCommandLineForLog() + ")");
             return true;
           }
           String message = e.getMessage();
