@@ -601,4 +601,113 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
     myFixture.testHighlighting()
   }
 
+  fun testLocalVariable() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+
+    configureKt("""
+    package pkg
+
+    import org.jetbrains.annotations.Nls
+
+    fun test() {
+        val x = <warning descr="Hardcoded string literal: \"Hardcoded string\"">"Hardcoded string"</warning>
+        var nls1: @Nls String = x
+        nls1 = x
+    }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
+  fun testTopLevelProperty() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+
+    configureKt("""
+    package pkg
+    
+    import org.jetbrains.annotations.Nls
+
+    var x: String = "Hardcoded string"
+
+    fun test() {
+        var nls1: @Nls String = <warning descr="Reference to non-localized string is used where localized string is expected">x</warning>
+        nls1 = <warning descr="Reference to non-localized string is used where localized string is expected">x</warning>
+    }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
+  fun testFunctionParameter() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+
+    configureKt("""
+    package pkg
+
+    import org.jetbrains.annotations.Nls
+
+    fun test(x: String) {
+        var nls1: @Nls String = <warning descr="Reference to non-localized string is used where localized string is expected">x</warning>
+        nls1 = <warning descr="Reference to non-localized string is used where localized string is expected">x</warning>
+    }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
+  fun testSimpleReferenceCallArgument() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+
+    configureKt("""
+    package pkg
+
+    import org.jetbrains.annotations.Nls
+
+    val x: String = "Hardcoded string"
+
+    fun test() {
+      takeNls(<warning descr="Reference to non-localized string is used where localized string is expected">x</warning>)
+    }
+
+    fun takeNls(arg: @Nls String) {
+    }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
+  fun testQualifiedReferenceCallArgument() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+
+    configureKt("""
+    package pkg
+
+    import org.jetbrains.annotations.Nls
+
+    object Y {
+      const val X = "Constant literal"
+      val s = "Non constant literal"
+    }
+
+    fun test() {
+      takeNls(Y.<warning descr="Reference to non-localized string is used where localized string is expected">X</warning>)
+      takeNls(Y.<warning descr="Reference to non-localized string is used where localized string is expected">s</warning>)
+    }
+
+    fun takeNls(arg: @Nls String) {
+    }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
 }

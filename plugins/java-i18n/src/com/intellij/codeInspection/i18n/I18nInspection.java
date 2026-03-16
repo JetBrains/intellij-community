@@ -478,6 +478,16 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
     @Override
     public boolean visitQualifiedReferenceExpression(@NotNull UQualifiedReferenceExpression ref) {
+      // Quick exits for Kotlin are necessary because of the different shapes of UAST tree.
+      // This is caused by different structures of underlying PSI for fully qualified expressions in Java and Kotlin.
+
+      // Don't process Kotlin qualified function calls as variables.
+      if (ref.getSelector() instanceof UCallExpression) return true;
+      // Don't process Kotlin references twice. Unlike in Java, in Kotlin both FQ references and simple selector references are visited.
+      if (ref.getSelector() instanceof USimpleNameReferenceExpression selector && selector.getExpressionType() != null) {
+        return true;
+      }
+
       return visitReference(ref);
     }
 
@@ -489,9 +499,26 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     private boolean visitReference(@NotNull UReferenceExpression ref) {
       PsiElement sourcePsi = ref.getSourcePsi();
       if (sourcePsi == null) return true;
-      PsiVariable target = ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
-      if (target == null || target instanceof PsiLocalVariable) return true;
+      PsiModifierListOwner target = ObjectUtils.tryCast(ref.resolve(), PsiModifierListOwner.class);
+      if (target == null) return true;
+      if (!isVariableRefToProcess(ref, target)) return true;
       processReferenceToNonLocalized(sourcePsi, ref, target);
+      return true;
+    }
+
+    private static boolean isVariableRefToProcess(@NotNull UReferenceExpression ref, @NotNull PsiModifierListOwner target) {
+      if (target instanceof PsiVariable) {
+        return !(target instanceof PsiLocalVariable);
+      }
+      // If target is a PsiMethod, it might be a Kotlin accessor
+      PsiMethod targetMethod = ObjectUtils.tryCast(target, PsiMethod.class);
+      if (targetMethod == null) return false;
+      // Filter our regular calls
+      UElement uastParent = ref.getUastParent();
+      if (uastParent instanceof UCallExpression uCallExpression) {
+        // `foo(ref)` is OK, `ref()` is not
+        return uCallExpression.getValueArguments().contains(ref);
+      }
       return true;
     }
 
