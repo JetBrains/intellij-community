@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapEngine;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapChangeNotifier;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
@@ -74,6 +75,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
   private final DocumentEx myDocument;
   private SoftWrapPainter myPainter;
   private final CachingSoftWrapDataMapper myDataMapper;
+  private final @NotNull SoftWrapChangeNotifier mySoftWrapChangeNotifier;
 
   /**
    * Visual area width change causes soft wraps addition/removal, so, we want to update {@code 'y'} coordinate
@@ -102,13 +104,15 @@ public final class SoftWrapApplianceManager implements Dumpable {
   public SoftWrapApplianceManager(@NotNull SoftWrapsStorage storage,
                                   @NotNull EditorImpl editor,
                                   @NotNull SoftWrapPainter painter,
-                                  CachingSoftWrapDataMapper dataMapper)
+                                  @NotNull CachingSoftWrapDataMapper dataMapper,
+                                  @NotNull SoftWrapChangeNotifier softWrapChangeNotifier)
   {
     myStorage = storage;
     myEditor = editor;
     myDocument = editor.getElfDocument();
     myPainter = painter;
     myDataMapper = dataMapper;
+    mySoftWrapChangeNotifier = softWrapChangeNotifier;
     myWidthProvider = new DefaultVisibleAreaWidthProvider();
     myEditor.getScrollingModel().addVisibleAreaListener(e -> EditorThreading.run(() -> {
       updateAvailableArea();
@@ -190,6 +194,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
   public void recalculateAll() {
     reset();
     myStorage.removeAll();
+    mySoftWrapChangeNotifier.notifySoftWrapsChanged();
     myVisibleAreaWidth = myAvailableWidth;
     myCustomIndentUsedLastTime = myEditor.getSettings().isUseCustomSoftWrapIndent();
     myCustomIndentValueUsedLastTime = myEditor.getSettings().getCustomSoftWrapIndent();
@@ -360,6 +365,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     // Drop information about processed lines.
     reset();
     myStorage.removeAll();
+    mySoftWrapChangeNotifier.notifySoftWrapsChanged();
     myVisibleAreaWidth = currentVisibleAreaWidth;
     final boolean result = recalculateSoftWraps();
     if (!result) {

@@ -6403,9 +6403,9 @@ f:com.intellij.openapi.editor.impl.SelectionModelImpl
 - removeSelectionListener(com.intellij.openapi.editor.event.SelectionListener):V
 - setBlockSelection(com.intellij.openapi.editor.LogicalPosition,com.intellij.openapi.editor.LogicalPosition):V
 f:com.intellij.openapi.editor.impl.SoftWrapModelImpl
-- com.intellij.openapi.editor.InlayModel$SimpleAdapter
 - com.intellij.diagnostic.Dumpable
 - com.intellij.openapi.Disposable
+- com.intellij.openapi.editor.InlayModel$SimpleAdapter
 - com.intellij.openapi.editor.ex.FoldingListener
 - com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 - com.intellij.openapi.editor.ex.SoftWrapModelEx

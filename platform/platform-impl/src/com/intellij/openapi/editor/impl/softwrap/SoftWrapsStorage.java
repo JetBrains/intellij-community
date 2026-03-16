@@ -24,7 +24,6 @@ import java.util.List;
 public final class SoftWrapsStorage implements Dumpable {
   private final List<SoftWrapImpl> myWraps = new ArrayList<>();
   private final List<SoftWrapImpl> myWrapsView = Collections.unmodifiableList(myWraps);
-  private final List<SoftWrapChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**
    * @return    {@code true} if there is at least one soft wrap registered at the current storage; {@code false} otherwise
@@ -155,23 +154,6 @@ public final class SoftWrapsStorage implements Dumpable {
    */
   public void removeAll() {
     myWraps.clear();
-    notifyListenersAboutChange();
-  }
-
-  /**
-   * Registers given listener within the current model
-   *
-   * @param listener    listener to register
-   * @return            {@code true} if given listener was not registered before; {@code false} otherwise
-   */
-  public boolean addSoftWrapChangeListener(@NotNull SoftWrapChangeListener listener) {
-    return myListeners.add(listener);
-  }
-
-  public void notifyListenersAboutChange() {
-    for (SoftWrapChangeListener listener : myListeners) {
-      listener.softWrapsChanged();
-    }
   }
 
   @Override

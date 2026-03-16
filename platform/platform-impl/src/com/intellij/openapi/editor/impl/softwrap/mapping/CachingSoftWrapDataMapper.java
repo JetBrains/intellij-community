@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapChangeNotifier;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import org.jetbrains.annotations.ApiStatus;
@@ -24,11 +25,14 @@ public final class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentPar
   private final List<SoftWrapImpl> myAffectedByUpdateSoftWraps = new ArrayList<>();
   private final EditorEx myEditor;
   private final SoftWrapsStorage myStorage;
+  private final @NotNull SoftWrapChangeNotifier mySoftWrapChangeNotifier;
 
-  public CachingSoftWrapDataMapper(@NotNull EditorEx editor, @NotNull SoftWrapsStorage storage)
+  public CachingSoftWrapDataMapper(@NotNull EditorEx editor, @NotNull SoftWrapsStorage storage,
+                                   @NotNull SoftWrapChangeNotifier softWrapChangeNotifier)
   {
     myEditor = editor;
     myStorage = storage;
+    mySoftWrapChangeNotifier = softWrapChangeNotifier;
   }
 
   public boolean matchesOldSoftWrap(SoftWrap newSoftWrap, int lengthDiff) {
@@ -96,7 +100,7 @@ public final class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentPar
         } else {
           softWrapsChanged = true;
         }
-      } 
+      }
       if (firstIndex >= 0 && i >= firstIndex) {
         softWrap.advance(lengthDiff);
       }
@@ -111,7 +115,7 @@ public final class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentPar
     }
     myAffectedByUpdateSoftWraps.clear();
     if (softWrapsChanged) {
-      myStorage.notifyListenersAboutChange();
+      mySoftWrapChangeNotifier.notifySoftWrapsChanged();
     }
   }
 
@@ -120,7 +124,7 @@ public final class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentPar
     List<SoftWrapImpl> softWraps = myStorage.getSoftWraps();
     return softWraps.isEmpty() ? null : softWraps.get(softWraps.size() - 1);
   }
-  
+
   @Override
   public @NotNull String dumpState() {
     return "Soft wraps affected by current update: " + myAffectedByUpdateSoftWraps;
