@@ -19,13 +19,14 @@ import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import java.util.function.Supplier
 
 @Service(Service.Level.PROJECT)
 @ApiStatus.Experimental
-internal class JsonPathEvaluateManager internal constructor(private val project: Project) {
+internal class JsonPathEvaluateManager internal constructor(private val project: Project, private val cs: CoroutineScope) {
   fun evaluateExpression(jsonPathExpr: String? = null) {
     val toolWindow = initToolwindow()
     val cm = toolWindow.contentManager
@@ -56,7 +57,7 @@ internal class JsonPathEvaluateManager internal constructor(private val project:
       return
     }
 
-    val newView = JsonPathEvaluateFileView(project, file)
+    val newView = JsonPathEvaluateFileView(project, file, cs)
     val newContent = cm.factory.createContent(newView.component,
                                               JsonPathBundle.message("jsonpath.toolwindow.evaluate.on.file", file.name),
                                               false)
@@ -102,7 +103,7 @@ internal class JsonPathEvaluateManager internal constructor(private val project:
   }
 
   private fun addSnippetTab(cm: @NotNull ContentManager): Pair<@NotNull Content, JsonPathEvaluateSnippetView> {
-    val newView = JsonPathEvaluateSnippetView(project)
+    val newView = JsonPathEvaluateSnippetView(project, cs)
     val newContent = cm.factory.createContent(newView.component, findNextSnippetTitle(cm), false)
     newContent.isCloseable = true
     newContent.isPinnable = true
