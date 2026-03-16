@@ -97,6 +97,8 @@ object PyTypeChecker {
     context: TypeEvalContext,
     substitutions: GenericSubstitutions,
   ): Boolean {
+    PyAnyType.validate(expected)
+    PyAnyType.validate(actual)
     return match(expected, actual, MatchContext(context, substitutions, false))
       .orElse(true)!!
   }
