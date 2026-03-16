@@ -46,7 +46,7 @@ class SelectFieldBase(Field):
 
 class SelectField(SelectFieldBase):
     coerce: Callable[[Any], Any]
-    choices: list[_Choice] | _GroupedChoices
+    choices: Sequence[_Choice] | _GroupedChoices | None
     validate_choice: bool
     def __init__(
         self,
