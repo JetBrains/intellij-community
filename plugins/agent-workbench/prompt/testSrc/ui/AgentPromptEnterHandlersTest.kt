@@ -10,10 +10,12 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.EditorTextField
+import com.intellij.ui.components.JBTabbedPane
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import javax.swing.JPanel
 import javax.swing.KeyStroke
 
 @TestApplication
@@ -111,7 +113,7 @@ class AgentPromptEnterHandlersTest {
   }
 
   @Test
-  fun tabTransfersFocusWhenTabQueueShortcutDisabled() {
+  fun tabSelectsNextPromptTabWhenTabQueueShortcutDisabled() {
     runInEdtAndWait {
       var submitCalls = 0
       var forwardFocusCalls = 0
@@ -132,7 +134,7 @@ class AgentPromptEnterHandlersTest {
   }
 
   @Test
-  fun shiftTabTransfersFocusBackwardWithoutSubmitCallbacks() {
+  fun shiftTabSelectsPreviousPromptTabWithoutSubmitCallbacks() {
     runInEdtAndWait {
       var submitCalls = 0
       var backwardFocusCalls = 0
@@ -149,6 +151,38 @@ class AgentPromptEnterHandlersTest {
         assertThat(submitCalls).isZero()
         assertThat(backwardFocusCalls).isEqualTo(1)
       }
+    }
+  }
+
+  @Test
+  fun selectAdjacentPromptTabWrapsForwardToFirstTab() {
+    runInEdtAndWait {
+      val tabbedPane = JBTabbedPane().apply {
+        addTab("New", JPanel())
+        addTab("Existing", JPanel())
+        addTab("Extension", JPanel())
+        selectedIndex = 2
+      }
+
+      selectAdjacentPromptTab(tabbedPane, 1)
+
+      assertThat(tabbedPane.selectedIndex).isZero()
+    }
+  }
+
+  @Test
+  fun selectAdjacentPromptTabWrapsBackwardToLastTab() {
+    runInEdtAndWait {
+      val tabbedPane = JBTabbedPane().apply {
+        addTab("New", JPanel())
+        addTab("Existing", JPanel())
+        addTab("Extension", JPanel())
+        selectedIndex = 0
+      }
+
+      selectAdjacentPromptTab(tabbedPane, -1)
+
+      assertThat(tabbedPane.selectedIndex).isEqualTo(2)
     }
   }
 
