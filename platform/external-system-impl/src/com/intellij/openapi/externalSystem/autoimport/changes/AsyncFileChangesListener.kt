@@ -10,7 +10,6 @@ import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
 import com.intellij.openapi.util.io.CanonicalPathPrefixTree
 import com.intellij.util.containers.prefixTree.set.toPrefixTreeSet
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Filters and delegates file and document events into subscribed listeners.
@@ -24,10 +23,10 @@ class AsyncFileChangesListener(
   private val parentDisposable: Disposable,
 ) {
 
-  private val updatedFiles = ConcurrentHashMap<String, ModificationData>()
+  private var updatedFiles: HashMap<String, ModificationData> = HashMap()
 
   fun init() {
-    updatedFiles.clear()
+    updatedFiles = HashMap()
   }
 
   fun onFileChange(path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {
@@ -36,7 +35,7 @@ class AsyncFileChangesListener(
 
   fun apply() {
     val stamp = Stamp.nextStamp()
-    val updatedFilesSnapshot = HashMap(updatedFiles)
+    val updatedFilesSnapshot = updatedFiles
     filesProvider.supply(parentDisposable) { filesToWatch ->
       val index = filesToWatch.toPrefixTreeSet(CanonicalPathPrefixTree)
       val updatedWatchedFiles = updatedFilesSnapshot.flatMap { (path, modificationData) ->
