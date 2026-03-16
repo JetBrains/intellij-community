@@ -4370,8 +4370,9 @@ a:com.intellij.psi.impl.include.FileIncludeManager
 - a:resolveFileInclude(com.intellij.psi.impl.include.FileIncludeInfo,com.intellij.psi.PsiFile):com.intellij.psi.PsiFileSystemItem
 a:com.intellij.psi.impl.include.FileIncludeProvider
 - <init>():V
-- a:acceptFile(com.intellij.openapi.vfs.VirtualFile):Z
+- acceptFile(com.intellij.openapi.vfs.VirtualFile):Z
 - acceptFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
+- acceptFile(com.intellij.util.indexing.IndexedFile):Z
 - a:getId():java.lang.String
 - a:getIncludeInfos(com.intellij.util.indexing.FileContent):com.intellij.psi.impl.include.FileIncludeInfo[]
 - getIncludeName(com.intellij.psi.PsiFile,java.lang.String):java.lang.String
