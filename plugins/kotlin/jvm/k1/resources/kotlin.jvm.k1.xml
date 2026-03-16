@@ -36,6 +36,9 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <scratch.creationHelper language="kotlin"
+                            implementationClass="org.jetbrains.kotlin.idea.jvm.k1.scratch.KotlinK1ScratchFileCreationHelper"/>
+
     <projectService serviceImplementation="org.jetbrains.kotlin.console.KotlinConsoleKeeper"/>
     <fileEditorProvider id="KtsScratchFileEditorProvider"
                         implementation="org.jetbrains.kotlin.idea.jvm.k1.scratch.K1ScratchFileEditorProvider"/>

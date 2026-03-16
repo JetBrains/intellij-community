@@ -473,13 +473,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
 
   protected final void invokeSetUp() throws Exception {
     long setupStart = System.nanoTime();
-    TestLoggerFactory.onFixturesInitializationStarted(false);
-    try {
-      setUp();
-    }
-    finally {
-      TestLoggerFactory.onFixturesInitializationFinished(false);
-    }
+    TestLoggerFactory.fixtureInitialization(false, ()->setUp());
     long setupCost = (System.nanoTime() - setupStart) / 1000000;
     logPerClassCost((int)setupCost, TOTAL_SETUP_COST_MILLIS, TOTAL_SETUP_COUNT);
   }

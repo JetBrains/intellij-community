@@ -7,9 +7,11 @@ import com.intellij.ide.starter.models.TestCase
 import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.profiler.ProfilerType
+import com.intellij.ide.starter.project.NoProject
 import com.intellij.ide.starter.project.ProjectInfoSpec
 import com.intellij.ide.starter.report.publisher.ReportPublisher
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.tools.ide.performanceTesting.commands.SdkObject
 import com.intellij.util.PlatformUtils
 import org.kodein.di.direct
 import org.kodein.di.instance
@@ -47,6 +49,22 @@ class IDERemDevTestContext private constructor(
   isReportPublishingEnabled = isReportPublishingEnabled,
   preserveSystemDir = preserveSystemDir,
 ) {
+
+  override fun copy(ide: InstalledIde?, resolvedProjectHome: Path?, sdk: SdkObject?): IDETestContext {
+    require(sdk == null || testCase.projectInfo != NoProject) { "project must be specified to setup project SDK" }
+    return IDERemDevTestContext(
+      paths,
+      ide ?: this.ide,
+      testCase.copy(sdk = sdk),
+      testName,
+      resolvedProjectHome ?: _resolvedProjectHome,
+      profilerType,
+      publishers,
+      isReportPublishingEnabled,
+      preserveSystemDir,
+      frontendIDEContext
+    )
+  }
 
   override fun setProfiler(profilerType: ProfilerType): IDETestContext {
     frontendIDEContext.setProfiler(profilerType)

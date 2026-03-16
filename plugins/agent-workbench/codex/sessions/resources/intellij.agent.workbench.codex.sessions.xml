@@ -19,6 +19,13 @@
       id="agentWorkbenchCodex"
       order="before agentWorkbenchClaude"
       implementation="com.intellij.agent.workbench.codex.sessions.CodexAgentSessionProviderDescriptor"/>
+    <advancedSetting
+      id="agent.workbench.codex.prompt.suggestion.model"
+      default="off"
+      bundle="messages.CodexSessionsBundle"
+      groupKey="advanced.settings.agent.workbench"/>
+    <agent.workbench.promptSuggestionAiBackend
+      implementation="com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerPromptSuggestionBackend"/>
   </extensions>
 
   <actions>

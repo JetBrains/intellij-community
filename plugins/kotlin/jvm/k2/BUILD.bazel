@@ -1,5 +1,12 @@
 ### auto-generated section `build intellij.kotlin.jvm` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin-jvm",
+  opt_in = ["org.jetbrains.kotlin.K1Deprecation"],
+  x_context_parameters = True
+)
 
 resourcegroup(
   name = "kotlin-jvm_resources",
@@ -13,6 +20,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":kotlin-jvm_resources"],
+  kotlinc_opts = ":custom_kotlin-jvm",
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -48,6 +56,11 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-kotlin-scripting-common",
     "//plugins/kotlin/base/scripting/scripting.scratch.definition",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "@lib//:kotlinc-analysis-api",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//plugins/kotlin/base/statistics",
   ]
 )
 
@@ -56,6 +69,7 @@ jvm_library(
   module_name = "intellij.kotlin.jvm",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-jvm",
   runtime_deps = [
     ":kotlin-jvm",
     "//platform/analysis-api:analysis_test_lib",
@@ -87,6 +101,10 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
     "//platform/util/jdom:jdom_test_lib",
     "//plugins/kotlin/base/scripting/scripting.scratch.definition:scripting.scratch.definition_test_lib",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight_test_lib",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+    "//plugins/kotlin/base/statistics:statistics_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.jvm` end

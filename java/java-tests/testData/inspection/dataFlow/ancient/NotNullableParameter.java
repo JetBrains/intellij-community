@@ -6,6 +6,6 @@ class Npe {
    }
 
    void bar() {
-     Object o = foo(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>); // null should not be passed here.
+     Object o = foo(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>); // null should not be passed here.
    }
 }

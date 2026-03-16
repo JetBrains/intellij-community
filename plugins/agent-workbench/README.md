@@ -80,6 +80,7 @@ Detailed requirements and testing contracts are documented in `spec/`.
 - [Codex Sessions Rollout Source](spec/agent-sessions-codex-rollout-source.spec.md) - Rollout-default Codex discovery, watcher semantics, backend selector, and app-server write interoperability.
 - [Agent Sessions New-Session Actions](spec/actions/new-thread.spec.md) - New-thread UX, provider/YOLO selection, creation dedup, pending-thread rebinding.
 - [Global Prompt Entry](spec/actions/global-prompt-entry.spec.md) - Global shortcut entrypoint, centered popup UX, context capture, and launch bridge flow.
+- [Global Prompt Suggestions](spec/actions/global-prompt-suggestions.spec.md) - Context-derived seed prompts, prompt-panel suggestion UI, async refresh semantics, and Codex polishing.
 - [Testing Contract](spec/agent-sessions-testing.spec.md) - Coverage ownership matrix and required contract test suites.
 
 ## Test All
@@ -89,3 +90,22 @@ Run all Agent Workbench tests with:
 ```bash
 ./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.*'
 ```
+
+## Troubleshooting Codex + ijproxy Launch
+
+When diagnosing a Codex thread started from `Cmd+\` or `Ctrl+\` that falls back to shell tools instead of `ijproxy`, collect a fresh `idea.log` from IDE startup through one repro and enable these categories in `Help | Diagnostic Tools | Debug Log Settings`:
+
+- `#com.intellij.agent.workbench.sessions.launch.config.backend.AgentWorkbenchProjectLaunchConfigLogCategory` for `.agent-workbench.yaml` discovery, parsed config summaries, shim preparation, and provider launch augmentation.
+- `#com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService` for sanitized new-thread launch handoff summaries.
+- `#com.intellij.agent.workbench.codex.common.CodexAppServerClient` for Codex app-server startup summaries and forwarded stderr.
+- `#com.intellij.mcpserver.impl.McpServerService:trace` for IDE MCP server and session startup.
+- `#com.intellij.mcpserver.impl.McpSessionHandler:trace` for MCP tool list updates and actual tool calls.
+- Optional: `#com.intellij.mcpserver.impl.util.network.RoutingContext:trace` for stdio and session transport issues.
+- Optional: `#com.intellij.mcpserver.ToolCallListener:trace` for extra per-tool activity.
+- Optional: `#com.intellij.mcpserver.impl.ReflectionToolsProvider` for MCP tool discovery and loading issues.
+
+Interpret the logs like this:
+
+- If the launch-config category never reports a resolved config for `codex`, agent-workbench did not apply `.agent-workbench.yaml` augmentation.
+- If the launch-config logs look correct but `CodexAppServerClient` shows startup or stderr failures, the problem is before MCP tool calls.
+- If `McpSessionHandler` shows session traffic and tool calls, `ijproxy` was available and shell-only behavior is model-side rather than missing transport.

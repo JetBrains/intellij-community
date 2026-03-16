@@ -208,7 +208,7 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         val debugProbesImplClass = context.vm.findDebugProbesImplClass() ?: return null
         val args = listOf(debugProbesImplClass, threadReferenceProxyImpl.threadReference)
         val result = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getCoroutinesRunningOnCurrentThread", args)
-        result ?: return null
+        if (result == null) return null
         return (result as ArrayReference).values.asSequence().map { (it as LongValue).value() }.toHashSet()
     }
 

@@ -264,7 +264,7 @@ internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProces
     ) : RendererContainer(renderer.renderThreadGroup(dispatcherName, isCurrent)) {
         override fun computeChildren(node: XCompositeNode) {
             invokeInSuspendContext(suspendContext) { suspendContext ->
-                coroutines ?: return@invokeInSuspendContext
+                if (coroutines == null) return@invokeInSuspendContext
                 val children = XValueChildrenList()
                 children.addChildCoroutineContainers(suspendContext, coroutines, emptyMap(), emptySet())
                 node.addChildrenOrError(children)

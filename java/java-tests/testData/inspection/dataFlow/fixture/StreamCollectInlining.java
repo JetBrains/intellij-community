@@ -14,9 +14,9 @@ class Clazz {
   }
   
   public void passNull(Collection<?> c) {
-    c.stream().collect(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>, 
-                       <warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>, 
-                       <warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    c.stream().collect(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>, 
+                       <warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>, 
+                       <warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
   }
   
   public void doSomethingStupid(Collection<String> c) {

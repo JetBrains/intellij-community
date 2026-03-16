@@ -9,6 +9,6 @@ public class WrongParameter {
     resolveAction(
       new Object(),
       new Object(),
-      <warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>); // Last parameter should be highlighted
+      <warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>); // Last parameter should be highlighted
   }
 }

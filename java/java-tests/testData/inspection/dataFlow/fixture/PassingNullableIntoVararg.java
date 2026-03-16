@@ -8,7 +8,7 @@ class Test {
   public static void main(String[] args) {
     Object o = null;
     if(Math.random() > 0.5) test(o);
-    if(Math.random() > 0.5) test2(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">o</warning>);
+    if(Math.random() > 0.5) test2(<warning descr="Passing 'null' argument to parameter annotated as non-null">o</warning>);
     if(Math.random() > 0.5) test2(<warning descr="Argument 'o' might be null">o</warning>, o);
   }
 }

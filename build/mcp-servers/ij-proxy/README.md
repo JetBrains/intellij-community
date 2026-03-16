@@ -9,6 +9,16 @@ It forwards JSON-RPC messages between stdin/stdout and the upstream streamable H
 - Hide `project_path`/`projectPath` from tool schemas shown to clients.
 - Inject a proxy-controlled project path for `tools/call` requests (defaults to `process.cwd()`), overriding client-provided `project_path`/`projectPath` values (override with `JETBRAINS_MCP_PROJECT_PATH`).
 
+## Multi-IDE support (IDEA + Rider)
+
+In the JetBrains monorepo, `dotnet/` is excluded from IDEA's scope and requires Rider. Neither IDE alone covers all files. When both are running, the proxy discovers both and routes transparently.
+
+- Auto-discover IDEs by scanning ports and matching `serverInfo.name` (e.g. `"JetBrains Rider MCP Server"`). No configuration needed.
+- Route file operations (`read_file`, `list_dir`, `get_file_problems`, etc.) to Rider for `dotnet/` paths; everything else goes to IDEA.
+- Merge search results (`search_text`, `search_regex`, `search_file`, `search_symbol`) from both IDEs concurrently. Rider results are prefixed with `dotnet/` for monorepo-relative paths.
+- Adjust Rider's `project_path` to `dotnet/` and strip `dotnet/` prefixes from file path arguments before forwarding.
+- Single-IDE mode: when only one IDE is running, the proxy behaves as a standard single-upstream proxy.
+
 ## Usage
 
 Install dependencies (once, from this directory):

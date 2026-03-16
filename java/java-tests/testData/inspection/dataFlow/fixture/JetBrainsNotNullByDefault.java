@@ -142,13 +142,13 @@ class Test<K> {
 class Test2{
   public static void main(String[] args) {
     final Test<String> stringTest = new Test<>();
-    final String test = stringTest.test(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    final String test = stringTest.test(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
     if(<warning descr="Condition 'test != null' is always 'true'">test != null</warning>) {
       System.out.println("1");
     }
     // TODO: should report incompatible bound @Nullable String = K extends @NotNullByDefault Object
     final Test<@Nullable String> stringTest2 = new Test<>();
-    final String test2 = stringTest2.test(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    final String test2 = stringTest2.test(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
     if(<warning descr="Condition 'test2 != null' is always 'true'">test2 != null</warning>) {
       System.out.println("1");
     }
@@ -174,7 +174,7 @@ class InheritNotNullByDefault {
       if(<warning descr="Condition 's == null' is always 'false'">s == null</warning>) {
         System.out.println("null");
       }
-      final String s1 = staticInner.get(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+      final String s1 = staticInner.get(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
     }
   }
 

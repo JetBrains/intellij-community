@@ -45,6 +45,7 @@ import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyDescriptorTypeUtil
 import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeMember
 import com.jetbrains.python.psi.types.PyTypeProviderBase
 import com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef
@@ -201,9 +202,10 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
 
     fun getDataclassTypeForClass(clsType: PyType?, context: TypeEvalContext): PyCallableType? {
       if (clsType !is PyClassType) return null
+      val genericClassType = clsType as? PyCollectionType ?: PyTypeChecker.findGenericDefinitionType(clsType.pyClass, context) ?: clsType
 
-      val params = collectDataclassFieldParameters(clsType, context, initOnly = true) ?: return null
-      return PyCallableTypeImpl(params, clsType.toInstance())
+      val params = collectDataclassFieldParameters(genericClassType, context, initOnly = true) ?: return null
+      return PyCallableTypeImpl(params, genericClassType.toInstance())
     }
 
     private fun collectDataclassFieldParameters(

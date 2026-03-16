@@ -43,6 +43,7 @@ import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -273,6 +274,7 @@ public final class ScratchFileActions {
                                                                   @NotNull DataContext dataContext) {
     ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();
     context.text = StringUtil.notNullize(getSelectionText(editor));
+    context.sourceFile = file;
     if (StringUtil.isNotEmpty(context.text)) {
       initLanguageFromCaret(project, editor, file, context, dataContext);
     }
@@ -322,6 +324,12 @@ public final class ScratchFileActions {
     Navigatable navigatable = PsiNavigationSupport.getInstance().createNavigatable(project, file, context.caretOffset);
     navigatable.navigate(!LaterInvocator.isInModalContextForProject(project));
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+
+    if (context.language != null) {
+      ScratchFileCreationHelper.EXTENSION.forLanguage(context.language)
+        .afterCreate(project, context, psiFile);
+    }
+
     if (context.ideView != null && psiFile != null) {
       context.ideView.selectElement(psiFile);
     }
@@ -386,6 +394,7 @@ public final class ScratchFileActions {
                                             @NotNull DataContext dataContext) {
     if (editor == null || psiFile == null) return;
     Caret caret = editor.getCaretModel().getPrimaryCaret();
+    context.selectionRange = caret.getSelectionRange();
     int offset = caret.getOffset();
     PsiElement element = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, offset);
     PsiFile file = element != null ? element.getContainingFile() : psiFile;

@@ -14,7 +14,7 @@ class Demo {
       .collect(Collectors.groupingByConcurrent(x -> x.<warning descr="Method invocation 'trim' will produce 'NullPointerException'">trim</warning>(), Collectors.toList()));
     Map<String, List<String>> map3 = list.stream()
       .filter(Objects::isNull)
-      .collect(Collectors.groupingBy(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>, <warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>, <warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>));
+      .collect(Collectors.groupingBy(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>, <warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>, <warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>));
     Map<String, List<String>> map4 = list.stream()
       .filter(Objects::isNull)
       .collect(Collectors.groupingBy(x -> <warning descr="Function may return null, but it's not allowed here">null</warning>));

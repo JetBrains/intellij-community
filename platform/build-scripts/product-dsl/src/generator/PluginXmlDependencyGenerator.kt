@@ -138,8 +138,8 @@ internal fun collectPluginGraphDeps(
                 filteredModuleDeps.add(classification.moduleName)
                 return@dependsOn
               }
-              val depModuleId = contentModule(classification.moduleName)?.id ?: -1
-              if (depModuleId >= 0 && shouldSkipEmbeddedPluginDependency(depModuleId, embeddedCheckProductNames)) {
+              val depModuleId = contentModule(classification.moduleName)
+              if (depModuleId != null && shouldSkipEmbeddedPluginDependency(depModuleId, embeddedCheckProductNames)) {
                 filteredModuleDeps.add(classification.moduleName)
                 return@dependsOn
               }
@@ -247,7 +247,7 @@ private suspend fun buildPluginDependencyPlan(
     suppressedPlugins = pluginHandling.effectiveSuppressedDeps,
   )
 
-  // Remove duplicate legacy <depends> only when modern deps are present or we are generating a <dependencies> section.
+  // Remove duplicate legacy <depends> only when modern deps are present, or we are generating a <dependencies> section.
   val hasDependenciesSection = extractDependenciesEntries(info.pluginXmlContent) != null
   val hasModernDepsInXIncludes = info.depsByFile.drop(1).any { it.pluginDependencies.isNotEmpty() || it.moduleDependencies.isNotEmpty() }
   val legacyPluginIds = info.legacyDepends.map { it.pluginId.value }.sorted()

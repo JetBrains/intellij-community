@@ -8,6 +8,6 @@ class Test {
   }
 
   void construct() {
-    new Record(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    new Record(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
   }
 }

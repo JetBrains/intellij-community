@@ -7,13 +7,12 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.DropDownLink
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
-import javax.swing.JList
 
 internal class AmendCommitModeDropDownLink(val amendHandler: AmendCommitHandler) :
   DropDownLink<CommitToAmend>(CommitToAmend.Last, { link -> createPopup(link, amendHandler) }) {
@@ -51,20 +50,14 @@ internal class AmendCommitModeDropDownLink(val amendHandler: AmendCommitHandler)
         .setNamerForFiltering { value ->
           itemToString(value)
         }
-        .setRenderer(object : SimpleListCellRenderer<CommitToAmend>() {
-          override fun customize(
-            list: JList<out CommitToAmend>,
-            value: CommitToAmend,
-            index: Int,
-            selected: Boolean,
-            hasFocus: Boolean,
-          ) {
-            val fullText = itemToString(value)
-            val popupText = itemToPopupText(value)
-            text = popupText
-            icon = if (value == link.selectedItem) AllIcons.Actions.Checked else AllIcons.Empty
-            toolTipText = if (popupText == fullText) null else fullText
+        .setRenderer(listCellRenderer {
+          val fullText = itemToString(value)
+          val popupText = itemToPopupText(value)
+          icon(if (value == link.selectedItem) AllIcons.Actions.Checked else AllIcons.Empty)
+          text(popupText) {
+            speedSearch {}
           }
+          toolTipText = if (popupText == fullText) null else fullText
         })
         .setSelectedValue(link.selectedItem, true)
         .setVisibleRowCount(5)

@@ -111,7 +111,7 @@ public final class WrapWithAdapterMethodCallFix extends PsiUpdateModCommandActio
               type = substitutor.substitute(type);
             }
           }
-          return outType.isAssignableFrom(type);
+          return !type.equals(inType) && outType.isAssignableFrom(type);
         })).orElse(null);
     }
 

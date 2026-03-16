@@ -4050,45 +4050,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/quickfix/contextParameterWithoutName")
-    public static class ContextParameterWithoutName extends AbstractK1QuickFixTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("firstPosition.kt")
-        public void testFirstPosition() throws Exception {
-            runTest("testData/quickfix/contextParameterWithoutName/firstPosition.kt");
-        }
-
-        @TestMetadata("lastPosition.kt")
-        public void testLastPosition() throws Exception {
-            runTest("testData/quickfix/contextParameterWithoutName/lastPosition.kt");
-        }
-
-        @TestMetadata("middlePosition.kt")
-        public void testMiddlePosition() throws Exception {
-            runTest("testData/quickfix/contextParameterWithoutName/middlePosition.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/quickfix/contextParameterWithoutName/simple.kt");
-        }
-
-        @TestMetadata("withComments.kt")
-        public void testWithComments() throws Exception {
-            runTest("testData/quickfix/contextParameterWithoutName/withComments.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/convertCollectionLiteralToIntArrayOf")
     public static class ConvertCollectionLiteralToIntArrayOf extends AbstractK1QuickFixTest {
         @java.lang.Override
@@ -19268,6 +19229,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/convertCollection/assignment.kt");
             }
 
+            @TestMetadata("customListOfFunction.kt")
+            public void testCustomListOfFunction() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertCollection/customListOfFunction.kt");
+            }
+
             @TestMetadata("emptyListArgumentToMutableList.kt")
             public void testEmptyListArgumentToMutableList() throws Exception {
                 runTest("testData/quickfix/typeMismatch/convertCollection/emptyListArgumentToMutableList.kt");
@@ -19303,6 +19269,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/convertCollection/emptyMapToMutableMapNullableReturn.kt");
             }
 
+            @TestMetadata("emptyMapWithTypeArgsToMutableMap.kt")
+            public void testEmptyMapWithTypeArgsToMutableMap() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertCollection/emptyMapWithTypeArgsToMutableMap.kt");
+            }
+
             @TestMetadata("emptySetAssignmentToMutableSet.kt")
             public void testEmptySetAssignmentToMutableSet() throws Exception {
                 runTest("testData/quickfix/typeMismatch/convertCollection/emptySetAssignmentToMutableSet.kt");
@@ -19328,14 +19299,34 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/convertCollection/iterableToArray.kt");
             }
 
+            @TestMetadata("listOfNestedToMutableList.kt")
+            public void testListOfNestedToMutableList() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertCollection/listOfNestedToMutableList.kt");
+            }
+
+            @TestMetadata("listOfSubtypeToMutableList.kt")
+            public void testListOfSubtypeToMutableList() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertCollection/listOfSubtypeToMutableList.kt");
+            }
+
             @TestMetadata("listOfToMutableList.kt")
             public void testListOfToMutableList() throws Exception {
                 runTest("testData/quickfix/typeMismatch/convertCollection/listOfToMutableList.kt");
             }
 
+            @TestMetadata("listOfToMutableSetMismatch.kt")
+            public void testListOfToMutableSetMismatch() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertCollection/listOfToMutableSetMismatch.kt");
+            }
+
             @TestMetadata("listOfWithTypeArgsToMutableList.kt")
             public void testListOfWithTypeArgsToMutableList() throws Exception {
                 runTest("testData/quickfix/typeMismatch/convertCollection/listOfWithTypeArgsToMutableList.kt");
+            }
+
+            @TestMetadata("listOfWrongTypeToMutableList.kt")
+            public void testListOfWrongTypeToMutableList() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertCollection/listOfWrongTypeToMutableList.kt");
             }
 
             @TestMetadata("listToArray.kt")
@@ -19363,6 +19354,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/convertCollection/mapOfToMutableMap.kt");
             }
 
+            @TestMetadata("mapToMutableListMismatch.kt")
+            public void testMapToMutableListMismatch() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertCollection/mapToMutableListMismatch.kt");
+            }
+
+            @TestMetadata("mutableListStarProjection.kt")
+            public void testMutableListStarProjection() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertCollection/mutableListStarProjection.kt");
+            }
+
             @TestMetadata("sequenceToArray.kt")
             public void testSequenceToArray() throws Exception {
                 runTest("testData/quickfix/typeMismatch/convertCollection/sequenceToArray.kt");
@@ -19376,6 +19377,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("setOfToMutableSet.kt")
             public void testSetOfToMutableSet() throws Exception {
                 runTest("testData/quickfix/typeMismatch/convertCollection/setOfToMutableSet.kt");
+            }
+
+            @TestMetadata("specificImplementationExpected.kt")
+            public void testSpecificImplementationExpected() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertCollection/specificImplementationExpected.kt");
             }
 
             @TestMetadata("typeArgumentMismatchWithExplicitType.kt")

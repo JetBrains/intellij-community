@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
+// @spec community/plugins/agent-workbench/spec/actions/global-prompt-entry.spec.md
+// @spec community/plugins/agent-workbench/spec/actions/global-prompt-suggestions.spec.md
+
 import com.intellij.agent.workbench.prompt.AgentPromptBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.setToolTipText
@@ -21,6 +24,7 @@ import com.intellij.util.ui.DialogUtil
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
@@ -49,6 +53,7 @@ private const val CARD_PREVIEW = "preview"
 internal data class AgentPromptPaletteView(
   @JvmField val rootPanel: JPanel,
   @JvmField val promptPanel: JPanel,
+  @JvmField val suggestionsPanel: JPanel,
   @JvmField val composerContextPanel: JPanel,
   @JvmField val bottomPanel: JPanel,
   @JvmField val tabbedPane: JBTabbedPane,
@@ -75,6 +80,7 @@ private class ComposerContextActionLink(text: @Nls String) : ActionLink(text) {
 
 internal fun createAgentPromptPaletteView(
   promptArea: EditorTextField,
+  suggestionsPanel: JPanel = JPanel(),
   contextChipsPanel: JPanel,
   providerOptionsPanel: JPanel? = null,
   onProviderIconClicked: () -> Unit,
@@ -209,6 +215,8 @@ internal fun createAgentPromptPaletteView(
     autoHideOnDisable = false
     isFocusable = false
     setDropDownLinkIcon()
+    withFont(JBUI.Fonts.smallFont())
+    foreground = UIUtil.getContextHelpForeground()
     border = JBUI.Borders.empty()
     DialogUtil.registerMnemonic(this)
   }
@@ -217,21 +225,22 @@ internal fun createAgentPromptPaletteView(
     isOpaque = false
     add(contextChipsPanel, BorderLayout.CENTER)
   }
-  val promptActionsBar = JPanel(BorderLayout()).apply {
+  val composerContextActionsPanel = JPanel(BorderLayout()).apply {
     isOpaque = false
-    border = JBUI.Borders.emptyTop(4)
+    border = JBUI.Borders.emptyTop(2)
     add(addContextButton, BorderLayout.WEST)
   }
   val composerContextPanel = BorderLayoutPanel().apply {
     isOpaque = false
-    border = JBUI.Borders.emptyTop(6)
+    border = JBUI.Borders.emptyTop(4)
     addToTop(contextChipsContainer)
-    addToBottom(promptActionsBar)
+    addToBottom(composerContextActionsPanel)
   }
 
   val promptPanel = JPanel(BorderLayout()).apply {
     isOpaque = false
-    border = JBUI.Borders.empty(8, 12)
+    border = JBUI.Borders.empty(6, 12, 8, 12)
+    add(suggestionsPanel, BorderLayout.NORTH)
     add(promptCardPanel, BorderLayout.CENTER)
     add(composerContextPanel, BorderLayout.SOUTH)
     minimumSize = PROMPT_PANEL_MINIMUM_SIZE
@@ -273,6 +282,7 @@ internal fun createAgentPromptPaletteView(
   return AgentPromptPaletteView(
     rootPanel = rootPanel,
     promptPanel = promptPanel,
+    suggestionsPanel = suggestionsPanel,
     composerContextPanel = composerContextPanel,
     bottomPanel = bottomPanel,
     tabbedPane = tabbedPane,

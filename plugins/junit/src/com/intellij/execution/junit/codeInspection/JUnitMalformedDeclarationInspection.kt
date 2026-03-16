@@ -385,7 +385,7 @@ private class JUnitMalformedSignatureVisitor(
   private fun UDeclaration.isParameterizedTest(): Boolean {
     return when (this) {
       is UMethod -> MetaAnnotationUtil.isMetaAnnotated(javaPsi, listOf(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST))
-      is UClass -> MetaAnnotationUtil.isMetaAnnotated(javaPsi, listOf(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_CLASS))
+      is UClass -> MetaAnnotationUtil.isMetaAnnotatedInHierarchy(javaPsi, listOf(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_CLASS))
       else -> false
     }
   }
@@ -689,6 +689,7 @@ private class JUnitMalformedSignatureVisitor(
   private fun checkMalformedParameterized(declaration: UDeclaration) {
     if (!declaration.isParameterizedTest()) return
     val javaPsi = declaration.javaPsi as? PsiModifierListOwner ?: return
+    if (declaration is UClass && javaPsi.hasModifierProperty(PsiModifier.ABSTRACT)) return
     val usedSourceAnnotations = MetaAnnotationUtil.findMetaAnnotations(javaPsi, SOURCE_ANNOTATIONS).toList()
     checkConflictingSourceAnnotations(usedSourceAnnotations, declaration)
     if (declaration is UClass) checkConflictingConstructors(declaration)

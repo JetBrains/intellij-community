@@ -7,6 +7,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.lang.properties.psi.Property
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.parentOfType
 
 class PropertiesMoveLineUpCommandProvider :
@@ -18,7 +19,7 @@ class PropertiesMoveLineUpCommandProvider :
                         previewText = ActionsBundle.message("action.MoveLineUp.description")) {
 
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
-    return super.isApplicable(offset, psiFile, editor) && isAtEndOfProperty(offset, psiFile)
+    return super.isApplicable(offset, psiFile, editor) && isAtEndOfProperty(offset, psiFile) && !isNeighborMultiline(offset, psiFile, forward = false)
   }
 }
 
@@ -31,7 +32,7 @@ class PropertiesMoveLineDownCommandProvider :
                         previewText = ActionsBundle.message("action.MoveLineDown.description")) {
 
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
-    return super.isApplicable(offset, psiFile, editor) && isAtEndOfProperty(offset, psiFile)
+    return super.isApplicable(offset, psiFile, editor) && isAtEndOfProperty(offset, psiFile) && !isNeighborMultiline(offset, psiFile, forward = true)
   }
 }
 
@@ -42,4 +43,13 @@ private fun isAtEndOfProperty(offset: Int, psiFile: PsiFile): Boolean {
   if (text.endsWith(" ") &&
       text.trim().endsWith("\\")) return false // broken multiline property
   return offset == property.textRange.endOffset
+}
+
+private fun isNeighborMultiline(offset: Int, psiFile: PsiFile, forward: Boolean): Boolean {
+  val property = getCommandContext(offset, psiFile)?.parentOfType<Property>() ?: return false
+  var sibling = if (forward) property.nextSibling else property.prevSibling
+  while (sibling is PsiWhiteSpace) {
+    sibling = if (forward) sibling.nextSibling else sibling.prevSibling
+  }
+  return sibling is Property && sibling.text.contains("\n")
 }

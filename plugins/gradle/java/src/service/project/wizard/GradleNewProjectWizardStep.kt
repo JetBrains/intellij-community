@@ -181,7 +181,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
               label(GradleBundle.message("gradle.project.settings.distribution.wrapper.version.npw"))
                 .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
               cell(TextCompletionComboBox(context.project, TextCompletionComboBoxConverter.Default()))
-                .columns(8)
+                .columns(COLUMNS_SHORT)
                 .applyToComponent { bindSelectedItem(gradleVersionProperty) }
                 .applyToComponent { bindCompletionVariants(gradleVersionsProperty) }
                 .trimmedTextValidation(CHECK_NON_EMPTY)

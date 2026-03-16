@@ -37,15 +37,15 @@ class ProductModulesLoaderTest {
     writePluginXmlWithModules(tempDirectory.rootPath / "plugin", "<idea-plugin><id>plugin</id></idea-plugin>")
     val xml = generateProductModulesWithPlugin()
     val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.MONOLITH, repository)
-    val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.stringId }
+    val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.name }
     assertEquals(1, mainGroupModules.size)
     val root = mainGroupModules.single()
-    assertEquals("root", root.moduleDescriptor.moduleId.stringId)
+    assertEquals("root", root.moduleDescriptor.moduleId.name)
     assertEquals(RuntimeModuleLoadingRule.REQUIRED, root.loadingRule)
     assertEquals(emptySet<RuntimeModuleId>(), productModules.mainModuleGroup.optionalModuleIds)
 
     val pluginGroup = productModules.bundledPluginModuleGroups.single()
-    assertEquals("plugin", pluginGroup.includedModules.single().moduleDescriptor.moduleId.stringId)
+    assertEquals("plugin", pluginGroup.includedModules.single().moduleDescriptor.moduleId.name)
   }
   
   @Test
@@ -69,16 +69,16 @@ class ProductModulesLoaderTest {
       """.trimIndent())
     }.generateInTempDir().resolve(FILE_NAME)
     val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.MONOLITH, repository)
-    val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.stringId }
+    val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.name }
     assertEquals(3, mainGroupModules.size)
     val (optional, required, root) = mainGroupModules
-    assertEquals("root", root.moduleDescriptor.moduleId.stringId)
+    assertEquals("root", root.moduleDescriptor.moduleId.name)
     assertEquals(RuntimeModuleLoadingRule.EMBEDDED, root.loadingRule)
-    assertEquals("required", required.moduleDescriptor.moduleId.stringId)
+    assertEquals("required", required.moduleDescriptor.moduleId.name)
     assertEquals(RuntimeModuleLoadingRule.REQUIRED, required.loadingRule)
-    assertEquals("optional", optional.moduleDescriptor.moduleId.stringId)
+    assertEquals("optional", optional.moduleDescriptor.moduleId.name)
     assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optional.loadingRule)
-    assertEquals(setOf("optional", "unknown-optional"), productModules.mainModuleGroup.optionalModuleIds.mapTo(HashSet()) { it.stringId })
+    assertEquals(setOf("optional", "unknown-optional"), productModules.mainModuleGroup.optionalModuleIds.mapTo(HashSet()) { it.name })
   }
 
   @Test
@@ -100,14 +100,14 @@ class ProductModulesLoaderTest {
       """.trimIndent())
     }.generateInTempDir().resolve(FILE_NAME)
     val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.MONOLITH, repository)
-    val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.stringId }
+    val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.name }
     assertEquals(3, mainGroupModules.size)
     val (optional, root, util) = mainGroupModules
-    assertEquals("optional", optional.moduleDescriptor.moduleId.stringId)
+    assertEquals("optional", optional.moduleDescriptor.moduleId.name)
     assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optional.loadingRule)
-    assertEquals("root", root.moduleDescriptor.moduleId.stringId)
+    assertEquals("root", root.moduleDescriptor.moduleId.name)
     assertEquals(RuntimeModuleLoadingRule.EMBEDDED, root.loadingRule)
-    assertEquals("util", util.moduleDescriptor.moduleId.stringId)
+    assertEquals("util", util.moduleDescriptor.moduleId.name)
     assertEquals(RuntimeModuleLoadingRule.EMBEDDED, util.loadingRule)
   }
   
@@ -127,11 +127,11 @@ class ProductModulesLoaderTest {
     val pluginModules = pluginModuleGroup.includedModules
     assertEquals(2, pluginModules.size)
     val (plugin, optional) = pluginModules
-    assertEquals("plugin", plugin.moduleDescriptor.moduleId.stringId)
+    assertEquals("plugin", plugin.moduleDescriptor.moduleId.name)
     assertEquals(RuntimeModuleLoadingRule.EMBEDDED, plugin.loadingRule)
-    assertEquals("optional", optional.moduleDescriptor.moduleId.stringId)
+    assertEquals("optional", optional.moduleDescriptor.moduleId.name)
     assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optional.loadingRule)
-    assertEquals(setOf("optional", "unknown"), pluginModuleGroup.optionalModuleIds.mapTo(HashSet()) { it.stringId })
+    assertEquals(setOf("optional", "unknown"), pluginModuleGroup.optionalModuleIds.mapTo(HashSet()) { it.name })
   }
 
   @Test
@@ -148,7 +148,7 @@ class ProductModulesLoaderTest {
     assertThat(productModules.bundledPluginModuleGroups).isEmpty()
     assertThat(productModules.notLoadedBundledPluginModules).hasSize(1)
     val notLoadedPlugin = productModules.notLoadedBundledPluginModules.entries.single()
-    assertThat(notLoadedPlugin.key.stringId).isEqualTo("plugin")
+    assertThat(notLoadedPlugin.key.name).isEqualTo("plugin")
     assertThat(notLoadedPlugin.value).containsExactly(
       RuntimeModuleId.raw("plugin"),
       RuntimeModuleId.raw("plugin.util"),
@@ -178,9 +178,9 @@ class ProductModulesLoaderTest {
       val pluginModules = pluginModuleGroup.includedModules
       assertEquals(3, pluginModules.size)
       val (plugin, common, additional) = pluginModules
-      assertEquals("plugin", plugin.moduleDescriptor.moduleId.stringId)
-      assertEquals("plugin.common", common.moduleDescriptor.moduleId.stringId)
-      assertEquals(additionalModuleName, additional.moduleDescriptor.moduleId.stringId)
+      assertEquals("plugin", plugin.moduleDescriptor.moduleId.name)
+      assertEquals("plugin.common", common.moduleDescriptor.moduleId.name)
+      assertEquals(additionalModuleName, additional.moduleDescriptor.moduleId.name)
     }
     checkGroup(ProductMode.MONOLITH, "plugin.localIde")
     checkGroup(ProductMode.FRONTEND, "plugin.frontend")
@@ -217,8 +217,8 @@ class ProductModulesLoaderTest {
     }.generateInTempDir().resolve(FILE_NAME)
     val productModules = ProductModulesSerialization.loadProductModules(xmlPath, ProductMode.FRONTEND, repository)
     val mainModules = productModules.mainModuleGroup.includedModules
-    assertEquals(listOf("additional", "root"), mainModules.map { it.moduleDescriptor.moduleId.stringId })
-    val bundledPlugins = productModules.bundledPluginModuleGroups.map { it.mainModule.moduleId.stringId }
+    assertEquals(listOf("additional", "root"), mainModules.map { it.moduleDescriptor.moduleId.name })
+    val bundledPlugins = productModules.bundledPluginModuleGroups.map { it.mainModule.moduleId.name }
     assertEquals(listOf("plugin", "common.plugin"), bundledPlugins)
   }
   
@@ -252,8 +252,8 @@ class ProductModulesLoaderTest {
     }.generateInTempDir().resolve(FILE_NAME)
     val productModules = ProductModulesSerialization.loadProductModules(xmlPath, ProductMode.FRONTEND, repository)
     val mainModules = productModules.mainModuleGroup.includedModules
-    assertEquals(listOf("root"), mainModules.map { it.moduleDescriptor.moduleId.stringId })
-    val bundledPlugins = productModules.bundledPluginModuleGroups.map { it.mainModule.moduleId.stringId }
+    assertEquals(listOf("root"), mainModules.map { it.moduleDescriptor.moduleId.name })
+    val bundledPlugins = productModules.bundledPluginModuleGroups.map { it.mainModule.moduleId.name }
     assertEquals(listOf("plugin"), bundledPlugins)
   }
   
@@ -277,8 +277,8 @@ class ProductModulesLoaderTest {
     val productModules = ProductModulesSerialization.loadProductModules(rootProductModulesPath.resolve(FILE_NAME), ProductMode.MONOLITH, repository)
     val (plugin1, plugin2) = productModules.bundledPluginModuleGroups
     val moduleMapping = ServiceModuleMapping.buildMapping(productModules)
-    assertEquals(listOf("additional1", "lib.common"), moduleMapping.getAdditionalModules(plugin1).map { it.moduleId.stringId})
-    assertEquals(listOf("lib.common"), moduleMapping.getAdditionalModules(plugin2).map { it.moduleId.stringId })
+    assertEquals(listOf("additional1", "lib.common"), moduleMapping.getAdditionalModules(plugin1).map { it.moduleId.name})
+    assertEquals(listOf("lib.common"), moduleMapping.getAdditionalModules(plugin2).map { it.moduleId.name })
   }
   
   @Test
@@ -346,7 +346,7 @@ class ProductModulesLoaderTest {
     productModulesWithPlugins(mainModules = listOf("plugin2"), plugins = listOf("plugin3")).generate(plugin2ProductModulesPath)
     val productModules =
       ProductModulesSerialization.loadProductModules(rootProductModulesPath.resolve(FILE_NAME), ProductMode.MONOLITH, repository)
-    assertThat(productModules.bundledPluginModuleGroups.map { it.mainModule.moduleId.stringId })
+    assertThat(productModules.bundledPluginModuleGroups.map { it.mainModule.moduleId.name })
       .doesNotContain("plugin3")
   }
 

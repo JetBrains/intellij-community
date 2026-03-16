@@ -5042,6 +5042,40 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
+  // PY-87909
+  public void testGenericDataclassField() {
+    doTest("int", """
+      from dataclasses import dataclass
+      
+      
+      @dataclass
+      class A[T]:
+          t: T
+      
+      
+      expr = A(1).t
+      """
+    );
+  }
+
+  public void testGenericDataclassFieldWithLegacyGenericSyntax() {
+    doTest("int", """
+      from dataclasses import dataclass
+      from typing import Generic, TypeVar
+      
+      T = TypeVar("T")
+      
+      
+      @dataclass
+      class A(Generic[T]):
+          t: T
+      
+      
+      expr = A(1).t
+      """
+    );
+  }
+
   public void testQuotedForwardReferenceInTypeHint() {
     doTest("MyClass", """
       def foo(x: "MyClass"):

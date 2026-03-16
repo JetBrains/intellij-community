@@ -18,20 +18,24 @@ internal fun computeContextFingerprint(items: List<AgentPromptContextItem>): Has
   hash.putInt(0)
 
   for (item in items) {
-    hash.putString(item.rendererId)
-    appendField(hash, "title", item.title)
-    hash.putString(item.body)
-    appendField(hash, "itemId", item.itemId)
-    appendField(hash, "parentItemId", item.parentItemId)
-    hash.putString(item.source)
-    hash.putInt(item.phase?.ordinal ?: -1)
-    hash.putInt(item.truncation.originalChars)
-    hash.putInt(item.truncation.includedChars)
-    hash.putInt(item.truncation.reason.ordinal)
-    appendPayloadCanonical(hash, item.payload)
+    appendExactContextFingerprintItem(hash, item)
   }
   hash.putInt(items.size)
   return hash.get()
+}
+
+internal fun appendExactContextFingerprintItem(sink: HashSink, item: AgentPromptContextItem) {
+  sink.putString(item.rendererId)
+  appendField(sink, "title", item.title)
+  sink.putString(item.body)
+  appendField(sink, "itemId", item.itemId)
+  appendField(sink, "parentItemId", item.parentItemId)
+  sink.putString(item.source)
+  sink.putInt(item.phase?.ordinal ?: -1)
+  sink.putInt(item.truncation.originalChars)
+  sink.putInt(item.truncation.includedChars)
+  sink.putInt(item.truncation.reason.ordinal)
+  appendPayloadCanonical(sink, item.payload)
 }
 
 internal fun applyDraftContextRemovals(

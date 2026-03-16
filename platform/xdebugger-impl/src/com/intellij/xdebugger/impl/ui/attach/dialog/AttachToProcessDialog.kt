@@ -348,7 +348,7 @@ open class AttachToProcessDialog(
     rootPane.isFocusTraversalPolicyProvider = true
     rootPane.focusTraversalPolicy = object : LayoutFocusTraversalPolicy() {
       override fun getComponentAfter(aContainer: Container?, aComponent: Component?): Component? {
-        aComponent ?: return super.getComponentAfter(aContainer, null)
+        if (aComponent == null) return super.getComponentAfter(aContainer, null)
 
         val components = getOrderedComponents()
         val indexOfComponent = components.indexOf(aComponent)
@@ -375,7 +375,7 @@ open class AttachToProcessDialog(
       }
 
       override fun getComponentBefore(aContainer: Container?, aComponent: Component?): Component? {
-        aComponent ?: return super.getComponentBefore(aContainer, null)
+        if (aComponent == null) return super.getComponentBefore(aContainer, null)
 
         val components = getOrderedComponents()
         val indexOfComponent = components.indexOf(aComponent)

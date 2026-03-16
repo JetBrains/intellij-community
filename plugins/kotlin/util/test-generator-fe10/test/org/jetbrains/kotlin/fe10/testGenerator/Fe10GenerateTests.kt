@@ -147,6 +147,8 @@ import org.jetbrains.kotlin.idea.intentions.AbstractK1MultiFileIntentionTest
 import org.jetbrains.kotlin.idea.intentions.declarations.AbstractK1JoinLinesTest
 import org.jetbrains.kotlin.idea.internal.AbstractBytecodeToolWindowMultiplatformTest
 import org.jetbrains.kotlin.idea.internal.AbstractBytecodeToolWindowTest
+import org.jetbrains.kotlin.idea.jvm.k1.AbstractK1ScratchLineMarkersTest
+import org.jetbrains.kotlin.idea.jvm.k1.AbstractK1ScratchRunActionTest
 import org.jetbrains.kotlin.idea.kdoc.AbstractKDocHighlightingTest
 import org.jetbrains.kotlin.idea.kdoc.AbstractKDocTypingTest
 import org.jetbrains.kotlin.idea.navigation.AbstractGotoDeclarationTest
@@ -273,8 +275,6 @@ import org.jetbrains.uast.test.kotlin.comparison.AbstractFE1LegacyUastValuesTest
 import org.jetbrains.uast.test.kotlin.comparison.AbstractFE1UastDeclarationTest
 import org.jetbrains.uast.test.kotlin.comparison.AbstractFE1UastTypesTest
 import org.jetbrains.uast.test.kotlin.comparison.AbstractFE1UastValuesTest
-import org.jetbrains.kotlin.idea.jvm.k1.AbstractK1ScratchLineMarkersTest
-import org.jetbrains.kotlin.idea.jvm.k1.AbstractK1ScratchRunActionTest
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     generateK1Tests()
@@ -462,6 +462,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "destructingNameMismatch", // K2-only
                     "removeRedundantCallsOfConversionMethods", // K2 compiler diagnostic
                     "destructingShortForm", // K2-only
+                    "contextParameterWithoutName", // K2-only context parameters
                 )
             )
         }

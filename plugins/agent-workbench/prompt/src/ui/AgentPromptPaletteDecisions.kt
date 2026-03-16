@@ -14,8 +14,13 @@ import org.jetbrains.annotations.NonNls
 internal fun resolveDefaultFooterHintMessageKey(
     targetMode: PromptTargetMode,
     selectedProvider: AgentSessionProviderDescriptor?,
+    hasNextPromptTab: Boolean = false,
 ): @NonNls String {
-  return if (isTabQueueShortcutEnabled(targetMode = targetMode, selectedProvider = selectedProvider)) {
+  return if (isTabQueueShortcutEnabled(
+      targetMode = targetMode,
+      selectedProvider = selectedProvider,
+      hasNextPromptTab = hasNextPromptTab,
+    )) {
     "popup.footer.hint.existing.queue"
   }
   else {
@@ -26,8 +31,11 @@ internal fun resolveDefaultFooterHintMessageKey(
 internal fun isTabQueueShortcutEnabled(
     targetMode: PromptTargetMode,
     selectedProvider: AgentSessionProviderDescriptor?,
+    hasNextPromptTab: Boolean = false,
 ): Boolean {
-  return targetMode == PromptTargetMode.EXISTING_TASK && selectedProvider?.supportsPromptTabQueueShortcut == true
+  return targetMode == PromptTargetMode.EXISTING_TASK &&
+         selectedProvider?.supportsPromptTabQueueShortcut == true &&
+         !hasNextPromptTab
 }
 
 internal fun shouldShowExistingTaskSelectionHint(

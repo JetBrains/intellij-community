@@ -4,7 +4,7 @@ import {expect, test} from 'bun:test'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {StreamableHTTPClientTransport} from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import {extractEntries} from '../proxy-tools/shared'
-import {setIdeVersion, shouldApplyWorkaround, WorkaroundKey} from '../workarounds'
+import {shouldApplyWorkaround, WorkaroundKey} from '../workarounds'
 import {dirAAbs, dirARel, dirBAbs, isUnder, projectRoot, REGEX_SCOPE_PATTERN, streamUrl, toAbsolute} from './jb-mcp-test-utils'
 
 const maybeTest = streamUrl ? test : test.skip
@@ -26,8 +26,8 @@ maybeTest('jb mcp search_in_files_by_regex respects directoryToSearch', async ()
 
   try {
     const serverInfo = client.getServerVersion()
-    setIdeVersion(serverInfo?.version ?? null)
-    const bugExpected = shouldApplyWorkaround(WorkaroundKey.SearchInFilesByRegexDirectoryScopeIgnored)
+    const ideVersion = serverInfo?.version ?? null
+    const bugExpected = shouldApplyWorkaround(WorkaroundKey.SearchInFilesByRegexDirectoryScopeIgnored, ideVersion)
 
     const result = await client.callTool({
       name: 'search_in_files_by_regex',

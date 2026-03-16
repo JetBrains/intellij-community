@@ -3,7 +3,6 @@
   <dependencies>
     <plugin id="com.intellij.modules.idea.community"/>
     <module name="intellij.xml.psi"/>
-    <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.java"/>
     <module name="intellij.java.ui"/>

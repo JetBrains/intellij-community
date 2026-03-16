@@ -4,6 +4,7 @@
   <dependencies>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.guava"/>
+    <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>

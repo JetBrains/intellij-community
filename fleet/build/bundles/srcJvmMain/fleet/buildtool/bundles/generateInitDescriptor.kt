@@ -6,6 +6,7 @@ import fleet.buildtool.codecache.PluginPart
 import fleet.buildtool.codecache.detectNativeLibraryPlatform
 import fleet.buildtool.codecache.detectNativeLibraryPlatformBasedOnItsName
 import fleet.buildtool.codecache.specs.NativeLibrariesExtractorSpec
+import fleet.buildtool.codecache.specs.NativeLibrariesExtractorSpec.PlatformDetector
 import fleet.buildtool.codecache.specs.NativeLibraryExtractor
 import fleet.buildtool.codecache.specs.ShadowedJarSpec
 import fleet.codecache.CodeCacheHasher
@@ -58,7 +59,7 @@ suspend fun generateInitDescriptor(
         directory = packedModulesDir,
         nativeLibraryExtractor = NativeLibraryExtractor.ExtractTo(
           directory = outputNativeLibs,
-          specifications = listOf(extractJnaLibrarySpec, extractKotlinDesktopLibrarySpec)
+          specifications = listOf(ExtractJnaLibrarySpec, ExtractKotlinDesktopLibrarySpec)
         ),
         version = null,
         logger = logger,
@@ -98,10 +99,10 @@ private val dockCoroutinesShadowedJarSpec = ShadowedJarSpec(
   jpmsModuleName = "fleet.dock.coroutines",
 )
 
-private val extractJnaLibrarySpec = NativeLibrariesExtractorSpec(
-  jarNamePattern = Regex("com\\.sun\\.jna\\.jar"),
-  allowedExtensions = setOf("jnilib", "dylib", "so", "tbd", "dll", "a"),
-  nativeLibrariesSelector = { extractedRoot ->
+private object ExtractJnaLibrarySpec : NativeLibrariesExtractorSpec {
+  override val jarNamePattern = Regex("com\\.sun\\.jna\\.jar")
+  override val allowedExtensions = setOf("jnilib", "dylib", "so", "tbd", "dll", "a")
+  override val nativeLibrariesSelector = { extractedRoot: Path ->
     val nativeLibrariesRoot = extractedRoot.resolve("com/sun/jna")
     if (!Files.exists(nativeLibrariesRoot)) {
       emptyList()
@@ -111,13 +112,15 @@ private val extractJnaLibrarySpec = NativeLibrariesExtractorSpec(
         .filter { it.isDirectory() }
         .mapNotNull { it.listDirectoryEntries().singleOrNull() }
     }
-  },
-  platformDetector = { library -> detectNativeLibraryPlatform(library.parent.name) },
-)
+  }
+  override val platformDetector: PlatformDetector = { library, jar ->
+    detectNativeLibraryPlatform(library.parent.name)
+  }
+}
 
-private val extractKotlinDesktopLibrarySpec = NativeLibrariesExtractorSpec(
-  jarNamePattern = Regex("kotlin\\.desktop\\.toolkit.*\\.jar"),
-  allowedExtensions = setOf("dylib", "so", "dll"),
-  nativeLibrariesSelector = { extractedRoot -> extractedRoot.listDirectoryEntries() },
-  platformDetector = { library -> detectNativeLibraryPlatformBasedOnItsName(library.name) },
-)
+private object ExtractKotlinDesktopLibrarySpec : NativeLibrariesExtractorSpec {
+  override val jarNamePattern = Regex("kotlin\\.desktop\\.toolkit.*\\.jar")
+  override val allowedExtensions = setOf("dylib", "so", "dll")
+  override val nativeLibrariesSelector = { extractedRoot: Path -> extractedRoot.listDirectoryEntries() }
+  override val platformDetector: PlatformDetector = { _, jar -> detectNativeLibraryPlatformBasedOnItsName(jar.name) }
+}

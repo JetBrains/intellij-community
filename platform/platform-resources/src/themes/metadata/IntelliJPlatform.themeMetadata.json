@@ -39,98 +39,12 @@
       "description": "Background of alert dialogs"
     },
     {
-      "key": "Badge.blueBackground",
-      "description": "Background color for blue primary badge (e.g. 'New')",
-      "source": "com.intellij.ui.components.Badge",
-      "since": "2026.2"
-    },
-    {
-      "key": "Badge.blueForeground",
-      "description": "Text color for blue primary badge",
-      "source": "com.intellij.ui.components.Badge",
-      "since": "2026.2"
-    },
-    {
-      "key": "Badge.blueSecondaryBackground",
-      "description": "Background color for blue secondary badge",
-      "source": "com.intellij.ui.components.Badge",
-      "since": "2026.2"
-    },
-    {
-      "key": "Badge.blueSecondaryForeground",
-      "description": "Text color for blue secondary badge",
-      "source": "com.intellij.ui.components.Badge",
-      "since": "2026.2"
-    },
-    {
-      "key": "Badge.disabledBackground",
-      "description": "Background color for disabled badge",
-      "source": "com.intellij.ui.components.Badge",
-      "since": "2026.2"
-    },
-    {
-      "key": "Badge.disabledForeground",
-      "description": "Text color for disabled badge",
-      "source": "com.intellij.ui.components.Badge",
-      "since": "2026.2"
-    },
-    {
-      "key": "Badge.graySecondaryBackground",
-      "description": "Background color for gray secondary badge",
-      "source": "com.intellij.ui.components.Badge",
-      "since": "2026.2"
-    },
-    {
-      "key": "Badge.graySecondaryForeground",
-      "description": "Text color for gray secondary badge",
-      "source": "com.intellij.ui.components.Badge",
-      "since": "2026.2"
-    },
-    {
-      "key": "Badge.greenBackground",
-      "description": "Background color for green primary badge",
-      "source": "com.intellij.ui.components.Badge",
-      "since": "2026.2"
-    },
-    {
-      "key": "Badge.greenForeground",
-      "description": "Text color for green primary badge",
-      "source": "com.intellij.ui.components.Badge",
-      "since": "2026.2"
-    },
-    {
       "key": "Badge.greenOutlineBorderColor",
-      "description": "Border color for green outline badge",
-      "source": "com.intellij.ui.components.Badge"
+      "description": "Border color for green outline badge"
     },
     {
       "key": "Badge.greenOutlineForeground",
-      "description": "Foreground color for green outline badge",
-      "source": "com.intellij.ui.components.Badge"
-    },
-    {
-      "key": "Badge.greenSecondaryBackground",
-      "description": "Background color for green secondary badge",
-      "source": "com.intellij.ui.components.Badge",
-      "since": "2026.2"
-    },
-    {
-      "key": "Badge.greenSecondaryForeground",
-      "description": "Text color for green secondary badge",
-      "source": "com.intellij.ui.components.Badge",
-      "since": "2026.2"
-    },
-    {
-      "key": "Badge.purpleSecondaryBackground",
-      "description": "Background color for purple secondary badge",
-      "source": "com.intellij.ui.components.Badge",
-      "since": "2026.2"
-    },
-    {
-      "key": "Badge.purpleSecondaryForeground",
-      "description": "Text color for purple secondary badge",
-      "source": "com.intellij.ui.components.Badge",
-      "since": "2026.2"
+      "description": "Foreground color for green outline badge"
     },
     {
       "key": "Banner.errorBackground"

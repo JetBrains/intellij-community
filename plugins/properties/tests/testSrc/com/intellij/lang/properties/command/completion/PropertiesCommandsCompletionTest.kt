@@ -97,6 +97,48 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
   }
 
+  fun testMoveLineUpWithMultilineAbove() {
+    myFixture.configureByText(PropertiesFileType.INSTANCE, """
+      a.b.c=first \
+        continued
+      d.e.f=second.<caret>
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertNull(elements.firstOrNull { element -> element.lookupString.contains("Move line up", ignoreCase = true) })
+  }
+
+  fun testMoveLineDownWithMultilineBelow() {
+    myFixture.configureByText(PropertiesFileType.INSTANCE, """
+      a.b.c=first.<caret>
+      d.e.f=second \
+        continued
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertNull(elements.firstOrNull { element -> element.lookupString.contains("Move line down", ignoreCase = true) })
+  }
+
+  fun testMoveLineUpWithMultilineBelow() {
+    myFixture.configureByText(PropertiesFileType.INSTANCE, """
+      a.b.c=first
+      d.e.f=second.<caret>
+      e.f.g=third \
+        continued
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Move line up", ignoreCase = true) })
+  }
+
+  fun testMoveLineDownWithMultilineAbove() {
+    myFixture.configureByText(PropertiesFileType.INSTANCE, """
+      a.b.c=first \
+        continued
+      d.e.f=second.<caret>
+      e.f.g=third
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Move line down", ignoreCase = true) })
+  }
+
   fun testDoubleDot() {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.c.<caret>    =  some.strange 

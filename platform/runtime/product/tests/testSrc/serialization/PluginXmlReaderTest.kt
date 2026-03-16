@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.serialization
 
-import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.product.serialization.impl.loadPluginModules
 import com.intellij.platform.runtime.repository.RuntimeModuleId
+import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.createModuleDescriptor
 import com.intellij.platform.runtime.repository.createRepository
 import com.intellij.platform.runtime.repository.writePluginXml
@@ -34,7 +34,7 @@ class PluginXmlReaderTest {
     val pluginModules = loadPluginModules(repository.getModule(RuntimeModuleId.raw("plugin.main")), repository, 
                                           ResourceFileResolver.createDefault(repository))
     val main = pluginModules.single()
-    assertEquals("plugin.main", main.moduleId.stringId)
+    assertEquals("plugin.main", main.moduleId.name)
     assertEquals(RuntimeModuleLoadingRule.EMBEDDED, main.loadingRule)
   }
   
@@ -77,19 +77,19 @@ class PluginXmlReaderTest {
     assertEquals(7, pluginModules.size)
     val (main, optional, optionalExplicit, onDemand, required) = pluginModules
     val (embedded, unknown) = pluginModules.subList(5, 7)
-    assertEquals("plugin.main", main.moduleId.stringId)
+    assertEquals("plugin.main", main.moduleId.name)
     assertEquals(RuntimeModuleLoadingRule.EMBEDDED, main.loadingRule)
-    assertEquals("plugin.optional", optional.moduleId.stringId)
+    assertEquals("plugin.optional", optional.moduleId.name)
     assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optional.loadingRule)
-    assertEquals("plugin.optional.explicit", optionalExplicit.moduleId.stringId)
+    assertEquals("plugin.optional.explicit", optionalExplicit.moduleId.name)
     assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optionalExplicit.loadingRule)
-    assertEquals("plugin.on_demand", onDemand.moduleId.stringId)
+    assertEquals("plugin.on_demand", onDemand.moduleId.name)
     assertEquals(RuntimeModuleLoadingRule.ON_DEMAND, onDemand.loadingRule)
-    assertEquals("plugin.required", required.moduleId.stringId)
+    assertEquals("plugin.required", required.moduleId.name)
     assertEquals(RuntimeModuleLoadingRule.REQUIRED, required.loadingRule)
-    assertEquals("plugin.embedded", embedded.moduleId.stringId)
+    assertEquals("plugin.embedded", embedded.moduleId.name)
     assertEquals(RuntimeModuleLoadingRule.EMBEDDED, embedded.loadingRule)
-    assertEquals("plugin.unknown", unknown.moduleId.stringId)
+    assertEquals("plugin.unknown", unknown.moduleId.name)
     assertEquals(RuntimeModuleLoadingRule.OPTIONAL, unknown.loadingRule)
   }
 }

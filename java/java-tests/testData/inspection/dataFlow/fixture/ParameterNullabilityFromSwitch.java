@@ -18,6 +18,6 @@ class Test {
 
   public static void main(String[] args) {
     nullable(<warning descr="Passing 'null' argument to non-annotated parameter">null</warning>);
-    notNullable(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    notNullable(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
   }
 }

@@ -10,6 +10,7 @@
     <module name="intellij.libraries.sshd.osgi"/>
     <module name="intellij.libraries.system.stubs.jupiter"/>
     <module name="intellij.libraries.testcontainers"/>
+    <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>

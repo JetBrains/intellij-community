@@ -10,7 +10,7 @@ public class ExtensionMethodDfa {
   public void testArrays() {
     String[] arr = null;
     String str = null;
-    <warning descr="Passing 'null' argument to parameter annotated as @NotNull">arr</warning>.fill(str);
+    <warning descr="Passing 'null' argument to parameter annotated as non-null">arr</warning>.fill(str);
   }
 }
 class Extensions {

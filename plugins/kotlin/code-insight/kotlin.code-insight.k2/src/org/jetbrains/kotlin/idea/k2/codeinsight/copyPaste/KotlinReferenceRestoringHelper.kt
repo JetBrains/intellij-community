@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.castAll
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 
-internal object KotlinReferenceRestoringHelper {
+object KotlinReferenceRestoringHelper {
     fun collectSourceReferenceInfos(sourceFile: KtFile, startOffsets: IntArray, endOffsets: IntArray): List<KotlinSourceReferenceInfo> {
         var currentStartOffsetInPastedText = 0
 

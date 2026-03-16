@@ -14,6 +14,6 @@ Consider adding a new extension to the corresponding intellij.java.analysis.impl
     <resolveScopeProvider implementation="com.intellij.psi.impl.file.impl.JavaResolveScopeProvider"/>
 
     <registryKey key="idea.report.nullity.missing.in.generated.overriders" defaultValue="true"
-                 description="Whether &quot;@NotNull/@Nullable problems&quot; inspection should complain about overriding methods or parameters missing @NotNull, which occur in generated code"/>
+                 description="Whether &quot;Nullability problems&quot; inspection should complain about overriding methods or parameters missing non-null annotation, which occur in generated code"/>
   </extensions>
 </idea-plugin>

@@ -48,8 +48,7 @@ internal fun GraphScope.hasPluginSource(moduleId: Int): Boolean {
  * Returns true only if the module has at least one source reachable from this product
  * (product/module-set or bundled plugin content) and every such source has EMBEDDED loading.
  */
-internal fun GraphScope.isEmbeddedInProduct(moduleId: Int, productName: String): Boolean {
-  val module = ContentModuleNode(moduleId)
+internal fun GraphScope.isEmbeddedInProduct(module: ContentModuleNode, productName: String): Boolean {
   val product = product(productName) ?: return false
   var hasSourceInProduct = false
   var allEmbedded = true
@@ -72,7 +71,7 @@ internal fun GraphScope.isEmbeddedInProduct(moduleId: Int, productName: String):
         hasSourceInProduct = true
         var loading: ModuleLoadingRuleValue? = null
         sourcePlugin.containsContent { contentModule, mode ->
-          if (contentModule.id == moduleId) {
+          if (contentModule == module) {
             loading = mode
           }
         }
@@ -87,7 +86,7 @@ internal fun GraphScope.isEmbeddedInProduct(moduleId: Int, productName: String):
         hasSourceInProduct = true
         var loading: ModuleLoadingRuleValue? = null
         sourceProduct.containsContent { contentModule, mode ->
-          if (contentModule.id == moduleId) {
+          if (contentModule == module) {
             loading = mode
           }
         }
@@ -102,7 +101,7 @@ internal fun GraphScope.isEmbeddedInProduct(moduleId: Int, productName: String):
         hasSourceInProduct = true
         var loading: ModuleLoadingRuleValue? = null
         sourceModuleSet.containsModule { contentModule, mode ->
-          if (contentModule.id == moduleId) {
+          if (contentModule == module) {
             loading = mode
           }
         }
@@ -115,7 +114,11 @@ internal fun GraphScope.isEmbeddedInProduct(moduleId: Int, productName: String):
   return hasSourceInProduct && allEmbedded
 }
 
-internal fun GraphScope.isGloballyEmbeddedInAllProducts(moduleId: Int, allRealProductNames: Set<String>): Boolean {
+/**
+ * Returns true when a plugin.xml module dependency should be skipped
+ * because the target module is globally embedded in the provided product scope.
+ */
+internal fun GraphScope.shouldSkipEmbeddedPluginDependency(moduleId: ContentModuleNode, allRealProductNames: Set<String>): Boolean {
   if (allRealProductNames.isEmpty()) {
     return false
   }
@@ -127,14 +130,6 @@ internal fun GraphScope.isGloballyEmbeddedInAllProducts(moduleId: Int, allRealPr
   }
 
   return true
-}
-
-/**
- * Returns true when a plugin.xml module dependency should be skipped
- * because the target module is globally embedded in the provided product scope.
- */
-internal fun GraphScope.shouldSkipEmbeddedPluginDependency(depModuleId: Int, allRealProductNames: Set<String>): Boolean {
-  return isGloballyEmbeddedInAllProducts(depModuleId, allRealProductNames)
 }
 
 /**

@@ -51,9 +51,9 @@ class KotlinBuildToolLongFlowValidationStep : KotlinBuildToolFusFlowValidationSt
  *
  * @property allowedValues The list of string values that are considered valid
  */
-class KotlinBuildToolStringAllowedValuesFlowValidationStep(val allowedValues: List<String>) : KotlinBuildToolFusFlowValidationStep<String> {
+class KotlinBuildToolStringAllowedValuesFlowValidationStep(private val allowedValues: List<String>, private val delimiter: String = ",") : KotlinBuildToolFusFlowValidationStep<String> {
     override fun process(values: List<RawFusValue>): List<String> =
-        values.map{ it.value }.filter { it in allowedValues }
+        values.flatMap { it.value.split(delimiter) }.map { it.trim() }.filter { it in allowedValues }
 }
 
 /**
@@ -64,7 +64,10 @@ class KotlinBuildToolStringAllowedValuesFlowValidationStep(val allowedValues: Li
  * @property validationStep The underlying validation step to use for initial processing
  * @property filter The predicate function used to further filter the validated values
  */
-class FilteredKotlinBuildToolFusFlowValidationStep<T: Any>(val validationStep: KotlinBuildToolFusFlowValidationStep<T>, val filter: (T) -> Boolean) :
+class FilteredKotlinBuildToolFusFlowValidationStep<T : Any>(
+    val validationStep: KotlinBuildToolFusFlowValidationStep<T>,
+    val filter: (T) -> Boolean
+) :
     KotlinBuildToolFusFlowValidationStep<T> {
     override fun process(values: List<RawFusValue>): List<T>? {
         return validationStep.process(values)?.filter(filter)
@@ -72,10 +75,34 @@ class FilteredKotlinBuildToolFusFlowValidationStep<T: Any>(val validationStep: K
 }
 
 /**
+ * A validation and transformation step for string list values.
+ * This step splits the input string into a list of strings based on a delimiter.
+ * The delimiter defaults to a comma (",").
+ *
+ * @property delimiter The delimiter used to split the input string into a list of strings
+ */
+class KotlinBuildToolStringListFlowValidationStep(private val delimiter: String = ",") : KotlinBuildToolFusFlowValidationStep<String> {
+    override fun process(values: List<RawFusValue>): List<String> {
+        return values.flatMap { it.value.split(delimiter) }.map { it.trim() }.filterNot { it.isEmpty() }
+    }
+}
+
+/**
+ * A validation and transformation step implementation for raw FUS values, splitting the delimited strings .
+ *
+ * @property delimiter The delimiter used to split raw string values. Default is a comma (",").
+ */
+class KotlinBuildToolListFlowValidationStep(private val delimiter: String = ",") : KotlinBuildToolFusFlowValidationStep<List<String>> {
+    override fun process(values: List<RawFusValue>): List<List<String>> {
+        return values.map { it.value.split(delimiter).map { it.trim() }.filterNot { it.isEmpty() } }
+    }
+}
+
+/**
  * Basic validation and transformation step of FUS value processing for string values.
  * All input values are included in the result as-is.
  */
-object KotlinBuildToolStringFLowValidationStep: KotlinBuildToolFusFlowValidationStep<String> {
+object KotlinBuildToolStringFLowValidationStep : KotlinBuildToolFusFlowValidationStep<String> {
     override fun process(values: List<RawFusValue>): List<String> {
         return values.map { it.value }
     }

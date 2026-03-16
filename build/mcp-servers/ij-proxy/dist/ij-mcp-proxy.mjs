@@ -3,40 +3,25 @@
 var __create = Object.create;
 var { getPrototypeOf: __getProtoOf, defineProperty: __defProp, getOwnPropertyNames: __getOwnPropNames } = Object;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-function __accessProp(key) {
-  return this[key];
-}
-var __toESMCache_node, __toESMCache_esm, __toESM = (mod, isNodeMode, target) => {
-  var canCache = mod != null && typeof mod === "object";
-  if (canCache) {
-    var cache = isNodeMode ? __toESMCache_node ??= /* @__PURE__ */ new WeakMap : __toESMCache_esm ??= /* @__PURE__ */ new WeakMap, cached = cache.get(mod);
-    if (cached)
-      return cached;
-  }
+var __toESM = (mod, isNodeMode, target) => {
   target = mod != null ? __create(__getProtoOf(mod)) : {};
   let to = isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: !0 }) : target;
   for (let key of __getOwnPropNames(mod))
     if (!__hasOwnProp.call(to, key))
       __defProp(to, key, {
-        get: __accessProp.bind(mod, key),
+        get: () => mod[key],
         enumerable: !0
       });
-  if (canCache)
-    cache.set(mod, to);
   return to;
 };
 var __commonJS = (cb, mod) => () => (mod || cb((mod = { exports: {} }).exports, mod), mod.exports);
-var __returnValue = (v) => v;
-function __exportSetter(name, newValue) {
-  this[name] = __returnValue.bind(null, newValue);
-}
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, {
       get: all[name],
       enumerable: !0,
       configurable: !0,
-      set: __exportSetter.bind(all, name)
+      set: (newValue) => all[name] = () => newValue
     });
 };
 var __require = import.meta.require;
@@ -6546,7 +6531,7 @@ var require_picomatch2 = __commonJS((exports, module) => {
 });
 
 // ij-mcp-proxy.ts
-import path7 from "path";
+import path8 from "path";
 import { cwd, env } from "process";
 import { fileURLToPath } from "url";
 
@@ -19695,481 +19680,6 @@ class AjvJsonSchemaValidator {
   }
 }
 
-// node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/client.js
-class ExperimentalClientTasks {
-  constructor(_client) {
-    this._client = _client;
-  }
-  async* callToolStream(params, resultSchema = CallToolResultSchema, options) {
-    let clientInternal = this._client, optionsWithTask = {
-      ...options,
-      task: options?.task ?? (clientInternal.isToolTask(params.name) ? {} : void 0)
-    }, stream = clientInternal.requestStream({ method: "tools/call", params }, resultSchema, optionsWithTask), validator = clientInternal.getToolOutputValidator(params.name);
-    for await (let message of stream) {
-      if (message.type === "result" && validator) {
-        let result = message.result;
-        if (!result.structuredContent && !result.isError) {
-          yield {
-            type: "error",
-            error: new McpError(ErrorCode.InvalidRequest, `Tool ${params.name} has an output schema but did not return structured content`)
-          };
-          return;
-        }
-        if (result.structuredContent)
-          try {
-            let validationResult = validator(result.structuredContent);
-            if (!validationResult.valid) {
-              yield {
-                type: "error",
-                error: new McpError(ErrorCode.InvalidParams, `Structured content does not match the tool's output schema: ${validationResult.errorMessage}`)
-              };
-              return;
-            }
-          } catch (error48) {
-            if (error48 instanceof McpError) {
-              yield { type: "error", error: error48 };
-              return;
-            }
-            yield {
-              type: "error",
-              error: new McpError(ErrorCode.InvalidParams, `Failed to validate structured content: ${error48 instanceof Error ? error48.message : String(error48)}`)
-            };
-            return;
-          }
-      }
-      yield message;
-    }
-  }
-  async getTask(taskId, options) {
-    return this._client.getTask({ taskId }, options);
-  }
-  async getTaskResult(taskId, resultSchema, options) {
-    return this._client.getTaskResult({ taskId }, resultSchema, options);
-  }
-  async listTasks(cursor, options) {
-    return this._client.listTasks(cursor ? { cursor } : void 0, options);
-  }
-  async cancelTask(taskId, options) {
-    return this._client.cancelTask({ taskId }, options);
-  }
-  requestStream(request, resultSchema, options) {
-    return this._client.requestStream(request, resultSchema, options);
-  }
-}
-
-// node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/helpers.js
-function assertToolsCallTaskCapability(requests, method, entityName) {
-  if (!requests)
-    throw Error(`${entityName} does not support task creation (required for ${method})`);
-  switch (method) {
-    case "tools/call":
-      if (!requests.tools?.call)
-        throw Error(`${entityName} does not support task creation for tools/call (required for ${method})`);
-      break;
-    default:
-      break;
-  }
-}
-function assertClientRequestTaskCapability(requests, method, entityName) {
-  if (!requests)
-    throw Error(`${entityName} does not support task creation (required for ${method})`);
-  switch (method) {
-    case "sampling/createMessage":
-      if (!requests.sampling?.createMessage)
-        throw Error(`${entityName} does not support task creation for sampling/createMessage (required for ${method})`);
-      break;
-    case "elicitation/create":
-      if (!requests.elicitation?.create)
-        throw Error(`${entityName} does not support task creation for elicitation/create (required for ${method})`);
-      break;
-    default:
-      break;
-  }
-}
-
-// node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js
-function applyElicitationDefaults(schema, data) {
-  if (!schema || data === null || typeof data !== "object")
-    return;
-  if (schema.type === "object" && schema.properties && typeof schema.properties === "object") {
-    let obj = data, props = schema.properties;
-    for (let key of Object.keys(props)) {
-      let propSchema = props[key];
-      if (obj[key] === void 0 && Object.prototype.hasOwnProperty.call(propSchema, "default"))
-        obj[key] = propSchema.default;
-      if (obj[key] !== void 0)
-        applyElicitationDefaults(propSchema, obj[key]);
-    }
-  }
-  if (Array.isArray(schema.anyOf)) {
-    for (let sub of schema.anyOf)
-      if (typeof sub !== "boolean")
-        applyElicitationDefaults(sub, data);
-  }
-  if (Array.isArray(schema.oneOf)) {
-    for (let sub of schema.oneOf)
-      if (typeof sub !== "boolean")
-        applyElicitationDefaults(sub, data);
-  }
-}
-function getSupportedElicitationModes(capabilities) {
-  if (!capabilities)
-    return { supportsFormMode: !1, supportsUrlMode: !1 };
-  let hasFormCapability = capabilities.form !== void 0, hasUrlCapability = capabilities.url !== void 0;
-  return { supportsFormMode: hasFormCapability || !hasFormCapability && !hasUrlCapability, supportsUrlMode: hasUrlCapability };
-}
-
-class Client extends Protocol {
-  constructor(_clientInfo, options) {
-    super(options);
-    if (this._clientInfo = _clientInfo, this._cachedToolOutputValidators = /* @__PURE__ */ new Map, this._cachedKnownTaskTools = /* @__PURE__ */ new Set, this._cachedRequiredTaskTools = /* @__PURE__ */ new Set, this._listChangedDebounceTimers = /* @__PURE__ */ new Map, this._capabilities = options?.capabilities ?? {}, this._jsonSchemaValidator = options?.jsonSchemaValidator ?? new AjvJsonSchemaValidator, options?.listChanged)
-      this._pendingListChangedConfig = options.listChanged;
-  }
-  _setupListChangedHandlers(config2) {
-    if (config2.tools && this._serverCapabilities?.tools?.listChanged)
-      this._setupListChangedHandler("tools", ToolListChangedNotificationSchema, config2.tools, async () => {
-        return (await this.listTools()).tools;
-      });
-    if (config2.prompts && this._serverCapabilities?.prompts?.listChanged)
-      this._setupListChangedHandler("prompts", PromptListChangedNotificationSchema, config2.prompts, async () => {
-        return (await this.listPrompts()).prompts;
-      });
-    if (config2.resources && this._serverCapabilities?.resources?.listChanged)
-      this._setupListChangedHandler("resources", ResourceListChangedNotificationSchema, config2.resources, async () => {
-        return (await this.listResources()).resources;
-      });
-  }
-  get experimental() {
-    if (!this._experimental)
-      this._experimental = {
-        tasks: new ExperimentalClientTasks(this)
-      };
-    return this._experimental;
-  }
-  registerCapabilities(capabilities) {
-    if (this.transport)
-      throw Error("Cannot register capabilities after connecting to transport");
-    this._capabilities = mergeCapabilities(this._capabilities, capabilities);
-  }
-  setRequestHandler(requestSchema, handler) {
-    let methodSchema = getObjectShape(requestSchema)?.method;
-    if (!methodSchema)
-      throw Error("Schema is missing a method literal");
-    let methodValue;
-    if (isZ4Schema(methodSchema)) {
-      let v4Schema = methodSchema;
-      methodValue = v4Schema._zod?.def?.value ?? v4Schema.value;
-    } else {
-      let v3Schema = methodSchema;
-      methodValue = v3Schema._def?.value ?? v3Schema.value;
-    }
-    if (typeof methodValue !== "string")
-      throw Error("Schema method literal must be a string");
-    let method = methodValue;
-    if (method === "elicitation/create") {
-      let wrappedHandler = async (request, extra) => {
-        let validatedRequest = safeParse2(ElicitRequestSchema, request);
-        if (!validatedRequest.success) {
-          let errorMessage = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid elicitation request: ${errorMessage}`);
-        }
-        let { params } = validatedRequest.data;
-        params.mode = params.mode ?? "form";
-        let { supportsFormMode, supportsUrlMode } = getSupportedElicitationModes(this._capabilities.elicitation);
-        if (params.mode === "form" && !supportsFormMode)
-          throw new McpError(ErrorCode.InvalidParams, "Client does not support form-mode elicitation requests");
-        if (params.mode === "url" && !supportsUrlMode)
-          throw new McpError(ErrorCode.InvalidParams, "Client does not support URL-mode elicitation requests");
-        let result = await Promise.resolve(handler(request, extra));
-        if (params.task) {
-          let taskValidationResult = safeParse2(CreateTaskResultSchema, result);
-          if (!taskValidationResult.success) {
-            let errorMessage = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
-            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage}`);
-          }
-          return taskValidationResult.data;
-        }
-        let validationResult = safeParse2(ElicitResultSchema, result);
-        if (!validationResult.success) {
-          let errorMessage = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid elicitation result: ${errorMessage}`);
-        }
-        let validatedResult = validationResult.data, requestedSchema = params.mode === "form" ? params.requestedSchema : void 0;
-        if (params.mode === "form" && validatedResult.action === "accept" && validatedResult.content && requestedSchema) {
-          if (this._capabilities.elicitation?.form?.applyDefaults)
-            try {
-              applyElicitationDefaults(requestedSchema, validatedResult.content);
-            } catch {}
-        }
-        return validatedResult;
-      };
-      return super.setRequestHandler(requestSchema, wrappedHandler);
-    }
-    if (method === "sampling/createMessage") {
-      let wrappedHandler = async (request, extra) => {
-        let validatedRequest = safeParse2(CreateMessageRequestSchema, request);
-        if (!validatedRequest.success) {
-          let errorMessage = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid sampling request: ${errorMessage}`);
-        }
-        let { params } = validatedRequest.data, result = await Promise.resolve(handler(request, extra));
-        if (params.task) {
-          let taskValidationResult = safeParse2(CreateTaskResultSchema, result);
-          if (!taskValidationResult.success) {
-            let errorMessage = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
-            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage}`);
-          }
-          return taskValidationResult.data;
-        }
-        let resultSchema = params.tools || params.toolChoice ? CreateMessageResultWithToolsSchema : CreateMessageResultSchema, validationResult = safeParse2(resultSchema, result);
-        if (!validationResult.success) {
-          let errorMessage = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid sampling result: ${errorMessage}`);
-        }
-        return validationResult.data;
-      };
-      return super.setRequestHandler(requestSchema, wrappedHandler);
-    }
-    return super.setRequestHandler(requestSchema, handler);
-  }
-  assertCapability(capability, method) {
-    if (!this._serverCapabilities?.[capability])
-      throw Error(`Server does not support ${capability} (required for ${method})`);
-  }
-  async connect(transport, options) {
-    if (await super.connect(transport), transport.sessionId !== void 0)
-      return;
-    try {
-      let result = await this.request({
-        method: "initialize",
-        params: {
-          protocolVersion: LATEST_PROTOCOL_VERSION,
-          capabilities: this._capabilities,
-          clientInfo: this._clientInfo
-        }
-      }, InitializeResultSchema, options);
-      if (result === void 0)
-        throw Error(`Server sent invalid initialize result: ${result}`);
-      if (!SUPPORTED_PROTOCOL_VERSIONS.includes(result.protocolVersion))
-        throw Error(`Server's protocol version is not supported: ${result.protocolVersion}`);
-      if (this._serverCapabilities = result.capabilities, this._serverVersion = result.serverInfo, transport.setProtocolVersion)
-        transport.setProtocolVersion(result.protocolVersion);
-      if (this._instructions = result.instructions, await this.notification({
-        method: "notifications/initialized"
-      }), this._pendingListChangedConfig)
-        this._setupListChangedHandlers(this._pendingListChangedConfig), this._pendingListChangedConfig = void 0;
-    } catch (error48) {
-      throw this.close(), error48;
-    }
-  }
-  getServerCapabilities() {
-    return this._serverCapabilities;
-  }
-  getServerVersion() {
-    return this._serverVersion;
-  }
-  getInstructions() {
-    return this._instructions;
-  }
-  assertCapabilityForMethod(method) {
-    switch (method) {
-      case "logging/setLevel":
-        if (!this._serverCapabilities?.logging)
-          throw Error(`Server does not support logging (required for ${method})`);
-        break;
-      case "prompts/get":
-      case "prompts/list":
-        if (!this._serverCapabilities?.prompts)
-          throw Error(`Server does not support prompts (required for ${method})`);
-        break;
-      case "resources/list":
-      case "resources/templates/list":
-      case "resources/read":
-      case "resources/subscribe":
-      case "resources/unsubscribe":
-        if (!this._serverCapabilities?.resources)
-          throw Error(`Server does not support resources (required for ${method})`);
-        if (method === "resources/subscribe" && !this._serverCapabilities.resources.subscribe)
-          throw Error(`Server does not support resource subscriptions (required for ${method})`);
-        break;
-      case "tools/call":
-      case "tools/list":
-        if (!this._serverCapabilities?.tools)
-          throw Error(`Server does not support tools (required for ${method})`);
-        break;
-      case "completion/complete":
-        if (!this._serverCapabilities?.completions)
-          throw Error(`Server does not support completions (required for ${method})`);
-        break;
-      case "initialize":
-        break;
-      case "ping":
-        break;
-    }
-  }
-  assertNotificationCapability(method) {
-    switch (method) {
-      case "notifications/roots/list_changed":
-        if (!this._capabilities.roots?.listChanged)
-          throw Error(`Client does not support roots list changed notifications (required for ${method})`);
-        break;
-      case "notifications/initialized":
-        break;
-      case "notifications/cancelled":
-        break;
-      case "notifications/progress":
-        break;
-    }
-  }
-  assertRequestHandlerCapability(method) {
-    if (!this._capabilities)
-      return;
-    switch (method) {
-      case "sampling/createMessage":
-        if (!this._capabilities.sampling)
-          throw Error(`Client does not support sampling capability (required for ${method})`);
-        break;
-      case "elicitation/create":
-        if (!this._capabilities.elicitation)
-          throw Error(`Client does not support elicitation capability (required for ${method})`);
-        break;
-      case "roots/list":
-        if (!this._capabilities.roots)
-          throw Error(`Client does not support roots capability (required for ${method})`);
-        break;
-      case "tasks/get":
-      case "tasks/list":
-      case "tasks/result":
-      case "tasks/cancel":
-        if (!this._capabilities.tasks)
-          throw Error(`Client does not support tasks capability (required for ${method})`);
-        break;
-      case "ping":
-        break;
-    }
-  }
-  assertTaskCapability(method) {
-    assertToolsCallTaskCapability(this._serverCapabilities?.tasks?.requests, method, "Server");
-  }
-  assertTaskHandlerCapability(method) {
-    if (!this._capabilities)
-      return;
-    assertClientRequestTaskCapability(this._capabilities.tasks?.requests, method, "Client");
-  }
-  async ping(options) {
-    return this.request({ method: "ping" }, EmptyResultSchema, options);
-  }
-  async complete(params, options) {
-    return this.request({ method: "completion/complete", params }, CompleteResultSchema, options);
-  }
-  async setLoggingLevel(level, options) {
-    return this.request({ method: "logging/setLevel", params: { level } }, EmptyResultSchema, options);
-  }
-  async getPrompt(params, options) {
-    return this.request({ method: "prompts/get", params }, GetPromptResultSchema, options);
-  }
-  async listPrompts(params, options) {
-    return this.request({ method: "prompts/list", params }, ListPromptsResultSchema, options);
-  }
-  async listResources(params, options) {
-    return this.request({ method: "resources/list", params }, ListResourcesResultSchema, options);
-  }
-  async listResourceTemplates(params, options) {
-    return this.request({ method: "resources/templates/list", params }, ListResourceTemplatesResultSchema, options);
-  }
-  async readResource(params, options) {
-    return this.request({ method: "resources/read", params }, ReadResourceResultSchema, options);
-  }
-  async subscribeResource(params, options) {
-    return this.request({ method: "resources/subscribe", params }, EmptyResultSchema, options);
-  }
-  async unsubscribeResource(params, options) {
-    return this.request({ method: "resources/unsubscribe", params }, EmptyResultSchema, options);
-  }
-  async callTool(params, resultSchema = CallToolResultSchema, options) {
-    if (this.isToolTaskRequired(params.name))
-      throw new McpError(ErrorCode.InvalidRequest, `Tool "${params.name}" requires task-based execution. Use client.experimental.tasks.callToolStream() instead.`);
-    let result = await this.request({ method: "tools/call", params }, resultSchema, options), validator = this.getToolOutputValidator(params.name);
-    if (validator) {
-      if (!result.structuredContent && !result.isError)
-        throw new McpError(ErrorCode.InvalidRequest, `Tool ${params.name} has an output schema but did not return structured content`);
-      if (result.structuredContent)
-        try {
-          let validationResult = validator(result.structuredContent);
-          if (!validationResult.valid)
-            throw new McpError(ErrorCode.InvalidParams, `Structured content does not match the tool's output schema: ${validationResult.errorMessage}`);
-        } catch (error48) {
-          if (error48 instanceof McpError)
-            throw error48;
-          throw new McpError(ErrorCode.InvalidParams, `Failed to validate structured content: ${error48 instanceof Error ? error48.message : String(error48)}`);
-        }
-    }
-    return result;
-  }
-  isToolTask(toolName) {
-    if (!this._serverCapabilities?.tasks?.requests?.tools?.call)
-      return !1;
-    return this._cachedKnownTaskTools.has(toolName);
-  }
-  isToolTaskRequired(toolName) {
-    return this._cachedRequiredTaskTools.has(toolName);
-  }
-  cacheToolMetadata(tools) {
-    this._cachedToolOutputValidators.clear(), this._cachedKnownTaskTools.clear(), this._cachedRequiredTaskTools.clear();
-    for (let tool of tools) {
-      if (tool.outputSchema) {
-        let toolValidator = this._jsonSchemaValidator.getValidator(tool.outputSchema);
-        this._cachedToolOutputValidators.set(tool.name, toolValidator);
-      }
-      let taskSupport = tool.execution?.taskSupport;
-      if (taskSupport === "required" || taskSupport === "optional")
-        this._cachedKnownTaskTools.add(tool.name);
-      if (taskSupport === "required")
-        this._cachedRequiredTaskTools.add(tool.name);
-    }
-  }
-  getToolOutputValidator(toolName) {
-    return this._cachedToolOutputValidators.get(toolName);
-  }
-  async listTools(params, options) {
-    let result = await this.request({ method: "tools/list", params }, ListToolsResultSchema, options);
-    return this.cacheToolMetadata(result.tools), result;
-  }
-  _setupListChangedHandler(listType, notificationSchema, options, fetcher) {
-    let parseResult = ListChangedOptionsBaseSchema.safeParse(options);
-    if (!parseResult.success)
-      throw Error(`Invalid ${listType} listChanged options: ${parseResult.error.message}`);
-    if (typeof options.onChanged !== "function")
-      throw Error(`Invalid ${listType} listChanged options: onChanged must be a function`);
-    let { autoRefresh, debounceMs } = parseResult.data, { onChanged } = options, refresh = async () => {
-      if (!autoRefresh) {
-        onChanged(null, null);
-        return;
-      }
-      try {
-        let items = await fetcher();
-        onChanged(null, items);
-      } catch (e) {
-        let error48 = e instanceof Error ? e : Error(String(e));
-        onChanged(error48, null);
-      }
-    }, handler = () => {
-      if (debounceMs) {
-        let existingTimer = this._listChangedDebounceTimers.get(listType);
-        if (existingTimer)
-          clearTimeout(existingTimer);
-        let timer = setTimeout(refresh, debounceMs);
-        this._listChangedDebounceTimers.set(listType, timer);
-      } else
-        refresh();
-    };
-    this.setNotificationHandler(notificationSchema, handler);
-  }
-  async sendRootsListChanged() {
-    return this.notification({ method: "notifications/roots/list_changed" });
-  }
-}
-
 // node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/server.js
 class ExperimentalServerTasks {
   constructor(_server) {
@@ -20232,6 +19742,36 @@ class ExperimentalServerTasks {
   }
   async cancelTask(taskId, options) {
     return this._server.cancelTask({ taskId }, options);
+  }
+}
+
+// node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/helpers.js
+function assertToolsCallTaskCapability(requests, method, entityName) {
+  if (!requests)
+    throw Error(`${entityName} does not support task creation (required for ${method})`);
+  switch (method) {
+    case "tools/call":
+      if (!requests.tools?.call)
+        throw Error(`${entityName} does not support task creation for tools/call (required for ${method})`);
+      break;
+    default:
+      break;
+  }
+}
+function assertClientRequestTaskCapability(requests, method, entityName) {
+  if (!requests)
+    throw Error(`${entityName} does not support task creation (required for ${method})`);
+  switch (method) {
+    case "sampling/createMessage":
+      if (!requests.sampling?.createMessage)
+        throw Error(`${entityName} does not support task creation for sampling/createMessage (required for ${method})`);
+      break;
+    case "elicitation/create":
+      if (!requests.elicitation?.create)
+        throw Error(`${entityName} does not support task creation for elicitation/create (required for ${method})`);
+      break;
+    default:
+      break;
   }
 }
 
@@ -20629,103 +20169,6 @@ async function clearLogFile() {
   try {
     await writeFile(LOG_FILE, "");
   } catch {}
-}
-
-// project-path.ts
-function createProjectPathManager({
-  projectPath,
-  defaultProjectPathKey = "project_path"
-}) {
-  let projectPathKey = null, hasSeenToolsList = !1, hasProjectPathTools = !1, toolProjectPathKeyByName = /* @__PURE__ */ new Map;
-  function normalizeProjectPathArgs(args, desiredKey) {
-    if (!desiredKey)
-      return;
-    let hasSnake = Object.prototype.hasOwnProperty.call(args, "project_path"), hasCamel = Object.prototype.hasOwnProperty.call(args, "projectPath");
-    if (desiredKey === "projectPath") {
-      if (hasSnake)
-        delete args.project_path;
-      args.projectPath = projectPath;
-      return;
-    }
-    if (desiredKey === "project_path") {
-      if (hasCamel)
-        delete args.projectPath;
-      args.project_path = projectPath;
-    }
-  }
-  function shouldInjectProjectPath(toolName) {
-    if (!hasSeenToolsList)
-      return !0;
-    if (!hasProjectPathTools)
-      return !1;
-    if (!toolName)
-      return !0;
-    return toolProjectPathKeyByName.has(toolName);
-  }
-  function chooseProjectPathKey(toolName) {
-    if (toolName) {
-      let key = toolProjectPathKeyByName.get(toolName);
-      if (key)
-        return key;
-    }
-    return projectPathKey || defaultProjectPathKey;
-  }
-  function injectProjectPathArgs(toolName, args) {
-    if (!args || typeof args !== "object")
-      return;
-    if (shouldInjectProjectPath(toolName))
-      normalizeProjectPathArgs(args, chooseProjectPathKey(toolName));
-  }
-  function updateProjectPathKeys(tools) {
-    if (!Array.isArray(tools))
-      return;
-    let hasSnake = !1, hasCamel = !1;
-    toolProjectPathKeyByName.clear();
-    for (let tool of tools) {
-      let props = tool?.inputSchema?.properties;
-      if (!props || typeof props !== "object")
-        continue;
-      if (Object.prototype.hasOwnProperty.call(props, "project_path")) {
-        if (hasSnake = !0, typeof tool.name === "string")
-          toolProjectPathKeyByName.set(tool.name, "project_path");
-        continue;
-      }
-      if (Object.prototype.hasOwnProperty.call(props, "projectPath")) {
-        if (hasCamel = !0, typeof tool.name === "string")
-          toolProjectPathKeyByName.set(tool.name, "projectPath");
-      }
-    }
-    if (hasSeenToolsList = !0, hasProjectPathTools = toolProjectPathKeyByName.size > 0, hasSnake)
-      projectPathKey = "project_path";
-    else if (hasCamel)
-      projectPathKey = "projectPath";
-    else
-      projectPathKey = null;
-  }
-  function stripProjectPathFromTools(tools) {
-    if (!Array.isArray(tools))
-      return;
-    for (let tool of tools) {
-      let schema = tool?.inputSchema;
-      if (!schema || schema.type !== "object")
-        continue;
-      let props = schema.properties;
-      if (!props || typeof props !== "object")
-        continue;
-      let removedKeys = [];
-      if (Object.prototype.hasOwnProperty.call(props, "project_path"))
-        delete props.project_path, removedKeys.push("project_path");
-      if (Object.prototype.hasOwnProperty.call(props, "projectPath"))
-        delete props.projectPath, removedKeys.push("projectPath");
-      if (removedKeys.length > 0 && Array.isArray(schema.required))
-        schema.required = schema.required.filter((name) => !removedKeys.includes(name));
-    }
-  }
-  return {
-    injectProjectPathArgs,
-    stripProjectPathFromTools,
-    updateProjectPathKeys
-  };
 }
 
 // node_modules/is-port-reachable/index.js
@@ -22263,115 +21706,546 @@ function createStreamTransport({
   });
 }
 
-// workarounds.ts
-var FULL_VERSION_RE = /\b\d{4}\.\d+(?:\.\d+){0,2}\b/, BUILD_VERSION_RE = /\b\d{3}\.\d+(?:\.\d+)?\b/, SNAPSHOT_BUILD_RE = /\b(\d{3})\.SNAPSHOT\b/i, SNAPSHOT_BUILD_PART = Number.MAX_SAFE_INTEGER, ANY_VERSION_RE = /\d+(?:\.\d+)+/;
-var WORKAROUND_FIXED_IN = {
-  ["search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */]: "261.20247"
-}, currentIdeVersion = null;
-function setIdeVersion(rawVersion) {
-  if (!rawVersion) {
-    currentIdeVersion = null;
-    return;
+// node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/client.js
+class ExperimentalClientTasks {
+  constructor(_client) {
+    this._client = _client;
   }
-  currentIdeVersion = parseIdeVersion(rawVersion);
+  async* callToolStream(params, resultSchema = CallToolResultSchema, options) {
+    let clientInternal = this._client, optionsWithTask = {
+      ...options,
+      task: options?.task ?? (clientInternal.isToolTask(params.name) ? {} : void 0)
+    }, stream = clientInternal.requestStream({ method: "tools/call", params }, resultSchema, optionsWithTask), validator = clientInternal.getToolOutputValidator(params.name);
+    for await (let message of stream) {
+      if (message.type === "result" && validator) {
+        let result = message.result;
+        if (!result.structuredContent && !result.isError) {
+          yield {
+            type: "error",
+            error: new McpError(ErrorCode.InvalidRequest, `Tool ${params.name} has an output schema but did not return structured content`)
+          };
+          return;
+        }
+        if (result.structuredContent)
+          try {
+            let validationResult = validator(result.structuredContent);
+            if (!validationResult.valid) {
+              yield {
+                type: "error",
+                error: new McpError(ErrorCode.InvalidParams, `Structured content does not match the tool's output schema: ${validationResult.errorMessage}`)
+              };
+              return;
+            }
+          } catch (error48) {
+            if (error48 instanceof McpError) {
+              yield { type: "error", error: error48 };
+              return;
+            }
+            yield {
+              type: "error",
+              error: new McpError(ErrorCode.InvalidParams, `Failed to validate structured content: ${error48 instanceof Error ? error48.message : String(error48)}`)
+            };
+            return;
+          }
+      }
+      yield message;
+    }
+  }
+  async getTask(taskId, options) {
+    return this._client.getTask({ taskId }, options);
+  }
+  async getTaskResult(taskId, resultSchema, options) {
+    return this._client.getTaskResult({ taskId }, resultSchema, options);
+  }
+  async listTasks(cursor, options) {
+    return this._client.listTasks(cursor ? { cursor } : void 0, options);
+  }
+  async cancelTask(taskId, options) {
+    return this._client.cancelTask({ taskId }, options);
+  }
+  requestStream(request, resultSchema, options) {
+    return this._client.requestStream(request, resultSchema, options);
+  }
 }
-function shouldApplyWorkaround(key) {
-  if (isWorkaroundDisabled(key))
-    return logDebug(`Workaround ${key} not used (disabled by env)`), !1;
-  let fixedInRaw = (WORKAROUND_FIXED_IN[key] ?? "").trim();
-  if (!fixedInRaw)
-    return !0;
-  let ideVersion = currentIdeVersion;
-  if (!ideVersion)
-    return !0;
-  let fixedSpec = parseVersionSpec(fixedInRaw);
-  if (!fixedSpec)
-    return !0;
-  let currentParts = fixedSpec.kind === "build" ? ideVersion.build ?? deriveBuildFromFull(ideVersion.full) : ideVersion.full;
-  if (!currentParts)
-    return !0;
-  if (compareVersionParts(currentParts, fixedSpec.parts) >= 0)
-    return logDebug(`Workaround ${key} not used; fixed in ${fixedInRaw}, ide ${ideVersion.raw}`), !1;
-  return !0;
-}
-function isWorkaroundDisabled(key) {
-  let disabledAll = process.env.JETBRAINS_MCP_PROXY_DISABLE_WORKAROUNDS;
-  if (disabledAll && disabledAll !== "false" && disabledAll !== "0")
-    return !0;
-  let disabledKeys = process.env.JETBRAINS_MCP_PROXY_DISABLE_WORKAROUND_KEYS;
-  if (!disabledKeys)
-    return !1;
-  return disabledKeys.split(",").map((entry) => entry.trim()).filter((entry) => entry.length > 0).includes(key);
-}
-function logDebug(message) {
-  let enabled = process.env.JETBRAINS_MCP_PROXY_WORKAROUND_DEBUG;
-  if (!enabled || enabled === "0" || enabled === "false")
+
+// node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js
+function applyElicitationDefaults(schema, data) {
+  if (!schema || data === null || typeof data !== "object")
     return;
-  process.stderr.write(`[ij-mcp-proxy] ${message}
-`);
+  if (schema.type === "object" && schema.properties && typeof schema.properties === "object") {
+    let obj = data, props = schema.properties;
+    for (let key of Object.keys(props)) {
+      let propSchema = props[key];
+      if (obj[key] === void 0 && Object.prototype.hasOwnProperty.call(propSchema, "default"))
+        obj[key] = propSchema.default;
+      if (obj[key] !== void 0)
+        applyElicitationDefaults(propSchema, obj[key]);
+    }
+  }
+  if (Array.isArray(schema.anyOf)) {
+    for (let sub of schema.anyOf)
+      if (typeof sub !== "boolean")
+        applyElicitationDefaults(sub, data);
+  }
+  if (Array.isArray(schema.oneOf)) {
+    for (let sub of schema.oneOf)
+      if (typeof sub !== "boolean")
+        applyElicitationDefaults(sub, data);
+  }
 }
-function parseIdeVersion(raw) {
-  let full = extractVersionParts(raw, FULL_VERSION_RE), build = extractVersionParts(raw, BUILD_VERSION_RE);
-  if (!build) {
-    let snapshotMatch = raw.match(SNAPSHOT_BUILD_RE);
-    if (snapshotMatch) {
-      let train = Number.parseInt(snapshotMatch[1], 10);
-      if (!Number.isNaN(train))
-        build = [train, SNAPSHOT_BUILD_PART];
+function getSupportedElicitationModes(capabilities) {
+  if (!capabilities)
+    return { supportsFormMode: !1, supportsUrlMode: !1 };
+  let hasFormCapability = capabilities.form !== void 0, hasUrlCapability = capabilities.url !== void 0;
+  return { supportsFormMode: hasFormCapability || !hasFormCapability && !hasUrlCapability, supportsUrlMode: hasUrlCapability };
+}
+
+class Client extends Protocol {
+  constructor(_clientInfo, options) {
+    super(options);
+    if (this._clientInfo = _clientInfo, this._cachedToolOutputValidators = /* @__PURE__ */ new Map, this._cachedKnownTaskTools = /* @__PURE__ */ new Set, this._cachedRequiredTaskTools = /* @__PURE__ */ new Set, this._listChangedDebounceTimers = /* @__PURE__ */ new Map, this._capabilities = options?.capabilities ?? {}, this._jsonSchemaValidator = options?.jsonSchemaValidator ?? new AjvJsonSchemaValidator, options?.listChanged)
+      this._pendingListChangedConfig = options.listChanged;
+  }
+  _setupListChangedHandlers(config2) {
+    if (config2.tools && this._serverCapabilities?.tools?.listChanged)
+      this._setupListChangedHandler("tools", ToolListChangedNotificationSchema, config2.tools, async () => {
+        return (await this.listTools()).tools;
+      });
+    if (config2.prompts && this._serverCapabilities?.prompts?.listChanged)
+      this._setupListChangedHandler("prompts", PromptListChangedNotificationSchema, config2.prompts, async () => {
+        return (await this.listPrompts()).prompts;
+      });
+    if (config2.resources && this._serverCapabilities?.resources?.listChanged)
+      this._setupListChangedHandler("resources", ResourceListChangedNotificationSchema, config2.resources, async () => {
+        return (await this.listResources()).resources;
+      });
+  }
+  get experimental() {
+    if (!this._experimental)
+      this._experimental = {
+        tasks: new ExperimentalClientTasks(this)
+      };
+    return this._experimental;
+  }
+  registerCapabilities(capabilities) {
+    if (this.transport)
+      throw Error("Cannot register capabilities after connecting to transport");
+    this._capabilities = mergeCapabilities(this._capabilities, capabilities);
+  }
+  setRequestHandler(requestSchema, handler) {
+    let methodSchema = getObjectShape(requestSchema)?.method;
+    if (!methodSchema)
+      throw Error("Schema is missing a method literal");
+    let methodValue;
+    if (isZ4Schema(methodSchema)) {
+      let v4Schema = methodSchema;
+      methodValue = v4Schema._zod?.def?.value ?? v4Schema.value;
+    } else {
+      let v3Schema = methodSchema;
+      methodValue = v3Schema._def?.value ?? v3Schema.value;
+    }
+    if (typeof methodValue !== "string")
+      throw Error("Schema method literal must be a string");
+    let method = methodValue;
+    if (method === "elicitation/create") {
+      let wrappedHandler = async (request, extra) => {
+        let validatedRequest = safeParse2(ElicitRequestSchema, request);
+        if (!validatedRequest.success) {
+          let errorMessage = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid elicitation request: ${errorMessage}`);
+        }
+        let { params } = validatedRequest.data;
+        params.mode = params.mode ?? "form";
+        let { supportsFormMode, supportsUrlMode } = getSupportedElicitationModes(this._capabilities.elicitation);
+        if (params.mode === "form" && !supportsFormMode)
+          throw new McpError(ErrorCode.InvalidParams, "Client does not support form-mode elicitation requests");
+        if (params.mode === "url" && !supportsUrlMode)
+          throw new McpError(ErrorCode.InvalidParams, "Client does not support URL-mode elicitation requests");
+        let result = await Promise.resolve(handler(request, extra));
+        if (params.task) {
+          let taskValidationResult = safeParse2(CreateTaskResultSchema, result);
+          if (!taskValidationResult.success) {
+            let errorMessage = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
+            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage}`);
+          }
+          return taskValidationResult.data;
+        }
+        let validationResult = safeParse2(ElicitResultSchema, result);
+        if (!validationResult.success) {
+          let errorMessage = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid elicitation result: ${errorMessage}`);
+        }
+        let validatedResult = validationResult.data, requestedSchema = params.mode === "form" ? params.requestedSchema : void 0;
+        if (params.mode === "form" && validatedResult.action === "accept" && validatedResult.content && requestedSchema) {
+          if (this._capabilities.elicitation?.form?.applyDefaults)
+            try {
+              applyElicitationDefaults(requestedSchema, validatedResult.content);
+            } catch {}
+        }
+        return validatedResult;
+      };
+      return super.setRequestHandler(requestSchema, wrappedHandler);
+    }
+    if (method === "sampling/createMessage") {
+      let wrappedHandler = async (request, extra) => {
+        let validatedRequest = safeParse2(CreateMessageRequestSchema, request);
+        if (!validatedRequest.success) {
+          let errorMessage = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid sampling request: ${errorMessage}`);
+        }
+        let { params } = validatedRequest.data, result = await Promise.resolve(handler(request, extra));
+        if (params.task) {
+          let taskValidationResult = safeParse2(CreateTaskResultSchema, result);
+          if (!taskValidationResult.success) {
+            let errorMessage = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
+            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage}`);
+          }
+          return taskValidationResult.data;
+        }
+        let resultSchema = params.tools || params.toolChoice ? CreateMessageResultWithToolsSchema : CreateMessageResultSchema, validationResult = safeParse2(resultSchema, result);
+        if (!validationResult.success) {
+          let errorMessage = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid sampling result: ${errorMessage}`);
+        }
+        return validationResult.data;
+      };
+      return super.setRequestHandler(requestSchema, wrappedHandler);
+    }
+    return super.setRequestHandler(requestSchema, handler);
+  }
+  assertCapability(capability, method) {
+    if (!this._serverCapabilities?.[capability])
+      throw Error(`Server does not support ${capability} (required for ${method})`);
+  }
+  async connect(transport, options) {
+    if (await super.connect(transport), transport.sessionId !== void 0)
+      return;
+    try {
+      let result = await this.request({
+        method: "initialize",
+        params: {
+          protocolVersion: LATEST_PROTOCOL_VERSION,
+          capabilities: this._capabilities,
+          clientInfo: this._clientInfo
+        }
+      }, InitializeResultSchema, options);
+      if (result === void 0)
+        throw Error(`Server sent invalid initialize result: ${result}`);
+      if (!SUPPORTED_PROTOCOL_VERSIONS.includes(result.protocolVersion))
+        throw Error(`Server's protocol version is not supported: ${result.protocolVersion}`);
+      if (this._serverCapabilities = result.capabilities, this._serverVersion = result.serverInfo, transport.setProtocolVersion)
+        transport.setProtocolVersion(result.protocolVersion);
+      if (this._instructions = result.instructions, await this.notification({
+        method: "notifications/initialized"
+      }), this._pendingListChangedConfig)
+        this._setupListChangedHandlers(this._pendingListChangedConfig), this._pendingListChangedConfig = void 0;
+    } catch (error48) {
+      throw this.close(), error48;
+    }
+  }
+  getServerCapabilities() {
+    return this._serverCapabilities;
+  }
+  getServerVersion() {
+    return this._serverVersion;
+  }
+  getInstructions() {
+    return this._instructions;
+  }
+  assertCapabilityForMethod(method) {
+    switch (method) {
+      case "logging/setLevel":
+        if (!this._serverCapabilities?.logging)
+          throw Error(`Server does not support logging (required for ${method})`);
+        break;
+      case "prompts/get":
+      case "prompts/list":
+        if (!this._serverCapabilities?.prompts)
+          throw Error(`Server does not support prompts (required for ${method})`);
+        break;
+      case "resources/list":
+      case "resources/templates/list":
+      case "resources/read":
+      case "resources/subscribe":
+      case "resources/unsubscribe":
+        if (!this._serverCapabilities?.resources)
+          throw Error(`Server does not support resources (required for ${method})`);
+        if (method === "resources/subscribe" && !this._serverCapabilities.resources.subscribe)
+          throw Error(`Server does not support resource subscriptions (required for ${method})`);
+        break;
+      case "tools/call":
+      case "tools/list":
+        if (!this._serverCapabilities?.tools)
+          throw Error(`Server does not support tools (required for ${method})`);
+        break;
+      case "completion/complete":
+        if (!this._serverCapabilities?.completions)
+          throw Error(`Server does not support completions (required for ${method})`);
+        break;
+      case "initialize":
+        break;
+      case "ping":
+        break;
+    }
+  }
+  assertNotificationCapability(method) {
+    switch (method) {
+      case "notifications/roots/list_changed":
+        if (!this._capabilities.roots?.listChanged)
+          throw Error(`Client does not support roots list changed notifications (required for ${method})`);
+        break;
+      case "notifications/initialized":
+        break;
+      case "notifications/cancelled":
+        break;
+      case "notifications/progress":
+        break;
+    }
+  }
+  assertRequestHandlerCapability(method) {
+    if (!this._capabilities)
+      return;
+    switch (method) {
+      case "sampling/createMessage":
+        if (!this._capabilities.sampling)
+          throw Error(`Client does not support sampling capability (required for ${method})`);
+        break;
+      case "elicitation/create":
+        if (!this._capabilities.elicitation)
+          throw Error(`Client does not support elicitation capability (required for ${method})`);
+        break;
+      case "roots/list":
+        if (!this._capabilities.roots)
+          throw Error(`Client does not support roots capability (required for ${method})`);
+        break;
+      case "tasks/get":
+      case "tasks/list":
+      case "tasks/result":
+      case "tasks/cancel":
+        if (!this._capabilities.tasks)
+          throw Error(`Client does not support tasks capability (required for ${method})`);
+        break;
+      case "ping":
+        break;
+    }
+  }
+  assertTaskCapability(method) {
+    assertToolsCallTaskCapability(this._serverCapabilities?.tasks?.requests, method, "Server");
+  }
+  assertTaskHandlerCapability(method) {
+    if (!this._capabilities)
+      return;
+    assertClientRequestTaskCapability(this._capabilities.tasks?.requests, method, "Client");
+  }
+  async ping(options) {
+    return this.request({ method: "ping" }, EmptyResultSchema, options);
+  }
+  async complete(params, options) {
+    return this.request({ method: "completion/complete", params }, CompleteResultSchema, options);
+  }
+  async setLoggingLevel(level, options) {
+    return this.request({ method: "logging/setLevel", params: { level } }, EmptyResultSchema, options);
+  }
+  async getPrompt(params, options) {
+    return this.request({ method: "prompts/get", params }, GetPromptResultSchema, options);
+  }
+  async listPrompts(params, options) {
+    return this.request({ method: "prompts/list", params }, ListPromptsResultSchema, options);
+  }
+  async listResources(params, options) {
+    return this.request({ method: "resources/list", params }, ListResourcesResultSchema, options);
+  }
+  async listResourceTemplates(params, options) {
+    return this.request({ method: "resources/templates/list", params }, ListResourceTemplatesResultSchema, options);
+  }
+  async readResource(params, options) {
+    return this.request({ method: "resources/read", params }, ReadResourceResultSchema, options);
+  }
+  async subscribeResource(params, options) {
+    return this.request({ method: "resources/subscribe", params }, EmptyResultSchema, options);
+  }
+  async unsubscribeResource(params, options) {
+    return this.request({ method: "resources/unsubscribe", params }, EmptyResultSchema, options);
+  }
+  async callTool(params, resultSchema = CallToolResultSchema, options) {
+    if (this.isToolTaskRequired(params.name))
+      throw new McpError(ErrorCode.InvalidRequest, `Tool "${params.name}" requires task-based execution. Use client.experimental.tasks.callToolStream() instead.`);
+    let result = await this.request({ method: "tools/call", params }, resultSchema, options), validator = this.getToolOutputValidator(params.name);
+    if (validator) {
+      if (!result.structuredContent && !result.isError)
+        throw new McpError(ErrorCode.InvalidRequest, `Tool ${params.name} has an output schema but did not return structured content`);
+      if (result.structuredContent)
+        try {
+          let validationResult = validator(result.structuredContent);
+          if (!validationResult.valid)
+            throw new McpError(ErrorCode.InvalidParams, `Structured content does not match the tool's output schema: ${validationResult.errorMessage}`);
+        } catch (error48) {
+          if (error48 instanceof McpError)
+            throw error48;
+          throw new McpError(ErrorCode.InvalidParams, `Failed to validate structured content: ${error48 instanceof Error ? error48.message : String(error48)}`);
+        }
+    }
+    return result;
+  }
+  isToolTask(toolName) {
+    if (!this._serverCapabilities?.tasks?.requests?.tools?.call)
+      return !1;
+    return this._cachedKnownTaskTools.has(toolName);
+  }
+  isToolTaskRequired(toolName) {
+    return this._cachedRequiredTaskTools.has(toolName);
+  }
+  cacheToolMetadata(tools) {
+    this._cachedToolOutputValidators.clear(), this._cachedKnownTaskTools.clear(), this._cachedRequiredTaskTools.clear();
+    for (let tool of tools) {
+      if (tool.outputSchema) {
+        let toolValidator = this._jsonSchemaValidator.getValidator(tool.outputSchema);
+        this._cachedToolOutputValidators.set(tool.name, toolValidator);
+      }
+      let taskSupport = tool.execution?.taskSupport;
+      if (taskSupport === "required" || taskSupport === "optional")
+        this._cachedKnownTaskTools.add(tool.name);
+      if (taskSupport === "required")
+        this._cachedRequiredTaskTools.add(tool.name);
+    }
+  }
+  getToolOutputValidator(toolName) {
+    return this._cachedToolOutputValidators.get(toolName);
+  }
+  async listTools(params, options) {
+    let result = await this.request({ method: "tools/list", params }, ListToolsResultSchema, options);
+    return this.cacheToolMetadata(result.tools), result;
+  }
+  _setupListChangedHandler(listType, notificationSchema, options, fetcher) {
+    let parseResult = ListChangedOptionsBaseSchema.safeParse(options);
+    if (!parseResult.success)
+      throw Error(`Invalid ${listType} listChanged options: ${parseResult.error.message}`);
+    if (typeof options.onChanged !== "function")
+      throw Error(`Invalid ${listType} listChanged options: onChanged must be a function`);
+    let { autoRefresh, debounceMs } = parseResult.data, { onChanged } = options, refresh = async () => {
+      if (!autoRefresh) {
+        onChanged(null, null);
+        return;
+      }
+      try {
+        let items = await fetcher();
+        onChanged(null, items);
+      } catch (e) {
+        let error48 = e instanceof Error ? e : Error(String(e));
+        onChanged(error48, null);
+      }
+    }, handler = () => {
+      if (debounceMs) {
+        let existingTimer = this._listChangedDebounceTimers.get(listType);
+        if (existingTimer)
+          clearTimeout(existingTimer);
+        let timer = setTimeout(refresh, debounceMs);
+        this._listChangedDebounceTimers.set(listType, timer);
+      } else
+        refresh();
+    };
+    this.setNotificationHandler(notificationSchema, handler);
+  }
+  async sendRootsListChanged() {
+    return this.notification({ method: "notifications/roots/list_changed" });
+  }
+}
+
+// project-path.ts
+function createProjectPathManager({
+  projectPath,
+  defaultProjectPathKey = "project_path"
+}) {
+  let projectPathKey = null, hasSeenToolsList = !1, hasProjectPathTools = !1, toolProjectPathKeyByName = /* @__PURE__ */ new Map;
+  function normalizeProjectPathArgs(args, desiredKey) {
+    if (!desiredKey)
+      return;
+    let hasSnake = Object.prototype.hasOwnProperty.call(args, "project_path"), hasCamel = Object.prototype.hasOwnProperty.call(args, "projectPath");
+    if (desiredKey === "projectPath") {
+      if (hasSnake)
+        delete args.project_path;
+      args.projectPath = projectPath;
+      return;
+    }
+    if (desiredKey === "project_path") {
+      if (hasCamel)
+        delete args.projectPath;
+      args.project_path = projectPath;
+    }
+  }
+  function shouldInjectProjectPath(toolName) {
+    if (!hasSeenToolsList)
+      return !0;
+    if (!hasProjectPathTools)
+      return !1;
+    if (!toolName)
+      return !0;
+    return toolProjectPathKeyByName.has(toolName);
+  }
+  function chooseProjectPathKey(toolName) {
+    if (toolName) {
+      let key = toolProjectPathKeyByName.get(toolName);
+      if (key)
+        return key;
+    }
+    return projectPathKey || defaultProjectPathKey;
+  }
+  function injectProjectPathArgs(toolName, args) {
+    if (!args || typeof args !== "object")
+      return;
+    if (shouldInjectProjectPath(toolName))
+      normalizeProjectPathArgs(args, chooseProjectPathKey(toolName));
+  }
+  function updateProjectPathKeys(tools) {
+    if (!Array.isArray(tools))
+      return;
+    let hasSnake = !1, hasCamel = !1;
+    toolProjectPathKeyByName.clear();
+    for (let tool of tools) {
+      let props = tool?.inputSchema?.properties;
+      if (!props || typeof props !== "object")
+        continue;
+      if (Object.prototype.hasOwnProperty.call(props, "project_path")) {
+        if (hasSnake = !0, typeof tool.name === "string")
+          toolProjectPathKeyByName.set(tool.name, "project_path");
+        continue;
+      }
+      if (Object.prototype.hasOwnProperty.call(props, "projectPath")) {
+        if (hasCamel = !0, typeof tool.name === "string")
+          toolProjectPathKeyByName.set(tool.name, "projectPath");
+      }
+    }
+    if (hasSeenToolsList = !0, hasProjectPathTools = toolProjectPathKeyByName.size > 0, hasSnake)
+      projectPathKey = "project_path";
+    else if (hasCamel)
+      projectPathKey = "projectPath";
+    else
+      projectPathKey = null;
+  }
+  function stripProjectPathFromTools(tools) {
+    if (!Array.isArray(tools))
+      return;
+    for (let tool of tools) {
+      let schema = tool?.inputSchema;
+      if (!schema || schema.type !== "object")
+        continue;
+      let props = schema.properties;
+      if (!props || typeof props !== "object")
+        continue;
+      let removedKeys = [];
+      if (Object.prototype.hasOwnProperty.call(props, "project_path"))
+        delete props.project_path, removedKeys.push("project_path");
+      if (Object.prototype.hasOwnProperty.call(props, "projectPath"))
+        delete props.projectPath, removedKeys.push("projectPath");
+      if (removedKeys.length > 0 && Array.isArray(schema.required))
+        schema.required = schema.required.filter((name) => !removedKeys.includes(name));
     }
   }
   return {
-    raw,
-    full: full ?? void 0,
-    build: build ?? void 0
+    injectProjectPathArgs,
+    stripProjectPathFromTools,
+    updateProjectPathKeys
   };
-}
-function parseVersionSpec(version2) {
-  let snapshotMatch = version2.match(SNAPSHOT_BUILD_RE);
-  if (snapshotMatch) {
-    let train = Number.parseInt(snapshotMatch[1], 10);
-    if (!Number.isNaN(train))
-      return { parts: [train], kind: "build" };
-  }
-  let match = version2.match(ANY_VERSION_RE);
-  if (!match)
-    return null;
-  let parts = parseVersionParts(match[0]);
-  if (!parts)
-    return null;
-  let kind = parts[0] >= 1000 ? "full" : "build";
-  return { parts, kind };
-}
-function extractVersionParts(raw, regex) {
-  let match = raw.match(regex);
-  if (!match)
-    return null;
-  return parseVersionParts(match[0]);
-}
-function parseVersionParts(value) {
-  let parts = value.split(".").map((part) => Number.parseInt(part, 10));
-  if (parts.some((part) => Number.isNaN(part)))
-    return null;
-  return parts;
-}
-function deriveBuildFromFull(full) {
-  if (!full || full.length < 2)
-    return null;
-  let year = full[0], minor = full[1];
-  if (!Number.isFinite(year) || !Number.isFinite(minor))
-    return null;
-  if (year < 2000 || year > 2100)
-    return null;
-  return [(year - 2000) * 10 + minor];
-}
-function compareVersionParts(left, right) {
-  let maxLength = Math.max(left.length, right.length);
-  for (let i = 0;i < maxLength; i += 1) {
-    let leftValue = left[i] ?? 0, rightValue = right[i] ?? 0;
-    if (leftValue !== rightValue)
-      return leftValue - rightValue;
-  }
-  return 0;
 }
 
 // proxy-tools/handlers/apply-patch.ts
@@ -23004,8 +22878,6 @@ function parseStrictPairHunk(lines, startIndex, endIndex) {
       hasSecondDelimiter = !0, i += 1;
       break;
     }
-    if (isPrefixedDiffLine(line))
-      throw Error("Strict @@ pair hunk cannot mix prefixed diff lines");
     oldLines.push(line), i += 1;
   }
   if (!hasSecondDelimiter)
@@ -23013,8 +22885,6 @@ function parseStrictPairHunk(lines, startIndex, endIndex) {
   let newLines = [];
   while (i < endIndex && !isPatchHeaderLine(lines[i]) && !isHunkHeaderLine(lines[i])) {
     let line = lines[i];
-    if (isPrefixedDiffLine(line))
-      throw Error("Strict @@ pair hunk cannot mix prefixed diff lines");
     newLines.push(line), i += 1;
   }
   if (oldLines.length === 0 && newLines.length === 0)
@@ -23811,6 +23681,109 @@ async function handleRenameTool(args, projectPath, callUpstreamTool) {
   return `Renamed ${symbolName} to ${newName} in ${path4.resolve(projectPath, relative)}`;
 }
 
+// workarounds.ts
+var FULL_VERSION_RE = /\b\d{4}\.\d+(?:\.\d+){0,2}\b/, BUILD_VERSION_RE = /\b\d{3}\.\d+(?:\.\d+)?\b/, SNAPSHOT_BUILD_RE = /\b(\d{3})\.SNAPSHOT\b/i, SNAPSHOT_BUILD_PART = Number.MAX_SAFE_INTEGER, ANY_VERSION_RE = /\d+(?:\.\d+)+/;
+var WORKAROUND_FIXED_IN = {
+  ["search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */]: "261.20247"
+};
+function shouldApplyWorkaround(key, rawVersion) {
+  if (isWorkaroundDisabled(key))
+    return logDebug(`Workaround ${key} not used (disabled by env)`), !1;
+  let fixedInRaw = (WORKAROUND_FIXED_IN[key] ?? "").trim();
+  if (!fixedInRaw)
+    return !0;
+  if (!rawVersion)
+    return !0;
+  let ideVersion = parseIdeVersion(rawVersion), fixedSpec = parseVersionSpec(fixedInRaw);
+  if (!fixedSpec)
+    return !0;
+  let currentParts = fixedSpec.kind === "build" ? ideVersion.build ?? deriveBuildFromFull(ideVersion.full) : ideVersion.full;
+  if (!currentParts)
+    return !0;
+  if (compareVersionParts(currentParts, fixedSpec.parts) >= 0)
+    return logDebug(`Workaround ${key} not used; fixed in ${fixedInRaw}, ide ${ideVersion.raw}`), !1;
+  return !0;
+}
+function isWorkaroundDisabled(key) {
+  let disabledAll = process.env.JETBRAINS_MCP_PROXY_DISABLE_WORKAROUNDS;
+  if (disabledAll && disabledAll !== "false" && disabledAll !== "0")
+    return !0;
+  let disabledKeys = process.env.JETBRAINS_MCP_PROXY_DISABLE_WORKAROUND_KEYS;
+  if (!disabledKeys)
+    return !1;
+  return disabledKeys.split(",").map((entry) => entry.trim()).filter((entry) => entry.length > 0).includes(key);
+}
+function logDebug(message) {
+  let enabled = process.env.JETBRAINS_MCP_PROXY_WORKAROUND_DEBUG;
+  if (!enabled || enabled === "0" || enabled === "false")
+    return;
+  process.stderr.write(`[ij-mcp-proxy] ${message}
+`);
+}
+function parseIdeVersion(raw) {
+  let full = extractVersionParts(raw, FULL_VERSION_RE), build = extractVersionParts(raw, BUILD_VERSION_RE);
+  if (!build) {
+    let snapshotMatch = raw.match(SNAPSHOT_BUILD_RE);
+    if (snapshotMatch) {
+      let train = Number.parseInt(snapshotMatch[1], 10);
+      if (!Number.isNaN(train))
+        build = [train, SNAPSHOT_BUILD_PART];
+    }
+  }
+  return {
+    raw,
+    full: full ?? void 0,
+    build: build ?? void 0
+  };
+}
+function parseVersionSpec(version2) {
+  let snapshotMatch = version2.match(SNAPSHOT_BUILD_RE);
+  if (snapshotMatch) {
+    let train = Number.parseInt(snapshotMatch[1], 10);
+    if (!Number.isNaN(train))
+      return { parts: [train], kind: "build" };
+  }
+  let match = version2.match(ANY_VERSION_RE);
+  if (!match)
+    return null;
+  let parts = parseVersionParts(match[0]);
+  if (!parts)
+    return null;
+  let kind = parts[0] >= 1000 ? "full" : "build";
+  return { parts, kind };
+}
+function extractVersionParts(raw, regex) {
+  let match = raw.match(regex);
+  if (!match)
+    return null;
+  return parseVersionParts(match[0]);
+}
+function parseVersionParts(value) {
+  let parts = value.split(".").map((part) => Number.parseInt(part, 10));
+  if (parts.some((part) => Number.isNaN(part)))
+    return null;
+  return parts;
+}
+function deriveBuildFromFull(full) {
+  if (!full || full.length < 2)
+    return null;
+  let year = full[0], minor = full[1];
+  if (!Number.isFinite(year) || !Number.isFinite(minor))
+    return null;
+  if (year < 2000 || year > 2100)
+    return null;
+  return [(year - 2000) * 10 + minor];
+}
+function compareVersionParts(left, right) {
+  let maxLength = Math.max(left.length, right.length);
+  for (let i = 0;i < maxLength; i += 1) {
+    let leftValue = left[i] ?? 0, rightValue = right[i] ?? 0;
+    if (leftValue !== rightValue)
+      return leftValue - rightValue;
+  }
+  return 0;
+}
+
 // proxy-tools/handlers/search-shared.ts
 import path5 from "path";
 
@@ -24133,7 +24106,7 @@ async function handleSearchTextTool(args, projectPath, callUpstreamTool, capabil
     throw Error("text search is not supported by this IDE version");
   return await searchTextLegacy(query, scope, limit, projectPath, callUpstreamTool);
 }
-async function handleSearchRegexTool(args, projectPath, callUpstreamTool, capabilities) {
+async function handleSearchRegexTool(args, projectPath, callUpstreamTool, capabilities, shouldApplyWorkaround2 = () => !0) {
   let query = requireString(args.q, "q").trim(), limit = normalizeLimit(args.limit), { scope, normalizedPaths } = buildPathScope(projectPath, args.paths);
   if (capabilities.hasSearchRegex) {
     let result = await callUpstreamTool("search_regex", {
@@ -24145,7 +24118,7 @@ async function handleSearchRegexTool(args, projectPath, callUpstreamTool, capabi
   }
   if (!capabilities.supportsRegex)
     throw Error("regex search is not supported by this IDE version");
-  return await searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool);
+  return await searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool, shouldApplyWorkaround2);
 }
 async function searchTextLegacy(query, scope, limit, projectPath, callUpstreamTool) {
   let requestLimit = expandLimit(limit, scope), directoryToSearch = resolveSearchRoot(projectPath, scope, null), { entries, probablyHasMoreMatchingEntries, timedOut } = await searchInFiles({
@@ -24156,14 +24129,14 @@ async function searchTextLegacy(query, scope, limit, projectPath, callUpstreamTo
   }, callUpstreamTool), filtered = scope ? filterEntriesByScope(entries, projectPath, scope) : entries, items = normalizeItemsFromEntries(filtered, projectPath, limit, !0), more = timedOut || probablyHasMoreMatchingEntries || filtered.length > limit;
   return serializeSearchResult({ items, more });
 }
-async function searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool) {
+async function searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool, shouldApplyWorkaround2) {
   let requestLimit = expandLimit(limit, scope), directoryToSearch = resolveSearchRoot(projectPath, scope, null), { entries, probablyHasMoreMatchingEntries, timedOut } = await searchInFiles({
     regexPattern: query,
     directoryToSearch: directoryToSearch ?? void 0,
     caseSensitive: !0,
     maxUsageCount: requestLimit
   }, callUpstreamTool), filtered = entries;
-  if (directoryToSearch && shouldApplyWorkaround("search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */))
+  if (directoryToSearch && shouldApplyWorkaround2("search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */))
     filtered = filterEntriesByDirectory(filtered, projectPath, directoryToSearch);
   if (scope)
     filtered = filterEntriesByScope(filtered, projectPath, scope);
@@ -24411,7 +24384,7 @@ var TOOL_VARIANTS = [
     name: "search_regex",
     description: "Search for a regular expression in project files.",
     schemaFactory: () => createSearchRegexSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities, shouldApplyWorkaround: shouldApplyWorkaround2 }) => (args) => handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities, shouldApplyWorkaround2),
     upstreamNames: ["search_regex"],
     expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchRegex && searchCapabilities.supportsRegex
   },
@@ -24527,13 +24500,15 @@ function createProxyTooling({
   projectPath,
   callUpstreamTool,
   searchCapabilities,
-  readCapabilities
+  readCapabilities,
+  ideVersion
 }) {
-  let { proxyToolSpecs, proxyToolNames, handlers } = buildProxyToolingData({
+  let boundVersion = ideVersion ?? null, { proxyToolSpecs, proxyToolNames, handlers } = buildProxyToolingData({
     projectPath,
     callUpstreamTool,
     searchCapabilities,
-    readCapabilities
+    readCapabilities,
+    shouldApplyWorkaround: (key) => shouldApplyWorkaround(key, boundVersion)
   });
   async function runProxyToolCall(toolName, args) {
     let handler = handlers.get(toolName);
@@ -24542,6 +24517,227 @@ function createProxyTooling({
     return await handler(args);
   }
   return { proxyToolSpecs, proxyToolNames, runProxyToolCall };
+}
+
+// upstream.ts
+var RECOVERABLE_UPSTREAM_ERROR_RE = /\b(not connected|connection closed|session not found|server not initialized|mcp-session-id header is required)\b/i;
+function getErrorMessage(error48) {
+  return error48 instanceof Error ? error48.message : String(error48);
+}
+function isRecoverableUpstreamError(error48) {
+  return RECOVERABLE_UPSTREAM_ERROR_RE.test(getErrorMessage(error48));
+}
+function normalizeToolResult(result) {
+  if (result && typeof result === "object" && "toolResult" in result)
+    return result.toolResult;
+  return result;
+}
+
+class UpstreamConnection {
+  client;
+  _transport;
+  _projectPathManager;
+  _defaultProjectPathKey;
+  _toolCallTimeoutMs;
+  _warn;
+  _connectedPromise = null;
+  _tools = null;
+  searchCapabilities = resolveSearchCapabilities([]).capabilities;
+  readCapabilities = resolveReadCapabilities([]).capabilities;
+  ideVersion = null;
+  onStateChange;
+  constructor(options) {
+    this._transport = options.transport, this._toolCallTimeoutMs = options.toolCallTimeoutMs, this._warn = options.warn, this._defaultProjectPathKey = options.defaultProjectPathKey, this._projectPathManager = createProjectPathManager({
+      projectPath: options.projectPath,
+      defaultProjectPathKey: options.defaultProjectPathKey
+    }), this.client = new Client({ name: "ij-mcp-proxy", version: "1.0.0" }), this.client.onerror = (error48) => {
+      this._warn(`Upstream client error: ${error48.message}`);
+    }, this.client.onclose = () => {
+      this.reset(), this._warn("Upstream client connection closed; will reconnect on next request");
+    };
+  }
+  updateProjectPath(newProjectPath) {
+    this._projectPathManager = createProjectPathManager({
+      projectPath: newProjectPath,
+      defaultProjectPathKey: this._defaultProjectPathKey
+    });
+  }
+  async connect() {
+    if (!this.client.transport)
+      this._connectedPromise = null, this._tools = null;
+    if (this._connectedPromise)
+      return this._connectedPromise;
+    return this._connectedPromise = this.client.connect(this._transport).catch((error48) => {
+      throw this._connectedPromise = null, error48;
+    }), this._connectedPromise = this._connectedPromise.then(() => {
+      this._updateIdeVersion();
+    }), this._connectedPromise;
+  }
+  reset() {
+    this._connectedPromise = null, this._tools = null, this.searchCapabilities = resolveSearchCapabilities([]).capabilities, this.readCapabilities = resolveReadCapabilities([]).capabilities, this.ideVersion = null, this.onStateChange?.();
+  }
+  async withReconnect(label, fn) {
+    try {
+      return await fn();
+    } catch (error48) {
+      if (!isRecoverableUpstreamError(error48))
+        throw error48;
+      this._warn(`Upstream ${label} failed (${getErrorMessage(error48)}); reconnecting and retrying once`), this.reset();
+      try {
+        await this._transport.resetTransport(error48);
+      } catch (resetError) {
+        this._warn(`Failed to reset MCP stream transport: ${getErrorMessage(resetError)}`);
+      }
+      return await this.connect(), fn();
+    }
+  }
+  async refreshTools() {
+    return await this.withReconnect("tools/list", async () => {
+      await this.connect();
+      let response = await this.client.listTools(), tools = Array.isArray(response?.tools) ? response.tools : [];
+      return this._projectPathManager.updateProjectPathKeys(tools), this._projectPathManager.stripProjectPathFromTools(tools), this._tools = tools, this.searchCapabilities = resolveSearchCapabilities(tools).capabilities, this.readCapabilities = resolveReadCapabilities(tools).capabilities, this.onStateChange?.(), tools;
+    });
+  }
+  async getTools() {
+    if (!this._tools)
+      await this.refreshTools();
+    return this._tools ?? [];
+  }
+  async callTool(toolName, args) {
+    return await this.withReconnect(`tools/call ${toolName}`, async () => {
+      await this.connect(), await this.getTools();
+      let callArgs = { ...args };
+      this._projectPathManager.injectProjectPathArgs(toolName, callArgs);
+      let options = this._toolCallTimeoutMs > 0 ? { timeout: this._toolCallTimeoutMs } : void 0, result = normalizeToolResult(await this.client.callTool({ name: toolName, arguments: callArgs }, void 0, options));
+      if (result?.isError)
+        throw Error(extractTextFromResult(result) || "Upstream tool error");
+      return result;
+    });
+  }
+  async callToolForClient(toolName, args) {
+    return await this.withReconnect(`tools/call ${toolName}`, async () => {
+      await this.connect(), await this.getTools(), this._projectPathManager.injectProjectPathArgs(toolName, args);
+      let options = this._toolCallTimeoutMs > 0 ? { timeout: this._toolCallTimeoutMs } : void 0, result = await this.client.callTool({ name: toolName, arguments: args }, void 0, options);
+      return normalizeToolResult(result);
+    });
+  }
+  async forwardRequest(method, params) {
+    return await this.withReconnect(method, async () => {
+      return await this.connect(), await this.client.request({ method, params }, ResultSchema);
+    });
+  }
+  async forwardNotification(notification) {
+    await this.withReconnect(notification.method, async () => {
+      await this.connect(), await this.client.notification(notification);
+    });
+  }
+  _updateIdeVersion() {
+    let serverInfo = this.client.getServerVersion();
+    this.ideVersion = typeof serverInfo?.version === "string" ? serverInfo.version : null;
+  }
+}
+
+// discovery.ts
+function buildCandidateList(preferredPorts, portScanStart, portScanLimit) {
+  let seen = /* @__PURE__ */ new Set, candidates = [];
+  for (let port of preferredPorts) {
+    if (!Number.isFinite(port) || port <= 0 || seen.has(port))
+      continue;
+    seen.add(port), candidates.push(port);
+  }
+  let limit = Number.isFinite(portScanLimit) && portScanLimit > 0 ? portScanLimit : 0, start = Number.isFinite(portScanStart) && portScanStart > 0 ? portScanStart : 0;
+  for (let i = 0;i < limit; i++) {
+    let port = start + i;
+    if (port <= 0 || seen.has(port))
+      continue;
+    seen.add(port), candidates.push(port);
+  }
+  return candidates;
+}
+async function findReachablePorts(options) {
+  let { preferredPorts, portScanStart, portScanLimit, scanTimeoutMs, buildUrl, probeHost = "127.0.0.1", warn } = options, candidates = buildCandidateList(preferredPorts, portScanStart, portScanLimit);
+  if (candidates.length === 0)
+    return [];
+  let probeResults = await Promise.allSettled(candidates.map(async (port) => {
+    let reachable = await isPortReachable(port, {
+      host: probeHost,
+      timeout: scanTimeoutMs > 0 ? scanTimeoutMs : void 0
+    });
+    return { port, reachable };
+  })), result = [];
+  for (let probeResult of probeResults)
+    if (probeResult.status === "fulfilled" && probeResult.value.reachable) {
+      let port = probeResult.value.port;
+      result.push({ port, url: buildUrl(port) });
+    }
+  if (result.length === 0 && warn)
+    warn(`No reachable MCP stream ports found. Probed: ${candidates.join(", ")}`);
+  return result;
+}
+
+// routing.ts
+import path7 from "path";
+var RIDER_PROJECT_SUBPATH = "dotnet", MERGE_TOOL_NAMES = /* @__PURE__ */ new Set([
+  "search_text",
+  "search_regex",
+  "search_file",
+  "search_symbol"
+]);
+function resolveRoute(toolName, args, projectRoot) {
+  if (MERGE_TOOL_NAMES.has(toolName))
+    return "merge";
+  return resolveIdeForPath(args, projectRoot) === "rider" ? "target-rider" : "primary";
+}
+function rewriteArgsForTarget(route, args) {
+  if (route !== "target-rider")
+    return { ...args };
+  let rewritten = { ...args };
+  for (let key of PATH_ARG_KEYS) {
+    let value = rewritten[key];
+    if (typeof value === "string" && value.length > 0)
+      rewritten[key] = stripRiderPrefix(value);
+  }
+  return rewritten;
+}
+function stripRiderPrefix(filePath) {
+  if (filePath.startsWith(RIDER_PROJECT_SUBPATH + "/"))
+    return filePath.slice(RIDER_PROJECT_SUBPATH.length + 1);
+  if (filePath.startsWith(RIDER_PROJECT_SUBPATH + "\\"))
+    return filePath.slice(RIDER_PROJECT_SUBPATH.length + 1);
+  if (filePath === RIDER_PROJECT_SUBPATH)
+    return "";
+  return filePath;
+}
+function isMergeTool(toolName) {
+  return MERGE_TOOL_NAMES.has(toolName);
+}
+function createPathPrefixTransformer(prefix) {
+  return (items) => items.map((item) => ({
+    ...item,
+    filePath: prefix + "/" + item.filePath
+  }));
+}
+var riderItemTransformer = createPathPrefixTransformer(RIDER_PROJECT_SUBPATH);
+function resolveIdeForPath(args, projectRoot) {
+  let filePath = extractPathArg(args);
+  return filePath != null && isRiderPath(filePath, projectRoot) ? "rider" : "idea";
+}
+function isRiderPath(filePath, projectRoot) {
+  if (!filePath)
+    return !1;
+  let absolute = path7.isAbsolute(filePath) ? path7.normalize(filePath) : path7.resolve(projectRoot, filePath), relative = path7.relative(projectRoot, absolute);
+  if (relative.startsWith("..") || path7.isAbsolute(relative))
+    return !1;
+  return relative === RIDER_PROJECT_SUBPATH || relative.startsWith(RIDER_PROJECT_SUBPATH + path7.sep);
+}
+var PATH_ARG_KEYS = ["pathInProject", "file_path", "dir_path", "directoryPath", "filePath"];
+function extractPathArg(args) {
+  for (let key of PATH_ARG_KEYS) {
+    let value = args[key];
+    if (typeof value === "string" && value.length > 0)
+      return value;
+  }
+  return;
 }
 
 // ij-mcp-proxy.ts
@@ -24572,38 +24768,59 @@ function buildStreamUrl(port) {
 }
 function resolveProjectPath(rawValue) {
   if (!rawValue)
-    return { projectPath: path7.resolve(cwd()) };
+    return { projectPath: path8.resolve(cwd()) };
   if (rawValue.startsWith("file://"))
     try {
-      return { projectPath: path7.resolve(fileURLToPath(new URL(rawValue))) };
+      return { projectPath: path8.resolve(fileURLToPath(new URL(rawValue))) };
     } catch (error48) {
       let message = error48 instanceof Error ? error48.message : String(error48);
       return {
-        projectPath: path7.resolve(rawValue),
+        projectPath: path8.resolve(rawValue),
         warning: `Failed to parse JETBRAINS_MCP_PROJECT_PATH as a file URI (${message}); falling back to path resolution.`
       };
     }
-  return { projectPath: path7.resolve(rawValue) };
+  return { projectPath: path8.resolve(rawValue) };
 }
-var explicitProjectPath = env.JETBRAINS_MCP_PROJECT_PATH, projectPathResolution = resolveProjectPath(explicitProjectPath), projectPath = projectPathResolution.projectPath, defaultProjectPathKey = "project_path", projectPathManager = createProjectPathManager({ projectPath, defaultProjectPathKey }), REPLACED_TOOL_NAMES = getReplacedToolNames(), BASE_BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES]), searchCapabilities = resolveSearchCapabilities([]).capabilities, readCapabilities = resolveReadCapabilities([]).capabilities;
+var explicitProjectPath = env.JETBRAINS_MCP_PROJECT_PATH, projectPathResolution = resolveProjectPath(explicitProjectPath), projectPath = projectPathResolution.projectPath, defaultProjectPathKey = "project_path", REPLACED_TOOL_NAMES = getReplacedToolNames(), BASE_BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES]);
 function blockedToolMessage(toolName) {
   if (toolName === "create_new_file")
     return `Tool '${toolName}' is not exposed by ij-proxy. Use 'apply_patch' instead.`;
   return `Tool '${toolName}' is not exposed by ij-proxy.`;
 }
-var proxyToolSpecs = [], proxyToolNames = /* @__PURE__ */ new Set, runProxyToolCall = async () => {
-  throw Error("Proxy tooling not initialized");
-};
-function updateProxyTooling() {
-  let tooling = createProxyTooling({
-    projectPath,
-    callUpstreamTool,
-    searchCapabilities,
-    readCapabilities
-  });
-  proxyToolSpecs = tooling.proxyToolSpecs, proxyToolNames = tooling.proxyToolNames, runProxyToolCall = tooling.runProxyToolCall;
+var ideaUpstream = null, riderUpstream = null, discoveryPromise = null, proxyToolSpecs = [], proxyToolNames = /* @__PURE__ */ new Set, ideaProxyToolCall = null, riderProxyToolCall = null;
+function primaryUpstream() {
+  let upstream = ideaUpstream ?? riderUpstream;
+  if (!upstream)
+    throw Error("No upstream connection available");
+  return upstream;
 }
-updateProxyTooling();
+function updateProxyTooling() {
+  let ideaSpecs = [], ideaNames = /* @__PURE__ */ new Set;
+  if (ideaUpstream) {
+    let tooling = createProxyTooling({
+      projectPath,
+      callUpstreamTool: (name, args) => ideaUpstream.callTool(name, args),
+      searchCapabilities: ideaUpstream.searchCapabilities,
+      readCapabilities: ideaUpstream.readCapabilities,
+      ideVersion: ideaUpstream.ideVersion
+    });
+    ideaSpecs = tooling.proxyToolSpecs, ideaNames = tooling.proxyToolNames, ideaProxyToolCall = tooling.runProxyToolCall;
+  } else
+    ideaProxyToolCall = null;
+  let riderSpecs = [], riderNames = /* @__PURE__ */ new Set;
+  if (riderUpstream) {
+    let riderProjectPath = path8.join(projectPath, RIDER_PROJECT_SUBPATH), tooling = createProxyTooling({
+      projectPath: riderProjectPath,
+      callUpstreamTool: (name, args) => riderUpstream.callTool(name, args),
+      searchCapabilities: riderUpstream.searchCapabilities,
+      readCapabilities: riderUpstream.readCapabilities,
+      ideVersion: riderUpstream.ideVersion
+    });
+    riderSpecs = tooling.proxyToolSpecs, riderNames = tooling.proxyToolNames, riderProxyToolCall = tooling.runProxyToolCall;
+  } else
+    riderProxyToolCall = null;
+  proxyToolSpecs = mergeToolLists(ideaSpecs, riderSpecs, /* @__PURE__ */ new Set), proxyToolNames = /* @__PURE__ */ new Set([...ideaNames, ...riderNames]);
+}
 function note(message) {
   logToFile(message), logProgress(message);
 }
@@ -24613,27 +24830,107 @@ function warn(message) {
 clearLogFile();
 if (projectPathResolution.warning)
   warn(projectPathResolution.warning);
-var streamTransport = createStreamTransport({
-  explicitUrl: explicitMcpUrl,
-  preferredPorts,
-  portScanStart,
-  portScanLimit,
-  connectTimeoutMs,
-  scanTimeoutMs,
-  queueLimit,
-  queueWaitTimeoutMs,
-  retryAttempts: STREAM_RETRY_ATTEMPTS,
-  retryBaseDelayMs: STREAM_RETRY_BASE_DELAY_MS,
-  buildUrl: buildStreamUrl,
-  note,
-  warn
-}), upstreamClient = new Client({ name: "ij-mcp-proxy", version: "1.0.0" });
-upstreamClient.onerror = (error48) => {
-  warn(`Upstream client error: ${error48.message}`);
-};
-upstreamClient.onclose = () => {
-  resetUpstreamState(), warn("Upstream client connection closed; will reconnect on next request");
-};
+function createUpstreamForUrl(url2) {
+  let transport = createStreamTransport({
+    explicitUrl: url2,
+    preferredPorts: [],
+    portScanStart: 0,
+    portScanLimit: 0,
+    connectTimeoutMs,
+    scanTimeoutMs,
+    queueLimit,
+    queueWaitTimeoutMs,
+    retryAttempts: STREAM_RETRY_ATTEMPTS,
+    retryBaseDelayMs: STREAM_RETRY_BASE_DELAY_MS,
+    buildUrl: buildStreamUrl,
+    note,
+    warn
+  }), conn = new UpstreamConnection({
+    transport,
+    projectPath,
+    defaultProjectPathKey,
+    toolCallTimeoutMs,
+    warn
+  });
+  return conn.onStateChange = () => updateProxyTooling(), conn;
+}
+function setupUpstreamClientHandlers(conn) {
+  conn.client.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
+    try {
+      await conn.refreshTools(), await proxyServer.sendToolListChanged();
+    } catch (error48) {
+      let message = error48 instanceof Error ? error48.message : String(error48);
+      warn(`Failed to refresh tool list after upstream change: ${message}`);
+    }
+  }), conn.client.fallbackRequestHandler = async (request) => {
+    return await proxyServer.request({ method: request.method, params: request.params }, ResultSchema);
+  }, conn.client.fallbackNotificationHandler = async (notification) => {
+    try {
+      await proxyServer.notification(notification);
+    } catch (error48) {
+      let message = error48 instanceof Error ? error48.message : String(error48);
+      warn(`Failed to forward upstream notification: ${message}`);
+    }
+  };
+}
+function isRiderServerName(name) {
+  return /rider/i.test(name);
+}
+async function ensureDiscovered() {
+  if (ideaUpstream || riderUpstream)
+    return;
+  if (discoveryPromise)
+    return discoveryPromise;
+  return discoveryPromise = performDiscovery(), discoveryPromise;
+}
+async function performDiscovery() {
+  try {
+    if (explicitMcpUrl) {
+      let conn = createUpstreamForUrl(explicitMcpUrl);
+      await conn.connect();
+      let name = conn.client.getServerVersion()?.name ?? "";
+      if (isRiderServerName(name))
+        conn.updateProjectPath(path8.join(projectPath, RIDER_PROJECT_SUBPATH)), riderUpstream = conn;
+      else
+        ideaUpstream = conn;
+      setupUpstreamClientHandlers(conn), updateProxyTooling();
+      return;
+    }
+    let reachable = await findReachablePorts({
+      preferredPorts,
+      portScanStart,
+      portScanLimit,
+      scanTimeoutMs,
+      buildUrl: buildStreamUrl,
+      warn
+    });
+    for (let { url: url2 } of reachable) {
+      let conn = createUpstreamForUrl(url2);
+      try {
+        await conn.connect();
+        let name = conn.client.getServerVersion()?.name ?? "";
+        if (isRiderServerName(name) && !riderUpstream)
+          conn.updateProjectPath(path8.join(projectPath, RIDER_PROJECT_SUBPATH)), riderUpstream = conn, setupUpstreamClientHandlers(conn), note(`Rider upstream: ${url2} (${name})`);
+        else if (!isRiderServerName(name) && !ideaUpstream)
+          ideaUpstream = conn, setupUpstreamClientHandlers(conn), note(`IDEA upstream: ${url2} (${name})`);
+        else
+          try {
+            await conn.client.close();
+          } catch {}
+      } catch (error48) {
+        let message = error48 instanceof Error ? error48.message : String(error48);
+        warn(`Failed to connect to ${url2}: ${message}`);
+      }
+    }
+    if (!ideaUpstream && !riderUpstream)
+      throw Error(`No IDE found. Install the "MCP Server" plugin and ensure it is enabled. Probed ports: ${preferredPorts.join(", ")} + scan ${portScanStart}..${portScanStart + portScanLimit - 1}`);
+    if (ideaUpstream && riderUpstream)
+      note("Multi-IDE mode: routing between IDEA and Rider");
+    updateProxyTooling();
+  } finally {
+    discoveryPromise = null;
+  }
+}
 var proxyServer = new Server({ name: "ij-mcp-proxy", version: "1.0.0" }, {
   capabilities: {
     tools: { listChanged: !0 },
@@ -24643,9 +24940,10 @@ var proxyServer = new Server({ name: "ij-mcp-proxy", version: "1.0.0" }, {
   }
 });
 proxyServer.setRequestHandler(ListToolsRequestSchema, async () => {
-  let upstreamTools = await getUpstreamTools();
+  await ensureDiscovered();
+  let ideaTools = ideaUpstream ? await ideaUpstream.getTools() : [], riderTools = riderUpstream ? await riderUpstream.getTools() : [], allUpstreamTools = mergeToolLists(ideaTools, riderTools, /* @__PURE__ */ new Set);
   return {
-    tools: mergeToolLists(proxyToolSpecs, upstreamTools, BASE_BLOCKED_TOOL_NAMES)
+    tools: mergeToolLists(proxyToolSpecs, allUpstreamTools, BASE_BLOCKED_TOOL_NAMES)
   };
 });
 proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -24654,49 +24952,58 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
     return makeToolError("Tool name is required");
   if (BASE_BLOCKED_TOOL_NAMES.has(toolName))
     return makeToolError(blockedToolMessage(toolName));
-  if (proxyToolNames.has(toolName))
-    try {
-      let output = await runProxyToolCall(toolName, args);
-      return makeToolOutput(output);
-    } catch (error48) {
-      let message = error48 instanceof Error ? error48.message : String(error48);
-      return makeToolError(message);
+  if (await ensureDiscovered(), proxyToolNames.has(toolName)) {
+    if (ideaProxyToolCall && riderProxyToolCall) {
+      if (isMergeTool(toolName))
+        return await callMergedProxyTool(toolName, args);
+      let ide = resolveIdeForPath(args, projectPath), proxyCall2 = ide === "rider" ? riderProxyToolCall : ideaProxyToolCall, rewrittenArgs = rewriteArgsForTarget(ide === "rider" ? "target-rider" : "target-idea", args);
+      try {
+        return makeToolOutput(await proxyCall2(toolName, rewrittenArgs));
+      } catch (error48) {
+        let message = error48 instanceof Error ? error48.message : String(error48);
+        return makeToolError(message);
+      }
     }
+    let proxyCall = ideaProxyToolCall ?? riderProxyToolCall;
+    if (proxyCall)
+      try {
+        return makeToolOutput(await proxyCall(toolName, args));
+      } catch (error48) {
+        let message = error48 instanceof Error ? error48.message : String(error48);
+        return makeToolError(message);
+      }
+  }
+  if (ideaUpstream && riderUpstream) {
+    let route = resolveRoute(toolName, args, projectPath);
+    switch (route) {
+      case "merge":
+        return await callMergedPassthroughTool(toolName, args);
+      case "target-idea":
+      case "target-rider": {
+        let target = route === "target-rider" ? riderUpstream : ideaUpstream;
+        try {
+          return await target.callToolForClient(toolName, rewriteArgsForTarget(route, args));
+        } catch (error48) {
+          let message = error48 instanceof Error ? error48.message : String(error48);
+          return makeToolError(message);
+        }
+      }
+      case "primary":
+        break;
+    }
+  }
   try {
-    return await callUpstreamToolForClient(toolName, args);
+    return await primaryUpstream().callToolForClient(toolName, args);
   } catch (error48) {
     let message = error48 instanceof Error ? error48.message : String(error48);
     return makeToolError(message);
   }
 });
 proxyServer.fallbackRequestHandler = async (request) => {
-  return await withUpstreamReconnect(request.method, async () => {
-    return await ensureUpstreamConnected(), await upstreamClient.request({ method: request.method, params: request.params }, ResultSchema);
-  });
+  return await ensureDiscovered(), await primaryUpstream().forwardRequest(request.method, request.params);
 };
 proxyServer.fallbackNotificationHandler = async (notification) => {
-  await withUpstreamReconnect(notification.method, async () => {
-    await ensureUpstreamConnected(), await upstreamClient.notification(notification);
-  });
-};
-upstreamClient.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
-  try {
-    await refreshUpstreamTools(), await proxyServer.sendToolListChanged();
-  } catch (error48) {
-    let message = error48 instanceof Error ? error48.message : String(error48);
-    warn(`Failed to refresh tool list after upstream change: ${message}`);
-  }
-});
-upstreamClient.fallbackRequestHandler = async (request) => {
-  return await proxyServer.request({ method: request.method, params: request.params }, ResultSchema);
-};
-upstreamClient.fallbackNotificationHandler = async (notification) => {
-  try {
-    await proxyServer.notification(notification);
-  } catch (error48) {
-    let message = error48 instanceof Error ? error48.message : String(error48);
-    warn(`Failed to forward upstream notification: ${message}`);
-  }
+  await ensureDiscovered(), await primaryUpstream().forwardNotification(notification);
 };
 var stdioTransport = new StdioServerTransport;
 stdioTransport.onerror = (error48) => {
@@ -24706,63 +25013,57 @@ proxyServer.connect(stdioTransport).catch((error48) => {
   let message = error48 instanceof Error ? error48.message : String(error48);
   warn(`Failed to start stdio transport: ${message}`);
 });
-var upstreamConnectedPromise = null, upstreamTools = null, RECOVERABLE_UPSTREAM_ERROR_RE = /\b(not connected|connection closed|session not found|server not initialized|mcp-session-id header is required)\b/i;
-function getErrorMessage(error48) {
-  return error48 instanceof Error ? error48.message : String(error48);
+async function callMergedProxyTool(toolName, args) {
+  let results = await Promise.allSettled([
+    ideaProxyToolCall(toolName, { ...args }),
+    riderProxyToolCall(toolName, { ...args })
+  ]);
+  return mergeSettledResults(results, "proxy", [void 0, riderItemTransformer]);
 }
-function isRecoverableUpstreamError(error48) {
-  let message = getErrorMessage(error48);
-  return RECOVERABLE_UPSTREAM_ERROR_RE.test(message);
+async function callMergedPassthroughTool(toolName, args) {
+  let results = await Promise.allSettled([
+    ideaUpstream.callToolForClient(toolName, { ...args }),
+    riderUpstream.callToolForClient(toolName, { ...args })
+  ]);
+  return mergeSettledResults(results, "passthrough", [void 0, riderItemTransformer]);
 }
-function resetUpstreamState() {
-  upstreamConnectedPromise = null, upstreamTools = null, searchCapabilities = resolveSearchCapabilities([]).capabilities, readCapabilities = resolveReadCapabilities([]).capabilities, updateProxyTooling(), setIdeVersion(null);
+function logSettledErrors(results) {
+  for (let r of results)
+    if (r.status === "rejected")
+      warn(`Merge: one upstream failed: ${r.reason instanceof Error ? r.reason.message : String(r.reason)}`);
 }
-async function withUpstreamReconnect(label, fn) {
-  try {
-    return await fn();
-  } catch (error48) {
-    if (!isRecoverableUpstreamError(error48))
-      throw error48;
-    warn(`Upstream ${label} failed (${getErrorMessage(error48)}); reconnecting and retrying once`), resetUpstreamState();
-    try {
-      await streamTransport.resetTransport(error48);
-    } catch (resetError) {
-      warn(`Failed to reset MCP stream transport: ${getErrorMessage(resetError)}`);
+function settledErrorOutput(results) {
+  for (let r of results)
+    if (r.status === "rejected") {
+      let message = r.reason instanceof Error ? r.reason.message : String(r.reason);
+      return makeToolError(message);
     }
-    return await ensureUpstreamConnected(), fn();
+  return makeToolError("All upstreams failed");
+}
+function extractItemsFromResult(value, mode) {
+  if (mode === "proxy")
+    return extractItems(value);
+  let text = extractTextFromResult(value);
+  if (!text)
+    return [];
+  return extractItems({ content: [{ type: "text", text }] });
+}
+function mergeSettledResults(results, mode, transformers = []) {
+  logSettledErrors(results);
+  let allItems = [];
+  for (let i = 0;i < results.length; i++) {
+    let r = results[i];
+    if (r.status !== "fulfilled")
+      continue;
+    let value = r.value;
+    if (value == null)
+      continue;
+    let items = extractItemsFromResult(value, mode), transformer = transformers[i];
+    allItems.push(...transformer ? transformer(items) : items);
   }
-}
-async function ensureUpstreamConnected() {
-  if (!upstreamClient.transport)
-    upstreamConnectedPromise = null, upstreamTools = null;
-  if (upstreamConnectedPromise)
-    return upstreamConnectedPromise;
-  return upstreamConnectedPromise = upstreamClient.connect(streamTransport).catch((error48) => {
-    throw upstreamConnectedPromise = null, error48;
-  }), upstreamConnectedPromise = upstreamConnectedPromise.then(() => {
-    updateIdeVersionFromUpstream();
-  }), upstreamConnectedPromise;
-}
-function updateIdeVersionFromUpstream() {
-  let version2 = upstreamClient.getServerVersion()?.version;
-  setIdeVersion(typeof version2 === "string" ? version2 : null);
-}
-async function refreshUpstreamTools() {
-  return await withUpstreamReconnect("tools/list", async () => {
-    await ensureUpstreamConnected();
-    let response = await upstreamClient.listTools(), tools = Array.isArray(response?.tools) ? response.tools : [];
-    return projectPathManager.updateProjectPathKeys(tools), projectPathManager.stripProjectPathFromTools(tools), upstreamTools = tools, searchCapabilities = resolveSearchCapabilities(tools).capabilities, readCapabilities = resolveReadCapabilities(tools).capabilities, updateProxyTooling(), tools;
-  });
-}
-async function getUpstreamTools() {
-  if (!upstreamTools)
-    await refreshUpstreamTools();
-  return upstreamTools ?? [];
-}
-function normalizeToolResult(result) {
-  if (result && typeof result === "object" && "toolResult" in result)
-    return result.toolResult;
-  return result;
+  if (allItems.length > 0)
+    return makeToolOutput(JSON.stringify({ items: allItems }));
+  return settledErrorOutput(results);
 }
 function makeToolOutput(text) {
   return {
@@ -24785,27 +25086,9 @@ function makeToolError(text) {
     isError: !0
   };
 }
-async function callUpstreamToolForClient(toolName, args) {
-  return await withUpstreamReconnect(`tools/call ${toolName}`, async () => {
-    await ensureUpstreamConnected(), await getUpstreamTools(), projectPathManager.injectProjectPathArgs(toolName, args);
-    let options = toolCallTimeoutMs > 0 ? { timeout: toolCallTimeoutMs } : void 0, result = await upstreamClient.callTool({ name: toolName, arguments: args }, void 0, options);
-    return normalizeToolResult(result);
-  });
-}
-async function callUpstreamTool(toolName, args) {
-  return await withUpstreamReconnect(`tools/call ${toolName}`, async () => {
-    await ensureUpstreamConnected(), await getUpstreamTools();
-    let callArgs = { ...args };
-    projectPathManager.injectProjectPathArgs(toolName, callArgs);
-    let options = toolCallTimeoutMs > 0 ? { timeout: toolCallTimeoutMs } : void 0, result = normalizeToolResult(await upstreamClient.callTool({ name: toolName, arguments: callArgs }, void 0, options));
-    if (result?.isError)
-      throw Error(extractTextFromResult(result) || "Upstream tool error");
-    return result;
-  });
-}
-function mergeToolLists(proxyTools, upstreamTools2, blockedNames) {
+function mergeToolLists(listA, listB, blockedNames) {
   let blocked = blockedNames instanceof Set ? blockedNames : new Set(blockedNames || []), result = [], seen = /* @__PURE__ */ new Set;
-  for (let tool of proxyTools || []) {
+  for (let tool of listA || []) {
     if (!tool || typeof tool.name !== "string")
       continue;
     if (blocked.has(tool.name))
@@ -24814,8 +25097,8 @@ function mergeToolLists(proxyTools, upstreamTools2, blockedNames) {
       continue;
     seen.add(tool.name), result.push(tool);
   }
-  if (Array.isArray(upstreamTools2))
-    for (let tool of upstreamTools2) {
+  if (Array.isArray(listB))
+    for (let tool of listB) {
       let name = tool?.name;
       if (typeof name !== "string" || !name)
         continue;
