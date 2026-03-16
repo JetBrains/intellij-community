@@ -2,32 +2,33 @@ package com.intellij.terminal.frontend.toolwindow.impl
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
-import com.intellij.ui.ClientProperty
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.IslandsState
+import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.PathUtilRt
 import com.intellij.util.asDisposable
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -37,18 +38,23 @@ import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandStartedEvent
+import java.awt.BorderLayout
+import java.awt.Insets
 import java.util.Locale
 import java.util.concurrent.CancellationException
-import javax.swing.SwingConstants
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Supplier
+import javax.swing.JComponent
 import com.intellij.ui.EditorNotificationPanel.Status as NotificationStatus
 
 private val AGENT_WORKBENCH_PLUGIN_ID = PluginId.getId("com.intellij.agent.workbench")
 private const val AGENT_WORKBENCH_TOOL_WINDOW_ID = "agent.workbench.sessions"
 private const val AGENT_WORKBENCH_PROMOTION_ENABLED_REGISTRY_KEY = "terminal.agent.workbench.promotion.enabled"
-private const val AGENT_WORKBENCH_PROMOTION_SHOWN_KEY = "terminal.agent.workbench.promotion.shown"
+private const val AGENT_WORKBENCH_PROMOTION_DISMISSED_KEY = "terminal.agent.workbench.promotion.dismissed"
 
 /**
- * Watches Reworked Terminal tool window tabs and shows a one-time Agent Workbench promotion banner
+ * Watches Reworked Terminal tool window tabs and shows an Agent Workbench promotion banner
  * when the user starts working with supported AI CLIs directly in the terminal.
  *
  * Feature flow:
@@ -60,41 +66,44 @@ private const val AGENT_WORKBENCH_PROMOTION_SHOWN_KEY = "terminal.agent.workbenc
  * 3. The notifier arms each view only while the promotion is still potentially relevant.
  *    In the synchronous `commandStarted` callback it performs only a cheap armed-check and supported
  *    executable match on `executedCommand`.
- * 4. After the first matching command in a view, the listener is disarmed, and the remaining
- *    plugin/gate checks are deferred to a background coroutine, outside the synchronous terminal
- *    update path.
- * 5. If the promotion is accepted, the notifier logs the `promo.shown` FUS event and posts only the
- *    banner creation to the strict UI dispatcher.
+ * 4. After the first matching command in a view, the listener starts a background acquisition attempt
+ *    outside the synchronous terminal update path. If another banner is already active, the view is
+ *    re-armed for later matching commands.
+ * 5. If the promotion gets an active-presentation lease, the notifier posts only the banner creation to
+ *    the strict UI dispatcher and logs the `promo.shown` FUS event only after the banner is attached.
  * 6. The promotion is eligible only when all the following are true:
  *    - The command matches a supported provider executable (`codex` or `claude`),
  *    - The promotion registry key is enabled,
  *    - The Agent Workbench plugin is not installed,
- *    - The app-level gate has not marked the promotion as shown before.
+ *    - The app-level gate has not marked the promotion as dismissed before.
  *
  * Banner behavior:
  * - The banner is inserted above the terminal content in the current [TerminalViewImpl].
- * - The close action dismisses the banner for the current terminal view only.
- * - The install action logs `promo.install.clicked`, installs and enables Agent Workbench, disposes
- *   the banner on success, activates the Agent Workbench tool window, and then logs
+ * - The close action permanently dismisses the promotion and removes the banner.
+ * - The install action permanently dismisses the promotion, logs `promo.install.clicked`, installs and
+ *   enables Agent Workbench, disposes the banner on success, activates the Agent Workbench tool window,
+ *   and then logs
  *   `promo.activation.succeeded`.
  *
  * Gate semantics:
- * - The "shown" flag is stored in [PropertiesComponent] and shared across projects and IDE restarts.
- * - The promotion is therefore shown at most once per IDE configuration, not once per project or
- *   terminal tab.
+ * - The dismissal flag is stored in [PropertiesComponent] and shared across projects and IDE restarts.
+ * - While the promotion is not dismissed, at most one banner can be active at a time across the IDE.
+ * - If an active banner disappears because its terminal view is disposed, the promotion becomes eligible
+ *   again for later matching commands.
  * - A disabled Agent Workbench plugin is treated as present, so the promotion is suppressed.
  */
 internal class AgentWorkbenchTerminalPromotionNotifier(private val project: Project) : TerminalTabsManagerListener {
   private val controller = AgentWorkbenchTerminalPromotionController(
     gate = object : AgentWorkbenchTerminalPromotionGate {
-      override fun isShown(): Boolean {
-        return PropertiesComponent.getInstance().isTrueValue(AGENT_WORKBENCH_PROMOTION_SHOWN_KEY)
+      override fun isDismissed(): Boolean {
+        return PropertiesComponent.getInstance().isTrueValue(AGENT_WORKBENCH_PROMOTION_DISMISSED_KEY)
       }
 
-      override fun tryMarkShown(): Boolean {
-        return PropertiesComponent.getInstance().updateValue(AGENT_WORKBENCH_PROMOTION_SHOWN_KEY, true)
+      override fun markDismissed() {
+        PropertiesComponent.getInstance().setValue(AGENT_WORKBENCH_PROMOTION_DISMISSED_KEY, true)
       }
     },
+    presentationTracker = DefaultAgentWorkbenchTerminalPromotionPresentationTracker,
     shouldCheckGate = {
       Registry.`is`(AGENT_WORKBENCH_PROMOTION_ENABLED_REGISTRY_KEY, true) &&
       !IdeProductMode.isFrontend &&
@@ -124,32 +133,87 @@ internal class AgentWorkbenchTerminalPromotionNotifier(private val project: Proj
 
       val viewDisposable = Disposer.newCheckedDisposable(view.coroutineScope.asDisposable(), "AgentWorkbenchTerminalPromotionView")
       val listenerDisposable = Disposer.newDisposable(viewDisposable, "AgentWorkbenchTerminalPromotionListener")
-      var promotionArmed = true
+      val promotionState = AtomicReference(AgentWorkbenchTerminalPromotionListenerState.ARMED)
       shellIntegration.addCommandExecutionListener(listenerDisposable, object : TerminalCommandExecutionListener {
         override fun commandStarted(event: TerminalCommandStartedEvent) {
-          if (!promotionArmed) {
+          if (!promotionState.compareAndSet(AgentWorkbenchTerminalPromotionListenerState.ARMED,
+                                            AgentWorkbenchTerminalPromotionListenerState.ATTEMPT_IN_PROGRESS)) {
             return
           }
           if (!controller.isPromotionAvailable()) {
-            promotionArmed = false
+            finishPromotionListening(promotionState, listenerDisposable)
             return
           }
 
-          val provider = matchAgentWorkbenchTerminalProvider(event.commandBlock.executedCommand) ?: return
-          promotionArmed = false
-          Disposer.dispose(listenerDisposable)
+          val provider = matchAgentWorkbenchTerminalProvider(event.commandBlock.executedCommand)
+          if (provider == null) {
+            rearmPromotionListening(promotionState)
+            return
+          }
+
           view.coroutineScope.launch(Dispatchers.Default + CoroutineName("Agent Workbench terminal promotion")) {
-            if (!controller.tryAcquirePromotion()) {
-              return@launch
-            }
-
-            ReworkedTerminalUsageCollector.logAgentWorkbenchPromoShown(project, provider.id)
-
-            withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
-              if (project.isDisposed || viewDisposable.isDisposed) {
-                return@withContext
+            when (val acquireResult = controller.tryAcquirePromotion()) {
+              AgentWorkbenchTerminalPromotionAcquireResult.Unavailable -> {
+                finishPromotionListening(promotionState, listenerDisposable)
               }
-              showAgentWorkbenchPromotionBanner(project, provider, view)
+              AgentWorkbenchTerminalPromotionAcquireResult.AlreadyPresented -> {
+                rearmPromotionListening(promotionState)
+              }
+              is AgentWorkbenchTerminalPromotionAcquireResult.Acquired -> {
+                var bannerShown = false
+                try {
+                  val presentationResult = withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
+                    presentAgentWorkbenchTerminalPromotion(
+                      isProjectDisposed = { project.isDisposed },
+                      isViewDisposed = { viewDisposable.isDisposed },
+                      attachBanner = {
+                        showAgentWorkbenchPromotionBanner(
+                          project = project,
+                          provider = provider,
+                          view = view,
+                          dismissPromotion = controller::dismissPromotion,
+                          onBannerDisposed = acquireResult.lease::release,
+                        )
+                      },
+                      onShown = {
+                        ReworkedTerminalUsageCollector.logAgentWorkbenchPromoShown(project, provider.id)
+                      },
+                      onAborted = acquireResult.lease::release,
+                    )
+                  }
+
+                  when (presentationResult) {
+                    AgentWorkbenchTerminalPromotionPresentationResult.SHOWN -> {
+                      bannerShown = true
+                      finishPromotionListening(promotionState, listenerDisposable)
+                    }
+                    AgentWorkbenchTerminalPromotionPresentationResult.ABORTED -> {
+                      finishPromotionListening(promotionState, listenerDisposable)
+                    }
+                    AgentWorkbenchTerminalPromotionPresentationResult.NOT_ATTACHED -> {
+                      rearmPromotionListening(promotionState)
+                    }
+                  }
+                }
+                catch (e: CancellationException) {
+                  if (project.isDisposed || viewDisposable.isDisposed) {
+                    finishPromotionListening(promotionState, listenerDisposable)
+                  }
+                  else {
+                    rearmPromotionListening(promotionState)
+                  }
+                  throw e
+                }
+                catch (e: Exception) {
+                  rearmPromotionListening(promotionState)
+                  throw e
+                }
+                finally {
+                  if (!bannerShown) {
+                    acquireResult.lease.release()
+                  }
+                }
+              }
             }
           }
         }
@@ -166,42 +230,119 @@ internal class AgentWorkbenchTerminalPromotionNotifier(private val project: Proj
  * 2. The terminal command already matched one of the supported providers.
  * 3. Agent Workbench is missing from the IDE installation.
  *    If the plugin is installed but disabled, it is treated as present and the promotion is not shown.
- * 4. The app-level promotion gate allows showing it.
- *    The current gate persists a once-ever "shown" flag shared across projects and IDE restarts.
+ * 4. The app-level dismissal gate allows showing it.
+ *    The current gate persists a dismissal flag shared across projects and IDE restarts.
+ * 5. The app-level presentation tracker grants at most one active banner lease at a time.
  *
  * The listener uses [isPromotionAvailable] as a cheap arming check and [tryAcquirePromotion] when a
- * matching command has already been detected. The gate is consulted only after the cheaper dynamic
- * preconditions encapsulated by [shouldCheckGate] succeed.
+ * matching command has already been detected. The dismissal gate and the presentation tracker are
+ * consulted only after the cheaper dynamic preconditions encapsulated by [shouldCheckGate] succeed.
  */
 @Internal
 class AgentWorkbenchTerminalPromotionController(
   private val gate: AgentWorkbenchTerminalPromotionGate,
+  private val presentationTracker: AgentWorkbenchTerminalPromotionPresentationTracker,
   private val shouldCheckGate: () -> Boolean,
 ) {
   fun isPromotionAvailable(): Boolean {
     if (!shouldCheckGate()) {
       return false
     }
-    return !gate.isShown()
+    return !gate.isDismissed()
   }
 
-  fun tryAcquirePromotion(): Boolean {
+  fun tryAcquirePromotion(): AgentWorkbenchTerminalPromotionAcquireResult {
     if (!shouldCheckGate()) {
-      return false
+      return AgentWorkbenchTerminalPromotionAcquireResult.Unavailable
     }
-    return gate.tryMarkShown()
+    if (gate.isDismissed()) {
+      return AgentWorkbenchTerminalPromotionAcquireResult.Unavailable
+    }
+
+    val lease = presentationTracker.tryAcquirePresentation()
+    return if (lease == null) AgentWorkbenchTerminalPromotionAcquireResult.AlreadyPresented
+    else AgentWorkbenchTerminalPromotionAcquireResult.Acquired(lease)
   }
+
+  fun dismissPromotion() {
+    gate.markDismissed()
+  }
+}
+
+private enum class AgentWorkbenchTerminalPromotionListenerState {
+  ARMED,
+  ATTEMPT_IN_PROGRESS,
+  FINISHED,
+}
+
+private object DefaultAgentWorkbenchTerminalPromotionPresentationTracker : AgentWorkbenchTerminalPromotionPresentationTracker {
+  private val activeBanner = AtomicBoolean(false)
+
+  override fun tryAcquirePresentation(): AgentWorkbenchTerminalPromotionPresentationLease? {
+    if (!activeBanner.compareAndSet(false, true)) {
+      return null
+    }
+
+    val released = AtomicBoolean(false)
+    return AgentWorkbenchTerminalPromotionPresentationLease {
+      if (released.compareAndSet(false, true)) {
+        activeBanner.set(false)
+      }
+    }
+  }
+}
+
+@Internal
+sealed interface AgentWorkbenchTerminalPromotionAcquireResult {
+  object Unavailable : AgentWorkbenchTerminalPromotionAcquireResult
+  object AlreadyPresented : AgentWorkbenchTerminalPromotionAcquireResult
+  class Acquired(val lease: AgentWorkbenchTerminalPromotionPresentationLease) : AgentWorkbenchTerminalPromotionAcquireResult
+}
+
+@Internal
+enum class AgentWorkbenchTerminalPromotionPresentationResult {
+  SHOWN,
+  ABORTED,
+  NOT_ATTACHED,
+}
+
+@Internal
+interface AgentWorkbenchTerminalPromotionPresentationTracker {
+  fun tryAcquirePresentation(): AgentWorkbenchTerminalPromotionPresentationLease?
+}
+
+@Internal
+fun interface AgentWorkbenchTerminalPromotionPresentationLease {
+  fun release()
+}
+
+@Internal
+fun presentAgentWorkbenchTerminalPromotion(
+  isProjectDisposed: () -> Boolean,
+  isViewDisposed: () -> Boolean,
+  attachBanner: () -> Boolean,
+  onShown: () -> Unit,
+  onAborted: () -> Unit,
+): AgentWorkbenchTerminalPromotionPresentationResult {
+  if (isProjectDisposed() || isViewDisposed()) {
+    onAborted()
+    return AgentWorkbenchTerminalPromotionPresentationResult.ABORTED
+  }
+  if (!attachBanner()) {
+    onAborted()
+    return AgentWorkbenchTerminalPromotionPresentationResult.NOT_ATTACHED
+  }
+
+  onShown()
+  return AgentWorkbenchTerminalPromotionPresentationResult.SHOWN
 }
 
 @Internal
 enum class AgentWorkbenchTerminalProvider(
   @JvmField internal val id: String,
-  private val bundleKey: String,
 ) {
-  CODEX("codex", "agent.workbench.promotion.provider.codex"),
-  CLAUDE("claude", "agent.workbench.promotion.provider.claude");
-
-  fun displayName(): String = TerminalBundle.message(bundleKey)
+  CODEX("codex"),
+  CLAUDE("claude");
 }
 
 @Internal
@@ -223,9 +364,9 @@ class AgentWorkbenchTerminalPromotionActivationHandler(
 
 @Internal
 interface AgentWorkbenchTerminalPromotionGate {
-  fun isShown(): Boolean
+  fun isDismissed(): Boolean
 
-  fun tryMarkShown(): Boolean
+  fun markDismissed()
 }
 
 @Internal
@@ -251,9 +392,14 @@ private fun showAgentWorkbenchPromotionBanner(
   project: Project,
   provider: AgentWorkbenchTerminalProvider,
   view: TerminalView,
-) {
-  val terminalViewImpl = view as? TerminalViewImpl ?: return
+  dismissPromotion: () -> Unit,
+  onBannerDisposed: () -> Unit,
+): Boolean {
+  val terminalViewImpl = view as? TerminalViewImpl ?: return false
   val bannerDisposable = Disposer.newDisposable(view.coroutineScope.asDisposable(), "AgentWorkbenchPromotionBanner")
+  Disposer.register(bannerDisposable) {
+    onBannerDisposed()
+  }
   val activationHandler = AgentWorkbenchTerminalPromotionActivationHandler(
     isProjectDisposed = { project.isDisposed },
     activateToolWindow = { activateAgentWorkbenchToolWindow(project) },
@@ -261,9 +407,9 @@ private fun showAgentWorkbenchPromotionBanner(
       ReworkedTerminalUsageCollector.logAgentWorkbenchPromoActivationSucceeded(project, provider.id)
     },
   )
-  val banner = AgentWorkbenchTerminalPromotionPanel(
-    provider = provider,
+  val banner = createAgentWorkbenchPromotionBanner(
     onInstallClicked = {
+      dismissPromotion()
       ReworkedTerminalUsageCollector.logAgentWorkbenchPromoInstallClicked(project, provider.id)
       installAndEnable(project = project, pluginIds = setOf(AGENT_WORKBENCH_PLUGIN_ID), showDialog = true) {
         Disposer.dispose(bannerDisposable)
@@ -271,35 +417,39 @@ private fun showAgentWorkbenchPromotionBanner(
       }
     },
     onClose = {
+      dismissPromotion()
       Disposer.dispose(bannerDisposable)
     },
   )
-  terminalViewImpl.setTopComponent(banner, bannerDisposable)
+  try {
+    terminalViewImpl.setTopComponent(banner, bannerDisposable)
+  }
+  catch (e: Exception) {
+    Disposer.dispose(bannerDisposable)
+    throw e
+  }
+  return true
 }
 
-private class AgentWorkbenchTerminalPromotionPanel(
-  provider: AgentWorkbenchTerminalProvider,
+@Internal
+fun createAgentWorkbenchPromotionBanner(
   onInstallClicked: () -> Unit,
   onClose: () -> Unit,
-) : EditorNotificationPanel(NotificationStatus.Info) {
-  init {
-    @Suppress("DialogTitleCapitalization") // Agent Workbench is a product name.
-    val installActionText = TerminalBundle.message("agent.workbench.promotion.install.action")
-    text = XmlStringUtil.wrapInHtml(
-      StringUtil.escapeXmlEntities(
-        TerminalBundle.message("agent.workbench.promotion.banner.text", provider.displayName()),
-      ),
-    )
-    ClientProperty.get(this, FileEditorManager.SEPARATOR_BORDER)?.let { separatorBorder ->
-      border = JBUI.Borders.compound(separatorBorder, border)
+) : JComponent {
+  val installActionText = TerminalBundle.message("agent.workbench.promotion.install.action")
+  val banner = EditorNotificationPanel(NotificationStatus.Info).apply {
+    text = TerminalBundle.message("agent.workbench.promotion.banner.text")
+    createActionLabel(installActionText, Runnable { onInstallClicked() })
+    setCloseAction(Runnable { onClose() })
+  }
+  val wrappedBanner = InternalUICustomization.getInstance()?.configureEditorTopComponent(banner, true) ?: banner
+  return NonOpaquePanel(BorderLayout()).apply {
+    @Suppress("UseDPIAwareInsets")
+    val supplier = Supplier {
+      Insets(if (IslandsState.isEnabled()) 8 else 0, 0, 0, 0)
     }
-    myLabel.verticalTextPosition = SwingConstants.TOP
-    createActionLabel(installActionText) {
-      onInstallClicked()
-    }
-    setCloseAction {
-      onClose()
-    }
+    border = JBUI.Borders.empty(JBInsets.create(supplier, supplier.get()))
+    add(wrappedBanner, BorderLayout.CENTER)
   }
 }
 
@@ -328,4 +478,21 @@ private fun isShellEnvironmentAssignment(token: String): Boolean {
   }
 
   return variableName.all { it == '_' || it.isLetterOrDigit() }
+}
+
+private fun finishPromotionListening(
+  promotionState: AtomicReference<AgentWorkbenchTerminalPromotionListenerState>,
+  listenerDisposable: Disposable,
+) {
+  promotionState.set(AgentWorkbenchTerminalPromotionListenerState.FINISHED)
+  Disposer.dispose(listenerDisposable)
+}
+
+private fun rearmPromotionListening(
+  promotionState: AtomicReference<AgentWorkbenchTerminalPromotionListenerState>,
+) {
+  promotionState.compareAndSet(
+    AgentWorkbenchTerminalPromotionListenerState.ATTEMPT_IN_PROGRESS,
+    AgentWorkbenchTerminalPromotionListenerState.ARMED,
+  )
 }
