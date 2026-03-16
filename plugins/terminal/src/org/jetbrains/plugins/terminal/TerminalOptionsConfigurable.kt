@@ -90,6 +90,7 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
+import org.jetbrains.plugins.terminal.settings.TerminalApplicationTitleShowingMode
 import org.jetbrains.plugins.terminal.settings.TerminalSettingsProvider
 import org.jetbrains.plugins.terminal.util.updateActionShortcut
 import java.awt.Color
@@ -351,6 +352,9 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .bindText(optionsProvider::tabName)
             .align(AlignX.FILL)
         }
+
+        applicationTitleSettings(optionsProvider)
+
         row {
           val enforceContrastCheckbox = checkBox(message("settings.enforce.minimum.contrast.ratio"))
             .bindSelected(optionsProvider::enforceMinContrastRatio)
@@ -484,6 +488,33 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
       }
     })
     return shellPathField
+  }
+}
+
+private fun Panel.applicationTitleSettings(options: TerminalOptionsProvider) {
+  lateinit var appTitleEnabledCheckbox: JBCheckBox
+
+  row {
+    appTitleEnabledCheckbox = checkBox(message("settings.show.application.title"))
+      .bindSelected(options::showApplicationTitle)
+      .component
+  }
+  indent {
+    buttonsGroup {
+      row {
+        radioButton(
+          message("settings.show.application.title.command.running"),
+          TerminalApplicationTitleShowingMode.WHEN_COMMAND_RUNNING
+        )
+      }
+      row {
+        radioButton(
+          message("settings.show.application.title.always"),
+          TerminalApplicationTitleShowingMode.ALWAYS
+        )
+      }
+    }.bind(options::applicationTitleShowingMode)
+      .enabledIf(appTitleEnabledCheckbox.selected)
   }
 }
 
