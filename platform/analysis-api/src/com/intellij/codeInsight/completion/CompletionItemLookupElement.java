@@ -9,7 +9,6 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModUpdateFileText;
 import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemPresentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.MarkupText;
@@ -168,9 +167,6 @@ public final class CompletionItemLookupElement extends LookupElement implements 
       }
     }
     presentation.setIcon(itemPresentation.mainIcon());
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      tailText += " (MC)";
-    }
     presentation.setTailText(tailText, true);
     presentation.setTypeText(itemPresentation.detailText().toText(), itemPresentation.detailIcon());
   }
