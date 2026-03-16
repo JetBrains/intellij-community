@@ -36,7 +36,7 @@ t3: RecursiveTuple = (1, "1", 1, "2")  # OK
 t4: RecursiveTuple = (1, ("1", 1), "2")  # OK
 t5: RecursiveTuple = (1, ("1", 1), (1, (1, 2)))  # OK
 t6: RecursiveTuple = (1, ("1", 1), (1, (1, [2])))  # E
-t6: RecursiveTuple = (1, [1])  # E
+t7: RecursiveTuple = (1, [1])  # E
 
 
 RecursiveMapping = str | int | Mapping[str, "RecursiveMapping"]
