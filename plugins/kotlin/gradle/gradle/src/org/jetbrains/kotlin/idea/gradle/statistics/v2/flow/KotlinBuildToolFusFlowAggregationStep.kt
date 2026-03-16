@@ -35,6 +35,13 @@ class ConcatenateValuesAggregationStep(val separator: String) : KotlinBuildToolF
 }
 
 /**
+ * A step in the aggregation process that joins lists of strings into a single list of strings.
+ */
+object JoinListAggregationStep : KotlinBuildToolFusFlowAggregationStep<List<String>> {
+    override fun process(values: List<List<String>>): List<String>? = values.flatten()
+}
+
+/**
  * Aggregation step of FUS value processing.
  * Aggregate Boolean metrics returns logical OR operation or null.
  */
