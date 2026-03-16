@@ -10,7 +10,7 @@ _TransitionResult: TypeAlias = tuple[_Context, str | None, list[str]]
 _TransitionMethod: TypeAlias = Callable[[Match[str], _Context, str], _TransitionResult[_Context]]
 _Observer: TypeAlias = Callable[[StateMachine[_Context]], None]
 
-__docformat__: Final = "reStructuredText"
+__docformat__: Final = "restructuredtext"
 
 class StateMachine(Generic[_Context]):
     input_lines: StringList | None

@@ -436,8 +436,11 @@ os._wrap_close.write  # Methods that come from __getattr__() at runtime
 os._wrap_close.writelines  # Methods that come from __getattr__() at runtime
 os.PathLike.__class_getitem__  # PathLike is a protocol; we don't expect all PathLike classes to implement class_getitem
 
+_pickle.Pickler.reducer_override  # Can be added by subclasses
+pickle.Pickler.reducer_override  # Can be added by subclasses
 pickle._Pickler\..*  # Best effort typing for undocumented internals
 pickle._Unpickler\..*  # Best effort typing for undocumented internals
+
 shutil.rmtree  # function with attributes, which we approximate with a callable protocol
 socketserver.BaseServer.get_request  # Not implemented, but expected to exist on subclasses.
 ssl.PROTOCOL_SSLv2  # Depends on the existence and flags of SSL
