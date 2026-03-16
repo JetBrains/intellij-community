@@ -18,7 +18,7 @@ import com.intellij.util.xml.GenericAttributeValue
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex
-import java.util.*
+import java.util.Collections
 import java.util.function.Function
 
 fun locateExtensionsByPsiClass(psiClass: PsiClass): List<ExtensionCandidate> {

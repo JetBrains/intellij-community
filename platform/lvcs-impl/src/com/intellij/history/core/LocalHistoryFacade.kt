@@ -3,7 +3,20 @@ package com.intellij.history.core
 
 import com.intellij.history.ActivityId
 import com.intellij.history.ByteContent
-import com.intellij.history.core.changes.*
+import com.intellij.history.core.changes.Change
+import com.intellij.history.core.changes.ChangeSet
+import com.intellij.history.core.changes.ChangeVisitor
+import com.intellij.history.core.changes.ContentChange
+import com.intellij.history.core.changes.CreateDirectoryChange
+import com.intellij.history.core.changes.CreateEntryChange
+import com.intellij.history.core.changes.CreateFileChange
+import com.intellij.history.core.changes.DeleteChange
+import com.intellij.history.core.changes.MoveChange
+import com.intellij.history.core.changes.PutLabelChange
+import com.intellij.history.core.changes.PutSystemLabelChange
+import com.intellij.history.core.changes.ROStatusChange
+import com.intellij.history.core.changes.RenameChange
+import com.intellij.history.core.changes.StructuralChange
 import com.intellij.history.core.tree.Entry
 import com.intellij.history.core.tree.RootEntry
 import com.intellij.history.integration.IdeaGateway

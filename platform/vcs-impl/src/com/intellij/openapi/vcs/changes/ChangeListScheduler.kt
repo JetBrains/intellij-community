@@ -1,13 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.ArrayDeque
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
@@ -77,12 +84,14 @@ internal class ChangeListScheduler(private val coroutineScope: CoroutineScope) {
         EDT.dispatchAllInvocationEvents()
       }
       try {
-        future!!.asCompletableFuture().get(10, TimeUnit.MILLISECONDS)
+        TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+          future.asCompletableFuture().get(10, TimeUnit.MILLISECONDS)
+        }
       }
-      catch (ignore: TimeoutException) {
+      catch (_: TimeoutException) {
         continue
       }
-      catch (ignored: CancellationException) {
+      catch (_: CancellationException) {
       }
       catch (e: InterruptedException) {
         throwables.add(e)

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +17,7 @@ import java.util.Set;
 /**
  * @author Maxim.Mossienko
  */
+@PerformanceUnitTest
 public class XmlPerformanceTest extends LightQuickFixTestCase {
   private static final Set<String> ourTestsWithFolding = Set.of("IndentUnindent2");
 

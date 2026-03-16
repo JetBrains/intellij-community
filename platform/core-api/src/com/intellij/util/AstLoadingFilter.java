@@ -62,6 +62,7 @@ import java.util.function.Supplier;
  * </pre>
  * <p/>
  * Note that tree access won't result in an exception when the tree was already loaded.
+ * @see <a href=https://plugins.jetbrains.com/docs/intellij/psi-performance.html">PSI Performance (IntelliJ Platform Docs)</a>
  */
 public final class AstLoadingFilter {
 

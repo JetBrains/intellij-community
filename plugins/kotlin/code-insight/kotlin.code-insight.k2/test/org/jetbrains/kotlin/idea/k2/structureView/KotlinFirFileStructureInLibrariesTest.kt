@@ -4,11 +4,11 @@ package org.jetbrains.kotlin.idea.k2.structureView
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.structureView.KotlinFileStructureTestBase
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.test.util.invalidateCaches
 import java.io.File
 
 class KotlinFirFileStructureInLibrariesTest: KotlinFileStructureTestBase() {

@@ -11,7 +11,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyIfStatement;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,17 +31,17 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * Intention to merge the if clauses in the case of nested ifs where only the inner if contains code (the outer if only contains the inner one)
  * For instance,
  * if a:
- *   if b:
- *    # stuff here
+ * if b:
+ * # stuff here
  * into
  * if a and b:
- *   #stuff here
+ * #stuff here
  */
 public final class PyJoinIfIntention extends PsiUpdateModCommandAction<PyIfStatement> {
   public PyJoinIfIntention() {
     super(PyIfStatement.class);
   }
-  
+
   @Override
   public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.join.if");

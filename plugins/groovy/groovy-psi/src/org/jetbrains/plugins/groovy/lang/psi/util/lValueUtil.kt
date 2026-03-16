@@ -5,7 +5,11 @@ package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets.POSTFIX_UNARY_OP_SET
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTuple
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.UnknownArgument

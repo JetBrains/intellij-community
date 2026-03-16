@@ -5,8 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.components.JBScrollBar;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultBoundedRangeModel;
+import java.awt.Dimension;
 
 @ApiStatus.Internal
 public final class LocalInvisibleScrollBar extends JBScrollBar {

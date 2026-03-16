@@ -2,7 +2,14 @@
 package com.intellij.designer.componentTree;
 
 import com.intellij.designer.actions.DesignerActionPanel;
-import com.intellij.designer.designSurface.*;
+import com.intellij.designer.designSurface.ComponentDecorator;
+import com.intellij.designer.designSurface.ComponentSelectionListener;
+import com.intellij.designer.designSurface.ComponentTargetFilter;
+import com.intellij.designer.designSurface.EditOperation;
+import com.intellij.designer.designSurface.EditableArea;
+import com.intellij.designer.designSurface.FeedbackLayer;
+import com.intellij.designer.designSurface.FeedbackTreeLayer;
+import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -15,13 +22,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Cursor;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

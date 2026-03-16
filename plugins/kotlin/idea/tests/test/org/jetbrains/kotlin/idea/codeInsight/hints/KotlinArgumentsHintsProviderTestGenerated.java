@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.hints;
 
@@ -35,6 +35,66 @@ public class KotlinArgumentsHintsProviderTestGenerated extends AbstractKotlinArg
         runTest("testData/codeInsight/hints/arguments/blacklisted.kt");
     }
 
+    @TestMetadata("contextParametersLambda.kt")
+    public void testContextParametersLambda() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/contextParametersLambda.kt");
+    }
+
+    @TestMetadata("contextParametersMultiple.kt")
+    public void testContextParametersMultiple() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/contextParametersMultiple.kt");
+    }
+
+    @TestMetadata("contextParametersMultipleWithArgument.kt")
+    public void testContextParametersMultipleWithArgument() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/contextParametersMultipleWithArgument.kt");
+    }
+
+    @TestMetadata("contextParametersReceiverFunction.kt")
+    public void testContextParametersReceiverFunction() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/contextParametersReceiverFunction.kt");
+    }
+
+    @TestMetadata("contextParametersSimple.kt")
+    public void testContextParametersSimple() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/contextParametersSimple.kt");
+    }
+
+    @TestMetadata("contextParametersSimpleWithArgument.kt")
+    public void testContextParametersSimpleWithArgument() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/contextParametersSimpleWithArgument.kt");
+    }
+
+    @TestMetadata("contextParametersUnusedMultiple.kt")
+    public void testContextParametersUnusedMultiple() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/contextParametersUnusedMultiple.kt");
+    }
+
+    @TestMetadata("contextParametersUnusedMultipleWithArgument.kt")
+    public void testContextParametersUnusedMultipleWithArgument() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/contextParametersUnusedMultipleWithArgument.kt");
+    }
+
+    @TestMetadata("contextParametersWithLabeledLambda.kt")
+    public void testContextParametersWithLabeledLambda() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/contextParametersWithLabeledLambda.kt");
+    }
+
+    @TestMetadata("contextParametersWithNested.kt")
+    public void testContextParametersWithNested() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/contextParametersWithNested.kt");
+    }
+
+    @TestMetadata("contextParametersWithNestedLabeled.kt")
+    public void testContextParametersWithNestedLabeled() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/contextParametersWithNestedLabeled.kt");
+    }
+
+    @TestMetadata("contextParametersWithThis.kt")
+    public void testContextParametersWithThis() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/contextParametersWithThis.kt");
+    }
+
     @TestMetadata("functionalTypes.kt")
     public void testFunctionalTypes() throws Exception {
         runTest("testData/codeInsight/hints/arguments/functionalTypes.kt");
@@ -48,6 +108,11 @@ public class KotlinArgumentsHintsProviderTestGenerated extends AbstractKotlinArg
     @TestMetadata("invokeCallsParameterNamesWithContextReceivers.kt")
     public void testInvokeCallsParameterNamesWithContextReceivers() throws Exception {
         runTest("testData/codeInsight/hints/arguments/invokeCallsParameterNamesWithContextReceivers.kt");
+    }
+
+    @TestMetadata("javaClsParameterNames.kt")
+    public void testJavaClsParameterNames() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/javaClsParameterNames.kt");
     }
 
     @TestMetadata("javaParameters.kt")

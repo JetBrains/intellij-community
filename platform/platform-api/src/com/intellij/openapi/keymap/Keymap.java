@@ -9,7 +9,7 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.KeyStroke;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;

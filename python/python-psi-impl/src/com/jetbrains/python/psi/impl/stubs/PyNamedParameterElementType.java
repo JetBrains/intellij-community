@@ -66,7 +66,7 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
 
   @Override
   public void serialize(final @NotNull PyNamedParameterStub stub, final @NotNull StubOutputStream dataStream)
-      throws IOException {
+    throws IOException {
     dataStream.writeName(stub.getName());
 
     byte flags = 0;
@@ -79,7 +79,8 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
   }
 
   @Override
-  public @NotNull PyNamedParameterStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public @NotNull PyNamedParameterStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub)
+    throws IOException {
     String name = dataStream.readNameString();
     byte flags = dataStream.readByte();
     String defaultValueText = dataStream.readNameString();

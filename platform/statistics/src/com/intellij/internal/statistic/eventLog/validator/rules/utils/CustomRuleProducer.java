@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.rules.utils;
 
-import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
+import com.jetbrains.fus.reporting.api.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupContextData;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRuleFactory;

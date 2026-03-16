@@ -32,6 +32,7 @@ jvm_library(
     "//platform/diff-impl",
     "//platform/util/concurrency",
     "//platform/util-ex",
+    "//platform/forms_rt:java-guiForms-rt",
     "//libraries/guava",
     "//libraries/ini4j",
     "//libraries/oro-matcher",
@@ -45,6 +46,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/external-process-auth-helper",
     "//platform/vcs-impl/shared",
+    "//platform/core-impl",
   ],
   runtime_deps = [
     "@lib//:jaxb-runtime",
@@ -57,7 +59,19 @@ jvm_library(
 jvm_library(
   name = "vcs-svn-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/svn4idea:vcs-svn",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//platform/lang-api:lang",
+    "//platform/core-impl",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
 )
 
 jvm_library(
@@ -88,7 +102,9 @@ jvm_library(
     "//libraries/stream",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
-  ]
+    "//platform/forms_rt:java-guiForms-rt",
+  ],
+  runtime_deps = [":vcs-svn-tests"]
 )
 ### auto-generated section `build intellij.vcs.svn.tests` end
 

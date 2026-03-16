@@ -1,0 +1,23 @@
+### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "module_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "module",
+  module_name = "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":module_resources"],
+  deps = [
+    "//platform/vcs-api:vcs",
+    "//plugins/editorconfig/backend",
+    "//plugins/jsonpath",
+    "//platform/vcs-log/impl",
+  ]
+)
+### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module` end

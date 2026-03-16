@@ -9,11 +9,18 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import java.awt.Font;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.geom.GeneralPath;
 
-import static javax.swing.SwingConstants.*;
+import static javax.swing.SwingConstants.BOTTOM;
+import static javax.swing.SwingConstants.CENTER;
+import static javax.swing.SwingConstants.LEFT;
+import static javax.swing.SwingConstants.RIGHT;
+import static javax.swing.SwingConstants.TOP;
 
 public final class TabsUtil {
   public static final int NEW_TAB_VERTICAL_PADDING = JBUIScale.scale(2);

@@ -8,7 +8,12 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtImportList
+import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
+import org.jetbrains.kotlin.psi.KtPackageDirective
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 internal class UsedReferencesCollector(private val file: KtFile) {
 

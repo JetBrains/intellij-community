@@ -4,6 +4,6 @@
     <line>9</line>
     <module>light_idea_test_case</module>
     <entry_point TYPE="field" FQNAME="test.Foo F%AR" />
-    <description>Object private property name &lt;code&gt;`F%AR`&lt;/code&gt; may contain only letters, digits or underscores #loc</description>
+    <description>Object private property name &lt;code&gt;`F%AR`&lt;/code&gt; may contain only letters, digits or underscores</description>
   </problem>
 </problems>

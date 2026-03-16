@@ -12,7 +12,6 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -22,6 +21,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespace
+import org.jetbrains.kotlin.test.util.invalidateCaches
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 
 abstract class AbstractKotlinNavigationToLibrarySourceTest : AbstractReferenceResolveTest() {

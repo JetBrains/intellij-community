@@ -19,6 +19,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/core-impl",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//jps/model-serialization",
@@ -33,6 +34,7 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//platform/analysis-impl",
     "//platform/util/progress",
+    "//platform/project-frame",
     "//libraries/jcef",
     "//platform/lang-api:lang",
     "//platform/backend/workspace",
@@ -40,6 +42,7 @@ jvm_library(
     "//platform/jbr",
     "//platform/ide-core-impl",
     "//platform/util/coroutines",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/statistics/uploader",
     "//platform/util/jdom",
     "//platform/service-container",
@@ -56,6 +59,9 @@ jvm_library(
     "//platform/platform-impl/concurrency",
     "//platform/platform-impl/update-checker",
     "//libraries/jbr",
+    "//platform/projectModel-impl",
+    "//platform/execution",
+    "//platform/kernel/rpc",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.internal` end

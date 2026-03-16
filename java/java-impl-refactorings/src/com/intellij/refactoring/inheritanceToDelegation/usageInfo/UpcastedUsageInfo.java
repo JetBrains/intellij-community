@@ -15,7 +15,8 @@
  */
 package com.intellij.refactoring.inheritanceToDelegation.usageInfo;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 
 public class UpcastedUsageInfo extends InheritanceToDelegationUsageInfo{
   public final PsiClass upcastedTo;

@@ -17,6 +17,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "//platform/editor-ui-api:editor-ui",
     "//platform/external-system-api:externalSystem",
     "//jps/model-api:model",
@@ -43,8 +44,9 @@ jvm_library(
     "//libraries/commons/cli",
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
+    "//platform/core-impl",
     "//platform/util/jdom",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/diagnostic/telemetry",
     "//platform/ide-core-impl",
     "@lib//:opentelemetry",
@@ -55,6 +57,8 @@ jvm_library(
     "//platform/settings",
     "//libraries/kotlinx/serialization/core",
     "//platform/eel-provider",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.platform.externalSystem.impl` end
@@ -69,7 +73,15 @@ resourcegroup(
 jvm_library(
   name = "externalSystem-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  exports = ["//platform/lang-impl:lang-tests"],
+  runtime_deps = [
+    "//platform/observable",
+    "//libraries/kotlin/reflect",
+    "//platform/core-ui",
+    "//platform/workspace/storage",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
 )
 
 jvm_library(
@@ -104,7 +116,7 @@ jvm_library(
     "//libraries/mockito",
     "@lib//:mockito-kotlin",
     "//platform/lang-impl:lang-tests_test_lib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/core-ui",
     "//platform/workspace/storage",
     "//platform/platform-util-io:ide-util-io",
@@ -119,8 +131,11 @@ jvm_library(
     "//plugins/gradle",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
-  exports = ["//platform/lang-impl:lang-tests_test_lib"]
+  exports = ["//platform/lang-impl:lang-tests_test_lib"],
+  runtime_deps = [":externalSystem-tests"]
 )
 ### auto-generated section `build intellij.platform.externalSystem.tests` end
 

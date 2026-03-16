@@ -10,7 +10,7 @@ import com.intellij.util.PsiIconUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 final class PsiBasedFileIconProvider implements FileIconProvider {
   @Override

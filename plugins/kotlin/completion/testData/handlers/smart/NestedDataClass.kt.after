@@ -7,3 +7,5 @@ class Outer {
 }
 
 // ELEMENT: Nested
+
+// IGNORE_K2

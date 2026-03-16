@@ -1,0 +1,16 @@
+JsonFile: n_string_unescaped_newline.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"new')
+    PsiErrorElement:',' or ']' expected, got 'line'
+      <empty list>
+    PsiWhiteSpace('\n')
+    JsonReferenceExpression
+      PsiElement(IDENTIFIER)('line')
+    PsiErrorElement:',' or ']' expected, got '"]'
+      <empty list>
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"]')
+    PsiErrorElement:',' or ']' expected
+      <empty list>

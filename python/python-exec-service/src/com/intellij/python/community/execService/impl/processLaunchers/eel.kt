@@ -7,6 +7,7 @@ import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.ProcessFunctions
 import com.intellij.platform.eel.spawnProcess
@@ -50,7 +51,7 @@ private class EelProcessCommands(
     get() = ProcessCommandsInfo(
       env = env,
       cwd = binOnEel.workDir?.toRealPath()?.pathString,
-      target = binOnEel.path.getEelDescriptor().machine.name,
+      target = binOnEel.path.getEelDescriptor().name,
     )
 
   override val processFunctions: ProcessFunctions = ProcessFunctions(

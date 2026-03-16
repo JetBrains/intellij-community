@@ -4,7 +4,14 @@ package com.intellij.java.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
 import com.intellij.refactoring.listeners.MoveMemberListener;
@@ -12,13 +19,14 @@ import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
 import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-public class PullUpTest extends LightRefactoringTestCase {
+public class PullUpTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/refactoring/pullUp/";
 
   private static final String IGNORE_CONFLICTS = "IGNORE";

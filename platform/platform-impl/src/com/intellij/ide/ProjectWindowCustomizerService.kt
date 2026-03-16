@@ -18,6 +18,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.ui
 import com.intellij.openapi.components.Service
@@ -37,6 +38,7 @@ import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.DeferredIconImpl
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.paint.PaintUtil.alignIntToInt
@@ -49,17 +51,24 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.AvatarIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.launchOnShow
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.Window
 import java.nio.file.Path
-import java.util.*
+import java.util.Random
 import javax.swing.Icon
 import javax.swing.JComponent
 import kotlin.io.path.invariantSeparatorsPathString
@@ -135,7 +144,7 @@ internal class ProjectGradients(val index: Int) {
 }
 
 @Service
-class ProjectWindowCustomizerService : Disposable {
+class ProjectWindowCustomizerService(private val coroutineScope: CoroutineScope) : Disposable {
   companion object {
     private var instance: ProjectWindowCustomizerService? = null
     private var leftGradientCache: GradientTextureCache = GradientTextureCache()
@@ -301,10 +310,22 @@ class ProjectWindowCustomizerService : Disposable {
       return false
     }
 
-    val iconMainColor = IconUtil.mainColor(icon)
-    setCustomProjectColor(project, iconMainColor, false)
+    if (icon is DeferredIconImpl<*>) {
+      coroutineScope.launch(Dispatchers.UI) {
+        icon.awaitEvaluation()
+        setCustomProjectColorWithIcon(project, icon, false)
+      }
+      return true
+    }
+
+    setCustomProjectColorWithIcon(project, icon, true)
 
     return true
+  }
+
+  private fun setCustomProjectColorWithIcon(project: Project, icon: Icon, evaluate: Boolean) {
+    val iconMainColor = IconUtil.mainColor(icon, evaluate)
+    setCustomProjectColor(project, iconMainColor, false)
   }
 
   @Internal

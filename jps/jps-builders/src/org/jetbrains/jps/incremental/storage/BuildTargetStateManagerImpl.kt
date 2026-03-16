@@ -12,7 +12,11 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.TargetTypeRegistry
 import org.jetbrains.jps.model.JpsModel
-import java.io.*
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap

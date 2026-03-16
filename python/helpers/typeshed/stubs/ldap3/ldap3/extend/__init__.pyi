@@ -1,4 +1,4 @@
-from typing import Any
+from _typeshed import Incomplete
 
 class ExtendedOperationContainer:
     def __init__(self, connection) -> None: ...
@@ -91,7 +91,7 @@ class MicrosoftExtendedOperations(ExtendedOperationContainer):
     ): ...
 
 class ExtendedOperationsRoot(ExtendedOperationContainer):
-    standard: Any
-    novell: Any
-    microsoft: Any
+    standard: Incomplete
+    novell: Incomplete
+    microsoft: Incomplete
     def __init__(self, connection) -> None: ...

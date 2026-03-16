@@ -3,8 +3,13 @@ package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LanguageInspectionSuppressors
+import com.intellij.codeInspection.LocalInspectionEP
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.RedundantSuppressInspection
+import com.intellij.codeInspection.RedundantSuppressionDetector
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.ide.highlighter.JavaFileType
@@ -22,6 +27,7 @@ import com.intellij.psi.PsiLiteralExpression
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.enableInspectionTool
 import com.intellij.testFramework.enableInspectionTools
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.ThrowableRunnable
 import org.intellij.lang.annotations.Language
 import java.util.concurrent.atomic.AtomicBoolean
@@ -214,10 +220,10 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
   }
 
   private fun doHighlightingInDumbMode(): List<HighlightInfo> {
-    var result: MutableList<HighlightInfo>? = null
+    var result: List<HighlightInfo>? = null
     DumbModeTestUtils.runInDumbModeSynchronously(project) {
       Disposer.newDisposable(testRootDisposable).use { disposable ->
-        (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).mustWaitForSmartMode(false, disposable)
+        CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, disposable)
         result = doHighlighting()
       }
     }

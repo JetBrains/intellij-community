@@ -13,7 +13,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -21,7 +25,11 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
@@ -69,7 +77,7 @@ public final class WSLUtil {
    * @return root for WSL executable or null if unavailable
    */
   private static @Nullable Path getExecutableRootPath() {
-    String localAppDataPath = System.getenv().get("LOCALAPPDATA");
+    String localAppDataPath = System.getenv("LOCALAPPDATA");
     return StringUtil.isEmpty(localAppDataPath) ? null : Paths.get(localAppDataPath, "Microsoft\\WindowsApps");
   }
 

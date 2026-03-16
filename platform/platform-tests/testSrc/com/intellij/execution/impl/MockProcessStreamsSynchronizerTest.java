@@ -4,6 +4,7 @@ package com.intellij.execution.impl;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.Disposable;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -95,6 +96,7 @@ public class MockProcessStreamsSynchronizerTest extends LightPlatformTestCase {
     assertNoPendingChunks();
   }
 
+  @PerformanceUnitTest
   public void testPerformanceSingleStream() {
     Benchmark.newBenchmark("single stream", () -> {
       mySynchronizer = new MockProcessStreamsSynchronizer(getTestRootDisposable());
@@ -119,6 +121,7 @@ public class MockProcessStreamsSynchronizerTest extends LightPlatformTestCase {
     }).start();
   }
 
+  @PerformanceUnitTest
   public void testPerformanceTwoStreams() {
     Benchmark.newBenchmark("two streams", () -> {
       mySynchronizer = new MockProcessStreamsSynchronizer(getTestRootDisposable());

@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  Derived.class
+End of files
+Compiling files:
+  java/membersChange/addMoreSpecific1/a/Derived.java
+End of files
+Cleaning output files:
+  Client.class
+End of files
+Compiling files:
+  java/membersChange/addMoreSpecific1/a/Client.java
+End of files
+------------------------------------------
+Exit code: OK

@@ -2,7 +2,13 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionCodeFragment;
+import com.intellij.psi.PsiJavaCodeReferenceCodeFragment;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCodeFragment;
 import com.intellij.psi.impl.source.PsiCodeFragmentImpl;
 import com.intellij.psi.impl.source.PsiExpressionCodeFragmentImpl;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceCodeFragmentImpl;

@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -9,8 +10,9 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Image;
+import java.awt.Point;
 import java.awt.dnd.DragSourceDropEvent;
 
 /**
@@ -207,7 +209,9 @@ public final class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.Wi
       @Override
       public DnDSupportBuilder setDropHandler(DnDDropHandler handler) {
         return setDropHandlerWithResult(e -> {
-          handler.drop(e);
+          WriteIntentReadAction.run(() -> {
+            handler.drop(e);
+          });
           return true;
         });
       }

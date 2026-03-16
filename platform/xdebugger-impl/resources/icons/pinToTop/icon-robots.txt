@@ -1,0 +1,2 @@
+deprecated: pinnedItem.svg; to be removed (Use AllIcons.Debugger.PinToTop.PinnedItem instead)
+deprecated: unpinnedItem.svg;to be removed (Use AllIcons.Debugger.PinToTop.UnpinnedItem instead)

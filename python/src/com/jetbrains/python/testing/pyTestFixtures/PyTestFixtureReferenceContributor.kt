@@ -5,19 +5,41 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.PlatformPatterns
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementResolveResult
+import com.intellij.psi.PsiPolyVariantReference
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceContributor
+import com.intellij.psi.PsiReferenceProvider
+import com.intellij.psi.PsiReferenceRegistrar
+import com.intellij.psi.ResolveResult
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.findParentOfType
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.toArray
 import com.jetbrains.python.BaseReference
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.COROUTINE
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.GENERATOR
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyDecorator
+import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyImportedNameDefiner
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyParameter
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
-import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyCollectionType
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeProviderBase
+import com.jetbrains.python.psi.types.PyUnionType
+import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus
 
 class PyTestFixtureReference(pyElement: PsiElement, fixture: PyTestFixture, private val importElement: PyElement? = null, range: TextRange? = null) : BaseReference(pyElement, range), PsiPolyVariantReference {
@@ -87,9 +109,12 @@ class PyTestFixtureReference(pyElement: PsiElement, fixture: PyTestFixture, priv
     if (myElement is PyStringLiteralExpression) {
       return myElement.replace(PyElementGenerator.getInstance(myElement.project).createStringLiteralFromString(newElementName))
     }
-    val annotationString = (myElement as? PyNamedParameter)?.annotation?.value?.name
-    return myElement.replace(PyElementGenerator.getInstance(myElement.project)
-                               .createParameter(newElementName, null, annotationString, LanguageLevel.getDefault()))!!
+    (myElement as? PyNamedParameter)?.let {
+      it.setName(newElementName)
+      return it
+    }
+
+    return super.handleElementRename(newElementName)
   }
 }
 
@@ -117,10 +142,10 @@ class PyTextFixtureTypeProvider : PyTypeProviderBase() {
     val classType = PyUtil.`as`(type, PyClassType::class.java)
     if (genericType != null && classType != null) {
       val qName = classType.getClassQName()
-      if (ArrayUtil.contains(qName, "typing.Awaitable", GENERATOR)) {
+      if (ArrayUtil.contains(qName, "typing.Awaitable", PyTypingTypeProvider.GENERATOR)) {
         return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(), 0, null))
       }
-      if (COROUTINE == qName) {
+      if (PyTypingTypeProvider.COROUTINE == qName) {
         return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(), 2, null))
       }
     }
@@ -137,8 +162,9 @@ private object PyTestReferenceAsParameterProvider : PyTestReferenceProvider() {
     val namedParam = element as? PyNamedParameter ?: return emptyArray()
     val namedFixtureParameterLink = getFixtureLink(namedParam, TypeEvalContext.codeAnalysis(element.project, element.containingFile))
                                     ?: return emptyArray()
-    val annotationLength = namedParam.annotation?.textLength ?: 0
-    return arrayOf(PyTestFixtureReference(namedParam, namedFixtureParameterLink.fixture, namedFixtureParameterLink.importElement, TextRange(0, element.textLength - annotationLength)))
+    val nameId = namedParam.nameIdentifier
+    val range = nameId?.textRangeInParent ?: TextRange.from(0, namedParam.textLength)
+    return arrayOf(PyTestFixtureReference(namedParam, namedFixtureParameterLink.fixture, namedFixtureParameterLink.importElement, range))
   }
 }
 

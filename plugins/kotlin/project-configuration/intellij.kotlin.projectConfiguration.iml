@@ -10,7 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.asm" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
@@ -51,9 +50,15 @@
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
-    <orderEntry type="library" name="maven-resolver-provider" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.maven.resolver.provider" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
+    <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />
+    <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" />
   </component>
 </module>

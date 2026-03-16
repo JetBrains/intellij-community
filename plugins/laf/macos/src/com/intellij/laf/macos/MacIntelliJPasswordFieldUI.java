@@ -5,10 +5,14 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaPasswordFieldUI;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Container;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
 

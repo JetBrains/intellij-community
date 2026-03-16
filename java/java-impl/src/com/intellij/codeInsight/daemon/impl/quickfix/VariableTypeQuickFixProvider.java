@@ -16,10 +16,10 @@
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.psi.PsiVariable;
+import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
 public final class VariableTypeQuickFixProvider implements ChangeVariableTypeQuickFixProvider{

@@ -8,7 +8,7 @@ import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Graphics;
 
 public class BasicGutterContentProvider extends GutterContentProvider {
   public static final String EVAL_OUT_MARKER = "\u200C";

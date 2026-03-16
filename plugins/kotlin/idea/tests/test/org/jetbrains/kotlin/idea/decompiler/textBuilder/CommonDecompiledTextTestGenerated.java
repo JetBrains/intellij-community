@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.decompiler.textBuilder;
 
@@ -83,11 +83,6 @@ public class CommonDecompiledTextTestGenerated extends AbstractCommonDecompiledT
     @TestMetadata("Enum")
     public void testEnum() throws Exception {
         runTest("testData/decompiler/decompiledText/Enum/");
-    }
-
-    @TestMetadata("FlexibleTypes")
-    public void testFlexibleTypes() throws Exception {
-        runTest("testData/decompiler/decompiledText/FlexibleTypes/");
     }
 
     @TestMetadata("FunInterfaceDeclaration")

@@ -3,7 +3,15 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.editorActions.TextBlockTransferable;
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.CaretStateTransferableData;
+import com.intellij.openapi.editor.ClipboardTextPerCaretSplitter;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCopyPasteHelper;
+import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actions.BasePasteHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -17,7 +25,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPasswordField;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import java.awt.datatransfer.DataFlavor;
@@ -26,10 +35,16 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.function.BiPredicate;
 
-import static com.intellij.openapi.editor.impl.CopiedFromEmptySelectionPasteMode.*;
+import static com.intellij.openapi.editor.impl.CopiedFromEmptySelectionPasteMode.AT_CARET;
+import static com.intellij.openapi.editor.impl.CopiedFromEmptySelectionPasteMode.ENTIRE_LINE_ABOVE_CARET;
+import static com.intellij.openapi.editor.impl.CopiedFromEmptySelectionPasteMode.TRIM_IF_MIDDLE_LINE;
 
 public final class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
 

@@ -2,7 +2,11 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.lang.jvm.*;
+import com.intellij.lang.jvm.JvmClass;
+import com.intellij.lang.jvm.JvmClassKind;
+import com.intellij.lang.jvm.JvmMethod;
+import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.JvmParameter;
 import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.lang.jvm.util.JvmInheritanceUtil;

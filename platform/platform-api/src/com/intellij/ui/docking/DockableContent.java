@@ -18,7 +18,8 @@ package com.intellij.ui.docking;
 import com.intellij.openapi.actionSystem.Presentation;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Image;
 
 public interface DockableContent<T> {
   @NotNull

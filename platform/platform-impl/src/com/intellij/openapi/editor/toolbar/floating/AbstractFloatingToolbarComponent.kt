@@ -11,7 +11,11 @@ import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.AlphaComposite
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.RenderingHints
 import javax.swing.JComponent
 
 private val BACKGROUND = JBColor.namedColor("Toolbar.Floating.background", JBColor(0xEDEDED, 0x454A4D))

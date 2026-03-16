@@ -19,8 +19,8 @@ def func1(
     assert_type(p4, list[ClassA | int])
 
 
-bad1: ClassA  # E: Runtime error: requires quotes
-bad2: list[ClassA]  # E: Runtime error: requires quotes
+bad1: ClassA  # E?: Runtime error prior to 3.14: requires quotes
+bad2: list[ClassA]  # E?: Runtime error prior to 3.14: requires quotes
 bad3: "ClassA" | int  # E: Runtime error
 bad4: int | "ClassA"  # E: Runtime error
 
@@ -63,7 +63,7 @@ def invalid_annotations(
 
 
 class ClassB:
-    def method1(self) -> ClassB:  # E: Runtime error
+    def method1(self) -> ClassB:  # E?: Runtime error prior to 3.14
         return ClassB()
 
     def method2(self) -> "ClassB":  # OK

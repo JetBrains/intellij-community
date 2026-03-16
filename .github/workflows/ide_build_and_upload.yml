@@ -23,7 +23,8 @@ on:
 
 jobs:
   build-linux-x64:
-    runs-on: ubuntu-latest
+    # IDEs cannot be built due to insufficient disk space on standard 'ubuntu-latest' runners
+    runs-on: Large-linux-x64-for-intellij-community
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: ./.github/actions/build_ide
@@ -41,7 +42,8 @@ jobs:
           extension: tar.gz
           artifacts_dir: ${{inputs.artifacts_dir}}
   build-windows-x64:
-    runs-on: ubuntu-latest
+    # IDEs cannot be built due to insufficient disk space on standard 'ubuntu-latest' runners
+    runs-on: Large-linux-x64-for-intellij-community
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: ./.github/actions/build_ide
@@ -59,7 +61,8 @@ jobs:
           extension: exe
           artifacts_dir: ${{inputs.artifacts_dir}}
   build-macos-aarch64:
-    runs-on: ubuntu-latest
+    # IDEs cannot be built due to insufficient disk space on standard 'ubuntu-latest' runners
+    runs-on: Large-linux-x64-for-intellij-community
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: ./.github/actions/build_ide

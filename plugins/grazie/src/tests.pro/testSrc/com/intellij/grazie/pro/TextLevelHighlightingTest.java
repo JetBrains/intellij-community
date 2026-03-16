@@ -17,7 +17,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.testFramework.UsefulTestCase.*;
+import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
+import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
+import static com.intellij.testFramework.UsefulTestCase.assertOrderedEquals;
 
 @SuppressWarnings("NonAsciiCharacters")
 public class TextLevelHighlightingTest extends BaseTestCase {
@@ -84,7 +86,7 @@ public class TextLevelHighlightingTest extends BaseTestCase {
        * <STYLE_SUGGESTION>a </STYLE_SUGGESTION>non-capitalized one in a long enough text
        * @see C a "see" non-capitalized noun phrase. Then a capitalized sentence, which is also OK.
        * @deprecated a "deprecated" non-capitalized noun phrase.
-       *             Then a capitalized sentence which is long enough to be detected.
+       *             Then a capitalized sentence <GRAMMAR_ERROR descr="Grazie.RuleEngine.En.Punctuation.RELATIVE_CLAUSE_COMMA">which</GRAMMAR_ERROR> is long enough to be detected.
        *             <caret><STYLE_SUGGESTION>th</STYLE_SUGGESTION>en another non-capitalized sentence.
        */
       class C {}
@@ -157,7 +159,7 @@ public class TextLevelHighlightingTest extends BaseTestCase {
       
       /**
        * @see D a "see D" non-capitalized noun phrase.
-       *        Then a capitalized sentence which is long enough to be detected.
+       *        Then a capitalized sentence <GRAMMAR_ERROR descr="Grazie.RuleEngine.En.Punctuation.RELATIVE_CLAUSE_COMMA">which</GRAMMAR_ERROR> is long enough to be detected.
        *        <STYLE_SUGGESTION>th</STYLE_SUGGESTION>en another non-capitalized sentence.
        */
       class D {}

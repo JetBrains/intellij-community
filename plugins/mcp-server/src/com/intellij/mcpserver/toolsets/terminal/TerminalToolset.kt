@@ -2,9 +2,13 @@
 
 package com.intellij.mcpserver.toolsets.terminal
 
-import com.intellij.mcpserver.*
+import com.intellij.mcpserver.McpServerBundle
+import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
+import com.intellij.mcpserver.clientInfo
+import com.intellij.mcpserver.project
+import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.TruncateMode
 import com.intellij.mcpserver.util.checkUserConfirmationIfNeeded

@@ -7,7 +7,29 @@ import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.blockStatement
 import org.jetbrains.kotlin.nj2k.isAtomic
 import org.jetbrains.kotlin.nj2k.parenthesizeIfCompoundExpression
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKAssignmentChainAlsoLink
+import org.jetbrains.kotlin.nj2k.tree.JKAssignmentChainLetLink
+import org.jetbrains.kotlin.nj2k.tree.JKBinaryExpression
+import org.jetbrains.kotlin.nj2k.tree.JKBlock
+import org.jetbrains.kotlin.nj2k.tree.JKDeclarationStatement
+import org.jetbrains.kotlin.nj2k.tree.JKExpression
+import org.jetbrains.kotlin.nj2k.tree.JKExpressionStatement
+import org.jetbrains.kotlin.nj2k.tree.JKIfElseStatement
+import org.jetbrains.kotlin.nj2k.tree.JKJavaAssignmentExpression
+import org.jetbrains.kotlin.nj2k.tree.JKJavaSwitchCase
+import org.jetbrains.kotlin.nj2k.tree.JKKtAssignmentStatement
+import org.jetbrains.kotlin.nj2k.tree.JKKtItExpression
+import org.jetbrains.kotlin.nj2k.tree.JKKtOperatorImpl
+import org.jetbrains.kotlin.nj2k.tree.JKLoopStatement
+import org.jetbrains.kotlin.nj2k.tree.JKOperator
+import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken
+import org.jetbrains.kotlin.nj2k.tree.JKParenthesizedExpression
+import org.jetbrains.kotlin.nj2k.tree.JKStatement
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.JKVariable
+import org.jetbrains.kotlin.nj2k.tree.copyTreeAndDetach
+import org.jetbrains.kotlin.nj2k.tree.detached
+import org.jetbrains.kotlin.nj2k.tree.withFormattingFrom
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class AssignmentExpressionUnfoldingConversion(context: ConverterContext) : RecursiveConversion(context) {

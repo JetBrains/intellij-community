@@ -6,7 +6,6 @@ import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 
 import java.io.File;
 

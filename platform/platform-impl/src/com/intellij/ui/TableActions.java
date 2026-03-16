@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTable;
 
 @ApiStatus.Internal
 public abstract class TableActions extends SwingActionDelegate {
@@ -80,6 +80,38 @@ public abstract class TableActions extends SwingActionDelegate {
     public static final @NonNls String ID = "selectNextRowExtendSelection";
 
     public ShiftDown() {
+      super(ID);
+    }
+  }
+
+  public static final class CtrlLeft extends TableActions {
+    public static final @NonNls String ID = "selectFirstColumn";
+
+    public CtrlLeft() {
+      super(ID);
+    }
+  }
+
+  public static final class CtrlRight extends TableActions {
+    public static final @NonNls String ID = "selectLastColumn";
+
+    public CtrlRight() {
+      super(ID);
+    }
+  }
+
+  public static final class CtrlShiftLeft extends TableActions {
+    public static final @NonNls String ID = "selectFirstColumnExtendSelection";
+
+    public CtrlShiftLeft() {
+      super(ID);
+    }
+  }
+
+  public static final class CtrlShiftRight extends TableActions {
+    public static final @NonNls String ID = "selectLastColumnExtendSelection";
+
+    public CtrlShiftRight() {
       super(ID);
     }
   }

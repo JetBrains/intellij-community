@@ -5,8 +5,18 @@ import com.intellij.icons.AllIcons
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import java.awt.Graphics
-import java.awt.event.*
-import javax.swing.*
+import java.awt.event.ActionEvent
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionAdapter
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.KeyStroke
 
 class RatingComponent : JComponent() {
   private val myIconSize = 32

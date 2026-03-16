@@ -159,16 +159,16 @@ class NotebookPositionKeeper(val editor: EditorImpl) : Disposable.Default {
   }
 
   fun <T> keepScrollingPositionWhile(task: () -> T): T {
-    return WriteIntentReadAction.compute<T, Nothing> {
+    return WriteIntentReadAction.computeThrowable<T, Nothing> {
       if (editor.isDisposed) {
-        return@compute task()
+        return@computeThrowable task()
       }
       val position = getPosition(false)
       val (r, newOffset) = getOffsetProvider(position).use { offsetProvider ->
         task() to offsetProvider.getOffset()
       }
       if (scrollToKeepCell(null)) {
-        return@compute r
+        return@computeThrowable r
       }
       restorePosition(Position(newOffset, position.viewportShift))
       r

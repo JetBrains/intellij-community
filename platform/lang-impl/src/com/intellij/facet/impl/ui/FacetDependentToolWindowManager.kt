@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.ui
 
-import com.intellij.facet.*
+import com.intellij.facet.Facet
+import com.intellij.facet.FacetType
+import com.intellij.facet.ProjectFacetManager
+import com.intellij.facet.ProjectWideFacetAdapter
+import com.intellij.facet.ProjectWideFacetListenersRegistry
 import com.intellij.facet.ui.FacetDependentToolWindow
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -17,7 +21,7 @@ import com.intellij.toolWindow.RegisterToolWindowTaskProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private class FacetDependentToolWindowManager : RegisterToolWindowTaskProvider {
+internal class FacetDependentToolWindowManager : RegisterToolWindowTaskProvider {
   override suspend fun getTasks(project: Project): Collection<ToolWindowEP> {
     val facetDependentToolWindows = FacetDependentToolWindow.EXTENSION_POINT_NAME.extensionList
     if (facetDependentToolWindows.isEmpty()) {

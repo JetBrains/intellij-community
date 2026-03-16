@@ -2,7 +2,17 @@
 @file:OptIn(IntellijInternalApi::class)
 package com.intellij.ide.startup.importSettings.jb
 
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.ComponentStoreImpl
+import com.intellij.configurationStore.FileBasedStorage
+import com.intellij.configurationStore.FileStorageAnnotation
+import com.intellij.configurationStore.PROJECT_DEFAULT_FILE_NAME
+import com.intellij.configurationStore.PROJECT_DEFAULT_FILE_SPEC
+import com.intellij.configurationStore.StateStorageManager
+import com.intellij.configurationStore.StateStorageManagerImpl
+import com.intellij.configurationStore.StreamProvider
+import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
+import com.intellij.configurationStore.reloadComponents
+import com.intellij.configurationStore.saveSettings
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.ConfigImportOptions
@@ -22,7 +32,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.CustomConfigMigrationOption
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -53,7 +69,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
-import kotlin.io.path.*
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.inputStream
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 
 private val LOG = logger<JbSettingsImporter>()
 
@@ -406,11 +429,12 @@ internal class JbSettingsImporter(private val configDirPath: Path, private val p
     RepositoryHelper.updatePluginHostsFromConfigDir(configDirPath, LOG)
     val updateableMap = HashMap<PluginId, IdeaPluginDescriptor?>(pluginsMap)
     progressIndicator.text2 = ImportSettingsBundle.message("progress.details.checking.for.plugin.updates")
-    val internalPluginUpdates = service<UpdateCheckerFacade>().getInternalPluginUpdates(
-      buildNumber = null,
-      indicator = progressIndicator,
-      updateablePluginsMap = updateableMap
-    )
+    @Suppress("DEPRECATION")
+    val internalPluginUpdates = UpdateCheckerFacade.getInstance().getPluginUpdates(pluginsMap.keys, progressIndicator)
+    for (pluginId in internalPluginUpdates.pluginUpdates.all) {
+      updateableMap.remove(pluginId.id)
+    }
+
     for (pluginDownloader in internalPluginUpdates.pluginUpdates.all) {
       LOG.info("Downloading ${pluginDownloader.id}")
       if (pluginDownloader.prepareToInstall(progressIndicator)) {
@@ -422,8 +446,9 @@ internal class JbSettingsImporter(private val configDirPath: Path, private val p
         updateableMap[pluginDownloader.id] = descriptor
         // failed to download - should copy instead
         ImportSettingsEventsCollector.jbPluginImportConnectionError()
-        LOG.info("Failed to download a newer version of '${pluginDownloader.id}' : ${pluginDownloader.pluginVersion}. " +
-                 "Will try to copy old version (${descriptor.version}) instead")
+        LOG.info(
+          "Failed to download a newer version of '${pluginDownloader.id}' : ${pluginDownloader.pluginVersion}. " +
+          "Will try to copy old version (${descriptor.version}) instead")
       }
     }
     checkPluginsCompatibility(updateableMap, progressIndicator)
@@ -443,10 +468,8 @@ internal class JbSettingsImporter(private val configDirPath: Path, private val p
     progressIndicator.text2 = ImportSettingsBundle.message("progress.details.checking.plugins.compatibility")
     val updates = MarketplaceRequests.getNearestUpdate(updateablePluginsMap.keys)
     for (update in updates) {
-      if (update.compatible)
-        continue
-
-      if (!update.products.contains(myIdeData.marketplaceCode)) {
+      if (!update.compatible && !update.products.contains(myIdeData.marketplaceCode)) {
+        @Suppress("DEPRECATION")
         val pluginId = PluginId.findId(update.pluginId) ?: continue
         LOG.info("Plugins ${update.pluginId} is incompatible with ${myIdeData.fullName}. Will not migrate it")
         updateablePluginsMap.remove(pluginId)

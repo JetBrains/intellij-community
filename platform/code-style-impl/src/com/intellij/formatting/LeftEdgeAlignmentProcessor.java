@@ -44,6 +44,10 @@ public final class LeftEdgeAlignmentProcessor extends AbstractBlockAlignmentProc
   protected boolean applyIndentToTheFirstBlockOnLine(@NotNull IndentData alignmentAnchorIndent, @NotNull Context context) {
     WhiteSpace whiteSpace = context.targetBlock().getWhiteSpace();
     whiteSpace.setSpaces(alignmentAnchorIndent.getSpaces(), alignmentAnchorIndent.getIndentSpaces());
+    if (alignmentAnchorIndent.getSpaces() > 0) {
+      // Alignment spaces should not be converted into tabs
+      whiteSpace.setForceSkipTabulationsUsage(true);
+    }
     return true;
   }
 

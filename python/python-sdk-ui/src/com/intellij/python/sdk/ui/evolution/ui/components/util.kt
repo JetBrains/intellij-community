@@ -13,7 +13,6 @@ import com.intellij.util.ui.LafIconLookup.getIcon
 import com.intellij.util.ui.LafIconLookup.getSelectedIcon
 import javax.swing.Icon
 import kotlin.math.min
-import kotlin.text.startsWith
 
 data class IconViewport(val width: Int, val height: Int) {
   companion object {

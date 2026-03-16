@@ -4,7 +4,7 @@ package com.jetbrains.python.testing
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.EnumSet
 import kotlin.reflect.KCallable
 
 internal class PyTestCustomOption(property: KCallable<*>, vararg supportedTypes: PyRunTargetVariant) {

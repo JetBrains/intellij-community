@@ -15,7 +15,13 @@
  */
 package com.siyeh.ig.methodmetrics;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEmptyStatement;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiStatement;
 import org.jetbrains.annotations.NotNull;
 
 class NCSSVisitor extends JavaRecursiveElementWalkingVisitor {

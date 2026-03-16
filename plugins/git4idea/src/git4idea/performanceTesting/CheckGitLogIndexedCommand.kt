@@ -16,7 +16,7 @@ import org.jetbrains.concurrency.toPromise
 /**
  * Checks that VCS log is fully indexed on project closing
  */
-class CheckGitLogIndexedCommand(text: String, line: Int) : AbstractCommand(text, line) {
+internal class CheckGitLogIndexedCommand(text: String, line: Int) : AbstractCommand(text, line) {
 
   companion object {
     const val PREFIX = CMD_PREFIX + "checkGitLogIndexing"

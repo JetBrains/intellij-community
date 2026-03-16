@@ -6,8 +6,11 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JScrollBar;
+import javax.swing.JViewport;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Point;
 
 public class EditorMergedHorizontalScrollBarLayout extends AbstractLayoutManager {
   private final JScrollBar myScrollBar;

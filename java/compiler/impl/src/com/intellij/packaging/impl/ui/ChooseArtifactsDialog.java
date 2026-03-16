@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.artifacts.Artifact;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 public class ChooseArtifactsDialog extends ChooseElementsDialog<Artifact> {

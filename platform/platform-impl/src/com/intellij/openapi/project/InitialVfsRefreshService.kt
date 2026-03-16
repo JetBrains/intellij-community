@@ -18,6 +18,22 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
+/**
+ * _Initiate_ VFS in-memory state syncing with on-disk FS state:
+ * - marks all the VFS roots as 'dirty' (which effectively marks all VFS files 'dirty')
+ * - initiate _asynchronous_ refresh, **without waiting for it to finish**
+ *
+ * Historically, this is needed for **quite a specific case**: some files belonging to project B were changed while only
+ * project A is opened, and project B is opened afterward. In this case `fsnotifier` doesn't watch for changes in B's files
+ * while project B is not opened => VFS events for changes are not generated => on B opening, there is no way to know some
+ * VFS files are out of sync with the disk. [InitialVfsRefreshService] fixes that by forcing entire VFS in-memory state to
+ * be synced -- rough, overkill, but works.
+ *
+ * It turns out to be more generally useful, though: by some reasons, we don't have a rule to do `Virtualfile.isDirty() -> refresh()`
+ * before any `VirtualFile` access -- which makes code vulnerable in cases some FS changes are not yet synced. This service
+ * together with a couple others (like force sync on IDE focus lost-gain) +/- fixes that issue, by closing most of the
+ * un-synced windows -- but not all of them.
+ */
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class InitialVfsRefreshService(private val project: Project, private val coroutineScope: CoroutineScope) {
@@ -45,7 +61,7 @@ class InitialVfsRefreshService(private val project: Project, private val corouti
         val roots = ProjectRootManagerEx.getInstanceEx(project).markRootsForRefresh()
         logger.info("$projectId: starting initial VFS refresh of ${roots.size} roots")
         val t = System.nanoTime()
-        RefreshQueue.getInstance().refresh(true, roots)
+        RefreshQueue.getInstance().refresh(/*async: */true, roots)
         val duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t)
         logger.info("${projectId}: initial VFS refresh finished in ${duration} ms")
         VfsUsageCollector.logInitialRefresh(project, duration)

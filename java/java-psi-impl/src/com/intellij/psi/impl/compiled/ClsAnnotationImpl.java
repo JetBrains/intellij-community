@@ -3,7 +3,15 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiAnnotationOwner;
+import com.intellij.psi.PsiAnnotationParameterList;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;

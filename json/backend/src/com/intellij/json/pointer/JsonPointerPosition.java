@@ -9,7 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
+import static com.jetbrains.jsonSchema.JsonPointerUtil.escapeForJsonPointer;
+import static com.jetbrains.jsonSchema.JsonPointerUtil.normalizeId;
+import static com.jetbrains.jsonSchema.JsonPointerUtil.normalizeSlashes;
+import static com.jetbrains.jsonSchema.JsonPointerUtil.split;
+import static com.jetbrains.jsonSchema.JsonPointerUtil.unescapeJsonPointerPart;
 
 public final class JsonPointerPosition {
 

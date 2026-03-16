@@ -5,12 +5,15 @@ import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionProvider;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.command.CommandCompletionFactory;
+import com.intellij.codeInsight.completion.command.CommandCompletionService;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
@@ -37,6 +40,17 @@ final class PostfixTemplatesCompletionProvider extends CompletionProvider<Comple
       if (!showAsSeparateGroup) {
         matcher = new MyPrefixMatcher(matcher.getPrefix());
       }
+      else {
+        Project project = editor.getProject();
+        if (project != null) {
+          CommandCompletionService completionService = project.getService(CommandCompletionService.class);
+          CommandCompletionFactory completionServiceFactory = completionService.getFactory(parameters.getPosition().getLanguage());
+          if (completionServiceFactory != null) {
+            char suffix = completionServiceFactory.suffix();
+            matcher = new MyGroupPrefixMatcher(matcher.getPrefix(), suffix);
+          }
+        }
+      }
       postfixLiveTemplate.addCompletions(parameters, result.withPrefixMatcher(matcher));
       String possibleKey = postfixLiveTemplate.computeTemplateKeyWithoutContextChecking(new CustomTemplateCallback(editor, originalFile));
       if (possibleKey != null) {
@@ -59,6 +73,26 @@ final class PostfixTemplatesCompletionProvider extends CompletionProvider<Comple
     }
 
     return true;
+  }
+
+  private static final class MyGroupPrefixMatcher extends PrefixMatcher {
+    private final char myPreviousFilter;
+
+    private MyGroupPrefixMatcher(String prefix, char previousFilter) {
+      super(prefix);
+      myPreviousFilter = previousFilter;
+    }
+
+    @Override
+    public boolean prefixMatches(@NotNull String name) {
+      return name.startsWith(myPrefix) ||
+             (myPreviousFilter + name).startsWith(myPrefix);
+    }
+
+    @Override
+    public @NotNull PrefixMatcher cloneWithPrefix(@NotNull String prefix) {
+      return new MyGroupPrefixMatcher(prefix, myPreviousFilter);
+    }
   }
 
   private static final class MyPrefixMatcher extends PrefixMatcher {

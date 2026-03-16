@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.util.AbstractKotlinBundle
 @NonNls
 private const val BUNDLE = "messages.KotlinIdeaReplBundle"
 
+@K1Deprecation
 object KotlinIdeaReplBundle : AbstractKotlinBundle(BUNDLE) {
     @Nls
     @JvmStatic

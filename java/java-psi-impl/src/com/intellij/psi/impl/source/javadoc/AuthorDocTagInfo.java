@@ -2,7 +2,11 @@
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 
 class AuthorDocTagInfo extends SimpleDocTagInfo {
   AuthorDocTagInfo() {

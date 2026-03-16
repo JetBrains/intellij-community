@@ -7,7 +7,7 @@ import com.intellij.ide.ui.ThemeListProvider
 import com.intellij.openapi.editor.colors.Groups
 import com.intellij.ui.ExperimentalUI
 
-private class ThemeListProviderImpl : ThemeListProvider {
+internal class ThemeListProviderImpl : ThemeListProvider {
   override fun getShownThemes(): Groups<UIThemeLookAndFeelInfo> {
     val uiThemeProviderListManager = UiThemeProviderListManager.getInstance()
 
@@ -62,6 +62,12 @@ private class ThemeListProviderImpl : ThemeListProvider {
     }
 
     if (!islandsUiThemes.isEmpty()) {
+      val islandsDarcula = islandsUiThemes.find { it.id == "Islands Darcula" }
+      if (islandsDarcula != null) {
+        islandsUiThemes.remove(islandsDarcula)
+        islandsUiThemes.add(2, islandsDarcula)
+      }
+
       val darcula = uiThemeProviderListManager.findThemeById("Darcula")
       if (darcula != null) {
         newUiThemes.add(darcula)

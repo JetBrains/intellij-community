@@ -4,18 +4,37 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import kotlinx.coroutines.CoroutineDispatcher;
 import kotlinx.coroutines.Dispatchers;
 import kotlinx.coroutines.ExecutorsKt;
-import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Param;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
+import org.openjdk.jmh.annotations.Threads;
+import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.locks.LockSupport;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.AsyncKt.*;
+import static com.intellij.openapi.vfs.newvfs.persistent.AsyncKt.runTaskAsyncViaDeferred;
+import static com.intellij.openapi.vfs.newvfs.persistent.AsyncKt.runTaskAsyncViaDirectDispatch;
 import static com.intellij.util.io.BlockingKt.getBlockingDispatcher;
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Benchmark async task overhead on old-school thread pools vs coroutines

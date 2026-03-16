@@ -1,6 +1,6 @@
 from collections.abc import Callable, Iterable
 from typing import Any, TypeVar
-from typing_extensions import ParamSpec, Self
+from typing_extensions import ParamSpec, Self, disjoint_base
 
 from gevent.greenlet import Greenlet
 from gevent.queue import UnboundQueue
@@ -12,6 +12,7 @@ _P = ParamSpec("_P")
 # returned by some public API functions, we don't bother adding a whole bunch of overloads to handle
 # the case of 1-n Iterables being passed in and just go for the fully unsafe signature
 # we do the crazy overloads instead in the functions that create these objects
+@disjoint_base
 class IMapUnordered(Greenlet[_P, _T]):
     finished: bool
     # it may contain an undocumented Failure object
@@ -20,6 +21,7 @@ class IMapUnordered(Greenlet[_P, _T]):
     def __iter__(self) -> Self: ...
     def __next__(self) -> _T: ...
 
+@disjoint_base
 class IMap(IMapUnordered[_P, _T]):
     index: int
 

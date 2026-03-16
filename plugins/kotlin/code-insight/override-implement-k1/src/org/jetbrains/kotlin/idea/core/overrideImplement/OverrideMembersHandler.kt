@@ -4,7 +4,13 @@ package org.jetbrains.kotlin.idea.core.overrideImplement
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.containingPackage
 import org.jetbrains.kotlin.descriptors.java.JavaVisibilities
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.name.FqName
@@ -14,6 +20,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
 private val METHODS_OF_ANY = listOf("equals", "hashCode", "toString").map { FqName("kotlin.Any.$it") }.toSet()
 
+@K1Deprecation
 class OverrideMembersHandler(private val preferConstructorParameters: Boolean = false) : GenerateMembersHandler(false) {
     override fun collectMembersToGenerate(descriptor: ClassDescriptor, project: Project): Collection<OverrideMemberChooserObject> {
         val result = ArrayList<OverrideMemberChooserObject>()

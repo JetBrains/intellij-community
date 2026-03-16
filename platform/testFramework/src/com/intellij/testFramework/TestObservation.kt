@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.observation.Observation
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.psi.impl.PsiDocumentManagerEx
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT_MS
 import com.intellij.testFramework.concurrency.waitForPromiseAndPumpEdt
@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.concurrency.asPromise
-import java.util.*
+import java.util.StringJoiner
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -75,7 +75,7 @@ object TestObservation {
     if (!Registry.`is`("ide.activity.tracking.enable.debug")) {
       return "Enable 'ide.activity.tracking.enable.debug' registry option to collect uncommited document traces"
     }
-    val psiDocumentManager = PsiDocumentManager.getInstance(project) as PsiDocumentManagerBase
+    val psiDocumentManager = PsiDocumentManager.getInstance(project) as PsiDocumentManagerEx
     return psiDocumentManager.uncommitedDocumentsWithTraces.entries
       .joinToString("\n") {
         it.key.toString() + ": " + it.value.stackTraceToString()

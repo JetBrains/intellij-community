@@ -1,0 +1,70 @@
+### auto-generated section `build intellij.python.test.env.plain` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "plain_test_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "plain",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:jetbrains-annotations",
+    "//python/python-test-env/core",
+    "//python/openapi:community",
+    "//python/python-venv:venv",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//python/python-sdk:sdk",
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/lang-impl",
+    "//python:python-community-impl",
+    "//platform/ide-core",
+    "//platform/lang-core",
+    "//python/testFramework",
+  ]
+)
+
+jvm_library(
+  name = "plain_test_lib",
+  module_name = "intellij.python.test.env.plain",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":plain_test_resources"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//python/python-test-env/core",
+    "//python/python-test-env/core:core_test_lib",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "//python/python-venv:venv",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/lang-impl",
+    "//python:python-community-impl",
+    "//platform/ide-core",
+    "//platform/lang-core",
+    "//python/testFramework",
+    "//python/python-exec-service:community-execService",
+    "//python/python-exec-service:community-execService_test_lib",
+  ],
+  runtime_deps = [":plain"]
+)
+### auto-generated section `build intellij.python.test.env.plain` end
+
+### auto-generated section `test intellij.python.test.env.plain` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "plain_test",
+  runtime_deps = [":plain_test_lib"]
+)
+### auto-generated section `test intellij.python.test.env.plain` end

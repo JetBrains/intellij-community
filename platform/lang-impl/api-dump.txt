@@ -98,12 +98,14 @@ f:com.intellij.codeInsight.codeVision.CodeVisionBundle$Companion
 - f:message(java.lang.String,java.lang.Object[]):java.lang.String
 - f:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 c:com.intellij.codeInsight.codeVision.CodeVisionHost
-- f:finishInitialisation():V
+- f:getAnchorForEntry(com.intellij.codeInsight.codeVision.CodeVisionEntry):com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
+- f:getProviderById(java.lang.String):com.intellij.codeInsight.codeVision.CodeVisionProvider
+- p:initialize():V
 - f:isInitialised():Z
 com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
 - sf:Companion:com.intellij.codeInsight.codeVision.CodeVisionProviderFactory$Companion
-- sf:EP_NAME:java.lang.String
 - a:createProviders(com.intellij.openapi.project.Project):kotlin.sequences.Sequence
+f:com.intellij.codeInsight.codeVision.CodeVisionProviderFactory$Companion
 com.intellij.codeInsight.codeVision.GenericPlaceholderCollector
 - a:collectPlaceholders(com.intellij.openapi.editor.Editor):java.util.List
 com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider
@@ -117,9 +119,21 @@ com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEntry
 com.intellij.codeInsight.codeVision.ui.renderers.painters.ICodeVisionEntryBasePainter
 - a:paint(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.markup.TextAttributes,java.awt.Graphics,java.lang.Object,java.awt.Point,com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel$InlayState,Z,com.intellij.codeInsight.codeVision.CodeVisionEntry):V
 - a:size(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel$InlayState,java.lang.Object):java.awt.Dimension
+c:com.intellij.codeInsight.completion.CodeCompletionHandlerBase
+- s:setAutoInsertTimeout(I,com.intellij.openapi.Disposable):V
 com.intellij.codeInsight.completion.CompletionPhaseListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:completionPhaseChanged(Z):V
+f:com.intellij.codeInsight.completion.WordCompletionContributor
+- com.intellij.codeInsight.completion.CompletionContributor
+- com.intellij.openapi.project.DumbAware
+- <init>():V
+- s:addWordCompletionVariants(com.intellij.codeInsight.completion.CompletionResultSet,com.intellij.codeInsight.completion.CompletionParameters,java.util.Set):V
+- s:addWordCompletionVariants(com.intellij.codeInsight.completion.CompletionResultSet,com.intellij.codeInsight.completion.CompletionParameters,java.util.Set,Z):V
+f:com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$AutoRestarting
+- b:<init>(com.intellij.codeInsight.completion.PrefixMatcher,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+pe:com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$MatchingOutcome
+- s:getEntries():kotlin.enums.EnumEntries
 com.intellij.codeInsight.daemon.ProjectSdkSetupValidator
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - doFix(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
@@ -162,6 +176,10 @@ com.intellij.codeInsight.editorActions.CopyPastePreProcessor
 - a:preprocessOnCopy(com.intellij.psi.PsiFile,I[],I[],java.lang.String):java.lang.String
 - a:preprocessOnPaste(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,java.lang.String,com.intellij.openapi.editor.RawText):java.lang.String
 - requiresAllDocumentsToBeCommitted(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):Z
+c:com.intellij.codeInsight.editorActions.EnterHandler
+- s:adjustLineIndentNoCommit(com.intellij.openapi.editor.Document,I,java.lang.String):I
+f:com.intellij.codeInsight.editorActions.FixDocCommentAction
+- s:generateComment(com.intellij.psi.PsiElement,com.intellij.openapi.project.Project,com.intellij.openapi.editor.ModNavigator):V
 com.intellij.codeInsight.editorActions.JavaLikeQuoteHandler
 - com.intellij.codeInsight.editorActions.QuoteHandler
 - canBeConcatenated(com.intellij.psi.PsiElement):Z
@@ -270,6 +288,25 @@ com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionProvider
 - a:getRelativeOrderings():java.util.List
 - handleClick(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.codeVision.CodeVisionEntry):V
 - preparePreview(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
+a:com.intellij.codeInsight.hints.presentation.AbstractRoundWithBackgroundPresentation
+- com.intellij.codeInsight.hints.presentation.StaticDelegatePresentation
+- <init>(com.intellij.codeInsight.hints.presentation.InlayPresentation,java.awt.Color,F):V
+- a:getArcHeight():I
+- a:getArcWidth():I
+- f:getBackgroundAlpha():F
+- f:getColor():java.awt.Color
+- paint(java.awt.Graphics2D,com.intellij.openapi.editor.markup.TextAttributes):V
+f:com.intellij.codeInsight.hints.presentation.PillWithBackgroundPresentation
+- com.intellij.codeInsight.hints.presentation.AbstractRoundWithBackgroundPresentation
+f:com.intellij.codeInsight.hints.presentation.RoundWithBackgroundBorderedPresentation
+- <init>(com.intellij.codeInsight.hints.presentation.AbstractRoundWithBackgroundPresentation,java.awt.Color,I):V
+- b:<init>(com.intellij.codeInsight.hints.presentation.AbstractRoundWithBackgroundPresentation,java.awt.Color,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+f:com.intellij.codeInsight.hints.presentation.RoundWithBackgroundPresentation
+- com.intellij.codeInsight.hints.presentation.AbstractRoundWithBackgroundPresentation
+- <init>(com.intellij.codeInsight.hints.presentation.InlayPresentation,I,I,java.awt.Color,F):V
+- b:<init>(com.intellij.codeInsight.hints.presentation.InlayPresentation,I,I,java.awt.Color,F,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- getArcHeight():I
+- getArcWidth():I
 f:com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 - com.intellij.codeInsight.intention.IntentionActionDelegate
 - com.intellij.openapi.actionSystem.ShortcutProvider
@@ -292,6 +329,7 @@ f:com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 - isSelectable():Z
 - isShowIcon():Z
 - suggestionShown(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
+c:com.intellij.codeInsight.intention.impl.IntentionListStep
 com.intellij.codeInsight.intention.impl.IntentionsOrderProvider
 - sf:EXTENSION:com.intellij.lang.LanguageExtension
 - a:getSortedIntentions(com.intellij.codeInsight.intention.impl.CachedIntentions,java.util.List):java.util.List
@@ -322,6 +360,10 @@ com.intellij.codeInsight.lookup.LookupActionProvider
 com.intellij.codeInsight.lookup.LookupManagerListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:activeLookupChanged(com.intellij.codeInsight.lookup.Lookup,com.intellij.codeInsight.lookup.Lookup):V
+f:com.intellij.codeInsight.lookup.impl.LookupCellRenderer
+- sf:getMatchingFragmentList(java.lang.String,java.lang.String):java.util.List
+f:com.intellij.codeInsight.lookup.impl.LookupCellRenderer$Companion
+- f:getMatchingFragmentList(java.lang.String,java.lang.String):java.util.List
 com.intellij.codeInsight.lookup.impl.LookupCellRenderer$IconDecorator
 - javax.swing.Icon
 - a:getDelegate():javax.swing.Icon
@@ -366,7 +408,10 @@ com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getDefaultLiveTemplateFiles():java.lang.String[]
 - a:getHiddenLiveTemplateFiles():java.lang.String[]
+f:com.intellij.codeInsight.template.impl.ListTemplatesHandler
+- s:filterTemplatesByPrefix(java.util.Collection,com.intellij.openapi.editor.Document,I,Z,Z):java.util.Map
 f:com.intellij.codeInsight.template.impl.TemplateManagerImpl
+- s:updateTemplate(com.intellij.codeInsight.template.impl.TemplateImpl,com.intellij.modcommand.ModPsiUpdater):V
 com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector
 - a:getExpressions(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Document,I):java.util.List
 - a:getRenderer():com.intellij.util.Function
@@ -528,6 +573,19 @@ com.intellij.find.actions.ShowUsagesActionHandler
 com.intellij.find.editorHeaderActions.ContextAwareShortcutProvider
 - a:getShortcut(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.ShortcutSet
 com.intellij.find.editorHeaderActions.Embeddable
+a:com.intellij.find.impl.FindManagerBase
+- com.intellij.find.FindManager
+- pf:myFindInFileModel:com.intellij.find.FindModel
+- pf:myFindInProjectModel:com.intellij.find.FindModel
+- pf:myProject:com.intellij.openapi.project.Project
+- <init>(com.intellij.openapi.project.Project):V
+- findString(java.lang.CharSequence,I,com.intellij.find.FindModel):com.intellij.find.FindResult
+- findString(java.lang.CharSequence,I,com.intellij.find.FindModel,com.intellij.openapi.vfs.VirtualFile):com.intellij.find.FindResult
+- getFindInFileModel():com.intellij.find.FindModel
+- getFindInProjectModel():com.intellij.find.FindModel
+- getStringToReplace(java.lang.String,com.intellij.find.FindModel,I,java.lang.CharSequence):java.lang.String
+f:com.intellij.find.impl.FindManagerImpl
+- com.intellij.find.impl.FindManagerBase
 com.intellij.find.impl.FindPopupScopeUI
 - a:applyTo(com.intellij.find.FindModel,com.intellij.find.impl.FindPopupScopeUI$ScopeType):V
 - a:applyTo(com.intellij.find.FindSettings,com.intellij.find.impl.FindPopupScopeUI$ScopeType):V
@@ -594,6 +652,8 @@ com.intellij.ide.actions.runAnything.activity.RunAnythingProvider
 - a:getMainListItem(com.intellij.openapi.actionSystem.DataContext,java.lang.Object):com.intellij.ide.actions.runAnything.items.RunAnythingItem
 - a:getMatcher(com.intellij.openapi.actionSystem.DataContext,java.lang.String):com.intellij.util.text.Matcher
 - a:getValues(com.intellij.openapi.actionSystem.DataContext,java.lang.String):java.util.Collection
+c:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
+- dispose():V
 f:com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 - <init>(com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor):V
 - getDelegate():com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
@@ -630,6 +690,13 @@ com.intellij.ide.fileTemplates.CreateFromTemplateHandler
 - a:isNameRequired():Z
 - a:prepareProperties(java.util.Map):V
 - prepareProperties(java.util.Map,java.lang.String,com.intellij.ide.fileTemplates.FileTemplate,com.intellij.openapi.project.Project):V
+f:com.intellij.ide.fileTemplates.VelocityWrapper
+- sf:INTROSPECTION_SECURE_UBERSPECTOR:java.lang.String
+- sf:INTROSPECTOR_RESTRICT_CLASSES:java.lang.String
+- sf:INTROSPECTOR_RESTRICT_PACKAGES:java.lang.String
+- <init>():V
+f:com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl
+- getDefaultContextMap():java.util.Map
 com.intellij.ide.highlighter.custom.CustomHighlighterColors
 - sf:CUSTOM_INVALID_STRING_ESCAPE:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:CUSTOM_KEYWORD1_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
@@ -682,19 +749,17 @@ com.intellij.ide.util.PsiElementRenderingInfo
 com.intellij.ide.util.TypeVisibilityStateHolder
 - a:isVisible(java.lang.Object):Z
 - a:setVisible(java.lang.Object,Z):V
-com.intellij.ide.util.gotoByName.ChooseByNameContributorWithDisposableCleanup
-- com.intellij.navigation.ChooseByNameContributorEx2
-- processElementsWithName(java.lang.String,com.intellij.util.Processor,com.intellij.util.indexing.FindSymbolParameters):V
-- a:processElementsWithNameWithDisposable(com.intellij.openapi.Disposable,java.lang.String,com.intellij.util.Processor,com.intellij.util.indexing.FindSymbolParameters):V
-- processNames(com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):V
-- processNames(com.intellij.util.Processor,com.intellij.util.indexing.FindSymbolParameters):V
-- a:processNamesWithDisposable(com.intellij.openapi.Disposable,com.intellij.util.Processor,com.intellij.util.indexing.FindSymbolParameters):V
 com.intellij.ide.util.gotoByName.ChooseByNameItem
 - a:getDescription():java.lang.String
 - a:getName():java.lang.String
 com.intellij.ide.util.gotoByName.ChooseByNameItemProvider
 - a:filterElements(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,java.lang.String,Z,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor):Z
 - a:filterNames(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,java.lang.String[],java.lang.String):java.util.List
+com.intellij.ide.util.gotoByName.ChooseByNameMatcherFactory
+- sf:Companion:com.intellij.ide.util.gotoByName.ChooseByNameMatcherFactory$Companion
+- a:createMatcher(java.lang.String,Z):com.intellij.psi.codeStyle.MinusculeMatcher
+f:com.intellij.ide.util.gotoByName.ChooseByNameMatcherFactory$Companion
+- f:tryGetInstance():com.intellij.ide.util.gotoByName.ChooseByNameMatcherFactory
 com.intellij.ide.util.gotoByName.ChooseByNameModelEx
 - com.intellij.ide.util.gotoByName.ChooseByNameModel
 - s:getItemProvider(com.intellij.ide.util.gotoByName.ChooseByNameModel,com.intellij.psi.PsiElement):com.intellij.ide.util.gotoByName.ChooseByNameItemProvider
@@ -712,6 +777,8 @@ com.intellij.ide.util.gotoByName.ChooseByNameWeightedItemProvider
 - a:filterElementsWithWeights(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,java.lang.String,Z,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor):Z
 com.intellij.ide.util.gotoByName.CustomMatcherModel
 - a:matches(java.lang.String,java.lang.String):Z
+c:com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider
+- ps:matches(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,java.lang.String,com.intellij.psi.codeStyle.MinusculeMatcher,java.lang.String,com.intellij.psi.codeStyle.MinusculeMatcher,java.lang.String):com.intellij.ide.util.gotoByName.MatchResult
 a:com.intellij.ide.util.gotoByName.DisposableGotoModelWithPersistentFilter
 - com.intellij.ide.util.gotoByName.FilteringGotoByModel
 - com.intellij.openapi.Disposable$Default
@@ -877,7 +944,6 @@ com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
 - a:withLookupReason(java.lang.String):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
 - a:withProgressIndicator(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
 - a:withProgressMessageTitle(java.lang.String):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
-- a:withProject(com.intellij.openapi.project.Project):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
 - a:withSdkHomeFilter(kotlin.jvm.functions.Function1):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
 - a:withSdkName(java.lang.String):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
 - a:withSdkType(com.intellij.openapi.projectRoots.SdkType):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
@@ -965,7 +1031,7 @@ com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor
 - a:setName(java.lang.String):V
 com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 - getIconForDownloadAction(com.intellij.openapi.projectRoots.SdkTypeId):javax.swing.Icon
-- pickSdk(com.intellij.openapi.projectRoots.SdkTypeId,com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk):com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
+- pickSdk(com.intellij.openapi.projectRoots.SdkTypeId,com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk,java.util.function.Predicate):com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 - showDownloadUI(com.intellij.openapi.projectRoots.SdkTypeId,com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.Sdk,java.util.function.Predicate,java.util.function.Consumer):V
 - a:showDownloadUI(com.intellij.openapi.projectRoots.SdkTypeId,com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk,java.util.function.Consumer):V
 - a:supportsDownload(com.intellij.openapi.projectRoots.SdkTypeId):Z
@@ -1046,6 +1112,8 @@ com.intellij.psi.templateLanguages.MultipleLangCommentProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:canProcess(com.intellij.psi.PsiFile,com.intellij.psi.FileViewProvider):Z
 - a:getLineCommenter(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.lang.Language,com.intellij.lang.Language):com.intellij.lang.Commenter
+c:com.intellij.refactoring.actions.RenameElementAction
+- com.intellij.openapi.project.DumbAwareAction
 com.intellij.refactoring.actions.RenameFileActionProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - enabledInProjectView(com.intellij.psi.PsiFile):Z
@@ -1071,7 +1139,7 @@ c:com.intellij.refactoring.extractMethod.AbstractExtractMethodDialog
 - pf:myDecorator:com.intellij.refactoring.extractMethod.ExtractMethodDecorator
 - pf:myFragment:com.intellij.codeInsight.codeFragment.CodeFragment
 - pf:myProject:com.intellij.openapi.project.Project
-- p:mySignaturePreviewTextArea:com.intellij.refactoring.ui.MethodSignatureComponent
+- pf:mySignaturePreviewTextArea:com.intellij.refactoring.ui.MethodSignatureComponent
 - pf:myValidator:com.intellij.refactoring.extractMethod.ExtractMethodValidator
 - p:myVariableData:com.intellij.refactoring.util.AbstractVariableData[]
 - p:getParameterColumns():com.intellij.util.ui.ColumnInfo[]
@@ -1084,6 +1152,7 @@ com.intellij.refactoring.introduce.IntroduceTarget
 - a:render():java.lang.String
 com.intellij.refactoring.move.MoveCallback
 - a:refactoringCompleted():V
+c:com.intellij.refactoring.rename.PlainDirectoryRenameHandler
 c:com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 - p:checkLocalScope():com.intellij.psi.PsiElement
 com.intellij.refactoring.safeDelete.SafeDeleteDialog$Callback
@@ -1124,6 +1193,10 @@ f:com.intellij.tools.ToolManager$Companion
 - f:getInstance():com.intellij.tools.ToolManager
 com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory
 - a:createConsoleComponent(com.intellij.execution.ui.ConsoleView,com.intellij.openapi.actionSystem.DefaultActionGroup):javax.swing.JComponent
+c:com.intellij.util.indexing.IndexInfrastructureVersionBase
+- s:getAllLanguageStubDescriptors():java.util.List
+- s:getStubFileElementBaseVersion(com.intellij.psi.stubs.LanguageStubDescriptor):I
+- s:getStubFileElementTypeKey(com.intellij.psi.stubs.LanguageStubDescriptor):java.lang.String
 com.intellij.util.indexing.UnindexedFilesUpdaterListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:updateFinished(com.intellij.openapi.project.Project):V

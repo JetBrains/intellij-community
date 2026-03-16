@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.create.model
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -60,6 +61,7 @@ internal class GitLabMergeRequestCreateTitleGenerationViewModelImpl(
         when (it) {
           is GenerationError -> throw it.e
           is GenerationStep -> {
+            checkCanceled()
             setTitle(it.title)
             if (it.description != null) setDescription(it.description)
           }

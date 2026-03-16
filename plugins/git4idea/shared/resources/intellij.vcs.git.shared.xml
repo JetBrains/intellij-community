@@ -30,6 +30,12 @@
       <action id="git.branches.popup.resize" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupResizeAction"/>
     </group>
 
+    <group id="Git.Branch">
+      <group id="Git.Branch.Checkout">
+        <action id="Git.Checkout.Update" class="com.intellij.vcs.git.actions.branch.GitCheckoutWithUpdateAction"/>
+      </group>
+      <group id="Git.Branch.Placeholder"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -39,11 +45,8 @@
     <rdct.remoteSettingProvider implementation="git4idea.config.GitRemoteSettingsInfoProvider"/>
 
     <postStartupActivity implementation="com.intellij.vcs.git.GitDataHoldersInitializer"/>
-  </extensions>
 
-  <extensionPoints>
-    <extensionPoint qualifiedName="Git4Idea.gitRepoIconProvider"
-                    interface="com.intellij.vcs.git.ui.GitRepoIconProvider"
-                    dynamic="true"/>
-  </extensionPoints>
+    <registryKey key="git.enable.working.trees.feature" defaultValue="true" restartRequired="true"
+                 description="Enables the 'Working Trees' feature, see https://youtrack.jetbrains.com/issue/IJPL-204771"/>
+  </extensions>
 </idea-plugin>

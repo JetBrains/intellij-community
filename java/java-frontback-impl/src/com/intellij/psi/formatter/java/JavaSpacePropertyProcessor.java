@@ -6,24 +6,112 @@ import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.lang.java.parser.JavaBinaryOperations;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaDocTokenType;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationParameterList;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayAccessExpression;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiArrayInitializerMemberValue;
+import com.intellij.psi.PsiAssertStatement;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiCaseLabelElementList;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiContinueStatement;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiDeconstructionList;
+import com.intellij.psi.PsiDeconstructionPattern;
+import com.intellij.psi.PsiDisjunctionType;
+import com.intellij.psi.PsiDoWhileStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiEnumConstantInitializer;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiForeachPatternStatement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPatternVariable;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiRecordHeader;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiResourceList;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiSwitchLabelStatement;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
+import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.PsiSynchronizedStatement;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiWhileStatement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.PsiYieldStatement;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.StdTokenSets;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.java.EnumConstantElement;
-import com.intellij.psi.javadoc.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiSnippetAttribute;
+import com.intellij.psi.javadoc.PsiSnippetAttributeList;
+import com.intellij.psi.javadoc.PsiSnippetDocTag;
 import com.intellij.psi.jsp.IJspClassLevelDeclarationStatement;
 import com.intellij.psi.jsp.IJspCodeBlock;
 import com.intellij.psi.jsp.IJspJavaComment;
@@ -43,7 +131,11 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.*;
+import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.END_OF_LINE;
+import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE;
+import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
+import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
 
 public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance(JavaSpacePropertyProcessor.class);
@@ -151,7 +243,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       return PsiTreeUtil.getParentOfType(parent, PsiDocMethodOrFieldRef.class) != null;
     }
 
-    return type == JavaDocElementType.DOC_COMMENT || type == JavaDocElementType.DOC_TAG || type == JavaDocElementType.DOC_INLINE_TAG;
+    return JavaDocElementType.DOC_COMMENT_TOKENS.contains(type) || type == JavaDocElementType.DOC_TAG || type == JavaDocElementType.DOC_INLINE_TAG;
   }
 
   private void init(ASTNode child) {
@@ -214,7 +306,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitClass(@NotNull PsiClass aClass) {
-    if (myType1 == JavaDocElementType.DOC_COMMENT) {
+    if (JavaDocElementType.DOC_COMMENT_TOKENS.contains(myType1)) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       return;
     }
@@ -1109,13 +1201,13 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       else if (i == JavaTokenType.GT || i == JavaTokenType.LT || i == JavaTokenType.GE || i == JavaTokenType.LE) {
         createSpaceInCode(mySettings.SPACE_AROUND_RELATIONAL_OPERATORS);
       }
-      else if (JavaBinaryOperations.ADDITIVE_OPS.contains(i)) {
+      else if (ElementType.ADDITIVE_OPS.contains(i)) {
         createSpaceInCode(mySettings.SPACE_AROUND_ADDITIVE_OPERATORS);
       }
-      else if (JavaBinaryOperations.MULTIPLICATIVE_OPS.contains(i)) {
+      else if (ElementType.MULTIPLICATIVE_OPS.contains(i)) {
         createSpaceInCode(mySettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS);
       }
-      else if (JavaBinaryOperations.SHIFT_OPS.contains(i)) {
+      else if (ElementType.SHIFT_OPS.contains(i)) {
         createSpaceInCode(mySettings.SPACE_AROUND_SHIFT_OPERATORS);
       }
       else {
@@ -1126,7 +1218,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitField(@NotNull PsiField field) {
-    if (myType1 == JavaDocElementType.DOC_COMMENT) {
+    if (JavaDocElementType.DOC_COMMENT_TOKENS.contains(myType1)) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       return;
     }
@@ -1203,7 +1295,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitMethod(@NotNull PsiMethod method) {
-    if (myType1 == JavaDocElementType.DOC_COMMENT) {
+    if (JavaDocElementType.DOC_COMMENT_TOKENS.contains(myType1)) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       return;
     }
@@ -2049,8 +2141,6 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private boolean isAllowedToMoveSemicolonInLongCallChain() {
     if (!myJavaSettings.WRAP_SEMICOLON_AFTER_CALL_CHAIN) return false;
-
-    if (Registry.is(LegacyChainedMethodCallsBlockBuilder.COMPATIBILITY_KEY)) return false;
 
     if(!(myChild1 instanceof PsiMethodCallExpression) || myType1 != JavaElementType.METHOD_CALL_EXPRESSION) return false;
 

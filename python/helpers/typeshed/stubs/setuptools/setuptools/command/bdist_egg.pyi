@@ -52,10 +52,5 @@ def can_scan() -> bool: ...
 INSTALL_DIRECTORY_ATTRS: Final[list[str]]
 
 def make_zipfile(
-    zip_filename: _StrPathT,
-    base_dir,
-    verbose: bool = False,
-    dry_run: bool = False,
-    compress: bool = True,
-    mode: _ZipFileMode = "w",
+    zip_filename: _StrPathT, base_dir, verbose: bool = False, compress: bool = True, mode: _ZipFileMode = "w"
 ) -> _StrPathT: ...

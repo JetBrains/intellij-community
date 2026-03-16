@@ -3,3 +3,5 @@ fun foo(){
 }
 
 // ELEMENT: ENGLISH
+
+// IGNORE_K2

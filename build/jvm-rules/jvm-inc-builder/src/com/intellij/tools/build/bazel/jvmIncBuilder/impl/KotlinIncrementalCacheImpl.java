@@ -17,7 +17,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.filter;
+import static org.jetbrains.jps.util.Iterators.find;
+import static org.jetbrains.jps.util.Iterators.flat;
+import static org.jetbrains.jps.util.Iterators.map;
 
 public final class KotlinIncrementalCacheImpl implements IncrementalCache {
 

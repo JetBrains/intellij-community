@@ -23,10 +23,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.ui.UIUtil;
 import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,20 +46,23 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
 
   protected void addTestFromJson(String filePath, String... extensions) throws IOException {
     JsonFactory factory = JsonFactory.builder().build();
-    JsonParser parser = factory.createParser(new File(filePath));
-    parser.enable(JsonParser.Feature.ALLOW_COMMENTS);
-    if (parser.nextToken() != JsonToken.START_OBJECT) {
-      throw new IOException("Unexpected JSON format");
-    }
-    while (parser.nextToken() != JsonToken.END_OBJECT) {
-      String key = parser.getText();
-      parser.nextToken();
-      String expected = parser.getText();
-      for (String source : StringUtil.split(key, "|")) {
-        // replace ${1:hello} with hello
-        expected = expected.replaceAll("\\$\\{\\d(:([^}]+))?}", "$2");
-        addTest(source, expected, extensions);
+    try (JsonParser parser = factory.createParser(new File(filePath))) {
+      parser.enable(JsonParser.Feature.ALLOW_COMMENTS);
+      if (parser.nextToken() != JsonToken.START_OBJECT) {
+        throw new IOException("Unexpected JSON format");
       }
+      while (parser.nextToken() != JsonToken.END_OBJECT) {
+        String key = parser.getText();
+        parser.nextToken();
+        String expected = parser.getText();
+        for (String source : StringUtil.split(key, "|")) {
+          // replace ${1:hello} with hello
+          expected = expected.replaceAll("\\$\\{\\d(:([^}]+))?}", "$2");
+          addTest(source, expected, extensions);
+        }
+      }
+    } catch (IOException e) {
+      addTest(e.getMessage(), filePath + " file was found.", extensions);
     }
     /*
       JsonObject jsonObject = new GsonBuilder().setLenient().create()
@@ -82,7 +85,7 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
 
   protected void addTest(String source, String expected, @Nullable TestInitializer setUp, String... extensions) {
     for (String extension : extensions) {
-      super.addTest(new EmmetAbbreviation(source, expected, extension, false, setUp) {});
+      super.addTest(new EmmetAbbreviation(source, expected, /* name */ source, extension, false, setUp) {});
     }
   }
 
@@ -92,8 +95,16 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
 
   protected void addTestWithPositionCheck(String source, String expected, @Nullable TestInitializer setUp, String... extensions) {
     for (String extension : extensions) {
-      super.addTest(new EmmetAbbreviation(source, expected, extension, true, setUp) {});
+      super.addTest(new EmmetAbbreviation(source, expected, /* name */ source, extension, true, setUp) {});
     }
+  }
+
+  protected void addTestWithName(String source, String name, String expected, @Nullable TestInitializer setUp, String extension) {
+    super.addTest(new EmmetAbbreviation(source, expected, name, extension, false, setUp) {});
+  }
+
+  protected void addTestWithNameWithPositionCheck(String source, String name, String expected, @Nullable TestInitializer setUp, String extension) {
+    super.addTest(new EmmetAbbreviation(source, expected, name, extension, true, setUp) {});
   }
 
   @Override
@@ -111,6 +122,7 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
   }
 
   private abstract class EmmetAbbreviation extends BasePlatformTestCase {
+    private final String name;
     private final String extension;
     private final String sourceData;
     private final String expectedData;
@@ -121,9 +133,11 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
 
     EmmetAbbreviation(@NotNull String sourceData,
                       @NotNull String expectedData,
+                      @NotNull String name,
                       @NotNull String extension,
                       boolean checkPosition,
                       @Nullable TestInitializer initializer) {
+      this.name = name;
       this.extension = extension;
       this.sourceData = sourceData;
       this.expectedData = expectedData;
@@ -173,7 +187,7 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
       action.actionPerformed(myFixture.getEditor(), DataManager.getInstance().getDataContext());
 
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
       WriteCommandAction.runWriteCommandAction(getProject(), () -> {
         TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());
@@ -216,7 +230,7 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
 
     @Override
     public String toString() {
-      return (sourceData + " in " + extension).replace('\n', ' ').replaceAll("  ", "");
+      return (name + " in " + extension).replace('\n', ' ').replaceAll("  ", "");
     }
 
     @Override

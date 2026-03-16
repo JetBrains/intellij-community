@@ -1,28 +1,46 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
 import com.intellij.idea.IgnoreJUnit3
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.Executor.append
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.Executor.child
+import com.intellij.openapi.vcs.Executor.mkdir
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.data.VcsLogStorage
-import com.intellij.vcs.log.data.index.*
+import com.intellij.vcs.log.data.index.IndexDataGetter
+import com.intellij.vcs.log.data.index.IndexedDetails
+import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
+import com.intellij.vcs.log.data.index.index
+import com.intellij.vcs.log.data.index.setUpIndex
 import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.impl.VcsUserImpl
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.cherrypick.GitCherryPicker
-import git4idea.test.*
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.USER_EMAIL
+import git4idea.test.USER_NAME
+import git4idea.test.addCommit
+import git4idea.test.appendAndCommit
+import git4idea.test.last
+import git4idea.test.makeCommit
+import git4idea.test.modify
+import git4idea.test.mv
+import git4idea.test.setupDefaultUsername
+import git4idea.test.setupUsername
+import git4idea.test.tac
 import junit.framework.TestCase
 
 abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
-  private val defaultUser = VcsUserImpl(USER_NAME, USER_EMAIL)
+  private val defaultUser = VcsUserUtil.createUser(USER_NAME, USER_EMAIL)
 
   private lateinit var disposable: Disposable
   private lateinit var index: VcsLogPersistentIndex
@@ -60,9 +78,9 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
     }
 
     val commits = indexAll()
-    TestCase.assertTrue(index.isIndexed(repo.root))
+    assertTrue(index.isIndexed(repo.root))
     for (commit in commits) {
-      TestCase.assertTrue(index.isIndexed(commit))
+      assertTrue(index.isIndexed(commit))
     }
   }
 
@@ -117,7 +135,7 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
 
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPattern(keyword)))
 
-    TestCase.assertEquals(expected, actual)
+    assertEquals(expected, actual)
   }
 
   fun `test regexp text filter`() {
@@ -144,7 +162,7 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
 
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPattern(pattern, isRegexpAllowed = true)))
 
-    TestCase.assertEquals(expected, actual)
+    assertEquals(expected, actual)
   }
 
   private fun `test text filter with multiple patterns`(keyword1: String, keyword2: String) {
@@ -187,7 +205,7 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
     touch(file, "content")
     repo.addCommit("some message")
 
-    val author = VcsUserImpl("Name", "name@server.com")
+    val author = VcsUserUtil.createUser("Name", "name@server.com")
     val expected = setOf(getCommitIndex(makeCommit(author, file)))
 
     append(file, "even more content")
@@ -197,11 +215,11 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
 
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromUser(author, setOf(author, defaultUser))))
 
-    TestCase.assertEquals(expected, actual)
+    assertEquals(expected, actual)
   }
 
   fun `test author filter with different committer`() {
-    val author = VcsUserImpl("Name", "name@server.com")
+    val author = VcsUserUtil.createUser("Name", "name@server.com")
     val expected = mutableSetOf<Int>()
     var hashToPick = ""
     build {
@@ -219,7 +237,7 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
       }
       master {
         //cherry-pick with default user
-        GitCherryPicker(project).cherryPick(readDetails(listOf(hashToPick)))
+        GitCherryPicker(project).cherryPick(readDetails(hashToPick))
       }
     }
 
@@ -231,7 +249,7 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
   }
 
   fun `test text and author filter`() {
-    val author = VcsUserImpl("Name", "name@server.com")
+    val author = VcsUserUtil.createUser("Name", "name@server.com")
     val keyword = "keyword"
     val expected = mutableSetOf<Int>()
 
@@ -281,8 +299,8 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
     val newHistory = dataGetter.filter(listOf(createPathFilter(newFile)))
     val oldHistory = dataGetter.filter(listOf(createPathFilter(oldFile)))
 
-    TestCase.assertEquals(expectedHistory, newHistory)
-    TestCase.assertEquals(expectedHistory, oldHistory)
+    assertEquals(expectedHistory, newHistory)
+    assertEquals(expectedHistory, oldHistory)
   }
 
   fun `test directory history`() {
@@ -315,7 +333,7 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
     indexAll()
 
     val actualHistory = dataGetter.filter(listOf(createPathFilter(dir)))
-    TestCase.assertEquals(expectedHistory, actualHistory)
+    assertEquals(expectedHistory, actualHistory)
   }
 
   private fun createPathFilter(relativePath: String) = VcsLogFilterObject.fromPaths(setOf(VcsUtil.getFilePath(child(relativePath))))

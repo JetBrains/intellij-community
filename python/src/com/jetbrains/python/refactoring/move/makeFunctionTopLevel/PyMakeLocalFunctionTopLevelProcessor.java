@@ -25,7 +25,6 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author Mikhail Golubev
  */
 public class PyMakeLocalFunctionTopLevelProcessor extends PyBaseMakeFunctionTopLevelProcessor {
-
   public PyMakeLocalFunctionTopLevelProcessor(@NotNull PyFunction targetFunction, @NotNull String destination) {
     super(targetFunction, destination);
   }
@@ -73,5 +72,10 @@ public class PyMakeLocalFunctionTopLevelProcessor extends PyBaseMakeFunctionTopL
       }
     }
     return Lists.newArrayList(enclosingScopeReads);
+  }
+
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.python.make.local.function.top.level";
   }
 }

@@ -7,7 +7,12 @@ import com.intellij.openapi.ui.UiSwitcher
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.ui.Expandable
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.CollapsibleRow
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.gridLayout.toUnscaledGaps
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font

@@ -3,7 +3,6 @@ package com.intellij.java.psi.codeStyle.arrangement;
 
 import java.util.List;
 
-import static com.intellij.psi.codeStyle.arrangement.AbstractRearrangerTest.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PRIVATE;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC;
 

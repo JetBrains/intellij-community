@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.util.MethodHandleUtil;
 
-import javax.swing.*;
+import javax.swing.JButton;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.lang.invoke.MethodHandle;
 

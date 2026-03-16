@@ -1,0 +1,3 @@
+class Base {
+  final static char s = 'g';
+}

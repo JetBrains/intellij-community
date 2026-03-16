@@ -7,6 +7,7 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.ext
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.getUriForMavenArtifact
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.info
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.verbose
+import org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.toPath
@@ -15,7 +16,7 @@ object KotlinCompiler {
   private const val INTELLIJ_DEPENDENCIES_REPOSITORY_URL =
     "https://cache-redirector.jetbrains.com/intellij-dependencies"
 
-  private val MAVEN_LOCAL_URL by lazy { "file://${System.getProperty("user.home")}/.m2/repository" }
+  private val MAVEN_LOCAL_URL by lazy { "file://${getMavenRepositoryPath() ?: (System.getProperty("user.home") + "/.m2/repository")}" }
 
   private const val USE_MAVEN_LOCAL_PROPERTY = "kotlin.jps.use.maven.local"
   private fun shouldUseMavenLocal(): Boolean {

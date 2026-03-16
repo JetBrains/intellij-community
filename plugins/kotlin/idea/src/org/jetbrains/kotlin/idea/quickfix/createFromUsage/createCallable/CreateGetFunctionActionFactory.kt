@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.CallableInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.FunctionInfo
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
+@K1Deprecation
 object CreateGetFunctionActionFactory : CreateGetSetFunctionActionFactory(isGet = true) {
     override fun createCallableInfo(element: KtArrayAccessExpression, diagnostic: Diagnostic): CallableInfo? {
         val arrayExpr = element.arrayExpression ?: return null

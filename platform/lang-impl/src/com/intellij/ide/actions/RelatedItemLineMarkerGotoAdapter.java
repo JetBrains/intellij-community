@@ -14,7 +14,11 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class RelatedItemLineMarkerGotoAdapter extends GotoRelatedProvider {

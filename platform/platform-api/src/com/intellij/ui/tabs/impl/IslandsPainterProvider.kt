@@ -22,4 +22,6 @@ open class IslandsPainterProvider {
   open fun isTabOccupiesWholeHeight(): Boolean = true
 
   open fun getSingleRowTabInsets(tabsPosition: JBTabsPosition): Insets? = null
+
+  open fun isRoundedTabDuringDrag(): Boolean = false
 }

@@ -14,7 +14,10 @@ import org.junit.Test;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.createStrictMock;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
 
 public class SelectionCalculatorTest extends LocalHistoryTestCase {
   public static final String PATH = "f";

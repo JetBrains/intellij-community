@@ -3,7 +3,14 @@ package com.intellij.platform.whatsNew.reaction
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.project.DumbAware
@@ -57,9 +64,9 @@ class ReactionsPanel {
 }
 
 
-private class LikeReactionAction : ReactionAction(CommonBundle.message("button.without.mnemonic.yes"), AllIcons.Ide.LikeDimmed,
-                                                  AllIcons.Ide.Like,
-                                                  AllIcons.Ide.LikeSelected) {
+internal class LikeReactionAction : ReactionAction(CommonBundle.message("button.without.mnemonic.yes"), AllIcons.Ide.LikeDimmed,
+                                                   AllIcons.Ide.Like,
+                                                   AllIcons.Ide.LikeSelected) {
   override fun isSelected(e: AnActionEvent): Boolean {
     return getReactionStateChecker(e)?.checkState(ReactionChecker.State.Liked) == true
   }
@@ -69,8 +76,8 @@ private class LikeReactionAction : ReactionAction(CommonBundle.message("button.w
   }
 }
 
-private class DislikeReactionAction : ReactionAction(CommonBundle.message("button.without.mnemonic.no"), AllIcons.Ide.DislikeDimmed,
-                                                     AllIcons.Ide.Dislike, AllIcons.Ide.DislikeSelected) {
+internal class DislikeReactionAction : ReactionAction(CommonBundle.message("button.without.mnemonic.no"), AllIcons.Ide.DislikeDimmed,
+                                                      AllIcons.Ide.Dislike, AllIcons.Ide.DislikeSelected) {
   override fun isSelected(e: AnActionEvent): Boolean {
     return getReactionStateChecker(e)?.checkState(ReactionChecker.State.Disliked) == true
   }
@@ -80,7 +87,7 @@ private class DislikeReactionAction : ReactionAction(CommonBundle.message("butto
   }
 }
 
-private abstract class ReactionAction(
+internal abstract class ReactionAction(
   text: @NlsActions.ActionText String,
   val icon: Icon,
   val hoveredIcon: Icon,

@@ -19,7 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -31,8 +30,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XmlTagFixer implements Fixer {
   @Override
-  public void apply(Editor editor, AbstractBasicJavaSmartEnterProcessor processor, @NotNull ASTNode astNode) throws IncorrectOperationException {
-    PsiElement psiElement = BasicJavaAstTreeUtil.toPsi(astNode);
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, @NotNull PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof XmlTag) {
       final ASTNode emptyTagEnd = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(psiElement.getNode());
       final ASTNode endTagEnd = XmlChildRole.START_TAG_END_FINDER.findChild(psiElement.getNode());

@@ -11,6 +11,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.isKFunctionType
 import org.jetbrains.kotlin.builtins.isKSuspendFunctionType
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
@@ -22,9 +23,19 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.intentions.reflectToRegularFunctionType
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeSignatureConfiguration
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMutableMethodDescriptor
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinTypeInfo
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.modify
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.runChangeSignature
 import org.jetbrains.kotlin.idea.util.getDataFlowAwareTypes
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -33,6 +44,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 
+@K1Deprecation
 class AddFunctionParametersFix(
     callElement: KtCallElement,
     functionDescriptor: FunctionDescriptor,

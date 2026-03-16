@@ -1,0 +1,26 @@
+<component name="libraryTable">
+  <library name="qodana-sarif" type="repository">
+    <properties maven-id="com.jetbrains.qodana:qodana-sarif:0.2.115">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/qodana/qodana-sarif/0.2.115/qodana-sarif-0.2.115.jar">
+          <sha256sum>d4adc9b59fb524337717569800ae58513ef7b9c7c9749b72a4245f13ae932268</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="com.google.code.gson:gson" />
+        <dependency maven-id="org.jetbrains:annotations" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/qodana/qodana-sarif/0.2.115/qodana-sarif-0.2.115.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/qodana/qodana-sarif/0.2.115/qodana-sarif-0.2.115-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

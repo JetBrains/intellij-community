@@ -1,8 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.actions
 
-import com.intellij.codeInsight.*
+import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.codeInsight.ExpectedTypeInfo
 import com.intellij.codeInsight.ExpectedTypesProvider.createInfo
+import com.intellij.codeInsight.Nullability
+import com.intellij.codeInsight.NullableNotNullManager
+import com.intellij.codeInsight.TailTypes
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.request.ExpectedJavaType
 import com.intellij.lang.jvm.JvmClass
@@ -12,8 +16,18 @@ import com.intellij.lang.jvm.actions.ExpectedTypeWithNullability
 import com.intellij.lang.jvm.actions.ExpectedTypes
 import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.JvmPsiConversionHelper
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiImplicitClass
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifier.ModifierConstant
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.TypeAnnotationProvider
 import com.intellij.psi.impl.source.PsiClassImpl
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass
 import com.intellij.psi.util.PsiTypesUtil

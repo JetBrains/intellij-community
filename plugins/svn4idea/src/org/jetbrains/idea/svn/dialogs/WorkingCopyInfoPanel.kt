@@ -3,7 +3,11 @@ package org.jetbrains.idea.svn.dialogs
 
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.util.text.HtmlChunk.*
+import com.intellij.openapi.util.text.HtmlChunk.Element
+import com.intellij.openapi.util.text.HtmlChunk.empty
+import com.intellij.openapi.util.text.HtmlChunk.link
+import com.intellij.openapi.util.text.HtmlChunk.tag
+import com.intellij.openapi.util.text.HtmlChunk.text
 import com.intellij.ui.ColorUtil.toHex
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.HtmlPanel
@@ -12,7 +16,11 @@ import org.jetbrains.idea.svn.NestedCopyType
 import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.WorkingCopyFormat
 import org.jetbrains.idea.svn.api.Depth
-import org.jetbrains.idea.svn.dialogs.CopiesPanel.*
+import org.jetbrains.idea.svn.dialogs.CopiesPanel.CHANGE_FORMAT
+import org.jetbrains.idea.svn.dialogs.CopiesPanel.CLEANUP
+import org.jetbrains.idea.svn.dialogs.CopiesPanel.CONFIGURE_BRANCHES
+import org.jetbrains.idea.svn.dialogs.CopiesPanel.FIX_DEPTH
+import org.jetbrains.idea.svn.dialogs.CopiesPanel.MERGE_FROM
 import java.awt.Font
 import javax.swing.event.HyperlinkEvent
 

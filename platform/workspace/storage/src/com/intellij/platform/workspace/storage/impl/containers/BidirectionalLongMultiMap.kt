@@ -4,9 +4,13 @@
 package com.intellij.platform.workspace.storage.impl.containers
 
 import com.intellij.util.containers.CollectionFactory
-import it.unimi.dsi.fastutil.longs.*
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet
+import it.unimi.dsi.fastutil.longs.LongSet
+import it.unimi.dsi.fastutil.longs.LongSets
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
-import java.util.*
+import java.util.Collections
 
 /**
  * Bidirectional multimap that has longs as keys

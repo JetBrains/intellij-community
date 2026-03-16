@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.caches.resolve
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.projectRoots.Sdk
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.PlatformAnalysisParameters
 import org.jetbrains.kotlin.analyzer.ResolverForModuleFactory
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.resolve.jvm.JvmResolverForModuleFactory
 
 private val LOG = Logger.getInstance(JvmPlatformKindResolution::class.java)
 
+@K1Deprecation
 class JvmPlatformKindResolution : IdePlatformKindResolution {
     override fun createResolverForModuleFactory(
         settings: PlatformAnalysisParameters,

@@ -14,7 +14,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
@@ -28,7 +32,14 @@ import com.intellij.platform.util.progress.withProgressText
 import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.remoteDev.connection.JetBrainsClientDownloadInfo
-import com.intellij.remoteDev.util.*
+import com.intellij.remoteDev.util.ClientVersionUtil
+import com.intellij.remoteDev.util.FileManifestUtil
+import com.intellij.remoteDev.util.ProductInfo
+import com.intellij.remoteDev.util.SubProgressIndicatorBase
+import com.intellij.remoteDev.util.WindowsFileUtil
+import com.intellij.remoteDev.util.addPathSuffix
+import com.intellij.remoteDev.util.createSubProgress
+import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.util.PlatformUtils
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -53,17 +64,34 @@ import com.sun.jna.platform.win32.WinBase
 import com.sun.jna.platform.win32.WinNT
 import com.sun.jna.ptr.IntByReference
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.IOException
 import java.net.URI
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.LinkOption
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.absolute
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.notExists
+import kotlin.io.path.pathString
+import kotlin.io.path.readText
+import kotlin.io.path.toPath
 import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 
@@ -378,11 +406,26 @@ object CodeWithMeClientDownloader {
 
   fun downloadFrontendAndJdk(sessionInfoResponse: JetBrainsClientDownloadInfo,
                              progressIndicator: ProgressIndicator): FrontendInstallation {
+    return downloadFrontendAndJdkImpl(sessionInfoResponse, progressIndicator, useEmbeddedClientIfAvailable = true)
+  }
+
+  @TestOnly
+  fun downloadFrontendAndJdk(sessionInfoResponse: JetBrainsClientDownloadInfo,
+                             progressIndicator: ProgressIndicator,
+                             useEmbeddedClientIfAvailable: Boolean): FrontendInstallation {
+    return downloadFrontendAndJdkImpl(sessionInfoResponse, progressIndicator, useEmbeddedClientIfAvailable)
+  }
+
+  private fun downloadFrontendAndJdkImpl(sessionInfoResponse: JetBrainsClientDownloadInfo,
+                                         progressIndicator: ProgressIndicator,
+                                         useEmbeddedClientIfAvailable: Boolean): FrontendInstallation {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
-    val embeddedClientLauncher = createEmbeddedClientLauncherIfAvailable(sessionInfoResponse.clientBuildNumber)
-    if (embeddedClientLauncher != null) {
-      return EmbeddedFrontendInstallation(embeddedClientLauncher)
+    if (useEmbeddedClientIfAvailable) {
+      val embeddedClientLauncher = createEmbeddedClientLauncherIfAvailable(sessionInfoResponse.clientBuildNumber)
+      if (embeddedClientLauncher != null) {
+        return EmbeddedFrontendInstallation(embeddedClientLauncher)
+      }
     }
 
     val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()

@@ -11,7 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.UUID
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)

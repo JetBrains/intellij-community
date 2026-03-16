@@ -12,7 +12,7 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.util.Arrays;
 import java.util.List;
 

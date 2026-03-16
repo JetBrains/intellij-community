@@ -5,13 +5,21 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.typeann.TargetInfo;
 import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotation;
-import org.jetbrains.java.decompiler.struct.attr.*;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTypeTableAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructTypeAnnotationAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.gen.Type;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 

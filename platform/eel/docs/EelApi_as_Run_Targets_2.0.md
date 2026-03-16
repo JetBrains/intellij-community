@@ -18,11 +18,11 @@ EelApi aims to unify the local and remote worlds, ensuring that the user experie
 
 ### Performance
 
-EelApi provides significant performance improvements compared to traditional approaches:
+EelApi provides performance optimizations compared to traditional approaches:
 
-- **Faster File System Access**: When working with WSL, EelApi is 30% faster than using the Windows file system API
-- **No Freezes**: Eliminates the freezes that often occur when working with remote file systems
-- **Reduced Latency**: Optimized file operations reduce the latency when reading and writing files
+- **Optimized File System Access**: Direct access to remote file systems bypasses slower protocols (e.g., 9P for WSL)
+- **Lower Latency**: Specialized operations reduce the number of round-trips needed for file operations
+- **Efficient I/O**: Uses optimized buffer sizes and batching for better throughput
 
 ### Simplified Integration
 

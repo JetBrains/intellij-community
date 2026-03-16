@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.plugins.marketplace.ModuleDependency;
+import com.intellij.ide.plugins.marketplace.PluginContentModule;
+import com.intellij.ide.plugins.marketplace.PluginModule;
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource;
@@ -12,7 +15,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public final class PluginNode implements IdeaPluginDescriptor {
   private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
@@ -74,6 +83,10 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   private FUSEventSource installSource;
 
+  private List<PluginContentModule> contentModules = Collections.emptyList();
+  private List<PluginModule> modules = Collections.emptyList();
+  private List<ModuleDependency> moduleDependencies = Collections.emptyList();
+
   public PluginNode(@NotNull PluginId id) {
     this.id = id;
   }
@@ -107,22 +120,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public void setIsPaid(boolean isPaid) {
     this.isPaid = isPaid;
-  }
-
-  /**
-   * @deprecated Use {@link #getDefaultTrialPeriod()}
-   */
-  @Deprecated(forRemoval = true)
-  public @Nullable Integer getTrialPeriod() {
-    return defaultTrialPeriod;
-  }
-
-  /**
-   * @deprecated Use {@link #setDefaultTrialPeriod(Integer)}}
-   */
-  @Deprecated(forRemoval = true)
-  public void setTrialPeriod(@Nullable Integer trialPeriod) {
-    this.defaultTrialPeriod = trialPeriod;
   }
 
   public @Nullable Integer getDefaultTrialPeriod() {
@@ -677,6 +674,36 @@ public final class PluginNode implements IdeaPluginDescriptor {
   @ApiStatus.Internal
   public void setInstallSource(FUSEventSource installSource) {
     this.installSource = installSource;
+  }
+
+  @ApiStatus.Internal
+  public List<PluginContentModule> getContentModules() {
+    return contentModules;
+  }
+
+  @ApiStatus.Internal
+  public void setContentModules(List<PluginContentModule> contentModules) {
+    this.contentModules = contentModules != null ? contentModules : Collections.emptyList();
+  }
+
+  @ApiStatus.Internal
+  public List<PluginModule> getModules() {
+    return modules;
+  }
+
+  @ApiStatus.Internal
+  public void setModules(List<PluginModule> modules) {
+    this.modules = modules != null ? modules : Collections.emptyList();
+  }
+
+  @ApiStatus.Internal
+  public List<ModuleDependency> getModuleDependencies() {
+    return moduleDependencies;
+  }
+
+  @ApiStatus.Internal
+  public void setModuleDependencies(List<ModuleDependency> moduleDependencies) {
+    this.moduleDependencies = moduleDependencies != null ? moduleDependencies : Collections.emptyList();
   }
 
   @Override

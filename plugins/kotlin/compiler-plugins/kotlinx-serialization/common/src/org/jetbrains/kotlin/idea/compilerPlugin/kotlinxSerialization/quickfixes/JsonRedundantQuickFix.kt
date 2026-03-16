@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationBundle
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
@@ -41,7 +40,7 @@ internal class JsonRedundantQuickFix(expression: KtCallExpression) : KotlinQuick
 
     override fun getFamilyName(): String = text
 
-    override fun getText(): String = KotlinSerializationBundle.message("extract.json.to.property")
+    override fun getText(): String = KotlinBundle.message("extract.json.to.property")
 
     object Factory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {

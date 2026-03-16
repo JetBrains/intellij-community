@@ -19,7 +19,12 @@ import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.indexing
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.jacksonMapper
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.oldVersionIndexingDiagnosticDir
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup.IndexingActivityType
-import com.intellij.util.indexing.diagnostic.dto.*
+import com.intellij.util.indexing.diagnostic.dto.JsonIndexDiagnosticAppInfo
+import com.intellij.util.indexing.diagnostic.dto.JsonIndexingActivityDiagnostic
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectDumbIndexingHistory
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectIndexingActivityHistory
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistory
+import com.intellij.util.indexing.diagnostic.dto.JsonRuntimeInfo
 import com.intellij.util.indexing.diagnostic.presentation.createAggregateActivityHtml
 import com.intellij.util.indexing.diagnostic.presentation.generateHtml
 import com.intellij.util.io.createDirectories
@@ -35,7 +40,11 @@ import java.nio.file.Path
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
-import kotlin.io.path.*
+import kotlin.io.path.bufferedReader
+import kotlin.io.path.bufferedWriter
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.nameWithoutExtension
 import kotlin.math.min
 import kotlin.streams.asSequence
 

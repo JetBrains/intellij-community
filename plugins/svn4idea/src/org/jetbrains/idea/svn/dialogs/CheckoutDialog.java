@@ -6,7 +6,7 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 
-import javax.swing.*;
+import javax.swing.Action;
 
 public class CheckoutDialog extends RepositoryBrowserDialog {
   private final CheckoutProvider.Listener myListener;

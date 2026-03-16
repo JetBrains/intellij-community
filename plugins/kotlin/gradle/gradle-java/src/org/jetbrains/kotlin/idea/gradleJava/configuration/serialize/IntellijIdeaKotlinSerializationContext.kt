@@ -2,7 +2,10 @@
 package org.jetbrains.kotlin.idea.gradleJava.configuration.serialize
 
 import com.intellij.openapi.diagnostic.Logger
-import org.jetbrains.kotlin.gradle.idea.serialize.*
+import org.jetbrains.kotlin.gradle.idea.serialize.IdeaKotlinExtrasSerializationExtension
+import org.jetbrains.kotlin.gradle.idea.serialize.IdeaKotlinExtrasSerializer
+import org.jetbrains.kotlin.gradle.idea.serialize.IdeaKotlinSerializationContext
+import org.jetbrains.kotlin.gradle.idea.serialize.IdeaKotlinSerializationLogger
 import org.jetbrains.kotlin.idea.gradle.configuration.serialize.KotlinExtrasSerializationService
 import org.jetbrains.kotlin.tooling.core.Extras
 

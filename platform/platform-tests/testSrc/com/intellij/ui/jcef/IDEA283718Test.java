@@ -10,7 +10,9 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Tests IDEA-283718

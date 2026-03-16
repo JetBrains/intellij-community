@@ -5,7 +5,7 @@ import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
 

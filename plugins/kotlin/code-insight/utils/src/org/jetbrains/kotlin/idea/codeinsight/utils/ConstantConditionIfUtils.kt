@@ -8,7 +8,17 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.KtWhenExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespace
 
 @ApiStatus.Internal
 object ConstantConditionIfUtils {
@@ -66,18 +76,16 @@ object ConstantConditionIfUtils {
                 replaced(psiFactory.createExpressionByPattern("run $0", branch.text))
             }
             else -> {
-                val firstChildSibling = branch.firstChild.nextSibling
+                val firstChildSibling = branch.firstChild.getNextSiblingIgnoringWhitespace()
                 val lastChild = branch.lastChild
-                val replaced = if (firstChildSibling != lastChild) {
-                    if (keepBraces) {
-                        parent.addAfter(branch, this)
+                val replaced = if (keepBraces) {
+                    parent.addAfter(branch, this)
+                } else if (firstChildSibling != lastChild) {
+                    if (subjectVariable != null) {
+                        branch.addAfter(subjectVariable, branch.lBrace)
+                        parent.addAfter(psiFactory.createExpression("run ${branch.text}"), this)
                     } else {
-                        if (subjectVariable != null) {
-                            branch.addAfter(subjectVariable, branch.lBrace)
-                            parent.addAfter(psiFactory.createExpression("run ${branch.text}"), this)
-                        } else {
-                            parent.addRangeAfter(firstChildSibling, lastChild.prevSibling, this)
-                        }
+                        parent.addRangeAfter(firstChildSibling, lastChild.prevSibling, this)
                     }
                 } else {
                     null
@@ -90,7 +98,6 @@ object ConstantConditionIfUtils {
         return replaced
     }
 
-    // TODO Similar code is located in WhenWithOnlyElseInspection
     private fun KtExpression.hasNoSideEffects(): Boolean = when (this) {
         is KtStringTemplateExpression -> !hasInterpolation()
         is KtConstantExpression -> true

@@ -15,7 +15,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UQualifiedReferenceExpression;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UastUtils;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.util.List;

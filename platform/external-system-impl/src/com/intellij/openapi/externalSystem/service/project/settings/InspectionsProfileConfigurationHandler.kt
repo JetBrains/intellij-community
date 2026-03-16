@@ -10,7 +10,7 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 
-private class InspectionsProfileConfigurationHandler: ConfigurationHandler {
+internal class InspectionsProfileConfigurationHandler: ConfigurationHandler {
   override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
     if (configuration.find("inspections") !is List<*>) return
 

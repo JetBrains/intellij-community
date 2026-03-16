@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -18,7 +19,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 
 internal fun antToRegex(pattern: String): Regex {
   return pattern
-    .let { FileUtil.toSystemIndependentName(it) }
+    .let { FileUtilRt.toSystemIndependentName(it) }
     .let { FileUtil.convertAntToRegexp(it) }
     .let { Regex(it) }
 }

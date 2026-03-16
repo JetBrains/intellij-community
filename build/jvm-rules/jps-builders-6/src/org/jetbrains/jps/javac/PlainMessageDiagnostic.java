@@ -3,7 +3,8 @@ package org.jetbrains.jps.javac;
 
 import org.jetbrains.annotations.Nls;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.util.Locale;
 
 public class PlainMessageDiagnostic implements Diagnostic<JavaFileObject>{

@@ -22,8 +22,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.diff.tools.util.base.HighlightPolicy.*;
-import static com.intellij.diff.tools.util.base.IgnorePolicy.*;
+import static com.intellij.diff.tools.util.base.HighlightPolicy.BY_CHAR;
+import static com.intellij.diff.tools.util.base.HighlightPolicy.BY_LINE;
+import static com.intellij.diff.tools.util.base.HighlightPolicy.BY_WORD;
+import static com.intellij.diff.tools.util.base.HighlightPolicy.BY_WORD_SPLIT;
+import static com.intellij.diff.tools.util.base.HighlightPolicy.DO_NOT_HIGHLIGHT;
+import static com.intellij.diff.tools.util.base.IgnorePolicy.DEFAULT;
+import static com.intellij.diff.tools.util.base.IgnorePolicy.IGNORE_WHITESPACES;
+import static com.intellij.diff.tools.util.base.IgnorePolicy.IGNORE_WHITESPACES_CHUNKS;
+import static com.intellij.diff.tools.util.base.IgnorePolicy.TRIM_WHITESPACES;
 
 @ApiStatus.Internal
 public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implements TwosideTextDiffProvider {

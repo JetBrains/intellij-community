@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildData.productInfo
 
 import kotlinx.serialization.KSerializer
@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -35,6 +35,7 @@ class ProductInfoData private constructor(
   val productVendor: String? = null,
   @Serializable(with = LocalDateSerializer::class)
   val majorVersionReleaseDate: LocalDate? = null,
+  val minRequiredJavaVersion: Int? = null,
   val launch: List<ProductInfoLaunchData>,
   val customProperties: List<CustomProperty> = emptyList(),
   val bundledPlugins: List<String> = emptyList(),
@@ -43,8 +44,8 @@ class ProductInfoData private constructor(
   val flavors: List<ProductFlavorData> = emptyList(),
   
   // not used by the launcher; must be at the end
-  @ApiStatus.Internal
-  val layout: List<ProductInfoLayoutItem> = emptyList(),
+  @Internal
+  @JvmField val layout: List<ProductInfoLayoutItem> = emptyList(),
 ) {
   companion object {
     /**
@@ -52,8 +53,7 @@ class ProductInfoData private constructor(
      * Some properties that are nullable in the primary constructor are deliberately marked as not-null in this function to state that they
      * are required in the current version, and internal clients may rely on their presence.
      */
-    @ApiStatus.Internal
-    @JvmStatic
+    @Internal
     fun create(
       name: String,
       version: String,
@@ -65,6 +65,7 @@ class ProductInfoData private constructor(
       svgIconPath: String?,
       productVendor: String,
       majorVersionReleaseDate: LocalDate?,
+      minRequiredJavaVersion: Int?,
       launch: List<ProductInfoLaunchData>,
       customProperties: List<CustomProperty>,
       bundledPlugins: List<String>,
@@ -84,6 +85,7 @@ class ProductInfoData private constructor(
         svgIconPath = svgIconPath,
         productVendor = productVendor,
         majorVersionReleaseDate = majorVersionReleaseDate,
+        minRequiredJavaVersion = minRequiredJavaVersion,
         launch = launch,
         customProperties = customProperties,
         bundledPlugins = bundledPlugins,
@@ -97,7 +99,7 @@ class ProductInfoData private constructor(
 }
 
 @Serializable
-class ProductFlavorData @ApiStatus.Internal constructor(@JvmField val id: String)
+class ProductFlavorData @Internal constructor(@JvmField val id: String)
 
 /**
  * Describes 'launch' section in [product-info.json][ProductInfoData] file.
@@ -121,7 +123,7 @@ class ProductInfoLaunchData private constructor(
      * Some properties that are nullable in the primary constructor are deliberately marked as not-null in this function to state that they
      * are required in the current version, and internal clients may rely on their presence.
      */
-    @ApiStatus.Internal
+    @Internal
     @JvmStatic
     fun create(
       os: String,
@@ -145,38 +147,37 @@ class ProductInfoLaunchData private constructor(
         bootClassPathJarNames = bootClassPathJarNames,
         additionalJvmArguments = additionalJvmArguments,
         mainClass = mainClass,
-        customCommands = customCommands
+        customCommands = customCommands,
       )
     }
   }
 }
 
 @Serializable
-class CustomCommandLaunchData @ApiStatus.Internal constructor(
-  val commands: List<String>,
-  val vmOptionsFilePath: String? = null,
-  val bootClassPathJarNames: List<String> = emptyList(),
-  val additionalJvmArguments: List<String> = emptyList(),
-  val mainClass: String? = null,
-  val envVarBaseName: String? = null,
-  val dataDirectoryName: String? = null,
+@Suppress("unused")
+class CustomCommandLaunchData @Internal constructor(
+  @JvmField val commands: List<String>,
+  @JvmField val vmOptionsFilePath: String? = null,
+  @JvmField val bootClassPathJarNames: List<String> = emptyList(),
+  @JvmField val additionalJvmArguments: List<String> = emptyList(),
+  @JvmField val mainClass: String? = null,
+  @JvmField val envVarBaseName: String? = null,
+  @JvmField val dataDirectoryName: String? = null,
 )
 
 @Serializable
-class CustomProperty @ApiStatus.Internal constructor(
+class CustomProperty @Internal constructor(
   val key: String,
   val value: String,
 )
 
 @Serializer(forClass = LocalDate::class)
 private object LocalDateSerializer : KSerializer<LocalDate> {
-  private val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+  private val formatter = DateTimeFormatter.ofPattern(@Suppress("SpellCheckingInspection") "yyyyMMdd")
 
   override fun serialize(encoder: Encoder, value: LocalDate) {
     encoder.encodeString(value.format(formatter))
   }
 
-  override fun deserialize(decoder: Decoder): LocalDate {
-    return LocalDate.parse(decoder.decodeString(), formatter)
-  }
+  override fun deserialize(decoder: Decoder): LocalDate = LocalDate.parse(decoder.decodeString(), formatter)
 }

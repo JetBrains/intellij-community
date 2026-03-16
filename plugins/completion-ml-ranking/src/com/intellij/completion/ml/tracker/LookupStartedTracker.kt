@@ -5,9 +5,9 @@ package com.intellij.completion.ml.tracker
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupListener
-import com.intellij.completion.ml.util.CompletionUtil
 import com.intellij.completion.ml.personalization.UserFactorDescriptions
 import com.intellij.completion.ml.personalization.UserFactorStorage
+import com.intellij.completion.ml.util.CompletionUtil
 
 /**
  * @author Vitaliy.Bibaev

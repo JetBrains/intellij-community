@@ -14,7 +14,9 @@ internal interface MyServiceInterface
 internal class MyServiceImplementation1 : MyServiceInterface
 internal class MyServiceImplementation2 : MyServiceInterface
 
-internal object ThrowingInitializer : InstanceInitializer {
+internal class ThrowingInitializer(
+  override val overridable: Boolean = false
+) : InstanceInitializer {
 
   override val instanceClassName: String
     get() = "ThrowingInitializer.instanceClassName"
@@ -28,7 +30,10 @@ internal object ThrowingInitializer : InstanceInitializer {
   }
 }
 
-internal class ReadyInitializer(private val instance: MyServiceInterface) : InstanceInitializer {
+internal class ReadyInitializer(
+  private val instance: MyServiceInterface,
+  override val overridable: Boolean = false,
+) : InstanceInitializer {
 
   override val instanceClassName: String
     get() = instance.javaClass.name
@@ -46,6 +51,8 @@ internal class TestClassInstanceInitializer(
   private val clazz: Class<*>,
   private val resolver: DependencyResolver,
 ) : InstanceInitializer {
+
+  override val overridable: Boolean = false
 
   override val instanceClassName: String
     get() = clazz.name

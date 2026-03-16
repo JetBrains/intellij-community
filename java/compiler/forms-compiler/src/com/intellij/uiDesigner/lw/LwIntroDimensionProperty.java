@@ -3,7 +3,7 @@ package com.intellij.uiDesigner.lw;
 
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.Dimension;
 
 public final class LwIntroDimensionProperty extends LwIntrospectedProperty {
   LwIntroDimensionProperty(final String name) {

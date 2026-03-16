@@ -4,7 +4,7 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.readWrite
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance
-import java.util.*
+import java.util.BitSet
 
 internal class ReadBeforeWriteInstance(
   private val onlyFirst: Boolean

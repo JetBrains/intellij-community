@@ -2,6 +2,7 @@
 package com.intellij.ide;
 
 import com.intellij.core.CoreBundle;
+import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -20,7 +21,20 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiPackageStatement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -119,6 +133,8 @@ public final class JavaFilePasteProvider implements PasteProvider {
 
   @Override
   public boolean isPasteEnabled(final @NotNull DataContext dataContext) {
+    if (FileCopyPasteUtil.isFileListFlavorAvailable()) return false;
+
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || ideView == null || ideView.getDirectories().length == 0) {

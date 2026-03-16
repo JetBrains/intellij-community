@@ -40,7 +40,6 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//xml/xml-analysis-api:analysis",
     "//java/java-analysis-api:analysis",
-    "//plugins/kotlin/code-insight/intentions-shared:kotlin-code-insight-intentions-shared",
     "//plugins/kotlin/code-insight/utils",
     "@lib//:kotlinc-analysis-api-provided",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
@@ -53,10 +52,13 @@ jvm_library(
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/indices",
-    "//plugins/kotlin/uast/uast-kotlin-base",
+    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base",
     "//platform/lang-impl",
+    "//platform/lang-api:lang",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//platform/eel",
+    "//java/java-indexing-api:indexing",
+    "//java/openapi:java",
   ]
 )
 ### auto-generated section `build intellij.kotlin.devkit` end

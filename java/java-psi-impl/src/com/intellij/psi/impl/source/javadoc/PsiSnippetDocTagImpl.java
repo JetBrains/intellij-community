@@ -3,7 +3,12 @@ package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDocTokenType;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
@@ -38,7 +43,7 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
   @Override
   public PsiDocComment getContainingComment() {
     ASTNode scope = getTreeParent();
-    while (scope.getElementType() != JavaDocElementType.DOC_COMMENT) {
+    while (JavaDocElementType.DOC_COMMENT_TOKENS.contains(scope.getElementType())) {
       scope = scope.getTreeParent();
     }
     return (PsiDocComment)SourceTreeToPsiMap.treeElementToPsi(scope);

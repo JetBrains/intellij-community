@@ -1,11 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.junit5.eel.params.api
 
+import com.intellij.execution.target.EelTargetEnvironmentRequest
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.LocalEelApi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.opentest4j.TestAbortedException
 
 /**
  * Accept as an argument of your test, be sure to use [EelSource]
@@ -35,7 +36,4 @@ sealed interface EelHolder {
  * Consider using [EelHolder.eel] in a new code.
  */
 val EelHolder.target: TargetEnvironmentConfiguration?
-  get() = when (val t = type) {
-    is Docker, is Wsl -> t.target
-    Local -> null
-  }
+  get() = if (eel is LocalEelApi) null else EelTargetEnvironmentRequest.Configuration(eel)

@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 /** A problem found by a {@link TextChecker} in natural language text */
 public abstract class TextProblem {
@@ -67,6 +68,15 @@ public abstract class TextProblem {
     return highlightRanges;
   }
 
+  /** @return the ranges in the file to be highlighted, non-intersecting, sorted by the start offset ascending */
+  public @NotNull List<TextRange> getFileHighlightRanges() {
+    return this.highlightRanges.stream()
+      .map(range -> text.textRangeToFile(range))
+      .flatMap(range -> text.intersection(range).stream())
+      .filter(Predicate.not(TextRange::isEmpty))
+      .toList();
+  }
+
   /**
    * @return the range in {@link #getText()} used by the rule to perform the check.
    * By default, it's {@code null}, and then the whole sentence is considered to affect the rule results.
@@ -109,10 +119,18 @@ public abstract class TextProblem {
   }
 
   /**
-   * @return True if a problem isn't a grammar problem, but a style one.
-   * In this case it should be highlighted differently. {@link com.intellij.grazie.ide.TextProblemSeverities}
+   * @return True if a problem is a style problem.
+   * In this case it should be highlighted differently. {@link com.intellij.grazie.ide.TextProblemSeverities}.
    */
   public boolean isStyleLike() {
+    return false;
+  }
+
+  /**
+   * @return True if a problem is a spelling problem.
+   * In this case it should be highlighted differently. {@link com.intellij.spellchecker.SpellCheckerSeveritiesProvider}.
+   */
+  public boolean isSpellingProblem() {
     return false;
   }
 

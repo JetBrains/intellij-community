@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.analysis.AnalysisScope;
@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +23,13 @@ import org.junit.Assert;
 import java.io.CharArrayReader;
 import java.io.File;
 import java.io.StreamTokenizer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
 public final class InspectionTestUtil {
   private InspectionTestUtil() {
@@ -169,12 +174,12 @@ public final class InspectionTestUtil {
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null){
       Computable.PredefinedValueComputable<String> displayName = new Computable.PredefinedValueComputable<>(toolWrapper.getDisplayName());
-      HighlightDisplayKey.register(shortName, displayName, toolWrapper.getID());
+      HighlightDisplayKey.register(shortName, displayName, toolWrapper.getID(), null, toolWrapper);
     }
 
     globalContext.doInspections(scope);
     do {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
     while (!globalContext.isFinished());
   }

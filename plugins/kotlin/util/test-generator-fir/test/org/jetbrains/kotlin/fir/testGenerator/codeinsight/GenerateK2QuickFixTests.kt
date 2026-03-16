@@ -6,10 +6,14 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixM
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixTest
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelWithPostponedQuickFixMultiModuleTest
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractK2KDocUnresolvedReferenceTest
-import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.QUICKFIXES
+import org.jetbrains.kotlin.testGenerator.model.MutableTWorkspace
+import org.jetbrains.kotlin.testGenerator.model.Patterns
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
+import org.jetbrains.kotlin.testGenerator.model.model
+import org.jetbrains.kotlin.testGenerator.model.testClass
+import org.jetbrains.kotlin.testGenerator.model.testGroup
 
 internal fun MutableTWorkspace.generateK2FixTests() {
     val idea = "idea/tests/testData/"
@@ -88,6 +92,8 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/deprecatedJavaAnnotation", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/deprecatedSymbolUsage", pattern = pattern, isIgnored = false)
             model("$idea/quickfix/equalityNotApplicable", pattern = pattern)
+            model("$idea/quickfix/destructingShortForm", pattern = pattern)
+            model("$idea/quickfix/destructingNameMismatch", pattern = pattern)
             model("$idea/quickfix/explicitlyIgnoreReturnValue", pattern = pattern)
             model("$idea/quickfix/expressions", pattern = pattern)
             model("$idea/quickfix/final", pattern = pattern)
@@ -124,6 +130,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/moveToSealedParent", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/moveTypeAliasToTopLevel", pattern = pattern)
             model("$idea/quickfix/namedLambdaContextParameter", pattern = pattern)
+            model("$idea/quickfix/navigateToConflictingDeclaration", pattern = pattern)
             model("$idea/quickfix/nullables", pattern = pattern)
             model("$idea/quickfix/obsoleteKotlinJsPackages", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/optimizeImports", pattern = pattern, isIgnored = true)
@@ -142,6 +149,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/redundantModalityModifier", pattern = pattern)
             model("$idea/quickfix/redundantSuspend", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/redundantVisibilityModifier", pattern = pattern)
+            model("$idea/quickfix/removeRedundantCallsOfConversionMethods", pattern = pattern)
             model("$idea/quickfix/removeRedundantReturn", pattern = pattern)
             model("$idea/quickfix/removeAnnotation", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/removeArgument", pattern = pattern)
@@ -170,6 +178,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/replaceWithArrayCallInAnnotation", pattern = pattern)
             model("$idea/quickfix/replaceWithDotCall", pattern = pattern)
             model("$idea/quickfix/replaceWithSafeCall", pattern = pattern)
+            model("$idea/quickfix/returnInExpressionBody", pattern = pattern)
             model("$idea/quickfix/restrictedRetentionForExpressionAnnotation", pattern = pattern)
             model("$idea/quickfix/runBlockingInSuspendFunction", pattern = pattern)
             model("$idea/quickfix/addVarianceModifier", pattern = pattern)
@@ -209,6 +218,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/wrongLongSuffix", pattern = pattern)
             model("$idea/quickfix/yieldUnsupported", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/overridingIgnorableWithMustUse", pattern = pattern)
+            model("$idea/quickfix/replaceArrayEqualityOpWithArraysEquals", pattern = pattern)
         }
 
         testClass<AbstractHighLevelQuickFixMultiFileTest> {

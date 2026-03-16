@@ -3,7 +3,12 @@ package com.intellij.openapi.editor.textarea;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.CaretVisualAttributes;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
@@ -11,7 +16,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTextArea;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 

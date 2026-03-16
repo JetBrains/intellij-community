@@ -3,7 +3,11 @@ package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.SuspendManager;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -16,7 +20,12 @@ import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.OSProcessUtil;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -34,7 +43,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-import static junit.framework.TestCase.*;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNotNull;
+import static junit.framework.TestCase.assertTrue;
 
 public interface DebuggerMethods extends CompilerMethods {
   Logger getLogger();

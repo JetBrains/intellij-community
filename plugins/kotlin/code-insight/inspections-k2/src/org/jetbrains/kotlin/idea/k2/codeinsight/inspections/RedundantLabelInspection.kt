@@ -13,7 +13,13 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtLabeledExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtLoopExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 internal class RedundantLabelInspection : KotlinApplicableInspectionBase.Simple<KtLabeledExpression, Unit>() {
     override fun getProblemDescription(

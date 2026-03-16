@@ -18,9 +18,18 @@ import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.ast.PyAstNamedParameter;
 import com.jetbrains.python.ast.PyAstParameter;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyComprehensionElement;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyStubElementType;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
-import com.jetbrains.python.psi.stubs.*;
+import com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex;
+import com.jetbrains.python.psi.stubs.PyFileStub;
+import com.jetbrains.python.psi.stubs.PyLiteralKind;
+import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -109,7 +118,8 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
   }
 
   @Override
-  public @NotNull PyTargetExpressionStub deserialize(final @NotNull StubInputStream stream, final StubElement parentStub) throws IOException {
+  public @NotNull PyTargetExpressionStub deserialize(final @NotNull StubInputStream stream, final StubElement parentStub)
+    throws IOException {
     String name = stream.readNameString();
     String docString = stream.readUTFFast();
     if (docString.isEmpty()) {

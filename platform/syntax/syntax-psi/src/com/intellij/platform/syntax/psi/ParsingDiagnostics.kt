@@ -8,8 +8,8 @@ import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.psi.ParsingDiagnostics.ParserDiagnosticsHandler
-import kotlin.jvm.JvmName
 import org.jetbrains.annotations.ApiStatus
+import kotlin.time.measureTime
 
 @ApiStatus.Experimental
 fun registerParse(builder: PsiSyntaxBuilder, language: Language, parsingTimeNs: Long) {
@@ -23,6 +23,21 @@ fun registerParse(builder: SyntaxTreeBuilder, language: Language, parsingTimeNs:
     handler.registerParse(builder, language, parsingTimeNs)
   }
 }
+
+@ApiStatus.Experimental
+fun <T> registerParse(builder: PsiSyntaxBuilder, language: Language, parsingBlock: () -> T): T =
+  registerParse(builder.getSyntaxTreeBuilder(), language, parsingBlock)
+
+@ApiStatus.Experimental
+fun <T> registerParse(builder: SyntaxTreeBuilder, language: Language, parsingBlock: () -> T): T {
+  val result: T
+  val duration = measureTime {
+    result = parsingBlock()
+  }
+  registerParse(builder, language, duration.inWholeMilliseconds)
+  return result
+}
+
 
 @ApiStatus.Experimental
 fun registerLexing(language: Language, textLength: Long, lexingTimeNs: Long) {

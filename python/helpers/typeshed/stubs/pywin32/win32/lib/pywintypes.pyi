@@ -4,7 +4,7 @@ from _typeshed import Incomplete
 from collections.abc import Sequence
 from datetime import datetime
 from typing import ClassVar, Final, NoReturn, SupportsInt, overload
-from typing_extensions import Never, deprecated
+from typing_extensions import Never, deprecated, disjoint_base
 
 import _win32typing
 
@@ -16,8 +16,9 @@ class error(Exception):
 
 class com_error(Exception): ...
 
-class HANDLEType:
-    def __init__(self, *args: Never) -> NoReturn: ...
+@disjoint_base
+class HANDLEType:  # type: ignore[type-var]
+    def __new__(cls, *args: Never) -> NoReturn: ...
     @property
     def handle(self) -> int: ...
     def Close(self) -> None: ...

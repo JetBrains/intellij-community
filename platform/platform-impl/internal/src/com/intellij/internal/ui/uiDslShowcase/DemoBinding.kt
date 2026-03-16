@@ -3,7 +3,15 @@ package com.intellij.internal.ui.uiDslShowcase
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.bindIntText
+import com.intellij.ui.dsl.builder.bindIntValue
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.bindValue
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.util.Alarm
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font

@@ -5,9 +5,13 @@ import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiForStatement
 import com.intellij.psi.util.PsiTreeUtil
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskRuntimeContext
+import training.dsl.parseLessonSample
 import training.learn.course.KLesson
 
 class JavaStatementCompletionLesson

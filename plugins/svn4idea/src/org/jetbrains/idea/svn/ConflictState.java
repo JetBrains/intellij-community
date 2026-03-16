@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.join;

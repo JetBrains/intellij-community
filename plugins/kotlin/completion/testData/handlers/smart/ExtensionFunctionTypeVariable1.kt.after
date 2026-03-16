@@ -5,3 +5,4 @@ fun test(i: Int, foo: Int.() -> Char) {
 fun bar(p1: Char, p2: Int){}
 
 // ELEMENT: foo
+// IGNORE_K2

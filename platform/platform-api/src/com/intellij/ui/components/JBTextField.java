@@ -3,17 +3,24 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TextAccessor;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.SwingUndoUtil;
+import com.intellij.util.ui.TextLayoutUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.JTextField;
 import javax.swing.plaf.TextUI;
 import javax.swing.text.Document;
-import java.awt.*;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.Objects;
 

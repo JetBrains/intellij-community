@@ -9,10 +9,17 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.WindowRoundedCornersManager;
 import com.intellij.util.ui.JBValue;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicPopupMenuUI;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
 /**

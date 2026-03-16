@@ -4,7 +4,12 @@ package com.intellij.execution.ui;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.vmOptions.*;
+import com.intellij.execution.vmOptions.JdkOptionsData;
+import com.intellij.execution.vmOptions.VMOption;
+import com.intellij.execution.vmOptions.VMOptionKind;
+import com.intellij.execution.vmOptions.VMOptionVariant;
+import com.intellij.execution.vmOptions.VMOptionsService;
+import com.intellij.execution.vmOptions.VMOptionsServiceImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -15,7 +20,7 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestC
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;

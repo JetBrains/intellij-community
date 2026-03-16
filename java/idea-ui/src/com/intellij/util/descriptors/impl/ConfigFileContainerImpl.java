@@ -10,11 +10,22 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.descriptors.*;
+import com.intellij.util.descriptors.ConfigFile;
+import com.intellij.util.descriptors.ConfigFileContainer;
+import com.intellij.util.descriptors.ConfigFileInfo;
+import com.intellij.util.descriptors.ConfigFileInfoSet;
+import com.intellij.util.descriptors.ConfigFileListener;
+import com.intellij.util.descriptors.ConfigFileMetaData;
+import com.intellij.util.descriptors.ConfigFileMetaDataProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class ConfigFileContainerImpl extends SimpleModificationTracker implements ConfigFileContainer {
   private final Project project;

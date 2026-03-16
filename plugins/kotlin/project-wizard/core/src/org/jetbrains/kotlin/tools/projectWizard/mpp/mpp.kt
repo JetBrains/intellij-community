@@ -2,7 +2,13 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.mpp
 
-import org.jetbrains.kotlin.tools.projectWizard.core.*
+import org.jetbrains.kotlin.tools.projectWizard.core.Defaults
+import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
+import org.jetbrains.kotlin.tools.projectWizard.core.Writer
+import org.jetbrains.kotlin.tools.projectWizard.core.compute
+import org.jetbrains.kotlin.tools.projectWizard.core.div
+import org.jetbrains.kotlin.tools.projectWizard.core.mapSequenceIgnore
+import org.jetbrains.kotlin.tools.projectWizard.core.safeAs
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.SimpleTargetConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.inContextOfModuleConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
@@ -14,7 +20,7 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetTy
 import org.jetbrains.kotlin.tools.projectWizard.templates.FileDescriptor
 import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplate
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
 
 @DslMarker
 annotation class ExpectFileDSL

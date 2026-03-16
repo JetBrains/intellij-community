@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.createSmartPointer
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.usageView.UsageViewTypeLocation
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -42,8 +43,8 @@ import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtTypeElement
 import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -52,6 +53,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.utils.keysToMap
 
+@K1Deprecation
 object KotlinIntroduceTypeParameterHandler : RefactoringActionHandler {
     @NlsContexts.DialogTitle
     @JvmField
@@ -73,7 +75,7 @@ object KotlinIntroduceTypeParameterHandler : RefactoringActionHandler {
     fun doInvoke(project: Project, editor: Editor, elements: List<PsiElement>, targetParent: PsiElement) {
         val targetOwner = targetParent as KtTypeParameterListOwner
         val typeElementToExtract =
-            elements.singleOrNull() as? KtTypeElement ?: return showErrorHint(
+            (elements.singleOrNull() as? KtTypeReference)?.typeElement ?: return showErrorHint(
                 project,
                 editor,
                 KotlinBundle.message("error.text.no.type.to.refactor"),
@@ -179,6 +181,7 @@ object KotlinIntroduceTypeParameterHandler : RefactoringActionHandler {
     }
 }
 
+@K1Deprecation
 class IntroduceTypeParameterAction : AbstractIntroduceAction() {
     override fun getRefactoringHandler(provider: RefactoringSupportProvider): RefactoringActionHandler? =
         (provider as? KotlinRefactoringSupportProvider)?.getIntroduceTypeParameterHandler()

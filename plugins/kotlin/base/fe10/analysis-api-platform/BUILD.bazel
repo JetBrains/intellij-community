@@ -11,6 +11,7 @@ create_kotlinc_options(
     "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
     "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+    "org.jetbrains.kotlin.K1Deprecation",
   ]
 )
 

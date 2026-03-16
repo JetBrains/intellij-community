@@ -1,7 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.ChildAttributes;
+import com.intellij.formatting.FormattingMode;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Wrap;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
@@ -100,7 +105,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
 
   private void processHeadCommentsAndWhiteSpaces(@NotNull List<? super Block> result) {
     while (myCurrentChild != null) {
-      if (StdTokenSets.COMMENT_BIT_SET.contains(myCurrentChild.getElementType()) || myCurrentChild.getElementType() == JavaDocElementType.DOC_COMMENT) {
+      if (StdTokenSets.COMMENT_BIT_SET.contains(myCurrentChild.getElementType()) || JavaDocElementType.DOC_COMMENT_TOKENS.contains(myCurrentChild.getElementType())) {
         Block commentBlock = createJavaBlock(
           myCurrentChild,
           mySettings, myJavaSettings,

@@ -9,7 +9,7 @@ fun String.offset8to16(offset: Int): Int {
   }
   var utf8Offset = offset
   var utf16Offset = 0
-  for (c in codepoints(0)) {
+  forEachCodepoint { c ->
     val codePoint = c.codepoint
     utf8Offset -= when {
       codePoint < 128 -> 1
@@ -23,7 +23,9 @@ fun String.offset8to16(offset: Int): Int {
     // meaning we'll have one extra utf-16 code unit for every code point in this range.
     if (codePoint >= 65536) utf16Offset += 1
 
-    if (utf8Offset <= 0) break
+    if (utf8Offset <= 0) {
+      return utf16Offset
+    }
   }
 
   return utf16Offset

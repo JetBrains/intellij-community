@@ -9,7 +9,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public final class PathMacroConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   public static final @NonNls String HELP_ID = "preferences.pathVariables";

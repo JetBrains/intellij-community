@@ -20,6 +20,7 @@ jvm_library(
   resources = [":impl_resources"],
   kotlinc_opts = "@community//:k8",
   deps = [
+    "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",
     "@lib//:kotlin-tooling-core",
@@ -30,6 +31,9 @@ jvm_library(
     "//plugins/kotlin/base/project-model",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "@lib//:opentelemetry",
+    "@lib//:jspecify-provided",
+    "@lib//:gradle",
     ":platform_extensions_provided",
   ]
 )
@@ -41,6 +45,7 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   associates = [":impl"],
   deps = [
+    "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",
     "@lib//:kotlin-tooling-core",
@@ -54,6 +59,9 @@ jvm_library(
     "@lib//:junit4",
     "@lib//:kotlin-test-junit",
     "@lib//:kotlin-test",
+    "@lib//:opentelemetry",
+    "@lib//:jspecify-provided",
+    "@lib//:gradle",
     ":platform_extensions_provided",
   ]
 )

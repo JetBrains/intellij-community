@@ -2,10 +2,15 @@
 
 package org.jetbrains.kotlin.idea.refactoring.pushDown
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.classMembers.*
+import com.intellij.refactoring.classMembers.ANDCombinedMemberInfoModel
+import com.intellij.refactoring.classMembers.DelegatingMemberInfoModel
+import com.intellij.refactoring.classMembers.MemberInfoChange
+import com.intellij.refactoring.classMembers.MemberInfoModel
+import com.intellij.refactoring.classMembers.UsedByDependencyMemberInfoModel
 import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.util.ui.JBUI
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
@@ -82,13 +87,13 @@ class KotlinPushDownDialog(
         ) {
             override fun isFixedAbstract(member: KotlinMemberInfo?) = null
 
-            override fun isAbstractEnabled(memberInfo: KotlinMemberInfo): Boolean {
+            override fun isAbstractEnabled(memberInfo: KotlinMemberInfo): Boolean = runReadAction {
                 val member = memberInfo.member
                 if (member.hasModifier(KtTokens.INLINE_KEYWORD) ||
                     member.hasModifier(KtTokens.EXTERNAL_KEYWORD) ||
                     member.hasModifier(KtTokens.LATEINIT_KEYWORD)
-                ) return false
-                return member is KtNamedFunction || member is KtProperty
+                ) return@runReadAction false
+                member is KtNamedFunction || member is KtProperty
             }
         }
         memberInfoModel!!.memberInfoChanged(MemberInfoChange(memberInfos))

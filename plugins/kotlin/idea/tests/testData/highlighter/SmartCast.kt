@@ -5,9 +5,9 @@ fun <symbolName textAttributesKey="KOTLIN_CLASS">My</symbolName>?.<symbolName te
     if (this == null) return 42
     if (<symbolName textAttributesKey="KOTLIN_INSTANCE_PROPERTY"><symbolName textAttributesKey="KOTLIN_SMART_CAST_RECEIVER">x</symbolName></symbolName> == null) {
         if (<warning textAttributesKey="WARNING_ATTRIBUTES"><symbolName textAttributesKey="KOTLIN_INSTANCE_PROPERTY"><symbolName textAttributesKey="KOTLIN_SMART_CONSTANT"><symbolName textAttributesKey="KOTLIN_SMART_CAST_RECEIVER">x</symbolName></symbolName></symbolName> != null</warning>) {
-            <warning textAttributesKey="WARNING_ATTRIBUTES">return</warning> <symbolName textAttributesKey="KOTLIN_INSTANCE_PROPERTY"><symbolName textAttributesKey="KOTLIN_SMART_CAST_RECEIVER"><symbolName textAttributesKey="KOTLIN_SMART_CAST_VALUE">x</symbolName></symbolName></symbolName>
+            <warning textAttributesKey="WARNING_ATTRIBUTES">return</warning> <info descr="Smart cast to kotlin.Nothing" textAttributesKey="KOTLIN_SMART_CAST_VALUE"><symbolName textAttributesKey="KOTLIN_INSTANCE_PROPERTY"><symbolName textAttributesKey="KOTLIN_SMART_CAST_RECEIVER">x</symbolName></symbolName></info>
         }
         return 13
     }
-    return <symbolName textAttributesKey="KOTLIN_INSTANCE_PROPERTY"><symbolName textAttributesKey="KOTLIN_SMART_CAST_RECEIVER"><symbolName textAttributesKey="KOTLIN_SMART_CAST_VALUE">x</symbolName></symbolName></symbolName>
+    return <info descr="Smart cast to kotlin.Int" textAttributesKey="KOTLIN_SMART_CAST_VALUE"><symbolName descr="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY"><symbolName descr="Extension implicit receiver smart cast to My" textAttributesKey="KOTLIN_SMART_CAST_RECEIVER">x</symbolName></symbolName></info>
 }

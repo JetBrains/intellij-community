@@ -32,7 +32,11 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBSwingUtilities
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
 

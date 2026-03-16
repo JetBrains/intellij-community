@@ -5,10 +5,26 @@ package com.intellij.ui;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
 
-import static java.awt.Cursor.*;
+import static java.awt.Cursor.CUSTOM_CURSOR;
+import static java.awt.Cursor.DEFAULT_CURSOR;
+import static java.awt.Cursor.E_RESIZE_CURSOR;
+import static java.awt.Cursor.NE_RESIZE_CURSOR;
+import static java.awt.Cursor.NW_RESIZE_CURSOR;
+import static java.awt.Cursor.N_RESIZE_CURSOR;
+import static java.awt.Cursor.SE_RESIZE_CURSOR;
+import static java.awt.Cursor.SW_RESIZE_CURSOR;
+import static java.awt.Cursor.S_RESIZE_CURSOR;
+import static java.awt.Cursor.W_RESIZE_CURSOR;
 import static javax.swing.SwingUtilities.convertPointFromScreen;
 
 public class WindowResizeListener extends WindowMouseListener {
@@ -87,8 +103,8 @@ public class WindowResizeListener extends WindowMouseListener {
     if (myCorner != null && right < myCorner.getIconWidth() && bottom < myCorner.getIconHeight()) {
       return DEFAULT_CURSOR;
     }
-    Insets expected = getResizeBorder(view);
-    if (expected != null) {
+    Insets resizeArea = getResizeBorder(view);
+    if (resizeArea != null) {
       if (view instanceof Frame) {
         int state = ((Frame)view).getExtendedState();
         if (isStateSet(Frame.MAXIMIZED_HORIZ, state)) {
@@ -101,28 +117,7 @@ public class WindowResizeListener extends WindowMouseListener {
         }
       }
 
-      // Wayland doesn't allow to change window's location programmatically,
-      // so resizing from top/left shall be forbidden for now.
-      if (!isWayland && top < expected.top) {
-        if (left < expected.left * 2) return NW_RESIZE_CURSOR;
-        if (right < expected.right * 2) return NE_RESIZE_CURSOR;
-        return N_RESIZE_CURSOR;
-      }
-      if (bottom < expected.bottom) {
-        if (!isWayland && left < expected.left * 2) return SW_RESIZE_CURSOR;
-        if (right < expected.right * 2) return SE_RESIZE_CURSOR;
-        return S_RESIZE_CURSOR;
-      }
-      if (!isWayland && left < expected.left) {
-        if (top < expected.top * 2 ) return NW_RESIZE_CURSOR;
-        if (bottom < expected.bottom * 2) return SW_RESIZE_CURSOR;
-        return W_RESIZE_CURSOR;
-      }
-      if (right < expected.right) {
-        if (!isWayland && top < expected.top * 2) return NE_RESIZE_CURSOR;
-        if (bottom < expected.bottom * 2) return SE_RESIZE_CURSOR;
-        return E_RESIZE_CURSOR;
-      }
+      return support.getResizeCursor(top, left, bottom, right, resizeArea);
     }
     return CUSTOM_CURSOR;
   }
@@ -130,6 +125,7 @@ public class WindowResizeListener extends WindowMouseListener {
   @Override
   void updateBounds(Rectangle bounds, Component view, int dx, int dy) {
     Dimension minimum = view.getMinimumSize();
+    var myCursorType = getCursorType();
     if (myCursorType == NE_RESIZE_CURSOR || myCursorType == E_RESIZE_CURSOR || myCursorType == SE_RESIZE_CURSOR || myCursorType == DEFAULT_CURSOR) {
       bounds.width += fixMinSize(dx, bounds.width, minimum.width);
     }

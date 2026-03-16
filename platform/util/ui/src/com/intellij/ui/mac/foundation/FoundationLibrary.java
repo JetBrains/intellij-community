@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.foundation;
 
-import com.sun.jna.*;
+import com.sun.jna.Callback;
+import com.sun.jna.Library;
+import com.sun.jna.Pointer;
 
 public interface FoundationLibrary extends Library {
   void NSLog(Pointer pString, Object thing);

@@ -16,7 +16,11 @@
 package org.jetbrains.jps.model.ex;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementChildRole;
+import org.jetbrains.jps.model.JpsElementCollection;
+import org.jetbrains.jps.model.JpsNamedElement;
+import org.jetbrains.jps.model.JpsNamedElementCollection;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 public abstract class JpsExElementFactory {

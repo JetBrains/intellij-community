@@ -4,8 +4,13 @@ package org.jetbrains.plugins.gradle.tooling;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetJavaVersion;
+import org.jetbrains.plugins.gradle.tooling.jvm.GradleBrokenJvmSerialisationVersionRestriction;
+import org.jetbrains.plugins.gradle.tooling.jvm.GradleToolingApi9VersionRestriction;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TargetJavaVersionWatcher extends TestWatcher {
 
@@ -17,7 +22,13 @@ public class TargetJavaVersionWatcher extends TestWatcher {
   }
 
   public TargetJavaVersionWatcher(@Nullable JavaVersionRestriction restriction) {
-    myRestriction = restriction;
+    List<JavaVersionRestriction> effectiveRestrictions = new ArrayList<>();
+    effectiveRestrictions.add(new GradleToolingApi9VersionRestriction());
+    effectiveRestrictions.add(new GradleBrokenJvmSerialisationVersionRestriction());
+    if (restriction != null) {
+      effectiveRestrictions.add(restriction);
+    }
+    myRestriction = JavaVersionRestriction.compositeOf(effectiveRestrictions);
   }
 
   public @NotNull JavaVersionRestriction getRestriction() {

@@ -1,7 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
-import com.intellij.lang.jvm.*
+import com.intellij.lang.jvm.JvmAnnotation
+import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmClassKind
+import com.intellij.lang.jvm.JvmField
+import com.intellij.lang.jvm.JvmMethod
+import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.JvmTypeParameter
 import com.intellij.lang.jvm.types.JvmReferenceType
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.KtClassOrObject

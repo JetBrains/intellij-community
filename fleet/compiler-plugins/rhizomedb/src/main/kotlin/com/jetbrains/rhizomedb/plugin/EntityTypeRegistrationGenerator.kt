@@ -175,7 +175,13 @@ private class EntityTypeRegistrationGeneratorImpl(
    */
   private fun addEagerInitializedProperty(moduleName: String, file: IrFile, targetClass: IrClass) {
     val registerProviderFunction = funByName("registerEntityTypeProvider", RHIZOMEDB_FQN_IMPL)
-    val eagerAnnotation = classByName("EagerInitialization", FqName("kotlin"))
+    val eagerAnnotation = if (isWasmTarget()) {
+      classByName("EagerInitialization", FqName("kotlin"))
+    } else if (isIosTarget()) {
+      classByName("EagerInitialization", FqName("kotlin.native"))
+    } else {
+      throw IllegalStateException("EagerInitialization annotation is not supported for this target")
+    }
 
     with(pluginContext.irFactory) {
       // private val MyEntityTypeRegisterToken

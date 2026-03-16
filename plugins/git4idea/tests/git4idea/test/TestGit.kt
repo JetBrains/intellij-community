@@ -6,7 +6,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.branch.GitRebaseParams
-import git4idea.commands.*
+import git4idea.commands.GitCommandResult
+import git4idea.commands.GitImpl
+import git4idea.commands.GitLineHandler
+import git4idea.commands.GitLineHandlerListener
+import git4idea.commands.GitRebaseCommandResult
 import git4idea.push.GitPushParams
 import git4idea.rebase.GitInteractiveRebaseEditorHandler
 import git4idea.rebase.GitRebaseEditorHandler

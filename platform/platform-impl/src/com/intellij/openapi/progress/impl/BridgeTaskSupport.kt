@@ -12,7 +12,12 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.reportRawProgress
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * [BridgeTaskSupport] operates as a bridge between [ProgressIndicatorEx] and [PlatformTaskSupport],

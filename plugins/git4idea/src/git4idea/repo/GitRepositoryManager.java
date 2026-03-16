@@ -26,6 +26,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
+import com.intellij.openapi.application.ApplicationManager;
+
 import static com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher;
 
 @Service(Service.Level.PROJECT)
@@ -42,6 +44,8 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
     super(project, GitVcs.getKey(), GitUtil.DOT_GIT);
 
     AsyncVfsEventsPostProcessor.getInstance().addListener(new GitUntrackedDirtyScopeListener(this), coroutineScope);
+    ApplicationManager.getApplication().getMessageBus().connect(coroutineScope)
+      .subscribe(GitRepositoryUpdateListener.TOPIC, new GitWorktreeUpdateListener(project));
   }
 
   public static @NotNull GitRepositoryManager getInstance(@NotNull Project project) {
@@ -86,6 +90,8 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
     myUpdateExecutor.execute(() -> {
       if (!Disposer.isDisposed(repository)) {
         syncPublisher(repository.getProject(), GitRepository.GIT_REPO_CHANGE).repositoryChanged(repository);
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(GitRepositoryUpdateListener.TOPIC)
+          .repositoryUpdated(repository.getProject(), repository.getRoot());
 
         if (previousInfo != null) {
           syncPublisher(repository.getProject(), GitRepository.GIT_REPO_STATE_CHANGE).repositoryChanged(repository, previousInfo, info);

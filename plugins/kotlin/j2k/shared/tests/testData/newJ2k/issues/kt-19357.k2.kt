@@ -17,7 +17,7 @@ class TestPackagePrivateFieldInit {
             val hstart = h.start.hashCode()
             val hend = h.end.hashCode()
             val s = start.hashCode()
-            val e = if (end == null) Int.Companion.MAX_VALUE else end.hashCode()
+            val e = if (end == null) Int.MAX_VALUE else end.hashCode()
             if (s < hend && e > hstart) {
                 if (s <= hstart) {
                     if (e >= hend) {

@@ -2,7 +2,11 @@
 package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.BackDependencyIndex;
+import org.jetbrains.jps.dependency.Delta;
+import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.util.Iterators;
 
 import java.util.Collections;

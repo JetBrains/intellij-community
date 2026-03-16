@@ -11,3 +11,5 @@ fun foo(): X {
 
 // ABSENT: f
 // EXIST: { lookupString:"g", itemText:"X.g", tailText:"() (<root>)" }
+
+// IGNORE_K2

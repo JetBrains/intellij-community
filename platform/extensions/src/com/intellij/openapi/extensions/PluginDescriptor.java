@@ -16,9 +16,18 @@ import java.util.Date;
 public interface PluginDescriptor {
   @NotNull PluginId getPluginId();
 
+  /**
+   * @return a configured classloader instance for this plugin (or content module, hereinafter - module)
+   *  that can load classes of module's dependencies and module's own classes;
+   *  {@code null} if the module is not loaded in the application.
+   */
   @Nullable ClassLoader getPluginClassLoader();
 
+  /**
+   * @deprecated use {@link #getPluginClassLoader} instead
+   */
   @ApiStatus.Experimental
+  @Deprecated
   default @NotNull ClassLoader getClassLoader() {
     ClassLoader classLoader = getPluginClassLoader();
     return classLoader == null ? getClass().getClassLoader() : classLoader;

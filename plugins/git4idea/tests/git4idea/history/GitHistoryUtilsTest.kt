@@ -1,14 +1,26 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.Executor.mkdir
+import com.intellij.openapi.vcs.Executor.overwrite
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.util.Consumer
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.GitRevisionNumber
-import git4idea.test.*
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.addCommit
+import git4idea.test.checkout
+import git4idea.test.checkoutNew
+import git4idea.test.commit
+import git4idea.test.createSubRepository
+import git4idea.test.last
+import git4idea.test.lastAuthorTime
+import git4idea.test.log
+import git4idea.test.mv
 import junit.framework.TestCase
 import java.io.File
-import java.util.*
+import java.util.Date
 
 /**
  * Tests for low-level history methods in GitHistoryUtils.

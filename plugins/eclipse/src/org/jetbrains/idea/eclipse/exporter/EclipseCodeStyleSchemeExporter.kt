@@ -5,7 +5,16 @@ import com.intellij.openapi.options.SchemeExporter
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleScheme
 import org.jetbrains.idea.eclipse.codeStyleMapping.buildEclipseCodeStyleMappingTo
-import org.jetbrains.idea.eclipse.importer.EclipseXmlProfileElements.*
+import org.jetbrains.idea.eclipse.importer.EclipseXmlProfileElements.ID_ATTR
+import org.jetbrains.idea.eclipse.importer.EclipseXmlProfileElements.NAME_ATTR
+import org.jetbrains.idea.eclipse.importer.EclipseXmlProfileElements.PROFILES_TAG
+import org.jetbrains.idea.eclipse.importer.EclipseXmlProfileElements.PROFILE_KIND_ATTR
+import org.jetbrains.idea.eclipse.importer.EclipseXmlProfileElements.PROFILE_KIND_VALUE
+import org.jetbrains.idea.eclipse.importer.EclipseXmlProfileElements.PROFILE_TAG
+import org.jetbrains.idea.eclipse.importer.EclipseXmlProfileElements.SETTING_TAG
+import org.jetbrains.idea.eclipse.importer.EclipseXmlProfileElements.VALUE_ATTR
+import org.jetbrains.idea.eclipse.importer.EclipseXmlProfileElements.VERSION_ATTR
+import org.jetbrains.idea.eclipse.importer.EclipseXmlProfileElements.VERSION_VALUE
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets
 import javax.xml.stream.XMLOutputFactory

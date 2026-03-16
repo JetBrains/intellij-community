@@ -1,4 +1,5 @@
 import re
+from _typeshed import Incomplete
 from collections.abc import Iterable
 from typing_extensions import deprecated
 
@@ -19,7 +20,7 @@ allowed_content_types: frozenset[str]
 data_content_type: re.Pattern[str]
 
 @deprecated("html5lib's sanitizer is deprecated; see https://github.com/html5lib/html5lib-python/issues/443")
-class Filter(base.Filter):
+class Filter(base.Filter[dict[str, Incomplete]]):
     allowed_elements: Iterable[tuple[str | None, str]]
     allowed_attributes: Iterable[tuple[str | None, str]]
     allowed_css_properties: Iterable[str]
@@ -32,7 +33,7 @@ class Filter(base.Filter):
     svg_allow_local_href: Iterable[tuple[str | None, str]]
     def __init__(
         self,
-        source,
+        source: Iterable[dict[str, Incomplete]],
         allowed_elements: Iterable[tuple[str | None, str]] = ...,
         allowed_attributes: Iterable[tuple[str | None, str]] = ...,
         allowed_css_properties: Iterable[str] = ...,
@@ -44,8 +45,7 @@ class Filter(base.Filter):
         svg_attr_val_allows_ref: Iterable[tuple[str | None, str]] = ...,
         svg_allow_local_href: Iterable[tuple[str | None, str]] = ...,
     ) -> None: ...
-    def __iter__(self): ...
-    def sanitize_token(self, token): ...
-    def allowed_token(self, token): ...
-    def disallowed_token(self, token): ...
+    def sanitize_token(self, token: dict[str, Incomplete]) -> dict[str, Incomplete] | None: ...
+    def allowed_token(self, token: dict[str, Incomplete]) -> dict[str, Incomplete]: ...
+    def disallowed_token(self, token: dict[str, Incomplete]) -> dict[str, Incomplete]: ...
     def sanitize_css(self, style: str) -> str: ...

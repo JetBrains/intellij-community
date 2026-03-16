@@ -4,38 +4,52 @@ package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModPsiNavigator;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.name.ClassId;
 import org.jetbrains.kotlin.psi.KtElement;
 import org.jetbrains.kotlin.psi.KtFinallySection;
 import org.jetbrains.kotlin.psi.KtTryExpression;
 
+import java.util.List;
+
 public class KotlinTryFinallySurrounder extends KotlinTrySurrounderBase<KtFinallySection> {
 
     @Override
-    protected String getCodeTemplate() {
+    protected String getCodeTemplate(List<ClassId> exceptionClasses) {
         return "try { \n} finally {\n\n}";
     }
 
     @Override
-    protected void applyNavigation(@NotNull ActionContext context, @NotNull ModPsiNavigator navigator, KtFinallySection element) {
+    protected void applyNavigation(@NotNull ActionContext context, @NotNull ModPsiUpdater navigator, KtFinallySection element) {
         moveCaretToBlockCenter(context, navigator, element.getFinalExpression());
     }
 
-    public static void moveCaretToBlockCenter(@NotNull ActionContext context, @NotNull ModPsiNavigator navigator, KtElement expression) {
+    public static void moveCaretToBlockCenter(@NotNull ActionContext context, @NotNull ModNavigator navigator, KtElement expression) {
         Project project = context.project();
+        // Here we create a smart pointer before formatting operations.
+        // doPostponedOperationsAndUnblockDocument invalidates expression due to applying formatting
+        // Smart pointers track elements across PSI mutations (including formatting) as long as the element
+        // is not completely removed or corrupted, so we can retrieve the valid element reference after formatting.
+        SmartPsiElementPointer<KtElement> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(expression);
         Document document = expression.getContainingFile().getFileDocument();
         PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
         psiDocumentManager.doPostponedOperationsAndUnblockDocument(document);
-        TextRange finallyBlockRange = expression.getTextRange();
-        int newLineOffset = finallyBlockRange.getStartOffset() + 2;
-        int offset = CodeStyleManager.getInstance(project).adjustLineIndent(document, newLineOffset);
-        navigator.select(TextRange.from(offset, 0));
+        KtElement element = pointer.getElement();
+        if (element != null) {
+            TextRange finallyBlockRange = element.getTextRange();
+            int newLineOffset = finallyBlockRange.getStartOffset() + 2;
+            int offset = CodeStyleManager.getInstance(project).adjustLineIndent(document, newLineOffset);
+            navigator.select(TextRange.from(offset, 0));
+        }
         psiDocumentManager.commitDocument(document);
     }
 

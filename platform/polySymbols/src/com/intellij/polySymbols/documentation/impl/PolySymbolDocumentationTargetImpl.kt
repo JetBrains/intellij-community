@@ -61,7 +61,7 @@ internal class PolySymbolDocumentationTargetImpl<T : PolySymbol>(
 
   override fun computeDocumentation(): DocumentationResult? =
     documentation.takeIf { it.isNotEmpty() }
-      ?.build(symbol.origin)
+      ?.build(provider::loadIcon)
 
   companion object {
     internal fun check(lambda: Any) {

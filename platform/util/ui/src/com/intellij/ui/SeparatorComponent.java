@@ -5,8 +5,11 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 public class SeparatorComponent extends JComponent {
   private int myVGap = 3;

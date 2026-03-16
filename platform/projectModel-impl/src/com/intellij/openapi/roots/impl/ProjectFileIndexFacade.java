@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
@@ -26,6 +27,14 @@ import java.util.Set;
 public class ProjectFileIndexFacade extends FileIndexFacade {
   private final ProjectFileIndex myFileIndex;
   private final WorkspaceFileIndexEx myWorkspaceFileIndex;
+
+  @NonInjectable
+  @ApiStatus.Internal
+  public ProjectFileIndexFacade(Project project, ProjectFileIndex projectFileIndex, WorkspaceFileIndexEx workspaceFileIndex) {
+    super(project);
+    myFileIndex = projectFileIndex;
+    myWorkspaceFileIndex = workspaceFileIndex;
+  }
 
   @ApiStatus.Internal
   public ProjectFileIndexFacade(@NotNull Project project) {
@@ -117,11 +126,11 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   @Override
   public boolean isInProjectScope(@NotNull VirtualFile file) {
     // optimization: equivalent to the super method but has fewer getInfoForFile() calls
-    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(file, true, true, true, true, false, false);
+    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(file, true, true, true, true, false, true, false);
     if (fileInfo instanceof WorkspaceFileInternalInfo.NonWorkspace) {
       return false;
     }
-    if (fileInfo.findFileSet(it -> it.getKind() == WorkspaceFileKind.EXTERNAL) != null && !myFileIndex.isInSourceContent(file)) {
+    if (fileInfo.findFileSet(it -> it.getKind() == WorkspaceFileKind.EXTERNAL || it.getKind() == WorkspaceFileKind.EXTERNAL_NON_INDEXABLE) != null && !myFileIndex.isInSourceContent(file)) {
       return false;
     }
     return true;

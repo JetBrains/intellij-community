@@ -5,7 +5,13 @@ import com.intellij.openapi.util.io.NioFiles
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
-import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.BaseLayout
+import org.jetbrains.intellij.build.impl.JarPackager
+import org.jetbrains.intellij.build.impl.LibraryPackMode
+import org.jetbrains.intellij.build.impl.ModuleItem
+import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
+import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.impl.buildJar
 import org.jetbrains.intellij.build.io.zipWithCompression
 import java.nio.file.Files
 import java.nio.file.Path
@@ -47,6 +53,11 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "intellij.libraries.http.client",
     "intellij.libraries.cli.parser",
     "intellij.libraries.asm",
+    "intellij.libraries.jgoodies.forms",
+    "intellij.libraries.oro.matcher",
+    "intellij.libraries.plexus.utils",
+    "intellij.libraries.protobuf",
+    "intellij.libraries.maven.resolver.provider",
   ).map { ModuleItem(moduleName = it, relativeOutputFile = "util.jar", reason = null) })
 
   layout.withModule("intellij.platform.util.rt", "util_rt.jar")
@@ -79,7 +90,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(
   layout.withModule("intellij.groovy.constants.rt", "groovy-constants-rt.jar")
   layout.withModule("intellij.java.guiForms.jps", "java-guiForms-jps.jar")
 
-
   layout.withModule("intellij.maven.jps", "maven-jps.jar")
   layout.withModule("intellij.java.aetherDependencyResolver", "aether-dependency-resolver.jar")
   layout.withModule("intellij.gradle.jps", "gradle-jps.jar")
@@ -94,19 +104,16 @@ suspend fun buildCommunityStandaloneJpsBuilder(
 
   for (it in listOf(
     "jna",
-    "OroMatcher",
-    "protobuf",
     "Log4J",
-    "jgoodies-forms",
     "Eclipse",
-    "netty-jps",
+    "netty-codec-http",
+    "netty-buffer",
+    "netty-codec-protobuf",
     "slf4j-api",
-    "plexus-utils",
     "jetbrains-annotations",
     "jps-javac-extension",
     "kotlin-stdlib",
     "kotlinx-coroutines-core",
-    "maven-resolver-provider",
     "kotlin-metadata",
   )) {
     layout.withProjectLibrary(it, LibraryPackMode.STANDALONE_MERGED)
@@ -132,7 +139,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(
       platformLayout = null,
       moduleOutputPatcher = ModuleOutputPatcher(),
       dryRun = dryRun,
-      context = context
+      context = context,
     )
 
     val targetFile = targetDir.resolve("standalone-jps-$buildNumber.zip")
@@ -144,7 +151,8 @@ suspend fun buildCommunityStandaloneJpsBuilder(
           "intellij.platform.jps.model.tests",
           "intellij.platform.jps.model.serialization.tests"
         ),
-        context)
+        context = context,
+      )
       zipWithCompression(targetFile = targetFile, dirs = mapOf(tempDir to ""))
     }
 

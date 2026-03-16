@@ -1,14 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.execution.junit;
 
 
-import java.util.Iterator;
 import java.util.Map;
 
 public final class MapSerializerUtil {
+  public static final String TEST_STARTED = "testStarted";
+  public static final String TEST_FINISHED = "testFinished";
+
   public static final String TEST_FAILED = "testFailed";
   public static final String TEST_IGNORED = "testIgnored";
+  public static final String TEST_STD_OUT = "testStdOut";
 
+  public static final String TEST_SUITE_STARTED = "testSuiteStarted";
+  public static final String TEST_SUITE_FINISHED = "testSuiteFinished";
+
+  public static final String SUITE_TREE_STARTED = "suiteTreeStarted";
+  public static final String SUITE_TREE_ENDED = "suiteTreeEnded";
+  public static final String SUITE_TREE_NODE = "suiteTreeNode";
+
+  public static final String ROOT_NAME = "rootName";
 
   /**
    * String escaping info provider.
@@ -99,14 +110,16 @@ public final class MapSerializerUtil {
     return result;
   }
 
-  public static String asString(final String messageName, final Map attributes) {
-    String text = "##teamcity[" + messageName;
-    for (Iterator iterator = attributes.keySet().iterator(); iterator.hasNext(); ) {
-      final Object attrName = iterator.next();
-      text += " " + attrName + "='" + escapeStr((String)attributes.get(attrName), STD_ESCAPER) + "'";
+  public static String asString(final String messageName, final Map<String, String> attributes) {
+    StringBuilder text = new StringBuilder("##teamcity[" + messageName);
+    for (final Object attrName : attributes.keySet()) {
+      text.append(" ")
+        .append(attrName)
+        .append("='")
+        .append(escapeStr(attributes.get(attrName), STD_ESCAPER))
+        .append("'");
     }
-    text += "]";
-    return text;
+    text.append("]");
+    return text.toString();
   }
-
 }

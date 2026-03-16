@@ -63,9 +63,8 @@ public final class FoldingPolicy {
    *                               {@code null} otherwise
    */
   public static @Nullable PsiElement restoreBySignature(@NotNull PsiFile file,
-                                              @NotNull String signature,
-                                              @Nullable StringBuilder processingInfoStorage)
-  {
+                                                        @NotNull String signature,
+                                                        @Nullable StringBuilder processingInfoStorage) {
     for(ElementSignatureProvider provider: EP_NAME.getExtensionList()) {
       PsiElement result = provider.restoreBySignature(file, signature, processingInfoStorage);
       if (result != null) return result;

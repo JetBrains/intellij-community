@@ -3,7 +3,7 @@ package com.intellij.ui.wizard;
 
 import com.intellij.openapi.util.NlsContexts;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.List;
 

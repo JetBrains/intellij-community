@@ -159,7 +159,7 @@ internal open class YAMLExpandCollectionIntentionAction : PsiElementBaseIntentio
   }
 }
 
-private class YAMLExpandAllCollectionsInsideIntentionAction : YAMLExpandCollectionIntentionAction() {
+internal class YAMLExpandAllCollectionsInsideIntentionAction : YAMLExpandCollectionIntentionAction() {
   override fun startInWriteAction(): Boolean = false
 
   override fun getText(): String = YAMLBundle.message("yaml.intention.name.expand.all.collections.inside")

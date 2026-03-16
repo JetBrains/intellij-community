@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.lucene.common.jar
   projectLibraries:
   - name: lucene-analysis-common
     files:

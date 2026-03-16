@@ -16,7 +16,12 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.binaryExpressionVisitor
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 
 private const val NAN_NAME = "NaN"
 private const val REGULAR_PATTERN = "$0.isNaN()"

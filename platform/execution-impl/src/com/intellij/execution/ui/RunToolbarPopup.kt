@@ -1,7 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui
 
-import com.intellij.execution.*
+import com.intellij.execution.AdditionalRunningOptions
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.ExecutionListener
+import com.intellij.execution.ExecutionManager
+import com.intellij.execution.Executor
+import com.intellij.execution.ExecutorRegistry
+import com.intellij.execution.InlineResumeCreator
+import com.intellij.execution.RunManager
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ExecutorAction
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction.SelectConfigAction
@@ -9,6 +17,8 @@ import com.intellij.execution.actions.RunCurrentFileExecutorAction
 import com.intellij.execution.actions.RunSpecifiedConfigExecutorAction
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.fullRunAccess
+import com.intellij.execution.getStoppableDescriptors
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.process.ProcessHandler
@@ -16,14 +26,38 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
-import com.intellij.ide.dnd.*
-import com.intellij.openapi.actionSystem.*
+import com.intellij.ide.dnd.DnDAction
+import com.intellij.ide.dnd.DnDDragStartBean
+import com.intellij.ide.dnd.DnDEvent
+import com.intellij.ide.dnd.DnDManager
+import com.intellij.ide.dnd.DnDSource
+import com.intellij.ide.dnd.DnDTarget
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionGroupUtil
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
@@ -65,7 +99,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Point
-import java.util.*
+import java.util.WeakHashMap
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Predicate
 import javax.swing.JList
@@ -93,7 +127,7 @@ private const val TAG_REGULAR_SHOW = "regular-show" // shown regularly
 private const val TAG_REGULAR_DUPE = "regular-dupe" // shown regularly until search (pinned/recent duplicate)
 private const val TAG_HIDDEN = "hidden"             // hidden until search
 
-private class RunConfigurationsActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification.BackendOnly {
+internal class RunConfigurationsActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification.BackendOnly {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()
     val selectedFile = e.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR)?.file
@@ -562,7 +596,7 @@ fun runCounterToString(e: AnActionEvent, stopCount: Int): String =
     stopCount.toString()
   }
 
-private class PinConfigurationAction(val conf: RunnerAndConfigurationSettings, isPinned: Boolean)
+internal class PinConfigurationAction(val conf: RunnerAndConfigurationSettings, isPinned: Boolean)
   : DumbAwareAction(), RequiresPermissions {
   init {
     templatePresentation.text = getText(isPinned)
@@ -590,7 +624,7 @@ private class PinConfigurationAction(val conf: RunnerAndConfigurationSettings, i
   }
 }
 
-private class StopConfigurationInlineAction(val executor: Executor, val settings: RunnerAndConfigurationSettings)
+internal class StopConfigurationInlineAction(val executor: Executor, val settings: RunnerAndConfigurationSettings)
   : DumbAwareAction(), RequiresPermissions {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -758,7 +792,7 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
   }
 }
 
-private class ExecutionReasonableHistoryManager : ProjectActivity {
+internal class ExecutionReasonableHistoryManager : ProjectActivity {
   override suspend fun execute(project: Project) {
     project.messageBus.simpleConnect().subscribe(ExecutionManager.EXECUTION_TOPIC, MyExecutionListener { executorId, env, state ->
       getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->

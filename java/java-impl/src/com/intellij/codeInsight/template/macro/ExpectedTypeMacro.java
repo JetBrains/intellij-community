@@ -5,10 +5,20 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.JavaCodeContextType;
+import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.PsiTypeResult;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.text.BlockSupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +62,7 @@ public final class ExpectedTypeMacro extends Macro {
     final Project project = context.getProject();
     PsiType[] types = null;
 
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
+    PsiFile file = context.getPsiFile();
     assert file != null;
     final PsiFile fileCopy = (PsiFile)file.copy();
     BlockSupport.getInstance(project).reparseRange(fileCopy, context.getTemplateStartOffset(), context.getTemplateEndOffset(),

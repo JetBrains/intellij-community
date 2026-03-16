@@ -27,9 +27,9 @@ import static com.intellij.openapi.ui.playback.commands.AlphaNumericTypeCommand.
 /**
  * Command replace text from startOffset (0 by default) to endOffset (end of document by default) by newText ("" by default)
  * Syntax: %replaceText [-startOffset start] [-endOffset end] [-newText text]
- * Example: %replaceText -startOffset 0 -endOffset 10 -text "/" - replace text from 0 to 10 offset by "/"
- * Example: %replaceText -newText "newText" - replace all text in document by "newText"
- * Example: %replaceText -startOffset 0 -endOffset 50 - replace text form 0 to 50 offset by ""
+ * Example: %replaceText -startOffset 0 -endOffset 10 -newText / - replace text from offset 0 to 10 by /
+ * Example: %replaceText -newText my new text - replace all text in document by my new text
+ * Example: %replaceText -startOffset 0 -endOffset 50 - delete text from offset 0 to 50
  */
 public class ReplaceTextCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "replaceText";
@@ -43,7 +43,9 @@ public class ReplaceTextCommand extends AbstractCommand {
   protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     final AsyncPromise<Object> result = new AsyncPromise<>();
     Options options = new Options();
-    Args.parse(options, extractCommandArgument(PREFIX).split(" "), false);
+    String[] split = extractCommandArgument(PREFIX).split("-newText ", 2);
+    Args.parse(options, split[0].split(" "));
+    options.newText = split.length > 1 ? split[1] : "";
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
 

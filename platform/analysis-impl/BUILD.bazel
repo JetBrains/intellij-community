@@ -48,10 +48,10 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
   ],
-  exports = [
-    "//platform/core-impl",
-    "//platform/projectModel-impl",
-  ]
+  exports = ["//platform/projectModel-impl"]
 )
 ### auto-generated section `build intellij.platform.analysis.impl` end

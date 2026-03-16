@@ -10,9 +10,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UastCallKind
 import org.jetbrains.uast.generate.getUastElementFactory
 import org.jetbrains.uast.generate.replace
+import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 /**

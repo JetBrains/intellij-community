@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.codereview.list
 
 import org.jetbrains.annotations.Nls
 
+@ConsistentCopyVisibility
 data class NamedCollection<T> private constructor(val namePlural: @Nls String, val items: List<T>) {
   companion object {
     fun <T> create(namePlural: @Nls String, items: List<T>): NamedCollection<T>? =

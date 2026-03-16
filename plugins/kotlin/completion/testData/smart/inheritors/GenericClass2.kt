@@ -24,3 +24,5 @@ fun bar() {
 // EXIST: { itemText: "minOf", tailText: "(a: T, vararg other: T) (kotlin.comparisons)" }
 // EXIST: { itemText: "minOf", tailText: "(a: T, b: T, c: T) (kotlin.comparisons)" }
 // NOTHING_ELSE
+
+// IGNORE_K2

@@ -6,9 +6,9 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeCellRenderer;
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * Extend this class instead of DefaultTreeCellRenderer

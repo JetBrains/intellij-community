@@ -5,7 +5,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.TextMateBundleToLoad;
 import org.jetbrains.plugins.textmate.TextMateServiceImplKt;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @deprecated use {@link TextMateUserBundlesSettings} and {@link TextMateBuiltinBundlesSettings} instead

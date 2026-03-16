@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.HelpID
@@ -20,9 +19,27 @@ import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
-import org.jetbrains.kotlin.idea.refactoring.rename.handlers.RenameSyntheticDeclarationByReferenceHandler
 import org.jetbrains.kotlin.idea.refactoring.rename.handlers.shouldForbidRenamingFromJava
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
+import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
+import org.jetbrains.kotlin.psi.KtConstructorDelegationReferenceExpression
+import org.jetbrains.kotlin.psi.KtContextParameterList
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
+import org.jetbrains.kotlin.psi.KtTypeParameterList
 import org.jetbrains.kotlin.utils.exceptions.checkWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
@@ -93,8 +110,8 @@ abstract class KotlinChangeSignatureHandlerBase : ChangeSignatureHandler {
             return PsiTreeUtil.getParentOfType(parameterList, KtFunction::class.java, KtProperty::class.java, KtClass::class.java)
         }
 
-        element.parentOfType<KtContextReceiverList>()?.let { contextReceiverList ->
-            return PsiTreeUtil.getParentOfType(contextReceiverList, KtFunction::class.java, KtProperty::class.java)
+        element.parentOfType<KtContextParameterList>()?.let { contextParameterList ->
+            return PsiTreeUtil.getParentOfType(contextParameterList, KtFunction::class.java, KtProperty::class.java)
         }
 
         element.parentOfType<KtTypeParameterList>()?.let { typeParameterList ->

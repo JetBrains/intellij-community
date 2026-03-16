@@ -12,18 +12,17 @@ import com.intellij.ui.dsl.builder.components.ValidationType
 import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.jetbrains.python.PyBundle.message
-import java.nio.file.Path
 import javax.swing.JComponent
 
 internal sealed class VenvExistenceValidationState {
   data object Invisible : VenvExistenceValidationState()
 
   data class Warning(
-    val venvPath: Path,
+    val venvName: String,
   ) : VenvExistenceValidationState()
 
   data class Error(
-    val venvPath: Path,
+    val venvName: String,
   ) : VenvExistenceValidationState()
 }
 
@@ -50,15 +49,15 @@ internal fun Row.venvExistenceValidationAlert(
           is VenvExistenceValidationState.Warning -> listOfNotNull(selectExitingEnvironment)
           is VenvExistenceValidationState.Error -> listOfNotNull(
             ActionLink(message("sdk.create.custom.override.action")) {
-              observableState.set(VenvExistenceValidationState.Warning(state.venvPath))
+              observableState.set(VenvExistenceValidationState.Warning(state.venvName))
             },
             selectExitingEnvironment,
           )
         }
         val text = when (state) {
           VenvExistenceValidationState.Invisible -> ""
-          is VenvExistenceValidationState.Warning -> message("sdk.create.custom.override.warning", state.venvPath.toString())
-          is VenvExistenceValidationState.Error -> message("sdk.create.custom.override.error", state.venvPath.toString())
+          is VenvExistenceValidationState.Warning -> message("sdk.create.custom.override.warning", state.venvName)
+          is VenvExistenceValidationState.Error -> message("sdk.create.custom.override.error", state.venvName)
         }
 
         noticePlaceholder.component =

@@ -27,14 +27,13 @@ jvm_library(
     "@lib//:junit5-provided",
     "//java/java-runtime:rt",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//libraries/http-client",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/testFramework/teamCity",
-    "@lib//:hamcrest",
     ":libraries_junit4_provided",
   ]
 )

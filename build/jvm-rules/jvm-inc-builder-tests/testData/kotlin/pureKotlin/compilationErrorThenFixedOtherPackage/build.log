@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_compilationErrorThenFixedOtherPackage-a.kotlin_module
+  usage/UsageKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/compilationErrorThenFixedOtherPackage/a/usage.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_compilationErrorThenFixedOtherPackage-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/compilationErrorThenFixedOtherPackage/a/usage.kt
+End of files
+------------------------------------------
+Exit code: OK

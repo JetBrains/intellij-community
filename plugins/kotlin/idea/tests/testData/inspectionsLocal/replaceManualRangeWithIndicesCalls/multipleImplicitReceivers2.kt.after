@@ -1,7 +1,8 @@
 // WITH_STDLIB
+// FIX: Replace with 'withIndex()'
 fun LongArray.arrayToString(): String = buildString {
-    for (i in this@arrayToString.indices) {
+    for ((i, element) in this@arrayToString.withIndex()) {
         if (i > 0) append(", ")
-        append(this@arrayToString[i])
+        append(element)
     }
 }

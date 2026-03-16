@@ -9,8 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.kotlin.config.isHmpp
-import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker
 
 object KotlinMultiplatformAnalysisModeComponent {
     private const val resolutionModeOption = "kotlin.multiplatform.analysis.mode"

@@ -5,7 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.util.OpenSourceUtil;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 

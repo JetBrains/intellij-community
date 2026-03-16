@@ -18,14 +18,19 @@
 package com.intellij.compose.ide.plugin.shared
 
 import com.intellij.openapi.application.Application
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.util.application
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.name.FqName
 
 abstract class ComposableAnnotationToExtractedFunctionAdderTest : KotlinLightCodeInsightFixtureTestCase() {
   override fun runInDispatchThread(): Boolean = false
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+  }
 
   /** Copied from AOSP. Regression test for https://issuetracker.google.com/issues/301481575 */
   fun testConstantInComposableFunction() {
@@ -212,6 +217,31 @@ abstract class ComposableAnnotationToExtractedFunctionAdderTest : KotlinLightCod
         
         private fun newFunction() {
             Text("extract from here")
+        }
+      """.trimIndent())
+  }
+
+  fun `test inside property with explicit Composable type`() {
+    assertThatGivenComposeProjectWithState("""
+      import androidx.compose.material.Text
+      import androidx.compose.runtime.Composable
+  
+      val myComposable: @Composable () -> Unit = {
+          <selection>Text("Hello")</selection>
+      }
+    """.trimIndent())
+      .invokingExtractFunction()
+      .resultsIn("""
+        import androidx.compose.material.Text
+        import androidx.compose.runtime.Composable
+  
+        val myComposable: @Composable () -> Unit = {
+            newFunction()
+        }
+  
+        @Composable
+        private fun newFunction() {
+            Text("Hello")
         }
       """.trimIndent())
   }
@@ -903,6 +933,61 @@ abstract class ComposableAnnotationToExtractedFunctionAdderTest : KotlinLightCod
       """.trimIndent())
   }
 
+  fun `test inside returned lambda from function with Composable return type`() {
+    assertThatGivenComposeProjectWithState("""
+      import androidx.compose.material.Text
+      import androidx.compose.runtime.Composable
+  
+      fun returnsComposable(): @Composable () -> Unit {
+          return {
+              <selection>Text("Hello")</selection>
+          }
+      }
+    """.trimIndent())
+      .invokingExtractFunction()
+      .resultsIn("""
+        import androidx.compose.material.Text
+        import androidx.compose.runtime.Composable
+  
+        fun returnsComposable(): @Composable () -> Unit {
+            return {
+                newFunction()
+            }
+        }
+  
+        @Composable
+        private fun newFunction() {
+            Text("Hello")
+        }
+      """.trimIndent())
+  }
+
+  fun `test inside returned lambda from function with non-Composable return type`() {
+    assertThatGivenComposeProjectWithState("""
+        import androidx.compose.runtime.Composable
+    
+        fun returnsLambda(): () -> Unit {
+            return {
+                <selection>println("Hello")</selection>
+            }
+        }
+      """.trimIndent())
+      .invokingExtractFunction()
+      .resultsIn("""
+        import androidx.compose.runtime.Composable
+  
+        fun returnsLambda(): () -> Unit {
+            return {
+                newFunction()
+            }
+        }
+  
+        private fun newFunction() {
+            println("Hello")
+        }
+      """.trimIndent())
+  }
+
   fun `test Composable is not imported`() {
     assertThatGivenComposeProjectWithState("""
       @Composable
@@ -919,6 +1004,132 @@ abstract class ComposableAnnotationToExtractedFunctionAdderTest : KotlinLightCod
         
         private fun newFunction() {
             Text("World")
+        }
+      """.trimIndent())
+  }
+
+  fun `test inside named composable argument`() {
+    assertThatGivenComposeProjectWithState("""
+      import androidx.compose.material.Text
+      import androidx.compose.runtime.Composable
+  
+      fun withComposableParam(content: @Composable () -> Unit) {}
+  
+      fun f() {
+          withComposableParam(content = {
+              <selection>Text("Hello")</selection>
+          })
+      }
+    """.trimIndent())
+      .invokingExtractFunction()
+      .resultsIn("""
+        import androidx.compose.material.Text
+        import androidx.compose.runtime.Composable
+  
+        fun withComposableParam(content: @Composable () -> Unit) {}
+  
+        fun f() {
+            withComposableParam(content = {
+                newFunction()
+            })
+        }
+  
+        @Composable
+        private fun newFunction() {
+            Text("Hello")
+        }
+      """.trimIndent())
+  }
+
+  fun `test inside mixed named composable argument`() {
+    assertThatGivenComposeProjectWithState("""
+      import androidx.compose.runtime.Composable
+  
+      suspend fun mixedNamed(
+          composable: @Composable () -> Unit,
+          suspendBlock: suspend () -> Unit
+      ) {}
+  
+      fun f() {
+          mixedNamed(
+              composable = {
+                  <selection>Text("Hello")</selection>
+              },
+              suspendBlock = {
+                  println("World")
+              }
+          )
+      }
+    """.trimIndent())
+      .invokingExtractFunction()
+      .resultsIn("""
+        import androidx.compose.runtime.Composable
+  
+        suspend fun mixedNamed(
+            composable: @Composable () -> Unit,
+            suspendBlock: suspend () -> Unit
+        ) {}
+    
+        fun f() {
+            mixedNamed(
+                composable = {
+                    newFunction()
+                },
+                suspendBlock = {
+                    println("World")
+                }
+            )
+        }
+        
+        @Composable
+        private fun newFunction() {
+            Text("Hello")
+        }
+      """.trimIndent())
+  }
+
+  fun `test inside mixed named non-composable argument`() {
+    assertThatGivenComposeProjectWithState("""
+      import androidx.compose.runtime.Composable
+  
+      suspend fun mixedNamed(
+          composable: @Composable () -> Unit,
+          suspendBlock: suspend () -> Unit
+      ) {}
+  
+      fun f() {
+          mixedNamed(
+              composable = {
+                  Text("Hello")
+              },
+              suspendBlock = {
+                  <selection>println("World")</selection>
+              }
+          )
+      }
+    """.trimIndent())
+      .invokingExtractFunction()
+      .resultsIn("""
+        import androidx.compose.runtime.Composable
+  
+        suspend fun mixedNamed(
+            composable: @Composable () -> Unit,
+            suspendBlock: suspend () -> Unit
+        ) {}
+    
+        fun f() {
+            mixedNamed(
+                composable = {
+                    Text("Hello")
+                },
+                suspendBlock = {
+                    newFunction()
+                }
+            )
+        }
+  
+        private fun newFunction() {
+            println("World")
         }
       """.trimIndent())
   }

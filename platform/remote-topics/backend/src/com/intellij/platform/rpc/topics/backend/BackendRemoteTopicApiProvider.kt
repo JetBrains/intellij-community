@@ -5,7 +5,7 @@ import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.rpc.topics.impl.RemoteTopicApi
 import fleet.rpc.remoteApiDescriptor
 
-private class BackendRemoteTopicApiProvider : RemoteApiProvider {
+internal class BackendRemoteTopicApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<RemoteTopicApi>()) {
       BackendRemoteTopicApi()

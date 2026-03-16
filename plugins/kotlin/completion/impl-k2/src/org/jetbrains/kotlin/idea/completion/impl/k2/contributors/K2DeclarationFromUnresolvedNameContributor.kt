@@ -9,7 +9,12 @@ import org.jetbrains.kotlin.analysis.api.components.collectImplicitReceiverTypes
 import org.jetbrains.kotlin.analysis.api.components.dispatchReceiverType
 import org.jetbrains.kotlin.analysis.api.components.expressionType
 import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
@@ -19,8 +24,24 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarati
 import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.referenceScope
 import org.jetbrains.kotlin.idea.completion.suppressAutoInsertion
-import org.jetbrains.kotlin.idea.util.positionContext.*
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinClassifierNamePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinPrimaryConstructorParameterPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleParameterPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtPackageDirective
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
@@ -68,7 +89,7 @@ internal class K2DeclarationFromUnresolvedNameContributor : K2SimpleCompletionCo
         if (unresolvedRef.reference?.resolve() == null) {
             val lookupElement = LookupElementBuilder.create(name).suppressAutoInsertion()
                 .also { it.priority = ItemPriority.FROM_UNRESOLVED_NAME_SUGGESTION }
-            context.addElement(lookupElement)
+            addElement(lookupElement)
         }
     }
 

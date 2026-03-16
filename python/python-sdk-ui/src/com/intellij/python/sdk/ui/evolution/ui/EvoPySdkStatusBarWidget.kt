@@ -23,7 +23,7 @@ import kotlinx.coroutines.CoroutineScope
 private const val ID: String = "EvoPySdkStatusBarWidget"
 
 
-private class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
+internal class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
   override fun getId(): String = ID
 
   override fun getDisplayName(): String = PySdkUiBundle.message("evo.sdk.status.bar.widget.factory.display.name")

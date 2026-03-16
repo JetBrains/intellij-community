@@ -1,8 +1,3 @@
-# TODO: missing from stub
-regex.__all__
-regex._regex_core.__all__
-regex.regex.__all__
-
 # Not exported in C modules:
 regex._regex.Splitter
 regex._regex.Scanner
@@ -18,6 +13,3 @@ regex._regex.get_properties
 regex._regex.has_property_value
 regex._regex.CODE_SIZE
 regex._regex.MAGIC
-
-# Tests:
-regex.test_regex

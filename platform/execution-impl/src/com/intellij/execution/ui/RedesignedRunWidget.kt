@@ -3,7 +3,12 @@
 
 package com.intellij.execution.ui
 
-import com.intellij.execution.*
+import com.intellij.execution.AdditionalRunningOptions
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.Executor
+import com.intellij.execution.ExecutorActionStatus
+import com.intellij.execution.RunManager
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ExecutorAction
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.actions.StopAction
@@ -17,12 +22,25 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionButtonComponent
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.DecorativeElement
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.actionSystem.impl.Utils
+import com.intellij.openapi.actionSystem.impl.PopupShowingTimeTracker
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.components.Service
@@ -50,9 +68,18 @@ import com.intellij.ui.icons.TextIcon
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.*
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Insets
+import java.awt.Rectangle
 import java.awt.event.InputEvent
 import java.util.function.Predicate
 import javax.swing.Icon
@@ -107,7 +134,7 @@ private fun createRunActionToolbar(): ActionToolbar {
 
 private val runToolbarDataKey = Key.create<Boolean>("run-toolbar-data")
 
-private class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
+internal class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -284,7 +311,7 @@ abstract class TogglePopupAction : ToggleAction {
     val component = e.inputEvent?.component as? JComponent ?: return
     val start = IdeEventQueue.getInstance().popupTriggerTime
     val popup = createPopup(e) ?: return
-    Utils.showPopupElapsedMillisIfConfigured(start, popup.content)
+    PopupShowingTimeTracker.showElapsedMillisIfConfigured(start, popup)
     popup.showUnderneathOf(component)
   }
 
@@ -305,7 +332,7 @@ abstract class TogglePopupAction : ToggleAction {
   abstract fun getActionGroup(e: AnActionEvent): ActionGroup?
 }
 
-private abstract class WindowHeaderPlaceholder : DecorativeElement(), DumbAware, CustomComponentAction {
+internal abstract class WindowHeaderPlaceholder : DecorativeElement(), DumbAware, CustomComponentAction {
   private val NOT_FIRST_UPDATE = Key.create<Boolean>("notFirstUpdate")
   private val PROJECT = Key.create<Project>("justProject")
 
@@ -327,7 +354,7 @@ private abstract class WindowHeaderPlaceholder : DecorativeElement(), DumbAware,
   }
 }
 
-private class InactiveStopActionPlaceholder : WindowHeaderPlaceholder() {
+internal class InactiveStopActionPlaceholder : WindowHeaderPlaceholder() {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.icon = EmptyIcon.ICON_16
@@ -353,7 +380,7 @@ private class InactiveStopActionPlaceholder : WindowHeaderPlaceholder() {
   }
 }
 
-private class MoreRunToolbarActions : TogglePopupAction(
+internal class MoreRunToolbarActions : TogglePopupAction(
   IdeBundle.message("inline.actions.more.actions.text"), null, AllIcons.Actions.More
 ), DumbAware {
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {

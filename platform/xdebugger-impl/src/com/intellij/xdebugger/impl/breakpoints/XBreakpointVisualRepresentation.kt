@@ -17,27 +17,36 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.editor.markup.GutterDraggableObject
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.MarkupEditorFilter
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLightLineBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ThreeState
-import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
-import com.intellij.xdebugger.impl.XDebuggerManagerImpl
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl
-import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.ui.DebuggerColors
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Cursor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DragSource
-import java.lang.Runnable
 
 private data class UpdateUICallback(val callOnUpdate: Runnable)
 
@@ -241,18 +250,16 @@ class XBreakpointVisualRepresentation(
           if (myBreakpoint !is XLineBreakpointProxy) {
             return false
           }
+          val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(myProject)
           if (isCopyAction(actionId)) {
-            val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(myProject)
             breakpointManager.copyLineBreakpoint(myBreakpoint, file!!, line)
           }
           else {
-            val debuggerManager = XDebuggerManager.getInstance(myProject) as XDebuggerManagerImpl
             myBreakpoint.setFileUrl(file!!.url)
             myBreakpoint.setLine(line)
-            val session = debuggerManager.currentSession
-            if (session != null && myBreakpoint is XLineBreakpointProxy.Monolith) {
-              // TODO IJPL-185322 support active breakpoint update on DnD
-              session.checkActiveNonLineBreakpointOnRemoval(myBreakpoint.breakpoint)
+            val sessionProxy = XDebugManagerProxy.getInstance().getCurrentSessionProxy(myProject)
+            if (sessionProxy != null) {
+              breakpointManager.onBreakpointRemoval(myBreakpoint, sessionProxy)
             }
             return true
           }
@@ -263,7 +270,7 @@ class XBreakpointVisualRepresentation(
       override fun remove() {
         // TODO IJPL-185322 implement DnD remove for light breakpoints?
         if (myBreakpoint is XLineBreakpointProxy) {
-          XDebuggerUtilImpl.removeBreakpointWithConfirmation(myBreakpoint)
+          XBreakpointUIUtil.removeBreakpointWithConfirmation(myBreakpoint)
         }
       }
 

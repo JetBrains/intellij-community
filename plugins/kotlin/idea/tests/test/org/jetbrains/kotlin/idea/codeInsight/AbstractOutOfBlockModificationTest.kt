@@ -22,8 +22,14 @@ import org.jetbrains.kotlin.idea.completion.test.withComponentRegistered
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.mapFromK1Provider
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.resolve.lazy.ResolveSession
@@ -97,8 +103,8 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
 
     private fun checkForUnexpectedErrors(ktFile: KtFile) {
         val diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithAllCompilerChecks().bindingContext.diagnostics }
-        DirectiveBasedActionUtils.checkForUnexpectedWarnings(ktFile, diagnosticsProvider = diagnosticsProvider)
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, diagnosticsProvider = diagnosticsProvider)
+        DirectiveBasedActionUtils.checkForUnexpectedWarnings(ktFile, diagnosticsProvider = mapFromK1Provider(diagnosticsProvider))
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, diagnosticsProvider = mapFromK1Provider(diagnosticsProvider))
     }
 
     private fun checkOOBWithDescriptorsResolve(expectedOutOfBlock: Boolean) {

@@ -7,10 +7,25 @@ package org.jetbrains.kotlin.idea.search.ideaExtensions
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameter
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 class FirKotlinTargetElementEvaluator : KotlinTargetElementEvaluator() {
+    override fun getGotoDeclarationTarget(
+        element: PsiElement,
+        navElement: PsiElement?
+    ): PsiElement? {
+        if (navElement is KtClsFile && element is KtLightClassForFacade && !element.multiFileClass) {
+            val firstNavElement = navElement.declarations.firstOrNull()?.navigationElement
+            if (firstNavElement != null) {
+                return firstNavElement.containingFile
+            }
+        }
+        return super.getGotoDeclarationTarget(element, navElement)
+    }
+
     override fun findLambdaOpenLBraceForGeneratedIt(ref: PsiReference): PsiElement? {
         return (ref.element as? KtNameReferenceExpression)?.getFunctionLiteralByImplicitLambdaParameter()?.lBrace?.nextSibling
     }

@@ -11,7 +11,7 @@ import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
 import org.jetbrains.idea.maven.importing.MavenImportUtil.unescapeCompileSourceRootModuleSuffix
 
-private class MavenCompileSourceRootsConfigurator : MavenWorkspaceConfigurator {
+internal class MavenCompileSourceRootsConfigurator : MavenWorkspaceConfigurator {
   override fun configureMavenProject(context: MavenWorkspaceConfigurator.MutableMavenProjectContext) {
     val mavenProjectWithModules = context.mavenProjectWithModules
     val modulesWithType = mavenProjectWithModules.modules

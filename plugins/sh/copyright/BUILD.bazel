@@ -27,6 +27,16 @@ jvm_library(
 
 ### auto-generated section `build intellij.sh.copyright.tests` start
 jvm_library(
+  name = "copyright-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/sh/plugin:plugin-main",
+    "//platform/projectModel-impl",
+  ]
+)
+
+jvm_library(
   name = "copyright-tests_test_lib",
   module_name = "intellij.sh.copyright.tests",
   visibility = ["//visibility:public"],
@@ -40,7 +50,8 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-  ]
+  ],
+  runtime_deps = [":copyright-tests"]
 )
 ### auto-generated section `build intellij.sh.copyright.tests` end
 

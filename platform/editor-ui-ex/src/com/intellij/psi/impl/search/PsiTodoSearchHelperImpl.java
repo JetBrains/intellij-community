@@ -6,7 +6,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.TodoCacheManager;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.IndexPatternOccurrence;
+import com.intellij.psi.search.IndexPatternProvider;
+import com.intellij.psi.search.PsiTodoSearchHelper;
+import com.intellij.psi.search.TodoItem;
+import com.intellij.psi.search.TodoPattern;
 import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
@@ -14,7 +18,12 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 @ApiStatus.Internal
 public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {

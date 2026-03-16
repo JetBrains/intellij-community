@@ -42,15 +42,18 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JList;
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static com.intellij.application.options.colors.ColorAndFontOptions.selectOrEditColor;
-import static com.intellij.ui.SimpleTextAttributes.*;
+import static com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES;
+import static com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_OPAQUE;
+import static com.intellij.ui.SimpleTextAttributes.fromTextAttributes;
 
 /**
  * @author gregsh

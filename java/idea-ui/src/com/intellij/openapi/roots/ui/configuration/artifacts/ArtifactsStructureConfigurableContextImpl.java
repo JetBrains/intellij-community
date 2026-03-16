@@ -16,7 +16,15 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsHolderImpl;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.packaging.artifacts.*;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactListener;
+import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.artifacts.ArtifactModel;
+import com.intellij.packaging.artifacts.ArtifactPointer;
+import com.intellij.packaging.artifacts.ArtifactPointerManager;
+import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.packaging.artifacts.ModifiableArtifact;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.ManifestFileProvider;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;

@@ -4,8 +4,8 @@ package com.intellij.vcs.log.history
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.vcs.log.VcsLogDataPack
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogDataPack
 import com.intellij.vcs.log.visible.VisiblePack
 
 object FileHistoryPaths {

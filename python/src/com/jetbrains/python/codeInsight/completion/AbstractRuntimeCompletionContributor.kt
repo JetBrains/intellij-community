@@ -1,8 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.completion
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.PlainPrefixMatcher
+import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -16,7 +22,6 @@ import com.jetbrains.python.psi.PyStringElement
 abstract class AbstractRuntimeCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val project = parameters.editor.project ?: return
-    if (parameters.completionType == CompletionType.CLASS_NAME) return
 
     val context = ProcessingContext()
     if (!PlatformPatterns.psiElement().accepts(parameters.position, context)) return
@@ -29,7 +34,7 @@ abstract class AbstractRuntimeCompletionContributor : CompletionContributor(), D
     fillCompletionVariantsFromRuntime(project, service, parameters, result)
   }
 
-  abstract fun getRuntimeEnvService(project: Project): PyRuntime
+  abstract fun getRuntimeEnvService(project: Project, editor: Editor?): PyRuntime?
 
   abstract fun getCompletionRetrievalService(project: Project): PyRuntimeCompletionRetrievalService
 
@@ -40,10 +45,11 @@ abstract class AbstractRuntimeCompletionContributor : CompletionContributor(), D
     result: CompletionResultSet,
   ) {
 
-    val runtimeResults: MutableMap<String, RuntimeLookupElement> =
-      PyRuntimeCompletionUtils.createCompletionResultSet(service, getRuntimeEnvService(project), parameters)
-        .associateByTo(hashMapOf(), { it.lookupString },
-                       { RuntimeLookupElement(it, createCustomMatcher(parameters, result)) })
+    val runtimeService = getRuntimeEnvService(project, parameters.editor) ?: return
+    val runtimeResults: MutableMap<String, RuntimeLookupElement> = PyRuntimeCompletionUtils
+      .createCompletionResultSet(service, runtimeService, parameters)
+      .associateByTo(hashMapOf(), { it.lookupString },
+                     { RuntimeLookupElement(it, createCustomMatcher(parameters, result)) })
 
     if (runtimeResults.isEmpty()) {
       val remoteFileResults = project.service<RemoteFilePathRetrievalService>().retrieveRemoteFileLookupElements(parameters)

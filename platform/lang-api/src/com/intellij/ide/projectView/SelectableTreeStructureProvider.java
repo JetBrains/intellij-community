@@ -2,8 +2,8 @@
 
 package com.intellij.ide.projectView;
 
-import org.jetbrains.annotations.Nullable;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 
 public interface SelectableTreeStructureProvider extends TreeStructureProvider {

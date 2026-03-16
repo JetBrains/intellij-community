@@ -15,8 +15,12 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import java.util.concurrent.ConcurrentLinkedQueue

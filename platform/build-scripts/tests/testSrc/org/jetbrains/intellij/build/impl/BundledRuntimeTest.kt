@@ -5,8 +5,14 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.JetBrainsRuntimeDistribution
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LinuxLibcImpl
+import org.jetbrains.intellij.build.MacLibcImpl
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.junit.Test
 import java.nio.file.Files
@@ -75,10 +81,12 @@ class BundledRuntimeTest {
   private inline fun withCompilationContext(block: (CompilationContext) -> Unit) {
     val tempDir = Files.createTempDirectory("compilation-context-")
     try {
-      val context = createCompilationContextBlocking(
-        projectHome = COMMUNITY_ROOT.communityRoot,
-        defaultOutputRoot = tempDir,
-      )
+      val context = runBlocking(Dispatchers.Default) {
+        createCompilationContext(
+          projectHome = COMMUNITY_ROOT.communityRoot,
+          defaultOutputRoot = tempDir
+        )
+      }
       block(context)
     }
     finally {

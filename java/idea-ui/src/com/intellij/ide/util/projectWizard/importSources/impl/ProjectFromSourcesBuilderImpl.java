@@ -6,10 +6,17 @@ import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ProjectDescriptor;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.ide.util.projectWizard.importSources.*;
+import com.intellij.ide.util.projectWizard.importSources.DetectedContentRoot;
+import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
+import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
+import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
@@ -28,10 +35,17 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev

@@ -7,7 +7,7 @@ class A1:
     a: int = 1
 
 @dataclasses.dataclass
-class <error descr="Frozen dataclasses can not inherit non-frozen one and vice versa">B1</error>(A1):
+class <error descr="Frozen dataclasses cannot inherit non-frozen one and vice versa">B1</error>(A1):
     b: str = "2"
 
 
@@ -15,7 +15,7 @@ class <error descr="Frozen dataclasses can not inherit non-frozen one and vice v
 class A2:
     a: int = 1
 
-@dataclasses.dataclass(<error descr="Frozen dataclasses can not inherit non-frozen one and vice versa">frozen=True</error>)
+@dataclasses.dataclass(<error descr="Frozen dataclasses cannot inherit non-frozen one and vice versa">frozen=True</error>)
 class B2(A2):
     b: str = "2"
 

@@ -1,0 +1,3 @@
+JsonFile: n_structure_number_with_trailing_garbage.json
+  JsonReferenceExpression
+    PsiElement(IDENTIFIER)('2@')

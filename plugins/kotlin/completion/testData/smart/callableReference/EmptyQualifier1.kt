@@ -10,3 +10,5 @@ fun xf2(i: Int){}
 
 // EXIST: { lookupString:"xf1", itemText:"xf1", tailText: "() (<root>)", typeText: "Unit" }
 // NOTHING_ELSE
+
+// IGNORE_K2

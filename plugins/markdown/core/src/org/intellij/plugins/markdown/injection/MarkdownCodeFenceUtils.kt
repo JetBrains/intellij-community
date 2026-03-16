@@ -14,6 +14,7 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
+import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils.getContent
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageAliases
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes

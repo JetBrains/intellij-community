@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.hash4j.jar
   modules:
   - name: intellij.libraries.hash4j
     libraries:

@@ -5,9 +5,16 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.table.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.util.Arrays;
 
 /**

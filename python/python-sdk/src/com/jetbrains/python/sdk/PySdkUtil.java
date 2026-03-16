@@ -21,15 +21,19 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.ObjectUtils;
-import com.jetbrains.python.sdk.impl.PySdkBundle;
+import com.intellij.util.ui.EDT;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.impl.PySdkBundle;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -102,6 +106,7 @@ public final class PySdkUtil {
     return getProcessOutput(cmd, homePath, extraEnv, timeout, null, true);
   }
 
+  @ApiStatus.Internal
   public static ProcessOutput getProcessOutput(@NotNull GeneralCommandLine cmd, @Nullable String homePath,
                                                @Nullable @NonNls Map<String, String> extraEnv,
                                                int timeout,
@@ -147,7 +152,7 @@ public final class PySdkUtil {
           processInput.close();
         }
       }
-      if (SwingUtilities.isEventDispatchThread()) {
+      if (EDT.isCurrentThreadEdt()) {
         final ProgressManager progressManager = ProgressManager.getInstance();
         final Application application = ApplicationManager.getApplication();
         assert application.isUnitTestMode() ||
@@ -197,6 +202,7 @@ public final class PySdkUtil {
     return result;
   }
 
+  @ApiStatus.Internal
   public static @NotNull Map<String, String> activateVirtualEnv(@NotNull Sdk sdk) {
     final Map<String, String> cached = sdk.getUserData(ENVIRONMENT_KEY);
     if (cached != null) return cached;

@@ -4,8 +4,8 @@ package org.intellij.plugins.markdown.dto
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.project.ProjectId
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 @Serializable
 data class MarkdownHeaderInfo(

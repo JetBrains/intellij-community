@@ -3,9 +3,9 @@ package org.jetbrains.kotlin.search
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.search.searches.AnnotatedMembersSearch
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
-import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.utils.PathUtil.getResourcePathForClass

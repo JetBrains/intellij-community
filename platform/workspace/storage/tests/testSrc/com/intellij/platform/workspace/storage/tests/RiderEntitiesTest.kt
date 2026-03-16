@@ -2,7 +2,12 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.impl.asBase
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.ContentRootTestEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.DescriptorInstance
+import com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.ProjectModelTestEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyProjectModelTestEntity
 import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals

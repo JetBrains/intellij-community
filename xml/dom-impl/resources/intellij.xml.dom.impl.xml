@@ -54,7 +54,7 @@
     <applicationService serviceInterface="com.intellij.util.xml.ElementPresentationManager"
                         serviceImplementation="com.intellij.util.xml.ElementPresentationManagerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.util.xml.ConverterManager"
+    <applicationService serviceInterface="com.intellij.util.xml.ConverterManager" open="true"
                         serviceImplementation="com.intellij.util.xml.impl.ConverterManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.util.xml.highlighting.DomElementAnnotationsManager"

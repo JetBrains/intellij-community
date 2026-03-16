@@ -7,9 +7,14 @@ import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.awt.image.*;
+import sun.awt.image.ByteArrayImageSource;
+import sun.awt.image.FileImageSource;
+import sun.awt.image.ImageDecoder;
+import sun.awt.image.InputStreamImageSource;
+import sun.awt.image.URLImageSource;
 
-import java.awt.*;
+import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.image.ImageObserver;
 import java.awt.image.ImageProducer;
 import java.io.BufferedInputStream;

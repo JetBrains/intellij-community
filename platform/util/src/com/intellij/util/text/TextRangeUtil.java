@@ -7,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -79,6 +80,41 @@ public final class TextRangeUtil {
   }
 
   /**
+   * Merges intersecting (including adjacent) text ranges into one.
+   * For example, [[0, 5], [4, 9], [9, 13], [17, 29], [25, 31]] will be merged to [[0, 13], [17, 31]].
+   *
+   * @param sortedRanges The list of ranges, must be sorted by start offset.
+   */
+  public static List<TextRange> mergeRanges(List<TextRange> sortedRanges) {
+    return mergeRanges(sortedRanges, 0);
+  }
+
+  /**
+   * Merges intersecting (including adjacent) text ranges into one.
+   * For example, [[0, 5], [4, 9], [9, 13], [17, 29], [25, 31]] will be merged to [[0, 13], [17, 31]].
+   *
+   * @param sortedRanges The list of ranges, must be sorted by start offset.
+   * @param maxDistance The maximum distance between ranges to consider them as adjacent.
+   */
+  public static List<TextRange> mergeRanges(List<TextRange> sortedRanges, int maxDistance) {
+    if (sortedRanges.size() <= 1) return sortedRanges;
+    ArrayDeque<TextRange> mergedRanges = new ArrayDeque<>();
+    mergedRanges.add(sortedRanges.get(0));
+    for (int i = 1; i < sortedRanges.size(); i++) {
+      TextRange range = sortedRanges.get(i);
+      TextRange leftNeighbour = mergedRanges.peek();
+      if (intersects(leftNeighbour, range, maxDistance)) {
+        mergedRanges.pop();
+        mergedRanges.push(leftNeighbour.union(range));
+      }
+      else {
+        mergedRanges.push(range);
+      }
+    }
+    return new ArrayList<>(mergedRanges);
+  }
+
+  /**
    * Checks that the given range intersects one of the ranges in the list by performing a binary search.
    * @param range     The range to check.
    * @param rangeList The range list. <b>The list must be ordered by range start offset.</b>
@@ -114,5 +150,10 @@ public final class TextRangeUtil {
     int s2 = r2.getStartOffset();
     int e2 = r2.getEndOffset();
     return Math.max(s1, s2) <= Math.min(e1, e2) ? 0 : Math.min(Math.abs(s1 - e2), Math.abs(s2 - e1));
+  }
+
+  private static boolean intersects(TextRange range1, TextRange range2, int maxDistance) {
+    if (range1.intersects(range2)) return true;
+    return maxDistance > 0 && range1.getEndOffset() + maxDistance >= range2.getStartOffset();
   }
 }

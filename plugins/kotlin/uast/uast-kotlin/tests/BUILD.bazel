@@ -4,7 +4,22 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
+    "//libraries/asm",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:kotlinc-kotlin-compiler-fir",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/uast/uast-kotlin",
+    "//uast/uast-common:uast",
+    "//java/java-psi-impl:psi-impl",
+    "//uast/uast-java:java-uast",
+    "@lib//:vavr",
+  ]
 )
 
 jvm_library(
@@ -27,7 +42,6 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
-    "@lib//:kotlinc-kotlin-compiler-fir",
     "@lib//:kotlinc-kotlin-compiler-cli",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/plugin/k1",
@@ -37,10 +51,10 @@ jvm_library(
     "//plugins/kotlin/core",
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/uast/uast-kotlin",
-    "//plugins/kotlin/uast/uast-kotlin-idea-base",
-    "//plugins/kotlin/uast/uast-kotlin-base",
+    "//plugins/kotlin/uast/uast-kotlin-idea-base:kotlin-uast-idea-base",
+    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base",
     "//plugins/kotlin/uast/uast-kotlin-base/tests:tests_test_lib",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//uast/uast-common:uast",
     "//uast/testFramework",
@@ -48,7 +62,9 @@ jvm_library(
     "//uast/uast-java:java-uast",
     "//plugins/groovy/groovy-uast-tests:uast-tests_test_lib",
     "@lib//:vavr",
-  ]
+    "//plugins/kotlin/idea/tests:tests_test_lib",
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build kotlin.uast.uast-kotlin.tests` end
 

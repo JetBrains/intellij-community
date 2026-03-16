@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="ktor-server-cio-internal" type="repository">
+        <properties maven-id="io.ktor:ktor-server-cio-jvm:3.3.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-server-cio-jvm/3.3.2/ktor-server-cio-jvm-3.3.2.jar">
+              <sha256sum>af2c13243c4a9fab2e0165988340605865cb315431e0fd6e53d4c2f27159fc30</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-server-core-jvm/3.3.2/ktor-server-core-jvm-3.3.2.jar">
+              <sha256sum>62aa301035f1fd5322f1c4eed485bb739a6f9c5eb30681d58813573420a02f5e</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/typesafe/config/1.4.5/config-1.4.5.jar">
+              <sha256sum>4a4b0affb22a9572409d3a6bde99ce3f2045c551cadc1ca7fe09690892c526c3</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.slf4j:slf4j-api" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
+            <dependency maven-id="org.fusesource.jansi:jansi" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-io-core-jvm" />
+            <dependency maven-id="io.ktor:ktor-websockets-jvm" />
+            <dependency maven-id="io.ktor:ktor-utils-jvm" />
+            <dependency maven-id="io.ktor:ktor-http-jvm" />
+            <dependency maven-id="io.ktor:ktor-serialization-jvm" />
+            <dependency maven-id="io.ktor:ktor-events-jvm" />
+            <dependency maven-id="io.ktor:ktor-http-cio-jvm" />
+            <dependency maven-id="io.ktor:ktor-io-jvm" />
+            <dependency maven-id="io.ktor:ktor-network-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-cio-jvm/3.3.2/ktor-server-cio-jvm-3.3.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-core-jvm/3.3.2/ktor-server-core-jvm-3.3.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/typesafe/config/1.4.5/config-1.4.5.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-cio-jvm/3.3.2/ktor-server-cio-jvm-3.3.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-core-jvm/3.3.2/ktor-server-core-jvm-3.3.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/typesafe/config/1.4.5/config-1.4.5-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

@@ -5,6 +5,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.tree.java.IKeywordElementType;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @see com.intellij.java.syntax.element.JavaSyntaxTokenType
@@ -160,6 +161,11 @@ public interface JavaTokenType extends TokenType {
   IElementType PERMITS_KEYWORD = new IJavaElementType("PERMITS");
   IElementType WHEN_KEYWORD = new IJavaElementType("WHEN_KEYWORD");
 
+  /**
+   * @deprecated use {@link com.intellij.java.syntax.element.JavaSyntaxTokenType#JAVA_TOKEN_TYPE_SET}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TokenSet JAVA_TOKEN_TYPE_SET = TokenSet.create(IDENTIFIER,
                                                  C_STYLE_COMMENT,
                                                  END_OF_LINE_COMMENT,

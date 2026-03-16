@@ -5,6 +5,7 @@ import com.intellij.execution.EnvFilesOptions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.PathMappingSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -69,4 +70,10 @@ public interface PythonRunParams extends EnvFilesOptions {
   void setAddContentRoots(boolean flag);
 
   void setAddSourceRoots(boolean flag);
+
+  @ApiStatus.Internal
+  void setDebugJustMyCode(boolean flag);
+
+  @ApiStatus.Internal
+  boolean shouldDebugJustMyCode();
 }

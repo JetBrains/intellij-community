@@ -1,0 +1,18 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="org.jetbrains.kotlin"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.gradle"/>
+    <module name="intellij.gradle.completion"/>
+    <module name="intellij.java.frontback.psi.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.repository.search.common"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.contributor language="kotlin"
+                            id="KotlinGradleScriptCompletionContributor"
+                            order="first, before KotlinCompletionContributor, before liveTemplates"
+                            implementationClass="com.intellij.gradle.kotlin.completion.KotlinGradleScriptCompletionContributor"/>
+  </extensions>
+</idea-plugin>

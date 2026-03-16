@@ -5,7 +5,7 @@ import com.intellij.platform.managed.cache.RemoteManagedCacheApi
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
 
-private class RemoteManagedCacheApiImplProvider : RemoteApiProvider {
+internal class RemoteManagedCacheApiImplProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<RemoteManagedCacheApi>()) {
       RemoteManagedCacheApiImpl()

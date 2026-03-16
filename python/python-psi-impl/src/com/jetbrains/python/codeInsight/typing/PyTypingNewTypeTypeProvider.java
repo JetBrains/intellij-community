@@ -2,14 +2,29 @@ package com.jetbrains.python.codeInsight.typing;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.StubAwareComputation;
 import com.jetbrains.python.psi.impl.stubs.PyTypingNewTypeStubImpl;
 import com.jetbrains.python.psi.stubs.PyTypingNewTypeStub;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeProviderBase;
+import com.jetbrains.python.psi.types.PyTypingNewType;
+import com.jetbrains.python.psi.types.PyTypingNewTypeFactoryType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
 
   @Override
@@ -18,26 +33,40 @@ public final class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
                                            @NotNull TypeEvalContext context) {
     PyClass aClass = PyUtil.turnConstructorIntoClass(function);
     PyQualifiedNameOwner qualifiedNameOwner = aClass != null ? aClass : function;
-    return callSite instanceof PyCallExpression && PyTypingTypeProvider.NEW_TYPE.equals(qualifiedNameOwner.getQualifiedName())
-           ? PyTypeUtil.notNullToRef(getNewTypeFromAST((PyCallExpression)callSite, context))
-           : null;
+    if (callSite instanceof PyCallExpression callExpression &&
+        PyTypingTypeProvider.NEW_TYPE.equals(qualifiedNameOwner.getQualifiedName())) {
+      if (context.maySwitchToAST(callSite)) {
+        final PyTypingNewTypeStub stub = PyTypingNewTypeStubImpl.Companion.create(callExpression);
+        if (stub != null) {
+          final PyClassType type = getClassType(stub, context, callSite);
+          if (type != null) {
+            PyTypingNewType newType = new PyTypingNewType(type, stub.getName(), getDeclaration(callExpression));
+            return Ref.create(new PyTypingNewTypeFactoryType(newType));
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @Override
   public Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
-    if (referenceTarget instanceof PyTargetExpression) {
-      return PyTypeUtil.notNullToRef(getNewTypeForTarget((PyTargetExpression)referenceTarget, context));
+    PyTypingNewType newType = getNewTypeForResolvedElement(referenceTarget, context);
+    if (newType != null) {
+      return Ref.create(new PyTypingNewTypeFactoryType(newType));
     }
-
     return null;
   }
 
-  private static @Nullable PyTypingNewType getNewTypeForTarget(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
-    return StubAwareComputation.on(target)
-      .withCustomStub(stub -> stub.getCustomStub(PyTypingNewTypeStub.class))
-      .overStub(customStub -> getNewTypeFromStub(target, customStub, context))
-      .withStubBuilder(PyTypingNewTypeStubImpl.Companion::create)
-      .compute(context);
+  static @Nullable PyTypingNewType getNewTypeForResolvedElement(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+    if (element instanceof PyTargetExpression targetExpression) {
+      return StubAwareComputation.on(targetExpression)
+        .withCustomStub(stub -> stub.getCustomStub(PyTypingNewTypeStub.class))
+        .overStub(customStub -> getNewTypeFromStub(targetExpression, customStub, context))
+        .withStubBuilder(PyTypingNewTypeStubImpl.Companion::create)
+        .compute(context);
+    }
+    return null;
   }
 
   private static @Nullable PyTypingNewType getNewTypeFromStub(@NotNull PyTargetExpression target,
@@ -46,19 +75,6 @@ public final class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
     if (stub == null) return null;
     final PyClassType type = getClassType(stub, context, target);
     return type != null ? new PyTypingNewType(type, stub.getName(), target) : null;
-  }
-
-  private static @Nullable PyTypingNewType getNewTypeFromStub(@NotNull PyCallExpression call,
-                                                              @Nullable PyTypingNewTypeStub stub,
-                                                              @NotNull TypeEvalContext context) {
-    if (stub == null) return null;
-    final PyClassType type = getClassType(stub, context, call);
-    return type != null ? new PyTypingNewType(type, stub.getName(), getDeclaration(call)) : null;
-  }
-
-  private static @Nullable PyTypingNewType getNewTypeFromAST(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
-    if (!context.maySwitchToAST(call)) return null;
-    return getNewTypeFromStub(call, PyTypingNewTypeStubImpl.Companion.create(call), context);
   }
 
   private static @Nullable PyClassType getClassType(@NotNull PyTypingNewTypeStub stub,

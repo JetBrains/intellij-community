@@ -12,8 +12,8 @@ import com.intellij.platform.kernel.withKernel
 import com.jetbrains.rhizomedb.ChangeScope
 import com.jetbrains.rhizomedb.exists
 import fleet.kernel.change
-import fleet.kernel.isShared
-import fleet.kernel.shared
+import fleet.kernel.rebase.isShared
+import fleet.kernel.rebase.shared
 import org.jetbrains.annotations.ApiStatus
 
 /**

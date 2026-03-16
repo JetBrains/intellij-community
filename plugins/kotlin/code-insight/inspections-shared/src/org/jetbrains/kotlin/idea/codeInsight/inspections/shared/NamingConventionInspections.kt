@@ -3,7 +3,14 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.analysis.AnalysisScope
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.CommonProblemDescriptor
+import com.intellij.codeInspection.GlobalInspectionContext
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.codeInspection.InspectionsBundle
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.codeInspection.options.OptPane.string
@@ -36,7 +43,21 @@ import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
 import org.jetbrains.kotlin.idea.quickfix.RenameIdentifierFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtPackageDirective
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.enumEntryVisitor
+import org.jetbrains.kotlin.psi.namedFunctionVisitor
+import org.jetbrains.kotlin.psi.packageDirectiveVisitor
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.psi.psiUtil.unwrapNullability
@@ -121,7 +142,7 @@ class NamingConventionInspectionSettings(
         if (name != null && nameIdentifier != null && nameRegex?.matches(name) == false && additionalCheck()) {
             val message = getNameMismatchMessage(name, rules)
             @NlsSafe
-            val descriptionTemplate = "$entityName ${KotlinBundle.message("text.name")} <code>#ref</code> $message #loc"
+            val descriptionTemplate = "$entityName ${KotlinBundle.message("text.name")} <code>#ref</code> $message"
             holder.registerProblem(
                 element.nameIdentifier!!,
                 descriptionTemplate,
@@ -222,7 +243,7 @@ class FunctionNameInspection : NamingConventionInspection(
             if (function.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
                 return@namedFunctionVisitor
             }
-            val virtualFile = function.containingFile.virtualFile
+            val virtualFile = function.containingFile.virtualFile ?: return@namedFunctionVisitor
             if (!ProjectFileIndex.getInstance(function.project).isInTestSource(virtualFile)) {
                 verifyName(function, holder) { !function.isFactoryFunction() }
             }
@@ -270,7 +291,7 @@ class TestFunctionNameInspection : NamingConventionInspection(
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return namedFunctionVisitor { function ->
-            val virtualFile = function.containingFile.virtualFile
+            val virtualFile = function.containingFile.virtualFile ?: return@namedFunctionVisitor
             if (!ProjectFileIndex.getInstance(function.project).isInTestSource(virtualFile)) {
                 return@namedFunctionVisitor
             }
@@ -466,9 +487,9 @@ private data class CheckResult(val errorMessage: String, val isForPart: Boolean)
     @NlsSafe
     fun toProblemTemplateString(): String {
         return KotlinBundle.message("package.name") + if (isForPart) {
-            " <code>#ref</code> ${KotlinBundle.message("text.part")} $errorMessage #loc"
+            " <code>#ref</code> ${KotlinBundle.message("text.part")} $errorMessage"
         } else {
-            " <code>#ref</code> $errorMessage #loc"
+            " <code>#ref</code> $errorMessage"
         }
     }
 }

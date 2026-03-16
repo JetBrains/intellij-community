@@ -98,7 +98,9 @@ public class XmlSurroundWithTest extends MarkupSurroundTestBase {
       }
       throw new AssertionError("Surround with <tag></tag> action not found");
     } finally {
-      Disposer.dispose(ref.get());
+      PopupFactoryImpl.ActionGroupPopup disposable = ref.get();
+      disposable.cancel();
+      Disposer.dispose(disposable);
     }
   }
 

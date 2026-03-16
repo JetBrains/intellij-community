@@ -5,10 +5,11 @@ import com.intellij.openapi.util.Iconable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 
 public abstract class IconTableCellRenderer<T> extends DefaultTableCellRenderer {
   public static final IconTableCellRenderer<Iconable> ICONABLE = new IconTableCellRenderer<>() {

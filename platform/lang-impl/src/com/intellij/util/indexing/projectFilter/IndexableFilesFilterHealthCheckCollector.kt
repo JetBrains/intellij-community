@@ -10,11 +10,7 @@ import com.intellij.openapi.project.Project
  * @see <a href="https://youtrack.jetbrains.com/articles/IJPL-A-300/indexable.files.filter">About indexable.files.filter collector</a>
  */
 internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("indexable.files.filter",
-                                    10,
-                                    "FUS",
-                                    "Collects statistics of ProjectIndexableFilesFilterHealthCheck. " +
-                                    "See more here: https://youtrack.jetbrains.com/articles/IJPL-A-300/indexable.files.filter")
+  private val GROUP = EventLogGroup("indexable.files.filter", 10)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -29,7 +25,6 @@ internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollecto
 
   private val indexableFilesFilterHealthCheck = GROUP.registerVarargEvent(
     "indexable_files_filter_health_check",
-    description = "Reports results of health check of ProjectIndexableFilesFilter.",
     filterNameField,
     attemptNumberInProjectField,
     successfulAttemptNumberInProjectField,
@@ -42,12 +37,10 @@ internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollecto
     "indexable_files_filter_health_check_started",
     filterNameField,
     attemptNumberInProjectField,
-    description = "Event which happens every time health check is started."
   )
 
   private val indexableFilesFilterHealthCheckCancelled = GROUP.registerVarargEvent(
     "indexable_files_filter_health_check_cancelled",
-    description = "Event which happens every time health check is cancelled e.g. because scanning was in progress.",
     filterNameField,
     attemptNumberInProjectField,
     cancelledAttemptNumberInProjectField,
@@ -55,24 +48,19 @@ internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollecto
     cancellationReasonField,
   )
 
-  fun reportIndexableFilesFilterHealthcheckStarted(project: Project,
-                                                   filter: ProjectIndexableFilesFilter,
-                                                   attemptNumber: Int) {
-    indexableFilesFilterHealthCheckStarted.log(
-      project,
-      getFilterName(filter),
-      attemptNumber,
-    )
+  fun reportIndexableFilesFilterHealthcheckStarted(project: Project, filter: ProjectIndexableFilesFilter, attemptNumber: Int) {
+    indexableFilesFilterHealthCheckStarted.log(project, getFilterName(filter), attemptNumber)
   }
 
-
-  fun reportIndexableFilesFilterHealthcheck(project: Project,
-                                            filter: ProjectIndexableFilesFilter,
-                                            attemptNumber: Int,
-                                            successfulAttemptNumber: Int,
-                                            durationMs: Int,
-                                            nonIndexableFilesInFilterCount: Int,
-                                            indexableFilesNotInFilterCount: Int) {
+  fun reportIndexableFilesFilterHealthcheck(
+    project: Project,
+    filter: ProjectIndexableFilesFilter,
+    attemptNumber: Int,
+    successfulAttemptNumber: Int,
+    durationMs: Int,
+    nonIndexableFilesInFilterCount: Int,
+    indexableFilesNotInFilterCount: Int,
+  ) {
     indexableFilesFilterHealthCheck.log(
       project,
       filterNameField.with(getFilterName(filter)),
@@ -84,12 +72,14 @@ internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollecto
     )
   }
 
-  fun reportIndexableFilesFilterHealthcheckCancelled(project: Project,
-                                                     filter: ProjectIndexableFilesFilter,
-                                                     attemptNumber: Int,
-                                                     cancelledAttemptNumber: Int,
-                                                     durationMs: Int,
-                                                     cancellationReason: FilterActionCancellationReason) {
+  fun reportIndexableFilesFilterHealthcheckCancelled(
+    project: Project,
+    filter: ProjectIndexableFilesFilter,
+    attemptNumber: Int,
+    cancelledAttemptNumber: Int,
+    durationMs: Int,
+    cancellationReason: FilterActionCancellationReason,
+  ) {
     indexableFilesFilterHealthCheckCancelled.log(
       project,
       filterNameField.with(getFilterName(filter)),

@@ -5,7 +5,7 @@ import com.michaelbaranov.microba.common.CommitEvent;
 import com.michaelbaranov.microba.common.CommitListener;
 import com.michaelbaranov.microba.common.MicrobaComponent;
 
-import javax.swing.*;
+import javax.swing.JFormattedTextField;
 import javax.swing.event.EventListenerList;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

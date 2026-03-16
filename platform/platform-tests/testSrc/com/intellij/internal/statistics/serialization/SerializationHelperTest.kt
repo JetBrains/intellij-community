@@ -6,7 +6,12 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.LogEventRecord
 import com.intellij.internal.statistic.eventLog.LogEventRecordRequest
 import com.intellij.internal.statistic.eventLog.LogEventSerializer
-import com.intellij.internal.statistic.eventLog.events.scheme.*
+import com.intellij.internal.statistic.eventLog.events.scheme.EventDescriptor
+import com.intellij.internal.statistic.eventLog.events.scheme.EventsScheme
+import com.intellij.internal.statistic.eventLog.events.scheme.FieldDataType
+import com.intellij.internal.statistic.eventLog.events.scheme.FieldDescriptor
+import com.intellij.internal.statistic.eventLog.events.scheme.GroupDescriptor
+import com.intellij.internal.statistic.eventLog.events.scheme.PluginSchemeDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jetbrains.fus.reporting.model.lion3.LogEvent

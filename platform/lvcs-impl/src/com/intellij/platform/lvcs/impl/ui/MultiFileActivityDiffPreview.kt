@@ -9,7 +9,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandlerBase
+import com.intellij.openapi.vcs.changes.ui.PresentableChange
+import com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.platform.lvcs.impl.ActivityFileChange
 import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter

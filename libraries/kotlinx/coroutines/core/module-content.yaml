@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinx.coroutines.core.jar
+  modules:
+  - name: intellij.libraries.kotlinx.coroutines.core
+  library: kotlinx-coroutines-core
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-core-jvm/1/kotlinx-coroutines-core-jvm-1.jar

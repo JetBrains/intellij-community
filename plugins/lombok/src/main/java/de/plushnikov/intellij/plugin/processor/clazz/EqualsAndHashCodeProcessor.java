@@ -1,8 +1,20 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
@@ -27,7 +39,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static de.plushnikov.intellij.plugin.LombokClassNames.*;
+import static de.plushnikov.intellij.plugin.LombokClassNames.EQUALS_AND_HASHCODE;
+import static de.plushnikov.intellij.plugin.LombokClassNames.EQUALS_AND_HASHCODE_EXCLUDE;
+import static de.plushnikov.intellij.plugin.LombokClassNames.EQUALS_AND_HASHCODE_INCLUDE;
 
 /**
  * Inspect and validate @EqualsAndHashCode lombok annotation on a class
@@ -194,17 +208,26 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
       LombokAddNullAnnotations.createRelevantNullableAnnotation(psiClass, parameter);
       copyOnXAnnotationsForFirstParam(psiAnnotation, parameter);
     }
-
+    methodBuilder.withRelatedMembers(m -> {
+      final Collection<MemberInfo> memberInfos = collectEqualsAndHashcodeMemberInfo(m);
+      return ContainerUtil.map(memberInfos, MemberInfo::getField);
+    });
     methodBuilder.withBodyText(m -> {
-      PsiClass containingClass = m.getContainingClass();
-      PsiAnnotation anno = (PsiAnnotation)m.getNavigationElement();
-      return createEqualsBlockString(containingClass, anno, hasCanEqualMethod,
-                                     EqualsAndHashCodeToStringHandler.filterMembers(containingClass, anno, true,
-                                                                                    INCLUDE_ANNOTATION_METHOD, null,
-                                                                                    EQUALS_AND_HASHCODE_INCLUDE,
-                                                                                    EQUALS_AND_HASHCODE_EXCLUDE));
+      final PsiClass containingClass = m.getContainingClass();
+      final PsiAnnotation anno = (PsiAnnotation)m.getNavigationElement();
+      final Collection<MemberInfo> memberInfos = collectEqualsAndHashcodeMemberInfo(m);
+      return createEqualsBlockString(containingClass, anno, hasCanEqualMethod, memberInfos);
     });
     return methodBuilder;
+  }
+
+  private static @NotNull Collection<MemberInfo> collectEqualsAndHashcodeMemberInfo(LombokLightMethodBuilder m) {
+    PsiClass containingClass = m.getContainingClass();
+    PsiAnnotation anno = (PsiAnnotation)m.getNavigationElement();
+    return EqualsAndHashCodeToStringHandler.filterMembers(containingClass, anno, true,
+                                                          INCLUDE_ANNOTATION_METHOD, null,
+                                                          EQUALS_AND_HASHCODE_INCLUDE,
+                                                          EQUALS_AND_HASHCODE_EXCLUDE);
   }
 
   private @NotNull PsiMethod createHashCodeMethod(@NotNull PsiClass psiClass,
@@ -216,14 +239,15 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
       .withMethodReturnType(PsiTypes.intType())
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
+      .withRelatedMembers(m -> {
+        final Collection<MemberInfo> memberInfos = collectEqualsAndHashcodeMemberInfo(m);
+        return ContainerUtil.map(memberInfos, MemberInfo::getField);
+      })
       .withBodyText(m -> {
         PsiClass containingClass = m.getContainingClass();
         PsiAnnotation anno = (PsiAnnotation)m.getNavigationElement();
-        return createHashcodeBlockString(containingClass, anno,
-                                         EqualsAndHashCodeToStringHandler.filterMembers(containingClass, anno, true,
-                                                                                        INCLUDE_ANNOTATION_METHOD, null,
-                                                                                        EQUALS_AND_HASHCODE_INCLUDE,
-                                                                                        EQUALS_AND_HASHCODE_EXCLUDE));
+        final Collection<MemberInfo> memberInfos = collectEqualsAndHashcodeMemberInfo(m);
+        return createHashcodeBlockString(containingClass, anno, memberInfos);
       });
   }
 

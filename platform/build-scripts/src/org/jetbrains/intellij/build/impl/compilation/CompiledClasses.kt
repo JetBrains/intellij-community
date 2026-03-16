@@ -105,6 +105,11 @@ internal fun checkCompilationOptions(context: CompilationContext) {
 }
 
 internal fun isCompilationRequired(options: BuildOptions): Boolean {
+  // Compilation is never required with Bazel
+  if (isRunningFromBazelOut()) {
+    return false
+  }
+
   return options.forceRebuild ||
          !options.useCompiledClassesFromProjectOutput &&
          options.pathToCompiledClassesArchive == null &&
@@ -112,6 +117,11 @@ internal fun isCompilationRequired(options: BuildOptions): Boolean {
 }
 
 internal fun keepCompilationState(options: BuildOptions): Boolean {
+  if (isRunningFromBazelOut()) {
+    // Do not clean JPS output, we do not know exactly what classes directory is
+    return true
+  }
+
   return !options.forceRebuild &&
          (isPortableCompilationCacheEnabled ||
           options.useCompiledClassesFromProjectOutput ||
@@ -120,7 +130,12 @@ internal fun keepCompilationState(options: BuildOptions): Boolean {
           options.incrementalCompilation)
 }
 
-internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Collection<String>?, includingTestsInModules: List<String>?, span: Span) {
+internal suspend fun reuseOrCompile(
+  moduleNames: Collection<String>?,
+  includingTestsInModules: List<String>?,
+  span: Span,
+  context: CompilationContext,
+) {
   if (context.compilationData.outputForAllModulesIsAvailable) {
     span.addEvent("Output for all modules was already provided in this compilation session, skipping compilation")
     return
@@ -259,15 +274,15 @@ internal suspend fun doCompile(
       withTimeout(incrementalCompilationTimeout) {
         compile(
           jpsCompilationRunner = runner,
-          context = context,
           moduleNames = moduleNames,
           includingTestsInModules = includingTestsInModules,
+          context = context,
           canceledStatus = CanceledStatus { !isActive },
         )
       }
     }
     else {
-      compile(jpsCompilationRunner = runner, context = context, moduleNames = moduleNames, includingTestsInModules = includingTestsInModules)
+      compile(jpsCompilationRunner = runner, moduleNames = moduleNames, includingTestsInModules = includingTestsInModules, context = context)
     }
     context.messages.buildStatus(status)
   }
@@ -327,7 +342,7 @@ private suspend fun retryCompilation(
   }
   context.compilationData.reset()
   spanBuilder(successMessage).use {
-    compile(jpsCompilationRunner = runner, context = context, moduleNames = moduleNames, includingTestsInModules = includingTestsInModules)
+    compile(jpsCompilationRunner = runner, moduleNames = moduleNames, includingTestsInModules = includingTestsInModules, context = context)
   }
   Span.current().addEvent("Compilation successful after clean build retry")
   context.messages.changeBuildStatusToSuccess(successMessage)
@@ -336,9 +351,9 @@ private suspend fun retryCompilation(
 
 private suspend fun compile(
   jpsCompilationRunner: JpsCompilationRunner,
-  context: CompilationContext,
   moduleNames: Collection<String>?,
   includingTestsInModules: List<String>?,
+  context: CompilationContext,
   canceledStatus: CanceledStatus = CanceledStatus.NULL
 ) {
   when {
@@ -351,6 +366,6 @@ private suspend fun compile(
   }
   context.options.incrementalCompilation = true
   includingTestsInModules?.forEach {
-    jpsCompilationRunner.buildModuleTests(context.findRequiredModule(it), canceledStatus)
+    jpsCompilationRunner.buildModuleTests(context.outputProvider.findRequiredModule(it), canceledStatus)
   }
 }

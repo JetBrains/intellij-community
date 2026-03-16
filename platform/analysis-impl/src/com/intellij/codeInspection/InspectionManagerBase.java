@@ -100,6 +100,18 @@ public abstract class InspectionManagerBase extends InspectionManager {
 
   @Override
   public @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
+                                                            @Nullable("null means the text range of the element") TextRange rangeInElement,
+                                                            @NotNull String descriptionTemplate,
+                                                            @NotNull ProblemHighlightType highlightType,
+                                                            @Nullable String tooltipMessage,
+                                                            boolean onTheFly,
+                                                            @NotNull LocalQuickFix @Nullable ... fixes) {
+    boolean showTooltip = highlightType != ProblemHighlightType.INFORMATION;
+    return new ProblemDescriptorBase(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, rangeInElement, showTooltip, onTheFly, tooltipMessage);
+  }
+
+  @Override
+  public @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
                                                             boolean showTooltip,
                                                             @NotNull ProblemHighlightType highlightType,

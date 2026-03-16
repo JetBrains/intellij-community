@@ -5,7 +5,8 @@ import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Window;
 import java.util.Arrays;
 import java.util.EventListener;
 

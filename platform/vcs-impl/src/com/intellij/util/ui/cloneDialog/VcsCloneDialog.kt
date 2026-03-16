@@ -14,7 +14,11 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListe
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
-import com.intellij.ui.*
+import com.intellij.ui.CollectionListModel
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.ScrollingUtil
+import com.intellij.ui.SideBorder
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.cloneDialog.RepositoryUrlCloneDialogExtension.RepositoryUrlMainExtensionComponent

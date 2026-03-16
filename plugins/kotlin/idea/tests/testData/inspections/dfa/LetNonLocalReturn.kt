@@ -23,7 +23,7 @@ fun testChain3(file: String): Boolean {
     }
 }
 
-fun testElvis(param: String?, other: String) = param ?: other.let {
+fun testElvis(param: String?, other: String): String? = param ?: other.let {
     if (it.isNotEmpty()) return it
 
     null

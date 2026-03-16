@@ -5,7 +5,9 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
 import javax.swing.text.html.HTMLEditorKit;
 
 public class RestSwingHtmlPanel implements RestPreviewPanel {

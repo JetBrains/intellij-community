@@ -5,7 +5,11 @@ import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -24,7 +28,11 @@ import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.FreeThreadedFileViewProvider;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
+import com.intellij.psi.impl.PsiFileEx;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import com.intellij.psi.impl.file.PsiLargeBinaryFileImpl;
 import com.intellij.psi.impl.file.PsiLargeTextFileImpl;
@@ -160,7 +168,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     return myVirtualFile;
   }
 
-  private @Nullable Document getCachedDocument() {
+  @Nullable Document getCachedDocument() {
     Document document = com.intellij.reference.SoftReference.dereference(myDocument);
     if (document != null) return document;
     return FileDocumentManager.getInstance().getCachedDocument(getVirtualFile());
@@ -337,7 +345,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
       return;
     }
     if (document != null &&
-        ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myManager.getProject())).getSynchronizer().isInSynchronization(document)) {
+        ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(myManager.getProject())).getSynchronizer().isInSynchronization(document)) {
       return;
     }
 
@@ -390,7 +398,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
            + ", content=" + getContent() + ", eventSystemEnabled=" + isEventSystemEnabled() + '}';
   }
 
-  public abstract PsiFile getCachedPsi(@NotNull Language target);
+  public abstract @Nullable PsiFile getCachedPsi(@NotNull Language target);
 
   public abstract @Unmodifiable @NotNull List<PsiFile> getCachedPsiFiles();
 

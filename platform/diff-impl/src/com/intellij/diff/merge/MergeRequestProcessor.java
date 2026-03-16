@@ -13,7 +13,19 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -24,7 +36,6 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -43,10 +54,17 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
 
@@ -75,7 +93,7 @@ public abstract class MergeRequestProcessor implements Disposable {
   private @Nullable MergeRequest myRequest;
 
   private @NotNull MergeTool.MergeViewer myViewer;
-  private @Nullable BooleanGetter myCloseHandler;
+  private @Nullable BooleanSupplier myCloseHandler;
   private boolean myConflictResolved = false;
 
   public MergeRequestProcessor(@Nullable Project project) {
@@ -174,7 +192,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     buildToolbar(toolbarComponents.toolbarActions);
     myToolbarStatusPanel.setContent(toolbarComponents.statusPanel);
-    myCloseHandler = toolbarComponents.closeHandler;
+    myCloseHandler = toolbarComponents.closeHandler == null ? null : () -> toolbarComponents.closeHandler.invoke();
 
     updateBottomActions();
   }
@@ -446,7 +464,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
   @RequiresEdt
   public boolean checkCloseAction() {
-    return myConflictResolved || myCloseHandler == null || myCloseHandler.get();
+    return myConflictResolved || myCloseHandler == null || myCloseHandler.getAsBoolean();
   }
 
   //

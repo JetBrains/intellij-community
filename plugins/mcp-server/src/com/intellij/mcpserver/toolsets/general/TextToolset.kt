@@ -5,19 +5,29 @@ package com.intellij.mcpserver.toolsets.general
 import com.intellij.find.FindBundle
 import com.intellij.find.FindManager
 import com.intellij.find.impl.FindInProjectUtil
-import com.intellij.mcpserver.*
+import com.intellij.mcpserver.McpServerBundle
+import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
+import com.intellij.mcpserver.mcpFail
+import com.intellij.mcpserver.project
+import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.toolsets.Constants.MAX_USAGE_TEXT_CHARS
-import com.intellij.mcpserver.util.*
+import com.intellij.mcpserver.util.TruncateMode
+import com.intellij.mcpserver.util.buildUsageSnippetText
+import com.intellij.mcpserver.util.maxTextLength
+import com.intellij.mcpserver.util.projectDirectory
+import com.intellij.mcpserver.util.relativizeIfPossible
+import com.intellij.mcpserver.util.resolveInProject
+import com.intellij.mcpserver.util.truncateText
+import com.intellij.mcpserver.util.truncatedMarker
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
@@ -103,9 +113,6 @@ class TextToolset : McpToolset {
     @McpDescription("Case-sensitive search")
     caseSensitive: Boolean = true,
   ) {
-    // Validate that oldText is not empty to prevent endless loop
-    if (oldText.isEmpty()) mcpFail("oldText is empty")
-    
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.replacing.text.in.file", pathInProject, oldText, newText))
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(pathInProject)
@@ -116,16 +123,29 @@ class TextToolset : McpToolset {
       val rangeMarkers = mutableListOf<RangeMarker>()
       val document = FileDocumentManager.getInstance().getDocument(file) ?: mcpFail("Could not get document for $file")
       val text = document.text
-      var currentStartIndex = 0
 
-      while (true) {
-        Cancellation.checkCancelled()
-        val occurrenceStart = text.indexOf(oldText, currentStartIndex, !caseSensitive)
-        if (occurrenceStart < 0) break
-        val rangeMarker = document.createRangeMarker(occurrenceStart, occurrenceStart + oldText.length, true)
-        rangeMarkers.add(rangeMarker)
-        if (!replaceAll) break // only the first occurence
-        currentStartIndex = occurrenceStart + oldText.length
+      // Special handling for empty oldText
+      if (oldText.isEmpty()) {
+        if (text.isEmpty()) {
+          // Allow setting newText on empty file (LLM create-then-fill workflow)
+          val rangeMarker = document.createRangeMarker(0, 0, true)
+          rangeMarkers.add(rangeMarker)
+        } else {
+          // Fail if file is not empty to prevent endless loop
+          mcpFail("oldText is empty but file is not empty")
+        }
+      } else {
+        // Normal case: search for oldText
+        var currentStartIndex = 0
+        while (true) {
+          Cancellation.checkCancelled()
+          val occurrenceStart = text.indexOf(oldText, currentStartIndex, !caseSensitive)
+          if (occurrenceStart < 0) break
+          val rangeMarker = document.createRangeMarker(occurrenceStart, occurrenceStart + oldText.length, true)
+          rangeMarkers.add(rangeMarker)
+          if (!replaceAll) break // only the first occurence
+          currentStartIndex = occurrenceStart + oldText.length
+        }
       }
       document to rangeMarkers.toList()
     }
@@ -212,7 +232,7 @@ class TextToolset : McpToolset {
       isCaseSensitive = false
       isWholeWordsOnly = false
       isRegularExpressions = false
-      isProjectScope = true
+      isProjectScope = directoryToSearch == null
       isSearchInProjectFiles = false
       fileFilter = fileMask
       isCaseSensitive = caseSensitive
@@ -250,15 +270,9 @@ class TextToolset : McpToolset {
     val entries = usages.mapNotNull { usage ->
       val file = usage.virtualFile ?: return@mapNotNull null
       val document = readAction { FileDocumentManager.getInstance().getDocument(file) } ?: return@mapNotNull null
-      val textRange = usage.navigationRange ?: return@mapNotNull null
-      val startLineNumber = document.getLineNumber(textRange.startOffset)
-      val startLineStartOffset = document.getLineStartOffset(startLineNumber)
-      val endLineNumber = document.getLineNumber(textRange.endOffset)
-      val endLineEndOffset = document.getLineEndOffset(endLineNumber)
-      val textBeforeOccurrence = document.getText(TextRange(startLineStartOffset, textRange.startOffset)).take(MAX_USAGE_TEXT_CHARS)
-      val textInner = document.getText(TextRange(textRange.startOffset, textRange.endOffset)).take(MAX_USAGE_TEXT_CHARS)
-      val textAfterOccurrence = document.getText(TextRange(textRange.endOffset, endLineEndOffset)).take(MAX_USAGE_TEXT_CHARS)
-      UsageInfoEntry(projectDir.relativizeIfPossible(file), startLineNumber + 1, "$textBeforeOccurrence||$textInner||$textAfterOccurrence")
+      val textRange = readAction { usage.navigationRange } ?: return@mapNotNull null
+      val snippetText = document.buildUsageSnippetText(textRange, MAX_USAGE_TEXT_CHARS)
+      UsageInfoEntry(projectDir.relativizeIfPossible(file), snippetText.lineNumber, snippetText.lineText)
     }
 
     return UsageInfoResult(entries = entries, probablyHasMoreMatchingEntries = usages.size >= maxUsageCount, timedOut = timedOut)

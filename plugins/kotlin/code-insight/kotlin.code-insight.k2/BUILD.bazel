@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.kotlin.codeInsight` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_kotlin-codeInsight",
@@ -17,6 +17,11 @@ resourcegroup(
   name = "kotlin-codeInsight_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "plugins_kotlin_code-insight_descriptions_provided",
+  lib = "//plugins/kotlin/code-insight/descriptions"
 )
 
 jvm_library(
@@ -84,6 +89,8 @@ jvm_library(
     "//plugins/kotlin/kotlin.searching",
     "//plugins/kotlin/base/statistics",
     "//platform/editor-ui-ex:editor-ex",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ":plugins_kotlin_code-insight_descriptions_provided",
   ]
 )
 
@@ -125,8 +132,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/api",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//platform/usageView",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/fir/tests:tests_test_lib",
     "//plugins/kotlin/frontend-independent",
     "//platform/lang-impl",
@@ -139,6 +145,7 @@ jvm_library(
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "@lib//:kotlinc-analysis-api-impl-base",
     "//libraries/guava",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
@@ -157,6 +164,7 @@ jvm_library(
     "//plugins/kotlin/kotlin.ide",
     "//libraries/velocity",
     "//platform/util/text-matching",
+    "//platform/util/text-matching:text-matching_test_lib",
     "//platform/util/jdom",
     "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
     "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
@@ -166,9 +174,12 @@ jvm_library(
     "//java/testFramework",
     "//plugins/kotlin/base/statistics",
     "//platform/editor-ui-ex:editor-ex",
-    "//plugins/kotlin/bundled-compiler-plugins-support",
+    "//plugins/kotlin/bundled-compiler-plugins-support:compilerPlugins-support-bundled",
     "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
     "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ":plugins_kotlin_code-insight_descriptions_provided",
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight` end

@@ -11,7 +11,14 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.CommonIntentionAction;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiConstructorCall;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.infos.CandidateInfo;
 import org.jetbrains.annotations.NotNull;
 

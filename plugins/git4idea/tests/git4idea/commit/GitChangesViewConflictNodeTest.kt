@@ -17,7 +17,7 @@ internal class GitChangesViewConflictNodeTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     val groupingSupport = ChangesGroupingSupport(project = project, source = this, showConflictsNode = true).grouping
-    val model = ChangesViewUtil.createTreeModel(project, groupingSupport, changeListManager.changeLists, emptyList(), true) { true }
+    val model = ChangesViewUtil.createTreeModel(project, groupingSupport, changeListManager.changeLists, emptyList(), emptyList()) { true }
 
     val root = model.root as ChangesBrowserNode<*>
     val rootChildren = root.iterateNodeChildren().toList()

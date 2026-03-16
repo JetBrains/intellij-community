@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>numbers.txt</file>
+    <line>1</line>
+    <problem_class id="f97c5d29-941b-3b1b-afda-b0874906ab82" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">one</problem_class>
+    <description>one</description>
+    <highlighted_element>one</highlighted_element>
+    <language>TEXT</language>
+    <offset>0</offset>
+    <length>3</length>
+  </problem>
+
+  <problem>
+    <file>numbers.txt</file>
+    <line>2</line>
+    <problem_class id="b8a9f715-dbb6-3fd5-856e-7783c6820a61" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">two</problem_class>
+    <description>two</description>
+    <highlighted_element>two</highlighted_element>
+    <language>TEXT</language>
+    <offset>0</offset>
+    <length>3</length>
+  </problem>
+  
+</problems>

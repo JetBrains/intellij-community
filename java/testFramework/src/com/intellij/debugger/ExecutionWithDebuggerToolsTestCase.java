@@ -1,12 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.DebugProcessAdapterImpl;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.JavaDebugProcess;
+import com.intellij.debugger.engine.JavaSourcePositionHighlighter;
+import com.intellij.debugger.engine.StackFrameContext;
+import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.SuspendContextRunnable;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -29,8 +37,13 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.impl.XSteppingSuspendContext;
 import com.sun.jdi.Method;
 import com.sun.jdi.request.StepRequest;
 import org.jetbrains.annotations.NotNull;
@@ -38,10 +51,16 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
+
+import static com.intellij.debugger.DebuggerBreakpointTestUtilsKt.USE_XSESSION_PAUSE_LISTENER_KEY;
 
 /**
  * Runs the IDE with the debugger.
@@ -151,9 +170,33 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       assertNotNull("Debug process was not started", debugProcess);
 
       myBreakpointProvider = new BreakpointProvider(myDebugProcess);
-      debugProcess.addDebugProcessListener(myBreakpointProvider, getTestRootDisposable());
+
+      if (USE_XSESSION_PAUSE_LISTENER_KEY.get(myDebugProcess.getProject(), false)) {
+        useXSessionPauseListener(debugProcess);
+      } else {
+        debugProcess.addDebugProcessListener(myBreakpointProvider, getTestRootDisposable());
+      }
     }
     return myBreakpointProvider;
+  }
+
+  private void useXSessionPauseListener(DebugProcessImpl debugProcess) {
+    DebuggerSession jvmSession = debugProcess.getSession();
+    JavaDebugProcess process = debugProcess.getXdebugProcess();
+    assert (process != null);
+    XDebugSession xSession = process.getSession();
+    xSession.addSessionListener(new XDebugSessionListener() {
+      @Override
+      public void sessionPaused() {
+        SuspendContextImpl suspendContext = jvmSession.getContextManager().getContext().getSuspendContext();
+        if (suspendContext == null) {
+          XSuspendContext xSessionSuspendContext = xSession.getSuspendContext();
+          assert xSessionSuspendContext instanceof XSteppingSuspendContext : "Suspension context is null and XSuspendContext is  " + xSessionSuspendContext;
+        } else {
+          myBreakpointProvider.pausedWrapper(suspendContext);
+        }
+      }
+    });
   }
 
   /**
@@ -290,7 +333,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   }
 
   protected void pumpSwingThread() {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    LOG.assertTrue(EDT.isCurrentThreadEdt());
 
     InvokeRatherLaterRequest request = myRatherLaterRequests.get(0);
     request.invokesN++;
@@ -345,7 +388,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       });
     }
     else {
-      if (!SwingUtilities.isEventDispatchThread()) {
+      if (!EDT.isCurrentThreadEdt()) {
         try {
           EdtInvocationManager.getInstance().invokeAndWait(() -> pumpSwingThread());
         }
@@ -545,7 +588,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
         comment.done();
       }
     };
-    if (!SwingUtilities.isEventDispatchThread()) {
+    if (!EDT.isCurrentThreadEdt()) {
       DebuggerInvocationUtil.invokeAndWait(myProject, runnable, ModalityState.defaultModalityState());
     }
     else {
@@ -573,6 +616,10 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     @Override
     public void paused(SuspendContextImpl suspendContext) {
       // Need to add SuspendContextCommandImpl because the stepping pause is not now in SuspendContextCommandImpl
+      pausedWrapper(suspendContext);
+    }
+
+    void pausedWrapper(SuspendContextImpl suspendContext) {
       if (DebugProcessImpl.isInSuspendCommand(suspendContext)) {
         pausedImpl(suspendContext);
       }
@@ -624,7 +671,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     public void resumed(SuspendContextImpl suspendContext) {
       SuspendContextImpl pausedContext = myDebugProcess.getSuspendManager().getPausedContext();
       // do not switch context on resume inside stepping
-      if (pausedContext != null && myDebugProcess.getSession().getSteppingThread(suspendContext) == null) {
+      if (pausedContext != null && !myDebugProcess.isSteppingInProgress()) {
         paused(pausedContext);
       }
     }

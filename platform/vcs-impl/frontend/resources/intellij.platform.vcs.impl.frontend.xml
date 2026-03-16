@@ -11,7 +11,8 @@
     <ui.content.impl.toolWindowContentPostprocessor implementation="com.intellij.platform.vcs.impl.frontend.toolwindow.VcsToolWindowContentReplacer"/>
 
     <frontendChangesViewContentProvider implementation="com.intellij.platform.vcs.impl.frontend.shelf.ShelveChangesViewContentProvider"/>
-    <frontendChangesViewContentProvider implementation="com.intellij.platform.vcs.impl.frontend.changes.LocalChangesViewContentProvider"/>
+
+    <frontend.splitComponentProvider implementation="com.intellij.platform.vcs.impl.frontend.changes.ChangesViewSplitComponentProvider"/>
 
     <recentFiles.navigator implementation="com.intellij.platform.vcs.impl.frontend.diff.DiffRecentFilesNavigator"/>
     <recentFiles.excluder implementation="com.intellij.platform.vcs.impl.frontend.diff.DiffRecentFilesExcluder"/>

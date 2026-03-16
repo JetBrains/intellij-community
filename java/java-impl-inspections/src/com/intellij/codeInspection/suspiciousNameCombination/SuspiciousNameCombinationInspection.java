@@ -12,9 +12,23 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodMatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -22,7 +36,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
@@ -200,13 +217,13 @@ public final class SuspiciousNameCombinationInspection extends AbstractBaseJavaL
       if (name == null) {
         return null;
       }
-      String[] words = NameUtil.splitNameIntoWords(name);
-      Arrays.asList(words).replaceAll(SuspiciousNameCombinationInspection::canonicalize);
+      List<@NotNull String> words = ContainerUtil.map(NameUtil.splitNameIntoWordList(name),
+                                                      SuspiciousNameCombinationInspection::canonicalize);
       String result = null;
-      for (int i = 0; i < words.length; i++) {
+      for (int i = 0; i < words.size(); i++) {
         String word = "";
-        for (int j = i; j < words.length; j++) {
-          word += words[j];
+        for (int j = i; j < words.size(); j++) {
+          word += words.get(j);
           if (word.length() > myLongestWord) break;
           String group = myWordToGroupMap.get(word);
           if (group != null) {

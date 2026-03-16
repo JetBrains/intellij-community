@@ -3,8 +3,13 @@ package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 
 @Slow
+@PerformanceUnitTest
 public class GroovyStressPerformanceTest extends LightGroovyTestCase {
   @Override
   public String getBasePath() {

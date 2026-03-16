@@ -12,6 +12,7 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parents
 import com.intellij.util.Consumer
 import com.intellij.util.containers.sequenceOfNotNull
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
@@ -21,7 +22,18 @@ import org.jetbrains.kotlin.idea.caches.resolve.variableCallOrThis
 import org.jetbrains.kotlin.idea.util.getReceiverTargetDescriptor
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtTreeVisitor
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
@@ -30,6 +42,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.resolve.source.getPsi
 
+@K1Deprecation
 class KotlinHighlightReceiverUsagesHandlerFactory : HighlightUsagesHandlerFactoryBase() {
     override fun createHighlightUsagesHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
         if (!Registry.`is`(REGISTRY_FLAG)) return null
@@ -42,6 +55,7 @@ class KotlinHighlightReceiverUsagesHandlerFactory : HighlightUsagesHandlerFactor
     }
 }
 
+@K1Deprecation
 object ReceiverInfoSearcher {
     fun findReceiverInfoForUsageHighlighting(target: PsiElement): ReceiverInfo? =
         checkIfInThisReference(target) ?: checkIfInReceiverTypeReference(target)
@@ -127,6 +141,7 @@ object ReceiverInfoSearcher {
     }
 }
 
+@K1Deprecation
 @Suppress("StatefulEp")
 sealed class ReceiverInfo {
     abstract val psi: KtCallableDeclaration
@@ -177,6 +192,7 @@ sealed class ReceiverInfo {
     }
 }
 
+@K1Deprecation
 class KotlinHighlightReceiverUsagesHandler(
     private val receiverInfo: ReceiverInfo, editor: Editor,
     private val allowUsagesFromOtherHandlers: Boolean

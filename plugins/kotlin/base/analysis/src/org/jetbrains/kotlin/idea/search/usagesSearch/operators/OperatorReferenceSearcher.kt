@@ -5,8 +5,19 @@ package org.jetbrains.kotlin.idea.search.usagesSearch.operators
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.util.ProgressWrapper
-import com.intellij.psi.*
-import com.intellij.psi.search.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiPolyVariantReference
+import com.intellij.psi.PsiReference
+import com.intellij.psi.search.FileTypeIndex
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.SearchRequestCollector
+import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.UsageSearchContext
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
@@ -24,14 +35,20 @@ import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor.
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor.Companion.testLog
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtWhenEntry
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.util.*
 
 abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
     protected val targetDeclaration: PsiElement,

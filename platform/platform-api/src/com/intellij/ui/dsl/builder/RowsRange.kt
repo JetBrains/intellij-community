@@ -2,7 +2,7 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
 import org.jetbrains.annotations.ApiStatus
 
 /**

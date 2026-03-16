@@ -7,4 +7,4 @@ fun f(x: List<IntStringPair>) {
 
 // K1_TYPE: first -> <html>Int</html>
 
-// K2_TYPE: first -> Int
+// K2_TYPE: first -> <b>Int</b>

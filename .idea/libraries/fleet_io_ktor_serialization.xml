@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="fleet:io.ktor.serialization" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-serialization-jvm:3.1.3">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-serialization-jvm:3.3.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/3.1.3/ktor-serialization-jvm-3.1.3.jar">
-          <sha256sum>0d704bc1148a8fd9a1f2005e0b5189cdaed3030efe24b8236459c41c356f5620</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/3.3.2/ktor-serialization-jvm-3.3.2.jar">
+          <sha256sum>7f25be241b7abd7c982ffda291278b2b02546f1745092a134062b26dfee81bbb</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/3.1.3/ktor-serialization-jvm-3.1.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/3.3.2/ktor-serialization-jvm-3.3.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/3.1.3/ktor-serialization-jvm-3.1.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/3.3.2/ktor-serialization-jvm-3.3.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

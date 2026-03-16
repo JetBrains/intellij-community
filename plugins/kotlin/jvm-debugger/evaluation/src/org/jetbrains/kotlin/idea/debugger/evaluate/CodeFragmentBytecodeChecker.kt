@@ -2,7 +2,12 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CompiledCodeFragmentData
-import org.jetbrains.org.objectweb.asm.*
+import org.jetbrains.org.objectweb.asm.ClassReader
+import org.jetbrains.org.objectweb.asm.ClassVisitor
+import org.jetbrains.org.objectweb.asm.FieldVisitor
+import org.jetbrains.org.objectweb.asm.MethodVisitor
+import org.jetbrains.org.objectweb.asm.Opcodes
+import org.jetbrains.org.objectweb.asm.Type
 
 private const val nonExistentClassName = "error/NonExistentClass"
 

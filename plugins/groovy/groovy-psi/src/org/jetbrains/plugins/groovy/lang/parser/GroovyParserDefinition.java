@@ -27,7 +27,10 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrStubFileElementType;
 
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GSTRING;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GSTRING_INJECTION;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.MODIFIER_LIST;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.REGEX;
 
 public final class GroovyParserDefinition implements ParserDefinition {
   public static final IStubFileElementType GROOVY_FILE = new GrStubFileElementType(GroovyLanguage.INSTANCE);

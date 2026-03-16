@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="fleet:io.ktor.server.host.common" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-server-host-common-jvm:3.1.3">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-server-host-common-jvm:3.3.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-server-host-common-jvm/3.1.3/ktor-server-host-common-jvm-3.1.3.jar">
-          <sha256sum>6f4932086ba785deeb74170140508156b21772cd2961a37e7b551eb5d2649a29</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-server-host-common-jvm/3.3.2/ktor-server-host-common-jvm-3.3.2.jar">
+          <sha256sum>37d83eae6595f78008ef8e99a1bf4e664f70cfeb89d2484ec75a2cffc46be03d</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-host-common-jvm/3.1.3/ktor-server-host-common-jvm-3.1.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-host-common-jvm/3.3.2/ktor-server-host-common-jvm-3.3.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-host-common-jvm/3.1.3/ktor-server-host-common-jvm-3.1.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-host-common-jvm/3.3.2/ktor-server-host-common-jvm-3.3.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

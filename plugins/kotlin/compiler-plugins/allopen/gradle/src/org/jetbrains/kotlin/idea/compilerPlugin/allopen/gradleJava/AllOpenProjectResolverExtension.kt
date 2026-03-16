@@ -3,14 +3,14 @@
 package org.jetbrains.kotlin.idea.compilerPlugin.allopen.gradleJava
 
 import com.intellij.openapi.externalSystem.model.Key
-import org.jetbrains.kotlin.idea.gradleTooling.model.allopen.AllOpenModel
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AnnotationBasedPluginProjectResolverExtension
+import org.jetbrains.kotlin.idea.gradleTooling.model.allopen.AllOpenModel
 
 class AllOpenProjectResolverExtension : AnnotationBasedPluginProjectResolverExtension<AllOpenModel>() {
     companion object {
-        val KEY = Key.create(AllOpenModel::class.java, 1)
+        val KEY: Key<AllOpenModel> = Key.create(AllOpenModel::class.java, 1)
     }
 
     override val modelClass get() = AllOpenModel::class.java
-    override val userDataKey get() = KEY
+    override val userDataKey: Key<AllOpenModel> get() = KEY
 }

@@ -4,7 +4,7 @@ import com.intellij.util.Consumer;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;

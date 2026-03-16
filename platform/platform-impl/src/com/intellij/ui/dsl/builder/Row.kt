@@ -282,6 +282,11 @@ interface Row {
 
   fun icon(icon: Icon): Cell<JLabel>
 
+  /**
+   * Use [Cell.contextHelp] to add context help for a specific component. The [Cell.contextHelp] method provides
+   * more functionality in terms of accessibility, automatically sets the correct gap between the component and the context help button,
+   * and links the context help to the component's visibility and enabled state.
+   */
   fun contextHelp(@NlsContexts.Tooltip description: String, @TooltipTitle title: String? = null): Cell<JLabel>
 
   /**

@@ -24,7 +24,7 @@ class ImmutableList(Generic[T_co]):
         ...
 
     def __iter__(self) -> Iterator[T_co]:
-        ...
+        raise NotImplementedError
 
 
 class Employee:
@@ -55,7 +55,7 @@ B_co = TypeVar("B_co", covariant=True)
 # > Variance has no meaning, and should therefore be ignored by type checkers,
 # > if a type variable is bound to a generic function or type alias.
 def func(x: list[B_co]) -> B_co:  # OK
-    ...
+    raise NotImplementedError
 
 
 class Co(Generic[T_co]):

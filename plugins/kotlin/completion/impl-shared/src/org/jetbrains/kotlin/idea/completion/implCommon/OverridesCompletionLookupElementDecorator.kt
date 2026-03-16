@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
@@ -19,7 +19,12 @@ import org.jetbrains.kotlin.idea.completion.handlers.indexOfSkippingSpace
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtModifierList
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -101,7 +106,7 @@ class OverridesCompletionLookupElementDecorator(
 
         val prototype = generateMember()
         val prototypeModifierList = prototype.modifierList!!
-        prototypeModifierList.contextReceiverList?.let { receiverList ->
+        prototypeModifierList.contextParameterList?.let { receiverList ->
             val anchor = modifierList.firstChild
             when (val sibling = receiverList.nextSibling) {
                 is PsiWhiteSpace -> modifierList.addRangeBefore(receiverList, sibling, anchor)

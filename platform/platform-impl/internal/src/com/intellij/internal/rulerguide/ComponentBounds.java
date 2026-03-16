@@ -3,7 +3,8 @@ package com.intellij.internal.rulerguide;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 final class ComponentBounds extends Rectangle {
 

@@ -10,8 +10,15 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JSeparator;
+import javax.swing.ListCellRenderer;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
 
 import static com.intellij.openapi.util.Pair.pair;
 

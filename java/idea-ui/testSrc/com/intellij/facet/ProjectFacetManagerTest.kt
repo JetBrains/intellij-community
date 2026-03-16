@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet
 
-import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.MockFacetConfiguration
+import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule

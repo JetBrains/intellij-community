@@ -6,11 +6,10 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.xdebugger.impl.frame.actions.XWatchesTreeActionBase.getSelectedNodes
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import org.jetbrains.idea.devkit.debugger.DevKitDebuggerBundle
 
-private class DisableIDEStateAction : AnAction() {
+internal class DisableIDEStateAction : AnAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
   override fun update(e: AnActionEvent) {
     if (!DevKitDebuggerSettings.getInstance().showIdeState) {
@@ -24,7 +23,7 @@ private class DisableIDEStateAction : AnAction() {
     if (!ideNodeSelected(e)) return
     val tree = XDebuggerTree.getTree(e) ?: return
     DevKitDebuggerSettings.getInstance().showIdeState = false
-    tree.rebuildAndRestore(XDebuggerTreeState.saveState(tree))
+    tree.rebuild()
   }
 }
 

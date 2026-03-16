@@ -3,13 +3,22 @@ package com.intellij.debugger;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.AsyncStacksUtils;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.JavaDebugProcess;
+import com.intellij.debugger.engine.RemoteStateState;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.impl.*;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
+import com.intellij.debugger.impl.InvokeThread;
+import com.intellij.debugger.impl.RemoteConnectionBuilder;
+import com.intellij.debugger.impl.SynchronizationBasedSemaphore;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -18,7 +27,12 @@ import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.JavaCommandLineState;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.execution.configurations.RemoteState;
+import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -47,17 +61,21 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugProcessStarter;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.frame.XDebuggerFramesList;
-import com.intellij.xdebugger.impl.frame.XFramesView;
+import com.intellij.xdebugger.impl.frame.HiddenFramesStackFrame;
+import com.intellij.xdebugger.impl.frame.XStackFrameWithSeparatorAbove;
 import com.sun.jdi.Value;
 import com.sun.jdi.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -229,13 +247,15 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
-        XDebugSessionImpl session =
-          (XDebugSessionImpl)XDebuggerManager.getInstance(myProject).startSession(myExecutionEnvironment, new XDebugProcessStarter() {
+        XDebugProcessStarter starter = new XDebugProcessStarter() {
           @Override
           public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
             return JavaDebugProcess.create(session, myDebuggerSession);
           }
-        });
+        };
+        XDebugSessionImpl session = (XDebugSessionImpl)XDebuggerManager.getInstance(myProject).newSessionBuilder(starter)
+          .environment(myExecutionEnvironment)
+          .startSession().getSession();
         session.activateSession(false); // activate the session immediately
       }
       catch (ExecutionException e) {
@@ -504,10 +524,10 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     List<XStackFrame> frames = collectFrames(getDebuggerSession().getXDebugSession());
     systemPrintln("vvv stack trace vvv");
     frames.forEach(f -> {
-      if (f instanceof XDebuggerFramesList.ItemWithSeparatorAbove withSeparator && withSeparator.hasSeparatorAbove()) {
+      if (f instanceof XStackFrameWithSeparatorAbove withSeparator && withSeparator.hasSeparatorAbove()) {
         systemPrintln("-- " + withSeparator.getCaptionAboveOf() + " --");
       }
-      if (f instanceof XFramesView.HiddenStackFramesItem) {
+      if (f instanceof HiddenFramesStackFrame) {
         systemPrintln("  <hidden frames>");
       }
       else {
@@ -552,12 +572,15 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     assertNotNull(debuggerSession);
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
-        XDebuggerManager.getInstance(myProject).startSession(environment, new XDebugProcessStarter() {
+        XDebugProcessStarter starter = new XDebugProcessStarter() {
           @Override
           public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
             return JavaDebugProcess.create(session, debuggerSession);
           }
-        });
+        };
+        XDebuggerManager.getInstance(myProject).newSessionBuilder(starter)
+          .environment(environment)
+          .startSession();
       }
       catch (ExecutionException e) {
         fail(e.getMessage());

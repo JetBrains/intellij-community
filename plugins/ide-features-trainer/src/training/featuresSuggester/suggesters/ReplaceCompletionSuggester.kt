@@ -4,8 +4,22 @@ package training.featuresSuggester.suggesters
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.util.startOffset
-import training.featuresSuggester.*
-import training.featuresSuggester.actions.*
+import training.featuresSuggester.FeatureSuggesterBundle
+import training.featuresSuggester.NoSuggestion
+import training.featuresSuggester.SuggesterSupport
+import training.featuresSuggester.Suggestion
+import training.featuresSuggester.actions.Action
+import training.featuresSuggester.actions.BeforeCompletionChooseItemAction
+import training.featuresSuggester.actions.BeforeEditorTextInsertedAction
+import training.featuresSuggester.actions.BeforeEditorTextRemovedAction
+import training.featuresSuggester.actions.CompletionChooseItemAction
+import training.featuresSuggester.actions.EditorAction
+import training.featuresSuggester.actions.EditorCodeCompletionAction
+import training.featuresSuggester.actions.EditorEscapeAction
+import training.featuresSuggester.actions.EditorTextInsertedAction
+import training.featuresSuggester.actions.EditorTextRemovedAction
+import training.featuresSuggester.getParentByPredicate
+import training.featuresSuggester.getParentOfType
 
 class ReplaceCompletionSuggester : AbstractFeatureSuggester() {
   override val id: String = "Completion with replace"

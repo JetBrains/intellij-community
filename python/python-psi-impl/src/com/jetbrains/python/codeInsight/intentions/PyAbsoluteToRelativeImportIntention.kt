@@ -23,7 +23,7 @@ class PyAbsoluteToRelativeImportIntention : PyConvertImportIntentionAction("INTN
 
     val targetPath = statement.importSourceQName ?: return null
     val filePath = QualifiedNameFinder.findCanonicalImportPath(context.file, null) ?: return null
-    return if(targetPath.firstComponent == filePath.firstComponent) super.getPresentation(context, element) else null
+    return if (targetPath.firstComponent == filePath.firstComponent) super.getPresentation(context, element) else null
   }
 
   override fun invoke(context: ActionContext, element: PsiElement, updater: ModPsiUpdater) {

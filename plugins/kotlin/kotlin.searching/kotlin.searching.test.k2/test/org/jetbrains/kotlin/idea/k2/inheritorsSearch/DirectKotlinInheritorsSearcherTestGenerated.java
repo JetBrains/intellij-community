@@ -84,6 +84,11 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
         public void testFromJavaMethod() throws Exception {
             runTest("../testData/inheritorsSearch/javaMethod/fromJavaMethod.java");
         }
+
+        @TestMetadata("fromJavaMethod1.java")
+        public void testFromJavaMethod1() throws Exception {
+            runTest("../testData/inheritorsSearch/javaMethod/fromJavaMethod1.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

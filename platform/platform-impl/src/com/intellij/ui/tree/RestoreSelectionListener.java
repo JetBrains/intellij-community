@@ -4,7 +4,7 @@ package com.intellij.ui.tree;
 import com.intellij.ui.LoadingNode;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;

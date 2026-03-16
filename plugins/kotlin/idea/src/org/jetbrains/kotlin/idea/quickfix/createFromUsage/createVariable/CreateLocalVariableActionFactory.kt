@@ -7,19 +7,34 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageFixBase
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateLocalVariableUtil
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.CallableBuilderConfiguration
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.CallablePlacement
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.PropertyInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.createBuilder
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getExpressionForTypeGuess
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 import org.jetbrains.kotlin.types.Variance
-import java.util.*
+import java.util.Collections
 
+@K1Deprecation
 object CreateLocalVariableActionFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val refExpr = diagnostic.psiElement.findParentOfType<KtNameReferenceExpression>(strict = false) ?: return null
@@ -45,7 +60,7 @@ object CreateLocalVariableActionFactory : KotlinSingleIntentionActionFactory() {
         }
     }
 
-    class CreateLocalFromUsageAction(refExpr: KtNameReferenceExpression, val propertyName: String = refExpr.getReferencedName())
+    class CreateLocalFromUsageAction(refExpr: KtNameReferenceExpression, val propertyName: String = refExpr.text)
         : CreateFromUsageFixBase<KtNameReferenceExpression>(refExpr) {
         override fun getText(): String = KotlinBundle.message("fix.create.from.usage.local.variable", propertyName)
 

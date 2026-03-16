@@ -3,8 +3,15 @@ package org.jetbrains.plugins.groovy.findUsages
 
 import com.intellij.lang.cacheBuilder.WordsScanner
 import com.intellij.lang.findUsages.FindUsagesProvider
-import com.intellij.psi.*
-import com.intellij.psi.util.PsiFormatUtil.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.util.PsiFormatUtil.SHOW_NAME
+import com.intellij.psi.util.PsiFormatUtil.SHOW_PARAMETERS
+import com.intellij.psi.util.PsiFormatUtil.SHOW_TYPE
+import com.intellij.psi.util.PsiFormatUtil.formatMethod
 import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement
@@ -13,7 +20,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnnotationTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrRecordDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTraitTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
 import org.jetbrains.plugins.groovy.refactoring.rename.PropertyForRename

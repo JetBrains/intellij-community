@@ -20,7 +20,7 @@ import com.intellij.ui.table.JBTable
 import java.awt.Dimension
 import javax.swing.table.DefaultTableModel
 
-private class CheckClassLoadingAction : DumbAwareAction("Check Class Loading"), ActionRemoteBehaviorSpecification.Duplicated {
+internal class CheckClassLoadingAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Duplicated {
   override fun actionPerformed(e: AnActionEvent) {
     val className = Messages.showInputDialog(e.project, "Enter class name:", "Check Class Loading", Messages.getQuestionIcon())
     if (className.isNullOrBlank()) return

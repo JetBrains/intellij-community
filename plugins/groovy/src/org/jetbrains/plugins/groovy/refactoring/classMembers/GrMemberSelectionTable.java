@@ -15,7 +15,7 @@ import com.intellij.util.VisibilityIcons;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 /**

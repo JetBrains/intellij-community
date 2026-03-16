@@ -12,10 +12,12 @@ import com.intellij.find.impl.FindManagerImpl
 import com.intellij.inlinePrompt.isInlinePromptShown
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.Symbol
+import com.intellij.model.psi.PsiSymbolService
 import com.intellij.model.psi.impl.targetSymbols
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.ProperTextRange
@@ -25,6 +27,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -150,7 +153,7 @@ class IdentifierHighlightingComputer(
   }
 
   /**
-   * true if the [contextElement] can be an identifier highlighting target, i.e. if the caret is inside this element then myMarkupInfos should be added to the editor markup
+   * true if the [contextElement] can be an identifier highlighting target, i.e. if the caret is inside this element then [computeRanges].myTargets should be added to the editor markup
    *
    * it just checks that the symbols under all offsets in this identifier are the same
    */
@@ -158,19 +161,40 @@ class IdentifierHighlightingComputer(
     val textRange = contextElement.textRange
     var reference: PsiReference? = null
     var symbols:Collection<Symbol>? = null
+
     for (offset in textRange.startOffset..< textRange.endOffset) {
+      ProgressManager.checkCanceled()
       val smb = targetSymbols(myPsiFile, offset)
-      if (symbols != null && symbols != smb) {
+      if (symbols != null && symbols.map{ PsiSymbolService.getInstance().extractElementFromSymbol(it) } != smb.map{ PsiSymbolService.getInstance().extractElementFromSymbol(it) }) {
         return false
       }
       symbols = smb
       val ref = TargetElementUtil.findReference(myEditor, offset)
-      if (reference != null && ref != reference) {
+      if (reference != null && (ref == null || !referencesEqual(ref, reference))) {
         return false
       }
       reference = ref
     }
     return true
+  }
+
+  private fun referencesEqual(ref1: PsiReference, ref2: PsiReference): Boolean {
+    if (ref1 == ref2) {
+      return true
+    }
+    if (ref1 is PsiMultiReference && ref2 is PsiMultiReference) {
+      val references1 = ref1.references
+      val references2 = ref2.references
+      return references1.size == references2.size && references1.zip(references2).all {
+        referencesEqual(it.first, it.second)
+      }
+    }
+    if (ref1.element == ref2.element && ref1.rangeInElement == ref2.rangeInElement && ref1.javaClass == ref2.javaClass) {
+      // oftentimes developers are too lazy to cache the references for the PsiElement
+      // in this case we assume the same kind references based on the same place are actually the same
+      return true
+    }
+    return false
   }
 
   private fun highlightReferencesAndDeclarations(

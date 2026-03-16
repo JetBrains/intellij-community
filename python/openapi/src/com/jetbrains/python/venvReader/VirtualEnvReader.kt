@@ -1,42 +1,67 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.venvReader
 
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.execution.Platform
+import com.intellij.execution.target.FullPathOnTarget
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.util.SystemProperties
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.environmentVariables
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.osFamily
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.ui.EDT
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
+import com.jetbrains.python.venvReader.VirtualEnvReader.Companion.Instance
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.NotDirectoryException
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.isSymbolicLink
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.pathString
 
 typealias Directory = Path
 
+/**
+ * Use [Instance]. Provide "forced" vars to ctor for tests only.
+ */
 @ApiStatus.Internal
-class VirtualEnvReader(
-  private val envs: Map<@NonNls String, @NonNls String> = System.getenv(),
-  isWindows: Boolean = SystemInfoRt.isWindows,
+class VirtualEnvReader private constructor(
+  private val forcedVars: Map<@NonNls String, @NonNls String>?,
+  private val forcedOs: EelOsFamily? = null,
 ) {
-  private val pythonNames = if (isWindows)
-    setOf("pypy.exe", "python.exe")
-  else
-    setOf("pypy", "python")
 
-  private val binFolderName = if (isWindows) {
-    "Scripts"
-  } else {
-    "bin"
-  }
+  @TestOnly
+  constructor(
+    forcedVars: Map<@NonNls String, @NonNls String>? = null,
+    isWindows: Boolean? = null,
+  ) : this(forcedVars, when (isWindows) {
+    true -> EelOsFamily.Windows
+    false -> EelOsFamily.Posix
+    null -> null
+  })
+
 
   /**
    * Dir with virtual envs
    */
   @RequiresBackgroundThread
-  fun getVEnvRootDir(): Directory {
-    return resolveDirFromEnvOrElseGetDirInHomePath("WORKON_HOME", DEFAULT_VIRTUALENVS_DIR)
+  fun getVEnvRootDir(eel: EelApi? = getLocalEelIfApp()): Directory {
+    return resolveDirFromEnvOrElseGetDirInHomePath(eel, "WORKON_HOME", DEFAULT_VIRTUALENVS_DIR)
   }
 
   /**
@@ -44,25 +69,35 @@ class VirtualEnvReader(
    */
   @RequiresBackgroundThread
   fun findVEnvInterpreters(): List<PythonBinary> =
-    findLocalInterpreters(getVEnvRootDir())
+    findVenvsInDir(getVEnvRootDir())
 
   @RequiresBackgroundThread
-  fun getPyenvRootDir(): Directory {
-    return resolveDirFromEnvOrElseGetDirInHomePath("PYENV_ROOT", ".pyenv")
+  fun getPyenvRootDir(eel: EelApi? = getLocalEelIfApp()): Directory {
+    return resolveDirFromEnvOrElseGetDirInHomePath(eel, "PYENV_ROOT", PYENV_DEFAULT_DIR_NAME)
   }
 
   @RequiresBackgroundThread
   fun findPyenvInterpreters(): List<PythonBinary> =
-    findLocalInterpreters(getPyenvVersionsDir())
+    findVenvsInDir(getPyenvVersionsDir())
 
+  /**
+   * List contents of [root] looking for envs there, returns all pythons it were able to find
+   */
   @RequiresBackgroundThread
-  fun findLocalInterpreters(root: Directory): List<PythonBinary> {
-    if (!root.isDirectory()) {
-      return listOf()
-    }
+  fun findVenvsInDir(root: Directory): List<PythonBinary> {
 
     val candidates: ArrayList<Path> = arrayListOf()
-    for (dir in root.listDirectoryEntries()) {
+    val children = try {
+      root.listDirectoryEntries()
+    }
+    catch (_: NoSuchFileException) {
+      return emptyList()
+    }
+    catch (_: NotDirectoryException) {
+      return emptyList()
+    }
+
+    for (dir in children) {
       findPythonInPythonRoot(dir)?.let { candidates.add(it) }
     }
 
@@ -103,65 +138,129 @@ class VirtualEnvReader(
 
 
   /**
-   * [dir] is root directory of python installation or virtualenv
+   * [pathOrDir] is either a direct path to a Python binary or a root directory of python installation or virtualenv
    */
   @RequiresBackgroundThread
-  fun findPythonInPythonRoot(dir: PythonHomePath): PythonBinary? {
-    if (!dir.isDirectory()) {
+  fun findPythonInPythonRoot(pathOrDir: PythonHomePath): PythonBinary? {
+    val pythonPattern = getPythonBinaryPattern(pathOrDir.osFamily)
+    if (pathOrDir.isRegularFile() && pythonPattern.matches(pathOrDir.name)) {
+      return pathOrDir
+    }
+
+    if (!pathOrDir.isDirectory()) {
       return null
     }
 
-    val bin = dir.resolve("bin")
+    val bin = pathOrDir.resolve("bin")
     if (bin.isDirectory()) {
       findInterpreter(bin)?.let { return it }
     }
 
-    val scripts = dir.resolve("Scripts")
+    val scripts = pathOrDir.resolve("Scripts")
     if (scripts.isDirectory()) {
       findInterpreter(scripts)?.let { return it }
     }
 
-    return findInterpreter(dir)
+    return findInterpreter(pathOrDir)
   }
 
-  fun getVenvRootPath(path: Path): Path? {
+  /**
+   * [binaryOrDir] is either a venv root or a python binary
+   */
+  fun findPythonInPythonRootForTarget(binaryOrDir: FullPathOnTarget, platform: Platform): FullPathOnTarget {
+    val pythonPattern = getPythonBinaryPattern(platform)
+    val separator = platform.fileSeparator
+    val binaryOrDirWithoutSeparatorSuffix = binaryOrDir.removeSuffix(separator.toString())
+    if (pythonPattern.matches(binaryOrDirWithoutSeparatorSuffix.substringAfterLast(separator))) {
+      return binaryOrDir
+    }
+
+    return when (platform) {
+      Platform.WINDOWS -> "${binaryOrDirWithoutSeparatorSuffix}${separator}Scripts${separator}python.exe"
+      Platform.UNIX -> "${binaryOrDirWithoutSeparatorSuffix}${separator}bin${separator}python"
+    }
+  }
+
+  fun getVenvName(path: Path): String? {
     val bin = path.parent
+
+    val binFolderName = when (forcedOs ?: path.osFamily) {
+      EelOsFamily.Posix -> "bin"
+      EelOsFamily.Windows -> "Scripts"
+    }
 
     if (bin == null || bin.fileName.pathString != binFolderName) {
       return null
     }
 
     val venv = bin.parent
+    return venv?.name
+  }
 
-    if (venv == null) {
+  fun getVenvNameForTarget(path: FullPathOnTarget, platform: Platform): String? {
+    val separator = platform.fileSeparator
+    val bin = path.substringBeforeLast(separator)
+
+    val binFolderName = when (platform) {
+      Platform.UNIX -> "bin"
+      Platform.WINDOWS -> "Scripts"
+    }
+
+    if (bin.substringAfterLast(separator) != binFolderName) {
       return null
     }
 
-    val root = venv.parent
-
-    if (root == null) {
-      return null
-    }
-
-    return root
+    val venv = bin.substringBeforeLast(separator)
+    return venv.substringAfterLast(separator).takeIf { it.isNotBlank() }
   }
 
   /**
-   * Looks for python binary among directory entries
+   * Looks for python binary among directory entries.
+   * Prefers the shortest name (e.g., "python" over "python3.12") to ensure consistent results,
+   * since virtual environments create multiple symlinks (python, python3, python3.12)
+   * and Files.newDirectoryStream() order is undefined.
    */
   @RequiresBackgroundThread
   private fun findInterpreter(dir: Path): PythonBinary? =
-    dir.listDirectoryEntries().firstOrNull { it.isRegularFile() && it.name.lowercase() in pythonNames }
+    try {
+      Files.newDirectoryStream(dir).use { stream ->
+        val pythonPattern = getPythonBinaryPattern(forcedOs ?: dir.osFamily)
+        
+        val candidates = stream.filter {
+          it.isRegularFile() && pythonPattern.matches(it.name)
+        }.toList()
+        
+        candidates.minByOrNull { it.name.length }
+      }
+
+    }
+    catch (_: NotDirectoryException) {
+      return null
+    }
+    catch (_: NoSuchFileException) {
+      return null
+    }
 
   @RequiresBackgroundThread
-  private fun resolveDirFromEnvOrElseGetDirInHomePath(env: String, dirName: String): Path =
-    envs[env]?.let { tryResolvePath(it) }
-    ?: Path.of(SystemProperties.getUserHome(), dirName)
+  private fun resolveDirFromEnvOrElseGetDirInHomePath(eel: EelApi?, env: String, dirName: String): Path {
+    if (EDT.isCurrentThreadEdt()) {
+      // This check should have been done by @RequiresBackgroundThread
+      // But since Kotlin doesn't support it, we have to do that imperatively.
+      // This error doesn't break user flow but tests
+      logger.error("Access from EDT isn't allowed", Throwable())
+    }
+    val envs = forcedVars
+               ?: eel?.let { eel -> runBlockingMaybeCancellable { eel.exec.environmentVariables().eelIt().await() } }
+               ?: System.getenv()
+    return envs[env]?.let { tryResolvePath(it, eel?.descriptor) }
+           ?: (eel?.userInfo?.home?.asNioPath()
+               ?: Path(System.getProperty("user.home"))).resolve(dirName)
+  }
 
 
   companion object {
-    @JvmStatic
-    val Instance: VirtualEnvReader = VirtualEnvReader()
+    private val logger = fileLogger()
+    internal val Instance: VirtualEnvReader = VirtualEnvReader(forcedVars = null, forcedOs = null)
 
 
     /**
@@ -171,7 +270,37 @@ class VirtualEnvReader(
      * @see com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.getDefaultLocation
      */
     const val DEFAULT_VIRTUALENVS_DIR: String = ".virtualenvs"
+
+    @Suppress("VENV_IS_OK") // The only place it should be used in prod
     const val DEFAULT_VIRTUALENV_DIRNAME: String = ".venv"
 
+    const val PYENV_DEFAULT_DIR_NAME: String = ".pyenv"
+
+    private val POSIX_PYTHON_PATTERN = Regex("^(pypy|pythonw?)(\\d+(\\.\\d+)*)?t?$")
+    private val WIN_PYTHON_PATTERN = Regex("^(pypy|pythonw?)(\\d+(\\.\\d+)*)?t?\\.exe$", RegexOption.IGNORE_CASE)
+    private fun getLocalEelIfApp(): EelApi? = if (ApplicationManager.getApplication() != null) localEel else null
+
+    /**
+     * Returns a regex pattern that matches Python binary names.
+     * Matches: python, python3, python3.X, python3.X.Y, python3.X.Y.Z, etc., pypy, pypy3, pypy3.X, pypy3.X.Y, etc.
+     * (and .exe versions on Windows).
+     */
+    private fun getPythonBinaryPattern(osFamily: EelOsFamily): Regex {
+      return when (osFamily) {
+        EelOsFamily.Posix -> POSIX_PYTHON_PATTERN
+        EelOsFamily.Windows -> WIN_PYTHON_PATTERN
+      }
+    }
+
+    private fun getPythonBinaryPattern(platform: Platform): Regex = when (platform) {
+      Platform.UNIX -> POSIX_PYTHON_PATTERN
+      Platform.WINDOWS -> WIN_PYTHON_PATTERN
+    }
   }
 }
+
+/**
+ * Default (production) instance
+ */
+@ApiStatus.Internal
+fun VirtualEnvReader(): VirtualEnvReader = Instance

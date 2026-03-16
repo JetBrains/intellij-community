@@ -7,7 +7,7 @@ import com.jetbrains.JBR;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
-import java.awt.*;
+import java.awt.KeyboardFocusManager;
 
 public final class AccessibleAnnouncerUtil {
   private static final AccessibleAnnouncer announcer = JBR.getAccessibleAnnouncer();

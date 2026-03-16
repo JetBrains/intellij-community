@@ -2,11 +2,19 @@
 package org.jetbrains.idea.devkit.kotlin.util
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.idea.devkit.kotlin.util.ExecutionContextType.*
+import org.jetbrains.idea.devkit.kotlin.util.ExecutionContextType.BLOCKING
+import org.jetbrains.idea.devkit.kotlin.util.ExecutionContextType.SUSPENDING_FUNCTION
+import org.jetbrains.idea.devkit.kotlin.util.ExecutionContextType.SUSPENDING_LAMBDA
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate

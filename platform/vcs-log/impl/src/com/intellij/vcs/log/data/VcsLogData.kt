@@ -18,14 +18,27 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
+import com.intellij.platform.vcs.impl.shared.telemetry.VcsTracer
+import com.intellij.platform.vcs.impl.shared.telemetry.trace
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.vcs.log.*
-import com.intellij.vcs.log.data.index.*
-import com.intellij.vcs.log.data.util.trace
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsFullCommitDetails
+import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogCommitDataCache
+import com.intellij.vcs.log.VcsLogDataProvider
+import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.log.VcsUserRegistry
+import com.intellij.vcs.log.data.index.IndexDiagnosticRunner
+import com.intellij.vcs.log.data.index.SqliteVcsLogStorageBackend
+import com.intellij.vcs.log.data.index.VcsLogIndex
+import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
+import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
+import com.intellij.vcs.log.data.index.VcsLogStorageBackend
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
 import com.intellij.vcs.log.impl.VcsLogStorageLocker
@@ -34,10 +47,26 @@ import com.intellij.vcs.log.util.StorageId
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil.VcsUserHashingStrategy
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
@@ -73,13 +102,21 @@ class VcsLogData @ApiStatus.Internal constructor(
   val topCommitsCache: TopCommitsCache
 
   val miniDetailsGetter: MiniDetailsGetter
-  override val fullCommitDetailsCache: VcsLogCommitDataCache<VcsFullCommitDetails> get() = commitDetailsGetter
-
-  val commitDetailsGetter: CommitDetailsGetter
   override val commitMetadataCache: VcsLogCommitDataCache<VcsCommitMetadata> get() = miniDetailsGetter
 
+  val commitDetailsGetter: CommitDetailsGetter
+  override val fullCommitDetailsCache: VcsLogCommitDataCache<VcsFullCommitDetails> get() = commitDetailsGetter
+
   private val refresher: VcsLogRefresherImpl
-  val dataPack: DataPack get() = refresher.currentDataPack
+
+  val graphData: VcsLogGraphData get() = refresher.currentDataPack
+
+  @Deprecated("Use graphData instead", ReplaceWith("graphData"))
+  val dataPack: DataPack
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated("Use graphData instead", ReplaceWith("graphData"))
+    get() = DataPack(graphData.refsModel, graphData.logProviders, graphData.permanentGraph, graphData.isFull)
+
   val isRefreshInProgress: StateFlow<Boolean> get() = refresher.isBusy
   private val dataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList<DataPackChangeListener>()
 
@@ -155,7 +192,7 @@ class VcsLogData @ApiStatus.Internal constructor(
     commitDetailsGetter = CommitDetailsGetter(storage, logProviders, dataDisposable)
 
     val commitDataConsumer = VcsLogCommitDataConsumerImpl(userRegistry, index, topCommitsCache)
-    refresher = VcsLogRefresherImpl(cs, storage, logProviders, progress, commitDataConsumer,
+    refresher = VcsLogRefresherImpl(cs, project, storage, logProviders, progress, commitDataConsumer,
                                     Consumer { fireDataPackChangeEvent(it) },
                                     getRecentCommitsCount())
 
@@ -169,7 +206,6 @@ class VcsLogData @ApiStatus.Internal constructor(
         runCatching {
           val usersByRoot = progress.runWithProgress(DATA_PACK_REFRESH) {
             checkCanceled()
-            topCommitsCache.clear() // TODO: is it thread safe at all?
             readCurrentUser()
           }
           currentUser = usersByRoot
@@ -181,7 +217,7 @@ class VcsLogData @ApiStatus.Internal constructor(
     }
 
     val indexDiagnosticJob = cs.launch {
-      IndexDiagnosticRunner(this, index, storage, logProviders.keys, { dataPack }, commitDetailsGetter, errorHandler, this@VcsLogData)
+      IndexDiagnosticRunner(this, index, storage, logProviders.keys, { graphData }, commitDetailsGetter, errorHandler, this@VcsLogData)
     }
 
     cs.launch(CoroutineName("Disposer"), CoroutineStart.ATOMIC) {
@@ -252,7 +288,7 @@ class VcsLogData @ApiStatus.Internal constructor(
     dataPackChangeListeners.remove(listener)
   }
 
-  private fun fireDataPackChangeEvent(dataPack: DataPack) {
+  private fun fireDataPackChangeEvent(dataPack: VcsLogGraphData) {
     ApplicationManager.getApplication().invokeLater(Runnable {
       for (listener in dataPackChangeListeners) {
         if (LOG.isDebugEnabled()) {
@@ -267,7 +303,7 @@ class VcsLogData @ApiStatus.Internal constructor(
   }
 
   private suspend fun readCurrentUser(): Map<VirtualFile, VcsUser> =
-    TelemetryManager.getInstance().getTracer(VcsScope).trace(VcsBackendTelemetrySpan.LogData.ReadingCurrentUser) {
+    VcsTracer.trace(VcsBackendTelemetrySpan.LogData.ReadingCurrentUser) {
       buildMap {
         for ((root, provider) in logProviders.entries) {
           checkCanceled()

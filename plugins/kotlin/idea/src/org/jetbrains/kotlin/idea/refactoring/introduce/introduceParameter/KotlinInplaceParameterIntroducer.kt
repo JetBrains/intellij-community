@@ -4,10 +4,12 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 
+@K1Deprecation
 class KotlinInplaceParameterIntroducer(
     originalDescriptor: IntroduceParameterDescriptor<FunctionDescriptor>,
     parameterType: KotlinType,

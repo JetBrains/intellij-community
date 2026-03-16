@@ -3,7 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ui.CardLayoutPanel;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @author Alexander Lobas

@@ -2,7 +2,10 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
-import com.sun.jdi.*
+import com.sun.jdi.ArrayReference
+import com.sun.jdi.IntegerValue
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.StringReference
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 

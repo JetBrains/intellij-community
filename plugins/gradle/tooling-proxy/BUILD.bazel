@@ -14,6 +14,7 @@ jvm_library(
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
+    "//libraries/jspecify",
   ]
 )
 ### auto-generated section `build intellij.gradle.toolingProxy` end

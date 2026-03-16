@@ -7,7 +7,12 @@ import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.jcef.JBCefJSQuery.create
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.job
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.intellij.lang.annotations.Language
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise

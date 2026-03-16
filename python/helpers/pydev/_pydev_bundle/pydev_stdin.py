@@ -118,6 +118,13 @@ class DebugConsoleStdIn(BaseStdIn):
         self.__pydev_run_command(False)
         return result
 
+    def read(self, *args, **kwargs):
+        # Notify Java side about input and call original function
+        self.__pydev_run_command(True)
+        result = self.original_stdin.read(*args, **kwargs)
+        self.__pydev_run_command(False)
+        return result
+
     def __iter__(self):
         self.iter = self.original_stdin.__iter__()
         return self

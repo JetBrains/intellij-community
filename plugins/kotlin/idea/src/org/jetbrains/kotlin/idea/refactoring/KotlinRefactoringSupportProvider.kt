@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring
 import com.intellij.lang.refactoring.RefactoringSupportProvider
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringActionHandler
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeSignatureHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractInterfaceHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperclassHandler
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.idea.refactoring.pullUp.KotlinPullUpHandler
 import org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownHandler
 import org.jetbrains.kotlin.idea.refactoring.safeDelete.canDeleteElement
 
+@K1Deprecation
 class KotlinRefactoringSupportProvider : RefactoringSupportProvider() {
     override fun isSafeDeleteAvailable(element: PsiElement) = element.canDeleteElement()
 

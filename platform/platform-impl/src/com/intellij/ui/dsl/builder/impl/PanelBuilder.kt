@@ -3,8 +3,20 @@ package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.SpacingConfiguration
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.gridLayout.Grid
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JCheckBox
@@ -198,15 +210,17 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
       is CellImpl<*> -> {
         val gaps = cell.customGaps ?: getComponentGaps(leftGap, rightGap, cell.component, spacingConfiguration)
         val commentRight = cell.commentRight
+        val contextHelpLabel = cell.contextHelpLabel
 
-        if (commentRight == null) {
+        if (commentRight == null && contextHelpLabel == null) {
           builder.cell(cell.viewComponent, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
                        resizableColumn = cell.resizableColumn,
                        gaps = gaps, visualPaddings = prepareVisualPaddings(cell.viewComponent),
                        widthGroup = cell.widthGroup)
         } else {
           if (cell.verticalAlign == VerticalAlign.FILL) {
-            log.error("Vertical align FILL is not supported for cells with right comment, commentRight = ${commentRight.userText}")
+            log.error("Vertical align FILL is not supported for cells with right comment or context help, commentRight = " +
+                      "${commentRight?.userText}, contextHelp = ${cell.contextHelpInfo?.description}")
           }
 
           val subGridBuilder = builder.subGridBuilder(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
@@ -219,7 +233,14 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
                               resizableColumn = isHorizontalFill,
                               visualPaddings = prepareVisualPaddings(cell.viewComponent),
                               widthGroup = cell.widthGroup)
-          subGridBuilder.cell(commentRight, gaps = UnscaledGaps(left = spacingConfiguration.horizontalCommentGap))
+
+          if (contextHelpLabel != null) {
+            subGridBuilder.cell(contextHelpLabel, gaps = UnscaledGaps(left = spacingConfiguration.horizontalSmallGap))
+          }
+
+          if (commentRight != null) {
+            subGridBuilder.cell(commentRight, gaps = UnscaledGaps(left = spacingConfiguration.horizontalCommentGap))
+          }
         }
       }
       is PanelImpl -> {

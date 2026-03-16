@@ -27,7 +27,9 @@ public abstract class PyModuleMembersProvider {
    * @param context type evaluation context
    * @return provided members
    */
-  public @NotNull Collection<PyCustomMember> getMembers(@NotNull PyFile module, @NotNull PointInImport point, @NotNull TypeEvalContext context) {
+  public @NotNull Collection<PyCustomMember> getMembers(@NotNull PyFile module,
+                                                        @NotNull PointInImport point,
+                                                        @NotNull TypeEvalContext context) {
     final VirtualFile vFile = module.getVirtualFile();
     if (vFile != null) {
       final String qName = PyPsiFacade.getInstance(module.getProject()).findShortestImportableName(vFile, module);
@@ -64,6 +66,6 @@ public abstract class PyModuleMembersProvider {
    * @return provided members
    */
   protected abstract @NotNull Collection<PyCustomMember> getMembersByQName(@NotNull PyFile module,
-                                                                  @NotNull String qName,
-                                                                  @NotNull TypeEvalContext context);
+                                                                           @NotNull String qName,
+                                                                           @NotNull TypeEvalContext context);
 }

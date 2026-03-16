@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo
 import com.intellij.openapi.externalSystem.model.project.ProjectData
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -17,10 +16,15 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.BDDAssertions.then
 import org.junit.Test
 import java.io.IOException
-import kotlin.io.path.*
+import kotlin.io.path.createTempDirectory
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 import kotlin.reflect.jvm.jvmName
 
-class ExternalProjectsDataStorageTest: UsefulTestCase() {
+class ExternalProjectsDataStorageTest : UsefulTestCase() {
   lateinit var myFixture: IdeaProjectTestFixture
 
   override fun setUp() {
@@ -48,7 +52,10 @@ class ExternalProjectsDataStorageTest: UsefulTestCase() {
     val testSystemId = ProjectSystemId("Test")
     val externalName = "external_name"
     val externalProjectInfo = createExternalProjectInfo(
-      testSystemId, externalName, FileUtil.toSystemIndependentName(createTempDir(suffix = externalName).canonicalPath))
+      testSystemId,
+      externalName,
+      createTempDirectory(externalName).invariantSeparatorsPathString
+    )
 
     dataStorage.update(externalProjectInfo)
     dataStorage.save()
@@ -65,13 +72,23 @@ class ExternalProjectsDataStorageTest: UsefulTestCase() {
 
     val testSystemId = ProjectSystemId("Test")
     val externalName1 = "external_name1"
-    dataStorage.update(createExternalProjectInfo(
-      testSystemId, externalName1, FileUtil.toSystemIndependentName(createTempDir(suffix = externalName1).canonicalPath)))
+    dataStorage.update(
+      createExternalProjectInfo(
+        testSystemId,
+        externalName1,
+        createTempDirectory(externalName1).invariantSeparatorsPathString
+      )
+    )
     dataStorage.load()
 
     val externalName2 = "external_name2"
-    dataStorage.update(createExternalProjectInfo(
-      testSystemId, externalName2, FileUtil.toSystemIndependentName(createTempDir(suffix = externalName2).canonicalPath)))
+    dataStorage.update(
+      createExternalProjectInfo(
+        testSystemId,
+        externalName2,
+        createTempDirectory(externalName2).invariantSeparatorsPathString
+      )
+    )
 
     val list = dataStorage.list(testSystemId)
     then(list).hasSize(2)
@@ -104,9 +121,11 @@ class ExternalProjectsDataStorageTest: UsefulTestCase() {
     }
   }
 
-  private fun createExternalProjectInfo(testId: ProjectSystemId,
-                                        externalName: String,
-                                        externalProjectPath: String): InternalExternalProjectInfo {
+  private fun createExternalProjectInfo(
+    testId: ProjectSystemId,
+    externalName: String,
+    externalProjectPath: String,
+  ): InternalExternalProjectInfo {
     val projectData = ProjectData(testId, externalName, externalProjectPath, externalProjectPath)
     val node = DataNode(Key(ProjectData::class.jvmName, 0), projectData, null)
     return InternalExternalProjectInfo(testId, externalProjectPath, node)

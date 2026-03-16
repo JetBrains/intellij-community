@@ -1,32 +1,18 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.fileTypes.ex;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * {@link FileType} which is determined by the particular {@link VirtualFile}.
- * For example, text file located in "META-INF/services" directory should be treated as of SPI file type.
- *
- * <p/>As an implementation example, please
- * @see com.intellij.spi.SPIFileType
+ * For example, a text file located in the "META-INF/services" directory should be treated as of SPI file type.
+ * <p>
+ * <p/>As an implementation example, see com.intellij.spi.SPIFileType
  */
 public interface FileTypeIdentifiableByVirtualFile extends FileType {
   /**
@@ -35,6 +21,14 @@ public interface FileTypeIdentifiableByVirtualFile extends FileType {
    * so this method is just one of the possible file type definitions.
    */
   boolean isMyFileType(@NotNull VirtualFile file);
+
+  /**
+   * @return {@code true} if this file type can be used to override another file type via the "Override File Type" action.
+   */
+  @ApiStatus.Experimental
+  default boolean isAvailableForOverride() {
+    return false;
+  }
 
   FileTypeIdentifiableByVirtualFile[] EMPTY_ARRAY = new FileTypeIdentifiableByVirtualFile[0];
   ArrayFactory<FileTypeIdentifiableByVirtualFile> ARRAY_FACTORY =

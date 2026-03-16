@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.devkit.core.icons.DevkitCoreIcons;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,7 +12,6 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
-import org.jetbrains.idea.devkit.DevKitIcons;
 
 public abstract class ExtensionPointDeclarationRelatedItemLineMarkerProviderTestBase extends JavaCodeInsightFixtureTestCase {
 
@@ -24,8 +24,39 @@ public abstract class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest
     moduleBuilder.addLibrary("platform-core", PathUtil.getJarPathForClass(LanguageExtension.class));
   }
 
-  protected void assertStringEP() {
-    assertSingleEPDeclaration(getTestName(false) + getExtension(), "com.intellij.myStringEP");
+  public void testMyInterface() {
+    assertSingleEPDeclaration("MyInterface" + getExtension(), "com.intellij.myInterfaceEP");
+  }
+
+  public void testMyClass() {
+    assertSingleEPDeclaration("MyClass" + getExtension(), "com.intellij.myClassEP");
+  }
+
+  public void testMyWithImplementsInterface() {
+    assertSingleEPDeclaration("MyWithImplementsInterface" + getExtension(), "com.intellij.myWithImplementsEP");
+  }
+
+  public void testMyBeanClassInterface() {
+    // Negative test - should NOT show gutter for beanClass only
+    myFixture.copyFileToProject("extensionPointDeclarationEPs.xml");
+
+    final GutterMark gutter = myFixture.findGutter("MyBeanClassInterface" + getExtension());
+    assertNull("Gutter should not appear for beanClass-only EP", gutter);
+  }
+
+  public void testMyMultipleEPsInterface() {
+    // Should show gutter when multiple EPs reference the same interface
+    VirtualFile pluginXmlFile = myFixture.copyFileToProject("extensionPointDeclarationEPs.xml");
+    PsiFile pluginPsiFile = getPsiManager().findFile(pluginXmlFile);
+    assertNotNull(pluginPsiFile);
+
+    final GutterMark gutter = myFixture.findGutter("MyMultipleEPsInterface" + getExtension());
+    assertNotNull(gutter);
+
+    // Should list both EPs in tooltip
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter,
+                                                  "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;com.intellij.myMultipleEPs1<br>&nbsp;&nbsp;&nbsp;&nbsp;com.intellij.myMultipleEPs2<br></body></html>",
+                                                  DevkitCoreIcons.Gutter.Plugin, "extensionPoint", "extensionPoint");
   }
 
   protected void assertSingleEPDeclaration(String filePath, String epFqn) {
@@ -38,6 +69,6 @@ public abstract class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest
 
     final GutterMark gutter = myFixture.findGutter(filePath);
     DevKitGutterTargetsChecker.checkGutterTargets(gutter, "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;" + epFqn + "<br></body></html>",
-                                                  DevKitIcons.Gutter.Plugin, "extensionPoint");
+                                                  DevkitCoreIcons.Gutter.Plugin, "extensionPoint");
   }
 }

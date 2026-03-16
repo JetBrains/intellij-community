@@ -24,7 +24,7 @@ import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.Collections
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 

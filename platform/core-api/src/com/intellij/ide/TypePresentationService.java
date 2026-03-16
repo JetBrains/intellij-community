@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class TypePresentationService {
 
@@ -34,6 +34,6 @@ public abstract class TypePresentationService {
     if (i >= 0) {
       simpleName = simpleName.substring(i + 1);
     }
-    return StringUtil.capitalizeWords(StringUtil.join(NameUtilCore.nameToWords(simpleName), " "), true);
+    return StringUtil.capitalizeWords(StringUtil.join(NameUtilCore.nameToWordList(simpleName), " "), true);
   }
 }

@@ -9,7 +9,12 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.isObjectOrNonInnerClass
 import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetParent
 import org.jetbrains.kotlin.idea.refactoring.introduce.validateExpressionElements
 import org.jetbrains.kotlin.idea.util.ElementKind
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.psiUtil.getValueParameterList
 import org.jetbrains.kotlin.psi.psiUtil.parents
 

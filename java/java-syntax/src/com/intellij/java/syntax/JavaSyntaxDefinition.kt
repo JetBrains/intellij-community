@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.syntax
 
-import com.intellij.java.syntax.element.JavaWhitespaceOrCommentBindingPolicy
 import com.intellij.java.syntax.element.JavaDocSyntaxElementType
 import com.intellij.java.syntax.element.JavaSyntaxElementType
 import com.intellij.java.syntax.element.JavaSyntaxTokenType
+import com.intellij.java.syntax.element.JavaWhitespaceOrCommentBindingPolicy
 import com.intellij.java.syntax.lexer.JavaDocLexer
 import com.intellij.java.syntax.lexer.JavaLexer
 import com.intellij.java.syntax.lexer.JavaTypeEscapeLexer
@@ -54,7 +54,8 @@ object JavaSyntaxDefinition : LanguageSyntaxDefinition {
   override val comments: SyntaxElementTypeSet = syntaxElementTypeSetOf(
     JavaSyntaxTokenType.END_OF_LINE_COMMENT,
     JavaSyntaxTokenType.C_STYLE_COMMENT,
-    JavaDocSyntaxElementType.DOC_COMMENT
+    JavaDocSyntaxElementType.DOC_COMMENT,
+    JavaDocSyntaxElementType.DOC_MARKDOWN_COMMENT,
   )
 
   override val whitespaces: SyntaxElementTypeSet = syntaxElementTypeSetOf(SyntaxTokenTypes.WHITE_SPACE)

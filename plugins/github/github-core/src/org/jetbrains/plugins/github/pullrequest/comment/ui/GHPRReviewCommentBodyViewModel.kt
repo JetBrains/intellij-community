@@ -12,8 +12,13 @@ import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Side
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diff.impl.patch.*
+import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus
+import com.intellij.openapi.diff.impl.patch.PatchHunk
+import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil.getLinesInRange
+import com.intellij.openapi.diff.impl.patch.PatchLine
+import com.intellij.openapi.diff.impl.patch.PatchReader
+import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
@@ -24,7 +29,12 @@ import git4idea.remote.hosting.infoStateIn
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onEach
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.GHMarkdownToHtmlConverter
@@ -34,8 +44,8 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.detailsComputationFlow
 import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getHeadRemoteDescriptor
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getHeadRemoteDescriptor
 
 private val LOG = logger<GHPRReviewCommentBodyViewModel>()
 

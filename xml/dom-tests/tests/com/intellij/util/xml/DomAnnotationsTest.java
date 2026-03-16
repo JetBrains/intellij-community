@@ -8,7 +8,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.highlighting.*;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
+import com.intellij.util.xml.highlighting.DomElementProblemDescriptorImpl;
+import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
+import com.intellij.util.xml.highlighting.DomElementsProblemsHolderImpl;
+import com.intellij.util.xml.highlighting.MockDomInspection;
 import com.intellij.util.xml.impl.DomTestCase;
 
 import java.util.List;

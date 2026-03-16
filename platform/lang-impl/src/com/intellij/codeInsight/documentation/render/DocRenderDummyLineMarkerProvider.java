@@ -9,7 +9,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class DocRenderDummyLineMarkerProvider extends LineMarkerProviderDescriptor {
   private static final DocRenderDummyLineMarkerProvider INSTANCE = new DocRenderDummyLineMarkerProvider();

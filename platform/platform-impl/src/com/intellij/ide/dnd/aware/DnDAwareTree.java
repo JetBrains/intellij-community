@@ -15,11 +15,21 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JTree;
+import javax.swing.SwingUtilities;
+import javax.swing.TransferHandler;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.AlphaComposite;
+import java.awt.Component;
+import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -131,7 +141,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
     protected Transferable createTransferable(JComponent component) {
       if (component instanceof JTree tree) {
         TreePath[] selection = tree.getSelectionPaths();
-        if (selection != null && selection.length > 1) {
+        if (selection != null && selection.length > 0) {
           return new TransferableList<>(selection) {
             @Override
             protected String toString(TreePath path) {

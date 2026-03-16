@@ -39,7 +39,11 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 public class HgRollbackEnvironment implements RollbackEnvironment {
 

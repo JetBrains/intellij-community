@@ -367,6 +367,11 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-76899
+  public void testFieldInDataclassTransformInitIsSkippedDueToFieldSpecifierOverloadMultifile() {
+    doMultiFileTest();
+  }
+
   // PY-42137
   public void testMismatchedOverloadsHaveBothTooFewAndTooManyParameters() {
     doTest();
@@ -534,4 +539,146 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  public void testDecoratedClassMethod2() {
+    doTestByText("""
+                   from typing import TypeVar, Callable, Any, Generic
+                   
+                   T = TypeVar("T")
+                   
+                   def dec[T](f: Callable[[T, bool], bool]) -> Callable[[T, bool], bool]:
+                       def a(self, b: bool) -> bool:
+                           return f(self, b)
+                       return a
+                   
+                   class A:
+                       @dec
+                       def f(self, a: bool) -> bool:
+                           return True
+                   
+                   a = A()
+                   value = a.f(True)
+                   """);
+  }
+
+  // PY-60104 PY-13276
+  public void testTypedDecoratorNotChangingSignatureDoesNotSuppressWarnings() {
+    doTestByText("""
+                   import functools
+                   from typing import Callable
+                   
+                   def typed_decorator[** P, R](func: Callable[P, R]) -> Callable[P, R]:
+                       @functools.wraps(func)
+                       def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+                           return func(*args, **kwargs)
+                   
+                       return wrapper
+                   
+                   
+                   @typed_decorator
+                   def typed_only(n: int) -> str:
+                       return str(n)
+                   
+                   
+                   typed_only("bar", <warning descr="Unexpected argument">42</warning>)
+                   """);
+  }
+
+  // PY-13276
+  public void testUntypedDecoratorNotChangingSignatureDoesNotSuppressWarnings() {
+    doTestByText("""
+                   import functools
+                   
+                   def untyped_decorator_with_wraps(func):
+                       @functools.wraps(func)
+                       def wrapper(*args, **kwargs):
+                           return func(*args, **kwargs)
+                   
+                       return wrapper
+                   
+                   
+                   @untyped_decorator_with_wraps
+                   def untyped_wraps_only(n: int) -> str:
+                       return str(n)
+                   
+                   
+                   untyped_wraps_only("bar", <warning descr="Unexpected argument">42</warning>)
+                   """);
+  }
+
+  // PY-13276
+  public void testUntypedClassDecoratorDoesNotSuppressWarningsOnClassConstructor() {
+    doTestByText("""
+                   def untyped_class_decorator(cls):
+                       return cls
+                   
+                   
+                   @untyped_class_decorator
+                   class C:
+                       def __init__(self, x: int) -> None:
+                           pass
+                   
+                   
+                   C("foo", <warning descr="Unexpected argument">42</warning>)
+                   """);
+  }
+
+  // PY-13276
+  public void testUnresolvedClassDecoratorDoesNotSuppressWarningsOnClassConstructor() {
+    doTestByText("""
+                   @unresolved_dataclass
+                   class Person:
+                       name: str
+                       age: int
+                   
+                   Person(<warning descr="Unexpected argument">name="John"</warning>, <warning descr="Unexpected argument">age=42</warning>)
+                   """);
+  }
+
+  // PY-13276
+  public void testUnresolvedFunctionDecoratorDoesNotSuppressWarnings() {
+    doTestByText("""
+                   @unresolved_decorator
+                   def func():
+                       pass
+                   
+                   func(<warning descr="Unexpected argument">42</warning>)
+                   """);
+  }
+
+  // PY-51768
+  public void testImportedDecoratedFunctionWithParamSpec() {
+    doMultiFileTest();
+  }
+
+  // PY-85027
+  public void testBoundMethodDecoratedWithParamSpec() {
+    doTestByText("""
+      from typing import Callable
+      
+      def outer_decorator[**P, T](f: Callable[P, T]) -> Callable[P, T]:
+          return f
+      
+      class NonWorkingClass:
+          @outer_decorator
+          def add_two(self, x: float, y: float) -> float:
+              return x + y
+      
+      
+      NonWorkingClass().add_two(<warning descr="Parameter 'x' unfilled"><warning descr="Parameter 'y' unfilled">)</warning></warning>
+      """);
+  }
+
+  public void testPropertyMethodCallSet() {
+    doTestByText("""
+                   class A:
+                       def get_f(self) -> int:
+                           return 1
+                       def set_f(self, x: int):
+                           pass
+                   
+                       f = property(get_f, set_f)
+                   
+                   A().set_f(1)
+                   """);
+  }
 }

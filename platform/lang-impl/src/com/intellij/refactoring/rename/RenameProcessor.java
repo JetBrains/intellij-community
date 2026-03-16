@@ -24,9 +24,20 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.platform.diagnostic.telemetry.Scope;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.RefactoringBundle;
@@ -53,7 +64,15 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.openapi.util.NlsContexts.Command;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -64,7 +83,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   protected final LinkedHashMap<PsiElement, String> myAllRenames = new LinkedHashMap<>();
 
   private @NotNull PsiElement myPrimaryElement;
-  private String myNewName = null;
+  private String myNewName;
 
   private boolean mySearchInComments;
   private boolean mySearchTextOccurrences;
@@ -130,7 +149,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     super.doRun();
   }
 
-  public void prepareRenaming(final @NotNull PsiElement element, final String newName, final LinkedHashMap<PsiElement, String> allRenames) {
+  public void prepareRenaming(final @NotNull PsiElement element, final String newName, @NotNull LinkedHashMap<PsiElement, String> allRenames) {
     final List<RenamePsiElementProcessor> processors = RenamePsiElementProcessor.allForElement(element);
     myForceShowPreview = false;
     for (RenamePsiElementProcessor processor : processors) {
@@ -207,15 +226,16 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     try {
       for (Iterator<Map.Entry<PsiElement, String>> iterator = myAllRenames.entrySet().iterator(); iterator.hasNext(); ) {
         Map.Entry<PsiElement, String> entry = iterator.next();
-        if (entry.getKey() instanceof PsiFile file) {
-          final PsiDirectory containingDirectory = file.getContainingDirectory();
-          if (CopyFilesOrDirectoriesHandler.checkFileExist(containingDirectory, choice, file, entry.getValue(),
+        PsiElement psiElement = entry.getKey();
+        if (psiElement instanceof PsiFile psiFile) {
+          final PsiDirectory containingDirectory = psiFile.getContainingDirectory();
+          if (CopyFilesOrDirectoriesHandler.checkFileExist(containingDirectory, choice, psiFile, entry.getValue(),
                                                            RefactoringBundle.message("command.name.rename"))) {
             iterator.remove();
             continue;
           }
         }
-        RenameUtil.checkRename(entry.getKey(), entry.getValue());
+        RenameUtil.checkRename(psiElement, entry.getValue());
       }
     }
     catch (IncorrectOperationException e) {
@@ -270,9 +290,9 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return dialog.showAndGet();
   }
 
-  public void addElement(@NotNull PsiElement element, @NotNull String newName) {
-    RenameUtil.assertNonCompileElement(element);
-    myAllRenames.put(element, newName);
+  public void addElement(@NotNull PsiElement psiElement, @NotNull String newName) {
+    RenameUtil.assertNonCompileElement(psiElement);
+    myAllRenames.put(psiElement, newName);
   }
 
   private void setNewName(@NotNull String newName) {
@@ -338,7 +358,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     myPrimaryElement = elements[0];
 
     final Iterator<String> newNames = myAllRenames.values().iterator();
-    LinkedHashMap<PsiElement, String> newAllRenames = new LinkedHashMap<>();
+    Map<PsiElement, String> newAllRenames = new LinkedHashMap<>();
     for (PsiElement resolved : elements) {
       newAllRenames.put(resolved, newNames.next());
     }

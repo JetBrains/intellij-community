@@ -8,8 +8,19 @@ import com.intellij.util.asSafely
 import com.intellij.util.ui.MouseEventHandler
 import java.awt.Component
 import java.awt.Point
-import java.awt.event.*
-import javax.swing.*
+import java.awt.event.ContainerAdapter
+import java.awt.event.ContainerEvent
+import java.awt.event.ContainerListener
+import java.awt.event.MouseEvent
+import java.awt.event.MouseListener
+import java.awt.event.MouseMotionListener
+import java.awt.event.MouseWheelEvent
+import javax.swing.BorderFactory
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JScrollBar
+import javax.swing.JScrollPane
+import javax.swing.SwingUtilities
 
 internal fun getEditorBackground() = EditorColorsManager.getInstance().globalScheme.defaultBackground
 

@@ -1,3 +1,4 @@
+// WITH_STDLIB
 fun foo() {
     <selection>val a = "aaa"</selection>
 

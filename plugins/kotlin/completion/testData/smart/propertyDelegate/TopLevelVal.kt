@@ -14,3 +14,5 @@ val property by <caret>
 // EXIST: X
 // EXIST: Y
 // ABSENT: Z
+
+// IGNORE_K2

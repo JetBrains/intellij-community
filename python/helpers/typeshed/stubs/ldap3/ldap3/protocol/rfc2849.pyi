@@ -1,6 +1,6 @@
-from typing import Any
+from _typeshed import Incomplete
 
-conf_ldif_line_length: Any
+conf_ldif_line_length: Incomplete
 
 def safe_ldif_string(bytes_value): ...
 def add_controls(controls, all_base64): ...

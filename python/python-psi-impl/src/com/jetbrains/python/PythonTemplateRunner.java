@@ -33,8 +33,8 @@ public final class PythonTemplateRunner {
     VirtualFile virtualFile = anchor.getContainingFile().getVirtualFile();
     if (virtualFile == null) return;
     final FileEditor editor = PythonUiService.getInstance().getSelectedEditor(project, virtualFile);
-    if (editor instanceof TextEditor) {
-      builder.run(((TextEditor)editor).getEditor(), false);
+    if (editor instanceof TextEditor te) {
+      builder.run(te.getEditor(), false);
     }
     else {
       builder.runNonInteractively(false);
@@ -52,7 +52,8 @@ public final class PythonTemplateRunner {
     if (editor != null) {
       Template template = builder.buildInlineTemplate();
       TemplateManager.getInstance(project).startTemplate(editor, template);
-    } else {
+    }
+    else {
       builder.runNonInteractively(true);
     }
   }

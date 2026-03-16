@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
@@ -45,6 +46,8 @@ public class BuildDiagnosticCollector {
   private final ArrayList<CompileRoundData> myRounds = new ArrayList<>();
 
   private boolean myIsWholeTargetRebuild;
+  private long myLibrariesDifferentiateBegin = -1L;
+  private long myLibrariesDifferentiateEnd = -1L;
 
   public BuildDiagnosticCollector(@NotNull BuildContext context) {
     myContext = context;
@@ -53,6 +56,13 @@ public class BuildDiagnosticCollector {
 
   public void setWholeTargetRebuild(boolean wholeTargetRebuild) {
     myIsWholeTargetRebuild = wholeTargetRebuild;
+  }
+
+  public void markLibrariesDifferentiateBegin() {
+    myLibrariesDifferentiateBegin = System.nanoTime();
+  }
+  public void markLibrariesDifferentiateEnd() {
+    myLibrariesDifferentiateEnd = System.nanoTime();
   }
 
   public void setLibrariesDifferentiateLog(Iterable<NodeSource> affectedSources, @Nullable String librariesDifferentiateLog) {
@@ -96,7 +106,7 @@ public class BuildDiagnosticCollector {
 
         ConfigurationState pastState = ConfigurationState.loadSavedState(myContext);
         NodeSourcePathMapper pathMapper = myContext.getPathMapper();
-        ConfigurationState presentState = new ConfigurationState(pathMapper, myContext.getSources(), myContext.getResources(), myContext.getBinaryDependencies(), myContext.getFlags());
+        ConfigurationState presentState = new ConfigurationState(pathMapper, myContext.getSources(), myContext.getResources(), myContext.getBinaryDependencies(), myContext.getFlags(), myContext.getUntrackedInputsDigest());
 
         zos.putNextEntry(createZipEntry(dataDir, "description.txt"));
         //noinspection IOResourceOpenedButNotSafelyClosed
@@ -116,13 +126,15 @@ public class BuildDiagnosticCollector {
 
         var digestRenderer = new Object() {
           void formatDigest(String label, ConfigurationState past, ConfigurationState present, Function<? super ConfigurationState, Long> dataAccessor) {
-            long pastValue = dataAccessor.fun(past);
-            long presentValue = dataAccessor.fun(present);
+            long pastValue = dataAccessor.apply(past);
+            long presentValue = dataAccessor.apply(present);
             readme.format("%n%-20s digest %s => %s %s", label, Long.toHexString(pastValue), Long.toHexString(presentValue), (pastValue == presentValue ? "(unchanged)" : "(modified)"));
           }
         };
         digestRenderer.formatDigest("Worker Flags", pastState, presentState, ConfigurationState::getFlagsDigest);
         digestRenderer.formatDigest("Classpath Structure", pastState, presentState, ConfigurationState::getClasspathStructureDigest);
+        digestRenderer.formatDigest("Runners", pastState, presentState, ConfigurationState::getRunnersDigest);
+        digestRenderer.formatDigest("Untracked Inputs", pastState, presentState, ConfigurationState::getUntrackedInputsDigest);
         readme.println();
         readme.format("Whole target rebuild from the beginning? %s", myIsWholeTargetRebuild? "Yes" : "No");
 
@@ -135,6 +147,11 @@ public class BuildDiagnosticCollector {
         writeSources(readme, "Deleted Binary Dependencies:", libDelta.getDeleted());
         writeSources(readme, "Changed Binary Dependencies:", libDelta.getChanged());
         writeSources(readme, "Added Binary Dependencies:", filter(libDelta.getModified(), s -> !contains(libDelta.getChanged(), s)));
+        
+        if (myLibrariesDifferentiateBegin > 0L && myLibrariesDifferentiateEnd > myLibrariesDifferentiateBegin) {
+          readme.println();
+          readme.format("Binary dependencies differentiate time: %s", Duration.ofNanos(myLibrariesDifferentiateEnd - myLibrariesDifferentiateBegin));
+        }
 
         if (myLibrariesDifferentiateLog != null) {
           writeRoundData(readme, "Sources affected after binary dependencies differentiate:", 0, myLibrariesDifferentiateLog);

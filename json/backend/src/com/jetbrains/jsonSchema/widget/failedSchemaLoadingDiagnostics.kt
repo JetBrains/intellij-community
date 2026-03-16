@@ -6,7 +6,15 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
-import com.jetbrains.jsonSchema.fus.*
+import com.jetbrains.jsonSchema.fus.JsonHttpFileDownloadState
+import com.jetbrains.jsonSchema.fus.JsonHttpFileLoadingUsageCollector
+import com.jetbrains.jsonSchema.fus.JsonHttpFileNioFile
+import com.jetbrains.jsonSchema.fus.JsonHttpFileNioFileCanBeRead
+import com.jetbrains.jsonSchema.fus.JsonHttpFileNioFileLength
+import com.jetbrains.jsonSchema.fus.JsonHttpFileSyncRefreshVfsFile
+import com.jetbrains.jsonSchema.fus.JsonHttpFileVfsFile
+import com.jetbrains.jsonSchema.fus.JsonHttpFileVfsFileValidity
+import com.jetbrains.jsonSchema.fus.JsonRemoteSchemaDownloadState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.concurrent.CancellationException

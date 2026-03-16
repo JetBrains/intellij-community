@@ -19,7 +19,12 @@ import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.breadcrumbs.SimpleDiffBreadcrumbsPanel;
-import com.intellij.diff.util.*;
+import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.LineCol;
+import com.intellij.diff.util.Side;
+import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -38,7 +43,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEditorHolder> implements EditorDiffViewer {
@@ -65,12 +70,12 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
 
     TextDiffViewerUtil.checkDifferentDocuments(myRequest);
 
-    for (ThreeSide side : ThreeSide.values()) {
+    for (ThreeSide side : ThreeSide.getEntries()) {
       DiffUtil.installLineConvertor(getEditor(side), getContent(side));
     }
 
     if (getProject() != null) {
-      for (ThreeSide side : ThreeSide.values()) {
+      for (ThreeSide side : ThreeSide.getEntries()) {
         myContentPanel.setBreadcrumbs(side, new SimpleDiffBreadcrumbsPanel(getEditor(side), this), getTextSettings());
       }
     }
@@ -230,9 +235,9 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   protected abstract @Nullable SyncScrollSupport.SyncScrollable getSyncScrollable(@NotNull Side side);
 
   @RequiresEdt
-  protected @NotNull LogicalPosition transferPosition(@NotNull ThreeSide baseSide,
-                                                      @NotNull ThreeSide targetSide,
-                                                      @NotNull LogicalPosition position) {
+  public @NotNull LogicalPosition transferPosition(@NotNull ThreeSide baseSide,
+                                                   @NotNull ThreeSide targetSide,
+                                                   @NotNull LogicalPosition position) {
     if (mySyncScrollSupport == null) return position;
     if (baseSide == targetSide) return position;
 
@@ -274,7 +279,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
-    return ThreesideDiffViewer.canShowRequest(context, request, TextEditorHolder.TextEditorHolderFactory.INSTANCE);
+    return canShowRequest(context, request, TextEditorHolder.TextEditorHolderFactory.INSTANCE);
   }
 
   //

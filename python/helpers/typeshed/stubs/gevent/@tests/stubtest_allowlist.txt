@@ -64,6 +64,10 @@ gevent.socket.SocketType.makefile
 gevent.socket.SocketType.sendfile
 gevent.socket.SocketType.set_inheritable
 
+# Pretends to re-export a type marked @disjoint_base in the stubs, but runtime
+# defines __slots__
+gevent.socket.SocketType$
+
 # zope.interface related attributes we can ignore
 gevent.[\w\.]+\.__implemented__
 gevent.[\w\.]+\.__providedBy__

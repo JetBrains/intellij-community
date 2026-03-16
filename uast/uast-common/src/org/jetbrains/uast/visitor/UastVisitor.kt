@@ -1,7 +1,61 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.visitor
 
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UArrayAccessExpression
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UBinaryExpressionWithPattern
+import org.jetbrains.uast.UBinaryExpressionWithType
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UBreakExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UCallableReferenceExpression
+import org.jetbrains.uast.UCatchClause
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UClassInitializer
+import org.jetbrains.uast.UClassLiteralExpression
+import org.jetbrains.uast.UComment
+import org.jetbrains.uast.UContinueExpression
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UDeclarationsExpression
+import org.jetbrains.uast.UDoWhileExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UEnumConstant
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UExpressionList
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UForEachExpression
+import org.jetbrains.uast.UForExpression
+import org.jetbrains.uast.UIfExpression
+import org.jetbrains.uast.UImportStatement
+import org.jetbrains.uast.ULabeledExpression
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.ULocalVariable
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UNamedExpression
+import org.jetbrains.uast.UObjectLiteralExpression
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UParenthesizedExpression
+import org.jetbrains.uast.UPatternExpression
+import org.jetbrains.uast.UPolyadicExpression
+import org.jetbrains.uast.UPostfixExpression
+import org.jetbrains.uast.UPrefixExpression
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.USuperExpression
+import org.jetbrains.uast.USwitchClauseExpression
+import org.jetbrains.uast.USwitchExpression
+import org.jetbrains.uast.UThisExpression
+import org.jetbrains.uast.UThrowExpression
+import org.jetbrains.uast.UTryExpression
+import org.jetbrains.uast.UTypeReferenceExpression
+import org.jetbrains.uast.UUnaryExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UWhileExpression
+import org.jetbrains.uast.UYieldExpression
 
 /**
  * A visitor for UAST elements.

@@ -16,10 +16,10 @@
 
 package com.intellij.completion.ml.personalization
 
-import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
 import com.intellij.completion.ml.personalization.impl.ApplicationUserFactorStorage
 import com.intellij.completion.ml.personalization.impl.ProjectUserFactorStorage
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 
 /**
  * @author Vitaliy.Bibaev

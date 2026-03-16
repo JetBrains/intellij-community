@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicReference
  * Registers [WebModuleType] in IDEs which don't register neither [WebModuleType] nor [com.intellij.webcore.moduleType.PlatformWebModuleType]
  * but still need to use [WebModuleTypeBase] because they have Java plugin installed.
  */
-private class WebModuleTypeRegistrar(coroutineScope: CoroutineScope) : Disposable {
+internal class WebModuleTypeRegistrar(coroutineScope: CoroutineScope) : Disposable {
   private val webModuleTypeRef = AtomicReference<WebModuleType>()
 
   init {

@@ -21,6 +21,10 @@ sealed class EventField<T> {
   open val shouldBeAnonymized: Boolean
     get() = false
 
+  open val required: Boolean? = null
+
+  open val defaultValue: String? = null
+
   abstract fun addData(fuData: FeatureUsageData, value: T)
 
   @Contract(pure = true)
@@ -55,6 +59,29 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
 
     override val validationRule: List<String>
       get() = listOf("{enum:${allowedValues.joinToString("|")}}")
+  }
+
+  /**
+   * String event field validated against a predefined list of allowed values,
+   * with optional support for required and default value validation rules.
+   *
+   * @param name name of the field
+   * @param allowedValues list of allowed values for the field
+   * @param description optional description of the field
+   * @param required whether the field is required
+   * @param defaultValue optional default value applied when the field is missing or invalid
+   */
+  data class ValidatedByAllowedValuesExtended(@NonNls @EventFieldName override val name: String,
+                                      val allowedValues: List<String>,
+                                      @NonNls override val description: String? = null,
+                                      override val required: Boolean? = null,
+                                      override val defaultValue: String? = null) : StringEventField(name) {
+    override val validationRule: List<String>
+      get() = buildList {
+        add("{enum:${allowedValues.joinToString("|")}}")
+        required?.let { value -> add("{required:$value}") }
+        defaultValue?.let { value -> add("{default_value:$value}") }
+      }
   }
 
   data class ValidatedByEnum(@NonNls @EventFieldName override val name: String,

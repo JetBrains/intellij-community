@@ -20,7 +20,9 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import java.util.List;
 
-import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.*;
+import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensionsByExtensionPoint;
+import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensionsByExtensionPointAndId;
+import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensionsByPsiClass;
 
 @TestDataPath("$CONTENT_ROOT/testData/util/extensionLocator")
 public class ExtensionLocatorTest extends LightJavaCodeInsightFixtureTestCase {

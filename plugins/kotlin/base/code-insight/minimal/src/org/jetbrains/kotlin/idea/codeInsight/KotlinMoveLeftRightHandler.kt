@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight
 import com.intellij.codeInsight.editorActions.moveLeftRight.MoveElementLeftRightHandler
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
-import org.jetbrains.kotlin.psi.KtContextReceiverList
+import org.jetbrains.kotlin.psi.KtContextParameterList
 import org.jetbrains.kotlin.psi.KtParameterList
 import org.jetbrains.kotlin.psi.KtSuperTypeList
 import org.jetbrains.kotlin.psi.KtTypeConstraintList
@@ -15,7 +15,7 @@ class KotlinMoveLeftRightHandler : MoveElementLeftRightHandler() {
     override fun getMovableSubElements(element: PsiElement): Array<PsiElement> {
         when (element) {
             is KtParameterList -> return element.parameters.toTypedArray()
-            is KtContextReceiverList -> return element.contextParameters().toTypedArray()
+            is KtContextParameterList -> return element.contextParameters.toTypedArray()
             is KtValueArgumentList -> return element.arguments.toTypedArray()
             is KtArrayAccessExpression -> return element.indexExpressions.toTypedArray()
             is KtTypeParameterList -> return element.parameters.toTypedArray()

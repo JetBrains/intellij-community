@@ -2,7 +2,12 @@
 
 package com.intellij.facet.ui;
 
-import com.intellij.facet.*;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetType;
+import com.intellij.facet.FacetTypeId;
+import com.intellij.facet.FacetTypeRegistry;
+import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProviderBase;
 import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,7 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 /**

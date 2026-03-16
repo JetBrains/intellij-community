@@ -13,12 +13,20 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
-import static git4idea.crlf.GitCrlfUtil.*;
+import static git4idea.crlf.GitCrlfUtil.ATTRIBUTE_KEY;
+import static git4idea.crlf.GitCrlfUtil.RECOMMENDED_VALUE;
+import static git4idea.crlf.GitCrlfUtil.SUGGESTED_FIX;
 
 /**
  * Warns the user that CRLF line separators are about to be committed to the repository.

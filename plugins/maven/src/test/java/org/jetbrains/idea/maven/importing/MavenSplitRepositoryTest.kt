@@ -8,6 +8,8 @@ import org.jetbrains.idea.maven.server.MavenServerManager
 import org.junit.Test
 
 class MavenSplitRepositoryTest : MavenMultiVersionImportingTestCase() {
+  override fun skipPluginResolution() = false
+
   @Test
   fun testSplitRepositoryProjectSync() = runBlocking {
     // configure split repository

@@ -5,7 +5,13 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.commons.cli.Option;
-import org.gradle.cli.*;
+import org.gradle.cli.AbstractCommandLineConverter;
+import org.gradle.cli.CommandLineArgumentException;
+import org.gradle.cli.CommandLineOption;
+import org.gradle.cli.CommandLineParser;
+import org.gradle.cli.ParsedCommandLine;
+import org.gradle.cli.ParsedCommandLineOption;
+import org.gradle.cli.SystemPropertiesCommandLineConverter;
 
 import java.util.Collection;
 import java.util.List;

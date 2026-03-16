@@ -55,7 +55,7 @@ class AssertKotlinPluginModeExtension : BeforeAllCallback {
 
     override fun beforeAll(context: ExtensionContext) {
         assertKotlinPluginMode(
-            expectedPluginMode = useK2Plugin?.let { KotlinPluginMode.of(it) } ?: KotlinPluginMode.K1,
+            expectedPluginMode = useK2Plugin?.let { KotlinPluginMode.of(it) } ?: KotlinPluginMode.K2,
         )
     }
 }

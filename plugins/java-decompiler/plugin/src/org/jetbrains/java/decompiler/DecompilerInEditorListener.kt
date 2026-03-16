@@ -24,7 +24,7 @@ import java.util.function.Supplier
 import javax.swing.BoxLayout
 import kotlin.math.max
 
-private class DecompilerInEditorListener : EditorFactoryListener {
+internal class DecompilerInEditorListener : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor as? EditorImpl ?: return
     val virtualFile = FileDocumentManager.getInstance().getFile(editor.document) ?: return
@@ -34,9 +34,11 @@ private class DecompilerInEditorListener : EditorFactoryListener {
   }
 
   /**
+   * This is a hack. See IDEA-368466.
+   *
    * We want to add an icon to the small toolbar in the upper-right corner of the editor (aka "the inspection widget").
    *
-   * Normal, well-behaved plugins (for example GitHub plugin, for code review), contribute their own actions to the
+   * Normal, well-behaved plugins (for example, the GitHub plugin, for code review), contribute their own actions to the
    * inspection widget by calling [EditorMarkupModel.addInspectionWidgetAction].
    *
    * Unfortunately, we cannot act like a well-behaved plugin because the inspection widget is not shown for

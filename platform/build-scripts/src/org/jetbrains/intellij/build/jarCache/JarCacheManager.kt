@@ -9,10 +9,9 @@ import org.jetbrains.intellij.build.Source
 import org.jetbrains.intellij.build.ZipSource
 import java.nio.file.Path
 
-internal interface SourceBuilder {
+interface SourceBuilder {
   val useCacheAsTargetFile: Boolean
 
-  // one module (source) can be included in different plugins - cache per plugin
   fun updateDigest(digest: HashStream64)
 
   suspend fun produce(targetFile: Path)
@@ -20,7 +19,7 @@ internal interface SourceBuilder {
   fun consumeInfo(source: Source, size: Int, hash: Long)
 }
 
-internal sealed interface JarCacheManager {
+sealed interface JarCacheManager {
   suspend fun computeIfAbsent(
     sources: Collection<Source>,
     targetFile: Path,

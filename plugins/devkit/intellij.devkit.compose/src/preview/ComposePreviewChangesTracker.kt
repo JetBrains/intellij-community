@@ -6,7 +6,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
@@ -14,9 +19,21 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.TOPIC
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiModificationTracker
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
 
 private val manualRefreshCounter = AtomicInteger(0)
@@ -80,7 +97,12 @@ internal class ComposePreviewChangesTracker(val project: Project, val coroutineS
             FileDocumentManager.getInstance().saveAllDocuments()
           }
 
-          processor(virtualFile)
+          try {
+            processor(virtualFile)
+          }
+          catch (e: Throwable) {
+            thisLogger().error("Error during Compose UI Preview refresh chain", e)
+          }
         }
     }
   }

@@ -6,11 +6,34 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.AbstractEntityStorage
 import com.intellij.platform.workspace.storage.impl.references.MutableReferenceContainer
 import com.intellij.platform.workspace.storage.impl.references.ReferenceContainer
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
+import com.intellij.platform.workspace.storage.testEntities.entities.AttachedEntityList
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.MainEntityList
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.OoChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SelfLinkedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SourceEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.TreeMultiparentLeafEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.TreeMultiparentRootEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.child
+import com.intellij.platform.workspace.storage.testEntities.entities.children
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifySelfLinkedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyTreeMultiparentLeafEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyTreeMultiparentRootEntity
 import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNotSame
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 class StorageMutabilityTest {
 

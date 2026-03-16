@@ -2,10 +2,12 @@
 
 package org.jetbrains.kotlin.idea.kdoc
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.resolve.BindingContext
 
+@K1Deprecation
 interface KDocLinkResolutionService {
     fun resolveKDocLink(
         context: BindingContext,

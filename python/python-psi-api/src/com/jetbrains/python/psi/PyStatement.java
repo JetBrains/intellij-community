@@ -21,5 +21,5 @@ import com.jetbrains.python.ast.PyAstStatement;
  * Everything that may be an element of a statement list.
  */
 public interface PyStatement extends PyAstStatement, PyElement {
-    PyStatement[] EMPTY_ARRAY = new PyStatement[0];
+  PyStatement[] EMPTY_ARRAY = new PyStatement[0];
 }

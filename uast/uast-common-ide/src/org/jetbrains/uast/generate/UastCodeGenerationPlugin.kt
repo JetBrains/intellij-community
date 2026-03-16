@@ -8,7 +8,34 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UCallableReferenceExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UComment
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UDeclarationsExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UIfExpression
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.ULocalVariable
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UParenthesizedExpression
+import org.jetbrains.uast.UPolyadicExpression
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.UastCallKind
+import org.jetbrains.uast.getQualifiedParentOrThis
+import org.jetbrains.uast.toUElementOfType
 
 /**
  * Extensions which provides code generation support for generating UAST expressions.

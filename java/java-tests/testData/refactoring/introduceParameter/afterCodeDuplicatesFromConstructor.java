@@ -5,7 +5,7 @@ class A {
 
 class B extends A {
   public B(String a) {
-      this(a, "");
+    super(a);
   }
   public B(String a, final String anObject) {
     super(a);

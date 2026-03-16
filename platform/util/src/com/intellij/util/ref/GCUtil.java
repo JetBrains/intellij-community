@@ -50,7 +50,7 @@ public final class GCUtil {
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "StringConcatenationInsideStringBufferAppend"})
-  static boolean allocateTonsOfMemory(@NotNull StringBuilder log, @NotNull Runnable runWhileWaiting, @NotNull BooleanSupplier until) {
+  public static boolean allocateTonsOfMemory(@NotNull StringBuilder log, @NotNull Runnable runWhileWaiting, @NotNull BooleanSupplier until) {
     long freeMemory = Runtime.getRuntime().freeMemory();
     log.append("Free memory: " + freeMemory + "\n");
 

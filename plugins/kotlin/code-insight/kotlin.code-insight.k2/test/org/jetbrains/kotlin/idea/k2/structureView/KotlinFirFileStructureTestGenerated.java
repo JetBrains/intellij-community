@@ -105,6 +105,11 @@ public class KotlinFirFileStructureTestGenerated extends AbstractKotlinFirFileSt
         runTest("../../idea/tests/testData/structureView/fileStructure/LocalElements.kt");
     }
 
+    @TestMetadata("PropertyWithAccessors.kt")
+    public void testPropertyWithAccessors() throws Exception {
+        runTest("../../idea/tests/testData/structureView/fileStructure/PropertyWithAccessors.kt");
+    }
+
     @TestMetadata("Render.kt")
     public void testRender() throws Exception {
         runTest("../../idea/tests/testData/structureView/fileStructure/Render.kt");

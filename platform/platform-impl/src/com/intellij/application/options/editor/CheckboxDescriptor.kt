@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindSelected
@@ -67,7 +68,7 @@ class CheckboxDescriptor(val name: @NlsContexts.Checkbox String,
   }
 }
 
-fun Row.checkBox(ui: CheckboxDescriptor): com.intellij.ui.dsl.builder.Cell<JBCheckBox> {
+fun Row.checkBox(ui: CheckboxDescriptor): Cell<JBCheckBox> {
   val result = checkBox(ui.name)
     .bindSelected(ui.getter, ui.setter)
   ui.comment?.let {

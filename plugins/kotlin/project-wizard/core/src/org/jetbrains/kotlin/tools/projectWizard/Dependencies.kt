@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.DefaultRepo
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repositories
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repository
 import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
-import java.util.*
+import java.util.Collections
 
 @Suppress("ClassName", "SpellCheckingInspection")
 object Dependencies {

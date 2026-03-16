@@ -13,7 +13,9 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CurrentContentRevision
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer.*
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer.getBaseVersion
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer.getRevisionTitle
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer.getYourVersion
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
 import com.intellij.util.ThreeState
 import git4idea.i18n.GitBundle

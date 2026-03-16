@@ -5,8 +5,11 @@ import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 import java.awt.event.FocusListener;

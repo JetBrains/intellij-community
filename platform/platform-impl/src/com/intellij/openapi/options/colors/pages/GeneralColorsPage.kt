@@ -253,7 +253,7 @@ $customSeveritiesDemoText"""
                       ColorDescriptor.Kind.BACKGROUND),
       ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.preview.border.color"), EditorColors.PREVIEW_BORDER_COLOR,
                       ColorDescriptor.Kind.BACKGROUND))
-    private val NEW_COLOR_DESCRIPTORS = patchDescriptorsForNewUI(COLOR_DESCRIPTORS)
+    private val NEW_COLOR_DESCRIPTORS by lazy { patchDescriptorsForNewUI(COLOR_DESCRIPTORS) }
     private val ADDITIONAL_HIGHLIGHT_DESCRIPTORS: @NonNls MutableMap<String, TextAttributesKey>? = HashMap()
 
     init {

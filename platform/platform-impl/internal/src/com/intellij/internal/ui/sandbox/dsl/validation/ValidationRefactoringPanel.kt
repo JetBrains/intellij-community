@@ -6,13 +6,23 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.dsl.builder.toMutableProperty
 import com.intellij.ui.dsl.validation.CellValidation
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.Alarm
 import java.awt.BorderLayout
 import java.awt.Font
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTextField
+import javax.swing.SwingUtilities
 import javax.swing.event.DocumentEvent
 
 @Suppress("DialogTitleCapitalization")

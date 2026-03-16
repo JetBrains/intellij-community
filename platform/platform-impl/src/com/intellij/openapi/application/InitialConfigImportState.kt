@@ -6,6 +6,7 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.application.CustomConfigMigrationOption.SetProperties
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
@@ -50,18 +51,18 @@ object InitialConfigImportState {
 
   @JvmStatic
   fun isStartupWizardEnabled(): Boolean =
+    !PlatformUtils.isJetBrainsClient() &&
     !AppMode.isRemoteDevHost() &&
     System.getProperty("intellij.startup.wizard", if (ApplicationManagerEx.isInIntegrationTest()) "false" else "true").toBoolean()
 
   @JvmStatic
   @Throws(IOException::class)
   fun writeOptionsForRestart(newConfigDir: Path) {
-    val properties = buildList {
-      add(FIRST_SESSION_KEY)
-      if (isConfigImported()) {
-        add(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY)
-      }
+    val properties = ArrayList<Pair<String, String>>(2)
+    properties.add(FIRST_SESSION_KEY to "true")
+    if (isConfigImported()) {
+      properties.add(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY to "true")
     }
-    SetProperties.setToTrue(properties).writeConfigMarkerFile(newConfigDir)
+    SetProperties(properties).writeConfigMarkerFile(newConfigDir)
   }
 }

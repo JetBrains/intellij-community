@@ -1,6 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options
-
 import com.intellij.application.options.editor.EditorOptionsProvider
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -24,15 +23,24 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.asRange
+import com.intellij.ui.dsl.builder.bindIntText
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.layout.selected
 
 class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurable>(
-  ApplicationBundle.message("title.code.completion"), "reference.settingsdialog.IDE.editor.code.completion"),
+  ApplicationBundle.message("title.code.completion.popup"), "reference.settingsdialog.IDE.editor.code.completion"),
                               EditorOptionsProvider, WithEpDependencies {
 
   companion object {
-    const val ID: String = "editor.preferences.completion"
+    const val ID: String = "editor.preferences.completion.popup"
     private val LOG = Logger.getInstance(CodeCompletionConfigurable::class.java)
   }
 
@@ -106,6 +114,9 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
     val settings = CodeInsightSettings.getInstance()
 
     return panel {
+      row {
+        text(ApplicationBundle.message("completion.description"))
+      }.bottomGap(BottomGap.SMALL)
       buttonsGroup {
         row {
           cbMatchCase = checkBox(ApplicationBundle.message("completion.option.match.case"))

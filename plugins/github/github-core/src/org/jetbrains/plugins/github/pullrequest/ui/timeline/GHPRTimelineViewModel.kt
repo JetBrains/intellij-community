@@ -16,7 +16,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.GHNode
@@ -91,7 +96,7 @@ internal class GHPRTimelineViewModelImpl(
   override val ghostUser: GHUser = securityService.ghostUser
   override val currentUser: GHUser = securityService.currentUser
 
-  override val detailsVm = GHPRDetailsTimelineViewModel(project, parentCs, dataContext, dataProvider)
+  override val detailsVm = GHPRDetailsTimelineViewModel(project, cs, dataContext, dataProvider)
   private val timelineLoader = dataProvider.acquireTimelineLoader(cs)
 
   override val loadingErrorHandler: GHLoadingErrorHandler =
@@ -99,7 +104,7 @@ internal class GHPRTimelineViewModelImpl(
 
   override val commentVm: GHPRNewCommentViewModel? =
     if (securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)) {
-      GHPRNewCommentViewModel(project, parentCs, commentsData)
+      GHPRNewCommentViewModel(project, cs, commentsData)
     }
     else null
 

@@ -18,7 +18,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 
-import static com.intellij.openapi.vcs.Executor.*;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.debug;
+import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
 
 /**

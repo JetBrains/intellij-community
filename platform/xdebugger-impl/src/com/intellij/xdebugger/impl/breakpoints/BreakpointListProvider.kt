@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.ui.SizedIcon
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.SingleAlarm
@@ -19,7 +20,6 @@ import com.intellij.util.ui.NamedColorUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XDebuggerBundle.message
 import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction
@@ -76,7 +76,7 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
     }
 
     init {
-      XBreakpointUtil.subscribeOnBreakpointsChanges(project, project) {
+      XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).subscribeOnBreakpointsChanges(project) {
         breakpointsUpdater.cancelAndRequest()
       }
     }
@@ -110,7 +110,7 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
 
       val breakpoints = mutableMapOf<Any, Any>()
       ReadAction.run<Exception> {
-        val items = XBreakpointUtil.getAllBreakpointItems(project)
+        val items = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).getAllBreakpointItems()
 
         val manager = XDebuggerManager.getInstance(project).breakpointManager as? XBreakpointManagerImpl
         val selectedRules = manager?.breakpointsDialogSettings?.selectedGroupingRules

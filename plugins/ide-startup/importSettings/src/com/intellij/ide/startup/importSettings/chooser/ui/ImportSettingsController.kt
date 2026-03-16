@@ -5,7 +5,14 @@ import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.importProgress.ImportProgressPage
 import com.intellij.ide.startup.importSettings.chooser.productChooser.ProductChooserPage
 import com.intellij.ide.startup.importSettings.chooser.settingChooser.SettingChooserPage
-import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
+import com.intellij.ide.startup.importSettings.data.BaseService
+import com.intellij.ide.startup.importSettings.data.DataForSave
+import com.intellij.ide.startup.importSettings.data.DataToApply
+import com.intellij.ide.startup.importSettings.data.DialogImportData
+import com.intellij.ide.startup.importSettings.data.Product
+import com.intellij.ide.startup.importSettings.data.SettingsService
+import com.intellij.ide.startup.importSettings.data.StartupWizardService
 import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.ide.startup.importSettings.transfer.TransferableSetting
 import com.intellij.ide.startup.importSettings.wizard.pluginChooser.WizardPluginsPage

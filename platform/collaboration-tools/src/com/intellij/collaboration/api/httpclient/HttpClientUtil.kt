@@ -17,7 +17,10 @@ import java.io.InputStream
 import java.io.Reader
 import java.io.StringReader
 import java.net.http.HttpRequest
-import java.net.http.HttpResponse.*
+import java.net.http.HttpResponse.BodyHandler
+import java.net.http.HttpResponse.BodySubscriber
+import java.net.http.HttpResponse.BodySubscribers
+import java.net.http.HttpResponse.ResponseInfo
 import java.nio.ByteBuffer
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage

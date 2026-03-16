@@ -24,7 +24,10 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.associatedModuleDir
+import com.jetbrains.python.sdk.associatedModulePath
+import com.jetbrains.python.sdk.findAmongRoots
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 import com.jetbrains.python.statistics.PipfileWatcherIdsHolder.Companion.RUN_PIPENV_LOCK_SUGGESTION
 import com.jetbrains.python.util.ShowingMessageErrorSync
@@ -134,5 +137,5 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
   private fun VirtualFile.getModule(project: Project): Module? =
     ModuleUtil.findModuleForFile(this, project)
 
-  private suspend fun getPipFileLock(module: Module): VirtualFile? = withContext(Dispatchers.IO) { findAmongRoots(module, PipEnvFileHelper.PIP_FILE_LOCK) }
+  private suspend fun getPipFileLock(module: Module): VirtualFile? = findAmongRoots(module, PipEnvFileHelper.PIP_FILE_LOCK)
 }

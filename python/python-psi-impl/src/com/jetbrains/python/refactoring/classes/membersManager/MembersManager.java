@@ -16,7 +16,13 @@ import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -71,7 +77,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
   //We check type at runtime
   @SuppressWarnings({"unchecked", "rawtypes"})
   private static @NotNull Collection<PyMemberInfo<PyElement>> transformSafely(final @NotNull PyClass pyClass,
-                                                                     final @NotNull MembersManager<?> manager) {
+                                                                              final @NotNull MembersManager<?> manager) {
     final List<? extends PyElement> membersCouldBeMoved = manager.getMembersCouldBeMoved(pyClass);
     manager.checkElementTypes((Iterable)membersCouldBeMoved);
     return (Collection<PyMemberInfo<PyElement>>)Collections2.transform(membersCouldBeMoved, (Function)manager);
@@ -124,7 +130,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
    * @return member or null if not found
    */
   public static @Nullable PyMemberInfo<PyElement> findMember(final @NotNull Collection<? extends PyMemberInfo<PyElement>> members,
-                                                   final @NotNull Predicate<? super PyMemberInfo<PyElement>> predicate) {
+                                                             final @NotNull Predicate<? super PyMemberInfo<PyElement>> predicate) {
     for (final PyMemberInfo<PyElement> pyMemberInfo : members) {
       if (predicate.apply(pyMemberInfo)) {
         return pyMemberInfo;
@@ -141,7 +147,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
    * @return member or null if not found
    */
   public static @Nullable PyMemberInfo<PyElement> findMember(final @NotNull PyClass pyClass,
-                                                   final @NotNull Predicate<? super PyMemberInfo<PyElement>> predicate) {
+                                                             final @NotNull Predicate<? super PyMemberInfo<PyElement>> predicate) {
     return findMember(getAllMembersCouldBeMoved(pyClass), predicate);
   }
 

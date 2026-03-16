@@ -528,8 +528,13 @@ private class ManyItemMap<V : Any>(
     }
   }
 
-  override fun toString(): String =
-    "ManyItemMap(map=" + map.entries.joinToString(separator = ", ", prefix = "{", postfix = "}") { (k, v) -> "$k=$v" } + ", defaultContext=$defaultContext)"
+  override fun toString(): String {
+    val defaultContext = defaultContext
+    val entries = map.keys.associateWith { map[it] }.entries.filter { it.value != null }
+    val entriesText = entries
+      .joinToString(separator = ", ", prefix = "{", postfix = "}") { (k, v) -> "$k=$v" }
+    return "ManyItemMap(map=$entriesText, defaultContext=$defaultContext)"
+  }
 }
 
 private class EntryImpl<V : Any>(

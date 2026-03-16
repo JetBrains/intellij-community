@@ -3,7 +3,17 @@ package com.intellij.ide.impl.dataRules
 
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
-import com.intellij.openapi.actionSystem.PlatformDataKeys.*
+import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT
+import com.intellij.openapi.actionSystem.PlatformDataKeys.COPY_PROVIDER
+import com.intellij.openapi.actionSystem.PlatformDataKeys.CUT_PROVIDER
+import com.intellij.openapi.actionSystem.PlatformDataKeys.DELETE_ELEMENT_PROVIDER
+import com.intellij.openapi.actionSystem.PlatformDataKeys.EDITOR
+import com.intellij.openapi.actionSystem.PlatformDataKeys.FILE_EDITOR
+import com.intellij.openapi.actionSystem.PlatformDataKeys.NAVIGATABLE
+import com.intellij.openapi.actionSystem.PlatformDataKeys.NAVIGATABLE_ARRAY
+import com.intellij.openapi.actionSystem.PlatformDataKeys.PASTE_PROVIDER
+import com.intellij.openapi.actionSystem.PlatformDataKeys.PROJECT_FILE_DIRECTORY
+import com.intellij.openapi.actionSystem.PlatformDataKeys.SELECTED_ITEMS
 import com.intellij.openapi.actionSystem.UiDataRule
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl

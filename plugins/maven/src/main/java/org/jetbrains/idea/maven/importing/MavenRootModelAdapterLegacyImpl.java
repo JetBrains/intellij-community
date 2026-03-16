@@ -9,7 +9,21 @@ import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
+import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleSourceOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
@@ -39,7 +53,11 @@ import org.jetbrains.jps.model.serialization.SerializationConstants;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInterface {
 

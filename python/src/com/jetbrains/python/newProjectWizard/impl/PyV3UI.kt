@@ -13,7 +13,6 @@ import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificUI
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider
 import com.jetbrains.python.sdk.add.v2.PySdkCreator
 import com.jetbrains.python.sdk.add.v2.PythonSdkPanelBuilderAndSdkCreator
-import com.jetbrains.python.util.ShowingMessageErrorSync
 import javax.swing.JComponent
 
 internal class PyV3UI<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings> @RequiresEdt constructor(
@@ -23,8 +22,7 @@ internal class PyV3UI<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings> 
 ) {
 
   private val sdkPanelBuilderAndSdkCreator: PythonSdkPanelBuilderAndSdkCreator = PythonSdkPanelBuilderAndSdkCreator(
-    errorSink = ShowingMessageErrorSync,
-    module = null,
+      module = null,
   )
 
   private val _mainPanel: DialogPanel = panel {

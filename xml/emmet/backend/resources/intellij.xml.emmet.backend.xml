@@ -1,0 +1,13 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.xml.emmet"/>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationConfigurable groupId="editor" key="emmet.configuration.title" bundle="messages.XmlEmmetBundle"
+                             id="reference.idesettings.emmet"
+                             dynamic="true" provider="com.intellij.application.options.emmet.EmmetConfigurableProvider"/>
+    <lookup.actionProvider implementation="com.intellij.codeInsight.template.emmet.completion.EmmetLookupActionProvider"/>
+  </extensions>
+</idea-plugin>

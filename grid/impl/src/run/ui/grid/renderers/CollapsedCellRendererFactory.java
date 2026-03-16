@@ -1,7 +1,12 @@
 package com.intellij.database.run.ui.grid.renderers;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridModel;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.HierarchicalColumnsCollapseManager;
 import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.HierarchicalGridColumn;
+import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.extractors.ObjectFormatterConfig;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.openapi.util.Disposer;

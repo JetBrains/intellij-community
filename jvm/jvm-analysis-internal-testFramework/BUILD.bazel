@@ -17,6 +17,7 @@ jvm_library(
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
+    "//platform/execution",
     "//platform/testFramework",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/smRunner",

@@ -4,7 +4,10 @@ package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.CompoundPositionManager;
+import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.PositionManagerEx;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
@@ -52,13 +55,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GroovyPositionManager extends PositionManagerEx {
-  private static final Logger LOG = Logger.getInstance(PositionManagerImpl.class);
+  private static final Logger LOG = Logger.getInstance(GroovyPositionManager.class);
 
   private final DebugProcess myDebugProcess;
-  private static final Set<FileType> ourFileTypes = Collections.singleton(GroovyFileType.GROOVY_FILE_TYPE);
 
   public GroovyPositionManager(DebugProcess debugProcess) {
     myDebugProcess = debugProcess;
@@ -325,7 +328,7 @@ public class GroovyPositionManager extends PositionManagerEx {
       }
       if (!classes.isEmpty()) {
         classes.sort(PsiClassUtil.createScopeComparator(searchScope));
-        PsiClass clazz = classes.get(0);
+        PsiClass clazz = classes.getFirst();
         if (clazz != null) return clazz.getContainingFile();
       }
     }
@@ -381,17 +384,17 @@ public class GroovyPositionManager extends PositionManagerEx {
 
       if (sourceImage instanceof GrTypeDefinition && !((GrTypeDefinition)sourceImage).isAnonymous()) {
         String qName = getClassNameForJvm((GrTypeDefinition)sourceImage);
-        if (qName != null) return myDebugProcess.getVirtualMachineProxy().classesByName(qName);
+        if (qName != null) return VirtualMachineProxy.getCurrent().classesByName(qName);
       }
       else if (sourceImage == null) {
         final String scriptName = getScriptQualifiedName(position);
-        if (scriptName != null) return myDebugProcess.getVirtualMachineProxy().classesByName(scriptName);
+        if (scriptName != null) return VirtualMachineProxy.getCurrent().classesByName(scriptName);
       }
       else {
         String enclosingName = findEnclosingName(position);
         if (enclosingName == null) return null;
 
-        final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(enclosingName);
+        final List<ReferenceType> outers = VirtualMachineProxy.getCurrent().classesByName(enclosingName);
         final List<ReferenceType> result1 = new ArrayList<>(outers.size());
         for (ReferenceType outer : outers) {
           final ReferenceType nested = findNested(outer, sourceImage, position);
@@ -411,7 +414,7 @@ public class GroovyPositionManager extends PositionManagerEx {
     return result;
   }
 
-  private static @Nullable String getScriptFQName(@NotNull GroovyFile groovyFile) {
+  private static @NotNull String getScriptFQName(@NotNull GroovyFile groovyFile) {
     String packageName = groovyFile.getPackageName();
     String fileName = getRuntimeScriptName(groovyFile);
     return StringUtil.getQualifiedName(packageName, fileName);
@@ -432,7 +435,7 @@ public class GroovyPositionManager extends PositionManagerEx {
   }
 
   private @Nullable ReferenceType findNested(ReferenceType fromClass, final GroovyPsiElement toFind, SourcePosition classPosition) {
-    final VirtualMachineProxy vmProxy = myDebugProcess.getVirtualMachineProxy();
+    final VirtualMachineProxy vmProxy = VirtualMachineProxy.getCurrent();
     if (fromClass.isPrepared()) {
 
       final List<ReferenceType> nestedTypes = vmProxy.nestedTypes(fromClass);
@@ -466,10 +469,8 @@ public class GroovyPositionManager extends PositionManagerEx {
   }
 
   @Override
-  public @NotNull Set<? extends FileType> getAcceptedFileTypes() {
-    var result = new HashSet<FileType>();
-    ScriptPositionManagerHelper.EP_NAME.forEachExtensionSafe(ext -> result.addAll(ext.getAcceptedFileTypes()));
-    result.addAll(ourFileTypes);
-    return result;
+  public boolean isAcceptedFileType(@NotNull FileType fileType) {
+    return fileType == GroovyFileType.GROOVY_FILE_TYPE ||
+           ScriptPositionManagerHelper.EP_NAME.findFirstSafe(ext -> ext.getAcceptedFileTypes().contains(fileType)) != null;
   }
 }

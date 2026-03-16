@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl
 
+import com.intellij.gradle.java.groovy.service.resolve.GradleIdeaPluginScriptContributor.Companion.IDEA_MODEL_FQN
+import com.intellij.gradle.java.groovy.service.resolve.GradleIdeaPluginScriptContributor.Companion.IDEA_MODULE_FQN
+import com.intellij.gradle.java.groovy.service.resolve.GradleIdeaPluginScriptContributor.Companion.IDEA_MODULE_IML_FQN
+import com.intellij.gradle.java.groovy.service.resolve.GradleIdeaPluginScriptContributor.Companion.IDEA_PROJECT_FQN
+import com.intellij.gradle.java.groovy.service.resolve.GradleIdeaPluginScriptContributor.Companion.IDE_XML_MERGER_FQN
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.service.resolve.GradleIdeaPluginScriptContributor.Companion.IDEA_MODEL_FQN
-import org.jetbrains.plugins.gradle.service.resolve.GradleIdeaPluginScriptContributor.Companion.IDEA_MODULE_FQN
-import org.jetbrains.plugins.gradle.service.resolve.GradleIdeaPluginScriptContributor.Companion.IDEA_MODULE_IML_FQN
-import org.jetbrains.plugins.gradle.service.resolve.GradleIdeaPluginScriptContributor.Companion.IDEA_PROJECT_FQN
-import org.jetbrains.plugins.gradle.service.resolve.GradleIdeaPluginScriptContributor.Companion.IDE_XML_MERGER_FQN
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource

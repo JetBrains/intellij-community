@@ -1,4 +1,4 @@
-from typing import Any
+from _typeshed import Incomplete
 
 STATUS_INIT: str
 STATUS_VIRTUAL: str
@@ -11,5 +11,5 @@ STATUS_READY_FOR_DELETION: str
 STATUS_READY_FOR_MOVING: str
 STATUS_READY_FOR_RENAMING: str
 STATUS_DELETED: str
-STATUSES: Any
-INITIAL_STATUSES: Any
+STATUSES: Incomplete
+INITIAL_STATUSES: Incomplete

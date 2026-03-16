@@ -20,7 +20,7 @@ import java.time.temporal.ChronoUnit
  * Example: %waitJpsBuild 4s    - seconds
  * Example: %waitJpsBuild 4m    - minutes
  */
-class WaitJpsBuildCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+internal class WaitJpsBuildCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
   companion object {
     const val NAME = "waitJpsBuild"

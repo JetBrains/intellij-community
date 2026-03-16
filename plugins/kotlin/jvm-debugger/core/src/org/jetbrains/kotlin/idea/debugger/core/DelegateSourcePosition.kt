@@ -31,3 +31,5 @@ sealed class DelegateSourcePosition(private var delegate: SourcePosition) : Sour
 class KotlinSourcePositionWithEntireLineHighlighted(delegate: SourcePosition) : DelegateSourcePosition(delegate)
 
 class KotlinReentrantSourcePosition(delegate: SourcePosition) : DelegateSourcePosition(delegate)
+
+internal class KotlinLambdaStartSourcePosition(delegate: SourcePosition) : DelegateSourcePosition(delegate)

@@ -12,6 +12,7 @@ import com.intellij.platform.workspace.storage.tests.SerializationRoundTripCheck
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.workspace.ide.Source
 import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject
 import org.junit.Before
@@ -108,5 +109,3 @@ class ImlSerializationTest {
     val appRule = ApplicationRule()
   }
 }
-
-internal object Source : EntitySource

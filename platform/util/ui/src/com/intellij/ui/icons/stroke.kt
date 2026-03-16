@@ -34,6 +34,8 @@ private val strokeColors = pairWithDigest(listOf(
   "#fcc75b",
   "#f28c35",
   "#955ae0",
+  "#a8adbd",
+  "#ced0d6",
 ))
 
 private val strokeColorsForReplacer = pairWithDigest(listOf("white", "#ffffff"))

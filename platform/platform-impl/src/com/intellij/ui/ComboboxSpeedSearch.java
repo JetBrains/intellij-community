@@ -4,7 +4,10 @@ package com.intellij.ui;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.InputMap;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import java.util.function.Function;
 
 /**

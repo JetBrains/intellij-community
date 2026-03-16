@@ -45,7 +45,8 @@ public interface PsiAnnotationOwner {
   }
 
   /**
-   * Adds a new annotation to this owner. The annotation class name will be shortened. No attributes will be defined.
+   * Adds a new annotation to this owner. The annotation class name will be shortened if that class is already imported.
+   * No attributes will be defined.
    *
    * @param qualifiedName qualifiedName
    * @return newly added annotation

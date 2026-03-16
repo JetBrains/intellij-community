@@ -12,12 +12,12 @@ PsiJavaFile:ReferenceLinkMarkdown05.java
             PsiIdentifier:label('label')
             PsiReferenceParameterList
               <empty list>
-          PsiWhiteSpace(' ')
-          PsiIdentifier:with('with')
-          PsiWhiteSpace(' ')
-          PsiIdentifier:unbalanced('unbalanced')
-          PsiWhiteSpace(' ')
-          PsiIdentifier:brackets('brackets')
+        PsiWhiteSpace(' ')
+        PsiDocToken:DOC_COMMENT_DATA('with')
+        PsiWhiteSpace(' ')
+        PsiDocToken:DOC_COMMENT_DATA('unbalanced')
+        PsiWhiteSpace(' ')
+        PsiDocToken:DOC_COMMENT_DATA('brackets')
         PsiDocToken:DOC_RBRACKET(']')
       PsiDocToken:DOC_RBRACKET(']')
       PsiReferenceLink:

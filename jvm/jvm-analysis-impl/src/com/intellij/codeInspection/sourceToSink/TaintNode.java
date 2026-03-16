@@ -9,7 +9,15 @@ import com.intellij.ide.util.PsiMethodRenderingInfo;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -23,10 +31,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.UastContextKt;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
 

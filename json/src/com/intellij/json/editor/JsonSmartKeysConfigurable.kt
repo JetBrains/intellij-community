@@ -5,7 +5,7 @@ import com.intellij.json.JsonBundle
 import com.intellij.openapi.options.BeanConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 
-private class JsonSmartKeysConfigurable : BeanConfigurable<Unit>(Unit), SearchableConfigurable {
+internal class JsonSmartKeysConfigurable : BeanConfigurable<Unit>(Unit), SearchableConfigurable {
   init {
     JsonEditorOptions.getInstance()?.let { settings ->
       checkBox(JsonBundle.message("settings.smart.keys.insert.missing.comma.on.enter"), settings::COMMA_ON_ENTER)

@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
-import java.util.*
+import java.util.Date
 
 data class GitLabMergeRequestDetails(
   val iid: String,

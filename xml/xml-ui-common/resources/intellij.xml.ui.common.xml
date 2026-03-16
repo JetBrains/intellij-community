@@ -67,5 +67,12 @@
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.XmlMover" id="xml" order="before line"/>
     <moveLeftRightHandler language="XML" implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.XmlMoveLeftRightHandler"/>
     <preFormatProcessor implementation="com.intellij.lang.html.HtmlQuotesFormatPreprocessor"/>
+
+    <liveTemplateContext contextId="HTML_TEXT" baseContextId="HTML" implementation="com.intellij.codeInsight.template.HtmlTextContextType"/>
+    <liveTemplateContext contextId="HTML" implementation="com.intellij.codeInsight.template.HtmlContextType"/>
+    <liveTemplateContext contextId="XSL_TEXT" baseContextId="XML" implementation="com.intellij.codeInsight.template.XslTextContextType"/>
+    <liveTemplateContext contextId="XML" implementation="com.intellij.codeInsight.template.XmlContextType"/>
+    <liveTemplateContext contextId="XML_TEXT" baseContextId="XML" implementation="com.intellij.codeInsight.template.XmlTextContextType"/>
+    <liveTemplateContext contextId="XML_TAG" baseContextId="XML" implementation="com.intellij.codeInsight.template.XmlElementContextType"/>
   </extensions>
 </idea-plugin>

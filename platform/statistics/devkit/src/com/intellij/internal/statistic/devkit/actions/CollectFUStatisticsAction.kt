@@ -13,7 +13,12 @@ import com.intellij.internal.statistic.config.SerializationHelper
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil
 import com.intellij.internal.statistic.eventLog.LogEventSerializer
 import com.intellij.internal.statistic.eventLog.newLogEvent
-import com.intellij.internal.statistic.service.fus.collectors.*
+import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
+import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.UsageCollectorBean
+import com.intellij.internal.statistic.service.fus.collectors.UsageCollectors
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
@@ -33,7 +38,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.*
+import java.util.StringJoiner
 
 internal class CollectFUStatisticsAction : GotoActionBase(), DumbAware {
   override fun update(e: AnActionEvent) {

@@ -8,7 +8,14 @@ import com.intellij.codeInsight.completion.CompletionUtilCore.DUMMY_IDENTIFIER_T
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiBuilder.Marker
 import com.intellij.lang.PsiBuilderUtil.parseBlockLazy
-import com.intellij.lang.parser.GeneratedParserUtilBase.*
+import com.intellij.lang.parser.GeneratedParserUtilBase.Builder
+import com.intellij.lang.parser.GeneratedParserUtilBase.ErrorState
+import com.intellij.lang.parser.GeneratedParserUtilBase.Hook
+import com.intellij.lang.parser.GeneratedParserUtilBase.Parser
+import com.intellij.lang.parser.GeneratedParserUtilBase.addVariant
+import com.intellij.lang.parser.GeneratedParserUtilBase.consumeTokenFast
+import com.intellij.lang.parser.GeneratedParserUtilBase.register_hook_
+import com.intellij.lang.parser.GeneratedParserUtilBase.report_error_
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.KeyWithDefaultValue
@@ -19,12 +26,35 @@ import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer
 import org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser.closure_header_with_arrow
 import org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser.lambda_expression_head
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
-import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.*
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.APPLICATION_EXPRESSION
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.APPLICATION_INDEX
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_LAMBDA_BODY
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_LAMBDA_BODY_SWITCH_AWARE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLOSURE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLOSURE_SWITCH_AWARE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.IDENTIFIER
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.INSTANCEOF_EXPRESSION
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_RECORD
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.METHOD_CALL_EXPRESSION
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NEW_EXPRESSION
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NL
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.OPEN_BLOCK
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.OPEN_BLOCK_SWITCH_AWARE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.REFERENCE_EXPRESSION
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_COMMA
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LBRACE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RBRACE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENTS
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.EQUALITY_OPERATORS
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.KEYWORDS
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.RESERVED_KEYWORDS
 import org.jetbrains.plugins.groovy.util.get
 import org.jetbrains.plugins.groovy.util.set
 import org.jetbrains.plugins.groovy.util.withKey
-import java.util.*
+import java.util.Deque
+import java.util.LinkedList
 
 private val PsiBuilder.groovyParser: GroovyParser get() = (this as Builder).parser as GroovyParser
 

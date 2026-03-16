@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.ComponentStoreImpl
+import com.intellij.configurationStore.StateStorageManagerImpl
+import com.intellij.configurationStore.XmlElementStorage
+import com.intellij.configurationStore.askToRestart
+import com.intellij.configurationStore.runInAutoSaveDisabledMode
+import com.intellij.configurationStore.saveSettings
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT

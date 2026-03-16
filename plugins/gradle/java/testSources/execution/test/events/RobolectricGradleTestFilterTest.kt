@@ -2,7 +2,8 @@
 package org.jetbrains.plugins.gradle.execution.test.events
 
 import com.intellij.execution.PsiLocation
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.utils.vfs.getPsiFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase

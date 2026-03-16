@@ -6,7 +6,12 @@ import com.intellij.openapi.util.Condition
 import com.intellij.patterns.DomPatterns
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.XmlPatterns.xmlTag
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceContributor
+import com.intellij.psi.PsiReferenceProvider
+import com.intellij.psi.PsiReferenceRegistrar
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet
 import com.intellij.util.Function
 import com.intellij.util.ProcessingContext

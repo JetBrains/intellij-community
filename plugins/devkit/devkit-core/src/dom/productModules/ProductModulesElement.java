@@ -1,7 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.productModules;
 
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.DefinesXml;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.Required;
+import com.intellij.util.xml.SubTag;
+import com.intellij.util.xml.SubTagList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ContentDescriptor;

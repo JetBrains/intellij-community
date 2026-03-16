@@ -44,8 +44,7 @@ abstract class AbstractAnonymousSuperMacro : KotlinMacro() {
         val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
         psiDocumentManager.commitAllDocuments()
 
-        val document = context.editor?.document ?: return emptyList()
-        val file = psiDocumentManager.getPsiFile(document) as? KtFile ?: return emptyList()
+        val file = context.psiFile as? KtFile ?: return emptyList()
 
         val targetElement = file.findElementAt(context.startOffset) ?: return emptyList()
         val targetExpression = targetElement.findParentOfType<KtExpression>() ?: return emptyList()

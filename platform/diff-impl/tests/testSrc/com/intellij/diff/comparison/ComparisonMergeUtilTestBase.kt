@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Couple
 import com.intellij.util.IntPair
-import java.util.*
+import java.util.BitSet
 
 abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
   private fun doCharTest(texts: Trio<Document>, expected: List<Change>?, matchings: Trio<BitSet>?) {

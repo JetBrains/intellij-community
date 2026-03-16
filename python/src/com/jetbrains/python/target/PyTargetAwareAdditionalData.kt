@@ -13,7 +13,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.remote.RemoteSdkPropertiesHolder
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
+import com.jetbrains.python.PYCHARM_HELPERS
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
@@ -23,10 +23,6 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-/**
- * Aims to replace [com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase].
- * For the transitional period, both of them are supposed to be used.
- */
 open class PyTargetAwareAdditionalData private constructor(
   private val b: RemoteSdkPropertiesHolder,
   flavorAndData: PyFlavorAndData<*, *>?,
@@ -53,7 +49,11 @@ open class PyTargetAwareAdditionalData private constructor(
     notifyTargetEnvironmentConfigurationChanged()
   }
 
-  constructor(flavorAndData: PyFlavorAndData<*, *>, targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null) : this(RemoteSdkPropertiesHolder(PyRemoteSdkAdditionalData.PYCHARM_HELPERS), flavorAndData, targetEnvironmentConfiguration)
+  constructor(flavorAndData: PyFlavorAndData<*, *>, targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null) : this(
+    RemoteSdkPropertiesHolder(
+      PYCHARM_HELPERS),
+    flavorAndData,
+    targetEnvironmentConfiguration)
 
   override fun save(rootElement: Element) { // store "interpreter paths" (i.e. `PYTHONPATH` elements)
     super.save(rootElement) // store `INTERPRETER_PATH`, `HELPERS_PATH`, etc
@@ -99,13 +99,11 @@ open class PyTargetAwareAdditionalData private constructor(
     }
   }
 
-  /**
-   * @see com.jetbrains.python.remote.PyRemoteSdkAdditionalData.setSdkId
-   */
-  override fun setSdkId(sdkId: String?): Unit = throw IllegalStateException("sdkId in this class is constructed based on fields, so it can't be set")
+
+  override fun setSdkId(sdkId: String?): Unit =
+    throw IllegalStateException("sdkId in this class is constructed based on fields, so it can't be set")
 
   /**
-   * @see com.jetbrains.python.remote.PyRemoteSdkAdditionalData.getSdkId
    */ // TODO [targets] Review the usages and probably deprecate this property as it does not seem to be sensible
   override fun getSdkId(): String = targetEnvironmentConfiguration?.displayName + interpreterPath
 
@@ -128,7 +126,6 @@ open class PyTargetAwareAdditionalData private constructor(
 
     /**
      * Loads target data if it exists in xml. Returns `null` otherwise.
-     * @see com.jetbrains.python.remote.PyRemoteSdkAdditionalData.loadRemote
      */
     @JvmStatic
     fun loadTargetAwareData(sdk: Sdk, element: Element): PyTargetAwareAdditionalData? {
@@ -150,10 +147,9 @@ open class PyTargetAwareAdditionalData private constructor(
       return data
     }
 
-    private class DummyTargetAwareAdditionalData(base: Element)
-      : PyTargetAwareAdditionalData(flavorAndData = PyFlavorAndData(PyFlavorData.Empty, UnixPythonSdkFlavor.getInstance()))
-      , PyRemoteSdkAdditionalDataMarker
-    {
+    private class DummyTargetAwareAdditionalData(base: Element) :
+      PyTargetAwareAdditionalData(flavorAndData = PyFlavorAndData(PyFlavorData.Empty, UnixPythonSdkFlavor.getInstance())),
+      PyRemoteSdkAdditionalDataMarker {
       val element: Element = base.clone()
 
       override fun save(rootElement: Element) {

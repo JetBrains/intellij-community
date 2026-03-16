@@ -2,7 +2,11 @@
 package com.intellij.xml.syntax
 
 import com.intellij.platform.syntax.i18n.ResourceBundle
-import org.jetbrains.annotations.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.annotations.VisibleForTesting
 import kotlin.jvm.JvmStatic
 
 object XmlSyntaxBundle {

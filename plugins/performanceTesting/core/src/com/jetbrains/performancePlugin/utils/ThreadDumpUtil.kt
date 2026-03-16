@@ -6,11 +6,22 @@ import com.intellij.diagnostic.ThreadDumper
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
+
+private val logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH-mm-ss,SSS")
+private val formattedNow get() = logDateTimeFormatter.format(ZonedDateTime.now())
 
 @Service
 class ThreadDumpService(
@@ -93,11 +104,11 @@ private fun Path.getDumpFile(
 ): Path {
   val fileName = buildString {
     append(filePrefix)
-    val elapsedMs = System.nanoTime() / 1_000_000L
-    val time = "${elapsedMs}ms"
-    append("-$time")
+    append("-")
+    append(formattedNow)
     if (counter != null) {
-      append("-$counter")
+      append("-")
+      append(counter)
     }
     append(".txt")
   }

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.ElementPresentationManager;
@@ -20,11 +21,26 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.Action;
+import org.jetbrains.idea.devkit.dom.ActionOrGroup;
+import org.jetbrains.idea.devkit.dom.AddToGroup;
+import org.jetbrains.idea.devkit.dom.Component;
+import org.jetbrains.idea.devkit.dom.Dependency;
+import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.ExtensionPoints;
+import org.jetbrains.idea.devkit.dom.Extensions;
+import org.jetbrains.idea.devkit.dom.Group;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.IdeaVersion;
+import org.jetbrains.idea.devkit.dom.KeyboardShortcut;
+import org.jetbrains.idea.devkit.dom.PluginModule;
+import org.jetbrains.idea.devkit.dom.Separator;
+import org.jetbrains.idea.devkit.dom.Vendor;
+import org.jetbrains.idea.devkit.dom.With;
 import org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -331,14 +347,10 @@ public final class PluginDescriptorStructureUtil {
   private static @NotNull @NlsSafe String toDisplayName(@NotNull @NonNls String tagName) {
     String result = tagName.replaceAll("-", " ").replaceAll("\\.", "|");
 
-    String[] words = NameUtil.nameToWords(result);
-    for (int i = 0; i < words.length; i++) {
-      @NonNls String word = words[i];
+    List<@NotNull String> words = ContainerUtil.map(NameUtil.nameToWordList(result), word -> {
       String replacement = TAG_DISPLAY_NAME_REPLACEMENTS.get(StringUtil.toLowerCase(word));
-      if (replacement != null) {
-        words[i] = replacement;
-      }
-    }
+      return replacement != null ? replacement : word;
+    });
 
     result = StringUtil.join(words, " ");
     result = StringUtil.capitalizeWords(result, true);

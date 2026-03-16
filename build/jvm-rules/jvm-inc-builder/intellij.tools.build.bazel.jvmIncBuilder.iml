@@ -39,6 +39,6 @@
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.compose-compiler-plugin" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
-    <orderEntry type="library" name="Jaxen" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jaxen" />
   </component>
 </module>

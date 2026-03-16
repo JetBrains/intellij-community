@@ -5,7 +5,7 @@ import com.intellij.util.ui.RegionPainter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Graphics2D;
 
 /**
  * A {@code double} version of RegionPainter.

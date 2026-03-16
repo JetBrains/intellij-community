@@ -2,6 +2,7 @@
 package com.jetbrains.python.errorProcessing
 
 import com.jetbrains.python.packaging.PyExecutionException
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 /**
@@ -30,6 +31,7 @@ fun <T> Result<T>.asPythonResult(): com.jetbrains.python.Result<T, PyError> =
   }
   )
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use python result, not kotlin result")
 fun <S> PyResult<S>.asKotlinResult(): Result<S> = when (this) {
   is com.jetbrains.python.Result.Success -> {

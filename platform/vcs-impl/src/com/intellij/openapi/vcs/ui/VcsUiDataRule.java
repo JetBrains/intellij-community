@@ -14,7 +14,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-import static com.intellij.openapi.vcs.VcsDataKeys.*;
+import static com.intellij.openapi.vcs.VcsDataKeys.CHANGES;
+import static com.intellij.openapi.vcs.VcsDataKeys.CHANGES_SELECTION;
+import static com.intellij.openapi.vcs.VcsDataKeys.SELECTED_CHANGES;
+import static com.intellij.openapi.vcs.VcsDataKeys.VCS_REVISION_NUMBERS;
+import static com.intellij.openapi.vcs.VcsDataKeys.VIRTUAL_FILES;
 
 @ApiStatus.Internal
 public class VcsUiDataRule implements UiDataRule {

@@ -44,13 +44,13 @@ public class PyModuleFindUsagesHandler extends PyFindUsagesHandler {
 
   @Override
   public PsiElement @NotNull [] getPrimaryElements() {
-    return new PsiElement[] {myElement};
+    return new PsiElement[]{myElement};
   }
 
   @Override
   public @NotNull Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, @NotNull SearchScope searchScope) {
     if (target instanceof PyImportedModule) {
-      target = ((PyImportedModule) target).resolve();
+      target = ((PyImportedModule)target).resolve();
     }
     if (target instanceof PyFile && PyNames.INIT_DOT_PY.equals(((PyFile)target).getName())) {
       List<PsiReference> result = new ArrayList<>(super.findReferencesToHighlight(target, searchScope));

@@ -55,6 +55,11 @@ class Api(google.protobuf.message.Message):
     sometimes simply referred to as "APIs" in other contexts, such as the name of
     this message itself. See https://cloud.google.com/apis/design/glossary for
     detailed terminology.
+
+    New usages of this message as an alternative to ServiceDescriptorProto are
+    strongly discouraged. This message does not reliability preserve all
+    information necessary to model the schema and preserve semantics. Instead
+    make use of FileDescriptorSet which preserves the necessary information.
     """
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
@@ -66,6 +71,7 @@ class Api(google.protobuf.message.Message):
     SOURCE_CONTEXT_FIELD_NUMBER: builtins.int
     MIXINS_FIELD_NUMBER: builtins.int
     SYNTAX_FIELD_NUMBER: builtins.int
+    EDITION_FIELD_NUMBER: builtins.int
     name: builtins.str
     """The fully qualified name of this interface, including package name
     followed by the interface's simple name.
@@ -93,6 +99,8 @@ class Api(google.protobuf.message.Message):
     """
     syntax: google.protobuf.type_pb2.Syntax.ValueType
     """The source syntax of the service."""
+    edition: builtins.str
+    """The source edition string, only valid when syntax is SYNTAX_EDITIONS."""
     @property
     def methods(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___Method]:
         """The methods of this interface, in unspecified order."""
@@ -121,11 +129,14 @@ class Api(google.protobuf.message.Message):
         source_context: google.protobuf.source_context_pb2.SourceContext | None = ...,
         mixins: collections.abc.Iterable[global___Mixin] | None = ...,
         syntax: google.protobuf.type_pb2.Syntax.ValueType | None = ...,
+        edition: builtins.str | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["source_context", b"source_context"]) -> builtins.bool: ...
     def ClearField(
         self,
         field_name: typing.Literal[
+            "edition",
+            b"edition",
             "methods",
             b"methods",
             "mixins",
@@ -147,7 +158,13 @@ global___Api = Api
 
 @typing.final
 class Method(google.protobuf.message.Message):
-    """Method represents a method of an API interface."""
+    """Method represents a method of an API interface.
+
+    New usages of this message as an alternative to MethodDescriptorProto are
+    strongly discouraged. This message does not reliability preserve all
+    information necessary to model the schema and preserve semantics. Instead
+    make use of FileDescriptorSet which preserves the necessary information.
+    """
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -158,6 +175,7 @@ class Method(google.protobuf.message.Message):
     RESPONSE_STREAMING_FIELD_NUMBER: builtins.int
     OPTIONS_FIELD_NUMBER: builtins.int
     SYNTAX_FIELD_NUMBER: builtins.int
+    EDITION_FIELD_NUMBER: builtins.int
     name: builtins.str
     """The simple name of this method."""
     request_type_url: builtins.str
@@ -169,7 +187,17 @@ class Method(google.protobuf.message.Message):
     response_streaming: builtins.bool
     """If true, the response is streamed."""
     syntax: google.protobuf.type_pb2.Syntax.ValueType
-    """The source syntax of this method."""
+    """The source syntax of this method.
+
+    This field should be ignored, instead the syntax should be inherited from
+    Api. This is similar to Field and EnumValue.
+    """
+    edition: builtins.str
+    """The source edition string, only valid when syntax is SYNTAX_EDITIONS.
+
+    This field should be ignored, instead the edition should be inherited from
+    Api. This is similar to Field and EnumValue.
+    """
     @property
     def options(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[google.protobuf.type_pb2.Option]:
         """Any metadata attached to the method."""
@@ -184,10 +212,13 @@ class Method(google.protobuf.message.Message):
         response_streaming: builtins.bool | None = ...,
         options: collections.abc.Iterable[google.protobuf.type_pb2.Option] | None = ...,
         syntax: google.protobuf.type_pb2.Syntax.ValueType | None = ...,
+        edition: builtins.str | None = ...,
     ) -> None: ...
     def ClearField(
         self,
         field_name: typing.Literal[
+            "edition",
+            b"edition",
             "name",
             b"name",
             "options",

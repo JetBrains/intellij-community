@@ -6,7 +6,15 @@ package com.intellij.util.io
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.io.impl.*
+import com.intellij.util.io.impl.DirectoryContentBuilderImpl
+import com.intellij.util.io.impl.DirectoryContentSpecImpl
+import com.intellij.util.io.impl.DirectorySpec
+import com.intellij.util.io.impl.FileTextMatchers
+import com.intellij.util.io.impl.JarSpec
+import com.intellij.util.io.impl.ZipSpec
+import com.intellij.util.io.impl.assertContentUnderFileMatches
+import com.intellij.util.io.impl.fillSpecFromDirectory
+import org.jetbrains.annotations.ApiStatus
 import org.junit.rules.ErrorCollector
 import java.io.File
 import java.nio.file.Path
@@ -98,6 +106,7 @@ interface DirectoryContentSpec {
   /**
    * Generates files, directories and archives accordingly to this specification in [target] directory
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use generate(Path) instead")
   fun generate(target: File): Unit = generate(target.toPath())
 

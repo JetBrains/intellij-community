@@ -15,8 +15,12 @@ import com.intellij.openapi.project.impl.ProjectServiceContainerCustomizer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.project.stateStore
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.common.publishHeapDump
+import com.intellij.testFramework.createTestOpenProjectOptions
 import com.intellij.util.io.write
 import com.intellij.util.ref.GCWatcher
 import kotlinx.coroutines.Dispatchers

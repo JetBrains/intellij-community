@@ -30,7 +30,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.listeners.RefactoringEventData;
@@ -42,11 +48,34 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyComprehensionElement;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyGeneratorExpression;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyLiteralStringType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.NameSuggesterUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUiService;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
@@ -56,9 +85,20 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Optional;
 
-import static com.jetbrains.python.PyStringFormatParser.*;
+import static com.jetbrains.python.PyStringFormatParser.filterSubstitutions;
+import static com.jetbrains.python.PyStringFormatParser.getEscapeRanges;
+import static com.jetbrains.python.PyStringFormatParser.getFormatValueExpression;
+import static com.jetbrains.python.PyStringFormatParser.getNewStyleFormatValueExpression;
+import static com.jetbrains.python.PyStringFormatParser.parseNewStyleFormat;
+import static com.jetbrains.python.PyStringFormatParser.parsePercentFormat;
+import static com.jetbrains.python.PyStringFormatParser.substitutionsToRanges;
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
@@ -474,7 +514,7 @@ public abstract class IntroduceHandler implements RefactoringActionHandler {
     performActionOnElementOccurrences(operation);
   }
 
-  protected void showCanNotIntroduceErrorHint(@NotNull Project project, @NotNull Editor editor) {}
+  protected void showCanNotIntroduceErrorHint(@NotNull Project project, @NotNull Editor editor) { }
 
   protected void performActionOnElementOccurrences(final IntroduceOperation operation) {
     final Editor editor = operation.getEditor();
@@ -621,7 +661,7 @@ public abstract class IntroduceHandler implements RefactoringActionHandler {
   protected abstract String getHelpId();
 
   protected PyAssignmentStatement createDeclaration(Project project, String assignmentText, PsiElement anchor) {
-    LanguageLevel langLevel = ((PyFile) anchor.getContainingFile()).getLanguageLevel();
+    LanguageLevel langLevel = ((PyFile)anchor.getContainingFile()).getLanguageLevel();
     return PyElementGenerator.getInstance(project).createFromText(langLevel, PyAssignmentStatement.class, assignmentText);
   }
 
@@ -701,6 +741,4 @@ public abstract class IntroduceHandler implements RefactoringActionHandler {
 
   protected void postRefactoring(PsiElement element) {
   }
-
-
 }

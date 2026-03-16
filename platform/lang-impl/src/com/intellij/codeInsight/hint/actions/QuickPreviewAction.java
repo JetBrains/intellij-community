@@ -12,8 +12,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JList;
+import javax.swing.JTree;
+import java.awt.Component;
 
 /**
  * @author Konstantin Bulenkov

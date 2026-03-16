@@ -6,7 +6,11 @@ import com.intellij.openapi.externalSystem.util.runWriteActionAndGet
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findDocument
+import com.intellij.openapi.vfs.findOrCreateFile
+import com.intellij.openapi.vfs.readText
+import com.intellij.openapi.vfs.writeText
 import com.intellij.testFramework.utils.editor.commitToPsi
 import com.intellij.testFramework.utils.editor.reloadFromDisk
 import com.intellij.testFramework.utils.vfs.createFile
@@ -21,6 +25,7 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
   @get:JvmName("myProject")
   val project: Project get() = gradleFixture.project
   val module: Module get() = gradleFixture.module
+  val mainModule: Module get() = gradleFixture.mainModule
   val projectRoot: VirtualFile get() = gradleFixture.fileFixture.root
   val projectPath: String get() = projectRoot.path
 

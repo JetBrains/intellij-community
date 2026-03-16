@@ -10,13 +10,20 @@ import com.intellij.grazie.text.Rule
 import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.grazie.utils.getAssociatedGrazieRule
 import com.intellij.grazie.utils.isEnabledInState
-import kotlinx.html.*
+import kotlinx.html.FlowOrPhrasingContent
+import kotlinx.html.TABLE
+import kotlinx.html.TD
+import kotlinx.html.strong
+import kotlinx.html.style
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.tr
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.Categories
 import org.languagetool.rules.ITSIssueType
 import org.languagetool.rules.IncorrectExample
 import java.net.URL
-import java.util.*
+import java.util.MissingResourceException
 
 // ltRule used in ReSharper
 class LanguageToolRule @JvmOverloads constructor(

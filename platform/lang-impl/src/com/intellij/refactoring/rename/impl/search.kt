@@ -8,7 +8,13 @@ import com.intellij.model.search.impl.buildTextUsageQuery
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.SearchScope
-import com.intellij.refactoring.rename.api.*
+import com.intellij.refactoring.rename.api.RenameTarget
+import com.intellij.refactoring.rename.api.RenameUsage
+import com.intellij.refactoring.rename.api.RenameUsageSearchParameters
+import com.intellij.refactoring.rename.api.ReplaceTextTarget
+import com.intellij.refactoring.rename.api.ReplaceTextTargetContext
+import com.intellij.refactoring.rename.api.UsageTextByName
+import com.intellij.refactoring.rename.api.fileRangeUpdater
 import com.intellij.util.Query
 import org.jetbrains.annotations.ApiStatus
 

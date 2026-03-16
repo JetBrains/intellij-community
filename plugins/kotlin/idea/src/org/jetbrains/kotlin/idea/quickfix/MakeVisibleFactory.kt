@@ -3,11 +3,16 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
-import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.*
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.INTERNAL
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.INVISIBLE_FAKE
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.PRIVATE
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.PROTECTED
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.PUBLIC
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory3
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
@@ -20,6 +25,7 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.getAllSuperclassesWithoutAny
 
+@K1Deprecation
 object MakeVisibleFactory : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         val element = diagnostic.psiElement as? KtElement ?: return emptyList()

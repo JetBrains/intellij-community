@@ -1,5 +1,8 @@
-/*<# block fmt:fontSize=ABitSmallerThanInEditor,marginPadding=OnlyPadding #>*/
-class Test {
-  /*<# block [@Deprecated] [@NotNull] #>*/
-  public void perform() {}
+/*<# @Debug.Renderer(text = "name") #>*/
+class Person {
+  public final String name;
+
+  public Person(String name) {
+    this.name = name;
+  }
 }

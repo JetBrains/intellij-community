@@ -15,8 +15,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a named parameter, as opposed to a tuple parameter.
  */
-public interface PyNamedParameter extends PyAstNamedParameter, PyParameter, PsiNamedElement, PsiNameIdentifierOwner, PyExpression, PyTypeCommentOwner,
-                                          PyAnnotationOwner, StubBasedPsiElement<PyNamedParameterStub> {
+public interface PyNamedParameter
+  extends PyAstNamedParameter, PyParameter, PsiNamedElement, PsiNameIdentifierOwner, PyExpression, PyTypeCommentOwner,
+          PyAnnotationOwner, StubBasedPsiElement<PyNamedParameterStub> {
 
   @Override
   default @Nullable PyExpression getDefaultValue() {

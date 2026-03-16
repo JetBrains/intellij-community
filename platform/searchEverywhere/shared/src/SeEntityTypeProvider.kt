@@ -4,10 +4,13 @@ package com.intellij.platform.searchEverywhere
 import com.intellij.platform.kernel.EntityTypeProvider
 import com.intellij.platform.searchEverywhere.impl.SeItemEntity
 import com.intellij.platform.searchEverywhere.impl.SeItemEntityHolder
+import com.intellij.platform.searchEverywhere.providers.SeLegacyContributorsEntity
+import com.intellij.platform.searchEverywhere.providers.SeLegacyContributorsEntityHolder
 import com.jetbrains.rhizomedb.EntityType
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeEntityTypeProvider: EntityTypeProvider {
-  override fun entityTypes(): List<EntityType<*>> = listOf(SeSessionEntity, SeItemEntity, SeItemEntityHolder)
+  override fun entityTypes(): List<EntityType<*>> =
+    listOf(SeSessionEntity, SeItemEntity, SeItemEntityHolder, SeLegacyContributorsEntity, SeLegacyContributorsEntityHolder)
 }

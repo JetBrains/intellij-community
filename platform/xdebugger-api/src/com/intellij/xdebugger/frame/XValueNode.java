@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Represents a node in debugger tree. This interface isn't supposed to be implemented by a plugin.

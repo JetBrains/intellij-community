@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.Computable;
@@ -20,7 +20,7 @@ public abstract class WriteIntentReadAction {
    */
   @ApiStatus.Experimental
   public static void run(@NotNull Runnable action) {
-    compute((ThrowableComputable<Object, RuntimeException>)() -> {
+    computeThrowable(() -> {
       action.run();
       return null;
     });
@@ -30,8 +30,8 @@ public abstract class WriteIntentReadAction {
    * @see Application#runWriteIntentReadAction(ThrowableComputable)
    */
   @ApiStatus.Experimental
-  public static <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E {
-    compute((ThrowableComputable<Object, E>)() -> {
+  public static <E extends Throwable> void runThrowable(@NotNull ThrowableRunnable<E> action) throws E {
+    computeThrowable((ThrowableComputable<Object, E>)() -> {
       action.run();
       return null;
     });
@@ -51,7 +51,7 @@ public abstract class WriteIntentReadAction {
    * @see Application#runWriteIntentReadAction(ThrowableComputable)
    */
   @ApiStatus.Experimental
-  public static <T, E extends Throwable> T compute(@NotNull ThrowableComputable<T, E> action) throws E {
+  public static <T, E extends Throwable> T computeThrowable(@NotNull ThrowableComputable<T, E> action) throws E {
     return ApplicationManager.getApplication().runWriteIntentReadAction(action);
   }
 }

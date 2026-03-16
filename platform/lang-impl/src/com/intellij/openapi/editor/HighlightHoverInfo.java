@@ -23,8 +23,8 @@ import com.intellij.ui.popup.AbstractPopup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Point;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.editor.EditorMouseHoverPopupManager.LOG;

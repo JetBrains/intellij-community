@@ -20,6 +20,9 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.VirtualFileGist
 import com.intellij.util.indexing.roots.IndexableFileScanner
@@ -42,10 +45,11 @@ private enum class KnownLibraryKindForIndex {
 
 interface LibraryEffectiveKindProvider {
     fun getEffectiveKind(library: Library): PersistentLibraryKind<*>?
+    fun getEffectiveKind(library: LibraryEntity): PersistentLibraryKind<*>?
 }
 
 class LibraryEffectiveKindProviderImpl(private val project: Project): LibraryEffectiveKindProvider {
-    private fun findKind(classRoots: Array<VirtualFile>): PersistentLibraryKind<*>? {
+    private fun computeKind(classRoots: Array<VirtualFile>): PersistentLibraryKind<*>? {
         val virtualFile = classRoots.firstOrNull() ?: return null
         virtualFile.putUserData(CLASS_ROOTS_KEY, classRoots)
         try {
@@ -55,6 +59,18 @@ class LibraryEffectiveKindProviderImpl(private val project: Project): LibraryEff
         } finally {
             virtualFile.removeUserData(CLASS_ROOTS_KEY)
         }
+    }
+
+    private fun getKind(classRoots: Array<VirtualFile>): PersistentLibraryKind<*>? {
+        val classRoot = classRoots.firstOrNull() ?: return null
+
+        val platformKind: PersistentLibraryKind<*>? =
+            classRoot.getUserData(LIBRARY_KIND_KEY) ?: computeKind(classRoots)?.let {
+                classRoot.putUserData(LIBRARY_KIND_KEY, it)
+                it
+            }
+
+        return platformKind?.nonJvmOrNull()
     }
 
     override fun getEffectiveKind(library: Library): PersistentLibraryKind<*>? {
@@ -68,18 +84,14 @@ class LibraryEffectiveKindProviderImpl(private val project: Project): LibraryEff
             is KotlinLibraryKind -> kind
             else -> {
                 val classRoots = library.getFiles(OrderRootType.CLASSES)
-                val classRoot = classRoots.firstOrNull() ?: return null
-
-                val platformKind: PersistentLibraryKind<*>? =
-                    classRoot.getUserData(LIBRARY_KIND_KEY) ?: findKind(classRoots)?.let {
-                        classRoot.putUserData(LIBRARY_KIND_KEY, it)
-                        it
-                    }
-
-                val nonJvmOrNull = platformKind?.nonJvmOrNull()
-                nonJvmOrNull
+                getKind(classRoots)
             }
         }
+    }
+
+    override fun getEffectiveKind(library: LibraryEntity): PersistentLibraryKind<*>? {
+        val classRoots = library.roots.filter { it.type == LibraryRootTypeId.COMPILED }.mapNotNull { it.url.virtualFile }
+        return getKind(classRoots.toTypedArray())
     }
 
     // Kotlin JVM kind is expected to be cached to prevent reevaluation, but is not expected to be exposed to not break non-Kotlin kinds

@@ -27,6 +27,7 @@ import com.sun.jdi.Value;
 public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
   private static final Logger LOG = Logger.getInstance(ExpressionEvaluator.class);
   private final Evaluator myEvaluator;
+  private Modifier myModifier;
 
   public ExpressionEvaluatorImpl(Evaluator evaluator) {
     myEvaluator = evaluator;
@@ -35,7 +36,7 @@ public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
   //call evaluate before
   @Override
   public Modifier getModifier() {
-    return myEvaluator.getModifier();
+    return myModifier;
   }
 
   // EvaluationContextImpl should be at the same stackFrame as it was in the call to EvaluatorBuilderImpl.build
@@ -51,12 +52,12 @@ public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
 
       EvaluationContextImpl evaluationContextImpl = (EvaluationContextImpl)context;
 
-      final Object value;
+      final ModifiableValue modifiableValue;
       if (evaluationContextImpl.isMayRetryEvaluation()) {
-        value = DebuggerUtils.getInstance().processCollectibleValue(
-          () -> myEvaluator.evaluate(evaluationContextImpl),
+        modifiableValue = DebuggerUtils.getInstance().processCollectibleValue(
+          () -> myEvaluator.evaluateModifiable(evaluationContextImpl),
           r -> {
-            if (r instanceof Value v) {
+            if (r.getValue() instanceof Value v) {
               evaluationContextImpl.keep(v);
             }
             return r;
@@ -65,14 +66,17 @@ public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
         );
       }
       else {
-        value = myEvaluator.evaluate(evaluationContextImpl);
+        modifiableValue = myEvaluator.evaluateModifiable(evaluationContextImpl);
       }
+
+      Object value = modifiableValue.getValue();
 
       if (value != null && !(value instanceof Value)) {
         throw EvaluateExceptionUtil
           .createEvaluateException(JavaDebuggerBundle.message("evaluation.error.invalid.expression", ""));
       }
 
+      myModifier = modifiableValue.getModifier();
       return (Value)value;
     }
     catch (ReturnEvaluator.ReturnException r) {

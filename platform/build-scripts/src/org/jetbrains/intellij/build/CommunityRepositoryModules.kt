@@ -8,6 +8,7 @@ import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader
 import org.jetbrains.intellij.build.impl.LibraryPackMode
+import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAuto
@@ -23,7 +24,6 @@ import org.jetbrains.intellij.build.kotlin.CommunityKotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.net.URI
 import java.nio.file.Path
 import java.util.Locale
@@ -38,7 +38,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.ant.jps", "ant-jps.jar")
 
       spec.withGeneratedResources { dir, buildContext ->
-        copyAnt(pluginDir = dir, context = buildContext)
+        copyAnt(mainModule = spec.mainModule, pluginDir = dir, context = buildContext)
       }
     },
     plugin("intellij.laf.macos") { spec ->
@@ -87,68 +87,104 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("RMI Stubs", "intellij.xslt.debugger.rt", "rmi-stubs.jar")
     },
     plugin("intellij.maven") { spec ->
-      spec.withModule("intellij.idea.community.build.dependencies")
-      spec.withModule("intellij.maven.jps")
-      spec.withModule("intellij.maven.server.m3.common", "maven3-server-common.jar")
-      spec.withModule("intellij.maven.server.m3.impl", "maven3-server.jar")
-      spec.withModule("intellij.maven.server.m36.impl", "maven36-server.jar")
-      spec.withModule("intellij.maven.server.m40", "maven40-server.jar")
-      spec.withModule("intellij.maven.server.telemetry", "maven-server-telemetry.jar")
-      spec.withModule("intellij.maven.errorProne.compiler")
-      spec.withModule("intellij.maven.server.indexer", "maven-server-indexer.jar")
-      spec.withModuleLibrary(libraryName = "apache.maven.core:3.8.3", moduleName = "intellij.maven.server.indexer",
-                             relativeOutputPath = "intellij.maven.server.indexer/lib")
-      spec.withModuleLibrary(libraryName = "apache.maven.wagon.provider.api:3.5.2", moduleName = "intellij.maven.server.indexer",
-                             relativeOutputPath = "intellij.maven.server.indexer/lib")
-      spec.withModuleLibrary(libraryName = "apache.maven.archetype.common-no-trans:3.2.1", moduleName = "intellij.maven.server.indexer",
-                             relativeOutputPath = "intellij.maven.server.indexer/lib")
-      spec.withModuleLibrary(libraryName = "apache.maven.archetype.catalog-no-trans:321", moduleName = "intellij.maven.server.indexer",
-                             relativeOutputPath = "intellij.maven.server.indexer/lib")
 
-      spec.withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
-      spec.withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
-
-      spec.withModule("intellij.maven.server.eventListener", relativeJarPath = "maven-event-listener.jar")
-
-      spec.withModule("intellij.maven.server", relativeJarPath = "maven-server.jar")
-
-      spec.doNotCopyModuleLibrariesAutomatically(listOf(
-        "intellij.maven.artifactResolver.common",
-        "intellij.maven.artifactResolver.m31",
-        "intellij.maven.server.m3.common",
-        "intellij.maven.server.m3.impl",
-        "intellij.maven.server.m36.impl",
-        "intellij.maven.server.m40",
-        "intellij.maven.server.indexer",
-      ))
+      spec.doNotCopyModuleLibrariesAutomatically(
+        listOf(
+          "intellij.maven.artifactResolver.common",
+          "intellij.maven.artifactResolver.m31",
+          "intellij.maven.server.m3.common",
+          "intellij.maven.server.m3.impl",
+          "intellij.maven.server.m36.impl",
+          "intellij.maven.server.m40",
+          "intellij.maven.server.indexer",
+        )
+      )
 
       spec.withGeneratedResources { targetDir, context ->
         val targetLib = targetDir.resolve("lib")
 
-        val maven4Libs = BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
-        copyDir(maven4Libs, targetLib.resolve("maven4-server-lib"))
-
-        val maven3Libs = BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
-        copyDir(maven3Libs, targetLib.resolve("maven3-server-lib"))
-
-        val mavenTelemetryDependencies = BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
-        copyDir(mavenTelemetryDependencies, targetLib.resolve("maven-telemetry-lib"))
-
         val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
         copyDir(mavenDist, targetLib.resolve("maven3"))
       }
+
+      with("intellij.maven.server3") {
+        spec.withModule("intellij.maven.server.m3.common", "$this/maven3-server-common.jar")
+        spec.withModule("intellij.maven.server.m3.impl", "$this/maven3-server.jar")
+        spec.withModule("intellij.maven.server.telemetry", "$this/maven-server-telemetry.jar")
+
+
+        spec.withGeneratedResources { targetDir, context ->
+          val targetLib = targetDir.resolve("lib")
+          val maven3Libs = BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
+          copyDir(maven3Libs, targetLib.resolve(this))
+          val mavenTelemetryDependencies = BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+          copyDir(mavenTelemetryDependencies, targetLib.resolve(this))
+        }
+      }
+
+      with("intellij.maven.server36") {
+        spec.withModule("intellij.maven.server.m36.impl", "$this/maven36-server.jar")
+      }
+
+      with("intellij.maven.server4") {
+        spec.withModule("intellij.maven.server.m40", "$this/maven40-server.jar")
+        spec.withModule("intellij.maven.server.telemetry", "$this/maven-server-telemetry.jar")
+
+
+        spec.withGeneratedResources { targetDir, context ->
+          val targetLib = targetDir.resolve("lib")
+          val maven4Libs = BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
+          copyDir(maven4Libs, targetLib.resolve(this))
+          val mavenTelemetryDependencies = BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+          copyDir(mavenTelemetryDependencies, targetLib.resolve(this))
+        }
+      }
+
+      with("intellij.maven.rt") {
+        spec.withModule("intellij.maven.server.eventListener", relativeJarPath = "$this/maven-event-listener.jar")
+      }
+
+      with("intellij.maven.server.indexer") {
+        spec.withModule("intellij.maven.server.indexer", "$this/maven-server-indexer.jar")
+        spec.withModuleLibrary(
+          libraryName = "apache.maven.core:3.8.3", moduleName = "intellij.maven.server.indexer",
+          relativeOutputPath = this
+        )
+        spec.withModuleLibrary(
+          libraryName = "apache.maven.wagon.provider.api:3.5.2", moduleName = "intellij.maven.server.indexer",
+          relativeOutputPath = this
+        )
+        spec.withModuleLibrary(
+          libraryName = "apache.maven.archetype.common-no-trans:3.2.1", moduleName = "intellij.maven.server.indexer",
+          relativeOutputPath = this
+        )
+        spec.withModuleLibrary(
+          libraryName = "apache.maven.archetype.catalog-no-trans:321", moduleName = "intellij.maven.server.indexer",
+          relativeOutputPath = this
+        )
+      }
+
+      spec.withModule("intellij.idea.community.build.dependencies")
+      spec.withModule("intellij.maven.jps")
+      spec.withModule("intellij.maven.errorProne.compiler")
+      spec.withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
+      spec.withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
+      spec.withModule("intellij.maven.server", relativeJarPath = "maven-server.jar")
     },
-    pluginAuto(listOf(
-      "intellij.gradle",
-      "intellij.gradle.common",
-      "intellij.gradle.toolingProxy",
-    )) { spec ->
+    pluginAuto(
+      listOf(
+        "intellij.gradle.plugin",
+        "intellij.gradle",
+        "intellij.gradle.common",
+        "intellij.gradle.toolingProxy",
+      )
+    ) { spec ->
       spec.withModule("intellij.gradle.toolingExtension", "gradle-tooling-extension-api.jar")
       spec.withModule("intellij.gradle.toolingExtension.impl", "gradle-tooling-extension-impl.jar")
       spec.withProjectLibrary("Gradle", LibraryPackMode.STANDALONE_SEPARATE)
       spec.withProjectLibrary("Ant", "ant", LibraryPackMode.STANDALONE_SEPARATE)
     },
-    pluginAuto(listOf("intellij.gradle.java", "intellij.gradle.jps")) {
+    pluginAuto(listOf("intellij.gradle.java.plugin", "intellij.gradle.java", "intellij.gradle.jps")) {
       it.excludeProjectLibrary("Ant")
       it.excludeProjectLibrary("Gradle")
     },
@@ -214,7 +250,6 @@ object CommunityRepositoryModules {
     plugin("intellij.repository.search") { spec ->
       spec.withModule("intellij.maven.model", relativeJarPath = "maven-model.jar")
       spec.withProjectLibrary("package-search-api-client")
-      spec.withProjectLibrary("kotlinx-document-store-mvstore")
     },
     pluginAuto("intellij.java.jshell") { spec ->
       spec.withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
@@ -276,10 +311,12 @@ object CommunityRepositoryModules {
     }
   }
 
-  fun androidPlugin(additionalModulesToJars: Map<String, String> = emptyMap(),
-                    mainModuleName: String = "intellij.android.plugin.descriptor",
-                    allPlatforms: Boolean = false,
-                    addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null,): PluginLayout {
+  fun androidPlugin(
+    additionalModulesToJars: Map<String, String> = emptyMap(),
+    mainModuleName: String = "intellij.android.plugin.descriptor",
+    allPlatforms: Boolean = false,
+    addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null,
+  ): PluginLayout {
     return createAndroidPluginLayout(mainModuleName, additionalModulesToJars, allPlatforms, addition)
   }
 
@@ -453,8 +490,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.execution.common", "android.jar")
       spec.withModule("intellij.android.avd", "android.jar")
 
-      spec.withModule("intellij.android.safemode", "android.jar")
-
       spec.withModule("intellij.android.preview-fast-compile", "android.jar")
       spec.withModule("intellij.android.completion", "android.jar")
 
@@ -492,7 +527,6 @@ object CommunityRepositoryModules {
       //prebuilts/tools/common/m2:eclipse-layout-kernel <= not recognized
 
 
-
       // We do not bundle Google Login API
       //spec.withModuleLibrary("javax-servlet", "google-login-as", "")
       //spec.withModuleLibrary("jsr305-2.0.1", "google-login-as", "")
@@ -507,13 +541,11 @@ object CommunityRepositoryModules {
       //spec.withModuleLibrary("compose-desktop-ui", "intellij.android.adt.ui.compose", "")
       //spec.withModuleLibrary("skiko", "intellij.android.adt.ui.compose", "")
 
-      spec.withProjectLibrary("asm-tools")
-
       val ffmpegVersion = "6.0-1.5.9"
       val javacppVersion = "1.5.9"
 
       // Add ffmpeg and javacpp
-      spec.withModuleLibrary("ffmpeg", "intellij.android.streaming",  "ffmpeg-$ffmpegVersion.jar")
+      spec.withModuleLibrary("ffmpeg", "intellij.android.streaming", "ffmpeg-$ffmpegVersion.jar")
       spec.withModuleLibrary("ffmpeg-javacpp", "intellij.android.streaming", "javacpp-$javacppVersion.jar")
 
       // include only required as platform-dependent binaries
@@ -528,18 +560,17 @@ object CommunityRepositoryModules {
           spec.withModuleLibrary(javacppLibraryName, "intellij.android.streaming", "${javacppLibraryName}-$javacppVersion.jar")
         }
         else {
+          val streamingModuleName = "intellij.android.streaming"
+
           spec.withGeneratedPlatformResources(supportedOs, supportedArch, supportedLibc) { targetDir, context ->
-            val streamingModule = context.projectModel.project.findModuleByName("intellij.android.streaming")!!
-            val ffmpegLibrary = streamingModule.libraryCollection.findLibrary(ffmpegLibraryName)!!
-            val javacppLibrary = streamingModule.libraryCollection.findLibrary(javacppLibraryName)!!
             val libDir = targetDir.resolve("lib")
 
-            copyFileToDir(ffmpegLibrary.getFiles(JpsOrderRootType.COMPILED)[0].toPath(), libDir)
-            copyFileToDir(javacppLibrary.getFiles(JpsOrderRootType.COMPILED)[0].toPath(), libDir)
+            copyFileToDir(context.outputProvider.findLibraryRoots(ffmpegLibraryName, moduleLibraryModuleName = streamingModuleName).single(), libDir)
+            copyFileToDir(context.outputProvider.findLibraryRoots(javacppLibraryName, moduleLibraryModuleName = streamingModuleName).single(), libDir)
           }
 
-          spec.excludeModuleLibrary(ffmpegLibraryName, "intellij.android.streaming")
-          spec.excludeModuleLibrary(javacppLibraryName, "intellij.android.streaming")
+          spec.excludeModuleLibrary(ffmpegLibraryName, streamingModuleName)
+          spec.excludeModuleLibrary(javacppLibraryName, streamingModuleName)
         }
       }
 
@@ -563,7 +594,6 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("google-baksmali")
       spec.withProjectLibrary("google-dexlib2")
       //spec.withProjectLibrary("gradle-shared-proto")
-      spec.withProjectLibrary("HdrHistogram")
       spec.withProjectLibrary("javax-inject")
       //spec.withProjectLibrary("jetty")
       spec.withProjectLibrary("kotlinx-coroutines-guava")
@@ -641,11 +671,13 @@ object CommunityRepositoryModules {
     return plugin("intellij.groovy") { spec ->
       spec.directoryName = "Groovy"
       spec.mainJarName = "Groovy.jar"
-      spec.withModules(listOf(
-        "intellij.groovy.psi",
-        "intellij.groovy.structuralSearch",
-        "intellij.groovy.git",
-      ))
+      spec.withModules(
+        listOf(
+          "intellij.groovy.psi",
+          "intellij.groovy.structuralSearch",
+          "intellij.groovy.git",
+        )
+      )
       spec.withModule("intellij.groovy.jps", "groovy-jps.jar")
       spec.withModule("intellij.groovy.rt", "groovy-rt.jar")
       spec.withModule("intellij.groovy.spock.rt", "groovy-spock-rt.jar")
@@ -662,11 +694,13 @@ object CommunityRepositoryModules {
   }
 }
 
-private suspend fun copyAnt(pluginDir: Path, context: BuildContext): List<DistributionFileEntry> {
+private suspend fun copyAnt(mainModule: String, pluginDir: Path, context: BuildContext): List<DistributionFileEntry> {
   val antDir = pluginDir.resolve("dist")
   return spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()).use {
     val sources = ArrayList<ZipSource>()
-    val libraryData = ProjectLibraryData(libraryName = "Ant", packMode = LibraryPackMode.STANDALONE_MERGED, reason = "ant")
+    val antTargetFile = antDir.resolve("ant.jar")
+    val antModuleItem = ModuleItem(mainModule, relativeOutputFile = antTargetFile.fileName.toString(), reason = "ant")
+    val libraryData = ProjectLibraryData(libraryName = "Ant", packMode = LibraryPackMode.STANDALONE_MERGED, reason = "ant", owner = antModuleItem)
     copyDir(
       sourceDir = context.paths.communityHomeDir.resolve("lib/ant"),
       targetDir = antDir,
@@ -683,7 +717,6 @@ private suspend fun copyAnt(pluginDir: Path, context: BuildContext): List<Distri
     )
     sources.sort()
 
-    val antTargetFile = antDir.resolve("ant.jar")
     checkForNoDiskSpace(context) {
       buildJar(targetFile = antTargetFile, sources = sources)
     }
@@ -693,6 +726,7 @@ private suspend fun copyAnt(pluginDir: Path, context: BuildContext): List<Distri
         path = antTargetFile,
         data = libraryData,
         libraryFile = source.file,
+        canonicalLibraryPath = context.paths.communityHomeDir.relativize(source.file).toString(),
         hash = 0,
         size = 0,
         relativeOutputFile = "dist/ant.jar",

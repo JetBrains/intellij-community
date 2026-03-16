@@ -14,7 +14,11 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Stream;
 
 public class ClassFinder {
@@ -22,10 +26,16 @@ public class ClassFinder {
   private final List<String> classNameList;
   private final Path classPathRoot;
   private final boolean includeUnconventionallyNamedTests;
+  private final boolean includeEverything;
 
   public ClassFinder(final Path classPathRoot, final String rootPackage, boolean includeUnconventionallyNamedTests) {
+    this(classPathRoot, rootPackage, includeUnconventionallyNamedTests, false);
+  }
+
+  public ClassFinder(final Path classPathRoot, final String rootPackage, boolean includeUnconventionallyNamedTests, boolean includeEverything) {
     this.classPathRoot = classPathRoot;
     this.includeUnconventionallyNamedTests = includeUnconventionallyNamedTests;
+    this.includeEverything = includeEverything;
     String directoryOffset = rootPackage.replace(".", classPathRoot.getFileSystem().getSeparator());
     if (Files.isRegularFile(classPathRoot)) {
       classNameList = findAndStoreTestClassesFromJar(directoryOffset);
@@ -38,6 +48,12 @@ public class ClassFinder {
   private @Nullable String computeClassName(final @NotNull Path path, final @NotNull Path root) {
     Path absPath = path.toAbsolutePath();
     String fileName = absPath.getFileName().toString();
+    if (includeEverything) {
+      if (fileName.endsWith(".class")) {
+        return getClassFQN(absPath, root);
+      }
+      return null;
+    }
     if (!includeUnconventionallyNamedTests) {
       // It's faster and easier to check for `endsWith` rather than `extensionEquals` (see below) which does `endsWith`
       if (fileName.endsWith("Test.class")) {
@@ -68,7 +84,7 @@ public class ClassFinder {
       if (!Character.isUpperCase(name.charAt(0))) return false;
 
       // A test may be named Test*, *Test, *Tests*, *TestCase, *TestSuite, *Suite, etc
-      List<String> words = Arrays.asList(NameUtilCore.nameToWords(name));
+      List<String> words = NameUtilCore.nameToWordList(name);
 
       if (words.contains("Test") || words.contains("Tests") || words.contains("Suite")) {
         return true;

@@ -4,8 +4,8 @@ package com.intellij.completion.ml.tracker
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.ml.util.language
 import com.intellij.completion.ml.storage.MutableLookupStorage
+import com.intellij.completion.ml.util.language
 
 abstract class LookupTracker : LookupManagerListener {
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {

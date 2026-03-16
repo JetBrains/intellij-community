@@ -18,9 +18,12 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.ui.Gray;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 @SuppressWarnings("UseJBColor")
 public interface FileStatus {

@@ -31,7 +31,11 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.xml.XmlContentDFA;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,11 +47,22 @@ import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
 import javax.xml.XMLConstants;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.*;
 
 /**
  * @author Dmitry Avdeev

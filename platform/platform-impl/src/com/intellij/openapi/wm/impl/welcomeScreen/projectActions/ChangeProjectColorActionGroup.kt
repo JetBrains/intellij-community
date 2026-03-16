@@ -5,9 +5,14 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.RecentProjectIconHelper
 import com.intellij.ide.RecentProjectsManagerBase
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.application.impl.islands.isColorIslandGradientAvailable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
@@ -52,7 +57,7 @@ class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware, ActionRemo
   }
 }
 
-private class ChangeProjectColorAction(
+internal class ChangeProjectColorAction(
   projectPath: Path,
   val name: @NlsSafe String,
   val index: Int,
@@ -88,7 +93,7 @@ private class ChangeProjectColorAction(
   }
 }
 
-private class ChooseCustomProjectColorAction: AnAction(IdeBundle.message("action.ChooseCustomProjectColorAction.title")), DumbAware {
+internal class ChooseCustomProjectColorAction: AnAction(IdeBundle.message("action.ChooseCustomProjectColorAction.title")), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
     val ideFrame = IdeFocusManager.getInstance(project).lastFocusedFrame
@@ -102,7 +107,7 @@ private class ChooseCustomProjectColorAction: AnAction(IdeBundle.message("action
       currentColor = ProjectWindowCustomizerService.getInstance().getProjectColorToCustomize(project),
       listener = { color, _ ->
         ProjectWindowCustomizerService.getInstance().setCustomProjectColor(project, color)
-        e.project?.let { repaintFrame(it) }
+        repaintFrame(e.project)
       },
       location = relativePoint,
     )
@@ -111,10 +116,10 @@ private class ChooseCustomProjectColorAction: AnAction(IdeBundle.message("action
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.project != null
+    e.presentation.isEnabled = e.project != null && !isColorIslandGradientAvailable()
   }
 }
 
-private fun repaintFrame(project: Project) {
+internal fun repaintFrame(project: Project?) {
   WindowManager.getInstance().getIdeFrame(project)?.component?.repaint()
 }

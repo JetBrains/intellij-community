@@ -6,9 +6,15 @@ import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2GotoTestOrCodeAct
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2IntentionInInjectionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2IntentionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2MultiFileIntentionTest
-import org.jetbrains.kotlin.testGenerator.model.*
+import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2MultiModuleIntentionTest
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.INTENTIONS
+import org.jetbrains.kotlin.testGenerator.model.MutableTWorkspace
+import org.jetbrains.kotlin.testGenerator.model.Patterns
+import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
+import org.jetbrains.kotlin.testGenerator.model.model
+import org.jetbrains.kotlin.testGenerator.model.testClass
+import org.jetbrains.kotlin.testGenerator.model.testGroup
 
 
 internal fun MutableTWorkspace.generateK2IntentionTests() {
@@ -194,6 +200,10 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
 
         testClass<AbstractK2GotoTestOrCodeActionTest> {
             model("${idea}navigation/gotoTestOrCode", pattern = Patterns.forRegex("^(.+)\\.main\\..+\$"))
+        }
+
+        testClass<AbstractK2MultiModuleIntentionTest> {
+            model("$idea/multiModuleIntention", pattern = DIRECTORY, depth = 1)
         }
     }
 

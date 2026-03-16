@@ -6,8 +6,14 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.util.ui.UIUtil
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskRuntimeContext
+import training.dsl.dropMnemonic
+import training.dsl.parseLessonSample
+import training.dsl.restoreRefactoringOptionsInformer
 import training.learn.lesson.general.refactorings.RefactoringMenuLessonBase
 import training.util.adaptToNotNativeLocalization
 import javax.swing.JDialog

@@ -4,24 +4,28 @@ package com.intellij.codeInsight.inspections;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationBundle;
 import com.intellij.refactoring.typeMigration.inspections.GuavaInspection;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Dmitry Batkovich
  */
-public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
+public class GuavaInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+  private static final LightProjectDescriptor DESCRIPTOR =
+    new DefaultLightProjectDescriptor(IdeaTestUtil::getMockJdk18, List.of("com.google.guava:guava:20.0"));
+  
   private GuavaInspection myInspection;
 
   @Override
@@ -32,15 +36,13 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   }
 
   @Override
-  protected String getTestDataPath()  {
-    return PlatformTestUtil.getCommunityPath() + "/java/typeMigration/testData/inspections/guava";
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return DESCRIPTOR;
   }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
-    moduleBuilder.addLibraryJars("guava", getTestDataPath() + "/", "guava-stubs.jar");
-    moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
+  protected String getTestDataPath()  {
+    return PlatformTestUtil.getCommunityPath() + "/java/typeMigration/testData/inspections/guava";
   }
 
   public void testOptional() {

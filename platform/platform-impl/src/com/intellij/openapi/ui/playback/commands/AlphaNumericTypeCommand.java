@@ -5,13 +5,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
+import java.awt.Robot;
 import java.awt.event.KeyEvent;
 
 public class AlphaNumericTypeCommand extends TypeCommand {
@@ -65,7 +67,7 @@ public class AlphaNumericTypeCommand extends TypeCommand {
       result.setDone();
     };
 
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (EDT.isCurrentThreadEdt()) {
       ApplicationManager.getApplication().executeOnPooledThread(typeRunnable);
     } else {
       typeRunnable.run();

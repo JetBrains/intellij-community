@@ -1,15 +1,22 @@
 package com.intellij.database.run.ui;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.ResultView;
+import com.intellij.database.datagrid.SelectionModel;
+import com.intellij.database.datagrid.SelectionModelUtil;
+import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.CellRendererPanel;
 import com.intellij.ui.ExpandedItemRendererComponentWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
 
 import static com.intellij.database.datagrid.color.SelectionColorLayer.isRowBgPaintedByTable;
 

@@ -1,6 +1,10 @@
 package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
@@ -11,7 +15,11 @@ import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Updates fields of existing inner class type in class annotated by FieldNameConstants

@@ -4,14 +4,13 @@ package com.intellij.internal.statistics.metadata.validator
 import com.intellij.internal.statistic.eventLog.EventLogBuild
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.validator.IGroupValidators
+import com.jetbrains.fus.reporting.api.IGroupValidators
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.jetbrains.fus.reporting.api.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
+import com.jetbrains.fus.reporting.api.FUSRule
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.CustomRuleProducer
 import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider
-import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase

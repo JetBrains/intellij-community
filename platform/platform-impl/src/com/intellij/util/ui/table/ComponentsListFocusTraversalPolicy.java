@@ -4,8 +4,9 @@ package com.intellij.util.ui.table;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.LayoutFocusTraversalPolicy;
+import java.awt.Component;
+import java.awt.Container;
 import java.util.List;
 
 /**

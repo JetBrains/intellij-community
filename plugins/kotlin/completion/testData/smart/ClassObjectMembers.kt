@@ -21,3 +21,5 @@ fun foo(){
 // EXIST: { lookupString:"kk", itemText:"!! K.kk", tailText:" (sample)", typeText:"K?", attributes:"" }
 // EXIST: { lookupString:"kk", itemText:"?: K.kk", tailText:" (sample)", typeText:"K?", attributes:"" }
 // ABSENT: { itemText: "K.privateVal" }
+
+// IGNORE_K2

@@ -22,16 +22,35 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.helpers.NOPLogger;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.util.Objects;
 
 /**
  * Initializes Velocity when it's actually needed. All interaction with Velocity should go through this class.
  */
-final class VelocityWrapper {
+public final class VelocityWrapper {
   private static final Logger LOG = Logger.getInstance(VelocityWrapper.class);
 
   private static final RuntimeInstance ri = initialize();
+  public static final String INTROSPECTOR_RESTRICT_CLASSES = "java.lang.Compiler," +
+                                                             "java.lang.InheritableThreadLocal," +
+                                                             "java.lang.Package," +
+                                                             "java.lang.Process," +
+                                                             "java.lang.Runtime," +
+                                                             "java.lang.RuntimePermission," +
+                                                             "java.lang.SecurityManager," +
+                                                             "java.lang.System," +
+                                                             "java.lang.Thread," +
+                                                             "java.lang.ThreadGroup," +
+                                                             "java.lang.ThreadLocal," +
+                                                             "java.lang.Class," +
+                                                             "java.lang.ClassLoader";
+  public static final String INTROSPECTOR_RESTRICT_PACKAGES = "java.lang.reflect";
+  public static final String INTROSPECTION_SECURE_UBERSPECTOR = "org.apache.velocity.util.introspection.SecureUberspector";
 
   private static RuntimeInstance initialize() {
     try{
@@ -47,21 +66,9 @@ final class VelocityWrapper {
       ri.setProperty(RuntimeConstants.INPUT_ENCODING, FileTemplate.ourEncoding);
       ri.setProperty(RuntimeConstants.PARSER_POOL_SIZE, 3);
 
-      ri.setProperty(RuntimeConstants.UBERSPECT_CLASSNAME, "org.apache.velocity.util.introspection.SecureUberspector");
-      ri.setProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_PACKAGES, "java.lang.reflect");
-      ri.setProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_CLASSES, "java.lang.Compiler," +
-                                                                           "java.lang.InheritableThreadLocal," +
-                                                                           "java.lang.Package," +
-                                                                           "java.lang.Process," +
-                                                                           "java.lang.Runtime," +
-                                                                           "java.lang.RuntimePermission," +
-                                                                           "java.lang.SecurityManager," +
-                                                                           "java.lang.System," +
-                                                                           "java.lang.Thread," +
-                                                                           "java.lang.ThreadGroup," +
-                                                                           "java.lang.ThreadLocal," +
-                                                                           "java.lang.Class," +
-                                                                           "java.lang.ClassLoader");
+      ri.setProperty(RuntimeConstants.UBERSPECT_CLASSNAME, INTROSPECTION_SECURE_UBERSPECTOR);
+      ri.setProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_PACKAGES, INTROSPECTOR_RESTRICT_PACKAGES);
+      ri.setProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_CLASSES, INTROSPECTOR_RESTRICT_CLASSES);
 
       ri.setProperty(RuntimeConstants.RESOURCE_LOADER, "includes");
       ri.setProperty("includes.resource.loader.instance", new ResourceLoader() {

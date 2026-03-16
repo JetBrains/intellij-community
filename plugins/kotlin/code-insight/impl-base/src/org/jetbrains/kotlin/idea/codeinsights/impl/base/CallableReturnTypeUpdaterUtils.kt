@@ -19,14 +19,33 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.endOffset
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.*
+import org.jetbrains.kotlin.analysis.api.components.approximateToSuperPublicDenotableOrSelf
+import org.jetbrains.kotlin.analysis.api.components.directSupertypes
+import org.jetbrains.kotlin.analysis.api.components.directlyOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.hasFlexibleNullability
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.components.isNothingType
+import org.jetbrains.kotlin.analysis.api.components.isNullable
+import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.components.smartCastInfo
+import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseValueExpression
@@ -35,7 +54,15 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdate
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.setAndShortenTypeReference
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.setTypeReference
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.bfs
@@ -239,6 +266,12 @@ object CallableReturnTypeUpdaterUtils {
                 }
                 addAll(smartCastTypes)
             }
+
+            when (declaration) {
+                is KtFunction -> addIfNotNull((declaration.bodyExpression as? KtReturnExpression)?.returnedExpression?.expressionType)
+                is KtProperty -> addAll(declaration.accessors.mapNotNull { (it.bodyExpression as? KtReturnExpression)?.returnedExpression?.expressionType })
+            }
+
             if (this.isEmpty()) {
                 add(declaration.returnType)
             }
@@ -259,7 +292,7 @@ object CallableReturnTypeUpdaterUtils {
             .distinctBy { createTypeByKtType(it) }
             .let { types ->
                 when {
-                    cannotBeNull -> types.map { it.withNullability(false) }.distinctBy { createTypeByKtType(it) }
+                    cannotBeNull -> types.map { it.withNullability(false) }
                     declarationTypes.any { it.hasFlexibleNullability } -> types.flatMap { type ->
                         listOf(type.withNullability(false), type.withNullability(true))
                     }
@@ -279,7 +312,8 @@ object CallableReturnTypeUpdaterUtils {
     fun getTypeInfo(declaration: KtCallableDeclaration, useSmartCastType: Boolean = false, useTemplate: Boolean = true): TypeInfo {
         val calculateAllTypes = calculateAllTypes(declaration, useSmartCastType = useSmartCastType) { declarationType, allTypes, cannotBeNull ->
             if (isUnitTestMode()) {
-                selectForUnitTest(declaration, allTypes.toList())?.let { return@calculateAllTypes it }
+                // bfs sequence can't be used twice, thus we can convert to list only when we are going to return
+                selectForUnitTest(declaration, allTypes)?.let { return@calculateAllTypes it }
             }
 
             val declarationClassType = declarationType as? KaClassType
@@ -314,13 +348,14 @@ object CallableReturnTypeUpdaterUtils {
     context(_: KaSession)
     private fun selectForUnitTest(
         declaration: KtCallableDeclaration,
-        allTypes: List<KaType>
+        allTypes: Sequence<KaType>
     ): TypeInfo? {
         // This helps to be sure no nullable types are suggested
         if (declaration.containingKtFile.findDescendantOfType<PsiComment>()?.takeIf {
                 it.text == "// CHOOSE_NULLABLE_TYPE_IF_EXISTS"
             } != null) {
-            val targetType = allTypes.firstOrNull { it.isMarkedNullable } ?: allTypes.first()
+            val types = allTypes.toList()
+            val targetType = types.firstOrNull { it.isMarkedNullable } ?: types.first()
             return createByKtTypes(targetType)
         }
         // This helps to be sure something except Nothing is suggested
@@ -329,7 +364,8 @@ object CallableReturnTypeUpdaterUtils {
             } != null
         ) {
             // Note that `isNothing` returns true for both `Nothing` and `Nothing?`
-            val targetType = allTypes.firstOrNull { !it.isNothingType } ?: allTypes.first()
+            val types = allTypes.toList()
+            val targetType = types.firstOrNull { !it.isNothingType } ?: types.first()
             return createByKtTypes(targetType)
         }
         val chooseElement = declaration.containingKtFile.findDescendantOfType<PsiComment>()?.takeIf {
@@ -337,7 +373,7 @@ object CallableReturnTypeUpdaterUtils {
         }
         if (chooseElement != null) {
             val index = chooseElement.text.removePrefix("// CHOOSE_ELEMENT:").trim().toIntOrNull() ?: return null
-            val targetType = allTypes[index]
+            val targetType = allTypes.toList()[index]
             return createByKtTypes(targetType)
         }
 

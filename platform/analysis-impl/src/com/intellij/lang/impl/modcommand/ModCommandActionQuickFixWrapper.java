@@ -2,6 +2,7 @@
 package com.intellij.lang.impl.modcommand;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
@@ -9,11 +10,14 @@ import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-final class ModCommandActionQuickFixWrapper extends ModCommandQuickFix implements ReportingClassSubstitutor {
+/// Wraps [ModCommandAction] so old APIs can consume it as [LocalQuickFix].
+@ApiStatus.Internal
+public final class ModCommandActionQuickFixWrapper extends ModCommandQuickFix implements ReportingClassSubstitutor {
   private final ModCommandAction myAction;
-  private boolean myAvailableInBatchMode;
+  private final boolean myAvailableInBatchMode;
 
   ModCommandActionQuickFixWrapper(@NotNull ModCommandAction action) {
     this(action, true);
@@ -29,7 +33,7 @@ final class ModCommandActionQuickFixWrapper extends ModCommandQuickFix implement
     return myAvailableInBatchMode;
   }
 
-  ModCommandAction getAction() {
+  public ModCommandAction getAction() {
     return myAction;
   }
 

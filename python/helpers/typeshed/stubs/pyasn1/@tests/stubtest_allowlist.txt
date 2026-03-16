@@ -1,3 +1,0 @@
-# typeshed typing differences with runtime collections.OrderedDict and builtins.dict
-pyasn1.codec.native.encoder.SequenceEncoder.protoDict
-pyasn1.codec.native.encoder.SetEncoder.protoDict

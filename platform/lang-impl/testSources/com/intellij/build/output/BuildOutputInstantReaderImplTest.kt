@@ -3,12 +3,13 @@ package com.intellij.build.output
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.events.MessageEvent
-import com.intellij.build.events.MessageEvent.Kind.*
+import com.intellij.build.events.MessageEvent.Kind.ERROR
+import com.intellij.build.events.MessageEvent.Kind.INFO
+import com.intellij.build.events.MessageEvent.Kind.WARNING
 import com.intellij.build.events.impl.MessageEventImpl
 import org.junit.Assert
 import org.junit.Test
-import java.util.*
-import kotlin.collections.ArrayList
+import java.util.Collections
 
 class BuildOutputInstantReaderImplTest {
 

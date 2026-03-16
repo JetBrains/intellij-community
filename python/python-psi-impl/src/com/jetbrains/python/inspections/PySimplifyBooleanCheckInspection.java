@@ -84,7 +84,7 @@ public final class PySimplifyBooleanCheckInspection extends PyInspection {
 
     PyBinaryExpressionVisitor(@Nullable ProblemsHolder holder,
                               @NotNull TypeEvalContext context,
-                                     boolean ignoreComparisonToZero) {
+                              boolean ignoreComparisonToZero) {
       super(holder, context);
       myIgnoreComparisonToZero = ignoreComparisonToZero;
     }
@@ -112,10 +112,10 @@ public final class PySimplifyBooleanCheckInspection extends PyInspection {
 
       // because we are comparing to literal values, there will only ever be a union on one side
       final var unionMembers = (leftType instanceof PyUnionType unionType)
+                               ? unionType.getMembers()
+                               : (rightType instanceof PyUnionType unionType)
                                  ? unionType.getMembers()
-                                 : (rightType instanceof PyUnionType unionType)
-                                   ? unionType.getMembers()
-                                   : null;
+                                 : null;
 
       final var isOptional = unionMembers != null && ContainerUtil.exists(unionMembers, PyNoneTypeKt::isNoneType);
 
@@ -156,7 +156,8 @@ public final class PySimplifyBooleanCheckInspection extends PyInspection {
     }
 
     private void registerProblem(PyBinaryExpression binaryExpression) {
-      registerProblem(binaryExpression, PyPsiBundle.message("INSP.expression.can.be.simplified"), new SimplifyBooleanCheckQuickFix(binaryExpression));
+      registerProblem(binaryExpression, PyPsiBundle.message("INSP.expression.can.be.simplified"),
+                      new SimplifyBooleanCheckQuickFix(binaryExpression));
     }
   }
 }

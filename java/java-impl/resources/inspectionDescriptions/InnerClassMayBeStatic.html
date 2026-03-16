@@ -1,9 +1,14 @@
 <html>
 <body>
 Reports inner classes that can be made <code>static</code>.
-<p>A <code>static</code> inner class does not keep an implicit reference to its enclosing instance.
-  When using Java 17 or before,
-  this prevents a common cause of memory leaks and uses less memory per instance of the class.</p>
+<p>
+On Java 17 and older non-static inner classes contain an implicit reference to their enclosing instance.
+Static nested classes do not have such a reference.
+Therefore, making an inner class <code>static</code> prevents a common cause of memory leaks 
+and uses slightly less memory per instance of the class.
+<p>
+The implicit reference was <a href="https://www.oracle.com/java/technologies/javase/18-relnote-issues.html#JDK-8271623">removed</a> 
+for non-Serializable inner classes in Java 18.
 <p><b>Example:</b></p>
 <pre><code>
   <b>public class</b> Outer {

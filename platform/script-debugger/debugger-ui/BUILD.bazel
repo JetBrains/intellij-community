@@ -26,14 +26,15 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl",
     "//libraries/guava",
     "//platform/execution-impl",
-    "@lib//:netty-codec-http",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
     "//libraries/fastutil",
-    "@lib//:netty-buffer",
+    "//libraries/netty/buffer",
     "//platform/core-ui",
     "//platform/projectModel-api:projectModel",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",
     "//platform/util/jdom",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.platform.scriptDebugger.ui` end

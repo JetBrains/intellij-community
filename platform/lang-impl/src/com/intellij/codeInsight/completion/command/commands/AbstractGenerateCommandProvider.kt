@@ -3,9 +3,22 @@ package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.actions.CodeInsightAction
-import com.intellij.codeInsight.completion.command.*
+import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+import com.intellij.codeInsight.completion.command.CommandProvider
+import com.intellij.codeInsight.completion.command.CompletionCommand
+import com.intellij.codeInsight.completion.command.getDataContext
+import com.intellij.codeInsight.completion.command.getTargetContext
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.UpdateSession
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.editor.Document

@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.Collection;
 

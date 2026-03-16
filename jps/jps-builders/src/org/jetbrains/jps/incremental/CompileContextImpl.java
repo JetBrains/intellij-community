@@ -22,7 +22,11 @@ import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class CompileContextImpl extends UserDataHolderBase implements CompileContext {

@@ -20,7 +20,11 @@ import org.jetbrains.io.JsonUtil;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpResponse;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -147,10 +151,11 @@ public final class RegionUrlMapper {
 
   private static RegionMapping doLoadMappingOrThrow(Region reg) throws Exception {
     var configUrl = getConfigUrl(reg);
-    var client = PlatformHttpClient.client();
-    var request = PlatformHttpClient.request(new URI(configUrl));
-    var response = PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.ofString()));
-    return RegionMapping.fromJson(response.body());
+    try (var client = PlatformHttpClient.client()) {
+      var request = PlatformHttpClient.request(new URI(configUrl));
+      var response = PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.ofString()));
+      return RegionMapping.fromJson(response.body());
+    }
   }
 
   private static @NotNull String getConfigUrl(@NotNull Region reg) {

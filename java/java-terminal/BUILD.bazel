@@ -32,7 +32,8 @@ jvm_library(
 jvm_library(
   name = "terminal-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["@lib//:kotlin-stdlib"]
 )
 
 jvm_library(
@@ -52,7 +53,8 @@ jvm_library(
     "//plugins/terminal/completion",
     "//plugins/terminal/completion:completion_test_lib",
     "//plugins/terminal",
-  ]
+  ],
+  runtime_deps = [":terminal-tests"]
 )
 ### auto-generated section `build intellij.java.terminal.tests` end
 

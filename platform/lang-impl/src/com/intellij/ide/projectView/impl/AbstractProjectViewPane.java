@@ -1,15 +1,49 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.ide.*;
-import com.intellij.ide.dnd.*;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.PsiCopyPasteManager;
+import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.TreeExpander;
+import com.intellij.ide.dnd.DnDAction;
+import com.intellij.ide.dnd.DnDDragStartBean;
+import com.intellij.ide.dnd.DnDEvent;
+import com.intellij.ide.dnd.DnDEventImpl;
+import com.intellij.ide.dnd.DnDManager;
+import com.intellij.ide.dnd.DnDSource;
+import com.intellij.ide.dnd.DnDTarget;
+import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.ide.projectView.*;
-import com.intellij.ide.projectView.impl.nodes.*;
-import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.projectView.NodeSortKey;
+import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.ProjectViewNodeDecorator;
+import com.intellij.ide.projectView.RootsProvider;
+import com.intellij.ide.projectView.TreeStructureProvider;
+import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
+import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode;
+import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
+import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
+import com.intellij.ide.util.treeView.CachedTreePresentationNode;
+import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,12 +60,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.BusyObject;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiAwareObject;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
@@ -39,6 +83,7 @@ import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNode;
 import com.intellij.ui.treeStructure.BgtAwareTreeModel;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.ui.treeStructure.TreeStateListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -55,27 +100,54 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JTree;
+import javax.swing.SwingConstants;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
-import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.*;
+import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.getNodeElement;
+import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.getSelectedLibrary;
+import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.moduleContext;
+import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.moduleContexts;
+import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.unloadedModules;
+import static com.intellij.ui.tree.project.ProjectViewUpdateCauseUtilKt.guessProjectViewUpdateCauseByCaller;
 
 /**
  * Allows to add additional panes to the Project view.
@@ -104,6 +176,8 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
 
   private DnDTarget myDropTarget;
   private DnDSource myDragSource;
+
+  @Nullable ProjectViewUpdateCause updateFromRootCause;
 
   protected AbstractProjectViewPane(@NotNull Project project) {
     myProject = project;
@@ -134,7 +208,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
   }
 
   private void rebuildCompletely(boolean wait) {
-    ActionCallback callback = updateFromRoot(true);
+    ActionCallback callback = updateFromRoot(true, ProjectViewUpdateCause.EXTENSIONS_CHANGED);
     if (wait) {
       callback.waitFor(5000);
     }
@@ -220,16 +294,50 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     myTreeStructure = null;
   }
 
+  @ApiStatus.Internal
+  public @NotNull ActionCallback updateFromRoot(boolean restoreExpandedPaths, @NotNull ProjectViewUpdateCause cause) {
+    updateFromRootCause = cause;
+    try {
+      return updateFromRoot(restoreExpandedPaths);
+    }
+    finally {
+      updateFromRootCause = null;
+    }
+  }
+
+  /**
+   * Refreshes the entire tree asynchronously.
+   * <p>
+   *   Note: this method is for plugin developers only. For internal use,
+   *   call {@link #updateFromRoot(boolean, ProjectViewUpdateCause)} and specify the update cause explicitly.
+   * </p>
+   * @param restoreExpandedPaths determines whether the currently expanded paths should be preserved after refresh if possible
+   * @return a callback that will be invoked when the refresh is done
+   */
   public abstract @NotNull ActionCallback updateFromRoot(boolean restoreExpandedPaths);
 
+  /**
+   * Refreshes the specified node asynchronously.
+   * <p>
+   *   Note: this method is for plugin developers only. For internal use,
+   *   call {@link #updateFrom(Object, boolean, boolean, ProjectViewUpdateCause)} and specify the update cause explicitly.
+   * </p>
+   * @param forceResort not used, kept for compatibility reasons
+   * @param updateStructure if {@code true}, then all children are updated recursively as well
+   */
   public void updateFrom(Object element, boolean forceResort, boolean updateStructure) {
+    updateFrom(element, forceResort, updateStructure, guessProjectViewUpdateCauseByCaller(AbstractProjectViewPane.class));
+  }
+
+  @ApiStatus.Internal
+  public void updateFrom(Object element, boolean forceResort, boolean updateStructure, @NotNull ProjectViewUpdateCause cause) {
     if (element instanceof PsiElement) {
       var support = getAsyncSupport();
-      if (support != null) support.updateByElement((PsiElement)element, updateStructure);
+      if (support != null) support.updateByElement((PsiElement)element, updateStructure, List.of(cause));
     }
     else if (element instanceof TreePath) {
       var support = getAsyncSupport();
-      if (support != null) support.update((TreePath)element, updateStructure);
+      if (support != null) support.update((TreePath)element, updateStructure, List.of(cause));
     }
   }
 
@@ -319,6 +427,11 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     return false;
   }
 
+  @ApiStatus.Internal
+  protected Navigatable @NotNull [] getCachedNavigatablesFromSelectedPaths(TreePath @NotNull [] paths) {
+    return Navigatable.EMPTY_NAVIGATABLE_ARRAY;
+  }
+
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
     TreePath[] paths = getSelectionPaths();
@@ -344,13 +457,15 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
           navigatables.add(new CachedNodeNavigatable(myProject, o));
         }
       }
+      Navigatable[] cachedNavigatables = getCachedNavigatablesFromSelectedPaths(paths);
+      navigatables.addAll(Arrays.asList(cachedNavigatables));
       sink.set(CommonDataKeys.NAVIGATABLE_ARRAY,
                navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY));
     }
     uiDataSnapshotForSelection(sink, selectedUserObjects, singleSelectedPathUserObjects);
 
     if (myTreeStructure instanceof AbstractTreeStructureBase treeStructure) {
-      List<TreeStructureProvider> providers = ReadAction.compute(treeStructure::getProviders);
+      List<TreeStructureProvider> providers = treeStructure.getProviders();
       if (providers != null && !providers.isEmpty()) {
         //noinspection unchecked
         List<AbstractTreeNode<?>> selection = (List)ContainerUtil.filterIsInstance(
@@ -971,7 +1086,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
       return new DnDDragStartBean(new TransferableWrapper() {
         @Override
         public List<File> asFileList() {
-          return PsiCopyPasteManager.asFileList(psiElements);
+          return ReadAction.compute(() -> PsiCopyPasteManager.asFileList(psiElements));
         }
 
         @Override

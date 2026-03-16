@@ -16,7 +16,7 @@ jvm_library(
     "@lib//:junit5Jupiter",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/junit5",
     "//platform/core-api:core",
     "//platform/core-nio-fs",
@@ -29,6 +29,7 @@ jvm_library(
     "//platform/util",
     "//platform/util/coroutines",
     "//platform/util-ex",
+    "//platform/projectModel-api:projectModel",
   ]
 )
 
@@ -42,7 +43,7 @@ jvm_library(
     "@lib//:junit5Jupiter",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:junit5Params",
     "//libraries/junit5",
     "//libraries/junit5-pioneer",
@@ -60,6 +61,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/util-ex",
     "//platform/execution",
+    "//platform/projectModel-api:projectModel",
   ]
 )
 ### auto-generated section `build intellij.platform.testFramework.junit5.eel` end

@@ -2,7 +2,12 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output.parsers;
 
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.impl.*;
+import com.intellij.build.events.impl.FailureResultImpl;
+import com.intellij.build.events.impl.FinishBuildEventImpl;
+import com.intellij.build.events.impl.FinishEventImpl;
+import com.intellij.build.events.impl.SkippedResultImpl;
+import com.intellij.build.events.impl.StartEventImpl;
+import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +15,12 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingCon
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenSpyLoggedEventParser;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 

@@ -16,7 +16,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Random;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class PathManagerTest {
   private static final String TEST_RPOP = "__ij_subst_test__";

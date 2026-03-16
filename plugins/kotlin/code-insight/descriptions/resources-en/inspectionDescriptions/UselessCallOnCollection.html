@@ -1,15 +1,28 @@
 <html>
 <body>
-Reports <code>filter…</code> calls from the standard library on already filtered collections.
-<p>Several functions from the standard library such as <code>filterNotNull()</code> or <code>filterIsInstance</code>
-    have sense only when they are called on receivers that have types distinct from the resulting one. Otherwise,
-    such calls can be omitted as the result will be the same.</p>
-<p><b>Remove redundant call</b> quick-fix can be used to amend the code automatically.</p>
-<p>Example:</p>
+Reports redundant calls on collections, iterables, and sequences from the standard library.
+<p>This inspection detects two kinds of redundancy:</p>
+<ul>
+    <li><b>Redundant <code>filter…</code> calls</b> on already filtered collections.
+        Functions such as <code>filterNotNull()</code> or <code>filterIsInstance</code>
+        have sense only when they are called on receivers that have types distinct from the resulting one.
+        Otherwise, such calls can be omitted as the result will be the same.</li>
+    <li><b>Redundant <code>mapNotNull</code> calls</b> (and its variants).
+        <code>mapNotNull</code> is redundant when the transformation result
+        is already guaranteed to be non-nullable. In that case, the <code>NotNull</code> suffix
+        can be dropped (e.g., <code>mapNotNull</code> → <code>map</code>).</li>
+</ul>
+<p>A quick-fix is available to omit the redundant call or replace it with a simpler alternative.</p>
+<p>Examples:</p>
 <pre><code>
   fun test(list: List&lt;String&gt;) {
-      val x = list.filterNotNull() // quick-fix simplifies to 'list'
-      val y = list.filterIsInstance&lt;String&gt;() // quick-fix simplifies to 'list'
+      val x = list.filterNotNull() // can be simplified to 'list'
+      val y = list.filterIsInstance&lt;String&gt;() // can be simplified to 'list'
+  }
+</code></pre>
+<pre><code>
+  fun test(list: List&lt;Int&gt;) {
+      val x = list.mapNotNull { it + 1 } // can be replaced with 'map'
   }
 </code></pre>
 </body>

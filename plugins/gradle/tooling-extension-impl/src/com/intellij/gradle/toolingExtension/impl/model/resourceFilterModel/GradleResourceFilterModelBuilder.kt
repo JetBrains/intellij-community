@@ -4,7 +4,9 @@ package com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel
 import com.google.gson.GsonBuilder
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
 import com.intellij.util.ReflectionUtilRt.getField
-import org.codehaus.groovy.runtime.DefaultGroovyMethods.*
+import org.codehaus.groovy.runtime.DefaultGroovyMethods.getMetaClass
+import org.codehaus.groovy.runtime.DefaultGroovyMethods.hasProperty
+import org.codehaus.groovy.runtime.DefaultGroovyMethods.invokeMethod
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.file.ContentFilterable

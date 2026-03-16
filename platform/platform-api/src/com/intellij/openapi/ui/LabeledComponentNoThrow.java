@@ -4,7 +4,7 @@ package com.intellij.openapi.ui;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * Special type of LabeledComponent that does not throw exceptions in setComponentClass.

@@ -2,7 +2,13 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.NameValue;
+import com.intellij.util.xml.Required;
+import com.intellij.util.xml.Stubbed;
+import com.intellij.util.xml.SubTagList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.impl.IdeaPluginConverter;
 import org.jetbrains.idea.devkit.dom.impl.ModuleDescriptorNameConverter;

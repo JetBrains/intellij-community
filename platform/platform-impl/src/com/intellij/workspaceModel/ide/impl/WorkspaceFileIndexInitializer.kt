@@ -8,7 +8,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 
-private class WorkspaceFileIndexInitializer : InitProjectActivity {
+internal class WorkspaceFileIndexInitializer : InitProjectActivity {
   override suspend fun run(project: Project) {
     span("workspace file index initialization") {
       try {

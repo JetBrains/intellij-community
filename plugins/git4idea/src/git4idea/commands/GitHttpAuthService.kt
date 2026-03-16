@@ -13,12 +13,14 @@ import com.intellij.openapi.util.text.StringUtilRt
 import git4idea.http.GitAskPassApp
 import git4idea.http.GitAskPassAppHandler
 import kotlinx.coroutines.CoroutineScope
-import java.io.File
-import java.util.*
+import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
+import java.util.UUID
 
 /**
  * Provides the authentication mechanism for Git HTTP connections.
  */
+@ApiStatus.Internal
 abstract class GitHttpAuthService(coroutineScope: CoroutineScope) : ExternalProcessHandlerService<GitAskPassAppHandler>(
   "intellij-git-askpass",
   GitAskPassApp::class.java,
@@ -29,11 +31,13 @@ abstract class GitHttpAuthService(coroutineScope: CoroutineScope) : ExternalProc
   /**
    * Creates new [GitHttpAuthenticator] that will be requested to handle username and password requests from Git.
    */
-  abstract fun createAuthenticator(project: Project,
-                                   urls: Collection<String>,
-                                   workingDirectory: File,
-                                   authenticationGate: AuthenticationGate,
-                                   authenticationMode: AuthenticationMode): GitHttpAuthenticator
+  abstract fun createAuthenticator(
+    project: Project,
+    urls: Collection<String>,
+    workingDirectory: Path,
+    authenticationGate: AuthenticationGate,
+    authenticationMode: AuthenticationMode,
+  ): GitHttpAuthenticator
 
   override fun handleRequest(handler: GitAskPassAppHandler, requestBody: String): String? {
     return handler.handleInput(requestBody)
@@ -64,7 +68,7 @@ abstract class GitHttpAuthService(coroutineScope: CoroutineScope) : ExternalProc
   }
 }
 
-private class GitAskPassExternalProcessRest : ExternalProcessRest<GitAskPassAppHandler>(
+internal class GitAskPassExternalProcessRest : ExternalProcessRest<GitAskPassAppHandler>(
   GitAskPassAppHandler.ENTRY_POINT_NAME
 ) {
   override val externalProcessHandler: ExternalProcessHandlerService<GitAskPassAppHandler> get() = service<GitHttpAuthService>()

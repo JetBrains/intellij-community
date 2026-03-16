@@ -26,10 +26,14 @@ jvm_library(
     "//libraries/stream",
     "//java/debugger/impl",
     "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl/shared",
+    "//platform/xdebugger-impl/ui",
+    "//java/java-backend:backend",
     "//java/openapi:java",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
-  ]
+  ],
+  runtime_deps = ["//java/debugger/backend"]
 )
 
 jvm_library(
@@ -44,6 +48,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//jps/model-api:model",
     "//platform/lang-core",
+    "//platform/execution",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/stream-debugger-core:debugger-streams-core",
@@ -51,13 +56,18 @@ jvm_library(
     "//platform/core-api:core",
     "//java/java-psi-api:psi",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//libraries/stream",
     "//java/debugger/impl",
     "//java/debugger/impl:impl_test_lib",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//platform/xdebugger-impl/shared",
+    "//platform/xdebugger-impl/ui",
+    "//platform/xdebugger-impl/ui:ui_test_lib",
     "//java/execution/openapi:java-execution",
     "//java/testFramework",
+    "//java/java-backend:backend",
     "//java/openapi:java",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",

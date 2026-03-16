@@ -2,6 +2,8 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -12,23 +14,24 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 
-import java.awt.*;
+import java.awt.GraphicsEnvironment;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.List;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class TestFrameworkUtil {
-  public static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
+  public static boolean shouldSkipHeadless() { return GraphicsEnvironment.isHeadless(); }  // lazy to avoid caching GraphicsEnvironment.isHeadless() on class initialization
   public static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
 
   public static boolean canRunTest(@NotNull Class<?> testCaseClass) {
-    if (!SKIP_SLOW && !SKIP_HEADLESS) {
+    if (!SKIP_SLOW && !shouldSkipHeadless()) {
       return true;
     }
 
     for (Class<?> clazz = testCaseClass; clazz != null; clazz = clazz.getSuperclass()) {
-      if (SKIP_HEADLESS && clazz.getAnnotation(SkipInHeadlessEnvironment.class) != null) {
+      if (shouldSkipHeadless() && clazz.getAnnotation(SkipInHeadlessEnvironment.class) != null) {
         System.out.println("Class '" + testCaseClass.getName() + "' is skipped because it requires working UI environment");
         return false;
       }
@@ -73,18 +76,55 @@ public final class TestFrameworkUtil {
     return false;
   }
 
-  public static boolean isPerformanceTest(@Nullable String testName, @Nullable String className) {
-    return containsWord(testName, className, "performance");
+  public static boolean isPerformanceTest(@Nullable String testName, @NotNull Class<?> aClass) {
+    if (aClass.isAnnotationPresent(PerformanceUnitTest.class)) {
+      return true;
+    }
+
+    if (testName != null) {
+      List<Method> methods = ContainerUtil.findAll(aClass.getMethods(), method -> method.getName().equals(testName));
+      if (methods.isEmpty()) {
+        return false;  // not supported, e.g. org.angular2.lang.html.Angular2HtmlLexerSpecTest#`HtmlLexer, line/column numbers, it should work without newlines`
+      }
+
+      if (ContainerUtil.all(methods, method -> method.isAnnotationPresent(PerformanceUnitTest.class))) {
+        return true;
+      }
+      else if (ContainerUtil.exists(methods, method -> method.isAnnotationPresent(PerformanceUnitTest.class))) {
+        throw new IllegalStateException("Overloaded methods with inconsistent @PerformanceUnitTest annotations are not supported: " + aClass.getName() + "#" + testName);  // not supported
+      }
+    }
+
+    return false;
   }
 
-  public static boolean isStressTest(@Nullable String testName, @Nullable String className) {
-    return isPerformanceTest(testName, className) ||
-           containsWord(testName, className, "stress") ||
-           containsWord(testName, className, "slow");
+  public static boolean isStressTest(@Nullable String testName, @NotNull Class<?> aClass) {
+    return isPerformanceTest(testName, aClass) ||
+           containsWord(testName, aClass.getSimpleName(), "stress") ||
+           containsWord(testName, aClass.getSimpleName(), "slow");
   }
 
   private static boolean containsWord(@Nullable String testName, @Nullable String className, @NotNull String word) {
     return testName != null && StringUtil.containsIgnoreCase(testName, word) ||
            className != null && StringUtil.containsIgnoreCase(className, word);
+  }
+
+  public static TestSuite flattenSuite(TestSuite suite) {
+    TestSuite result = new TestSuite();
+    result.setName(suite.getName());
+    return flattenSuite(suite, result);
+  }
+
+  private static TestSuite flattenSuite(TestSuite suite, TestSuite result) {
+    for (int i = 0; i < suite.testCount(); i++) {
+      junit.framework.Test test = suite.testAt(i);
+      if (test instanceof TestSuite) {
+        flattenSuite((TestSuite)test, result);
+      }
+      else {
+        result.addTest(test);
+      }
+    }
+    return result;
   }
 }

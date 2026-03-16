@@ -23,8 +23,9 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenSettingsCache;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JList;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 

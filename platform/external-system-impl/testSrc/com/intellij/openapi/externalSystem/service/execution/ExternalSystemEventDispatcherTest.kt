@@ -3,7 +3,7 @@ package com.intellij.openapi.externalSystem.service.execution
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.DefaultBuildDescriptor
-import com.intellij.build.events.impl.BuildEventsImpl
+import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.impl.SuccessResultImpl
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.build.progress.BuildProgressDescriptorImpl
@@ -18,15 +18,12 @@ import org.assertj.core.api.Assertions.assertThat
 
 class ExternalSystemEventDispatcherTest : LightPlatformTestCase() {
 
-  private val buildEvents = BuildEventsImpl()
-
   fun `test invokeOnCompletion`() {
     val parsers = listOf(
       BuildOutputParser { line, reader, messageConsumer ->
         messageConsumer.accept(
-          buildEvents.output()
+          OutputBuildEvent.builder(line)
             .withParentId(reader.parentEventId)
-            .withMessage(line)
             .build()
         )
         return@BuildOutputParser true
@@ -41,9 +38,8 @@ class ExternalSystemEventDispatcherTest : LightPlatformTestCase() {
       BuildOutputParser { _, _, _ -> throw RuntimeException("Bad parser") },
       BuildOutputParser { line, reader, messageConsumer ->
         messageConsumer.accept(
-          buildEvents.output()
+          OutputBuildEvent.builder(line)
             .withParentId(reader.parentEventId)
-            .withMessage(line)
             .build()
         )
         return@BuildOutputParser true
@@ -60,7 +56,7 @@ class ExternalSystemEventDispatcherTest : LightPlatformTestCase() {
     val buildDescriptor = DefaultBuildDescriptor(taskId, "test task", "/path", System.currentTimeMillis())
     val dispatcher = ExternalSystemEventDispatcher(taskId, BuildProgressListener { _, event -> eventMessages += event.message })
     dispatcher.use {
-      val buildRootProgress = BuildRootProgressImpl(buildEvents, dispatcher)
+      val buildRootProgress = BuildRootProgressImpl(dispatcher)
       buildRootProgress.start("Build started", BuildProgressDescriptorImpl(buildDescriptor))
       dispatcher.invokeOnCompletion { eventMessages += "completion message 1" }
       val task1Progress = buildRootProgress.startChildProgress("sub task1 started")

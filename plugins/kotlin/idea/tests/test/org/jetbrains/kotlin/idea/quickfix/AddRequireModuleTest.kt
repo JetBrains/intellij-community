@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import org.jetbrains.kotlin.idea.test.KotlinLightJava9ModulesCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinMultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
+import org.jetbrains.kotlin.idea.test.KotlinMultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
+import org.jetbrains.kotlin.idea.test.KotlinMultiModuleJava9ProjectDescriptor.ModuleDescriptor.M3
+import org.jetbrains.kotlin.idea.test.KotlinMultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 

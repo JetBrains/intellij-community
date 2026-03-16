@@ -4,9 +4,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -14,11 +14,11 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
-internal class StreamDebuggerManager(project: Project) : FrontendXDebuggerManagerListener {
+internal class StreamDebuggerManager(project: Project) : XDebuggerManagerProxyListener {
   private val sessionStates = ConcurrentHashMap<XDebugSessionId, TraceDebuggerStateListener>()
 
   init {
-    project.messageBus.connect().subscribe(FrontendXDebuggerManagerListener.TOPIC, this)
+    project.messageBus.connect().subscribe(XDebuggerManagerProxyListener.TOPIC, this)
   }
 
 
@@ -56,7 +56,7 @@ private class TraceDebuggerStateListener(cs: CoroutineScope, sessionId: XDebugSe
 }
 
 
-private class TraceDebuggerInitializationProjectActivity : ProjectActivity {
+internal class TraceDebuggerInitializationProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     StreamDebuggerManager.getInstance(project)
   }

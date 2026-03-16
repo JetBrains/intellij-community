@@ -10,9 +10,15 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiReference
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -33,12 +39,20 @@ import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessing
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter
 import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter.Companion.addImports
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.resolve.calls.tower.isSynthesized
 
+@K1Deprecation
 class JavaToKotlinInlineHandler : AbstractCrossLanguageInlineHandler() {
     override fun prepareReference(reference: PsiReference, referenced: PsiElement): MultiMap<PsiElement, String> {
         val referenceElement = reference.element
@@ -108,7 +122,6 @@ private fun NewJavaToKotlinConverter.convertToKotlinNamedDeclaration(
     val (j2kResults, _, j2kContext) = ActionUtil.underModalProgress(project, KotlinBundle.message("action.j2k.name")) {
         elementsToKotlin(
             inputElements = listOf(referenced),
-            processor = processor,
             bodyFilter = { it == referenced },
             forInlining = true
         )
@@ -153,6 +166,7 @@ private fun unwrapElement(unwrappedUsage: KtReferenceExpression, referenced: Psi
     return resultExpression.getQualifiedElementSelector() as KtReferenceExpression
 }
 
+@K1Deprecation
 class J2KInlineCache(private val strategy: UsageReplacementStrategy, private val originalText: String) {
     /**
      * @return [strategy] without validation if [elementToValidation] is null

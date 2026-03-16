@@ -11,15 +11,19 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerManager
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.RemoteValueHint
 import com.intellij.platform.debugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.impl.evaluate.childCoroutineScope
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
-import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.concurrency.asPromise
 import java.awt.Point
@@ -28,7 +32,7 @@ private val LOG = Logger.getInstance(XQuickEvaluateHandler::class.java)
 
 internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
   override fun isEnabled(project: Project): Boolean {
-    val currentSession = FrontendXDebuggerManager.getInstance(project).currentSession.value
+    val currentSession = FrontendXDebuggerManager.getInstance(project).currentSession
     return currentSession != null && currentSession.currentEvaluator != null
   }
 
@@ -70,7 +74,7 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
       }
       else {
         val currentSession = if (frontendType is FrontendType.Remote) {
-          FrontendXDebuggerManager.getInstance(project).currentSession.value
+          FrontendXDebuggerManager.getInstance(project).currentSession
         }
         else {
           // Monolith case, we do not want to break plugins e.g., IJPL-176963

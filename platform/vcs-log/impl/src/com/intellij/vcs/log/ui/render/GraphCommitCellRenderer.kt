@@ -5,7 +5,7 @@ import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer
-import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
+import com.intellij.openapi.vcs.changes.ui.BranchPresentation
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredRenderer
@@ -32,7 +32,14 @@ import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager.Companion.getIns
 import com.intellij.vcs.log.ui.table.links.VcsLinksRenderer
 import com.intellij.vcs.log.visible.filters.VcsLogTextFilterWithMatches
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Font
+import java.awt.FontMetrics
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Point
 import java.awt.geom.AffineTransform
 import javax.swing.JComponent
 import javax.swing.JTable
@@ -85,14 +92,13 @@ class GraphCommitCellRenderer(
 
     prepareTemplateComponent(row, cell)
     if (templateComponent.referencePainter.isLeftAligned) {
-      val distance: Double = point.getX() - templateComponent.graphWidth
-      if (distance > 0 && distance <= templateComponent.referencesWidth) {
-        return TooltipReferencesPanel(logData, refs, bookmarks)
+      if (templateComponent.graphWidth < point.getX() && point.getX() <= templateComponent.graphWidth + templateComponent.referencesWidth) {
+        return templateComponent.referencePainter.createTooltip(logData, refs, bookmarks, point.getX() - templateComponent.graphWidth)
       }
     }
     else {
-      if (columnWidth - point.getX() <= templateComponent.referencesWidth) {
-        return TooltipReferencesPanel(logData, refs, bookmarks)
+      if (columnWidth - templateComponent.referencesWidth <= point.getX()) {
+        return templateComponent.referencePainter.createTooltip(logData, refs, bookmarks, point.getX() - columnWidth + templateComponent.referencesWidth)
       }
     }
     return null
@@ -213,11 +219,12 @@ class GraphCommitCellRenderer(
       val bookmarks = cell.bookmarksToThisCommit
       val labelForeground = if (isNewUI()) {
         JBColor.namedColor("VersionControl.Log.Commit.Reference.foreground",
-                           CurrentBranchComponent.TEXT_COLOR)
+            BranchPresentation.TEXT_COLOR
+        )
       }
       else {
         if (isSelected) table.getBaseStyle(row, column, hasFocus, isSelected).foreground!!
-        else CurrentBranchComponent.TEXT_COLOR
+        else BranchPresentation.TEXT_COLOR
       }
 
       append("") // appendTextPadding wont work without this

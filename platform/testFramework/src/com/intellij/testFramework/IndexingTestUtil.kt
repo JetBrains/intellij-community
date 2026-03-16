@@ -8,7 +8,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbServiceImpl
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl
 import com.intellij.util.ui.EDT

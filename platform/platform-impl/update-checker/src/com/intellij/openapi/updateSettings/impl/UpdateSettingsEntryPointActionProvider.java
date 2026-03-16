@@ -29,13 +29,17 @@ import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
-import static com.intellij.ide.actions.SettingsEntryPointAction.*;
+import static com.intellij.ide.actions.SettingsEntryPointAction.ActionProvider;
+import static com.intellij.ide.actions.SettingsEntryPointAction.UpdateAction;
+import static com.intellij.ide.actions.SettingsEntryPointAction.updateState;
 
-/**
- * @author Alexander Lobas
- */
 final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   private static final String NEXT_RUN_KEY_BUILD = "NextRunPlatformUpdateBuild";
   private static final String NEXT_RUN_KEY_VERSION = "NextRunPlatformUpdateVersion";
@@ -264,7 +268,9 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
               private static @NotNull InternalPluginResults getInternalPluginUpdates(@NotNull PlatformUpdates.Loaded loadedResult,
                                                                                      @NotNull ProgressIndicator indicator) {
-                return UpdateChecker.getInternalPluginUpdates(loadedResult.getNewBuild().getApiVersion(), indicator);
+                return UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates(
+                  indicator, loadedResult.getNewBuild().getApiVersion()
+                );
               }
             });
 

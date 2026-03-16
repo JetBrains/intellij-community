@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -18,6 +17,7 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -27,7 +27,12 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.messages.MessageBusConnection
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
@@ -242,10 +247,11 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
 
                     val projectFileIndex = ProjectFileIndex.getInstance(project)
                     val libraryInfoCache = LibraryInfoCache.getInstance(project)
+                    val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
                     for (manifest in stdlibManifests) {
-                        val orderEntries = projectFileIndex.getOrderEntriesForFile(manifest)
-                        for (entry in orderEntries) {
-                            val library = entry.safeAs<LibraryOrderEntry>()?.library.safeAs<LibraryEx>() ?: continue
+                        val libraryEntities = projectFileIndex.findContainingLibraries(manifest)
+                        for (entity in libraryEntities) {
+                            val library = entity.findLibraryBridge(snapshot).safeAs<LibraryEx>() ?: continue
                             val libraryInfos = libraryInfoCache[library]
                             return@index libraryInfos.find(::isStdlib) ?: continue
                         }

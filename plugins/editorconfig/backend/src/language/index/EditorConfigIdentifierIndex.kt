@@ -3,7 +3,11 @@ package org.editorconfig.language.index
 
 import com.intellij.editorconfig.common.plugin.EditorConfigFileType
 import com.intellij.editorconfig.common.syntax.psi.EditorConfigDescribableElement
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.DataIndexer
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
+import com.intellij.util.indexing.FileBasedIndexExtension
+import com.intellij.util.indexing.FileContent
+import com.intellij.util.indexing.ID
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.KeyDescriptor

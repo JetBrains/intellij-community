@@ -6,7 +6,11 @@ import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FilteringIterator;
+import com.intellij.util.containers.FlatteningIterator;
+import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NonNls;
@@ -14,7 +18,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NavigableSet;
+import java.util.Set;
+import java.util.TreeSet;
 
 public final class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   private final TreeSet<String> mySortedStrings = new TreeSet<>();

@@ -1,7 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.formatter;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.ASTBlock;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.IndentImpl;
+import com.intellij.formatting.Spacing;
+import com.intellij.formatting.SpacingBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
@@ -21,7 +27,11 @@ import com.intellij.util.containers.FactoryMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.yaml.*;
+import org.jetbrains.yaml.YAMLElementTypes;
+import org.jetbrains.yaml.YAMLFileType;
+import org.jetbrains.yaml.YAMLLanguage;
+import org.jetbrains.yaml.YAMLParserDefinition;
+import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLSequence;
 import org.jetbrains.yaml.psi.YAMLSequenceItem;

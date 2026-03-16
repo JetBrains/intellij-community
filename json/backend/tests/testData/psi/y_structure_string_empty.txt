@@ -1,0 +1,3 @@
+JsonFile: y_structure_string_empty.json
+  JsonStringLiteral
+    PsiElement(DOUBLE_QUOTED_STRING)('""')

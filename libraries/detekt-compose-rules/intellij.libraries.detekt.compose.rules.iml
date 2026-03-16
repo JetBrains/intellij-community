@@ -87,7 +87,20 @@
           <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-utils/1.23.8/detekt-utils-1.23.8-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/nlopez/compose/rules/common-detekt/0.4.27/common-detekt-0.4.27-javadoc.jar!/" />
         </JAVADOC>
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/nlopez/compose/rules/detekt/0.4.27/detekt-0.4.27-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-core/1.23.8/detekt-core-1.23.8-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-api/1.23.8/detekt-api-1.23.8-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-annotations-jvm/0.17.1/poko-annotations-jvm-0.17.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-parser/1.23.8/detekt-parser-1.23.8-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/davidburstrom/contester/contester-breakpoint/0.2.0/contester-breakpoint-0.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-tooling/1.23.8/detekt-tooling-1.23.8-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/snakeyaml/snakeyaml-engine/2.7/snakeyaml-engine-2.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-metrics/1.23.8/detekt-metrics-1.23.8-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-psi-utils/1.23.8/detekt-psi-utils-1.23.8-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-utils/1.23.8/detekt-utils-1.23.8-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/nlopez/compose/rules/common-detekt/0.4.27/common-detekt-0.4.27-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />

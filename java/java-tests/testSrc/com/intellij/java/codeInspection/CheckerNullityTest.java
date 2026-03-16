@@ -144,7 +144,7 @@ public class CheckerNullityTest extends LightJavaCodeInsightFixtureTestCase {
       import org.checkerframework.framework.qual.*;
       
       @DefaultQualifier(NonNull.class)
-      interface Test<X> {
+      interface Test<X extends @Nullable Object> {
         String test(X x);
         X test(String x);
       }""");

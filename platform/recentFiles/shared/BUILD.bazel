@@ -22,7 +22,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//platform/kernel/shared:kernel",
     "@lib//:jetbrains-annotations",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/platform-impl/rpc",
     "//platform/platform-api:ide",
     "//platform/core-ui",

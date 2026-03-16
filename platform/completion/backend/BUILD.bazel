@@ -19,7 +19,10 @@ jvm_library(
     "//platform/completion/common",
     "//platform/kernel/shared:kernel",
     "//platform/kernel/rpc.backend",
+  ],
+  runtime_deps = [
     "//platform/backend",
+    "//platform/main/intellij.platform.backend.main:backend-main",
   ]
 )
 ### auto-generated section `build intellij.platform.completion.backend` end

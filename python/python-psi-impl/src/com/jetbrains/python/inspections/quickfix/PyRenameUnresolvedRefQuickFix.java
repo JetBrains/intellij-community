@@ -18,7 +18,12 @@ package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.TemplateBuilderFactory;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -35,11 +40,17 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * User : ktisha
- *
+ * <p>
  * Quick fix to rename unresolved references
  */
 public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
@@ -66,7 +77,7 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
 
     ReferenceNameExpression refExpr = new ReferenceNameExpression(items, name);
     TemplateBuilderImpl builder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().
-                                          createTemplateBuilder(parentScope);
+      createTemplateBuilder(parentScope);
     for (PyReferenceExpression expr : refs) {
       if (!expr.equals(referenceExpression)) {
         builder.replaceElement(expr, name, name, false);
@@ -82,7 +93,7 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
   public static boolean isValidReference(final PsiReference reference) {
     if (!(reference instanceof PyReferenceImpl)) return false;
     ResolveResult[] results = ((PyReferenceImpl)reference).multiResolve(true);
-    if(results.length == 0) return false;
+    if (results.length == 0) return false;
     for (ResolveResult result : results) {
       if (!result.isValidResult()) return false;
     }
@@ -113,8 +124,9 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
 
     final Collection<String> usedNames = PyUtil.collectUsedNames(parentScope);
     for (String name : usedNames) {
-      if (name != null)
+      if (name != null) {
         items.add(LookupElementBuilder.create(name));
+      }
     }
 
     return items.toArray(LookupElement.EMPTY_ARRAY);

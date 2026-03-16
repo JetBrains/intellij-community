@@ -30,9 +30,14 @@ import com.intellij.designer.utils.Cursors;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ArrayUtil;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.dnd.*;
+import javax.swing.JComponent;
+import java.awt.Cursor;
+import java.awt.Point;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetAdapter;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

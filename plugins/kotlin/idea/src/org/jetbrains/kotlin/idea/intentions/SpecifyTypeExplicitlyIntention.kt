@@ -4,13 +4,18 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.HighPriorityAction
-import com.intellij.codeInsight.template.*
+import com.intellij.codeInsight.template.Expression
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateBuilderImpl
+import com.intellij.codeInsight.template.TemplateEditingAdapter
+import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -31,18 +36,34 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.getResolvableApproximations
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithInitializer
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.checkers.ExplicitApiDeclarationChecker
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.error.ErrorTypeKind
 import org.jetbrains.kotlin.types.error.ErrorUtils
+import org.jetbrains.kotlin.types.isDynamic
+import org.jetbrains.kotlin.types.isError
+import org.jetbrains.kotlin.types.isFlexible
+import org.jetbrains.kotlin.types.isNullabilityFlexible
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.utils.ifEmpty
 
+@K1Deprecation
 class SpecifyTypeExplicitlyIntention : SelfTargetingRangeIntention<KtCallableDeclaration>(
     KtCallableDeclaration::class.java,
     KotlinBundle.messagePointer("specify.type.explicitly")

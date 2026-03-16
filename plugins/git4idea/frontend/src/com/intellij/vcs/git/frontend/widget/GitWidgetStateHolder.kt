@@ -13,7 +13,13 @@ import com.intellij.vcs.git.rpc.GitWidgetState
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 
 @Service(Service.Level.PROJECT)
 internal class GitWidgetStateHolder(private val project: Project, cs: CoroutineScope) {

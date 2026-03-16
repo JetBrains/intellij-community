@@ -16,7 +16,7 @@ interface GitLabMergeRequestNotePositionMapping {
     private val LOG = logger<GitLabMergeRequestNotePositionMapping>()
 
     fun map(mrChanges: GitBranchComparisonResult, position: GitLabNotePosition): GitLabMergeRequestNotePositionMapping {
-      val textLocation = position.getLocation(Side.LEFT)
+      val textLocation = position.getLocation(Side.LEFT)?.second
 
       val changes = if (position.parentSha == mrChanges.mergeBaseSha) {
         // first commit
@@ -60,8 +60,12 @@ interface GitLabMergeRequestNotePositionMapping {
       val change = changes.find {
         val pathBefore = it.filePathBefore
         val pathAfter = it.filePathAfter
-        pathBefore != null && position.filePathBefore != null && pathBefore.path.endsWith(position.filePathBefore) ||
-        pathAfter != null && position.filePathAfter != null && pathAfter.path.endsWith(position.filePathAfter)
+
+        val positionPathBefore = position.filePathBefore
+        val positionPathAfter = position.filePathAfter
+
+        pathBefore != null && positionPathBefore != null && pathBefore.path.endsWith(positionPathBefore) ||
+        pathAfter != null && positionPathAfter != null && pathAfter.path.endsWith(positionPathAfter)
       } ?: run {
         LOG.debug("Can't find change for $position")
         return Obsolete

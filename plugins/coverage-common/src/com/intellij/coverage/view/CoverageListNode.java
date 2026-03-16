@@ -14,12 +14,16 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiQualifiedNamedElement;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.List;
 
 public class CoverageListNode extends AbstractTreeNode<Object> {
@@ -38,7 +42,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
    * Children are cached in order to be able to filter nodes with no (interesting) children.
    * @see DirectoryCoverageViewExtension#getChildrenNodes(AbstractTreeNode)
    */
-  private List<AbstractTreeNode<?>> myCachedChildren;
+  private volatile List<AbstractTreeNode<?>> myCachedChildren;
 
   /**
    * @deprecated Use {@link CoverageListNode#CoverageListNode(Project, PsiNamedElement, CoverageSuitesBundle)}
@@ -83,10 +87,14 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   }
 
   @Override
-  public synchronized @NotNull List<? extends AbstractTreeNode<?>> getChildren() {
-    if (myCachedChildren != null) return myCachedChildren;
-    return myCachedChildren = myBundle.getCoverageEngine().createCoverageViewExtension(myProject, myBundle)
+  public @NotNull List<? extends AbstractTreeNode<?>> getChildren() {
+    List<AbstractTreeNode<?>> children = myCachedChildren;
+    if (children != null) return children;
+
+    children = myBundle.getCoverageEngine().createCoverageViewExtension(myProject, myBundle)
       .getChildrenNodes(this);
+    myCachedChildren = children;
+    return children;
   }
 
   @Override

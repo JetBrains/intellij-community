@@ -1,12 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.analysis
 
-import com.intellij.platform.ml.*
+import com.intellij.platform.ml.MLModel
+import com.intellij.platform.ml.PerTier
+import com.intellij.platform.ml.Session
+import com.intellij.platform.ml.SystemLoggerBuilder
 import com.intellij.platform.ml.environment.Environment
 import com.intellij.platform.ml.feature.Feature
 import com.intellij.platform.ml.feature.FeatureDeclaration
 import com.intellij.platform.ml.logs.schema.EventField
 import com.intellij.platform.ml.logs.schema.EventPair
+import com.intellij.platform.ml.mergePerTier
 import com.intellij.platform.ml.session.DescribedRootContainer
 import com.intellij.platform.ml.session.DescribedSessionTree
 import kotlinx.coroutines.async

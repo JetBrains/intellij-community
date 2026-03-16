@@ -3,8 +3,14 @@ package com.intellij.codeInspection.options;
 
 import org.junit.jupiter.api.Test;
 
-import static com.intellij.codeInspection.options.OptPane.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static com.intellij.codeInspection.options.OptPane.EMPTY;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.tabs;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("InjectedReferences")
 public class OptPaneTest {

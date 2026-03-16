@@ -23,14 +23,15 @@ public final class DeclarationConflictChecker {
   /**
    * For each reference in the collection, finds a definition of name visible from the point of the reference. Returns a list of
    * such definitions.
-   * @param name what to look for.
+   *
+   * @param name       what to look for.
    * @param references references to check.
-   * @param ignored if an element defining the name is also listed here, ignore it.
+   * @param ignored    if an element defining the name is also listed here, ignore it.
    * @return a list of pairs (referring element, element that defines name).
    */
   public static @NotNull List<Pair<PsiElement, PsiElement>> findDefinitions(@NotNull String name,
-                                                                   @NotNull Collection<? extends PsiReference> references,
-                                                                   @NotNull Set<PsiElement> ignored) {
+                                                                            @NotNull Collection<? extends PsiReference> references,
+                                                                            @NotNull Set<PsiElement> ignored) {
     final List<Pair<PsiElement, PsiElement>> conflicts = new ArrayList<>();
     for (PsiReference ref : references) {
       final PsiElement refElement = ref.getElement();

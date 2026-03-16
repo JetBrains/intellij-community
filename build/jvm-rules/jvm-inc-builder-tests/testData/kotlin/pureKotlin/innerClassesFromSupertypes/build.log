@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_innerClassesFromSupertypes-a.kotlin_module
+  test/C.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/innerClassesFromSupertypes/a/b.kt
+End of files
+------------------------------------------
+Exit code: OK

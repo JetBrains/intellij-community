@@ -6,7 +6,12 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageFix.ha
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassInitializer
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.psi.util.parents
 import com.intellij.util.containers.withPrevious

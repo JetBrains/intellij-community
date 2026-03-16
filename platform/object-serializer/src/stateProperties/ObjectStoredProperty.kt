@@ -1,7 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization.stateProperties
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.JsonSchemaType
+import com.intellij.openapi.components.ScalarProperty
+import com.intellij.openapi.components.StoredProperty
+import com.intellij.openapi.components.StoredPropertyBase
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.serialization.ClassUtil

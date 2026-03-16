@@ -7,7 +7,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vcs.update.*
+import com.intellij.openapi.vcs.update.ActionInfo
+import com.intellij.openapi.vcs.update.SequentialUpdatesContext
+import com.intellij.openapi.vcs.update.UpdateEnvironment
+import com.intellij.openapi.vcs.update.UpdateSession
+import com.intellij.openapi.vcs.update.UpdatedFiles
+import com.intellij.openapi.vcs.update.VcsUpdateProcess
+import com.intellij.openapi.vcs.update.VcsUpdateSpecification
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.GitNotificationIdsHolder.Companion.BRANCH_SET_UPSTREAM_ERROR
 import git4idea.GitNotificationIdsHolder.Companion.UPDATE_NOTHING_TO_UPDATE
@@ -25,11 +31,11 @@ internal object GitUpdateExecutionProcess {
   fun launchUpdate(
     project: Project,
     repositories: Collection<GitRepository>,
-    updateConfig: Map<GitRepository, GitBranchPair>,
+    updateConfig: Map<GitRepository, GitBranchPair>?,
     updateMethod: UpdateMethod,
     shouldSetAsUpstream: Boolean = false,
   ) {
-    if (updateConfig.isEmpty()) {
+    if (updateConfig != null && updateConfig.isEmpty()) {
       notifyNothingToUpdate(project)
       return
     }
@@ -73,7 +79,7 @@ internal object GitUpdateExecutionProcess {
   private fun createSpec(
     project: Project,
     roots: List<FilePath>,
-    updateConfig: Map<GitRepository, GitBranchPair>,
+    updateConfig: Map<GitRepository, GitBranchPair>?,
     updateMethod: UpdateMethod,
     shouldSetAsUpstream: Boolean,
   ): VcsUpdateSpecification {
@@ -81,7 +87,7 @@ internal object GitUpdateExecutionProcess {
     val updateEnvironment = object : UpdateEnvironment by gitUpdateEnvironment {
       override fun updateDirectories(contentRoots: Array<out FilePath>, updatedFiles: UpdatedFiles, progressIndicator: ProgressIndicator, context: Ref<SequentialUpdatesContext?>): UpdateSession {
         if (shouldSetAsUpstream) {
-          updateConfig.forEach { (repository, branchPair) -> setBranchUpstream(repository, branchPair) }
+          updateConfig?.forEach { (repository, branchPair) -> setBranchUpstream(repository, branchPair) }
         }
 
         return GitUpdateEnvironment.performUpdate(project, contentRoots, updatedFiles, progressIndicator, updateMethod, updateConfig)

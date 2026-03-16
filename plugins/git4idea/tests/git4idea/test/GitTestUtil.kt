@@ -1,11 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GitTestUtil")
 
 package git4idea.test
 
 import com.intellij.dvcs.push.PushSpec
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.Executor.append
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
@@ -18,6 +20,7 @@ import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.test.VcsPlatformTestContext
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
@@ -35,7 +38,6 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.collections.contains
 
 const val USER_NAME = "John Doe"
 const val USER_EMAIL = "John.Doe@example.com"
@@ -70,7 +72,7 @@ fun createFileStructure(rootDir: VirtualFile, vararg paths: String) {
   rootDir.refresh(false, true)
 }
 
-internal fun initRepo(project: Project, repoRoot: Path, makeInitialCommit: Boolean) {
+internal fun initRepo(project: Project?, repoRoot: Path, makeInitialCommit: Boolean) {
   Files.createDirectories(repoRoot)
   cd(repoRoot.toString())
   gitInit(project)
@@ -99,7 +101,7 @@ fun GitPlatformTest.cloneRepo(source: String, destination: String, bare: Boolean
   setupDefaultUsername()
 }
 
-internal fun setupDefaultUsername(project: Project) {
+internal fun setupDefaultUsername(project: Project?) {
   setupUsername(project, USER_NAME, USER_EMAIL)
 }
 
@@ -107,7 +109,7 @@ internal fun GitPlatformTest.setupDefaultUsername() {
   setupDefaultUsername(project)
 }
 
-internal fun setupUsername(project: Project, name: String, email: String) {
+internal fun setupUsername(project: Project?, name: String, email: String) {
   assertFalse("Can not set empty user name ", name.isEmpty())
   assertFalse("Can not set empty user email ", email.isEmpty())
   git(project, "config user.name '$name'")
@@ -131,11 +133,19 @@ internal fun createRepository(project: Project, root: Path, makeInitialCommit: B
   return registerRepo(project, root)
 }
 
-internal fun GitRepository.createSubRepository(name: String): GitRepository {
+internal fun VcsPlatformTestContext.createRepository(project: Project, root: Path, makeInitialCommit: Boolean): GitRepository {
+  initRepo(project, root, makeInitialCommit)
+  LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.resolve(GitUtil.DOT_GIT))!!
+  return registerRepo(project, root)
+}
+
+internal fun GitRepository.createSubRepository(name: String, addToGitIgnore: Boolean = true): GitRepository {
   val childRoot = File(this.root.path, name)
   HeavyPlatformTestCase.assertTrue(childRoot.mkdirs())
   val repo = createRepository(this.project, childRoot.path)
-  this.tac(".gitignore", name)
+  if (addToGitIgnore) {
+    this.tac(".gitignore", name)
+  }
   return repo
 }
 

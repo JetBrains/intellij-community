@@ -12,8 +12,10 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.info.Info;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Container;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;

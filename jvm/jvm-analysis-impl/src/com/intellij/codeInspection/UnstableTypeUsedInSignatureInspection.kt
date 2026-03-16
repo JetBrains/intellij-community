@@ -15,7 +15,15 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.uast.UastVisitorAdapter
 import com.siyeh.ig.ui.ExternalizableStringSet
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UastVisibility
+import org.jetbrains.uast.getContainingUClass
+import org.jetbrains.uast.getContainingUFile
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 /**

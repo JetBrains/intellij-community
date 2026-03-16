@@ -3,7 +3,13 @@ package org.jetbrains.idea.maven.indices
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
@@ -16,11 +22,17 @@ import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.PathUtilRt
+import com.intellij.util.io.createDirectories
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.OptionTag
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.model.MavenIndexId
@@ -33,13 +45,16 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
+import java.io.IOException
 import java.net.URI
 import java.net.URISyntaxException
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.absolutePathString
-import kotlin.io.path.isDirectory
+import kotlin.io.path.exists
 import kotlin.io.path.name
 
 
@@ -174,7 +189,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
     return MavenServerManager.getInstance().createIndexer()
   }
 
-  private fun getDirForMavenIndex(repo: MavenRepositoryInfo): Path {
+  private suspend fun getDirForMavenIndex(repo: MavenRepositoryInfo): Path {
     val url = getCanonicalUrl(repo)
     val key = PathUtilRt.suggestFileName(PathUtilRt.getFileName(url), false, false)
 
@@ -183,18 +198,37 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
   }
 
 
-  private fun getCanonicalUrl(repo: MavenRepositoryInfo): String {
-    if (Path.of(repo.url).isDirectory()) return Path.of(repo.url).toCanonicalPath()
+  private suspend fun getCanonicalUrl(repo: MavenRepositoryInfo): String = withContext(Dispatchers.IO) {
+    val path =
+      try {
+        Path.of(repo.url).also {
+          if (!it.exists()) {
+            // Directory might not exist on fresh installations
+            it.createDirectories()
+          }
+        }.toCanonicalPath()
+      }
+      catch (_: IOException) {
+        null
+      }
+      catch (_: InvalidPathException) {
+        null
+      }
+
+    if (path != null) {
+      return@withContext path
+    }
+
     try {
       val uri = URI(repo.url)
       if (uri.scheme == null || uri.scheme.lowercase() == "file") {
         val path = uri.path
-        if (path != null) return path
+        if (path != null) return@withContext path
       }
-      return uri.toString()
+      return@withContext uri.toString()
     }
     catch (e: URISyntaxException) {
-      return repo.url
+      return@withContext repo.url
     }
 
   }

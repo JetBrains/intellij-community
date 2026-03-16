@@ -8,11 +8,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public final class NlsCapitalizationUtil {
-
   public static boolean isCapitalizationSatisfied(String value, Nls.Capitalization capitalization) {
     if (StringUtil.isEmpty(value) || capitalization == Nls.Capitalization.NotSpecified) {
       return true;
     }
+
     return capitalization == Nls.Capitalization.Title
            ? StringUtil.wordsToBeginFromUpperCase(value).equals(value)
            : checkSentenceCapitalization(value);
@@ -23,7 +23,7 @@ public final class NlsCapitalizationUtil {
     final int wordCount = words.size();
     if (wordCount == 0) return true;
 
-    if (Character.isLetter(words.get(0).charAt(0)) && !isCapitalizedWord(words.get(0))) return false;
+    if (Character.isLetter(words.getFirst().charAt(0)) && !isCapitalizedWord(words.getFirst())) return false;
     if (wordCount == 1) return true;
 
     int capitalized = 1;

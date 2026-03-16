@@ -3,7 +3,6 @@ package com.intellij.platform.pluginManager.backend.rpc
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.getTags

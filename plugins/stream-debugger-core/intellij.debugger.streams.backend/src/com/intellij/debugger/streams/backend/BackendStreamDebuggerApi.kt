@@ -4,15 +4,19 @@ import com.intellij.debugger.streams.core.action.TraceStreamRunner
 import com.intellij.debugger.streams.shared.ChainStatus
 import com.intellij.debugger.streams.shared.StreamDebuggerApi
 import com.intellij.openapi.application.smartReadAction
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.util.asDisposable
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.mapLatest
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class BackendStreamDebuggerApi : StreamDebuggerApi {

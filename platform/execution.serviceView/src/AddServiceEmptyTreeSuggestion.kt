@@ -4,7 +4,11 @@ package com.intellij.platform.execution.serviceView
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.services.ServiceViewEmptyTreeSuggestion
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.impl.ActionButtonUtil
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.popup.JBPopupFactory

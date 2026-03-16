@@ -4,7 +4,7 @@ package com.intellij.util
 import fleet.util.multiplatform.Actual
 
 @Suppress("unused")
-@Actual("threadLocalImpl")
+@Actual
 internal fun <T> threadLocalImplJvm(supplier: () -> T): ThreadLocalKmp<T> = threadLocal(supplier)
 
 private fun <T> threadLocal(supplier: () -> T) = object : ThreadLocalKmp<T> {

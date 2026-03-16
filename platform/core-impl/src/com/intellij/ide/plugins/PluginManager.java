@@ -8,14 +8,17 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.AbstractList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -27,7 +30,6 @@ public final class PluginManager {
   public static final String INSTALLED_TXT = "installed.txt";
   public static final Pattern EXPLICIT_BIG_NUMBER_PATTERN = Pattern.compile("(.*)\\.(9{4,}+|10{4,}+)");
 
-  @RequiresBlockingContext
   public static @NotNull PluginManager getInstance() {
     return ApplicationManager.getApplication().getService(PluginManager.class);
   }

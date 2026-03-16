@@ -187,7 +187,8 @@ public interface DfaMemoryState {
   void flushVariable(@NotNull DfaVariableValue variable);
 
   /**
-   * Flush all the variables for which filter returns true
+   * Flush all the variables for which filter returns true. The type of unstable variables will be corrected,
+   * like {@link #flushFields()} does (see {@link DfType#correctTypeOnFlush(DfType)}).
    *
    * @param filter filter to check whether the variable should be flushed
    */

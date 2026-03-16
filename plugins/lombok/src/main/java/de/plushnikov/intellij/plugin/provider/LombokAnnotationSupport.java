@@ -16,4 +16,9 @@ final class LombokAnnotationSupport implements AnnotationPackageSupport {
     }
     return Collections.emptyList();
   }
+
+  @Override
+  public boolean isNonNullUsedForInstrumentation() {
+    return true;
+  }
 }

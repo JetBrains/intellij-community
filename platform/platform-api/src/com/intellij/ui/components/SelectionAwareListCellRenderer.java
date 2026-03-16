@@ -5,8 +5,11 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
+import java.awt.Component;
 import java.util.function.Function;
 
 @ApiStatus.Internal
@@ -20,6 +23,7 @@ public class SelectionAwareListCellRenderer<T> implements ListCellRenderer<T> {
 
   /** @deprecated use {@link #SelectionAwareListCellRenderer(Function)} instead */
   @Deprecated
+  @ApiStatus.Internal
   @SuppressWarnings({"LambdaUnfriendlyMethodOverload", "UnnecessaryFullyQualifiedName", "UsagesOfObsoleteApi"})
   public SelectionAwareListCellRenderer(com.intellij.util.NotNullFunction<? super T, ? extends JComponent> fun) {
     myFun = fun;

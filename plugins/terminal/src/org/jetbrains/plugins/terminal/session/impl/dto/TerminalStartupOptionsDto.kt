@@ -12,6 +12,7 @@ data class TerminalStartupOptionsDto(
   val shellCommand: List<String>,
   val workingDirectory: String,
   val envVariables: Map<String, String>,
+  val pid: Long?,
 )
 
 @ApiStatus.Internal
@@ -19,7 +20,8 @@ fun TerminalStartupOptions.toDto(): TerminalStartupOptionsDto {
   return TerminalStartupOptionsDto(
     shellCommand = shellCommand,
     workingDirectory = workingDirectory,
-    envVariables = envVariables
+    envVariables = envVariables,
+    pid = pid,
   )
 }
 
@@ -28,6 +30,7 @@ fun TerminalStartupOptionsDto.toOptions(): TerminalStartupOptions {
   return TerminalStartupOptionsImpl(
     shellCommand = shellCommand,
     workingDirectory = workingDirectory,
-    envVariables = envVariables
+    envVariables = envVariables,
+    pid = pid,
   )
 }

@@ -28,12 +28,16 @@ import com.intellij.packageDependencies.ui.DependenciesPanel;
 import com.intellij.packageDependencies.ui.PackagePatternProvider;
 import com.intellij.packageDependencies.ui.ProjectPatternProvider;
 import com.intellij.projectView.BaseProjectViewTestCase;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 public class DependenciesPanelTest extends TestSourceBasedTestCase {
   public void testFiles() {

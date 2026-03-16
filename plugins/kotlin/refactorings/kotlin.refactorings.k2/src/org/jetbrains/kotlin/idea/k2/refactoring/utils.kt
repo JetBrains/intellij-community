@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring
 
 import com.intellij.ide.DataManager
@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.containingSymbol
 import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.importableFqName
 import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -29,9 +30,18 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.name
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
@@ -41,7 +51,26 @@ import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParenthes
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.SpecialNames
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtContextParameterList
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtTypeParameter
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 /**
@@ -64,7 +93,7 @@ fun PsiElement?.canDeleteElement(): Boolean {
     if (this is KtObjectDeclaration && isObjectLiteral()) return false
 
     if (this is KtParameter) {
-        if (parent is KtContextReceiverList) return true
+        if (parent is KtContextParameterList) return true
         val parameterList = parent as? KtParameterList ?: return false
         val declaration = parameterList.parent as? KtDeclaration ?: return false
         return declaration !is KtPropertyAccessor
@@ -145,7 +174,7 @@ fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
     val symbol = receiverValue.symbol
     return if ((symbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) {
         //specify companion name to avoid clashes with enum entries
-        (symbol.containingSymbol as KaClassifierSymbol).name!!.asString() + "." + symbol.name!!.asString()
+        (symbol.containingSymbol as KaClassifierSymbol).importableFqName!!.asString() + "." + symbol.name!!.asString()
     }
     else if ((symbol as? KaClassSymbol)?.classKind == KaClassKind.OBJECT) {
         symbol.name!!.asString()

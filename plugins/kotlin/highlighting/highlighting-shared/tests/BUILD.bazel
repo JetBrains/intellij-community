@@ -17,18 +17,18 @@ jvm_library(
     "//platform/core-ui",
     "//jps/model-api:model",
     "//platform/projectModel-api:projectModel",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//platform/diff-impl",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build kotlin.highlighting.shared.tests` end
 

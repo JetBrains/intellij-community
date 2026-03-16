@@ -29,7 +29,6 @@ project.iosMain
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
     Kotlin/Native: stdlib (COMPILE)
     commonMain (refines, COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (COMPILE)
 
 project.iosTest
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
@@ -37,7 +36,6 @@ project.iosTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
     iosMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-test:annotationsCommonMain:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-test:assertionsCommonMain:{{KGP_VERSION}} (TEST)
 

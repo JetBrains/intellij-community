@@ -13,7 +13,17 @@ import com.intellij.ide.ui.customization.NonCustomizableAction;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AbbreviationManager;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionStubBase;
+import com.intellij.openapi.actionSystem.ActionWithDelegate;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionGroupStub;
@@ -39,11 +49,24 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -53,6 +76,7 @@ public final class ActionsTreeUtil {
   private static final Logger LOG = Logger.getInstance(ActionsTreeUtil.class);
 
   private static final @NonNls String EDITOR_PREFIX = "Editor";
+  private static final String GROUP_INTENTIONS = "Intentions";
 
   private static final Set<String> ourBrokenActions = new HashSet<>();
 
@@ -480,7 +504,7 @@ public final class ActionsTreeUtil {
   private static Group createIntentionsGroup(Condition<? super AnAction> filtered) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     List<String> ids = actionManager.getActionIdList(WRAPPER_PREFIX);
-    Group group = new Group(KeyMapBundle.message("intentions.group.title"), IdeActions.GROUP_INTENTIONS, (Supplier<? extends Icon>)null);
+    Group group = new Group(KeyMapBundle.message("intentions.group.title"), GROUP_INTENTIONS, (Supplier<? extends Icon>)null);
     for (String id : ContainerUtil.sorted(ids)) {
       if (actionMatchesFilter(filtered, actionManager, id)) {
         group.addActionId(id);

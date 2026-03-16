@@ -3,7 +3,7 @@ package org.jetbrains.plugins.groovy.testIntegration;
 
 import com.intellij.execution.application.ApplicationRunLineMarkerProvider;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.MainMethodSearcherBase;
+import com.intellij.psi.util.JvmMainMethodSearcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.util.GroovyMainMethodSearcher;
 
@@ -16,7 +16,7 @@ final class GroovyAppLineMarkerContributor extends ApplicationRunLineMarkerProvi
   }
 
   @Override
-  protected MainMethodSearcherBase getMainMethodUtil() {
+  protected JvmMainMethodSearcher getMainMethodUtil() {
     return GroovyMainMethodSearcher.INSTANCE;
   }
 }

@@ -2,7 +2,11 @@
 package org.jetbrains.idea.maven.project
 
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.server.*
+import org.jetbrains.idea.maven.server.MavenServerConnector
+import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.server.withCompatibleConnector
+import org.jetbrains.idea.maven.server.withStoppedConnector
+import org.jetbrains.idea.maven.server.withStoppedConnectorOnce
 import org.junit.Test
 import java.rmi.ConnectException
 

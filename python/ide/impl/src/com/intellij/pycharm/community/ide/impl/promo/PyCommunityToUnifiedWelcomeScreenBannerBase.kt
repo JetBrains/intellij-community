@@ -14,7 +14,11 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBSwingUtilities
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Image
+import java.awt.LayoutManager
 import javax.swing.JComponent
 import javax.swing.JPanel
 

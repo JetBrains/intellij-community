@@ -5,13 +5,18 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.configurationStore.Property;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaImportsLayoutSettings;
+import com.intellij.psi.codeStyle.PackageEntry;
+import com.intellij.psi.codeStyle.PackageEntryTable;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Max Medvedev
  */
-public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements ImportsLayoutSettings {
+public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements JavaImportsLayoutSettings {
   public int STATIC_FIELDS_ORDER_WEIGHT = 1;
   public int FIELDS_ORDER_WEIGHT = 2;
   public int CONSTRUCTORS_ORDER_WEIGHT = 3;

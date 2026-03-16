@@ -16,15 +16,23 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.*;
+import com.intellij.refactoring.ui.NameSuggestionsField;
+import com.intellij.refactoring.ui.NameSuggestionsGenerator;
+import com.intellij.refactoring.ui.NameSuggestionsManager;
+import com.intellij.refactoring.ui.TypeSelector;
+import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 

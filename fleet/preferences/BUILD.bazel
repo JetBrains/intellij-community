@@ -25,6 +25,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-io-core",
     ":fleet_util_multiplatform_provided",
-  ]
+  ],
+  exports = ["@lib//:kotlinx-io-core"]
 )
 ### auto-generated section `build fleet.preferences` end

@@ -22,7 +22,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/editor-ui-api:editor-ui",
     "//platform/util",
-    "//platform/plugins/parser/impl",
+    "//platform/pluginSystem/parser/impl",
     "//platform/core-impl",
     "//platform/pluginManager/shared",
     "//platform/project/shared:project",

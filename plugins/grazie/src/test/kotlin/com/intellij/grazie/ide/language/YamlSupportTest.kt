@@ -6,10 +6,10 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 class YamlSupportTest : GrazieTestBase() {
-  override val enableGrazieChecker: Boolean = true
 
   fun `test grammar check in yaml file`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
@@ -21,6 +21,7 @@ class YamlSupportTest : GrazieTestBase() {
     assertEquals("bar", TextExtractor.findTextAt(file, 6, TextContent.TextDomain.ALL).toString())
   }
 
+  @PerformanceUnitTest
   fun `test yaml typos spellcheck performance`() {
     Benchmark.newBenchmark("Highlight typos in i18n.yaml file") {
       runHighlightTestForFile("ide/language/yaml/i18n.yaml")

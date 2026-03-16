@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 
 public final class XmlTagTreeHighlightingColors {
   private static ColorKey[] ourColorKeys = null;

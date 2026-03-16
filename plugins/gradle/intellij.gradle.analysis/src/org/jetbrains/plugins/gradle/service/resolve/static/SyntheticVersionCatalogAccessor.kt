@@ -8,7 +8,14 @@ import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.impl.light.LightClass
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.search.GlobalSearchScope

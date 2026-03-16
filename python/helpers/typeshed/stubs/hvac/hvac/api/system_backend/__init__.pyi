@@ -1,5 +1,3 @@
-from _typeshed import Incomplete
-
 from hvac.api.system_backend.audit import Audit as Audit
 from hvac.api.system_backend.auth import Auth as Auth
 from hvac.api.system_backend.capabilities import Capabilities as Capabilities
@@ -17,6 +15,7 @@ from hvac.api.system_backend.raft import Raft as Raft
 from hvac.api.system_backend.seal import Seal as Seal
 from hvac.api.system_backend.system_backend_mixin import SystemBackendMixin as SystemBackendMixin
 from hvac.api.system_backend.wrapping import Wrapping as Wrapping
+from hvac.api.vault_api_base import VaultApiBase
 from hvac.api.vault_api_category import VaultApiCategory
 
 __all__ = (
@@ -59,5 +58,5 @@ class SystemBackend(
     Seal,
     Wrapping,
 ):
-    implemented_classes: Incomplete
-    unimplemented_classes: Incomplete
+    implemented_classes: list[type[VaultApiBase]]
+    unimplemented_classes: list[str]

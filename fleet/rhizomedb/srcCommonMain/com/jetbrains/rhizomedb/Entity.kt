@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.rhizomedb
 
+import com.jetbrains.rhizomedb.Attributes.Many
+import com.jetbrains.rhizomedb.Entity.Companion.EntityObject
+import com.jetbrains.rhizomedb.impl.entity
 import kotlinx.serialization.builtins.serializer
-import com.jetbrains.rhizomedb.impl.*
 
 /**
  * All interfaces used with entity apis should extend this interface.

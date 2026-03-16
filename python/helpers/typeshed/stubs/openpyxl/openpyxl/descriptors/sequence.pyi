@@ -38,7 +38,7 @@ class Sequence(Descriptor[_ContainerT]):
 
 # `_T` is the type of the elements in the sequence.
 class UniqueSequence(Sequence[set[_T]]):
-    seq_types: tuple[type[list[_T]], type[tuple[_T, ...]], type[set[_T]]]
+    seq_types: tuple[type, ...]  # defaults to `list`, `tuple`, `set`
     container: type[set[_T]]
 
 # See `Sequence` for the meaning of `_ContainerT`.

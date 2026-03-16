@@ -33,6 +33,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/indexing-api:indexing",
     "//platform/lang-impl",
+    "//platform/platform-api:ide",
     "@lib//:kotlinc-analysis-api",
     "//platform/usageView-impl",
     "//plugins/kotlin/base/indices",
@@ -47,6 +48,7 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//plugins/kotlin/base/psi",
-  ]
+  ],
+  runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
 )
 ### auto-generated section `build intellij.kotlin.searching` end

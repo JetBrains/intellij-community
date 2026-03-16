@@ -12,7 +12,7 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class KotlinFindUsagesWithLibraryCustomTest : AbstractKotlinFindUsagesWithLibraryTest() {
+class KotlinFindUsagesWithLibraryCustomTest : AbstractK1KotlinFindUsagesWithLibraryTest() {
 
     override val isWithSourcesTestData = false
 

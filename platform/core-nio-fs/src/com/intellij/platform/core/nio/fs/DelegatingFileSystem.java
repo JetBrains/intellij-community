@@ -4,7 +4,11 @@ package com.intellij.platform.core.nio.fs;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.Iterator;
 import java.util.Set;

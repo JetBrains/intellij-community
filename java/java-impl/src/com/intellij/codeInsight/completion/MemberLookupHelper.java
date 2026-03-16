@@ -2,13 +2,23 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class MemberLookupHelper {
+public final class MemberLookupHelper {
   private final PsiMember myMember;
   private final boolean myMergedOverloads;
   private final @Nullable PsiClass myContainingClass;
@@ -53,6 +63,10 @@ public class MemberLookupHelper {
   public boolean willBeImported() {
     return myShouldImport;
   }
+  
+  public boolean isMergedOverloads() {
+    return myMergedOverloads;
+  }
 
   public void renderElement(@NotNull LookupElementPresentation presentation,
                             boolean showClass,
@@ -61,7 +75,7 @@ public class MemberLookupHelper {
     final String className = myContainingClass == null ? "???" : myContainingClass.getName();
 
     final String memberName = myMember.getName();
-    boolean constructor = myMember instanceof PsiMethod && ((PsiMethod)myMember).isConstructor();
+    boolean constructor = myMember instanceof PsiMethod method && method.isConstructor();
     if (constructor) {
       presentation.setItemText("new " + memberName);
       if (myContainingClass != null && myContainingClass.getTypeParameters().length > 0) {
@@ -81,13 +95,13 @@ public class MemberLookupHelper {
 
     final String params = myMergedOverloads
                           ? "(...)"
-                          : myMember instanceof PsiMethod
-                            ? getMethodParameterString((PsiMethod)myMember, substitutor)
+                          : myMember instanceof PsiMethod method
+                            ? getMethodParameterString(method, substitutor)
                             : "";
 
     presentation.appendTailText(params, false);
     if (myShouldImport && !constructor && StringUtil.isNotEmpty(className)) {
-      presentation.appendTailText(" in " + className + location, true);
+      presentation.appendTailText(JavaBundle.message("member.in.class", className) + location, true);
     } else {
       presentation.appendTailText(location, true);
     }
@@ -112,10 +126,11 @@ public class MemberLookupHelper {
     return null;
   }
 
-  private static @Nullable PsiType patchGetClass(@NotNull PsiMethod method, @Nullable PsiType type) {
-    if (PsiTypesUtil.isGetClass(method) && type instanceof PsiClassType) {
-      PsiType arg = ContainerUtil.getFirstItem(Arrays.asList(((PsiClassType)type).getParameters()));
-      PsiType bound = arg instanceof PsiWildcardType ? TypeConversionUtil.erasure(((PsiWildcardType)arg).getExtendsBound()) : null;
+  @ApiStatus.Internal
+  public static @Nullable PsiType patchGetClass(@NotNull PsiMethod method, @Nullable PsiType type) {
+    if (PsiTypesUtil.isGetClass(method) && type instanceof PsiClassType classType) {
+      PsiType arg = ContainerUtil.getFirstItem(Arrays.asList(classType.getParameters()));
+      PsiType bound = arg instanceof PsiWildcardType wildcardType ? TypeConversionUtil.erasure(wildcardType.getExtendsBound()) : null;
       if (bound != null) {
         return PsiTypesUtil.createJavaLangClassType(method, bound, false);
       }

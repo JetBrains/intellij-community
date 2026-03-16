@@ -2,14 +2,14 @@
 package com.jetbrains.python.psi.stubs;
 
 import com.intellij.psi.stubs.StubElement;
-import com.jetbrains.python.psi.PyImportElement;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.psi.PyImportElement;
 import org.jetbrains.annotations.Nullable;
 
 
 public interface PyImportElementStub extends StubElement<PyImportElement> {
   @Nullable
   QualifiedName getImportedQName();
-  
+
   String getAsName();
 }

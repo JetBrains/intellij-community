@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.groovy.ant` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "ant_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ant",
+  module_name = "intellij.groovy.ant",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ant_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/groovy",
+    "//plugins/ant",
+    "//platform/util",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/ide-core-impl",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/analysis-api:analysis",
+    "//xml/dom-openapi:dom",
+  ]
+)
+### auto-generated section `build intellij.groovy.ant` end

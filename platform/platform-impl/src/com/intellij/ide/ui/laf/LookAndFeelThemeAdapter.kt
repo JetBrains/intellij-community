@@ -24,10 +24,14 @@ import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.atomic.AtomicReference
-import javax.swing.*
+import javax.swing.InputMap
+import javax.swing.KeyStroke
+import javax.swing.LookAndFeel
+import javax.swing.UIDefaults
 import javax.swing.UIDefaults.LazyValue
+import javax.swing.UIManager
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.basic.BasicLookAndFeel
 import javax.swing.plaf.metal.MetalLookAndFeel

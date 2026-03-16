@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="jgoodies-common" type="repository">
+        <properties maven-id="com.jgoodies:jgoodies-common:1.4.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jgoodies/jgoodies-common/1.4.0/jgoodies-common-1.4.0.jar">
+              <sha256sum>efd986ec851c3a5cd57907e72f27d1af9c1e5b1874b07a8b778588646d71d9fc</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jgoodies/jgoodies-common/1.4.0/jgoodies-common-1.4.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jgoodies/jgoodies-common/1.4.0/jgoodies-common-1.4.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

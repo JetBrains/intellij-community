@@ -5,8 +5,10 @@ package org.jetbrains.kotlin.idea.refactoring.inline
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiReference
 import com.intellij.refactoring.BaseRefactoringProcessor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
+@K1Deprecation
 class KotlinInlineNamedFunctionDialog(
     function: KtNamedFunction,
     reference: PsiReference?,

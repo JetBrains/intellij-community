@@ -1,0 +1,135 @@
+### auto-generated section `build intellij.platform.debugger.impl.ui` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_ui",
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "ui_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ui",
+  module_name = "intellij.platform.debugger.impl.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ui_resources"],
+  kotlinc_opts = ":custom_ui",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//fleet/rpc",
+    "//fleet/util/core",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/stream",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/core-ui",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl/rpc",
+    "//platform/xdebugger-impl/shared",
+    "//platform/diff-api:diff",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/execution",
+    "//platform/execution-impl",
+    "//platform/foldings",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/rpc",
+    "//platform/platform-impl/ui",
+    "//platform/lang-api:lang",
+    "//platform/lang-core",
+    "//platform/lang-impl",
+    "//platform/project/shared:project",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/kernel/rpc",
+    "//platform/remote-topics/shared:rpc-topics",
+    "//platform/statistics",
+    "//platform/util",
+    "//platform/util/coroutines",
+    "//platform/util-ex",
+    "//platform/util/jdom",
+    "//libraries/fastutil",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+
+jvm_library(
+  name = "ui_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_ui",
+  associates = [":ui"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//fleet/rpc",
+    "//fleet/util/core",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/stream",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/core-ui",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl/rpc",
+    "//platform/xdebugger-impl/shared",
+    "//platform/diff-api:diff",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/execution",
+    "//platform/execution-impl",
+    "//platform/foldings",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/rpc",
+    "//platform/platform-impl/ui",
+    "//platform/lang-api:lang",
+    "//platform/lang-core",
+    "//platform/lang-impl",
+    "//platform/project/shared:project",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/kernel/rpc",
+    "//platform/remote-topics/shared:rpc-topics",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/util",
+    "//platform/util/coroutines",
+    "//platform/util-ex",
+    "//platform/util/jdom",
+    "//libraries/fastutil",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.debugger.impl.ui` end
+
+### auto-generated section `test intellij.platform.debugger.impl.ui` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "ui_test",
+  runtime_deps = [":ui_test_lib"]
+)
+### auto-generated section `test intellij.platform.debugger.impl.ui` end

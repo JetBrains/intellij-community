@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.xml.util.HtmlUtil
 
-private class WebBrowserXmlServiceImpl : WebBrowserXmlService() {
+internal class WebBrowserXmlServiceImpl : WebBrowserXmlService() {
   override fun isHtmlFile(element: PsiElement): Boolean {
     return HtmlUtil.isHtmlFile(element)
   }

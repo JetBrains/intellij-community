@@ -30,6 +30,7 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
     "//platform/util",
     "//platform/analysis-impl",
+    "//platform/core-impl",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
@@ -72,7 +73,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/plugin/k2",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
     "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting_test_lib",
@@ -85,7 +86,8 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
     "//plugins/gradle:gradle-tests_test_lib",
     "//platform/external-system-impl:externalSystem-tests_test_lib",
-  ]
+  ],
+  runtime_deps = [":ide-plugin-k2-tests"]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.k2.tests` end
 

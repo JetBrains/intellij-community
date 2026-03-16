@@ -10,9 +10,11 @@ import com.intellij.openapi.actionSystem.ex.ActionContextElement
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.Interactive
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.UnhandledException
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.Nls
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
@@ -21,7 +23,7 @@ import kotlin.coroutines.CoroutineContext
 private val LOG: Logger = fileLogger()
 
 internal fun processUnhandledException(
-  exception: Throwable,
+  cause: Throwable,
   coroutineContext: CoroutineContext?,
 ) {
   val coroutineContext = coroutineContext ?: currentThreadContextOrNull()
@@ -29,14 +31,16 @@ internal fun processUnhandledException(
 
   when (val interactiveMode = interactiveMode(coroutineContext)) {
     is Mode.Interactive -> {
+      val exception = UnhandledException(cause, isInteractive = true)
       SwingUtilities.invokeLater {
-        logExceptionSafely(message, exception, interactive = true)
+        logExceptionSafely(message, exception)
         val defaultMessage = LogMessage(exception, message, emptyList())
         // "clear" button doesn't play well with interactive message. Once cleared, windows becomes empty.
         val application = ApplicationManager.getApplication()
         val messagePool = MessagePool.getInstance()
 
-        val showError = Registry.get("ide.exceptions.show.interactive").asBoolean()
+        val showError = application != null // Early stage: app and registry aren't initialized yet
+                        && Registry.`is`("ide.exceptions.show.interactive", false)
                         && !application.isHeadlessEnvironment
                         // Sunsetting app might produce lots of errors due to races.
                         // While all of them needs to be fixed, no need to bother user with them,
@@ -48,14 +52,14 @@ internal fun processUnhandledException(
       }
     }
     Mode.NonInteractive -> {
-      logExceptionSafely(message, exception, interactive = false)
+      logExceptionSafely(message, UnhandledException(cause, isInteractive = false))
     }
   }
 }
 
-private fun logExceptionSafely(message: String, exception: Throwable, interactive: Boolean) {
+private fun logExceptionSafely(message: String, exception: UnhandledException) {
   try {
-    LOG.error("$message, interactive mode: $interactive", exception)
+    LOG.error(message, exception)
   }
   catch (_: Throwable) {
   }
@@ -79,8 +83,10 @@ private fun interactiveMode(coroutineContext: CoroutineContext?): Mode {
     return Mode.Interactive(action = text)
   }
   // Exception thrown on EDT with modal dialog (or no project) has something to do with current user task
-  if ((SwingUtilities.isEventDispatchThread() && LaterInvocator.isInModalContext()) ||
-      ProjectManager.getInstanceIfCreated()?.openProjects?.isEmpty() == true) {
+  if ((EDT.isCurrentThreadEdt() && LaterInvocator.isInModalContext()) ||
+      ApplicationManager.getApplication()
+        ?.getServiceIfCreated(ProjectManager::class.java)
+        ?.openProjects?.isEmpty() == true) {
     return Mode.Interactive(action = null)
   }
   else {

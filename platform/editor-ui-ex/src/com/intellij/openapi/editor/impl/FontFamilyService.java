@@ -10,7 +10,8 @@ import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.GraphicsEnvironment;
 import java.util.List;
 import java.util.Locale;
 

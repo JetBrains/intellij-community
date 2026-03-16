@@ -3,7 +3,14 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.model.project.AbstractDependencyData;
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
+import com.intellij.openapi.externalSystem.model.project.LibraryData;
+import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
+import com.intellij.openapi.externalSystem.model.project.LibraryLevel;
+import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,10 +25,20 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findChild;
-import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.attachGradleSdkSources;
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.attachSourcesAndJavadocFromGradleCacheIfNeeded;
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.isTestSourceSet;
 
 /**
  * {@link LibraryDataNodeSubstitutor} provides the facility to replace library dependencies with the related module dependencies

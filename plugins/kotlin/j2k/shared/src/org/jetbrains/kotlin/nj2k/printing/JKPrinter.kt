@@ -10,7 +10,16 @@ import org.jetbrains.kotlin.nj2k.JKImportStorage
 import org.jetbrains.kotlin.nj2k.symbols.JKSymbol
 import org.jetbrains.kotlin.nj2k.tree.JKLambdaExpression
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
-import org.jetbrains.kotlin.nj2k.types.*
+import org.jetbrains.kotlin.nj2k.types.JKCapturedType
+import org.jetbrains.kotlin.nj2k.types.JKClassType
+import org.jetbrains.kotlin.nj2k.types.JKContextType
+import org.jetbrains.kotlin.nj2k.types.JKNoType
+import org.jetbrains.kotlin.nj2k.types.JKParametrizedType
+import org.jetbrains.kotlin.nj2k.types.JKStarProjectionType
+import org.jetbrains.kotlin.nj2k.types.JKType
+import org.jetbrains.kotlin.nj2k.types.JKTypeParameterType
+import org.jetbrains.kotlin.nj2k.types.JKVarianceTypeParameterType
+import org.jetbrains.kotlin.nj2k.types.JKWildCardType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 open class JKPrinterBase {

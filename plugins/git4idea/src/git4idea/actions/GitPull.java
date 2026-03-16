@@ -1,11 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitOperationsCollector;
 import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 import static git4idea.GitNotificationIdsHolder.PULL_FAILED;
 import static java.util.Collections.singletonList;
 
-final class GitPull extends GitMergeAction {
+final class GitPull extends GitMergeAction<GitPullOption> {
   private static final Logger LOG = Logger.getInstance(GitPull.class);
   private static final @NonNls String INTERACTIVE = "interactive";
 
@@ -42,23 +42,24 @@ final class GitPull extends GitMergeAction {
   }
 
   @Override
-  protected DialogState displayDialog(@NotNull Project project, @NotNull List<VirtualFile> gitRoots,
-                                      @NotNull VirtualFile defaultRoot) {
+  protected DialogState<GitPullOption> displayDialog(@NotNull Project project, @NotNull List<VirtualFile> gitRoots,
+                                                      @NotNull VirtualFile defaultRoot) {
     final GitPullDialog dialog = new GitPullDialog(project, gitRoots, defaultRoot);
     if (!dialog.showAndGet()) {
       return null;
     }
 
-    GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
-    GitRepository repository = repositoryManager.getRepositoryForRootQuick(dialog.gitRoot());
-    assert repository != null : "Repository can't be null for root " + dialog.gitRoot();
+    GitRepository repository = dialog.getSelectedRepository();
+    if (repository != null) {
+      GitOperationsCollector.logPullFromDialog(project, repository, dialog.getSelectedBranch(), dialog.getSelectedOptions());
+    }
 
-    return new DialogState(dialog.gitRoot(),
-                           GitBundle.message("pulling.title", dialog.getSelectedRemote().getName()),
-                           getHandlerProvider(project, dialog),
-                           dialog.getSelectedBranch(),
-                           dialog.isCommitAfterMerge(),
-                           ContainerUtil.map(dialog.getSelectedOptions(), option -> option.getOption()));
+    return new DialogState<>(dialog.gitRoot(),
+                             GitBundle.message("pulling.title", dialog.getSelectedRemote().getName()),
+                             getHandlerProvider(project, dialog),
+                             dialog.getSelectedBranch(),
+                             dialog.isCommitAfterMerge(),
+                             dialog.getSelectedOptions());
   }
 
   @Override
@@ -67,8 +68,8 @@ final class GitPull extends GitMergeAction {
   }
 
   @Override
-  protected void perform(@NotNull DialogState dialogState, @NotNull Project project) {
-    if (!dialogState.selectedOptions.contains(GitPullOption.REBASE.getOption())) {
+  protected void perform(@NotNull DialogState<GitPullOption> dialogState, @NotNull Project project) {
+    if (!dialogState.selectedOptions.contains(GitPullOption.REBASE)) {
       super.perform(dialogState, project);
     }
     else {
@@ -76,7 +77,7 @@ final class GitPull extends GitMergeAction {
     }
   }
 
-  private static void performRebase(@NotNull Project project, DialogState dialogState) {
+  private static void performRebase(@NotNull Project project, @NotNull DialogState<GitPullOption> dialogState) {
     VirtualFile selectedRoot = dialogState.selectedRoot;
     GitRemoteBranch selectedBranch = ((GitRemoteBranch)dialogState.selectedBranch);
 

@@ -10,7 +10,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.MacColorSpaceLoader;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.color.ColorSpace;
 import java.awt.datatransfer.DataFlavor;
 

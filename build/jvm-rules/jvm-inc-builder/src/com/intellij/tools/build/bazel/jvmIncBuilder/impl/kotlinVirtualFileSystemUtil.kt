@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl
 
-import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream
-import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem
-import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileSystem
-import com.intellij.util.PathUtilRt
+import org.jetbrains.kotlin.com.intellij.openapi.util.io.BufferExposingByteArrayInputStream
+import org.jetbrains.kotlin.com.intellij.openapi.vfs.DeprecatedVirtualFileSystem
+import org.jetbrains.kotlin.com.intellij.openapi.vfs.StandardFileSystems
+import org.jetbrains.kotlin.com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.com.intellij.openapi.vfs.VirtualFileSystem
+import org.jetbrains.kotlin.com.intellij.util.PathUtilRt
 import org.jetbrains.kotlin.load.kotlin.LibraryContainerAwareVirtualFile
 import java.io.IOException
 import java.io.InputStream

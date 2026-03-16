@@ -4,7 +4,10 @@ package com.intellij.execution.wsl
 import com.intellij.execution.ConsoleFolding
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
-import com.intellij.execution.wsl.WSLDistribution.*
+import com.intellij.execution.wsl.WSLDistribution.DISTRIBUTION_PARAMETER
+import com.intellij.execution.wsl.WSLDistribution.EXEC_PARAMETER
+import com.intellij.execution.wsl.WSLDistribution.EXIT_CODE_PARAMETER
+import com.intellij.execution.wsl.WSLDistribution.WSL_EXE
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting

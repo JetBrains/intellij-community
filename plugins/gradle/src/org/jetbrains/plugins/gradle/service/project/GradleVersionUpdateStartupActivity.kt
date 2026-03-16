@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilitySupportUpdater
 
-private class GradleVersionUpdateStartupActivity : ProjectActivity {
+internal class GradleVersionUpdateStartupActivity : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()

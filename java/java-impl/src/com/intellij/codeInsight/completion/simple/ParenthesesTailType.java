@@ -3,23 +3,32 @@
 package com.intellij.codeInsight.completion.simple;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
+import com.intellij.codeInsight.ModNavigatorTailType;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ModNavigator;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class ParenthesesTailType extends TailType {
+public abstract class ParenthesesTailType extends ModNavigatorTailType {
 
-  protected abstract boolean isSpaceBeforeParentheses(CommonCodeStyleSettings styleSettings, Editor editor, final int tailOffset);
+  protected boolean isSpaceBeforeParentheses(CommonCodeStyleSettings styleSettings, final int tailOffset) {
+    return false;
+  }
 
-  protected abstract boolean isSpaceWithinParentheses(CommonCodeStyleSettings styleSettings, Editor editor, final int tailOffset);
+  protected boolean isSpaceWithinParentheses(CommonCodeStyleSettings styleSettings, final int tailOffset) {
+    return false;
+  }
 
   @Override
-  public int processTail(final @NotNull Editor editor, int tailOffset) {
-    CommonCodeStyleSettings styleSettings = CodeStyle.getLocalLanguageSettings(editor, tailOffset);
-    if (isSpaceBeforeParentheses(styleSettings, editor, tailOffset)) {
+  public int processTail(@NotNull ModNavigator editor, int tailOffset) {
+    PsiFile psiFile = editor.getPsiFile();
+    Language language = PsiUtilCore.getLanguageAtOffset(psiFile, tailOffset);
+    CommonCodeStyleSettings styleSettings = CodeStyle.getLanguageSettings(psiFile, language);
+    if (isSpaceBeforeParentheses(styleSettings, tailOffset)) {
       tailOffset = insertChar(editor, tailOffset, ' ');
     }
     Document document = editor.getDocument();
@@ -28,7 +37,7 @@ public abstract class ParenthesesTailType extends TailType {
     }
 
     tailOffset = insertChar(editor, tailOffset, '(');
-    if (isSpaceWithinParentheses(styleSettings, editor, tailOffset)) {
+    if (isSpaceWithinParentheses(styleSettings, tailOffset)) {
       tailOffset = insertChar(editor, tailOffset, ' ');
       tailOffset = insertChar(editor, tailOffset, ' ');
       tailOffset = insertChar(editor, tailOffset, ')');
@@ -36,7 +45,7 @@ public abstract class ParenthesesTailType extends TailType {
     } else {
       tailOffset = insertChar(editor, tailOffset, ')');
       moveCaret(editor, tailOffset, -1);
-      TabOutScopesTracker.getInstance().registerEmptyScopeAtCaret(editor);
+      editor.registerTabOut(TextRange.from(editor.getCaretOffset(), 0), editor.getCaretOffset() + 1);
     }
     return tailOffset;
   }

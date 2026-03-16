@@ -8,7 +8,7 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Base interface for things that can be executed (run configurations explicitly managed by user, or custom run profile implementations

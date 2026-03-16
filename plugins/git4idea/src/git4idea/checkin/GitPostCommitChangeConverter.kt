@@ -72,6 +72,9 @@ class GitPostCommitChangeConverter(private val project: Project) : PostCommitCha
     private var CommitContext.postCommitHashes: MutableMap<GitRepository, Hash>? by commitExecutorProperty(GIT_POST_COMMIT_HASHES_KEY, null)
 
     @JvmStatic
+    fun getRecordedPostCommitHashes(commitContext: CommitContext): Map<GitRepository, Hash>? = commitContext.postCommitHashes
+
+    @JvmStatic
     fun markRepositoryCommit(commitContext: CommitContext, repository: GitRepository) {
       var hashes = commitContext.postCommitHashes
       if (hashes == null) {

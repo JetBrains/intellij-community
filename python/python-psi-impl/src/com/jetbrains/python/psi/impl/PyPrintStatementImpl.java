@@ -26,7 +26,7 @@ public class PyPrintStatementImpl extends PyElementImpl implements PyPrintStatem
   }
 
   @Override
-   protected void acceptPyVisitor(final PyElementVisitor pyVisitor) {
+  protected void acceptPyVisitor(final PyElementVisitor pyVisitor) {
     pyVisitor.visitPyPrintStatement(this);
   }
 }

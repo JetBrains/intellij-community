@@ -14,7 +14,7 @@ import com.intellij.platform.lang.lsWidget.internal.LanguageServiceWidgetActions
  * The service interface [LanguageServiceWidgetActionsService] is located in the `intellij.platform.lang` module,
  * so it doesn't have access to the FUS classes.
  */
-private class LanguageServiceWidgetActionsServiceImpl : LanguageServiceWidgetActionsService() {
+internal class LanguageServiceWidgetActionsServiceImpl : LanguageServiceWidgetActionsService() {
   override fun openWidgetItemRelatedSettings(project: Project, settingsPageClass: Class<out Configurable>) {
     LanguageServiceWidgetUsagesCollector.actionInvoked(project, LanguageServiceWidgetActionKind.OpenSettings, settingsPageClass)
     ShowSettingsUtil.getInstance().showSettingsDialog(project, settingsPageClass)

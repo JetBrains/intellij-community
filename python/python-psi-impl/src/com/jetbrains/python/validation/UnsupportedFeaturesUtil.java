@@ -7,7 +7,14 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyComprehensionForComponent;
+import com.jetbrains.python.psi.PyExceptPart;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFinallyPart;
+import com.jetbrains.python.psi.PyListCompExpression;
+import com.jetbrains.python.psi.PyRaiseStatement;
+import com.jetbrains.python.psi.PyTupleExpression;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -143,7 +150,7 @@ public final class UnsupportedFeaturesUtil {
         MODULES.put(LanguageLevel.fromPythonVersion(attr.getValue("version")), new HashSet<>());
         myCurrentLevel = LanguageLevel.fromPythonVersion(attr.getValue("version"));
       }
-     }
+    }
 
     @Override
     public void endElement(String namespaceURI,
@@ -159,7 +166,7 @@ public final class UnsupportedFeaturesUtil {
 
     @Override
     public void characters(char[] ch, int start, int length)
-                                          throws SAXException {
+      throws SAXException {
       myContent.write(ch, start, length);
     }
   }
@@ -179,15 +186,15 @@ public final class UnsupportedFeaturesUtil {
         myClassName = attr.getValue("name");
         if (!CLASS_METHODS.containsKey(myClassName)) {
           CLASS_METHODS.put(myClassName, new HashMap<>());
-
         }
       }
       if (localName.equals("python")) {
         myCurrentLevel = LanguageLevel.fromPythonVersion(attr.getValue("version"));
         if (myClassName != null) {
           final Map<LanguageLevel, Set<String>> map = CLASS_METHODS.get(myClassName);
-          if (map != null)
+          if (map != null) {
             map.put(myCurrentLevel, new HashSet<>());
+          }
         }
       }
     }
@@ -200,8 +207,9 @@ public final class UnsupportedFeaturesUtil {
         Map<LanguageLevel, Set<String>> levelSetMap = CLASS_METHODS.get(myClassName);
         if (levelSetMap != null) {
           final Set<String> set = levelSetMap.get(myCurrentLevel);
-          if (set != null)
+          if (set != null) {
             set.add(myContent.toString());
+          }
         }
       }
     }

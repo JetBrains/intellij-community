@@ -17,6 +17,7 @@ jvm_library(
     "//plugins/gradle/java",
     "//plugins/maven",
     "//plugins/groovy",
+    "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
@@ -24,7 +25,8 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//platform/projectModel-api:projectModel",
-    "//plugins/repository-search",
+    "//plugins/repository-search/common",
+    "//plugins/gradle/java/groovy",
   ]
 )
 
@@ -38,6 +40,7 @@ jvm_library(
     "//plugins/maven",
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
+    "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
@@ -45,10 +48,11 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//platform/projectModel-api:projectModel",
-    "//plugins/repository-search",
-    "//plugins/repository-search:repository-search_test_lib",
+    "//plugins/repository-search/common",
+    "//plugins/repository-search/common:common_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//plugins/gradle/java/groovy",
   ]
 )
 ### auto-generated section `build intellij.gradle.java.maven` end

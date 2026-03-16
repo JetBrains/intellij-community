@@ -23,11 +23,22 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.docstrings.DocStringParser;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyIndentUtil;
+import com.jetbrains.python.psi.PyParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class PyFunctionBuilder {
@@ -49,7 +60,8 @@ public class PyFunctionBuilder {
    * @param decoratorsToCopyIfExist list of decorator names to be copied to new function.
    * @return builder configured by this function
    */
-  public static @NotNull PyFunctionBuilder copySignature(final @NotNull PyFunction source, final String @NotNull ... decoratorsToCopyIfExist) {
+  public static @NotNull PyFunctionBuilder copySignature(final @NotNull PyFunction source,
+                                                         final String @NotNull ... decoratorsToCopyIfExist) {
     final String name = source.getName();
     final PyFunctionBuilder functionBuilder = new PyFunctionBuilder((name != null) ? name : "", source);
     for (final PyParameter parameter : source.getParameterList().getParameters()) {
@@ -91,6 +103,7 @@ public class PyFunctionBuilder {
 
   /**
    * Adds param and its type to doc
+   *
    * @param name param name
    * @param type param type
    */

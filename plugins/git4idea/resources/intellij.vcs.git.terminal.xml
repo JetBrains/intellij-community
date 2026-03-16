@@ -1,9 +1,0 @@
-<idea-plugin package="git4idea.terminal">
-  <dependencies>
-    <plugin id="org.jetbrains.plugins.terminal"/>
-  </dependencies>
-
-  <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
-    <commandSpecsProvider implementation="git4idea.terminal.GitCommandSpecsProvider"/>
-  </extensions>
-</idea-plugin>

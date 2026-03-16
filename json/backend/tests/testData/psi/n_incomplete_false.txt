@@ -1,0 +1,6 @@
+JsonFile: n_incomplete_false.json
+  JsonArray
+    PsiElement([)('[')
+    JsonReferenceExpression
+      PsiElement(IDENTIFIER)('fals')
+    PsiElement(])(']')

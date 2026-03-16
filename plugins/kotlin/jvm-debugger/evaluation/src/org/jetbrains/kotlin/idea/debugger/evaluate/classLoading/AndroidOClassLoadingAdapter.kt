@@ -5,8 +5,9 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.classLoading
 import com.intellij.debugger.engine.JVMNameUtil
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.impl.DebuggerUtilsEx.mirrorOfByteArray
-import com.sun.jdi.*
 import com.intellij.debugger.impl.DexDebugFacility
+import com.sun.jdi.ClassLoaderReference
+import com.sun.jdi.ClassType
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 
 class AndroidOClassLoadingAdapter : AbstractAndroidClassLoadingAdapter() {

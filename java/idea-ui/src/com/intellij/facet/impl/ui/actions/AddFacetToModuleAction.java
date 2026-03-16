@@ -2,7 +2,11 @@
 
 package com.intellij.facet.impl.ui.actions;
 
-import com.intellij.facet.*;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetInfo;
+import com.intellij.facet.FacetType;
+import com.intellij.facet.FacetTypeId;
+import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.facet.impl.ui.FacetEditorFacade;
 import com.intellij.framework.FrameworkTypeEx;
 import com.intellij.framework.addSupport.impl.AddFrameworkSupportInProjectStructureAction;

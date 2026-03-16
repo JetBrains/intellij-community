@@ -2,12 +2,21 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.InspectionManagerBase;
+import com.intellij.codeInspection.ProblemDescriptorBase;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
-import com.intellij.codeInspection.ui.*;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.codeInspection.ui.InspectionTree;
+import com.intellij.codeInspection.ui.InspectionTreeModel;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
+import com.intellij.codeInspection.ui.ProblemDescriptionNode;
+import com.intellij.codeInspection.ui.RefElementNode;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -28,7 +37,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 @ApiStatus.Internal

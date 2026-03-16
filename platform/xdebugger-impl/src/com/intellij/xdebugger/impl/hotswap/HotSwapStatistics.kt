@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
-import com.intellij.xdebugger.impl.rpc.HotSwapSource
+import com.intellij.platform.debugger.impl.rpc.HotSwapSource
 import org.jetbrains.annotations.ApiStatus
 
 @Suppress("PublicApiImplicitType")

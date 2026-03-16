@@ -13,7 +13,7 @@ import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
@@ -38,7 +38,7 @@ class RefreshIndexableFilesAction : RecoveryAction {
 
     val eventLog = EventLog()
     Disposer.newDisposable().use { actionDisposable ->
-      project.messageBus.connect(actionDisposable).subscribe(VirtualFileManager.VFS_CHANGES, eventLog)
+      project.messageBus.connect(actionDisposable).subscribe(VirtualFileManager.VFS_CHANGES_BG, eventLog)
       val files: Collection<VirtualFile>
       if (recoveryScope is FilesRecoveryScope) {
         files = recoveryScope.files
@@ -55,7 +55,7 @@ class RefreshIndexableFilesAction : RecoveryAction {
   }
 
 
-  private class EventLog : BulkFileListener {
+  private class EventLog : BulkFileListenerBackgroundable {
     val loggedEvents: MutableList<Event> = mutableListOf()
 
     override fun before(events: List<VFileEvent>) {

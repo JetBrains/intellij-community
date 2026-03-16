@@ -28,17 +28,29 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class RenameHandlerRegistry {
   public static final Key<Boolean> SELECT_ALL = Key.create("rename.selectAll");
   private final PsiElementRenameHandler myDefaultElementRenameHandler;
-  private Function<? super Collection<? extends RenameHandler>, ? extends RenameHandler> myRenameHandlerSelectorInTests = ContainerUtil::getFirstItem;
+  private Function<? super Collection<? extends RenameHandler>, ? extends RenameHandler> myRenameHandlerSelectorInTests =
+    ContainerUtil::getFirstItem;
 
   public static RenameHandlerRegistry getInstance() {
     return ApplicationManager.getApplication().getService(RenameHandlerRegistry.class);
@@ -62,7 +74,7 @@ public class RenameHandlerRegistry {
       return null;
     }
     else if (availableHandlers.size() == 1) {
-      return availableHandlers.get(0);
+      return availableHandlers.getFirst();
     }
     else if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myRenameHandlerSelectorInTests.apply(availableHandlers);
@@ -113,7 +125,8 @@ public class RenameHandlerRegistry {
   }
 
   @TestOnly
-  public void setRenameHandlerSelectorInTests(Function<? super Collection<? extends RenameHandler>, ? extends RenameHandler> selector, Disposable parentDisposable) {
+  public void setRenameHandlerSelectorInTests(Function<? super Collection<? extends RenameHandler>, ? extends RenameHandler> selector,
+                                              Disposable parentDisposable) {
     myRenameHandlerSelectorInTests = selector;
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -136,7 +149,7 @@ public class RenameHandlerRegistry {
     private String mySelection;
     private final JRadioButton[] myRButtons;
 
-    protected HandlersChooser(Project project, @NlsContexts.RadioButton String [] renamers) {
+    protected HandlersChooser(Project project, @NlsContexts.RadioButton String[] renamers) {
       super(project);
       myRenamers = renamers;
       myRButtons = new JRadioButton[myRenamers.length];

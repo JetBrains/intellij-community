@@ -26,12 +26,12 @@ private class ChameleonRefImpl(
  * Jvm implementation of [newChameleonRef].
  */
 @Suppress("unused")
-@Actual("ChameleonRef")
+@Actual
 internal fun newChameleonRefJvm(): ChameleonRef = ChameleonRefImpl()
 
 /**
  * Jvm implementation of [newChameleonRef].
  */
 @Suppress("unused")
-@Actual("ChameleonRef")
+@Actual
 internal fun newChameleonRefJvm(chameleon: AstMarkersChameleon): ChameleonRef = ChameleonRefImpl(SoftReference(chameleon))

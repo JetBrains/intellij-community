@@ -18,9 +18,22 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JVMElementFactories;
+import com.intellij.psi.JVMElementFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.SmartList;
@@ -29,7 +42,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 public final class TestIntegrationUtils {
   private static final Logger LOG = Logger.getInstance(TestIntegrationUtils.class);
@@ -122,25 +141,32 @@ public final class TestIntegrationUtils {
   }
 
   public static List<MemberInfo> extractClassMethods(PsiClass clazz, boolean includeInherited) {
-    List<MemberInfo> result = new ArrayList<>();
-    Set<PsiClass> classes;
+    List<PsiClass> classes = new ArrayList<>();
+    classes.add(clazz);
     if (includeInherited) {
-      classes = InheritanceUtil.getSuperClasses(clazz);
-      classes.add(clazz);
+      classes.addAll(InheritanceUtil.getSuperClasses(clazz).reversed());
     }
-    else {
-      classes = Collections.singleton(clazz);
-    }
+
+    List<MemberInfo> result = new ArrayList<>();
+    Map<String, List<PsiMethod>> methodsByName = new HashMap<>();
     for (PsiClass aClass : classes) {
       if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) continue;
       MemberInfo.extractClassMembers(aClass, result, new MemberInfo.Filter<>() {
         @Override
         public boolean includeMember(PsiMember member) {
-          if (!(member instanceof PsiMethod)) return false;
-          if (member.hasModifierProperty(PsiModifier.PRIVATE) ||
-              (member.hasModifierProperty(PsiModifier.ABSTRACT) && member.getContainingClass() != clazz)) {
-            return false;
+          if (!(member instanceof PsiMethod method)) return false;
+          if (member.hasModifierProperty(PsiModifier.PRIVATE)) return false;
+
+          String name = method.getName();
+          List<PsiMethod> methods = methodsByName.computeIfAbsent(name, __ -> new ArrayList<>());
+          for (PsiMethod psiMethod : methods) {
+            // rely on the order of collected classes: from descendant to ancestors
+            if (PsiSuperMethodUtil.isSuperMethod(psiMethod, method)) {
+              return false;
+            }
           }
+          methods.add(method);
+
           return true;
         }
       }, false);

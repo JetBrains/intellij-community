@@ -2,7 +2,7 @@ from typing import Final
 
 from .segment import Segment
 
-MUTATION_UNSUPPORTED_MESSAGE: Final[str]
+MUTATION_UNSUPPORTED_MESSAGE: Final = "FacadeSegments cannot be mutated."
 
 class FacadeSegment(Segment):
     initializing: bool

@@ -1,5 +1,14 @@
 ### auto-generated section `build kotlin.code-insight.inspections-shared.tests.k1` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_k1",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
 
 jvm_library(
   name = "k1",
@@ -12,6 +21,7 @@ jvm_library(
   module_name = "kotlin.code-insight.inspections-shared.tests.k1",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_k1",
   deps = [
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
@@ -37,7 +47,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/utils",
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
     "//plugins/kotlin/idea/tests:tests_test_lib",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
@@ -50,7 +60,8 @@ jvm_library(
     "//platform/util/jdom",
     "//plugins/kotlin/code-insight/inspections-k1:kotlin-code-insight-inspections-k1",
     "//platform/core-ui",
-  ]
+  ],
+  runtime_deps = [":k1"]
 )
 ### auto-generated section `build kotlin.code-insight.inspections-shared.tests.k1` end
 

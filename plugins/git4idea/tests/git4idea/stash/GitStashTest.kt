@@ -5,7 +5,12 @@ import com.intellij.openapi.vcs.Executor.echo
 import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.history.GitLogUtil
-import git4idea.test.*
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.add
+import git4idea.test.branch
+import git4idea.test.checkout
+import git4idea.test.commit
+import git4idea.test.git
 import git4idea.ui.StashInfo
 import org.apache.commons.lang3.RandomStringUtils
 import java.util.regex.Pattern

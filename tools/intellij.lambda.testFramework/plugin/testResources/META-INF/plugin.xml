@@ -1,0 +1,9 @@
+<idea-plugin>
+  <id>com.intellij.lambda.test.plugin</id>
+  <vendor>JetBrains</vendor>
+
+  <content namespace="jetbrains">
+    <module name="intellij.lambda.testFramework" />
+    <module name="intellij.tools.ide.util.common"/>
+  </content>
+</idea-plugin>

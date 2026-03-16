@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.projectStructure.analysisContextModule
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.resolveExtensionFileModule
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
@@ -18,14 +18,14 @@ import org.jetbrains.kotlin.psi.KtElement
 class KotlinResolveExtensionGeneratedSourcesFilter : GeneratedSourcesFilter() {
     @OptIn(KaImplementationDetail::class)
     override fun isGeneratedSource(file: VirtualFile, project: Project): Boolean =
-        file.analysisContextModule != null
+        file.resolveExtensionFileModule != null
 
-    private val KtElement.hasAnalysisExtensionContext: Boolean
+    private val KtElement.hasResolveExtensionContext: Boolean
         get() = containingKtFile.virtualFile?.let { isGeneratedSource(it, project) } == true
 
     @OptIn(KaExperimentalApi::class)
     override fun getOriginalElements(element: PsiElement): List<PsiElement> {
-        if (element !is KtElement || !element.hasAnalysisExtensionContext) return emptyList()
+        if (element !is KtElement || !element.hasResolveExtensionContext) return emptyList()
         return analyze(element) {
             element.resolveExtensionNavigationElements.toList()
         }

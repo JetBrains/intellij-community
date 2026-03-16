@@ -34,6 +34,13 @@ jvm_library(
 
 ### auto-generated section `build intellij.gradle.declarativeSync.tests` start
 jvm_library(
+  name = "declarativeSync-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["@lib//:kotlin-stdlib"]
+)
+
+jvm_library(
   name = "declarativeSync-tests_test_lib",
   module_name = "intellij.gradle.declarativeSync.tests",
   visibility = ["//visibility:public"],
@@ -60,7 +67,8 @@ jvm_library(
     "//platform/workspace/storage",
     "//android/gradle-dsl-declarative",
     "//platform/workspace/jps",
-  ]
+  ],
+  runtime_deps = [":declarativeSync-tests"]
 )
 ### auto-generated section `build intellij.gradle.declarativeSync.tests` end
 

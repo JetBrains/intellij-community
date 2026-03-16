@@ -1,12 +1,13 @@
 import builtins
 from _typeshed import Incomplete, Unused
-from collections.abc import Callable, Collection, Sequence
+from collections.abc import Callable, Collection
 from typing import Any, ClassVar, Final, Literal, NoReturn, SupportsIndex, TypeVar, overload
 from typing_extensions import Self, TypeAlias, deprecated
 
 import numpy as np
 import pandas as pd
 from numpy.typing import ArrayLike, DTypeLike, NDArray
+from pandas._typing import ScalarIndexer, SequenceIndexer, TakeIndexer
 from pandas.api.extensions import ExtensionArray, ExtensionDtype
 from pyproj import CRS, Transformer
 from shapely import Geometry
@@ -68,15 +69,9 @@ class GeometryArray(ExtensionArray):
     def __len__(self) -> int: ...
     # np.integer[Any] because precision is not important
     @overload
-    def __getitem__(self, idx: int | np.integer[Any]) -> BaseGeometry: ...  # Always 1-D, doesn't accept tuple
+    def __getitem__(self, idx: ScalarIndexer) -> BaseGeometry: ...  # Always 1-D, doesn't accept tuple
     @overload
-    def __getitem__(
-        self, idx: slice | Sequence[SupportsIndex] | NDArray[np.bool_] | NDArray[np.integer[Any]]
-    ) -> GeometryArray: ...
-    @overload
-    def __getitem__(
-        self, idx: int | np.integer[Any] | slice | Sequence[int] | NDArray[np.bool_] | NDArray[np.integer[Any]]
-    ) -> BaseGeometry | GeometryArray: ...
+    def __getitem__(self, idx: SequenceIndexer) -> GeometryArray: ...
     def __setitem__(
         self, key, value: _ArrayOrGeom | pd.DataFrame | pd.Series[Any]  # Cannot use pd.Series[BaseGeometry]
     ) -> None: ...
@@ -222,17 +217,15 @@ class GeometryArray(ExtensionArray):
     @property
     def ndim(self) -> Literal[1]: ...
     def copy(self, *args: Unused, **kwargs: Unused) -> GeometryArray: ...
-    def take(
-        self, indices: Sequence[SupportsIndex] | NDArray[np.integer], allow_fill: bool = False, fill_value: Geometry | None = None
-    ) -> GeometryArray: ...
-    def fillna(
+    def take(self, indices: TakeIndexer, allow_fill: bool = False, fill_value: Geometry | None = None) -> GeometryArray: ...
+    def fillna(  # type: ignore[override]
         self,
         value: Geometry | GeometryArray | None = None,
         method: Literal["backfill", "bfill", "pad", "ffill"] | None = None,
         limit: int | None = None,
         copy: bool = True,
     ) -> GeometryArray: ...
-    @overload
+    @overload  # type: ignore[override]
     def astype(self, dtype: GeometryDtype, copy: bool = True) -> GeometryArray: ...
     @overload
     def astype(self, dtype: ExtensionDtype | Literal["string"], copy: bool = True) -> ExtensionArray: ...  # type: ignore[overload-overlap]

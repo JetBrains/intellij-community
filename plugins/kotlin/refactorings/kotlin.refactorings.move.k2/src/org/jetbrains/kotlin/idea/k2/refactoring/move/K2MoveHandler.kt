@@ -5,7 +5,12 @@ import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.move.MoveCallback

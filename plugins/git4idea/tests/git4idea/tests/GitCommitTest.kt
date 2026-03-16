@@ -1,48 +1,76 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.tests
 
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.IssueNavigationConfiguration
 import com.intellij.openapi.vcs.IssueNavigationLink
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.testFramework.junit5.eel.params.api.DockerTest
+import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
+import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.extensionPointFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.registryKeyFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.vcs.commit.CommitExceptionWithActions
-import git4idea.checkin.GitCheckinEnvironment
+import com.intellij.vcs.test.updateChangeListManager
+import com.intellij.vcs.test.vcsPlatformFixture
 import git4idea.checkin.GitCheckinExplicitMovementProvider
 import git4idea.checkin.isCommitRenamesSeparately
 import git4idea.config.GitConfigUtil
+import git4idea.config.GitSaveChangesPolicy
 import git4idea.config.GitVersion
 import git4idea.i18n.GitBundle
-import git4idea.test.*
-import org.junit.Assume.assumeTrue
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.addCommit
+import git4idea.test.assertChangesWithRefresh
+import git4idea.test.assertCommitted
+import git4idea.test.assertMessage
+import git4idea.test.assertNoChanges
+import git4idea.test.assertStagedChanges
+import git4idea.test.checkout
+import git4idea.test.commit
+import git4idea.test.createFileStructure
+import git4idea.test.createSubRepository
+import git4idea.test.git
+import git4idea.test.gitPlatformFixture
+import git4idea.test.gitSingleRepoFixture
+import git4idea.test.message
+import git4idea.test.tac
+import git4idea.test.tryCommit
+import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.OS
+import org.junit.jupiter.params.ParameterizedClass
 import java.io.File
+import kotlin.io.path.exists
+import kotlin.test.DefaultAsserter.assertEquals
+import kotlin.test.DefaultAsserter.assertTrue
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
-class GitCommitTest : GitSingleRepoTest() {
-  private val myMovementProvider = MyExplicitMovementProvider()
 
-  override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + GitCheckinEnvironment::class.java.name)
+internal abstract class GitCommitTestBase(@Suppress("unused") val eelHolder: EelHolder, val gitCommitFixture: TestFixture<GitCommitContext>) {
 
-  override fun setUp() {
-    super.setUp()
-
-    val point = Extensions.getRootArea().getExtensionPoint(GitCheckinExplicitMovementProvider.EP_NAME)
-    point.registerExtension(myMovementProvider, testRootDisposable)
-
-    commitContext.isCommitRenamesSeparately = true
-  }
+  protected abstract fun `verify test commit case rename & don't commit a file which is both staged and unstaged, should reset and restore unstaged`()
+  protected abstract fun `verify test commit with excluded added-deleted and added files`()
 
   // IDEA-50318
-  fun `test merge commit with spaces in path`() {
+  @Test
+  fun `test merge commit with spaces in path`() = with(gitCommitFixture.get()) {
     val PATH = "dir with spaces/file with spaces.txt"
     createFileStructure(projectRoot, PATH)
     addCommit("created some file structure")
 
     git("branch feature")
 
-    val file = File(projectPath, PATH)
+    val file = projectNioRoot.resolve(PATH)
     assertTrue("File doesn't exist!", file.exists())
     overwrite(file, "my content")
     addCommit("modified in master")
@@ -65,7 +93,8 @@ class GitCommitTest : GitSingleRepoTest() {
     assertNoChanges()
   }
 
-  fun `test commit with excluded staged rename`() {
+  @Test
+  fun `test commit with excluded staged rename`() = with(gitCommitFixture.get()) {
     tac("a.java", "old content")
     tac("b.java")
 
@@ -87,7 +116,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit with excluded case rename`() {
+  @Test
+  fun `test commit with excluded case rename`() = with(gitCommitFixture.get()) {
     tac("a.java", "old content")
     tac("b.java")
 
@@ -109,7 +139,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit staged rename`() {
+  @Test
+  fun `test commit staged rename`() = with(gitCommitFixture.get()) {
     tac("b.java")
 
     git("mv -f b.java c.java")
@@ -126,7 +157,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit case rename`() {
+  @Test
+  fun `test commit case rename`() = with(gitCommitFixture.get()) {
     generateCaseRename("a.java", "A.java")
 
     val changes = assertChangesWithRefresh {
@@ -139,8 +171,9 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit unstaged case rename - case ignored on case insensitive system`() {
-    IoTestUtil.assumeCaseInsensitiveFS()
+  @Test
+  fun `test commit unstaged case rename - case ignored on case insensitive system`() = with(gitCommitFixture.get()) {
+    IoTestUtil.assumeCaseInsensitiveFS(projectNioRoot)
 
     tac("a.java", "old content")
     rm("a.java")
@@ -156,8 +189,9 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit wrongly staged case rename - case ignored on case insensitive system`() {
-    IoTestUtil.assumeCaseInsensitiveFS()
+  @Test
+  fun `test commit wrongly staged case rename - case ignored on case insensitive system`() = with(gitCommitFixture.get()) {
+    IoTestUtil.assumeCaseInsensitiveFS(projectNioRoot)
 
     tac("a.java", "old content")
     rm("a.java")
@@ -174,7 +208,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit case rename + one staged file`() {
+  @Test
+  fun `test commit case rename + one staged file`() = with(gitCommitFixture.get()) {
     generateCaseRename("a.java", "A.java")
     touch("s.java")
     git("add s.java")
@@ -193,7 +228,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit case rename with another staged rename`() {
+  @Test
+  fun `test commit case rename with another staged rename`() = with(gitCommitFixture.get()) {
     tac("a.java")
     tac("b.java")
 
@@ -214,7 +250,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit case rename + one unstaged file`() {
+  @Test
+  fun `test commit case rename + one unstaged file`() = with(gitCommitFixture.get()) {
     tac("m.java")
     generateCaseRename("a.java", "A.java")
     echo("m.java", "unstaged")
@@ -233,7 +270,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit case rename & don't commit one unstaged file`() {
+  @Test
+  fun `test commit case rename & don't commit one unstaged file`() = with(gitCommitFixture.get()) {
     tac("m.java")
     generateCaseRename("a.java", "A.java")
     echo("m.java", "unstaged")
@@ -253,7 +291,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit case rename & don't commit one staged file`() {
+  @Test
+  fun `test commit case rename & don't commit one staged file`() = with(gitCommitFixture.get()) {
     `assume version where git reset returns 0 exit code on success `()
 
     tac("s.java")
@@ -279,7 +318,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit case rename & don't commit one staged case rename`() {
+  @Test
+  fun `test commit case rename & don't commit one staged case rename`() = with(gitCommitFixture.get()) {
     `assume version where git reset returns 0 exit code on success `()
 
     tac("s.java")
@@ -304,7 +344,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit case rename & don't commit one staged simple rename, then rename should remain staged`() {
+  @Test
+  fun `test commit case rename & don't commit one staged simple rename, then rename should remain staged`() = with(gitCommitFixture.get()) {
     `assume version where git reset returns 0 exit code on success `()
 
     echo("before.txt", "some\ncontent\nere")
@@ -330,7 +371,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit case rename + one unstaged file & don't commit one staged file`() {
+  @Test
+  fun `test commit case rename + one unstaged file & don't commit one staged file`() = with(gitCommitFixture.get()) {
     `assume version where git reset returns 0 exit code on success `()
 
     tac("s.java")
@@ -360,15 +402,14 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit case rename & don't commit a file which is both staged and unstaged, should reset and restore`() {
+  @Test
+  fun `test commit case rename & don't commit a file which is both staged and unstaged, should reset and restore unstaged`() = with(gitCommitFixture.get()) {
     `assume version where git reset returns 0 exit code on success `()
 
     tac("c.java", "initial")
     generateCaseRename("a.java", "A.java")
-    val STAGED_CONTENT = "staged"
     overwrite("c.java", STAGED_CONTENT)
     git("add c.java")
-    val UNSTAGED_CONTENT = "unstaged"
     overwrite("c.java", UNSTAGED_CONTENT)
 
     val changes = assertChangesWithRefresh {
@@ -388,14 +429,43 @@ class GitCommitTest : GitSingleRepoTest() {
       modified("c.java")
     }
 
-    // this is intentional data loss: it is a rare case, while restoring both staged and unstaged part is not so easy,
-    // so we are not doing it, at least until IDEA supports Git index
-    // (which will mean that users will be able to produce such situation intentionally with a help of IDE).
-    assertEquals(UNSTAGED_CONTENT, git("show :c.java"))
+    `verify test commit case rename & don't commit a file which is both staged and unstaged, should reset and restore unstaged`()
+  }
+
+  @RegistryKey("git.commit.staged.saver.use.index.info", "true")
+  @Test
+  fun `test commit case rename & don't commit a file which is both staged and unstaged, should reset and restore both staged and unstaged`() = with(gitCommitFixture.get()) {
+    `assume version where git reset returns 0 exit code on success `()
+
+    tac("c.java", "initial")
+    generateCaseRename("a.java", "A.java")
+    overwrite("c.java", STAGED_CONTENT)
+    git("add c.java")
+    overwrite("c.java", UNSTAGED_CONTENT)
+
+    val changes = assertChangesWithRefresh {
+      rename("a.java", "A.java")
+      modified("c.java")
+    }
+
+    commit(listOf(changes[0]))
+
+    repo.assertCommitted {
+      rename("a.java", "A.java")
+    }
+    assertChangesWithRefresh {
+      modified("c.java")
+    }
+    repo.assertStagedChanges {
+      modified("c.java")
+    }
+
+    assertEquals(STAGED_CONTENT, git("show :c.java"))
     assertEquals(UNSTAGED_CONTENT, FileUtil.loadFile(File(projectPath, "c.java")))
   }
 
-  fun `test commit case rename with additional non-staged changes should commit everything`() {
+  @Test
+  fun `test commit case rename with additional non-staged changes should commit everything`() = with(gitCommitFixture.get()) {
     val initialContent = """
       some
       large
@@ -424,7 +494,8 @@ class GitCommitTest : GitSingleRepoTest() {
     assertEquals(initialContent + additionalContent, git("show HEAD:A.java"))
   }
 
-  fun `test commit explicit rename`() {
+  @Test
+  fun `test commit explicit rename`() = with(gitCommitFixture.get()) {
     `assume version where git reset returns 0 exit code on success `()
 
     tac("a.before", "before content")
@@ -453,7 +524,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit explicit rename with issue links`() {
+  @Test
+  fun `test commit explicit rename with issue links`() = with(gitCommitFixture.get()) {
     `assume version where git reset returns 0 exit code on success `()
 
     tac("a.before", "before content")
@@ -490,7 +562,8 @@ class GitCommitTest : GitSingleRepoTest() {
 
       commit(changes, originalMessage)
       assertNoChanges()
-    } finally {
+    }
+    finally {
       navigationConfiguration.links = oldLinks
     }
 
@@ -505,7 +578,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit explicit rename + one unstaged file & don't commit one staged file`() {
+  @Test
+  fun `test commit explicit rename + one unstaged file & don't commit one staged file`() = with(gitCommitFixture.get()) {
     `assume version where git reset returns 0 exit code on success `()
 
     tac("s.java")
@@ -548,7 +622,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit rename with conflicting staged rename`() {
+  @Test
+  fun `test commit rename with conflicting staged rename`() = with(gitCommitFixture.get()) {
     `assume version where git reset returns 0 exit code on success `()
 
     tac("a.txt", "file content")
@@ -582,7 +657,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit with excluded added-deleted file`() {
+  @Test
+  fun `test commit with excluded added-deleted file`() = with(gitCommitFixture.get()) {
     `assume version where git reset returns 0 exit code on success `()
 
     tac("a.txt", "file content")
@@ -605,7 +681,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit with excluded deleted-added file`() {
+  @Test
+  fun `test commit with excluded deleted-added file`() = with(gitCommitFixture.get()) {
     `assume version where git reset returns 0 exit code on success `()
 
     tac("a.txt", "file content")
@@ -633,7 +710,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit with excluded added-deleted and added files`() {
+  @Test
+  fun `test commit with excluded added-deleted and added files`() = with(gitCommitFixture.get()) {
     `assume version where git reset returns 0 exit code on success `()
 
     tac("a.txt", "file content")
@@ -652,19 +730,11 @@ class GitCommitTest : GitSingleRepoTest() {
 
     commit(listOf(changes[0]))
 
-    assertChangesWithRefresh {
-      added("c.txt")
-    }
-    repo.assertStagedChanges {
-      added("c.txt")
-    }
-    assertMessage("comment", repo.message("HEAD"))
-    repo.assertCommitted {
-      modified("a.txt")
-    }
+    `verify test commit with excluded added-deleted and added files`()
   }
 
-  fun `test commit with deleted-added file`() {
+  @Test
+  fun `test commit with deleted-added file`() = with(gitCommitFixture.get()) {
     `assume version where git reset returns 0 exit code on success `()
 
     tac("a.txt", "file content")
@@ -693,7 +763,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit during unresolved merge conflict`() {
+  @Test
+  fun `test commit during unresolved merge conflict`() = with(gitCommitFixture.get()) {
     `assume version where git reset returns 0 exit code on success `()
 
     createFileStructure(projectRoot, "a.txt")
@@ -701,7 +772,7 @@ class GitCommitTest : GitSingleRepoTest() {
 
     git("branch feature")
 
-    val file = File(projectPath, "a.txt")
+    val file = projectNioRoot.resolve("a.txt")
     assertTrue("File doesn't exist!", file.exists())
     overwrite(file, "my content")
     addCommit("modified in master")
@@ -723,7 +794,8 @@ class GitCommitTest : GitSingleRepoTest() {
     assertMessage("modified in master", repo.message("HEAD"))
   }
 
-  fun `test commit gitignored file`() {
+  @Test
+  fun `test commit gitignored file`() = with(gitCommitFixture.get()) {
     `assume version where git reset returns 0 exit code on success `()
 
     tac(".gitignore", "ignore*")
@@ -770,7 +842,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit gitignored directory`() {
+  @Test
+  fun `test commit gitignored directory`() = with(gitCommitFixture.get()) {
     `assume version where git reset returns 0 exit code on success `()
 
     tac(".gitignore", "ignore/")
@@ -817,7 +890,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test excluded from commit gitignored file`() {
+  @Test
+  fun `test excluded from commit gitignored file`() = with(gitCommitFixture.get()) {
     `assume version where git reset returns 0 exit code on success `()
 
     tac(".gitignore", "ignore*")
@@ -860,7 +934,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test file to directory renames`() {
+  @Test
+  fun `test file to directory renames`() = with(gitCommitFixture.get()) {
     tac("a_path", "file content 1")
     tac("b_path", "file content 2")
 
@@ -889,7 +964,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test directory to file renames`() {
+  @Test
+  fun `test directory to file renames`() = with(gitCommitFixture.get()) {
     tac("a_path/file1.txt", "file content 1")
     tac("b_path/file2.txt", "file content 2")
 
@@ -920,7 +996,8 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test gpg failure notification action`() {
+  @Test
+  fun `test gpg failure notification action`() = with(gitCommitFixture.get()) {
     tac("a.java", "old content")
 
     git.config(repo, "--local", GitConfigUtil.GPG_COMMIT_SIGN, "true")
@@ -941,40 +1018,158 @@ class GitCommitTest : GitSingleRepoTest() {
     assertEquals(GitBundle.message("gpg.error.see.documentation.link.text"), action.templateText)
   }
 
-  private fun `assume version where git reset returns 0 exit code on success `() {
-    assumeTrue("Not testing: git reset returns 1 and fails the commit process in ${vcs.version}",
-               vcs.version.isLaterOrEqual(GitVersion(1, 8, 2, 0)))
+  @Test
+  fun `test commit with excluded staged submodule`() = with(gitCommitFixture.get()) {
+    tac("a", "old content")
+
+    overwrite("a", "new content")
+
+    val submodule = repo.createSubRepository("submodule", addToGitIgnore = false)
+    val submodulePath = submodule.root.toNioPath().asEelPath().toString()
+    git("add submodule $submodulePath")
+
+    repo.assertStagedChanges {
+      added("submodule")
+    }
+
+    val changes = assertChangesWithRefresh {
+      modified("a")
+      added("submodule")
+    }
+
+    commit(listOf(changes[0]))
+
+    repo.assertCommitted {
+      modified("a")
+    }
+    repo.assertStagedChanges {
+      added("submodule")
+    }
   }
 
-  private fun generateCaseRename(from: String, to: String) {
+  private fun `assume version where git reset returns 0 exit code on success `() = with(gitCommitFixture.get()) {
+    Assumptions.assumeTrue(vcs.version.isLaterOrEqual(GitVersion(1, 8, 2, 0)),
+                           "Not testing: git reset returns 1 and fails the commit process in ${vcs.version}")
+  }
+
+  private fun generateCaseRename(from: String, to: String) = with(gitCommitFixture.get()) {
     tac(from)
     git("mv -f $from $to")
   }
 
-  private class MyExplicitMovementProvider : GitCheckinExplicitMovementProvider() {
-    override fun isEnabled(project: Project): Boolean = true
+  companion object {
+    protected const val STAGED_CONTENT = "staged"
+    protected const val UNSTAGED_CONTENT = "unstaged"
+  }
+}
 
-    override fun getDescription(): String = "explicit movement in tests"
+private class MyExplicitMovementProvider : GitCheckinExplicitMovementProvider() {
+  override fun isEnabled(project: Project): Boolean = true
 
-    override fun getCommitMessage(originalCommitMessage: String): String = description
+  override fun getDescription(): String = "explicit movement in tests"
 
-    override fun collectExplicitMovements(project: Project,
-                                          beforePaths: MutableList<FilePath>,
-                                          afterPaths: MutableList<FilePath>): MutableCollection<Movement> {
-      val beforeMap = beforePaths.filter { it.name.endsWith(".before") }
-        .associate { it.name.removeSuffix(".before") to it }
+  override fun getCommitMessage(originalCommitMessage: String): String = description
 
-      val afterMap = afterPaths.filter { it.name.endsWith(".after") }
-        .associate { it.name.removeSuffix(".after") to it }
+  override fun collectExplicitMovements(
+    project: Project,
+    beforePaths: MutableList<FilePath>,
+    afterPaths: MutableList<FilePath>,
+  ): MutableCollection<Movement> {
+    val beforeMap = beforePaths.filter { it.name.endsWith(".before") }.associateBy { it.name.removeSuffix(".before") }
 
-      val movedChanges = ArrayList<Movement>()
-      for (key in (beforeMap.keys + afterMap.keys)) {
-        val beforePath = beforeMap[key] ?: continue
-        val afterPath = afterMap[key] ?: continue
-        movedChanges.add(Movement(beforePath, afterPath))
+    val afterMap = afterPaths.filter { it.name.endsWith(".after") }.associateBy { it.name.removeSuffix(".after") }
+
+    val movedChanges = ArrayList<Movement>()
+    for (key in (beforeMap.keys + afterMap.keys)) {
+      val beforePath = beforeMap[key] ?: continue
+      val afterPath = afterMap[key] ?: continue
+      movedChanges.add(Movement(beforePath, afterPath))
+    }
+
+    return movedChanges
+  }
+}
+
+internal class GitCommitTest {
+
+  @TestApplicationWithEel(osesMayNotHaveRemoteEels = [OS.WINDOWS, OS.LINUX, OS.MAC])
+  @ParameterizedClass
+  @DockerTest(image = "alpine/git", mandatory = false)
+  @Nested
+  inner class GitCommitWithResetAddTest(eelHolder: EelHolder) : GitCommitTestBase(eelHolder, gitCommitFixture(false)) {
+    override fun `verify test commit case rename & don't commit a file which is both staged and unstaged, should reset and restore unstaged`() = with(gitCommitFixture.get()) {
+      // this is intentional data loss: it is a rare case, while restoring both staged and unstaged part is not so easy,
+      // so we are not doing it, at least until IDEA supports Git index
+      // (which will mean that users will be able to produce such situation intentionally with a help of IDE).
+      assertEquals(UNSTAGED_CONTENT, git("show :c.java"))
+      assertEquals(UNSTAGED_CONTENT, FileUtil.loadFile(File(projectPath, "c.java")))
+    }
+
+    override fun `verify test commit with excluded added-deleted and added files`() = with(gitCommitFixture.get()) {
+      assertChangesWithRefresh {
+        added("c.txt")
       }
-
-      return movedChanges
+      repo.assertStagedChanges {
+        added("c.txt")
+      }
+      assertMessage("comment", repo.message("HEAD"))
+      repo.assertCommitted {
+        modified("a.txt")
+      }
     }
   }
+
+  @TestApplicationWithEel(osesMayNotHaveRemoteEels = [OS.WINDOWS, OS.LINUX, OS.MAC])
+  @ParameterizedClass
+  @DockerTest(image = "alpine/git", mandatory = false)
+  @Nested
+  inner class GitCommitWithIndexInfoTest(eelHolder: EelHolder) : GitCommitTestBase(eelHolder, gitCommitFixture(true)) {
+    override fun `verify test commit case rename & don't commit a file which is both staged and unstaged, should reset and restore unstaged`() = with(gitCommitFixture.get()) {
+      assertEquals(STAGED_CONTENT, git("show :c.java"))
+      assertEquals(UNSTAGED_CONTENT, FileUtil.loadFile(File(projectPath, "c.java")))
+    }
+
+    override fun `verify test commit with excluded added-deleted and added files`() = with(gitCommitFixture.get()) {
+      assertChangesWithRefresh {
+        added("c.txt")
+      }
+      repo.assertStagedChanges {
+        added("b.txt")
+        added("c.txt")
+      }
+      assertMessage("comment", repo.message("HEAD"))
+      repo.assertCommitted {
+        modified("a.txt")
+      }
+    }
+  }
+}
+
+internal interface GitCommitContext : GitSingleRepoContext {
+  val myMovementProvider: GitCheckinExplicitMovementProvider
+}
+
+private fun gitCommitFixture(useIndexInfoStagedChangesSaver: Boolean) =
+  projectFixture(openAfterCreation = true).let { projectFixture ->
+    projectFixture
+      .vcsPlatformFixture()
+      .gitPlatformFixture(projectFixture,
+                          defaultSaveChangesPolicy = GitSaveChangesPolicy.SHELVE,
+                          hasRemoteGitOperation = false) {
+        isCommitRenamesSeparately = true
+      }
+      .gitSingleRepoFixture(makeInitialCommit = true)
+      .gitCommitFixture(useIndexInfoStagedChangesSaver = useIndexInfoStagedChangesSaver)
+  }
+
+private fun TestFixture<GitSingleRepoContext>.gitCommitFixture(useIndexInfoStagedChangesSaver: Boolean): TestFixture<GitCommitContext> = testFixture {
+  val singleRepoContext = init()
+  val movementProvider = extensionPointFixture(GitCheckinExplicitMovementProvider.EP_NAME) {
+    MyExplicitMovementProvider()
+  }.init()
+  registryKeyFixture("git.commit.staged.saver.use.index.info") { setValue(useIndexInfoStagedChangesSaver) }.init()
+  val result = object : GitCommitContext, GitSingleRepoContext by singleRepoContext {
+    override val myMovementProvider: MyExplicitMovementProvider = movementProvider
+  }
+  initialized(result) {}
 }

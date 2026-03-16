@@ -9,7 +9,7 @@ UFile (package = ) [public final class ArrayGetAssignMultiIndexKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UReturnExpression [return this[index1 + index2]]
-                    UArrayAccessExpression [this[index1 + index2]] : java.lang.String
+                    UArrayAccessExpression [this[index1 + index2]] : @org.jetbrains.annotations.NotNull() java.lang.String
                         UThisExpression (label = null) [this] : @org.jetbrains.annotations.NotNull() java.lang.String @org.jetbrains.annotations.NotNull() []
                         UBinaryExpression (operator = +) [index1 + index2] : int
                             USimpleNameReferenceExpression (identifier = index1) [index1] : int
@@ -25,12 +25,12 @@ UFile (package = ) [public final class ArrayGetAssignMultiIndexKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : void
                 UBinaryExpression (operator = =) [this[index1 + index2] = elem] : @org.jetbrains.annotations.NotNull() kotlin.Unit
-                    UArrayAccessExpression [this[index1 + index2]] : java.lang.String
+                    UArrayAccessExpression [this[index1 + index2]] : @org.jetbrains.annotations.NotNull() java.lang.String
                         UThisExpression (label = null) [this] : @org.jetbrains.annotations.NotNull() java.lang.String @org.jetbrains.annotations.NotNull() []
                         UBinaryExpression (operator = +) [index1 + index2] : int
                             USimpleNameReferenceExpression (identifier = index1) [index1] : int
                             USimpleNameReferenceExpression (identifier = index2) [index2] : int
-                    USimpleNameReferenceExpression (identifier = elem) [elem] : java.lang.String
+                    USimpleNameReferenceExpression (identifier = elem) [elem] : @org.jetbrains.annotations.NotNull() java.lang.String
         UMethod (name = box) [public static final fun box() : java.lang.String {...}]
             UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
                 UDeclarationsExpression [var s: java.lang.String[] = <init>(1, { var it: int ->...})]
@@ -40,28 +40,28 @@ UFile (package = ) [public final class ArrayGetAssignMultiIndexKt {...]
                             ULiteralExpression (value = 1) [1] : int
                             ULambdaExpression [{ var it: int ->...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super @org.jetbrains.annotations.NotNull() java.lang.Integer, ? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                                 UParameter (name = it) [var it: int]
-                                UBlockExpression [{...}] : java.lang.String
+                                UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.String
                                     UReturnExpression [return ""]
-                                        UPolyadicExpression (operator = +) [""] : java.lang.String
+                                        UPolyadicExpression (operator = +) [""] : @org.jetbrains.annotations.NotNull() java.lang.String
                                             ULiteralExpression (value = "") [""] : java.lang.String
                 UBinaryExpression (operator = =) [s[1, -1] = "O"] : @org.jetbrains.annotations.NotNull() kotlin.Unit
-                    UArrayAccessExpression [s[1, -1]] : java.lang.String
+                    UArrayAccessExpression [s[1, -1]] : @org.jetbrains.annotations.NotNull() java.lang.String
                         USimpleNameReferenceExpression (identifier = s) [s] : @org.jetbrains.annotations.NotNull() java.lang.String @org.jetbrains.annotations.NotNull() []
                         ULiteralExpression (value = 1) [1] : int
                         UPrefixExpression (operator = -) [-1] : int
                             ULiteralExpression (value = 1) [1] : int
-                    UPolyadicExpression (operator = +) ["O"] : java.lang.String
+                    UPolyadicExpression (operator = +) ["O"] : @org.jetbrains.annotations.NotNull() java.lang.String
                         ULiteralExpression (value = "O") ["O"] : java.lang.String
                 UBinaryExpression (operator = +=) [s[2, -2] += "K"] : @org.jetbrains.annotations.NotNull() kotlin.Unit
-                    UArrayAccessExpression [s[2, -2]] : java.lang.String
+                    UArrayAccessExpression [s[2, -2]] : @org.jetbrains.annotations.NotNull() java.lang.String
                         USimpleNameReferenceExpression (identifier = s) [s] : @org.jetbrains.annotations.NotNull() java.lang.String @org.jetbrains.annotations.NotNull() []
                         ULiteralExpression (value = 2) [2] : int
                         UPrefixExpression (operator = -) [-2] : int
                             ULiteralExpression (value = 2) [2] : int
-                    UPolyadicExpression (operator = +) ["K"] : java.lang.String
+                    UPolyadicExpression (operator = +) ["K"] : @org.jetbrains.annotations.NotNull() java.lang.String
                         ULiteralExpression (value = "K") ["K"] : java.lang.String
                 UReturnExpression [return s[-3, 3]] : @org.jetbrains.annotations.NotNull() java.lang.Void
-                    UArrayAccessExpression [s[-3, 3]] : java.lang.String
+                    UArrayAccessExpression [s[-3, 3]] : @org.jetbrains.annotations.NotNull() java.lang.String
                         USimpleNameReferenceExpression (identifier = s) [s] : @org.jetbrains.annotations.NotNull() java.lang.String @org.jetbrains.annotations.NotNull() []
                         UPrefixExpression (operator = -) [-3] : int
                             ULiteralExpression (value = 3) [3] : int

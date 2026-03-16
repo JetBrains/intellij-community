@@ -17,6 +17,7 @@
       <excludeFolder url="file://$MODULE_DIR$/jvm-rules/bazel-jvm-rules" />
       <excludeFolder url="file://$MODULE_DIR$/jvm-rules/bazel-out" />
       <excludeFolder url="file://$MODULE_DIR$/jvm-rules/bazel-testlogs" />
+      <excludeFolder url="file://$MODULE_DIR$/mcp-servers/ij-proxy/dist" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -30,9 +31,9 @@
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
-    <orderEntry type="library" name="maven-resolver-provider" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.maven.resolver.provider" />
   </component>
 </module>

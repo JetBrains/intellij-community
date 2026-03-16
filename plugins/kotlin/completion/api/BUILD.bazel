@@ -23,6 +23,7 @@ jvm_library(
     "//plugins/kotlin/base/frontend-agnostic",
     "//platform/core-api:core",
     "//platform/analysis-api:analysis",
+    "//platform/core-impl",
     "//platform/projectModel-impl",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",

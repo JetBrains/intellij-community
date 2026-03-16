@@ -5,9 +5,7 @@
     <node text="packageFun(String)  ()"/>
   </node>
   <node text="KA.name(2 usages)  ()"/>
-  <node text="JA.foo(String)(2 usages)  ()">
-    <node text="PrintStream.println(String)  (java.io)"/>
-  </node>
+  <node text="JA.foo(String)(2 usages)  ()"/>
   <node text="packageFun(String)  ()"/>
   <node text="KA(4 usages)  ()"/>
 </node>

@@ -1,0 +1,2 @@
+// IGNORE_K1
+fun foo(bar: Int) = bar > 10 || bar < 0

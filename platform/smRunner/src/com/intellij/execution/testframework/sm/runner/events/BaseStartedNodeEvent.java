@@ -69,7 +69,7 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
   }
 
   public static @Nullable String getParentNodeId(@NotNull MessageWithAttributes message) {
-    return TreeNodeEvent.getNodeId(message, "parentNodeId");
+    return getNodeId(message, "parentNodeId");
   }
 
   public static @Nullable String getNodeType(@NotNull MessageWithAttributes message) {

@@ -1,0 +1,118 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="editable.java.test.console" defaultValue="false"
+                 description="Enables System.in in java test consoles (JUnit &amp; TestNG)"/>
+    <registryKey key="java.test.enable.tree.live.time" defaultValue="true"
+                 description="Enable live time for tests" restartRequired="true"/>
+    <registryKey key="ide.index.id.skip.java.sources.in.libs" defaultValue="false"
+                 description="IdIndex skips .java-files in libraries (index .class-files instead)" restartRequired="true"/>
+    <registryKey key="ide.jps.use.build.tool.window" defaultValue="true"
+                 description="Enables 'Build' toolwindow for JPS compilation messages"/>
+    <registryKey key="java.jps.backward.ref.index.builder.fs.case.sensitive" defaultValue="BY_ROOT"
+                 description="Case sensitivity of the project file system for compiler references. Available values: SENSITIVE, INSENSITIVE, BY_OS (Defined by OS or VM options), BY_ROOT (Defined by first root)"/>
+    <registryKey key="jps.build.use.workspace.model"
+                 description="Use workspace model inside JPS build process. The implementation isn't finished yet, refer to https://youtrack.jetbrains.com/issue/IJPL-409 for details."
+                 defaultValue="false"/>
+    <registryKey key="compiler.process.jdk" defaultValue=""
+                 description="Path to a JDK home. Force the build process to be run using the JDK specified. It is assumed that the jdk is at least of version 11."/>
+    <registryKey key="compiler.process.preload" defaultValue="true"
+                 description="After the build finishes, the IDE will preload and leave waiting in memory the build process for the next compilation. This will save time for process start and project model loading (may be noticeable for big projects)."/>
+    <registryKey key="compiler.process.debug.port" defaultValue="" description="Specifies the build port at which the build process will wait for debugger connections\n\
+   if 'Debug Build Process' (available via Find Action) is enabled.\n\
+  -1 means that a random available port will be chosen."/>
+    <registryKey key="compiler.automake.trigger.delay" defaultValue="300"
+                 description="Delay in milliseconds before triggering auto-make in response to file system events"/>
+    <registryKey key="compiler.automake.postpone.when.idle.less.than" defaultValue="3000"
+                 description="If at the moment the auto-build is about to start and the IDE is idle for less than specified milliseconds, the automatic build will be postponed in order not to interfere with the user's activity."/>
+    <registryKey key="compiler.automake.build.while.idle.timeout" defaultValue="60000"
+                 description="Application inactivity period, after which automatic builds may be triggered, if necessary, for all currently opened projects. Set to negative value to disable the feature."/>
+    <registryKey key="compiler.automake.allow.parallel" defaultValue="true" description="The option allows forcing automatically started builds to run in single-threaded mode even if 'Compile independent modules in parallel' is on\n\
+  This might help to save CPU resources for the foreground processes."/>
+    <registryKey key="compiler.document.save.enabled" defaultValue="false"
+                 description="Specify whether project save in response to document changes is enabled"/>
+    <registryKey key="compiler.document.save.trigger.delay" defaultValue="1500"
+                 description="Delay in milliseconds before triggering save in response to document changes"/>
+    <registryKey key="compiler.build.data.unused.threshold" defaultValue="30"
+                 description="If a project is not opened for the specified number of days, its build data will be cleared to save disk space"/>
+    <registryKey key="compiler.build.report.statistics" defaultValue="false"
+                 description="Turn on to display builder execution times as 'Information' messages in the compiler tool window."/>
+    <registryKey key="compiler.natural.int.multimap.impl" defaultValue="false"
+                 description="Experimental implementation for class-to-class dependency multimap in JPS caches.\nIf turned off after being turned on, project rebuild is required."/>
+    <registryKey key="compiler.process.use.portable.caches" defaultValue="false"
+                 description="Warning: for Intellij project only! \nTurn on to download compilation caches to reduce build time."/>
+    <registryKey key="compiler.ref.index" defaultValue="true" description="Enables Find Usages using references from compiler indices"
+                 restartRequired="true"/>
+    <registryKey key="compiler.ref.chain.search" defaultValue="true" description="Enables relevant method chain completion"/>
+    <registryKey key="enable.compiler.reference.index.test.actions" defaultValue="true"
+                 description="Enables compiler reference index test actions"/>
+    <registryKey key="use.jdk.vendor.in.suggested.jdk.name" defaultValue="true" description="Include Vendor name in suggested SDK names"/>
+    <registryKey key="java.additional.external.annotations.root.url" defaultValue=""
+                 description="URL of a zip file or a directory containing additional external annotations which will be applied to all modules and libraries"/>
+    <registryKey key="jdk.configure.existing" defaultValue="false" description="Attempt to add an existing SDK to the SDK table."/>
+    <registryKey key="java.telescope.usages.single.threaded" defaultValue="true"
+                 description="Make Java usage inlays computation single-threaded"/>
+    <registryKey key="compiler.process.new.session" defaultValue="true"
+                 description="Runs the build process in a new session on Linux via setsid(1)"/>
+    <registryKey defaultValue="true" description="Trigger autotest on delay instead of build events" key="trigger.autotest.on.delay"/>
+    <registryKey key="ide.jvm.run.marker" defaultValue="false" description="Enable JVM-lang-based run line markers"/>
+    <registryKey key="ide.jvm.command.line.clear.all.environments" defaultValue="true"
+                 description="Clear all environments when running a JVM command line application"/>
+    <registryKey key="testDiscovery.enabled"
+                 defaultValue="false"
+                 description="Enable instrumentation during tests to be able to start 'tests which pass this code' later"/>
+    <registryKey key="java.override.methods.enable.sort.by.overriding.action" defaultValue="false"
+                 description="Enables button in Override Methods dialog to sort methods by the percentage of subclasses that override"/>
+    <registryKey key="injections.java.fragment.editor.new" defaultValue="true" restartRequired="false"
+                 description="Using new optimised JavaInjectedFileChangesHandler when editing code injected to Java in the fragment editor"/>
+    <registryKey key="java.unused.symbol.strict.entry.points" defaultValue="true"
+                 description="Do not consider implicit usages part of the entry points (editor only)"/>
+    <registryKey key="ide.unused.symbol.calculation.maxFilesToSearchUsagesIn" defaultValue="10"
+                 description="Max number of scanned files to find usages of a symbol"/>
+    <registryKey key="ide.unused.symbol.calculation.maxFilesSizeToSearchUsagesIn" defaultValue="524288"
+                 description="Max files size in bytes to find usages of a symbol in case there are a few files"/>
+    <registryKey key="ide.goto.symbol.include.overrides.on.qualified.patterns" defaultValue="true"
+                 description="Disable deduplication of methods from the same hierarchy if a qualified pattern is used in Goto Symbol"/>
+    <registryKey defaultValue="false"
+                 description="Use shallow unused declaration analysis in batch mode (like in the editor, Java only)"
+                 key="java.unused.declaration.inspection.use.shallow.local.anaysis.as.global"/>
+    <registryKey key="introduce.variable.prefer.statements" defaultValue="false"
+                 description="If true, select the line at caret if there is no selection on the introduced variable; when false expressions chooser would be shown"/>
+    <registryKey key="add.past.participle.to.suggested.names" defaultValue="true"
+                 description="Past participle variants suggested when introducing variables"/>
+    <registryKey key="show.method.base.class.in.java.file.structure" defaultValue="true"
+                 description="Show the base class of a method in the Java File Structure view"/>
+    <registryKey key="ide.structural.navigation.visit.fields" defaultValue="false"
+                 description="Whether fields should be stopped at when navigating to the nex/previous structural member by Alt+Down/Up."/>
+    <registryKey key="ide.java.show.bundled.runtime" defaultValue="true"
+                 description="Enables using bundled JetBrains Runtime for execution"/>
+    <registryKey key="load.maven.dependencies.timeout" defaultValue="120"
+                 description="How long (in minutes) idea will wait for results of synchronized maven dependencies resolution"/>
+    <registryKey key="jar.http.downloader.enabled" defaultValue="false"
+                 description="Enabled maven-less library roots resolver for JPS (for internal JetBrains use only)"/>
+    <registryKey key="starters.dependency.update.host"
+                 defaultValue="https://frameworks.jetbrains.com"
+                 description="The host is used to download dependency config updates for framework starters"/>
+    <registryKey defaultValue="false" description="Suggested refactoring from call-site in Java"
+                 key="ide.java.refactoring.suggested.call.site"/>
+    <registryKey key="java.completion.argument.live.template" defaultValue="false"
+                 description="When completing a method call, start a live template with all arguments"/>
+    <registryKey key="java.completion.argument.live.template.completion" defaultValue="false"
+                 description="If java.completion.argument.live.template is enabled, show completion for method arguments immediately"/>
+    <registryKey key="java.completion.show.constructors" defaultValue="false"
+                 description="Show separate constructors when completing constructor call, instead of a single class name"/>
+    <registryKey key="java.javadoc.use.templates" defaultValue="true"
+                 description="Use code templates to generate JavaDoc stubs"/>
+    <registryKey key="java.completion.methods.use.tags"
+                 defaultValue="true"
+                 description="Use additional tags for methods for completion"/>
+    <registryKey key="ide.java.completion.suggest.static.after.instance"
+                 defaultValue="false"
+                 description="Suggest static methods/fields after instance qualifier in Java completion"/>
+    <registryKey key="java.create.compact.source.file.separately"
+                 defaultValue="true"
+                 description="Show 'Create java compact file' separately from all other classes"/>
+    <registryKey key="compiler.external.javac.keep.alive.timeout" defaultValue="300000"
+                 description="If not used for the specified period of time or longer, the IDE will shut down the cached javac compilation process"/>
+  </extensions>
+</idea-plugin>

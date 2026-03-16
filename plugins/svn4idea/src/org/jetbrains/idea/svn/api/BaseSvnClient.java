@@ -7,7 +7,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
-import org.jetbrains.idea.svn.commandLine.*;
+import org.jetbrains.idea.svn.commandLine.Command;
+import org.jetbrains.idea.svn.commandLine.CommandExecutor;
+import org.jetbrains.idea.svn.commandLine.CommandRuntime;
+import org.jetbrains.idea.svn.commandLine.LineCommandListener;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 
 import java.io.File;
 import java.util.Collection;

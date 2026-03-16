@@ -1,12 +1,31 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
-import java.io.*;
-import java.nio.file.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.CopyOption;
+import java.nio.file.FileStore;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.util.LinkedHashSet;
 import java.util.Locale;
+import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -327,5 +346,30 @@ public final class Utils {
   public static void pause(long millis) {
     try { Thread.sleep(millis); }
     catch (InterruptedException ignore) { }
+  }
+
+  public static String[] splitVersionString(String version) {
+    var p = version.indexOf('#');
+    if (p > 0) {
+      var nameAndVersion = version.substring(0, p).trim();
+      var buildNumber = version.substring(p + 1);
+      return new String[]{nameAndVersion, buildNumber};
+    }
+    else {
+      return new String[]{version};
+    }
+  }
+
+  public static int majorVersion(String buildNumber) {
+    var p = buildNumber.indexOf('.');
+    if (p > 0) {
+      try {
+        return Integer.parseInt(buildNumber.substring(0, p));
+      }
+      catch (NumberFormatException e) {
+        LOG.log(Level.WARNING, "invalid build number: " + buildNumber, e);
+      }
+    }
+    return 0;
   }
 }

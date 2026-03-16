@@ -14,7 +14,17 @@ import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
-import org.toml.lang.psi.*
+import org.toml.lang.psi.TomlArray
+import org.toml.lang.psi.TomlArrayTable
+import org.toml.lang.psi.TomlElement
+import org.toml.lang.psi.TomlFile
+import org.toml.lang.psi.TomlHeaderOwner
+import org.toml.lang.psi.TomlInlineTable
+import org.toml.lang.psi.TomlKey
+import org.toml.lang.psi.TomlKeySegment
+import org.toml.lang.psi.TomlKeyValue
+import org.toml.lang.psi.TomlTable
+import org.toml.lang.psi.TomlValue
 
 object TomlJsonPsiWalker : JsonLikePsiWalker {
     override fun isName(element: PsiElement?): ThreeState =

@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class DeleteActionBase extends DeleteAction implements DeleteProvider, GridAction {
+public abstract class DeleteActionBase extends DeleteAction implements DeleteProvider, GridEditAction {
   protected DeleteActionBase() {
     super(null, null, AllIcons.General.Remove);
   }
@@ -30,7 +30,7 @@ public abstract class DeleteActionBase extends DeleteAction implements DeletePro
 
     DataGrid grid = event.getData(DatabaseDataKeys.DATA_GRID_KEY);
     if (grid == null) {
-      event.getPresentation().setText(getTemplatePresentation().getText());
+      event.getPresentation().setTextWithMnemonic(getTemplatePresentation().getTextWithPossibleMnemonic());
     }
     else {
       int itemsCount = itemsCount(grid);

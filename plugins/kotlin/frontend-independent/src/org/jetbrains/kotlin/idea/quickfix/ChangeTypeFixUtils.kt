@@ -49,18 +49,20 @@ object ChangeTypeFixUtils {
                 KotlinBundle.message("fix.change.return.type.remove.explicit.return.type.of", presentation)
         }
 
+        val hasExplicitType = element.typeReference != null
+
         return when (element) {
             is KtFunction -> {
                 if (presentation != null)
-                    KotlinBundle.message("fix.change.return.type.return.type.text.of", presentation, typePresentation)
+                    KotlinBundle.message(if (hasExplicitType) "fix.change.return.type.return.type.text.of" else "fix.specify.type.return.type.text.of", presentation, typePresentation)
                 else
-                    KotlinBundle.message("fix.change.return.type.return.type.text", typePresentation)
+                    KotlinBundle.message(if (hasExplicitType) "fix.change.return.type.return.type.text" else "fix.specify.return.type.text", typePresentation)
             }
             else -> {
                 if (presentation != null)
-                    KotlinBundle.message("fix.change.return.type.type.text.of", presentation, typePresentation)
+                    KotlinBundle.message(if (hasExplicitType) "fix.change.return.type.type.text.of" else "fix.specify.type.text.of", presentation, typePresentation)
                 else
-                    KotlinBundle.message("fix.change.return.type.type.text", typePresentation)
+                    KotlinBundle.message(if (hasExplicitType) "fix.change.return.type.type.text" else "fix.specify.type.text", typePresentation)
             }
         }
     }

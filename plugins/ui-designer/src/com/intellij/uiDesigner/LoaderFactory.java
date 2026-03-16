@@ -18,7 +18,7 @@ import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.UIManager;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;

@@ -14,9 +14,11 @@ project.commonTest
     src/commonTest/kotlin (Test)
 
 project.jvmMain
+    src/jvmMain/java (Java)
     src/jvmMain/kotlin (Java)
 
 project.jvmTest
+    src/jvmTest/java (Java, Test)
     src/jvmTest/kotlin (Java, Test)
 
 project.linuxMain

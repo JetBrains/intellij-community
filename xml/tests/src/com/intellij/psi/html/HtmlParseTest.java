@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.IncorrectOperationException;
@@ -518,6 +519,7 @@ public class HtmlParseTest extends LightIdeaTestCase {
     assertResult("Angular2.txt", result);
   }
 
+  @PerformanceUnitTest
   public void testParsePerformance() throws Exception {
     ExtensionTestUtil.maskExtensions(HtmlEmbeddedContentSupport.EP_NAME,
                                      ContainerUtil.emptyList(), getTestRootDisposable());

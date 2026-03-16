@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  Server.class
+End of files
+Compiling files:
+  java/common/inner/a/Server.java
+End of files
+Cleaning output files:
+  Client$Inner.class
+  Client.class
+End of files
+Compiling files:
+  java/common/inner/a/Client.java
+End of files
+------------------------------------------
+Exit code: ERROR

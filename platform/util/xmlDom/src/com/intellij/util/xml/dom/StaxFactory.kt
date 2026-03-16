@@ -14,17 +14,18 @@ import java.io.Reader
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamException
 
-private val config = createConfig(coalesce = false)
-private val configWithCoalescing = createConfig(coalesce = true)
+private val config = createConfig(coalesce = false, preserveLocation = false)
+private val configWithCoalescing = createConfig(coalesce = true, preserveLocation = false)
+private val configWithLocation = createConfig(coalesce = true, preserveLocation = true)
 
-private fun createConfig(coalesce: Boolean): ReaderConfig {
+private fun createConfig(coalesce: Boolean, preserveLocation: Boolean): ReaderConfig {
   val config = ReaderConfig()
   config.doAutoCloseInput(true)
   config.setProperty(XMLInputFactory.SUPPORT_DTD, false)
   config.setProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, false)
   config.setProperty(XMLInputFactory2.P_INTERN_NAMES, false)
   config.setProperty(XMLInputFactory2.P_INTERN_NS_URIS, false)
-  config.doPreserveLocation(false)
+  config.doPreserveLocation(preserveLocation)
   config.setProperty(XMLInputFactory2.P_AUTO_CLOSE_INPUT, true)
   config.setXmlEncoding("UTF-8")
   config.doCoalesceText(coalesce)
@@ -68,4 +69,14 @@ fun createXmlStreamReader(reader: Reader): XMLStreamReader2 {
 
 fun createXmlStreamReader(chars: CharArray): XMLStreamReader2 {
   return StreamReaderImpl.construct(CharSourceBootstrapper.construct(configWithCoalescing.createNonShared(null, null, "UTF-8"), chars, 0, chars.size))
+}
+
+/**
+ * Creates an XML stream reader with location tracking enabled.
+ * Use this when you need character offsets via [XMLStreamReader2.getLocation].
+ */
+@Throws(XMLStreamException::class)
+@Internal
+fun createXmlStreamReaderWithLocation(reader: Reader): XMLStreamReader2 {
+  return StreamReaderImpl.construct(CharSourceBootstrapper.construct(configWithLocation.createNonShared(null, null, "UTF-8"), reader))
 }

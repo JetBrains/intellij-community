@@ -2,6 +2,12 @@
 
 package org.jetbrains.kotlin.nj2k
 
+import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterPartialTest
+import org.jetbrains.kotlin.psi.KtFile
 
-abstract class AbstractK1JavaToKotlinConverterPartialTest : AbstractJavaToKotlinConverterPartialTest()
+abstract class AbstractK1JavaToKotlinConverterPartialTest : AbstractJavaToKotlinConverterPartialTest() {
+    override fun dumpTextWithErrors(createKotlinFile: KtFile): String {
+        return createKotlinFile.dumpTextWithErrors()
+    }
+}

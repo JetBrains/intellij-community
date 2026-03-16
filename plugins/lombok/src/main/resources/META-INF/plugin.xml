@@ -113,6 +113,8 @@
 
     <canBeFinal implementation="de.plushnikov.intellij.plugin.extension.LombokCanBeFinalHandler"/>
 
+    <hierarchy.elementProvider implementation="de.plushnikov.intellij.plugin.hierarchy.LombokFieldHierarchyElementProvider"/>
+
     <localInspection groupPath="Java" language="JAVA" shortName="LombokGetterMayBeUsed" enabledByDefault="true" level="WARNING"
                      bundle="messages.LombokBundle" key="inspection.lombok.getter.may.be.used.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"

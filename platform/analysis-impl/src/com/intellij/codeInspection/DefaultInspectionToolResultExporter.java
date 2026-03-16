@@ -5,7 +5,14 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeInspection.ex.GlobalInspectionContextEx;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.ProblemDescriptorUserDataKt;
+import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
@@ -17,6 +24,7 @@ import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
@@ -47,7 +55,14 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -202,10 +217,12 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
   private void exportResult(@NotNull RefEntity refEntity, @NotNull CommonProblemDescriptor descriptor, @NotNull Element element) {
     PsiElement psiElement = descriptor instanceof ProblemDescriptor problemDescriptor ? problemDescriptor.getPsiElement() : null;
+    InspectionToolWrapper<?,?> toolWrapper =
+      myToolWrapper.getTool() instanceof AggregateResultsInspection ? getToolWrapperFromDescriptor(descriptor) : myToolWrapper;
     try {
       @NonNls Element problemClassElement = new Element(INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT);
-      problemClassElement.setAttribute(INSPECTION_RESULTS_ID_ATTRIBUTE, myToolWrapper.getShortName());
-      problemClassElement.addContent(sanitizeIllegalXmlChars(myToolWrapper.getDisplayName()));
+      problemClassElement.setAttribute(INSPECTION_RESULTS_ID_ATTRIBUTE, toolWrapper.getShortName());
+      problemClassElement.addContent(sanitizeIllegalXmlChars(toolWrapper.getDisplayName()));
 
       HighlightSeverity severity = InspectionToolResultExporter.getSeverity(refEntity, psiElement, this);
 
@@ -217,7 +234,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       problemClassElement.setAttribute(INSPECTION_RESULTS_ATTRIBUTE_KEY_ATTRIBUTE, type.getAttributesKey().getExternalName());
 
       element.addContent(problemClassElement);
-      if (myToolWrapper instanceof GlobalInspectionToolWrapper globalInspectionToolWrapper) {
+      if (toolWrapper instanceof GlobalInspectionToolWrapper globalInspectionToolWrapper) {
         GlobalInspectionTool globalInspectionTool = globalInspectionToolWrapper.getTool();
         QuickFix<?>[] fixes = descriptor.getFixes();
         if (fixes != null) {
@@ -277,12 +294,23 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     }
     catch (RuntimeException e) {
       String message = "Cannot save results for " + refEntity.getName() + ", inspection which caused problem: " +
-                       myToolWrapper.getShortName() + ", problem descriptor " + descriptor;
+                       toolWrapper.getShortName() + ", problem descriptor " + descriptor;
       if (psiElement != null) {
         message += ", element class: " + psiElement.getClass() + ", containing file: " + psiElement.getContainingFile();
       }
       LOG.error(message, e);
     }
+  }
+
+  private @NotNull InspectionToolWrapper<?, ?> getToolWrapperFromDescriptor(@NotNull CommonProblemDescriptor commonDescriptor) {
+    if (commonDescriptor instanceof ProblemDescriptor descriptor) {
+      ProblemGroup problemGroup = descriptor.getProblemGroup();
+      String problemName = problemGroup != null ? problemGroup.getProblemName() : null;
+      Tools tools = myContext.getTools().get(problemName);
+      InspectionToolWrapper<?, ?> toolWrapper = tools != null ? tools.getTool() : null;
+      return toolWrapper != null ? toolWrapper : myToolWrapper;
+    }
+    return myToolWrapper;
   }
 
   protected String getSeverityDelegateName() {

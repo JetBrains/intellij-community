@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class PropertiesProviderImpl implements PropertiesProvider {
+final class PropertiesProviderImpl implements PropertiesProvider {
   @Override
   public @Nullable String getPropertyValue(@NotNull String propertyKey, @NotNull GlobalSearchScope scope) {
     Project project = scope.getProject();

@@ -23,7 +23,7 @@ class KotlinStringULiteralExpression(
     override val value: String
         get() = text
 
-    override fun evaluate() = value
+    override fun evaluate(): String = value
 
     override fun getExpressionType(): PsiType = PsiType.getJavaLangString(sourcePsi.manager, sourcePsi.resolveScope)
 

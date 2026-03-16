@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.test;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
+import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import com.intellij.util.ArrayUtil;
 import junit.framework.Test;
@@ -17,12 +18,23 @@ import org.junit.internal.MethodSorter;
 import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
-import org.junit.runner.manipulation.*;
+import org.junit.runner.manipulation.Filter;
+import org.junit.runner.manipulation.Filterable;
+import org.junit.runner.manipulation.NoTestsRemainException;
+import org.junit.runner.manipulation.Sortable;
+import org.junit.runner.manipulation.Sorter;
 import org.junit.runner.notification.RunNotifier;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class JUnit3RunnerWithInners extends Runner implements Filterable, Sortable {
     private static final Set<Class<?>> requestedRunners = new HashSet<>();
@@ -76,16 +88,16 @@ public class JUnit3RunnerWithInners extends Runner implements Filterable, Sortab
             } else {
                 TestSuite testSuite = new TestSuite(testClass.asSubclass(TestCase.class));
                 processIndexingMode(testClass, testSuite);
-                return testSuite;
+                return TestFrameworkUtil.flattenSuite(testSuite);
             }
         } else if (unprocessedInnerClasses.size() == innerClasses.size()) {
-            return createTreeTestSuite(testClass);
+            return TestFrameworkUtil.flattenSuite(createTreeTestSuite(testClass));
         } else {
-            return new TestSuite(testClass.asSubclass(TestCase.class));
+            return TestFrameworkUtil.flattenSuite(new TestSuite(testClass.asSubclass(TestCase.class)));
         }
     }
 
-    private static Test createTreeTestSuite(Class<?> root) {
+    private static TestSuite createTreeTestSuite(Class<?> root) {
         Set<Class<?>> classes = new LinkedHashSet<>(collectDeclaredClasses(root, true));
         Map<Class<?>, TestSuite> classSuites = new HashMap<>();
 

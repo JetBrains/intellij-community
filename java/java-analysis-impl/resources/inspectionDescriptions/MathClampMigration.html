@@ -1,0 +1,24 @@
+<html>
+<body>
+Reports combinations of <code>Math.max()</code> and <code>Math.min()</code> that are equivalent to <code>Math.clamp()</code>.
+
+<p>
+  Example:
+</p>
+<pre><code>
+int min = 5, max = 10;
+/*before*/ input = Math.max(Math.min(max, input), min);
+/*after*/  input = Math.clamp(input, min, max);
+</code></pre>
+<!-- tooltip end -->
+
+<p>
+  By default, the inspection only shows when it can statically prove that <code>min</code> is lesser or equal than <code>max</code>.
+  This is done to avoid any <code>IllegalArgumentException</code> due to semantics changes.
+  If you want the inspection to show up nonetheless, you can enable the <b>Warn even if the lower bound could be higher than the upper
+  bound</b> option.
+</p>
+
+<p><small>New in 2026.1</small></p>
+</body>
+</html>

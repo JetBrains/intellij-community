@@ -77,8 +77,16 @@ import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import sun.awt.AWTAutoShutdown
@@ -165,7 +173,14 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
     }
   }
 
-  val app = ApplicationImpl(kernelStarted.coroutineContext, isHeadless)
+  val alreadyPreExistingApplication = ApplicationManager.getApplication() as? ApplicationImpl
+  if (alreadyPreExistingApplication != null) {
+    assert(alreadyPreExistingApplication.isUnitTestMode) {
+      "Active application is not in unit test mode"
+    }
+  }
+
+  val app = alreadyPreExistingApplication ?: ApplicationImpl(kernelStarted.coroutineContext, isHeadless)
   Disposer.register(app) {
     AWTAutoShutdown.getInstance().notifyThreadFree(awtBusyThread)
   }
@@ -182,32 +197,34 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   }
 
   try {
-    // 40 seconds - tests maybe executed on cloud agents where I/O is very slow
-    val timeout = System.getProperty("intellij.testFramework.modules.timeout.seconds", "40").toLong()
-    val pluginSet = loadedModuleFuture.asCompletableFuture().get(timeout, TimeUnit.SECONDS)
-    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app)
+    if (alreadyPreExistingApplication == null) {
+      // 40 seconds - tests maybe executed on cloud agents where I/O is very slow
+      val timeout = System.getProperty("intellij.testFramework.modules.timeout.seconds", "40").toLong()
+      val pluginSet = loadedModuleFuture.asCompletableFuture().get(timeout, TimeUnit.SECONDS)
+      app.registerComponents(modules = pluginSet.getEnabledModules(), app = app)
 
-    val task = suspend {
-      initConfigurationStore(app, emptyList())
+      val task = suspend {
+        initConfigurationStore(app, emptyList())
 
-      RegistryManager.getInstance() // to trigger RegistryKeyBean.addKeysFromPlugins exactly once per run
-      Registry.markAsLoaded()
+        RegistryManager.getInstance() // to trigger RegistryKeyBean.addKeysFromPlugins exactly once per run
+        Registry.markAsLoaded()
 
-      preloadServicesAndCallAppInitializedListeners(app)
-    }
-
-    if (EDT.isCurrentThreadEdt()) {
-      runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
-        task()
+        preloadServicesAndCallAppInitializedListeners(app)
       }
-    }
-    else {
-      runBlocking(Dispatchers.Default) {
-        task()
-      }
-    }
 
-    LoadingState.setCurrentState(LoadingState.APP_STARTED)
+      if (EDT.isCurrentThreadEdt()) {
+        runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
+          task()
+        }
+      }
+      else {
+        runBlocking(Dispatchers.Default) {
+          task()
+        }
+      }
+
+      LoadingState.setCurrentState(LoadingState.APP_STARTED)
+    }
     (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
   }
   catch (e: InterruptedException) {

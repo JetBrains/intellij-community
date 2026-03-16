@@ -22,6 +22,10 @@
     },
     {
       "id": "JavaFxRedundantPropertyValue",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JavaFxResourcePropertyValue",
       "codeQualityCategory": "Reliability"
     }
   ]

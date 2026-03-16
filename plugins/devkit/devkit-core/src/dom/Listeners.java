@@ -3,7 +3,13 @@ package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.openapi.extensions.ExtensionDescriptor;
 import com.intellij.psi.PsiClass;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.ExtendClass;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.Required;
+import com.intellij.util.xml.SubTagList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 

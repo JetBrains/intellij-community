@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
+import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.registerUProblem
 import com.intellij.execution.JUnitBundle
 import com.intellij.execution.junit.isJUnit3InScope
 import com.intellij.execution.junit.isJUnit4InScope
@@ -9,7 +13,11 @@ import com.intellij.execution.junit.isJUnit5Or6InScope
 import com.intellij.jvm.analysis.quickFix.ReplaceCallableExpressionQuickFix
 import com.intellij.jvm.analysis.refactoring.CallChainReplacementInfo
 import com.intellij.jvm.analysis.refactoring.CallReplacementInfo
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.ig.testFrameworks.UAssertHint

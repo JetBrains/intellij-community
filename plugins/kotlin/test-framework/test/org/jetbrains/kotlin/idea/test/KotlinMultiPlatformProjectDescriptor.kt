@@ -7,7 +7,10 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.LanguageLevelModuleExtension
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,7 +19,6 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.kotlin.container.topologicalSort
 import org.jetbrains.kotlin.idea.artifacts.KmpAwareLibraryDependency
 import org.jetbrains.kotlin.idea.artifacts.KmpLightFixtureDependencyDownloader
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativeVersion
@@ -26,7 +28,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
-import kotlin.sequences.forEach
+import org.jetbrains.kotlin.utils.topologicalSort
 
 /**
  * The project is created with the following module structure:
@@ -213,7 +215,9 @@ class KotlinMultiPlatformProjectDescriptor(
 
         runWriteAction {
             val descriptorsFromCommonToPlatform =
-                topologicalSort(platformDescriptors, reverseOrder = true, PlatformDescriptor::refinementDependencies)
+                topologicalSort(
+                    platformDescriptors, dependencies = PlatformDescriptor::refinementDependencies,
+                ).asReversed()
 
             // create libraries beforehand to avoid duplicates
             val projectLibraries = createProjectLibraries(project)

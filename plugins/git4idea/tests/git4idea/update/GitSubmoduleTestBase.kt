@@ -3,7 +3,11 @@ package git4idea.update
 
 import com.intellij.openapi.vcs.Executor.cd
 import git4idea.config.GitSaveChangesPolicy
-import git4idea.test.*
+import git4idea.test.GitPlatformTest
+import git4idea.test.git
+import git4idea.test.gitInit
+import git4idea.test.setupDefaultUsername
+import git4idea.test.tac
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 

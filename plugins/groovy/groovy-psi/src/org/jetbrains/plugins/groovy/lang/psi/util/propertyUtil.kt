@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.lang.java.beans.PropertyKind
-import com.intellij.lang.java.beans.PropertyKind.*
+import com.intellij.lang.java.beans.PropertyKind.BOOLEAN_GETTER
+import com.intellij.lang.java.beans.PropertyKind.GETTER
+import com.intellij.lang.java.beans.PropertyKind.SETTER
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPrimitiveType.getUnboxedType
 import com.intellij.psi.PsiType

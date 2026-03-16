@@ -6,7 +6,7 @@ import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.openapi.vcs.changes.ChangeListManager
 
-private class VcsContextFeatureProvider : ContextFeatureProvider {
+internal class VcsContextFeatureProvider : ContextFeatureProvider {
   override fun getName(): String  = "vcs"
 
   override fun calculateFeatures(environment: CompletionEnvironment): Map<String, MLFeatureValue> {

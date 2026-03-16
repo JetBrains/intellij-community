@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.container.composeContainer
 import org.jetbrains.kotlin.container.useImpl
 import org.jetbrains.kotlin.resolve.PlatformConfigurator
 import org.jetbrains.kotlin.resolve.PlatformConfiguratorBase
-import org.jetbrains.kotlin.resolve.checkers.ExperimentalMarkerDeclarationAnnotationChecker
+import org.jetbrains.kotlin.resolve.checkers.OptInMarkerDeclarationAnnotationChecker
 import org.jetbrains.kotlin.resolve.configureDefaultCheckers
 
 class CompositePlatformConfigurator(private val componentConfigurators: List<PlatformConfigurator>) : PlatformConfigurator {
@@ -27,6 +27,6 @@ class CompositePlatformConfigurator(private val componentConfigurators: List<Pla
         // ExperimentalMarkerDeclarationAnnotationChecker.
         // Unfortunately, it is declared in base class, so repeating call to 'configureModuleDependentCheckers' will lead
         // to multiple registrations.
-        container.useImpl<ExperimentalMarkerDeclarationAnnotationChecker>()
+        container.useImpl<OptInMarkerDeclarationAnnotationChecker>()
     }
 }

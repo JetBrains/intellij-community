@@ -5,7 +5,13 @@ import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.ProjectViewSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationManager.getApplication
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.ReportValue
+import com.intellij.openapi.components.SkipReportingStatistics
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry

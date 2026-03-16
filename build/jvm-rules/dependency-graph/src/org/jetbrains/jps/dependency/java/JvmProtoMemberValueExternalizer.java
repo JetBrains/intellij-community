@@ -229,11 +229,6 @@ enum JvmProtoMemberValueExternalizer implements Externalizer<Object> {
   }
 
   @Override
-  public Object[] createStorage(int size) {
-    return new Object[size];
-  }
-  
-  @Override
   public abstract void save(GraphDataOutput out, Object v) throws IOException;
 
   @Override

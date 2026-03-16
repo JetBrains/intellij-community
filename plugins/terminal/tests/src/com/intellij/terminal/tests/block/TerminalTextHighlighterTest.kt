@@ -2,7 +2,11 @@
 package com.intellij.terminal.tests.block
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.testFramework.*
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.RuleChain
+import com.intellij.testFramework.RunsInEdt
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TextAttributesProvider
 import org.jetbrains.plugins.terminal.block.output.TextWithHighlightings

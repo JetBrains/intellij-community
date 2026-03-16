@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer
 
 import org.jetbrains.plugins.textmate.TestUtil
-import org.junit.jupiter.api.Test
 import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
+import kotlin.test.Test
 
 class GitLexerTest : TextMateLexerTestCase() {
   @Test

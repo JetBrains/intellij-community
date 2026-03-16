@@ -4,7 +4,11 @@ package org.jetbrains.idea.svn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
-import org.jetbrains.idea.svn.commandLine.*;
+import org.jetbrains.idea.svn.commandLine.Command;
+import org.jetbrains.idea.svn.commandLine.CommandExecutor;
+import org.jetbrains.idea.svn.commandLine.CommandRuntime;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.junit.Test;
 
 import java.io.File;

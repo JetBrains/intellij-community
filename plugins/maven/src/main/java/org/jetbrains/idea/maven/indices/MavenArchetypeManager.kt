@@ -163,11 +163,9 @@ class MavenArchetypeManager(private val myProject: Project) {
 
   private fun <R> executeWithMavenEmbedderWrapper(function: (MavenEmbedderWrapper) -> R): R {
     val projectsManager = MavenProjectsManager.getInstance(myProject)
-    var baseDir = ""
-    val projects = projectsManager.rootProjects
-    if (!projects.isEmpty()) {
-      baseDir = getBaseDir(projects[0]!!.directoryFile).toString()
-    }
+    val baseDir = projectsManager.rootProjects.firstOrNull()?.let {
+      getBaseDir(it.directoryFile)
+    } ?: Path.of("")
     val mavenEmbedderWrappers = myProject.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
     mavenEmbedderWrappers.use {
       val mavenEmbedderWrapper = runBlockingMaybeCancellable {

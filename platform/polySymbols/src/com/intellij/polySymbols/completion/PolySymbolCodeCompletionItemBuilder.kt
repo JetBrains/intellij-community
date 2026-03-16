@@ -12,7 +12,9 @@ interface PolySymbolCodeCompletionItemBuilder {
   val offset: Int
   val icon: Icon?
   val typeText: String?
+  val typeTextGreyed: Boolean
   val tailText: String?
+  val tailTextGreyed: Boolean
   val caseSensitive: Boolean
 
   val completeAfterInsert: Boolean
@@ -29,9 +31,11 @@ interface PolySymbolCodeCompletionItemBuilder {
   fun offset(value: Int): PolySymbolCodeCompletionItemBuilder
   fun icon(value: Icon?): PolySymbolCodeCompletionItemBuilder
   fun typeText(value: String?): PolySymbolCodeCompletionItemBuilder
-  fun typeText(provider: () -> String?): PolySymbolCodeCompletionItemBuilder
+  fun typeText(value: String?, greyed: Boolean): PolySymbolCodeCompletionItemBuilder
   fun tailText(value: String?): PolySymbolCodeCompletionItemBuilder
+  fun tailText(value: String?, greyed: Boolean): PolySymbolCodeCompletionItemBuilder
   fun caseSensitive(value: Boolean): PolySymbolCodeCompletionItemBuilder
+  fun asyncCustomizer(value: PolySymbolCodeCompletionItem.() -> PolySymbolCodeCompletionItem): PolySymbolCodeCompletionItemBuilder
 
   fun completeAfterInsert(value: Boolean): PolySymbolCodeCompletionItemBuilder
   fun completeAfterChars(value: Set<Char>): PolySymbolCodeCompletionItemBuilder

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.completion.wheigher;
 
@@ -346,6 +346,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("destructuring.kt")
+            public void testDestructuring() throws Exception {
+                runTest("../../completion/testData/weighers/basic/expectedType/destructuring.kt");
+            }
+
             @TestMetadata("ifConditionQualified.kt")
             public void testIfConditionQualified() throws Exception {
                 runTest("../../completion/testData/weighers/basic/expectedType/ifConditionQualified.kt");
@@ -354,6 +359,21 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             @TestMetadata("MatchingNullableType.kt")
             public void testMatchingNullableType() throws Exception {
                 runTest("../../completion/testData/weighers/basic/expectedType/MatchingNullableType.kt");
+            }
+
+            @TestMetadata("overrideWithoutExplicitType.kt")
+            public void testOverrideWithoutExplicitType() throws Exception {
+                runTest("../../completion/testData/weighers/basic/expectedType/overrideWithoutExplicitType.kt");
+            }
+
+            @TestMetadata("propertyAccessor.kt")
+            public void testPropertyAccessor() throws Exception {
+                runTest("../../completion/testData/weighers/basic/expectedType/propertyAccessor.kt");
+            }
+
+            @TestMetadata("propertyAccessorWithoutBody.kt")
+            public void testPropertyAccessorWithoutBody() throws Exception {
+                runTest("../../completion/testData/weighers/basic/expectedType/propertyAccessorWithoutBody.kt");
             }
 
             @TestMetadata("returnFromFunction.kt")
@@ -385,6 +405,45 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             public void testWhileConditionQualified() throws Exception {
                 runTest("../../completion/testData/weighers/basic/expectedType/whileConditionQualified.kt");
             }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/weighers/basic/namedArguments")
+    public static class NamedArguments extends AbstractHighLevelWeigherTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("PreferInMultiLine.kt")
+        public void testPreferInMultiLine() throws Exception {
+            runTest("../../completion/testData/weighers/basic/namedArguments/PreferInMultiLine.kt");
+        }
+
+        @TestMetadata("PreferLowerArgumentIndex.kt")
+        public void testPreferLowerArgumentIndex() throws Exception {
+            runTest("../../completion/testData/weighers/basic/namedArguments/PreferLowerArgumentIndex.kt");
+        }
+
+        @TestMetadata("PreferLowestMissingArgument.kt")
+        public void testPreferLowestMissingArgument() throws Exception {
+            runTest("../../completion/testData/weighers/basic/namedArguments/PreferLowestMissingArgument.kt");
+        }
+
+        @TestMetadata("PreferMatchingTypeSingleLine.kt")
+        public void testPreferMatchingTypeSingleLine() throws Exception {
+            runTest("../../completion/testData/weighers/basic/namedArguments/PreferMatchingTypeSingleLine.kt");
+        }
+
+        @TestMetadata("PreferWhenUsingNamedArgumentsSingleLine.kt")
+        public void testPreferWhenUsingNamedArgumentsSingleLine() throws Exception {
+            runTest("../../completion/testData/weighers/basic/namedArguments/PreferWhenUsingNamedArgumentsSingleLine.kt");
         }
     }
 
@@ -505,6 +564,21 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../../completion/testData/weighers/basic/DeprecatedSinceKotlinFun.kt");
         }
 
+        @TestMetadata("DoNotLiftShorter.kt")
+        public void testDoNotLiftShorter() throws Exception {
+            runTest("../../completion/testData/weighers/basic/DoNotLiftShorter.kt");
+        }
+
+        @TestMetadata("DoNotPreferNullForNonNullable.kt")
+        public void testDoNotPreferNullForNonNullable() throws Exception {
+            runTest("../../completion/testData/weighers/basic/DoNotPreferNullForNonNullable.kt");
+        }
+
+        @TestMetadata("DoNotPreferNullForNonNullable2.kt")
+        public void testDoNotPreferNullForNonNullable2() throws Exception {
+            runTest("../../completion/testData/weighers/basic/DoNotPreferNullForNonNullable2.kt");
+        }
+
         @TestMetadata("DslCallWithExpectedType.kt")
         public void testDslCallWithExpectedType() throws Exception {
             runTest("../../completion/testData/weighers/basic/DslCallWithExpectedType.kt");
@@ -538,6 +612,16 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
         @TestMetadata("ExactMatchForKeyword.kt")
         public void testExactMatchForKeyword() throws Exception {
             runTest("../../completion/testData/weighers/basic/ExactMatchForKeyword.kt");
+        }
+
+        @TestMetadata("ExpectedTypeDeprioritizeGenericReturn.kt")
+        public void testExpectedTypeDeprioritizeGenericReturn() throws Exception {
+            runTest("../../completion/testData/weighers/basic/ExpectedTypeDeprioritizeGenericReturn.kt");
+        }
+
+        @TestMetadata("ExpectedTypeTypeParameters.kt")
+        public void testExpectedTypeTypeParameters() throws Exception {
+            runTest("../../completion/testData/weighers/basic/ExpectedTypeTypeParameters.kt");
         }
 
         @TestMetadata("ImportDirective.kt")
@@ -730,6 +814,36 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../../completion/testData/weighers/basic/PreferMatchingNamedArgumentName.kt");
         }
 
+        @TestMetadata("PreferNullForNullable.kt")
+        public void testPreferNullForNullable() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferNullForNullable.kt");
+        }
+
+        @TestMetadata("PreferThis.kt")
+        public void testPreferThis() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferThis.kt");
+        }
+
+        @TestMetadata("PreferThisWithLabel.kt")
+        public void testPreferThisWithLabel() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferThisWithLabel.kt");
+        }
+
+        @TestMetadata("PreferTypesMatchingAnnotatedType.kt")
+        public void testPreferTypesMatchingAnnotatedType() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferTypesMatchingAnnotatedType.kt");
+        }
+
+        @TestMetadata("PreferTypesMatchingBackTickedClassName.kt")
+        public void testPreferTypesMatchingBackTickedClassName() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferTypesMatchingBackTickedClassName.kt");
+        }
+
+        @TestMetadata("PreferTypesMatchingBackTickedParameterName.kt")
+        public void testPreferTypesMatchingBackTickedParameterName() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferTypesMatchingBackTickedParameterName.kt");
+        }
+
         @TestMetadata("PreferTypesMatchingConstructorParameterName.kt")
         public void testPreferTypesMatchingConstructorParameterName() throws Exception {
             runTest("../../completion/testData/weighers/basic/PreferTypesMatchingConstructorParameterName.kt");
@@ -745,14 +859,34 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../../completion/testData/weighers/basic/PreferTypesMatchingContextParameterName.kt");
         }
 
+        @TestMetadata("PreferTypesMatchingImportAlias.kt")
+        public void testPreferTypesMatchingImportAlias() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferTypesMatchingImportAlias.kt");
+        }
+
+        @TestMetadata("PreferTypesMatchingImportedType.kt")
+        public void testPreferTypesMatchingImportedType() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferTypesMatchingImportedType.kt");
+        }
+
         @TestMetadata("PreferTypesMatchingParameterName.kt")
         public void testPreferTypesMatchingParameterName() throws Exception {
             runTest("../../completion/testData/weighers/basic/PreferTypesMatchingParameterName.kt");
         }
 
+        @TestMetadata("PreferTypesMatchingPropertyDeclaration.kt")
+        public void testPreferTypesMatchingPropertyDeclaration() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferTypesMatchingPropertyDeclaration.kt");
+        }
+
         @TestMetadata("PreferTypesMatchingPropertyTypeName.kt")
         public void testPreferTypesMatchingPropertyTypeName() throws Exception {
             runTest("../../completion/testData/weighers/basic/PreferTypesMatchingPropertyTypeName.kt");
+        }
+
+        @TestMetadata("PreferTypesMatchingTypealias.kt")
+        public void testPreferTypesMatchingTypealias() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferTypesMatchingTypealias.kt");
         }
 
         @TestMetadata("Prefix.kt")

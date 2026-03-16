@@ -1,12 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl
 
-import com.intellij.codeInsight.multiverse.*
+import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl
+import com.intellij.codeInsight.multiverse.ModuleContext
+import com.intellij.codeInsight.multiverse.ProjectModelContextBridge
+import com.intellij.codeInsight.multiverse.anyContext
+import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.multiverseProjectFixture
 import com.intellij.psi.PsiFile
@@ -16,16 +22,31 @@ import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.util.PsiUtilCore.ensureValid
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.EnableTracingFor
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileOrDirInProjectFixture
 import com.intellij.testFramework.junit5.fixture.moduleInProjectFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.util.ExceptionUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 
+@EnableTracingFor(
+  categories = ["#com.intellij.psi.impl.file.impl.MultiverseFileViewProviderCache"],
+  categoryClasses = [CodeInsightContextManagerImpl::class],
+)
 @TestApplication
 internal class FileMoveWithWaitForIndexingTest {
+  @Suppress("unused")
+  private val enableStacktraceOnTraceLevel = testFixture {
+    val disposable = Disposer.newDisposable()
+    MultiverseFileViewProviderCacheLog.enableStacktraceOnTraceLevel(disposable)
+    initialized(Unit) {
+      Disposer.dispose(disposable)
+    }
+  }
+
   private val projectFixture = multiverseProjectFixture(openAfterCreation = true) {
     module("module1") {
       contentRoot("contentRoot1") {

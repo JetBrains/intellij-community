@@ -10,8 +10,10 @@ import com.intellij.usageView.UsageViewBundle
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.usageView.UsageViewUtil
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
+@K1Deprecation
 class MoveFilesWithDeclarationsViewDescriptor(
     private val elementsToMove: Array<PsiElement>,
     newParent: PsiDirectory

@@ -8,3 +8,7 @@ com.intellij.remote.RemoteConnector
 - a:getName():java.lang.String
 - a:getType():com.intellij.remote.RemoteConnectionType
 - a:produceRemoteCredentials(com.intellij.util.Consumer):V
+a:com.intellij.remote.RemoteSdkFactoryImpl
+- pa:createSdk(com.intellij.openapi.project.Project,java.util.Collection,com.intellij.openapi.projectRoots.SdkType,com.intellij.remote.RemoteSdkAdditionalData,java.lang.String):com.intellij.openapi.projectRoots.Sdk
+- createUnfinished(com.intellij.openapi.project.Project,com.intellij.remote.RemoteSdkAdditionalData,java.util.Collection):com.intellij.openapi.projectRoots.Sdk
+- generateSdkHomePath(com.intellij.openapi.project.Project,com.intellij.remote.RemoteSdkAdditionalData):java.lang.String

@@ -135,6 +135,7 @@ class BuildScriptDataBuilder(
   override fun withJUnit(): BuildScriptDataBuilder = apply { backend.withJUnit() }
   override fun withJUnit4(): BuildScriptDataBuilder = apply { backend.withJUnit4() }
   override fun withJUnit5(): BuildScriptDataBuilder = apply { backend.withJUnit5() }
+  override fun withJUnit6(): BuildScriptDataBuilder = apply { backend.withJUnit6() }
   override fun targetCompatibility(level: String): BuildScriptDataBuilder = apply { backend.targetCompatibility(level) }
   override fun sourceCompatibility(level: String): BuildScriptDataBuilder = apply { backend.sourceCompatibility(level) }
 

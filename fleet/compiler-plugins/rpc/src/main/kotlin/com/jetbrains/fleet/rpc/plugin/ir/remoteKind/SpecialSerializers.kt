@@ -1,20 +1,28 @@
 package com.jetbrains.fleet.rpc.plugin.ir.remoteKind
 
+import com.jetbrains.fleet.rpc.plugin.REMOTE_KIND_DEFERRED_CLASS_ID
+import com.jetbrains.fleet.rpc.plugin.REMOTE_KIND_FLOW_CLASS_ID
+import com.jetbrains.fleet.rpc.plugin.REMOTE_KIND_RECEIVE_CHANNEL_CLASS_ID
+import com.jetbrains.fleet.rpc.plugin.REMOTE_KIND_SEND_CHANNEL_CLASS_ID
+import com.jetbrains.fleet.rpc.plugin.ir.FileContext
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
 import org.jetbrains.kotlin.ir.builders.irCallConstructor
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.util.constructors
-import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
-import com.jetbrains.fleet.rpc.plugin.ir.CompilerPluginContext
-import com.jetbrains.fleet.rpc.plugin.ir.util.RPC_FQN
-import com.jetbrains.fleet.rpc.plugin.ir.util.name
 import org.jetbrains.kotlin.ir.builders.irBoolean
+import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
+import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.isNullable
 
-internal fun IrBuilderWithScope.handleSpecialTypes(irType: IrType, context: CompilerPluginContext, debugInfo: String): IrExpression? {
-  return context.fqnToRemoteKind(irType.classFqName)?.let { constructor ->
+@UnsafeDuringIrConstructionAPI
+internal fun IrBuilderWithScope.handleSpecialTypes(
+  irType: IrType,
+  context: FileContext,
+  debugInfo: String,
+): IrExpression? {
+  return context.getRemoteKindConstructor(irType.classFqName)?.let { constructor ->
     val elementKindType = (irType as IrSimpleType).arguments.first().typeOrFail
     val remoteKind = toRemoteKind(elementKindType, context, debugInfo)
     irCallConstructor(constructor, listOf(remoteKind.type)).apply {
@@ -24,31 +32,16 @@ internal fun IrBuilderWithScope.handleSpecialTypes(irType: IrType, context: Comp
   }
 }
 
-private fun CompilerPluginContext.fqnToRemoteKind(fqName: FqName?) = cache.remember {
-  val remoteKindFlowConstructor = pluginContext.referenceClass(
-    ClassId(RPC_FQN, FqName.fromSegments(listOf("RemoteKind", "Flow")), false)
-  )!!.constructors.first()
+@UnsafeDuringIrConstructionAPI
+private fun FileContext.getRemoteKindConstructor(fqName: FqName?): IrConstructorSymbol? =
+  when (fqName) {
+    FLOW_FQN -> referenceClass(REMOTE_KIND_FLOW_CLASS_ID)!!.constructors.first()
+    RECEIVE_CHANNEL_FQN -> referenceClass(REMOTE_KIND_RECEIVE_CHANNEL_CLASS_ID)!!.constructors.first()
+    SEND_CHANNEL_FQN -> referenceClass(REMOTE_KIND_SEND_CHANNEL_CLASS_ID)!!.constructors.first()
+    DEFERRED_FQN -> referenceClass(REMOTE_KIND_DEFERRED_CLASS_ID)!!.constructors.first()
 
-  val remoteKindReceiveChannelConstructor = pluginContext.referenceClass(
-    ClassId(RPC_FQN, FqName.fromSegments(listOf("RemoteKind", "ReceiveChannel")), false)
-  )!!.constructors.first()
-
-  val remoteKindSendChannelConstructor = pluginContext.referenceClass(
-    ClassId(RPC_FQN, FqName.fromSegments(listOf("RemoteKind", "SendChannel")), false)
-  )!!.constructors.first()
-
-  val remoteKindDeferredConstructor = pluginContext.referenceClass(
-    ClassId(RPC_FQN, FqName.fromSegments(listOf("RemoteKind", "Deferred")), false)
-  )!!.constructors.first()
-
-  mapOf(
-    FLOW_FQN to remoteKindFlowConstructor,
-    RECEIVE_CHANNEL_FQN to remoteKindReceiveChannelConstructor,
-    SEND_CHANNEL_FQN to remoteKindSendChannelConstructor,
-    DEFERRED_FQN to remoteKindDeferredConstructor,
-  )
-}[fqName]
-
+    else -> null
+  }
 
 internal val FLOW_FQN = FqName.fromSegments(listOf("kotlinx", "coroutines", "flow", "Flow"))
 internal val RESOURCE_FQN = FqName.fromSegments(listOf("fleet", "util", "async", "Resource"))

@@ -19,8 +19,22 @@ import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
-import org.jetbrains.kotlin.analysis.api.resolution.*
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -37,7 +51,27 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
 import org.jetbrains.kotlin.idea.k2.refactoring.util.areTypeArgumentsRedundant
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtDynamicType
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLabeledExpression
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtSuperExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtTypeParameter
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.buildValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
@@ -128,7 +162,7 @@ internal class ConvertLambdaToReferenceIntention :
             val valueParameters = symbol.valueParameters
             val arguments = outerCallExpression.valueArguments.filter { it !is KtLambdaArgument }
             val hadDefaultValues = valueParameters.size - 1 > arguments.size
-            val useNamedArguments = valueParameters.any { it.hasDefaultValue } && hadDefaultValues || arguments.any { it.isNamed() }
+            val useNamedArguments = valueParameters.any { it.hasDeclaredDefaultValue } && hadDefaultValues || arguments.any { it.isNamed() }
 
             val newArgumentList = psiFactory.buildValueArgumentList {
                 appendFixedText("(")
@@ -318,6 +352,7 @@ private fun KtExpression.isReferenceToPackage(): Boolean {
     return symbols.any { it is KaPackageSymbol }
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun isConvertibleCallInLambdaByAnalyze(
     callableExpression: KtExpression,
@@ -361,7 +396,7 @@ private fun isConvertibleCallInLambdaByAnalyze(
     if (noBoundReferences && hasReceiver && explicitReceiver == null) return false
 
     val callableArgumentsCount = (callableExpression as? KtCallExpression)?.valueArguments?.size ?: 0
-    if (symbol is KaFunctionSymbol && symbol.valueParameters.size != callableArgumentsCount && (lambdaExpression.parentValueArgument() == null || (symbol as? KaFunctionSymbol)?.valueParameters?.none { it.hasDefaultValue } == true)) return false
+    if (symbol is KaFunctionSymbol && symbol.valueParameters.size != callableArgumentsCount && (lambdaExpression.parentValueArgument() == null || (symbol as? KaFunctionSymbol)?.valueParameters?.none { it.hasDeclaredDefaultValue } == true)) return false
 
     if (!lambdaExpression.isArgument() && symbol is KaNamedFunctionSymbol && symbol.overloadedFunctions(lambdaExpression).size > 1) {
         val property = lambdaExpression.getStrictParentOfType<KtProperty>()

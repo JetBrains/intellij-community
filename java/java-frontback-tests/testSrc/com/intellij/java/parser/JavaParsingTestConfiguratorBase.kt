@@ -7,16 +7,23 @@ import com.intellij.java.syntax.element.JavaLanguageLevelProvider
 import com.intellij.lang.ASTNode
 import com.intellij.lang.LanguageASTFactory
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.lang.java.parser.BasicJavaParserUtil
 import com.intellij.lang.java.parser.JavaParserUtil
 import com.intellij.lang.java.syntax.JavaElementTypeConverterExtension
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
-import com.intellij.platform.syntax.psi.*
+import com.intellij.platform.syntax.psi.ElementTypeConverter
+import com.intellij.platform.syntax.psi.ElementTypeConverterFactory
+import com.intellij.platform.syntax.psi.ElementTypeConverters
+import com.intellij.platform.syntax.psi.PsiSyntaxBuilder
+import com.intellij.platform.syntax.psi.elementTypeConverterOf
 import com.intellij.platform.syntax.tree.SyntaxNode
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.*
+import com.intellij.psi.FileViewProvider
+import com.intellij.psi.LanguageLevelKey
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.SingleRootFileViewProvider
 import com.intellij.psi.impl.source.PsiJavaFileImpl
 import com.intellij.psi.impl.source.tree.FileElement
 import com.intellij.psi.impl.source.tree.JavaASTFactory
@@ -60,7 +67,7 @@ abstract class JavaParsingTestConfiguratorBase(
     ourLanguageLevel = languageLevel
   }
 
-  override fun createFileSyntaxNode(text: String, parserWrapper: BasicJavaParserUtil.ParserWrapper?): SyntaxNode {
+  override fun createFileSyntaxNode(text: String, parserWrapper: JavaParserUtil.ParserWrapper?): SyntaxNode {
     ourLanguageLevel = languageLevel
     return parseForSyntaxTree(text) { builder ->
       if (parserWrapper != null) {
@@ -76,9 +83,9 @@ abstract class JavaParsingTestConfiguratorBase(
     thinJavaParsingTestCase: AbstractBasicJavaParsingTestCase,
     name: String,
     text: String,
-    parser: BasicJavaParserUtil.ParserWrapper,
+    parser: Any,
   ): PsiFile {
-    ourTestParser = parser
+    ourTestParser = parser as JavaParserUtil.ParserWrapper
 
     val virtualFile = LightVirtualFile("$name.java", JavaFileType.INSTANCE, text, -1)
     val psiManager = PsiManager.getInstance(thinJavaParsingTestCase.getProject())
@@ -107,7 +114,7 @@ private fun createBuilder(chameleon: ASTNode?): PsiSyntaxBuilder {
   return builder
 }
 
-private fun parseWithWrapper(builder: SyntaxTreeBuilder, parser: BasicJavaParserUtil.ParserWrapper) {
+private fun parseWithWrapper(builder: SyntaxTreeBuilder, parser: JavaParserUtil.ParserWrapper) {
   val root = builder.mark()
   parser.parse(builder, ourLanguageLevel)
   if (!builder.eof()) {
@@ -121,11 +128,11 @@ private fun parseWithWrapper(builder: SyntaxTreeBuilder, parser: BasicJavaParser
 private lateinit var ourLanguageLevel: LanguageLevel
 private val ourSyntaxElementType = SyntaxElementType("test.java.file")
 private val ourTestFileElementType: IFileElementType = MyIFileElementType()
-private var ourTestParser: BasicJavaParserUtil.ParserWrapper? = null
+private var ourTestParser: JavaParserUtil.ParserWrapper? = null
 
 private val converter = elementTypeConverterOf(ourSyntaxElementType to ourTestFileElementType)
 
-private class JavaTestElementTypeConverterExtension : ElementTypeConverterFactory {
+internal class JavaTestElementTypeConverterExtension : ElementTypeConverterFactory {
   override fun getElementTypeConverter(): ElementTypeConverter = converter
 }
 

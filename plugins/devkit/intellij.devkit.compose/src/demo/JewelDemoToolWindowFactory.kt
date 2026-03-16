@@ -8,13 +8,11 @@ import com.intellij.openapi.util.NlsContexts.TabTitle
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import org.jetbrains.jewel.bridge.addComposeTab
-import org.jetbrains.jewel.foundation.JewelFlags
 import javax.swing.JComponent
 
 internal class JewelDemoToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     // Enable custom popup rendering to use JBPopup instead of the default Compose implementation
-    JewelFlags.useCustomPopupRenderer = true
 
     toolWindow.addComposeTab(DevkitComposeBundle.message("jewel.tw.tab.title.components")) { ComponentShowcaseTab(project) }
 

@@ -12,7 +12,15 @@ import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.impl.ProjectUtil.openOrImportFilesAsync
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionGroupWrapper
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -36,7 +44,11 @@ import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.border.CustomLineBorder
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.layout.ValueComponentPredicate
 import com.intellij.util.ui.JBUI
@@ -51,7 +63,6 @@ import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
-
 
 @Suppress("OVERRIDE_DEPRECATION")
 internal class ProjectsTabFactory : WelcomeTabFactory {
@@ -193,7 +204,7 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
 
   private fun createTwoRowRecentProjectsPanel(): JComponent {
     val recentProjectTree = createComponent(
-      parentDisposable, ProjectCollectors.all
+      parentDisposable, ProjectCollectors.all, disableSearchFieldBorder = false
     )
     recentProjectTree.selectLastOpenedProject()
     val treeComponent = recentProjectTree.component
@@ -212,9 +223,10 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
       }
       row {
         cell(projectSearch)
+          .customize(UnscaledGaps(left = 4, right = 4, top = 18, bottom = 4))
+          .align(Align.FILL)
       }
 
-      separator()
       row {
         val scrollPane = ScrollPaneFactory.createScrollPane(treeComponent, true)
           .apply {
@@ -228,7 +240,7 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
     }.andTransparent()
       .apply {
         border = JBUI.Borders.empty(13, 12)
-        initDnD(this)
+        initDnD(treeComponent)
       }
   }
 

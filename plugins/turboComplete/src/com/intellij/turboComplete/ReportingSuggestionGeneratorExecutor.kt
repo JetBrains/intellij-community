@@ -3,7 +3,12 @@ package com.intellij.turboComplete
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.addingPolicy.PolicyController
-import com.intellij.platform.ml.impl.turboComplete.*
+import com.intellij.platform.ml.impl.turboComplete.ImmediateExecutor
+import com.intellij.platform.ml.impl.turboComplete.KindCollector
+import com.intellij.platform.ml.impl.turboComplete.KindExecutionListener
+import com.intellij.platform.ml.impl.turboComplete.SuggestionGenerator
+import com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorExecutor
+import com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorExecutorProvider
 import com.intellij.turboComplete.analysis.PipelineListener
 
 private class GenerationReportingSuggestionGenerator(

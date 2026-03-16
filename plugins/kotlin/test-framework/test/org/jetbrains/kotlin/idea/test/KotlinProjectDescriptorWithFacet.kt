@@ -11,7 +11,10 @@ import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.facet.*
+import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
+import org.jetbrains.kotlin.idea.facet.KotlinFacetType
+import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
 import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetBridgeFactory
 import java.nio.file.Path

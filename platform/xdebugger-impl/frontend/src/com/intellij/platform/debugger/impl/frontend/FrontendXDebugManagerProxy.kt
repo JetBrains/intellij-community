@@ -6,57 +6,88 @@ import com.intellij.frontend.FrontendType
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStack
+import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
+import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
+import com.intellij.platform.debugger.impl.rpc.XStackFrameId
+import com.intellij.platform.debugger.impl.rpc.XValueId
+import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XValue
-import com.intellij.xdebugger.impl.XDebuggerExecutionPointManager
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
-import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import com.intellij.xdebugger.impl.rpc.XExecutionStackId
-import com.intellij.xdebugger.impl.rpc.XValueId
+import com.intellij.xdebugger.impl.XDebuggerExecutionPointManagerImpl
+import com.intellij.xdebugger.impl.proxy.withTemporaryXValueId
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
+import com.intellij.xdebugger.frame.XStackFrame
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import kotlinx.coroutines.flow.Flow
 
-private class FrontendXDebugManagerProxy : XDebugManagerProxy {
+internal class FrontendXDebugManagerProxy : XDebugManagerProxy {
   override fun isEnabled(): Boolean {
     val frontendType = FrontendApplicationInfo.getFrontendType()
-    return XDebugSessionProxy.useFeProxy() ||
+    return SplitDebuggerMode.isSplitDebugger() ||
            (frontendType is FrontendType.Remote && frontendType.isGuest()) // CWM case
   }
 
+  override fun hasBackendCounterpart(xValue: XValue): Boolean {
+    return FrontendXValue.asFrontendXValueOrNull(xValue) != null
+           || FrontendApplicationInfo.getFrontendType() is FrontendType.Monolith
+  }
+
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
-    val valueId = FrontendXValue.asFrontendXValue(value).xValueDto.id
-    return block(valueId)
+    val frontendXValue = FrontendXValue.asFrontendXValueOrNull(value)
+    if (frontendXValue != null) {
+      return block(frontendXValue.xValueDto.id)
+    }
+    else {
+      // Otherwise try to fall back to monolith implementation if possible
+      val monolithSession = XDebuggerEntityConverter.getSession(session) ?: error("XValue is not a FrontendXValue: $value")
+      monolithSession as XDebugSessionImpl
+      return withTemporaryXValueId(value, monolithSession, block)
+    }
   }
 
   override fun getXValueId(value: XValue): XValueId? =
     FrontendXValue.asFrontendXValueOrNull(value)?.xValueDto?.id
+
+  override fun getXExecutionStackId(stack: XExecutionStack): XExecutionStackId? =
+    (stack as? FrontendXExecutionStack)?.id
 
   override suspend fun <T> withId(stack: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T {
     val executionStackId = (stack as FrontendXExecutionStack).id
     return block(executionStackId)
   }
 
+  override suspend fun <T> withId(frame: XStackFrame, session: XDebugSessionProxy, block: suspend (XStackFrameId) -> T): T {
+    val frameId = (frame as FrontendXStackFrame).id
+    return block(frameId)
+  }
+
   override fun getCurrentSessionProxy(project: Project): XDebugSessionProxy? {
-    return FrontendXDebuggerManager.getInstance(project).currentSession.value
+    return getFrontendManager(project).currentSession
   }
 
   override fun getCurrentSessionFlow(project: Project): Flow<XDebugSessionProxy?> {
-    return FrontendXDebuggerManager.getInstance(project).currentSession
+    return getFrontendManager(project).currentSessionFlow
   }
 
   override fun getSessions(project: Project): List<XDebugSessionProxy> {
-    return FrontendXDebuggerManager.getInstance(project).sessions
+    return getFrontendManager(project).sessions
   }
 
   override fun getBreakpointManagerProxy(project: Project): XBreakpointManagerProxy {
-    return FrontendXDebuggerManager.getInstance(project).breakpointsManager
+    return getFrontendManager(project).breakpointsManager
   }
 
-  override fun getDebuggerExecutionPointManager(project: Project): XDebuggerExecutionPointManager? {
-    return XDebuggerExecutionPointManager.getInstance(project)
+  override fun getDebuggerExecutionPointManager(project: Project): XDebuggerExecutionPointManagerImpl {
+    return XDebuggerExecutionPointManagerImpl.getInstance(project)
   }
 
-  override fun hasBackendCounterpart(xValue: XValue): Boolean {
-    return FrontendXValue.asFrontendXValueOrNull(xValue) != null
+  override fun getWatchesManager(project: Project): XDebuggerWatchesManager {
+    return getFrontendManager(project).watchesManager
   }
+
+  private fun getFrontendManager(project: Project): FrontendXDebuggerManager = FrontendXDebuggerManager.getInstance(project)
 }

@@ -1,6 +1,15 @@
 package com.siyeh.igtest.numeric.integer_multiplication_implicit_cast_to_long;
 
 public class IntegerMultiplicationImplicitCastToLong {
+    void testBoxing(int i, Integer j) {
+      long nowI = System.currentTimeMillis() + <warning descr="i * 86400: integer multiplication implicitly cast to long">i * 86400</warning>;
+      long nowJ = System.currentTimeMillis() + <warning descr="j * 86400: integer multiplication implicitly cast to long">j * 86400</warning>;
+      if (j < 0 || j > 31) {
+        return;
+      }
+      long nowJ2 = System.currentTimeMillis() + j * 86400;
+    }
+  
     void rightArgOfShift(int step) {
         // Shift operations are not subjected to binary promotion (JLS 15.19), operands are promoted separately using unary promotion rules
         long l = 1L << (step * 8);

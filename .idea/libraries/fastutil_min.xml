@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="fastutil-min" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil:8.5.16-jb1">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil:8.5.18-jb1">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.16-jb1/intellij-deps-fastutil-8.5.16-jb1.jar">
-          <sha256sum>63aca730b99bb849f4efb87e61765a050b4a46c7d3f2969054e49439cb0132f8</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.18-jb1/intellij-deps-fastutil-8.5.18-jb1.jar">
+          <sha256sum>fdb9053d8584253099300e0196fc0d3ec5b828535b0f39b0f97cf66f629df356</sha256sum>
         </artifact>
       </verification>
     </properties>
@@ -11,11 +11,11 @@
       <root url="file://$PROJECT_DIR$/lib/annotations/fastutil" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.16-jb1/intellij-deps-fastutil-8.5.16-jb1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.18-jb1/intellij-deps-fastutil-8.5.18-jb1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.16-jb1/intellij-deps-fastutil-8.5.16-jb1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.18-jb1/intellij-deps-fastutil-8.5.18-jb1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

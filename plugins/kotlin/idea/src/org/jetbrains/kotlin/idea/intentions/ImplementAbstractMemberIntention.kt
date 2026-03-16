@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.ui.components.JBList
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
@@ -43,11 +44,17 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getTypeSubstitution
 import org.jetbrains.kotlin.idea.util.substitute
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 import javax.swing.ListSelectionModel
 
+@K1Deprecation
 abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntention<KtNamedDeclaration>(
     KtNamedDeclaration::class.java,
     KotlinBundle.messagePointer("implement.abstract.member")
@@ -196,6 +203,7 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
     }
 }
 
+@K1Deprecation
 class ImplementAbstractMemberIntention : ImplementAbstractMemberIntentionBase() {
     override fun computeText(element: KtNamedDeclaration): (() -> String)? = when (element) {
         is KtProperty -> KotlinBundle.lazyMessage("implement.abstract.property")
@@ -211,6 +219,7 @@ class ImplementAbstractMemberIntention : ImplementAbstractMemberIntentionBase() 
         get() = false
 }
 
+@K1Deprecation
 class ImplementAbstractMemberAsConstructorParameterIntention : ImplementAbstractMemberIntentionBase() {
     override fun computeText(element: KtNamedDeclaration): (() -> String)? {
         if (element !is KtProperty) return null

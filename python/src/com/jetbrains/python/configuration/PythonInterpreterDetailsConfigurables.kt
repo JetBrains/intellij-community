@@ -8,8 +8,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
-import com.jetbrains.python.run.target.ConnectionCredentialsToTargetConfigurationConverter
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
@@ -32,15 +30,6 @@ internal fun createPythonInterpreterConfigurable(project: Project,
   else if (sdkAdditionalData is PyTargetAwareAdditionalData) {
     createPythonInterpreterConfigurable(project, sdk, sdkAdditionalData, parentConfigurable)
   }
-  else if (sdkAdditionalData is PyRemoteSdkAdditionalData) {
-    val convertedSdkAdditionalData = sdkAdditionalData.convertToTargetAwareAdditionalData()
-    if (convertedSdkAdditionalData != null) {
-      createPythonInterpreterConfigurable(project, sdk, convertedSdkAdditionalData, parentConfigurable)
-    }
-    else {
-      UnsupportedPythonInterpreterConfigurable(sdk)
-    }
-  }
   else {
     UnsupportedPythonInterpreterConfigurable(sdk)
   }
@@ -56,7 +45,7 @@ private fun createPythonInterpreterConfigurable(project: Project,
   val targetType: TargetEnvironmentType<TargetEnvironmentConfiguration>? = targetEnvironmentConfiguration?.getTargetType()
   val targetConfigurable = targetType?.createConfigurable(project,
                                                           targetEnvironmentConfiguration,
-                                                          PythonLanguageRuntimeType.getInstance(),
+                                                          PythonLanguageRuntimeType.Helper.getInstance(),
                                                           parentConfigurable)
   return if (targetConfigurable != null) {
     val pythonLanguageRuntimeConfiguration = PythonLanguageRuntimeConfiguration()
@@ -73,14 +62,3 @@ private fun createPythonInterpreterConfigurable(project: Project,
   }
 }
 
-private fun PyRemoteSdkAdditionalData.convertToTargetAwareAdditionalData(): PyTargetAwareAdditionalData? {
-  val connectionCredentials = connectionCredentials()
-  val targetEnvironmentConfiguration = ConnectionCredentialsToTargetConfigurationConverter.EP_NAME.extensionList.firstNotNullOfOrNull {
-    it.tryConvert(connectionCredentials)
-  }
-  if (targetEnvironmentConfiguration == null) return null
-  val targetAwareAdditionalData = PyTargetAwareAdditionalData(flavorAndData)
-  targetAwareAdditionalData.targetEnvironmentConfiguration = targetEnvironmentConfiguration
-  targetAwareAdditionalData.interpreterPath = this.interpreterPath
-  return targetAwareAdditionalData
-}

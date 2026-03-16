@@ -18,7 +18,7 @@ import com.intellij.psi.util.JavaMultiReleaseUtil;
 import com.intellij.ui.NewUiValue;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 
 public final class ClassPresentationProvider implements ItemPresentationProvider<PsiClass> {

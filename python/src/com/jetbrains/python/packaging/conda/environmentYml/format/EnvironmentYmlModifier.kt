@@ -15,7 +15,7 @@ object EnvironmentYmlModifier {
   private val INDENT_PATTERN = Regex("\\n(\\s+)- ", RegexOption.MULTILINE)
   private val NEXT_SESSION_PATTERN = Regex("\\n\\w+:", RegexOption.MULTILINE)
 
-  fun addRequirement(project: Project, file: VirtualFile, packageName: String): Boolean {
+  suspend fun addRequirement(project: Project, file: VirtualFile, packageName: String): Boolean {
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return false
 
     val pyRequirements = CondaEnvironmentYmlParser.fromFile(file) ?: return false

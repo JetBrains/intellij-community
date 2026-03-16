@@ -12,12 +12,14 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val projectViewInit: Scope = Scope("projectViewInit")
 
 @Service(Service.Level.PROJECT)
-internal class ProjectViewInitNotifier(private val project: Project) {
+@Internal
+class ProjectViewInitNotifier(private val project: Project) {
   private val startedOccurred = AtomicBoolean()
   private val cachedNodesLoadedOccurred = AtomicBoolean()
   private val completedOccurred = AtomicBoolean()
@@ -44,6 +46,9 @@ internal class ProjectViewInitNotifier(private val project: Project) {
     LOG.info("Project View initialization completed")
     project.messageBus.syncPublisher(ProjectViewListener.TOPIC).initCompleted()
   }
+
+  @TestOnly
+  fun isInitCompleted(): Boolean = completedOccurred.get()
 
   private inner class TracingHelper {
     private val mainSpan = Ref<Span>()

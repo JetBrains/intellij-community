@@ -2,7 +2,14 @@
 package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotationMemberValue
+import com.intellij.psi.PsiAnnotationParameterList
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiNameValuePair
 import com.intellij.psi.impl.PsiImplUtil
 import com.intellij.psi.impl.compiled.ClsJavaCodeReferenceElementImpl
 import com.intellij.psi.impl.light.LightIdentifier

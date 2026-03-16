@@ -6,9 +6,17 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.isObjectOrCompanionObject
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKClass
+import org.jetbrains.kotlin.nj2k.tree.JKExpression
+import org.jetbrains.kotlin.nj2k.tree.JKField
+import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression
+import org.jetbrains.kotlin.nj2k.tree.JKMethod
+import org.jetbrains.kotlin.nj2k.tree.JKOtherModifierElement
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 import org.jetbrains.kotlin.nj2k.tree.Mutability.IMMUTABLE
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.CONST
+import org.jetbrains.kotlin.nj2k.tree.mutability
+import org.jetbrains.kotlin.nj2k.tree.parentOfType
 import org.jetbrains.kotlin.nj2k.types.asPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.fqName
 

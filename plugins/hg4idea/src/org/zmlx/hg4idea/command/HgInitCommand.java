@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
+import java.nio.file.Path;
 import java.util.Collections;
 
 /**
@@ -18,9 +19,10 @@ public class HgInitCommand {
     myProject = project;
   }
 
-  public HgCommandResult execute(@NotNull String rootPath) {
-    final HgCommandExecutor executor = new HgCommandExecutor(myProject, rootPath);
+  public HgCommandResult execute(@NotNull Path rootPath) {
+    String absolutePath = rootPath.toAbsolutePath().toString();
+    final HgCommandExecutor executor = new HgCommandExecutor(myProject, absolutePath);
     executor.setShowOutput(true);
-    return executor.executeInCurrentThread(null, "init", Collections.singletonList(rootPath));
+    return executor.executeInCurrentThread(null, "init", Collections.singletonList(absolutePath));
   }
 }

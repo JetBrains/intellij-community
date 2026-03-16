@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 class CondaPackageManagerProvider : PythonPackageManagerProvider {
-  override suspend fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? =
+  override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? =
     if (sdk.isCondaVirtualEnv) createCondaPackageManager(project, sdk) else null
 
   private fun createCondaPackageManager(project: Project, sdk: Sdk): PythonPackageManager =

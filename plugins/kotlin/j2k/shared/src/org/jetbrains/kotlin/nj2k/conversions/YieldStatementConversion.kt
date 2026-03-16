@@ -5,7 +5,12 @@ package org.jetbrains.kotlin.nj2k.conversions
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversionWithData
 import org.jetbrains.kotlin.nj2k.asStatement
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKErrorStatement
+import org.jetbrains.kotlin.nj2k.tree.JKJavaYieldStatement
+import org.jetbrains.kotlin.nj2k.tree.JKKtWhenExpression
+import org.jetbrains.kotlin.nj2k.tree.JKLambdaExpression
+import org.jetbrains.kotlin.nj2k.tree.JKMethod
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 
 class YieldStatementConversion(context: ConverterContext) : RecursiveConversionWithData<Boolean>(context, initialData = false) {
     override fun applyToElement(element: JKTreeElement, data: Boolean /* is yield allowed */): JKTreeElement {

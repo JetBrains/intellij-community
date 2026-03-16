@@ -37,5 +37,4 @@ public final class NumpyClassMembersProvider extends PyClassMembersProviderBase 
     }
     return Collections.emptyList();
   }
-
 }

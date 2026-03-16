@@ -1,11 +1,12 @@
 
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -20,7 +21,19 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.ButtonModel;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.KeyStroke;
+import javax.swing.MenuElement;
+import javax.swing.MenuSelectionManager;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.event.MenuDragMouseEvent;
 import javax.swing.event.MenuDragMouseListener;
 import javax.swing.event.MouseInputListener;
@@ -28,7 +41,15 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.basic.BasicLookAndFeel;
 import javax.swing.plaf.basic.BasicMenuItemUI;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -518,7 +539,9 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
       msm.clearSelectedPath();
     }
     ActionEvent event = new ActionEvent(menuItem, ActionEvent.ACTION_PERFORMED, null, e.getWhen(), e.getModifiers());
-    item.fireActionPerformed(event);
+    WriteIntentReadAction.run( () -> {
+      item.fireActionPerformed(event);
+    });
     if (keepMenuOpen) {
       Container parent = item.getParent();
       if (parent instanceof JComponent) {

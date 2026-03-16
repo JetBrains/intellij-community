@@ -45,15 +45,27 @@ def save_main_module(file, module_name):
 
 
 def get_fullname(mod_name):
-    try:
-        loader = pkgutil.get_loader(mod_name)
-    except:
+    # Use pkgutil ONLY for Python 2.7 (legacy support)
+    if sys.version_info[:2] == (2, 7):
+        try:
+            loader = pkgutil.get_loader(mod_name)
+        except (ImportError, AttributeError, TypeError, ValueError):
+            return None
+        if loader is not None:
+            for attr in ("get_filename", "_get_filename"):
+                meth = getattr(loader, attr, None)
+                if meth is not None:
+                    return meth(mod_name)
         return None
-    if loader is not None:
-        for attr in ("get_filename", "_get_filename"):
-            meth = getattr(loader, attr, None)
-            if meth is not None:
-                return meth(mod_name)
+    
+    # Use modern importlib API for all other Python versions (3.x)
+    try:
+        import importlib.util
+        spec = importlib.util.find_spec(mod_name)
+        if spec is not None and spec.origin is not None:
+            return spec.origin
+    except (ImportError, AttributeError, TypeError, ValueError, ModuleNotFoundError):
+        return None
     return None
 
 

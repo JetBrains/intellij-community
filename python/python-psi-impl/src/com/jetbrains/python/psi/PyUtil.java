@@ -16,7 +16,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -24,11 +29,31 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.IconManager;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
@@ -49,15 +74,39 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyClassTypeImpl;
+import com.jetbrains.python.psi.types.PyInstantiableType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.PyTypeUtil;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiStubSuppressor;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.CLASSMETHOD;
@@ -65,7 +114,7 @@ import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
 
 /**
  * Assorted utility methods for Python code insight.
- *
+ * <p>
  * These methods don't depend on the Python runtime.
  *
  * @see PyPsiUtils for utilities used in Python PSI API
@@ -73,7 +122,7 @@ import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
  */
 public final class PyUtil {
 
-  private static final boolean VERBOSE_MODE = System.getenv().get("_PYCHARM_VERBOSE_MODE") != null;
+  private static final boolean VERBOSE_MODE = System.getenv("_PYCHARM_VERBOSE_MODE") != null;
 
   private PyUtil() {
   }
@@ -421,7 +470,8 @@ public final class PyUtil {
   // Note that returned list may contain null items, e.g. for unresolved import elements, originally wrapped
   //  in `com.jetbrains.python.psi.resolve.ImportedResolveResult`
   //  TODO: it would be a good idea to revise `filterTopPriority` to return the import definer when the element is null
-  public static @NotNull List<@Nullable PsiElement> multiResolveTopPriority(@NotNull PsiElement element, @NotNull PyResolveContext resolveContext) {
+  public static @NotNull List<@Nullable PsiElement> multiResolveTopPriority(@NotNull PsiElement element,
+                                                                            @NotNull PyResolveContext resolveContext) {
     if (element instanceof PyReferenceOwner referenceOwner) {
       return multiResolveTopPriority(referenceOwner.getReference(resolveContext));
     }
@@ -555,7 +605,9 @@ public final class PyUtil {
    * @param <T>     value type
    * @param <P>     key type
    */
-  public static @NotNull <T, P> T getParameterizedCachedValue(@NotNull PsiElement element, @Nullable P param, @NotNull Function<P, @NotNull T> f) {
+  public static @NotNull <T, P> T getParameterizedCachedValue(@NotNull PsiElement element,
+                                                              @Nullable P param,
+                                                              @NotNull Function<P, @NotNull T> f) {
     final T result = getNullableParameterizedCachedValue(element, param, f);
     assert result != null;
     return result;
@@ -565,8 +617,8 @@ public final class PyUtil {
    * Same as {@link #getParameterizedCachedValue(PsiElement, Object, Function)} but allows nulls.
    */
   public static @Nullable <T, P> T getNullableParameterizedCachedValue(@NotNull PsiElement element,
-                                                             @Nullable P param,
-                                                             @NotNull Function<P, @Nullable T> f) {
+                                                                       @Nullable P param,
+                                                                       @NotNull Function<P, @Nullable T> f) {
     final CachedValuesManager manager = CachedValuesManager.getManager(element.getProject());
     final Map<Optional<P>, Optional<T>> cache = CachedValuesManager.getCachedValue(element, manager.getKeyForClass(f.getClass()), () -> {
       // concurrent hash map is a null-hostile collection
@@ -592,22 +644,13 @@ public final class PyUtil {
    */
   public static void runWithProgress(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
                                      boolean modal, boolean canBeCancelled, final @NotNull Consumer<? super ProgressIndicator> function) {
-    if (modal) {
-      ProgressManager.getInstance().run(new Task.Modal(project, title, canBeCancelled) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          function.consume(indicator);
-        }
-      });
-    }
-    else {
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, title, canBeCancelled) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          function.consume(indicator);
-        }
-      });
-    }
+    Task.Backgroundable task = new Task.Backgroundable(project, title, canBeCancelled) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        function.consume(indicator);
+      }
+    };
+    ProgressManager.getInstance().run(task.toModalIfNeeded(modal));
   }
 
   /**
@@ -648,7 +691,8 @@ public final class PyUtil {
     PyUtilCore.updateDocumentUnblockedAndCommitted(anchor, consumer);
   }
 
-  public static @Nullable <T> T updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Function<? super Document, ? extends T> func) {
+  public static @Nullable <T> T updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor,
+                                                                    @NotNull Function<? super Document, ? extends T> func) {
     return PyUtilCore.updateDocumentUnblockedAndCommitted(anchor, func);
   }
 
@@ -921,11 +965,13 @@ public final class PyUtil {
   /**
    * Constructs new lookup element for completion of keyword argument with equals sign appended.
    *
-   * @param name name of the parameter
+   * @param name           name of the parameter
    * @param settingsAnchor file to check code style settings and surround equals sign with spaces if necessary
    * @return lookup element
    */
-  public static @NotNull LookupElement createNamedParameterLookup(@NotNull String name, @NotNull PsiFile settingsAnchor, boolean addEquals) {
+  public static @NotNull LookupElement createNamedParameterLookup(@NotNull String name,
+                                                                  @NotNull PsiFile settingsAnchor,
+                                                                  boolean addEquals) {
     final String suffix;
     if (addEquals) {
       if (PythonCodeStyleService.getInstance().isSpaceAroundEqInKeywordArgument(settingsAnchor)) {
@@ -934,7 +980,8 @@ public final class PyUtil {
       else {
         suffix = "=";
       }
-    } else {
+    }
+    else {
       suffix = "";
     }
     LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + suffix).withIcon(
@@ -1160,6 +1207,50 @@ public final class PyUtil {
     }
   }
 
+  @ApiStatus.Internal
+  public static @Nullable PyClassType selectCallableTypeRuntimeClass(@NotNull PyCallableType callableType,
+                                                                     @Nullable PyExpression location,
+                                                                     @NotNull TypeEvalContext context) {
+    String className;
+    if (location instanceof PyReferenceExpression re && isBoundMethodReference(callableType, re, context)) {
+      className = PyNames.TYPES_METHOD_TYPE;
+    }
+    else {
+      className = PyNames.TYPES_FUNCTION_TYPE;
+    }
+    PyCallable callable = callableType.getCallable();
+    PyClass cls = callable != null ? PyPsiFacade.getInstance(callable.getProject()).createClassByQName(className, callable) : null;
+    return cls != null ? new PyClassTypeImpl(cls, false) : null;
+  }
+
+  private static boolean isBoundMethodReference(@NotNull PyCallableType callableType,
+                                                @NotNull PyReferenceExpression location,
+                                                @NotNull TypeEvalContext context) {
+    final PyFunction function = as(callableType.getCallable(), PyFunction.class);
+    final boolean isNonStaticMethod = function != null && function.getContainingClass() != null && function.getModifier() != STATICMETHOD;
+    if (isNonStaticMethod) {
+      // In Python 2 unbound methods have __method fake type
+      if (LanguageLevel.forElement(location).isPython2()) {
+        return true;
+      }
+      final PyExpression qualifier;
+      if (location.isQualified()) {
+        qualifier = location.getQualifier();
+      }
+      else {
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
+        qualifier = ContainerUtil.getLastItem(location.followAssignmentsChain(resolveContext).getQualifiers());
+      }
+      if (qualifier != null) {
+        final PyType qualifierType = context.getType(qualifier);
+        if (PyTypeUtil.toStream(qualifierType).select(PyClassType.class).anyMatch(it -> !it.isDefinition())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   public static final class MethodFlags {
 
     private final boolean myIsStaticMethod;
@@ -1257,7 +1348,9 @@ public final class PyUtil {
     return false;
   }
 
-  public static @Nullable PsiElement findPrevAtOffset(PsiFile psiFile, int caretOffset, @NotNull Class<? extends PsiElement> @NotNull ... toSkip) {
+  public static @Nullable PsiElement findPrevAtOffset(PsiFile psiFile,
+                                                      int caretOffset,
+                                                      @NotNull Class<? extends PsiElement> @NotNull ... toSkip) {
     return PyUtilCore.findPrevAtOffset(psiFile, caretOffset, toSkip);
   }
 
@@ -1273,7 +1366,9 @@ public final class PyUtil {
     return element;
   }
 
-  public static @Nullable PsiElement findNextAtOffset(final @NotNull PsiFile psiFile, int caretOffset, @NotNull Class<? extends PsiElement> @NotNull ... toSkip) {
+  public static @Nullable PsiElement findNextAtOffset(final @NotNull PsiFile psiFile,
+                                                      int caretOffset,
+                                                      @NotNull Class<? extends PsiElement> @NotNull ... toSkip) {
     return PyUtilCore.findNextAtOffset(psiFile, caretOffset, toSkip);
   }
 
@@ -1709,7 +1804,7 @@ public final class PyUtil {
   }
 
   public static final class IterHelper {  // TODO: rename sanely
-    private IterHelper() {}
+    private IterHelper() { }
 
     public static @Nullable PsiNamedElement findName(Iterable<? extends PsiNamedElement> it, String name) {
       PsiNamedElement ret = null;

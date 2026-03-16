@@ -6,6 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class JavaAbiFilter implements ZipOutputBuilder {
   private @NotNull final ZipOutputBuilder myDelegate;
@@ -34,6 +36,21 @@ public class JavaAbiFilter implements ZipOutputBuilder {
     byte[] filtered = filterAbiJarContent(entryName, content);
     if (filtered != null) {
       myDelegate.putEntry(entryName, filtered);
+    }
+  }
+
+  @Override
+  public void putEntry(String entryName, @NotNull Path content) {
+    if (entryName.endsWith(".class")) {
+      try { // class file content should be filtered
+        putEntry(entryName, Files.readAllBytes(content));
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    else {
+      myDelegate.putEntry(entryName, content);
     }
   }
 

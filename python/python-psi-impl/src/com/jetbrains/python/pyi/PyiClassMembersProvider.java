@@ -22,7 +22,9 @@ import java.util.List;
 
 public final class PyiClassMembersProvider extends PyClassMembersProviderBase implements PyOverridingAncestorsClassMembersProvider {
   @Override
-  public @NotNull Collection<PyCustomMember> getMembers(@NotNull PyClassType classType, PsiElement location, @NotNull TypeEvalContext context) {
+  public @NotNull Collection<PyCustomMember> getMembers(@NotNull PyClassType classType,
+                                                        PsiElement location,
+                                                        @NotNull TypeEvalContext context) {
     final PyClass cls = classType.getPyClass();
     final PsiElement pythonStub = PyiUtil.getPythonStub(cls);
     if (pythonStub instanceof PyClass) {

@@ -3,7 +3,7 @@ package com.intellij.openapi.ui.popup;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
 
 public interface AlignedPopup {
 

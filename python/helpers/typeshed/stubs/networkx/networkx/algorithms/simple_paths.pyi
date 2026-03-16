@@ -1,5 +1,5 @@
 from _typeshed import Incomplete, SupportsGetItem
-from collections.abc import Callable, Collection, Generator
+from collections.abc import Callable, Collection, Generator, Iterable
 from typing import Any
 
 from networkx.classes.graph import Graph, _Node
@@ -10,10 +10,12 @@ __all__ = ["all_simple_paths", "is_simple_path", "shortest_simple_paths", "all_s
 @_dispatchable
 def is_simple_path(G: Graph[_Node], nodes: Collection[Incomplete]) -> bool: ...
 @_dispatchable
-def all_simple_paths(G: Graph[_Node], source: _Node, target, cutoff: int | None = None) -> Generator[list[_Node], None, None]: ...
+def all_simple_paths(
+    G: Graph[_Node], source: _Node, target: _Node | Iterable[_Node], cutoff: int | None = None
+) -> Generator[list[_Node]]: ...
 @_dispatchable
 def all_simple_edge_paths(
-    G: Graph[_Node], source: _Node, target, cutoff: int | None = None
+    G: Graph[_Node], source: _Node, target: _Node | Iterable[_Node], cutoff: int | None = None
 ) -> Generator[list[_Node] | list[tuple[_Node, _Node]], None, list[_Node] | None]: ...
 @_dispatchable
 def shortest_simple_paths(

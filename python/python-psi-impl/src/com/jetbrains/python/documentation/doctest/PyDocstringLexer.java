@@ -38,15 +38,17 @@ public class PyDocstringLexer extends PythonIndentingLexer {
   @Override
   protected int getNextLineIndent() {
     int indent = super.getNextLineIndent();
-    if (!ourIgnoreSet.contains(getBaseTokenType()))
+    if (!ourIgnoreSet.contains(getBaseTokenType())) {
       return indent;
+    }
 
     indent = 0;
-    while (getBaseTokenType() != null && ourIgnoreSet.contains(getBaseTokenType()))
+    while (getBaseTokenType() != null && ourIgnoreSet.contains(getBaseTokenType())) {
       advanceBase();
+    }
 
     while (getBaseTokenType() != null && (PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(getBaseTokenType()) ||
-           ourIgnoreSet.contains(getBaseTokenType()))) {
+                                          ourIgnoreSet.contains(getBaseTokenType()))) {
       if (getBaseTokenType() == PyTokenTypes.TAB) {
         indent = ((indent / 8) + 1) * 8;
       }
@@ -64,17 +66,18 @@ public class PyDocstringLexer extends PythonIndentingLexer {
     if (getBaseTokenType() == null) {
       return 0;
     }
-    return indent > 0? indent - 1 : indent;
+    return indent > 0 ? indent - 1 : indent;
   }
 
   @Override
   protected void checkSignificantTokens() {
     IElementType tokenType = getBaseTokenType();
     if (!PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(tokenType) && tokenType != getCommentTokenType() &&
-      ! ourIgnoreSet.contains(tokenType)) {
+        !ourIgnoreSet.contains(tokenType)) {
       myLineHasSignificantTokens = true;
     }
   }
+
   @Override
   protected void checkStartState(int startOffset, int initialState) {
   }

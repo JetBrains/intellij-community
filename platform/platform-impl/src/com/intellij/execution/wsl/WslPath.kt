@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import com.intellij.openapi.vfs.impl.wsl.WslConstants
 
+@ConsistentCopyVisibility
 data class WslPath internal constructor(private val prefix: String = WslConstants.UNC_PREFIX,
                                         val distributionId: String,
                                         val linuxPath: String) {

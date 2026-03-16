@@ -7,9 +7,14 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 
+/**
+ * Extension point interface for creating instances of [SeItemsProvider].
+ */
 @ApiStatus.Experimental
-@ApiStatus.Internal
 interface SeItemsProviderFactory {
+  /**
+   * Unique provider identifier. It should be the same as id of the produced [SeItemsProvider]
+   */
   val id: String
 
   @Contract("_, _ -> new", pure = true)

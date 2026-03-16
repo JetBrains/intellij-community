@@ -2,11 +2,14 @@
 package org.jetbrains.kotlin.idea.grazie
 
 import com.intellij.grazie.text.TextContent
-import com.intellij.grazie.text.TextContent.TextDomain.*
+import com.intellij.grazie.text.TextContent.TextDomain.COMMENTS
+import com.intellij.grazie.text.TextContent.TextDomain.DOCUMENTATION
+import com.intellij.grazie.text.TextContent.TextDomain.LITERALS
 import com.intellij.grazie.text.TextContentBuilder
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.utils.Text
 import com.intellij.grazie.utils.getNotSoDistantSimilarSiblings
+import com.intellij.grazie.utils.replaceBackslashEscapedWhitespace
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.PsiCommentImpl
 import com.intellij.psi.util.elementType
@@ -48,6 +51,7 @@ internal class KotlinTextExtractor : TextExtractor() {
           .withUnknown { it is KtStringTemplateEntryWithExpression }
           .removingIndents(" \t|").removingLineSuffixes(" \t")
           .build(root, LITERALS)
+          ?.replaceBackslashEscapedWhitespace()
     }
     return null
   }

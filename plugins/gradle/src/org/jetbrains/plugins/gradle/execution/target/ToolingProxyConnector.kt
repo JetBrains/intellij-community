@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.target.HostPort
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.service.remote.MultiLoaderObjectInputStream
 import com.intellij.openapi.externalSystem.util.wsl.connectRetrying
 import com.intellij.openapi.progress.ProgressManager
@@ -12,7 +13,11 @@ import org.gradle.internal.remote.internal.RemoteConnection
 import org.gradle.internal.remote.internal.inet.SocketInetAddress
 import org.gradle.internal.remote.internal.inet.TcpOutgoingConnector
 import org.gradle.internal.serialize.Serializers
-import org.gradle.launcher.daemon.protocol.*
+import org.gradle.launcher.daemon.protocol.BuildEvent
+import org.gradle.launcher.daemon.protocol.DaemonMessageSerializer
+import org.gradle.launcher.daemon.protocol.Failure
+import org.gradle.launcher.daemon.protocol.Message
+import org.gradle.launcher.daemon.protocol.Success
 import org.gradle.tooling.BuildCancelledException
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.ResultHandler
@@ -119,8 +124,16 @@ internal class ToolingProxyConnector(
       ProgressManager.checkCanceled()
       val message = receive()
       if (message != null) {
-        if (processMessages(message, resultHandler, buildEventConsumer, intermediateResultHandler)) {
-          return
+        try {
+          if (processMessages(message, resultHandler, buildEventConsumer, intermediateResultHandler)) {
+            return
+          }
+        }
+        catch (e: InterruptedException) {
+          throw e
+        }
+        catch (e: RuntimeException) {
+          log.error("Unexpected error during communication with Tooling proxy", e)
         }
       }
       Thread.yield()
@@ -139,6 +152,7 @@ internal class ToolingProxyConnector(
     private val classloaderHolder: GradleToolingProxyClassloaderHolder,
     private val serverEnvironmentSetup: GradleServerEnvironmentSetup,
     private val configurationProvider: GradleServerConfigurationProvider?,
+    private val taskId: ExternalSystemTaskId?,
   ) {
 
     fun getConnector(host: String, port: Int): ToolingProxyConnector {
@@ -157,6 +171,7 @@ internal class ToolingProxyConnector(
         HostPort(host, port)
       }
       val communicationAddress = configurationProvider?.getClientCommunicationAddress(
+        taskId,
         serverEnvironmentSetup.getEnvironmentConfiguration(),
         hostPort
       )

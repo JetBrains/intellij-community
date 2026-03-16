@@ -153,6 +153,8 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
   @Test
   fun `disabled categories should be ignored when copying settings on initialization`() = timeoutRunBlockingAndStopBridge {
+    SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.KEYMAP, false)
+    SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.SYSTEM, false)
     initModifyAndSave(GeneralSettings.getInstance()) {
       autoSaveFiles = false
     }
@@ -166,8 +168,6 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     componentStore.save()
 
     val os = getPerOsSettingsStorageFolderName()
-    SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.KEYMAP, false)
-    SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.SYSTEM, false)
     //SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.UI, EDITOR_FONT_SUBCATEGORY_ID,  false)
 
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
@@ -189,6 +189,9 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
   @Test
   fun `settings from server are applied`() = timeoutRunBlockingAndStopBridge(5.seconds) {
     val generalSettings = init(GeneralSettings.getInstance())
+    SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.PLUGINS, false)
+    componentStore.save()
+
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     val fileState = GeneralSettings().apply {
@@ -289,9 +292,8 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
   @Test
   fun `sync settings are always uploaded even if system settings are disabled`() = timeoutRunBlockingAndStopBridge {
     init(SettingsSyncSettings.getInstance())
-    initModifyAndSave(GeneralSettings.getInstance()) { autoSaveFiles = false }
-
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.SYSTEM, false)
+    initModifyAndSave(GeneralSettings.getInstance()) { autoSaveFiles = false }
 
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer, false)
 

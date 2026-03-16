@@ -1,5 +1,8 @@
 fun test(f: Foo) {
-    f.when
+    when (f) {
+         -> {}
+        else -> {}
+    }
 }
 
 class Foo {

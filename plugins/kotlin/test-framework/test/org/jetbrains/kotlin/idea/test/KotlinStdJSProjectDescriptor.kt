@@ -7,8 +7,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
-import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 
 object KotlinStdJSProjectDescriptor : KotlinLightProjectDescriptor() {

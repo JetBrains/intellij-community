@@ -14,9 +14,9 @@ public final class DeprecatedSkipper extends CompletionPreselectSkipper {
     if (!isCompletionFromJavaFile(location)) return false;
 
     PsiElement e = element.getPsiElement();
-    return e != null && JavaDeprecationUtils.isDeprecated(e, location.getCompletionParameters().getPosition());  }
+    return e != null && JavaDeprecationUtils.isDeprecated(e, location.getBaseCompletionParameters().getPosition());  }
 
   private static boolean isCompletionFromJavaFile(CompletionLocation location) {
-    return location.getCompletionParameters().getOriginalFile().getLanguage() == JavaLanguage.INSTANCE;
+    return location.getBaseCompletionParameters().getOriginalFile().getLanguage() == JavaLanguage.INSTANCE;
   }
 }

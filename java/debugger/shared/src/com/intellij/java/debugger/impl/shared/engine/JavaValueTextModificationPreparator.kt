@@ -15,7 +15,7 @@ fun convertToJavaStringLiteral(text: String): String {
   return StringUtil.wrapWithDoubleQuote(SharedDebuggerUtils.translateStringValue(text))
 }
 
-private class JavaValueTextModificationPreparatorProvider : XValueTextModificationPreparatorProvider {
+internal class JavaValueTextModificationPreparatorProvider : XValueTextModificationPreparatorProvider {
   override fun getTextValuePreparator(value: XValue): XValueTextModificationPreparator? {
     if (value.xValueDescriptorAsync?.getNow(null)?.kind == JAVA_VALUE_KIND &&
         (value as? XValueTextProvider)?.shouldShowTextValue() == true &&

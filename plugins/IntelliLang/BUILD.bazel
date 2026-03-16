@@ -31,6 +31,8 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/util/jdom",
     "//platform/analysis-impl",
+    "//platform/core-impl",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.platform.langInjection` end

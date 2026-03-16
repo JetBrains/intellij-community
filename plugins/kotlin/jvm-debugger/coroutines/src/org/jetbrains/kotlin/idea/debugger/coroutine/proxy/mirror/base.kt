@@ -2,10 +2,11 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
-import com.sun.jdi.*
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.isSubTypeOrSame
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
+import com.intellij.debugger.impl.instanceOf
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.ReferenceType
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 
 abstract class BaseMirror<T: ObjectReference, F>(val name: String, context: DefaultExecutionContext) : ReferenceTypeProvider, MirrorProvider<T, F> {
     val log by logger
@@ -14,7 +15,7 @@ abstract class BaseMirror<T: ObjectReference, F>(val name: String, context: Defa
     override fun getCls(): ReferenceType = cls
 
     override fun isCompatible(value: T?) =
-        value?.referenceType()?.isSubTypeOrSame(name) ?: false
+        value?.referenceType()?.instanceOf(name) ?: false
 
     override fun mirror(value: T?, context: DefaultExecutionContext): F? {
         if (value == null) return null

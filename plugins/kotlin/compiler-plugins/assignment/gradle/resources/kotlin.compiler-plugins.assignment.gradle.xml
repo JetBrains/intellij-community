@@ -1,6 +1,6 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.assignment.gradleJava">
   <dependencies>
-    <plugin id="org.jetbrains.plugins.gradle"/>
+    <module name="intellij.gradle"/>
     <module name="intellij.kotlin.gradle.tooling"/>
     <module name="intellij.kotlin.gradle.gradle"/>
     <module name="kotlin.gradle.gradle-java"/>

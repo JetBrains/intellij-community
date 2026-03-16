@@ -9,6 +9,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
@@ -22,10 +23,16 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.valueArgumentVisitor
 
 internal class RedundantValueArgumentInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+    @OptIn(KaExperimentalApi::class)
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = valueArgumentVisitor(fun(argument: KtValueArgument) {
         val argumentExpression = argument.getArgumentExpression() ?: return
         val argumentList = argument.getStrictParentOfType<KtValueArgumentList>() ?: return
@@ -39,7 +46,7 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection(), Cl
             val call = callElement.resolveToCall()?.successfulFunctionCallOrNull() ?: return
             val parameterSymbol = findTargetParameter(argumentExpression, call) ?: return
 
-            if (parameterSymbol.hasDefaultValue) {
+            if (parameterSymbol.hasDeclaredDefaultValue) {
                 val parameter = (parameterSymbol).sourcePsiSafe<KtParameter>() ?: return
                 if (parameter.isVarArg) {
                     return

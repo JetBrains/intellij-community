@@ -4,7 +4,7 @@ package com.intellij.psi.filters.getters;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.PlainPrefixMatcher;
 import com.intellij.codeInsight.completion.StaticMemberProcessor;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -12,7 +12,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.java.stubs.index.JavaStaticMemberTypeIndex;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
@@ -25,7 +35,12 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author ik
@@ -109,7 +124,7 @@ public abstract class MembersGetter {
     };
     consumer.consume(baseType);
     if (searchInheritors && !CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName)) {
-      CodeInsightUtil.processSubTypes(baseType, myPlace, true, PrefixMatcher.ALWAYS_TRUE, consumer);
+      CodeInsightUtil.processSubTypes(baseType, myPlace, true, PlainPrefixMatcher.ALWAYS_TRUE, consumer);
     } else if (qualifiedName != null) {
       // If we don't search inheritors, we still process some known very common ones
       StreamEx.ofTree(qualifiedName, cls -> StreamEx.of(COMMON_INHERITORS.getOrDefault(cls, List.of()))).skip(1)

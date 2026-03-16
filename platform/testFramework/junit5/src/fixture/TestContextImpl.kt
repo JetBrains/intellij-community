@@ -12,6 +12,14 @@ internal class TestContextImpl(private val context: ExtensionContext, override v
 
   override val testName: String
     get() = context.displayName
+      .removeSuffix("()")
+      .let { name ->
+        if (name.startsWith("test") && name.length > 4) name.removePrefix("test").trimStart()
+        else name
+      }
+
+  override val extensionContext: ExtensionContext
+    get() = context
 
   override fun <T : Annotation> findAnnotation(clazz: Class<T>): T? {
     var extContext: ExtensionContext? = context

@@ -1,0 +1,22 @@
+- name: dist.all/lib/intellij.libraries.batik.jar
+  modules:
+  - name: intellij.libraries.batik
+    libraries:
+      batik-transcoder:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-transcoder/1/batik-transcoder-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-awt-util/1/batik-awt-util-1.jar
+      - name: $MAVEN_REPOSITORY$/org/apache/xmlgraphics/xmlgraphics-commons/2/xmlgraphics-commons-2.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-bridge/1/batik-bridge-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-anim/1/batik-anim-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-parser/1/batik-parser-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-svg-dom/1/batik-svg-dom-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-dom/1/batik-dom-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-css/1/batik-css-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-ext/1/batik-ext-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-gvt/1/batik-gvt-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-svggen/1/batik-svggen-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-util/1/batik-util-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-constants/1/batik-constants-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-xml/1/batik-xml-1.jar
+      xml-apis-ext:
+      - name: $MAVEN_REPOSITORY$/xml-apis/xml-apis-ext/1/xml-apis-ext-1.jar

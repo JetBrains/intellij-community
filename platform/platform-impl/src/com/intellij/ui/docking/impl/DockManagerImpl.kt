@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -15,8 +16,13 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.impl.*
+import com.intellij.openapi.fileEditor.impl.DockableEditor
+import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer
+import com.intellij.openapi.fileEditor.impl.EditorWindow
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.fileEditor.impl.createEditorDockContainer
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.PopupCornerType
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BusyObject
 import com.intellij.openapi.util.Disposer
@@ -30,10 +36,16 @@ import com.intellij.openapi.wm.impl.executeOnCancelInEdt
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ScreenUtil
+import com.intellij.ui.WindowRoundedCornersManager
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.docking.*
+import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockContainer.ContentResponse
+import com.intellij.ui.docking.DockContainerFactory
+import com.intellij.ui.docking.DockManager
+import com.intellij.ui.docking.DockableContent
+import com.intellij.ui.docking.DockableContentContainer
+import com.intellij.ui.docking.DragSession
 import com.intellij.ui.drag.DialogDragImageView
 import com.intellij.ui.drag.DialogWithImage
 import com.intellij.ui.drag.DragImageView
@@ -48,10 +60,18 @@ import kotlinx.coroutines.job
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
-import java.awt.*
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Image
+import java.awt.Rectangle
+import java.awt.Window
 import java.awt.event.MouseEvent
 import java.util.function.Predicate
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JDialog
+import javax.swing.JLabel
+import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 @State(name = "DockManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], getStateRequiresEdt = true)
@@ -330,6 +350,10 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
       })
       contentPane = imageContainer
       pack()
+
+      if (InternalUICustomization.getInstance()?.isRoundedTabDuringDrag == true) {
+        WindowRoundedCornersManager.setRoundedCorners(this, PopupCornerType.RoundedWindow)
+      }
     }
 
     override fun setVisible(isVisible: Boolean) {

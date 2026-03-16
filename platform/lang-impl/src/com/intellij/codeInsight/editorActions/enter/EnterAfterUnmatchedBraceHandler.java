@@ -311,7 +311,7 @@ public class EnterAfterUnmatchedBraceHandler implements EnterHandlerDelegate {
    * negative value if it's not possible to perform the calculation or if there are no unmatched left braces before
    * the given offset
    */
-  protected static int getUnmatchedLBracesNumberBefore(Editor editor, int offset, FileType fileType) {
+  private static int getUnmatchedLBracesNumberBefore(Editor editor, int offset, FileType fileType) {
     if (offset == 0) {
       return -1;
     }

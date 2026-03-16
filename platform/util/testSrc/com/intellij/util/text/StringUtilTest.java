@@ -28,7 +28,12 @@ import java.util.Set;
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
 import static com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Eugene Zhuravlev
@@ -963,8 +968,9 @@ public class StringUtilTest {
   @Test
   public void testEscapeToRegexp() {
     assertEquals("a\\nb", StringUtil.escapeToRegexp("a\nb"));
-    assertEquals("a\\&\\%\\$b", StringUtil.escapeToRegexp("a&%$b"));
+    assertEquals("a&%\\$b", StringUtil.escapeToRegexp("a&%$b"));
     assertEquals("\uD83D\uDE80", StringUtil.escapeToRegexp("\uD83D\uDE80"));
+    assertEquals(",'%=", StringUtil.escapeToRegexp(",'%="));
   }
 
   @Test

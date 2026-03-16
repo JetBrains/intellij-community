@@ -57,13 +57,6 @@ reportlab.lib.utils.CIDict.setdefault
 # it doesn't actually accept arbitrary arguments
 reportlab.platypus.doctemplate.PTCycle.__new__
 
-# type[Canvas] is a _CanvasMaker, for some reason stubtest trips up
-reportlab.platypus.BaseDocTemplate.build
-reportlab.platypus.SimpleDocTemplate.build
-reportlab.platypus.doctemplate.BaseDocTemplate.build
-reportlab.platypus.doctemplate.SimpleDocTemplate.build
-reportlab.platypus.tableofcontents.SimpleIndex.getCanvasMaker
-
 
 # Error: not present in stub
 # ==========================
@@ -80,7 +73,6 @@ reportlab.lib.abag.ABag.__setattr__
 reportlab.lib.styles.PropertySet.__setattr__
 
 # *-imports that cause a mess we don't want to propagate
-reportlab.graphics.charts.lineplots.pi
 reportlab\.graphics\.render(base|PDF|PM|PS|SVG)\.EVEN_ODD
 reportlab\.graphics\.render(base|PDF|PM|PS|SVG)\.FILL_EVEN_ODD
 reportlab\.graphics\.render(base|PDF|PM|PS|SVG)\.FILL_NON_ZERO

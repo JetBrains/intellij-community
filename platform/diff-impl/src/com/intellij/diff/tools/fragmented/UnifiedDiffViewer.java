@@ -14,7 +14,13 @@ import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.fragmented.UnifiedDiffModel.ChangedBlockData;
-import com.intellij.diff.tools.util.*;
+import com.intellij.diff.tools.util.DiffChangedRangeProvider;
+import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.diff.tools.util.DiffTitleHandler;
+import com.intellij.diff.tools.util.FoldingModelSupport;
+import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
+import com.intellij.diff.tools.util.PrevNextDifferenceIterableBase;
+import com.intellij.diff.tools.util.StatusPanel;
 import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
@@ -23,16 +29,42 @@ import com.intellij.diff.tools.util.breadcrumbs.DiffBreadcrumbsPanel;
 import com.intellij.diff.tools.util.side.OnesideContentPanel;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.tools.util.text.TwosideTextDiffProvider;
-import com.intellij.diff.util.*;
+import com.intellij.diff.util.DiffEditorHighlighterUpdater;
+import com.intellij.diff.util.DiffLineNumberConverter;
+import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.LineCol;
+import com.intellij.diff.util.LineRange;
+import com.intellij.diff.util.Side;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.IndentsModel;
+import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -44,7 +76,11 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.impl.*;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.impl.EmptyFoldingModel;
+import com.intellij.openapi.editor.impl.EmptyImmutableMarkupModel;
+import com.intellij.openapi.editor.impl.EmptyIndentsModel;
+import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.textarea.EmptyInlayModel;
@@ -75,13 +111,25 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xml.breadcrumbs.NavigatableCrumb;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.Point;
 import java.awt.geom.Point2D;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
@@ -425,69 +473,72 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
                                                                        StringUtil.countNewLines(builder.getText()) + 1);
 
     return () -> {
-      myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
+      WriteIntentReadAction.run(() -> {
 
-      LineCol oldCaretPosition = LineCol.fromOffset(myDocument, myEditor.getCaretModel().getPrimaryCaret().getOffset());
-      Pair<int[], Side> oldCaretLineTwoside = transferLineFromOneside(oldCaretPosition.line);
+        myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
+
+        LineCol oldCaretPosition = LineCol.fromOffset(myDocument, myEditor.getCaretModel().getPrimaryCaret().getOffset());
+        Pair<int[], Side> oldCaretLineTwoside = transferLineFromOneside(oldCaretPosition.line);
 
 
-      clearDiffPresentation();
+        clearDiffPresentation();
 
 
-      if (isContentsEqual &&
-          !DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DISABLE_CONTENTS_EQUALS_NOTIFICATION, myContext, myRequest)) {
-        myPanel.addNotification(TextDiffViewerUtil.createEqualContentsNotification(getContents()));
-      }
-
-      IntPredicate foldingLinePredicate = myFoldingModel.hideLineNumberPredicate(0);
-      IntUnaryOperator merged1 = DiffUtil.mergeLineConverters(DiffUtil.getContentLineConvertor(getContent1()),
-                                                              convertor1.createConvertor());
-      IntUnaryOperator merged2 = DiffUtil.mergeLineConverters(DiffUtil.getContentLineConvertor(getContent2()),
-                                                              convertor2.createConvertor());
-      myEditor.getGutter().setLineNumberConverter(new DiffLineNumberConverter(foldingLinePredicate, merged1),
-                                                  new DiffLineNumberConverter(foldingLinePredicate, merged2));
-
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        myDuringOnesideDocumentModification = true;
-        try {
-          myDocument.setText(builder.getText());
+        if (isContentsEqual &&
+            !DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DISABLE_CONTENTS_EQUALS_NOTIFICATION, myContext, myRequest)) {
+          myPanel.addNotification(TextDiffViewerUtil.createEqualContentsNotification(getContents()));
         }
-        finally {
-          myDuringOnesideDocumentModification = false;
+
+        IntPredicate foldingLinePredicate = myFoldingModel.hideLineNumberPredicate(0);
+        IntUnaryOperator merged1 = DiffUtil.mergeLineConverters(DiffUtil.getContentLineConvertor(getContent1()),
+                                                                convertor1.createConvertor());
+        IntUnaryOperator merged2 = DiffUtil.mergeLineConverters(DiffUtil.getContentLineConvertor(getContent2()),
+                                                                convertor2.createConvertor());
+        myEditor.getGutter().setLineNumberConverter(new DiffLineNumberConverter(foldingLinePredicate, merged1),
+                                                    new DiffLineNumberConverter(foldingLinePredicate, merged2));
+
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          myDuringOnesideDocumentModification = true;
+          try {
+            myDocument.setText(builder.getText());
+          }
+          finally {
+            myDuringOnesideDocumentModification = false;
+          }
+        });
+
+        DiffUtil.setEditorCodeStyle(myProject, myEditor, getContent(myMasterSide));
+
+        List<RangeMarker> guarderRangeBlocks = new ArrayList<>();
+        if (!myEditor.isViewer()) {
+          for (UnifiedDiffChange change : builder.getChanges()) {
+            LineRange range = myMasterSide.select(change.getInsertedRange(), change.getDeletedRange());
+            if (range.isEmpty()) continue;
+            TextRange textRange = DiffUtil.getLinesRange(myDocument, range.start, range.end);
+            guarderRangeBlocks.add(createGuardedBlock(textRange.getStartOffset(), textRange.getEndOffset()));
+          }
+          int textLength = myDocument.getTextLength(); // there are 'fake' newline at the very end
+          guarderRangeBlocks.add(createGuardedBlock(textLength, textLength));
         }
+
+        myModel.setChanges(builder.getChanges(), isContentsEqual, guarderRangeBlocks, convertor1, convertor2, builder.getRanges());
+
+        int newCaretLine = transferLineToOneside(oldCaretLineTwoside.second,
+                                                 oldCaretLineTwoside.second.select(oldCaretLineTwoside.first));
+        myEditor.getCaretModel().moveToOffset(LineCol.toOffset(myDocument, newCaretLine, oldCaretPosition.column));
+
+        myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings());
+
+        HighlightersData.apply(myProject, myEditor, highlightersData);
+        myMarkupUpdater.resumeUpdate();
+
+        myInitialScrollHelper.onRediff();
+
+        myStatusPanel.update();
+        myPanel.setGoodContent();
+
+        myEditor.getGutterComponentEx().revalidateMarkup();
       });
-
-      DiffUtil.setEditorCodeStyle(myProject, myEditor, getContent(myMasterSide));
-
-      List<RangeMarker> guarderRangeBlocks = new ArrayList<>();
-      if (!myEditor.isViewer()) {
-        for (UnifiedDiffChange change : builder.getChanges()) {
-          LineRange range = myMasterSide.select(change.getInsertedRange(), change.getDeletedRange());
-          if (range.isEmpty()) continue;
-          TextRange textRange = DiffUtil.getLinesRange(myDocument, range.start, range.end);
-          guarderRangeBlocks.add(createGuardedBlock(textRange.getStartOffset(), textRange.getEndOffset()));
-        }
-        int textLength = myDocument.getTextLength(); // there are 'fake' newline at the very end
-        guarderRangeBlocks.add(createGuardedBlock(textLength, textLength));
-      }
-
-      myModel.setChanges(builder.getChanges(), isContentsEqual, guarderRangeBlocks, convertor1, convertor2, builder.getRanges());
-
-      int newCaretLine = transferLineToOneside(oldCaretLineTwoside.second,
-                                               oldCaretLineTwoside.second.select(oldCaretLineTwoside.first));
-      myEditor.getCaretModel().moveToOffset(LineCol.toOffset(myDocument, newCaretLine, oldCaretPosition.column));
-
-      myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings());
-
-      HighlightersData.apply(myProject, myEditor, highlightersData);
-      myMarkupUpdater.resumeUpdate();
-
-      myInitialScrollHelper.onRediff();
-
-      myStatusPanel.update();
-      myPanel.setGoodContent();
-
-      myEditor.getGutterComponentEx().revalidateMarkup();
     };
   }
 
@@ -531,6 +582,17 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
    * This convertor returns 'good enough' position, even if exact matching is impossible
    */
   public @NotNull Pair<int[], @NotNull Side> transferLineFromOneside(int line) {
+    return Objects.requireNonNull(transferLineFromOneside(line, false));
+  }
+
+  /*
+   * This convertor returns position strictly. Returns null if exact matching is not possible
+   */
+  public @Nullable Pair<int[], @NotNull Side> transferLineFromOnesideStrict(int line) {
+    return transferLineFromOneside(line, true);
+  }
+
+  private @Nullable Pair<int[], @NotNull Side> transferLineFromOneside(int line, boolean strictConversion) {
     int[] lines = new int[2];
 
     ChangedBlockData blockData = myModel.getData();
@@ -548,6 +610,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     lines[1] = lineConvertor2.convert(line);
 
     if (lines[0] == -1 && lines[1] == -1) {
+      if(strictConversion) return null;
       lines[0] = lineConvertor1.convertApproximate(line);
       lines[1] = lineConvertor2.convertApproximate(line);
     }
@@ -1621,7 +1684,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
 
     protected void warnMockImplementation(@NotNull String methodName) {
       if (ourReportedMockMethods.add(methodName)) {
-        String message = "Method + '" + methodName + "' is not applicable. Consider using 'editor instanceOf ImaginaryEditor'";
+        String message = "Method '" + methodName + "' is not applicable. Consider using 'editor instanceOf ImaginaryEditor'";
         if (ApplicationManager.getApplication().isInternal() ||
             ApplicationManager.getApplication().isUnitTestMode()) {
           LOG.error(message);
@@ -1693,7 +1756,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
 
     @Override
     public @NotNull MarkupModel getMarkupModel() {
-      return new EmptyMarkupModel(getDocument());
+      return new EmptyImmutableMarkupModel(getDocument());
     }
 
     @Override

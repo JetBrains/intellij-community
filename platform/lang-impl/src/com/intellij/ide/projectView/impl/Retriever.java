@@ -17,9 +17,9 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.psi.PsiElement;
 
 import javax.swing.tree.TreeNode;
 

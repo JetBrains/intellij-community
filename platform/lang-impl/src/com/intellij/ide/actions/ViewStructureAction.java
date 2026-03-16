@@ -61,7 +61,7 @@ public final class ViewStructureAction extends DumbAwareAction {
     if (fileEditor == null) return;
 
     VirtualFile virtualFile = fileEditor.getFile();
-    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() :
+    Editor editor = fileEditor instanceof TextEditor te ? te.getEditor() :
                     e.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
@@ -118,7 +118,7 @@ public final class ViewStructureAction extends DumbAwareAction {
     }
 
     FileEditor fileEditor = e.getData(PlatformCoreDataKeys.FILE_EDITOR);
-    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() :
+    Editor editor = fileEditor instanceof TextEditor te ? te.getEditor() :
                     e.getData(CommonDataKeys.EDITOR);
 
     boolean enabled = fileEditor != null &&

@@ -14,7 +14,8 @@ import com.jetbrains.JBRFileDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.FileDialog;
 import java.nio.file.Path;
 
 import static java.util.Objects.requireNonNullElseGet;

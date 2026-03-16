@@ -1,4 +1,4 @@
-// "Create label foo@" "true"
+// "Create Label 'foo'@" "true"
 
 inline fun Int.bar(f: (Int) -> Unit) { }
 

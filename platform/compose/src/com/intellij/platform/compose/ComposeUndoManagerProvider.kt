@@ -4,8 +4,8 @@ package com.intellij.platform.compose
 import androidx.compose.ui.awt.ComposePanel
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.command.undo.UndoManagerProvider
 import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.command.undo.UndoManagerProvider
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.ComposeSemanticsTreeUtils.findFocusedComponent
 import org.jetbrains.jewel.bridge.ComposeSemanticsTreeUtils.isEditableTextField

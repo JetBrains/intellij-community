@@ -56,7 +56,7 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
         VFSContentStorage contentStorage = loader.contentsStorage();
         contentStorage.closeAndClean();
 
-        VFSContentStorage emptyContentStorage = loader.createContentStorage(loader.contentsHashesFile, loader.contentsFile);
+        VFSContentStorage emptyContentStorage = loader.createContentStorage(loader.contentsFile);
         loader.setContentsStorage(emptyContentStorage);
 
         cleanAllContentIds(records);

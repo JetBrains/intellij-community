@@ -4,21 +4,24 @@ package com.intellij.util.download.impl.eel
 import com.intellij.ide.IdeCoreBundle
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.download.DownloadableFileDescription
 import com.intellij.util.download.eel.EelFileDownloader
 import com.intellij.util.io.HttpRequests
-import com.intellij.util.io.delete
 import com.intellij.util.progress.ConcurrentTasksProgressManager
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
@@ -155,7 +158,7 @@ internal class EelFileDownloaderImpl(
       }
     }
 
-    private fun deleteFiles(pairs: List<Pair<Path, DownloadableFileDescription>>) = pairs.forEach { it.first.delete() }
+    private fun deleteFiles(pairs: List<Pair<Path, DownloadableFileDescription>>) = pairs.forEach { NioFiles.deleteRecursively(it.first) }
 
     @Throws(IOException::class)
     private fun downloadFile(

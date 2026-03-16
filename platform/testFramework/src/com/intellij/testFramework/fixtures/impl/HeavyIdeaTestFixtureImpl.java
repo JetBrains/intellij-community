@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.ide.IdeView;
@@ -33,7 +33,19 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.EditorListenerTracker;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.OpenProjectTaskBuilderKt;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.SdkLeakTracker;
+import com.intellij.testFramework.TemporaryDirectory;
+import com.intellij.testFramework.TestApplicationManager;
+import com.intellij.testFramework.ThreadTracker;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixturePathProvider;
@@ -49,7 +61,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -177,6 +196,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     });
     // project is disposed by now, no point in passing it
     actions.add(() -> HeavyPlatformTestCase.cleanupApplicationCaches(null));
+    actions.add(() -> myModule = null);
 
     new RunAll(actions).run();
   }

@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+﻿// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonValue
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.RepositoryHelper
@@ -13,10 +14,11 @@ import com.intellij.ide.plugins.newui.Tags
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.text.StringUtil.parseLong
 import com.intellij.openapi.util.text.StringUtil.unquoteString
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Locale
 
 /**
  * Object from Search Service for getting compatible updates for IDE.
@@ -32,6 +34,45 @@ data class IdeCompatibleUpdate(
   @get:JsonProperty("pluginXmlId")
   val pluginId: String = "",
   val version: String = "",
+)
+
+@Serializable
+@ApiStatus.Internal
+enum class DependencyType {
+  @SerialName("plugin")
+  PLUGIN,
+
+  @SerialName("module")
+  MODULE;
+
+  @Suppress("unused")
+  @JsonValue
+  fun toValue(): String = name.lowercase()
+}
+
+@Serializable
+@ApiStatus.Internal
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class ModuleDependency(
+  val type: DependencyType? = null,
+  val moduleName: String = "",
+  val pluginId: String = "",
+)
+
+@Serializable
+@ApiStatus.Internal
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class PluginContentModule(
+  val moduleName: String = "",
+  val loadingRule: String? = null,
+)
+
+@Serializable
+@ApiStatus.Internal
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class PluginModule(
+  val moduleName: String = "",
+  val moduleDependencies: List<ModuleDependency> = emptyList(),
 )
 
 /**
@@ -57,6 +98,10 @@ data class IntellijUpdateMetadata(
   val productCode: String? = null,
   val url: String? = null,
   val size: Int = 0,
+  val content: List<PluginContentModule> = emptyList(),
+  val modules: List<PluginModule> = emptyList(),
+  val mainModuleDependencies: List<ModuleDependency> = emptyList(),
+  val pluginAliases: List<String> = emptyList(),
 ) {
   fun toUiModel(): PluginUiModel {
     val pluginId = PluginId.getId(id)
@@ -83,6 +128,10 @@ data class IntellijUpdateMetadata(
     for (dep in optionalDependencies) {
       builder.addDependency(dep, true)
     }
+
+    builder.setContentModules(content)
+    builder.setModules(modules)
+    builder.setMainModuleDependencies(mainModuleDependencies)
 
     val model = builder.build()
 

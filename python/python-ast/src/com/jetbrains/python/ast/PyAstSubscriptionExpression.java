@@ -2,8 +2,8 @@
 package com.jetbrains.python.ast;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -27,14 +27,13 @@ public interface PyAstSubscriptionExpression extends PyAstQualifiedExpression, P
   }
 
   @Override
-  default @NotNull List<PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
-    if (AccessDirection.of(this) == AccessDirection.WRITE) {
-      final PsiElement parent = getParent();
-      if (parent instanceof PyAstAssignmentStatement) {
-        return Arrays.asList(getIndexExpression(), ((PyAstAssignmentStatement)parent).getAssignedValue());
-      }
+  default @NotNull List<@NotNull PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
+    List<PyAstExpression> result = new ArrayList<>();
+    ContainerUtil.addIfNotNull(result, getIndexExpression());
+    if (AccessDirection.of(this) == AccessDirection.WRITE && getParent() instanceof PyAstAssignmentStatement assignment) {
+      ContainerUtil.addIfNotNull(result, assignment.getAssignedValue());
     }
-    return Collections.singletonList(getIndexExpression());
+    return Collections.unmodifiableList(result);
   }
 
   /**

@@ -1,4 +1,4 @@
-// "Change return type of enclosing function 'test1' to 'Int'" "true"
+// "Specify 'Int' return type for enclosing function 'test1'" "true"
 // WITH_STDLIB
 
 fun test1(ss: List<Any>): Int {

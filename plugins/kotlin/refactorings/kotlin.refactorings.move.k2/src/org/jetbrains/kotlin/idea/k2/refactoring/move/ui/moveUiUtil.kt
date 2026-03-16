@@ -7,13 +7,18 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemFacade
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.getImplicitPackagePrefix
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 
 internal fun String.isValidKotlinFile(): Boolean {
     return endsWith(KotlinLanguage.INSTANCE.associatedFileType?.defaultExtension ?: return false) || endsWith(".kts")
@@ -65,3 +70,58 @@ internal fun findExplicitPkgMoveFqName(elementsToMove: List<PsiElement>): FqName
 
 internal fun K2MoveTargetModel.isMoveToExplicitPackage(): Boolean =
     pkgName == explicitPkgMoveFqName
+
+internal fun KtNamedDeclaration.isExpectOrActual(): Boolean =
+    isExpectDeclaration() || hasActualModifier()
+
+/**
+ * Searches for a source set name stem of a KMP source root.
+ *
+ * Stem is the main part of the source set name with `Main` and `Test` suffixes removed if present.
+ * Stem is not `null` only for KMP modules that have `dependsOn` dependencies.
+ *
+ * Stem examples:
+ * ```
+ * jvmTest -> "jvm"
+ * nativeMain -> "native"
+ * myCustomSourceSet -> "myCustomSourceSet"
+ * commonTest -> `null`
+ * myNonKmpModule -> `null`
+ * ```
+ */
+internal fun findSourceSetNameStem(kmpSourceRoot: PsiDirectory): String? {
+    val project = kmpSourceRoot.project
+    val kaModule = KaModuleProvider.getModule(project, kmpSourceRoot, useSiteModule = null)
+    val workspaceModule = kmpSourceRoot.module ?: return null
+
+    val dependsOnDependencies = kaModule.directDependsOnDependencies
+    if (dependsOnDependencies.isEmpty()) return null
+
+    val sourceSet = KotlinBuildSystemFacade.getInstance().findSourceSet(workspaceModule)
+    val fullSourceSetName = sourceSet?.name ?: workspaceModule.name.split(".").last()
+    val sourceSetNameStem = kmpSourceSetDefaultSuffixes.firstOrNull { fullSourceSetName.endsWith(it) }
+        ?.let { sourceSetNameSuffix -> fullSourceSetName.removeSuffix(sourceSetNameSuffix) }
+        ?: fullSourceSetName
+    return sourceSetNameStem
+}
+
+/**
+ * Changes provided file name to add a possible source set stem suffix before the .kt extension.
+ * In case if no stem is available for the source root, the file name is returned unchanged.
+ * See [findSourceSetNameStem] for stem description and examples.
+ *
+ * Examples:
+ * ```
+ * myFile.kt in jvmMain -> myFile.jvm.kt
+ * myFile.kt in commonMain -> myFile.kt
+ * myFile.native.kt in nativeTest -> myFile.native.native.kt // NB!
+ * ```
+ */
+internal fun findFileNameWithSourceSetStemSuffix(baseFileName: String, kmpSourceRoot: PsiDirectory?): String {
+    if (kmpSourceRoot == null) return baseFileName
+    val sourceSetSuffix = findSourceSetNameStem(kmpSourceRoot) ?: return baseFileName
+    val baseWithoutKt = baseFileName.substringBeforeLast(".kt")
+    return "$baseWithoutKt.$sourceSetSuffix.kt"
+}
+
+private val kmpSourceSetDefaultSuffixes = listOf("Main", "Test")

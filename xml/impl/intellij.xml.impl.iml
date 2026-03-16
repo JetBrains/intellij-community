@@ -10,8 +10,10 @@
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.foldings" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
@@ -49,6 +51,8 @@
     <orderEntry type="module" module-name="intellij.platform.polySymbols.backend" />
     <orderEntry type="module" module-name="intellij.libraries.xerces" />
     <orderEntry type="module" module-name="intellij.xml.syntax" />
+    <orderEntry type="module" module-name="intellij.xml.analysis" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
   </component>
   <component name="copyright">
     <Base>

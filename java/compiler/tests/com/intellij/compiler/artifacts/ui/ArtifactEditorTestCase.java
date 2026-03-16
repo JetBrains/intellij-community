@@ -3,7 +3,11 @@ package com.intellij.compiler.artifacts.ui;
 
 import com.intellij.compiler.artifacts.PackagingElementsTestCase;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.roots.ui.configuration.artifacts.*;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorContextImpl;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorSettings;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurableContext;
+import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ComplexPackagingElementNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.openapi.ui.TestDialog;

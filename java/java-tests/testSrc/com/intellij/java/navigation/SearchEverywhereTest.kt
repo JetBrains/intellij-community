@@ -1,7 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.navigation
 
-import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
+import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFeature
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
+import com.intellij.ide.actions.searcheverywhere.SearchListener
+import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
+import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
 import com.intellij.ide.util.gotoByName.GotoActionTest
 import com.intellij.openapi.actionSystem.AbbreviationManager
 import com.intellij.openapi.actionSystem.ActionManager
@@ -29,6 +37,8 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun setUp() {
     super.setUp()
+    SearchEverywhereFeature.allRegistryKeys.forEach { setRegistryPropertyForTest(it, "false") }
+
     waitForEssentialFlag = SEParam(
       { AdvancedSettings.getBoolean("search.everywhere.wait.for.contributors") },
       { AdvancedSettings.setBoolean("search.everywhere.wait.for.contributors", it) })

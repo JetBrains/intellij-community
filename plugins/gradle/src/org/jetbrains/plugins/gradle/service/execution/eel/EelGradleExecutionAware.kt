@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.execution.BuildLayoutParameters
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionAware

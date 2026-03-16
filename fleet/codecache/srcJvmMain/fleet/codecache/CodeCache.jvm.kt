@@ -1,7 +1,6 @@
 package fleet.codecache
 
 import fleet.bundles.Coordinates
-import fleet.bundles.CoordinatesResolution
 import fleet.bundles.ResolutionException
 import fleet.util.logging.KLoggers.logger
 import io.ktor.client.HttpClient
@@ -12,7 +11,14 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.jvm.javaio.copyTo
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileAlreadyExistsException

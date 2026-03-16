@@ -11,14 +11,24 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.github.api.data.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import org.jetbrains.plugins.github.api.data.GHActor
+import org.jetbrains.plugins.github.api.data.GHIssueComment
+import org.jetbrains.plugins.github.api.data.GHReaction
+import org.jetbrains.plugins.github.api.data.GHReactionContent
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsViewModel
-import java.util.*
+import java.util.Date
 
 interface GHPRTimelineCommentViewModel {
   val author: GHActor

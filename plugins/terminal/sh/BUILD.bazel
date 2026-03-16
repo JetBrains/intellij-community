@@ -15,6 +15,7 @@ jvm_library(
   resources = [":sh_resources"],
   deps = [
     "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//plugins/terminal",

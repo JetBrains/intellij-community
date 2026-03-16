@@ -1,4 +1,4 @@
-// "Remove variable 'test'" "true"
+// "Remove variable 'test' (may change semantics)" "true"
 fun f() {
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemovePsiElementSimpleFix$RemoveVariableFactory$doCreateQuickFix$removePropertyFix$1

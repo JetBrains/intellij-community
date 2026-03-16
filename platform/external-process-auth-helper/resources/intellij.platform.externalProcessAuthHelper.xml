@@ -1,0 +1,16 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.platform.builtInServer"/>
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <httpRequestHandler implementation="com.intellij.externalProcessAuthHelper.NativeSshExternalProcessRest"/>
+  </extensions>
+</idea-plugin>

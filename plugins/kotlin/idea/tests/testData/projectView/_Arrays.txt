@@ -38,6 +38,7 @@ Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt___Arrays
       ByteIterator
       CharIterator
       collections.kotlin_builtins
+      DetachedMapEntry.class
       DoubleIterator
       EmptyIterator
       EmptyList
@@ -133,11 +134,13 @@ Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt___Arrays
      ExperimentalStdlibApi
      ExperimentalSubclassOptIn
      ExperimentalUnsignedTypes
+     ExperimentalVersionOverloading
      ExposedCopyVisibility
      ExtensionFunctionType
      Function
      IgnorableReturnValue
      InitializedLazyImpl
+     IntroducedAt
      kotlin.kotlin_builtins
      KotlinNothingValueException
      KotlinNullPointerException

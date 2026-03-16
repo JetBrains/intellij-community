@@ -53,6 +53,11 @@ grammar {
     SVG.fill.attrib = attribute fill { Paint.datatype }?
     SVG.fill-rule.attrib =
         attribute fill-rule { ClipFillRule.datatype }?
+    SVG.paint-order.attrib =
+        attribute paint-order {
+            list { ( "fill" | "stroke" | "markers") + }
+            | string "normal"
+        }?
     SVG.stroke.attrib = attribute stroke { Paint.datatype }?
     SVG.stroke-dasharray.attrib =
         attribute stroke-dasharray { StrokeDashArrayValue.datatype }?
@@ -74,6 +79,7 @@ grammar {
     SVG.Paint.attrib &=
         SVG.fill.attrib,
         SVG.fill-rule.attrib,
+        SVG.paint-order.attrib,
         SVG.stroke.attrib,
         SVG.stroke-dasharray.attrib,
         SVG.stroke-dashoffset.attrib,

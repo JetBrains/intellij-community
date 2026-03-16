@@ -13,7 +13,7 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
 import java.awt.event.ActionEvent;
 
 public class UsageViewContext {

@@ -2,14 +2,18 @@
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkId
+import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.workspaceModel.core.fileIndex.*
+import com.intellij.workspaceModel.core.fileIndex.DependencyDescription
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributorEnforcer
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 import com.intellij.workspaceModel.ide.WsmSingletonEntityUtils
-import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.customName
 
 class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity>, PlatformInternalWorkspaceFileIndexContributor {
 
@@ -35,9 +39,9 @@ class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity>, 
     }
 
     for (root in entity.roots) {
-      when (root.type.name) {
-        OrderRootType.CLASSES.customName -> registrar.registerFileSet(root.url, WorkspaceFileKind.EXTERNAL, entity, compiledRootsData)
-        OrderRootType.SOURCES.customName -> registrar.registerFileSet(root.url, WorkspaceFileKind.EXTERNAL_SOURCE, entity,
+      when (root.type) {
+        SdkRootTypeId.CLASSES -> registrar.registerFileSet(root.url, WorkspaceFileKind.EXTERNAL, entity, compiledRootsData)
+        SdkRootTypeId.SOURCES -> registrar.registerFileSet(root.url, WorkspaceFileKind.EXTERNAL_SOURCE, entity,
                                                                       sourceRootFileSetData)
         else -> {}
       }

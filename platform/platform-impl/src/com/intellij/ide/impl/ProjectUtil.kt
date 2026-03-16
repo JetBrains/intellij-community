@@ -13,7 +13,15 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.openapi.application.*
+import com.intellij.ide.impl.ProjectUtil.focusProjectWindow
+import com.intellij.ide.impl.ProjectUtil.isSameProject
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
@@ -39,7 +47,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.CommandLineProjectOpenProcessor
-import com.intellij.platform.PROJECT_OPENED_BY_PLATFORM_PROCESSOR
+import com.intellij.platform.FolderProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createOptionsToOpenDotIdeaOrCreateNewIfNotExists
 import com.intellij.platform.attachToProjectAsync
@@ -76,8 +84,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.Result
-import kotlin.getOrThrow
 
 private val LOG = logger<ProjectUtil>()
 private var ourProjectPath: String? = null
@@ -182,11 +188,15 @@ object ProjectUtil {
       }
     }
 
-    val storePathManager = serviceAsync<ProjectStorePathManager>()
-    val descriptor = withContext(Dispatchers.IO) {
-      storePathManager.getStoreDescriptor(file)
-    }
-    if (descriptor.testStoreDirectoryExistsForProjectRoot()) {
+    // `isDirectory` test here is for backward compatibility with 252: in 252 we never entered this method with regular files - only with
+    // directories. The problem here is that any regular file now has a storeDescriptor (getStoreDescriptor return type is not nullable),
+    // which evaluates to `regularFile.parent.resolve(".idea")`, which, if exists, pushes IDE to open a new project, instead of a file in
+    // the opened project. This is a tiny quick-fix for 253. We should rework the project open flow to avoid this strange check here.
+    if (Files.isDirectory(file) && isValidProjectPath(file)) {
+      val descriptor = withContext(Dispatchers.IO) {
+        serviceAsync<ProjectStorePathManager>().getStoreDescriptor(file)
+      }
+
       LOG.info("Opening existing project with .idea at $file")
       // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
       val options = options.copy(
@@ -233,42 +243,21 @@ object ProjectUtil {
     LOG.info("Processors found for project in $file: ${processors.joinToString { it.name }}")
 
     val project: Project?
-    if (processors.size == 1 && processors[0] is PlatformProjectOpenProcessor) {
-      project = (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(
-        projectIdentityFile = file,
-        options = options.copy(
-          isNewProject = true,
-          useDefaultProjectAsTemplate = true,
-          runConfigurators = true,
-          beforeOpen = {
-            it.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
-            options.beforeOpen?.invoke(it) ?: true
-          },
-        )
-      )
-    }
-    else {
-      val virtualFile = nullableVirtualFileResult?.let {
-        it.getOrThrow() ?: return null
-      } ?: ProjectUtilCore.getFileAndRefresh(file) ?: return null
-      project = chooseProcessorAndOpenAsync(processors, virtualFile, options)
-    }
+    val virtualFile = nullableVirtualFileResult?.let {
+      it.getOrThrow() ?: return null
+    } ?: ProjectUtilCore.getFileAndRefresh(file) ?: return null
+
+    // isNewProject = true because for existing projects we should have exit earlier inside `if (isValidProjectPath(file))`
+    project = chooseProcessorAndOpenAsync(processors, virtualFile, options.copy(isNewProject = true))
     return project?.let { postProcess(it) }
   }
 
   private fun computeProcessors(file: Path, lazyVirtualFile: () -> VirtualFile?): MutableList<ProjectOpenProcessor> {
     val processors = ArrayList<ProjectOpenProcessor>()
     ProjectOpenProcessor.EXTENSION_POINT_NAME.forEachExtensionSafe { processor ->
-      if (processor is PlatformProjectOpenProcessor) {
-        if (Files.isDirectory(file)) {
-          processors.add(processor)
-        }
-      }
-      else {
-        val virtualFile = lazyVirtualFile()
-        if (virtualFile != null && processor.canOpenProject(virtualFile)) {
-          processors.add(processor)
-        }
+      val virtualFile = lazyVirtualFile()
+      if (virtualFile != null && processor.canOpenProject(virtualFile)) {
+        processors.add(processor)
       }
     }
     return processors
@@ -297,8 +286,13 @@ object ProjectUtil {
     virtualFile: VirtualFile,
     options: OpenProjectTask,
   ): Project? {
-    val processor = when (processors.size) {
-      1 -> {
+    val chooser = options.processorChooser
+    val processor = when {
+      chooser != null -> {
+        LOG.info("options.openProcessorChooser will handle the open processor dilemma")
+        chooser(processors) as ProjectOpenProcessor
+      }
+      processors.size == 1 -> {
         processors.first()
       }
       else -> {
@@ -307,16 +301,9 @@ object ProjectUtil {
           processors.first()
         }
         else {
-          val chooser = options.processorChooser
-          if (chooser == null) {
-            withContext(Dispatchers.EDT) {
-              SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile)
-            } ?: return null
-          }
-          else {
-            LOG.info("options.openProcessorChooser will handle the open processor dilemma")
-            chooser(processors) as ProjectOpenProcessor
-          }
+          withContext(Dispatchers.EDT) {
+            SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile)
+          } ?: return null
         }
       }
     }
@@ -324,7 +311,13 @@ object ProjectUtil {
     LOG.info("Using processor ${processor.name} to open the project at ${virtualFile.path}")
 
     try {
-      return processor.openProjectAsync(virtualFile, options.projectToClose, options.forceOpenInNewFrame)
+      return if (processor is PlatformProjectOpenProcessor) {
+        // this customization is needed, because there is no way to pass original OpenOptions to the ProjectOpenProcessor
+        PlatformProjectOpenProcessor.openProjectAsync(virtualFile.toNioPath(), options)
+      }
+      else {
+        processor.openProjectAsync(virtualFile, options.projectToClose, options.forceOpenInNewFrame)
+      }
     }
     catch (e: UnsupportedOperationException) {
       if (e != ProjectOpenProcessor.unimplementedOpenAsync) {
@@ -564,18 +557,15 @@ object ProjectUtil {
 
       LOG.debug { "$location: open file $file" }
       if (projectToClose == null) {
-        val processor = CommandLineProjectOpenProcessor.getInstanceIfExists()
-        if (processor != null) {
-          val opened = FUSProjectHotStartUpMeasurer.withProjectContextElement(file) {
-            processor.openProjectAndFile(file = file, tempProject = false)
+        val openedProject = FUSProjectHotStartUpMeasurer.withProjectContextElement(file) {
+          CommandLineProjectOpenProcessor.openProjectAndFile(file = file, tempProject = false)
+        }
+        if (openedProject != null) {
+          if (result == null) {
+            result = openedProject
           }
-          if (opened != null) {
-            if (result == null) {
-              result = opened
-            }
-            else {
-              FUSProjectHotStartUpMeasurer.openingMultipleProjects(false, list.size, false)
-            }
+          else {
+            FUSProjectHotStartUpMeasurer.openingMultipleProjects(false, list.size, false)
           }
         }
       }
@@ -638,65 +628,6 @@ object ProjectUtil {
     }
   }
 
-  private suspend fun openOrCreateProjectInner(name: String, file: Path): Project? {
-    val storePathManager = serviceAsync<ProjectStorePathManager>()
-    val existingFile = if (storePathManager.testStoreDirectoryExistsForProjectRoot(file)) file else null
-    val projectManager = serviceAsync<ProjectManager>() as ProjectManagerEx
-    if (existingFile != null) {
-      for (p in projectManager.openProjects) {
-        if (isSameProject(existingFile, p)) {
-          focusProjectWindow(project = p, stealFocusIfAppInactive = false)
-          return p
-        }
-      }
-      return projectManager.openProjectAsync(existingFile, OpenProjectTask { runConfigurators = true })
-    }
-
-    val created = try {
-      withContext(Dispatchers.IO) {
-        !Files.exists(file) && Files.createDirectories(file) != null || Files.isDirectory(file)
-      }
-    }
-    catch (_: IOException) {
-      false
-    }
-
-    if (!created) {
-      return null
-    }
-
-    val newProject = projectManager.newProjectAsync(file = file, options = OpenProjectTask {
-      isNewProject = true
-      isProjectCreatedWithWizard = true
-      runConfigurators = false //not used inside
-      projectName = name
-    })
-
-    try {
-      runInAutoSaveDisabledMode {
-        saveSettings(componentManager = newProject, forceSavingAllSettings = true)
-      }
-      PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
-        projectFile = file,
-        project = newProject,
-        newProject = true,
-        createModule = true,
-      )
-
-      return projectManager.openProjectAsync(projectIdentityFile = file, options = OpenProjectTask {
-        runConfigurators = false //not used when passing project
-        isProjectCreatedWithWizard = true
-        project = newProject
-      })
-    }
-    catch (th: Throwable) {
-      edtWriteAction {
-        Disposer.dispose(newProject)
-      }
-      throw th
-    }
-  }
-
   @JvmStatic
   fun getRootFrameForWindow(window: Window?): IdeFrame? {
     var w = window ?: return null
@@ -721,8 +652,11 @@ object ProjectUtil {
   fun getOpenProjects(): Array<Project> = ProjectUtilCore.getOpenProjects()
 
   @Internal
+  enum class FolderOpeningMode { AS_PROJECT, AS_FOLDER }
+
+  @Internal
   @VisibleForTesting
-  suspend fun openExistingDir(file: Path, currentProject: Project?): Project? {
+  suspend fun openExistingDir(file: Path, mode: FolderOpeningMode, currentProject: Project?): Project? {
     val canAttach = ProjectAttachProcessor.canAttachToProject()
     val preferAttach = currentProject != null &&
                        canAttach &&
@@ -731,18 +665,22 @@ object ProjectUtil {
       return null
     }
 
-    val project = if (canAttach) {
-      val options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, currentProject).copy(
-        projectRootDir = file,
-      )
-      (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options)
+    val options = if (mode == FolderOpeningMode.AS_PROJECT) {
+      createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, currentProject)
     }
     else {
-      val options = OpenProjectTask(projectToClose = currentProject).copy(
+      OpenProjectTask(projectToClose = currentProject).copy(
         projectRootDir = file,
+        createModule = false,
+        useDefaultProjectAsTemplate = false,
+        runConfigurators = false,
+        // suppress chooser dialog if there are other build files like Gradle or Maven
+        processorChooser = { FolderProjectOpenProcessor() },
       )
-      openOrImportAsync(file, options)
     }
+
+    val project = openOrImportAsync(file, options)
+
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       FileChooserUtil.setLastOpenedFile(project, file)
     }
@@ -764,6 +702,65 @@ object ProjectUtil {
     return withContext(Dispatchers.IO) {
       storePathManager.getStoreDescriptor(file).testStoreDirectoryExistsForProjectRoot()
     }
+  }
+}
+
+private suspend fun openOrCreateProjectInner(name: String, file: Path): Project? {
+  val storePathManager = serviceAsync<ProjectStorePathManager>()
+  val existingFile = if (storePathManager.testStoreDirectoryExistsForProjectRoot(file)) file else null
+  val projectManager = serviceAsync<ProjectManager>() as ProjectManagerEx
+  if (existingFile != null) {
+    for (p in projectManager.openProjects) {
+      if (isSameProject(existingFile, p)) {
+        focusProjectWindow(project = p, stealFocusIfAppInactive = false)
+        return p
+      }
+    }
+    return projectManager.openProjectAsync(existingFile, OpenProjectTask { runConfigurators = true })
+  }
+
+  val created = try {
+    withContext(Dispatchers.IO) {
+      Files.notExists(file) && Files.createDirectories(file) != null || Files.isDirectory(file)
+    }
+  }
+  catch (_: IOException) {
+    false
+  }
+
+  if (!created) {
+    return null
+  }
+
+  val newProject = projectManager.newProjectAsync(file = file, options = OpenProjectTask {
+    isNewProject = true
+    isProjectCreatedWithWizard = true
+    runConfigurators = false //not used inside
+    projectName = name
+  })
+
+  try {
+    runInAutoSaveDisabledMode {
+      saveSettings(componentManager = newProject, forceSavingAllSettings = true)
+    }
+    PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
+      projectFile = file,
+      project = newProject,
+      newProject = true,
+      createModule = true,
+    )
+
+    return projectManager.openProjectAsync(projectIdentityFile = file, options = OpenProjectTask {
+      runConfigurators = false //not used when passing project
+      isProjectCreatedWithWizard = true
+      project = newProject
+    })
+  }
+  catch (e: Throwable) {
+    edtWriteAction {
+      Disposer.dispose(newProject)
+    }
+    throw e
   }
 }
 

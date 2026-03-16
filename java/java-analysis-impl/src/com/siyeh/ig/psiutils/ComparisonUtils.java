@@ -15,7 +15,11 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Contract;

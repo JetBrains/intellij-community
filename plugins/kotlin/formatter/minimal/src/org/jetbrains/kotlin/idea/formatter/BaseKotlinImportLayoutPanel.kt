@@ -7,7 +7,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.*
+import com.intellij.ui.BooleanTableCellRenderer
+import com.intellij.ui.ColoredTableCellRenderer
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.TableUtil
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps

@@ -19,13 +19,9 @@ namespace local = ""
 		(	(	common.inner.phrasing
 			|	rb.elem
 			)+
-		,	(	(	rt.elem
-				|	rtc.elem
-				)+
+		,	(	rt.elem+
 				|	(	rp.elem
-					,	(	(	rt.elem
-							|	rtc.elem
-							),
+					,	(	rt.elem,
 							rp.elem
 						)+
 					)
@@ -45,19 +41,16 @@ namespace local = ""
 	rt.inner =
 		( common.inner.phrasing )
 
-## Ruby Text Container: <rtc>
+## Ruby Parenthesis: <rp>
 
-	rtc.elem =
-		element rtc { rtc.inner & rtc.attrs }
-	rtc.attrs =
+	rp.elem =
+		element rp { rp.inner & rp.attrs }
+	rp.attrs =
 		(	common.attrs
 		&	common.attrs.aria?
 		)
-	rtc.inner =
-		(	common.inner.phrasing
-			|	rt.elem
-			|	rp.elem
-		)*
+	rp.inner =
+		( text )
 
 ## Ruby Base: <rb>
 
@@ -69,14 +62,3 @@ namespace local = ""
 		)
 	rb.inner =
 		( common.inner.phrasing )
-
-## Ruby Parenthesis: <rp>
-
-	rp.elem =
-		element rp { rp.inner & rp.attrs }
-	rp.attrs =
-		(	common.attrs
-		&	common.attrs.aria?
-		)
-	rp.inner =
-		( text )

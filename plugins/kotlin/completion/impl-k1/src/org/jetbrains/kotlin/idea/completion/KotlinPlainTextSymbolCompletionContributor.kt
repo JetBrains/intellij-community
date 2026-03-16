@@ -5,11 +5,13 @@ import com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributor
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 
 private val separators = listOf(".", "#", "::")
 
+@K1Deprecation
 class KotlinPlainTextSymbolCompletionContributor : PlainTextSymbolCompletionContributor {
     override fun getLookupElements(file: PsiFile, invocationCount: Int, prefix: String): Collection<LookupElement> {
         val ktFile = file as? KtFile ?: return emptyList()

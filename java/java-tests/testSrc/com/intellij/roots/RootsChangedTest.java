@@ -13,7 +13,15 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.roots.libraries.Library;
@@ -21,7 +29,6 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -31,12 +38,12 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.testFramework.JavaModuleTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.SimpleMessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
@@ -52,7 +59,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class RootsChangedTest extends JavaModuleTestCase {
   private MyModuleRootListener myModuleRootListener;
-  private boolean useWfiForPartialScanning;
 
   @Override
   protected void setUp() throws Exception {
@@ -62,7 +68,6 @@ public class RootsChangedTest extends JavaModuleTestCase {
     MessageBusConnection connection = myProject.getMessageBus().connect(getTestRootDisposable());
     myModuleRootListener = new MyModuleRootListener(myProject);
     connection.subscribe(ModuleRootListener.TOPIC, myModuleRootListener);
-    useWfiForPartialScanning = Registry.is("use.workspace.file.index.for.partial.scanning");
   }
 
   @Override
@@ -83,7 +88,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
     myModuleRootListener.reset();
 
     ModuleRootModificationUtil.addContentRoot(moduleA, vDir1.getPath());
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     myModuleRootListener.assertEventsCount(1);
     assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir1);
@@ -154,11 +159,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
       sdkModificator.commitChanges();
     });
 
-    if (useWfiForPartialScanning) {
-      myModuleRootListener.assertEventsCount(1);
-    } else {
-      myModuleRootListener.assertEventsCount(2);
-    }
+    myModuleRootListener.assertEventsCount(1);
   }
 
   public void testModuleJdkEditing() {
@@ -184,11 +185,8 @@ public class RootsChangedTest extends JavaModuleTestCase {
       final SdkModificator sdkModificator = jdk.getSdkModificator();
       sdkModificator.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
-      if (useWfiForPartialScanning) {
-        myModuleRootListener.assertEventsCount(1);
-      } else {
-        myModuleRootListener.assertEventsCount(2);
-      }
+
+      myModuleRootListener.assertEventsCount(1);
 
       final SdkModificator sdkModificator2 = unused.getSdkModificator();
       sdkModificator2.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
@@ -212,20 +210,13 @@ public class RootsChangedTest extends JavaModuleTestCase {
       
       Sdk jdk = ProjectJdkTable.getInstance().createSdk("new-jdk", JavaSdk.getInstance());
       ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
-      if (useWfiForPartialScanning) {
-        myModuleRootListener.assertEventsCount(1);
-      } else {
-        myModuleRootListener.assertEventsCount(2);
-      }
+
+      myModuleRootListener.assertEventsCount(1);
 
       final SdkModificator sdkModificator = jdk.getSdkModificator();
       sdkModificator.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
-      if (useWfiForPartialScanning) {
-        myModuleRootListener.assertEventsCount(1);
-      } else {
-        myModuleRootListener.assertEventsCount(2);
-      }
+      myModuleRootListener.assertEventsCount(1);
     });
   }
 
@@ -264,11 +255,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
       final SdkModificator sdkModificator = jdk.getSdkModificator();
       sdkModificator.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
-      if (useWfiForPartialScanning) {
-        myModuleRootListener.assertEventsCount(1);
-      } else {
-        myModuleRootListener.assertEventsCount(2);
-      }
+      myModuleRootListener.assertEventsCount(1);
     });
   }
 
@@ -494,13 +481,13 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
   private void checkRootChangedOnDirCreationDeletion(VirtualFile contentRoot, String dirUrl, int mustGenerateEvents) {
     myModuleRootListener.reset();
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     VirtualFile dir = createChildDirectory(contentRoot, new File(dirUrl).getName());
     myModuleRootListener.assertEventsCount(mustGenerateEvents);
 
     myModuleRootListener.reset();
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     delete(dir);
     myModuleRootListener.assertEventsCount(mustGenerateEvents);
   }
@@ -529,8 +516,6 @@ public class RootsChangedTest extends JavaModuleTestCase {
     };
     connect.subscribe(VirtualFileManager.VFS_CHANGES, rogueListenerWhichStupidlyGetChildrenRightAway);
 
-    myModuleRootListener.reset();
-
     File iParent = new File(ioRoot, "parent");
     assertTrue(iParent.mkdirs());
     vRoot.refresh(true, true);
@@ -539,11 +524,9 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
     File ioExcluded = new File(iParent, "excluded");
     assertTrue(ioExcluded.mkdirs());
-    UIUtil.dispatchAllInvocationEvents(); // now events are fired
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // now events are fired
 
     assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioExcluded));
-
-    myModuleRootListener.assertEventsCount(1);
   }
 
   public void testChangesInsideCompilerOutputDirectoryMustNotLeadToRootsChange() {

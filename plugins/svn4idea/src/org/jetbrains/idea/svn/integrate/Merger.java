@@ -15,7 +15,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.RevisionRange;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 
 import java.io.File;

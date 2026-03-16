@@ -13,7 +13,33 @@ import com.intellij.testFramework.replaceService
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.documentation.docstrings.DocStringFormat
 import com.jetbrains.python.fixtures.PyTestCase
-import com.jetbrains.python.inspections.*
+import com.jetbrains.python.inspections.PyAbstractClassInspection
+import com.jetbrains.python.inspections.PyArgumentEqualDefaultInspection
+import com.jetbrains.python.inspections.PyArgumentListInspection
+import com.jetbrains.python.inspections.PyChainedComparisonsInspection
+import com.jetbrains.python.inspections.PyClassicStyleClassInspection
+import com.jetbrains.python.inspections.PyComparisonWithNoneInspection
+import com.jetbrains.python.inspections.PyCompatibilityInspection
+import com.jetbrains.python.inspections.PyDecoratorInspection
+import com.jetbrains.python.inspections.PyDefaultArgumentInspection
+import com.jetbrains.python.inspections.PyDictCreationInspection
+import com.jetbrains.python.inspections.PyFromFutureImportInspection
+import com.jetbrains.python.inspections.PyIncorrectDocstringInspection
+import com.jetbrains.python.inspections.PyInitNewSignatureInspection
+import com.jetbrains.python.inspections.PyListCreationInspection
+import com.jetbrains.python.inspections.PyMandatoryEncodingInspection
+import com.jetbrains.python.inspections.PyMethodOverridingInspection
+import com.jetbrains.python.inspections.PyMethodParametersInspection
+import com.jetbrains.python.inspections.PyMissingConstructorInspection
+import com.jetbrains.python.inspections.PyRedundantParenthesesInspection
+import com.jetbrains.python.inspections.PySetFunctionToLiteralInspection
+import com.jetbrains.python.inspections.PyShadowingBuiltinsInspection
+import com.jetbrains.python.inspections.PySimplifyBooleanCheckInspection
+import com.jetbrains.python.inspections.PySingleQuotedDocstringInspection
+import com.jetbrains.python.inspections.PyStatementEffectInspection
+import com.jetbrains.python.inspections.PyTrailingSemicolonInspection
+import com.jetbrains.python.inspections.PyUnboundLocalVariableInspection
+import com.jetbrains.python.inspections.PyUnnecessaryBackslashInspection
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.packaging.management.TestPypiPackageCache
 import com.jetbrains.python.packaging.pip.PypiPackageCache
@@ -452,6 +478,22 @@ class PyQuickFixTest : PyTestCase() {
       PyUnresolvedReferencesInspection::class.java,
       PyPsiBundle.message("QFIX.create.function.in.module", "foo", "__init__.py"),
       "mypack/__init__.py"
+    )
+  }
+
+  // PY-84710
+  fun testDoNotAddFunctionInsideImport() {
+    doMultiFilesNegativeInspectionTest(
+      PyUnresolvedReferencesInspection::class.java,
+      PyPsiBundle.message("QFIX.create.function.in.module", "unresolved", "mod.py")
+    )
+  }
+
+  // PY-84710
+  fun testDoNotAddFunctionInsideFromImportSource() {
+    doMultiFilesNegativeInspectionTest(
+      PyUnresolvedReferencesInspection::class.java,
+      PyPsiBundle.message("QFIX.create.function.in.module", "unresolved", "mod.py")
     )
   }
 
@@ -1388,6 +1430,18 @@ class PyQuickFixTest : PyTestCase() {
     myFixture.launchAction(intentionAction)
     val expectedFile = getTestName(true) + "/" + graftBeforeExt(modifiedFile, "_after")
     myFixture.checkResultByFile(modifiedFile, expectedFile, true)
+  }
+
+  private fun doMultiFilesNegativeInspectionTest(
+    inspectionClass: Class<out LocalInspectionTool>,
+    intentionStr: String,
+  ) {
+    myFixture.enableInspections(inspectionClass)
+    myFixture.copyDirectoryToProject(getTestName(true), "")
+    myFixture.configureFromTempProjectFile(getTestName(true) + ".py")
+    myFixture.checkHighlighting(true, false, false)
+    val intentions = myFixture.filterAvailableIntentions(intentionStr)
+    assertEmpty("Quick fix \"$intentionStr\" should not be available", intentions)
   }
 
   companion object {

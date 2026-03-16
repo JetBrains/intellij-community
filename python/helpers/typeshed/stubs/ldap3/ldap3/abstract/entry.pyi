@@ -1,16 +1,16 @@
-from typing import Any
+from _typeshed import Incomplete
 
 class EntryState:
-    dn: Any
-    status: Any
-    attributes: Any
-    raw_attributes: Any
-    response: Any
-    cursor: Any
-    origin: Any
-    read_time: Any
-    changes: Any
-    definition: Any
+    dn: Incomplete
+    status: Incomplete
+    attributes: Incomplete
+    raw_attributes: Incomplete
+    response: Incomplete
+    cursor: Incomplete
+    origin: Incomplete
+    read_time: Incomplete
+    changes: Incomplete
+    definition: Incomplete
     def __init__(self, dn, cursor) -> None: ...
     def set_status(self, status) -> None: ...
     @property

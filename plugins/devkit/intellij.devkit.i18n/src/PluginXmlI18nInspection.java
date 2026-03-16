@@ -3,7 +3,13 @@ package org.jetbrains.idea.devkit.i18n;
 
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.BatchQuickFix;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.InspectionEP;
+import com.intellij.codeInspection.LocalInspectionEP;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesImplUtil;
@@ -30,13 +36,21 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
@@ -46,16 +60,31 @@ import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.Action;
+import org.jetbrains.idea.devkit.dom.ActionOrGroup;
+import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.OverrideText;
+import org.jetbrains.idea.devkit.dom.Separator;
 import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase;
 import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 import org.jetbrains.idea.devkit.util.DevKitDomUtil;
 import org.jetbrains.idea.devkit.util.PluginPlatformInfo;
 import org.jetbrains.uast.UExpression;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -401,7 +430,7 @@ public final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase
       xml.setAttribute(attributeName, null);
       String shortName = getName(xml);
       if (shortName == null) return;
-      String[] items = ArrayUtil.mergeArrays(NameUtilCore.splitNameIntoWords(shortName), NameUtilCore.splitNameIntoWords(attributeName));
+      List<String> items = ContainerUtil.concat(NameUtilCore.splitNameIntoWordList(shortName), NameUtilCore.splitNameIntoWordList(attributeName));
       @NonNls String key = prefix + "." + StringUtil.join(items, s -> StringUtil.decapitalize(s), ".");
       xml.setAttribute("key", key);
 
@@ -654,7 +683,7 @@ public final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase
       Separator separator = (Separator)domElement;
 
       String text = StringUtil.defaultIfEmpty(separator.getText().getStringValue(), "noText");
-      @NonNls String key = "separator." + StringUtil.join(NameUtilCore.splitNameIntoWords(text),
+      @NonNls String key = "separator." + StringUtil.join(NameUtilCore.splitNameIntoWordList(text),
                                                           s -> StringUtil.trim(StringUtil.decapitalize(s)), ".");
 
       JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,

@@ -9,8 +9,10 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastApiTestBase
+import org.jetbrains.uast.test.kotlin.checkDescriptorsLeak
 import org.jetbrains.uast.test.kotlin.env.AbstractFE1UastTest
 import org.junit.runner.RunWith
 import java.io.File
@@ -29,6 +31,9 @@ class FE1UastApiTest : AbstractFE1UastTest() {
     @TestDataPath("/")
     @RunWith(JUnit3RunnerWithInners::class)
     class Declaration : AbstractFE1UastTest(), UastApiTestBase {
+        override fun checkLeak(convertedUAnnotation: UAnnotation) {
+            checkDescriptorsLeak(convertedUAnnotation)
+        }
 
         override var testDataDir = KotlinRoot.DIR.resolve("uast/uast-kotlin-fir/tests/testData/declaration")
 
@@ -58,6 +63,10 @@ class FE1UastApiTest : AbstractFE1UastTest() {
 
         override val pluginMode: KotlinPluginMode
             get() = KotlinPluginMode.K1
+
+        override fun checkLeak(convertedUAnnotation: UAnnotation) {
+            checkDescriptorsLeak(convertedUAnnotation)
+        }
 
         override fun check(testName: String, file: UFile) {
             // Bogus

@@ -3,7 +3,13 @@
 package org.jetbrains.kotlin.caches.resolve
 
 import com.intellij.openapi.diagnostic.Logger
-import org.jetbrains.kotlin.analyzer.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.analyzer.LibraryModuleInfo
+import org.jetbrains.kotlin.analyzer.ModuleContent
+import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.analyzer.ResolverForModule
+import org.jetbrains.kotlin.analyzer.ResolverForModuleFactory
+import org.jetbrains.kotlin.analyzer.ResolverForProject
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.container.StorageComponentContainer
 import org.jetbrains.kotlin.container.get
@@ -21,8 +27,10 @@ import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.resolve.BindingTraceContext
 import org.jetbrains.kotlin.resolve.SealedClassInheritorsProvider
 import org.jetbrains.kotlin.resolve.TargetEnvironment
+import org.jetbrains.kotlin.resolve.lazy.AbsentDescriptorHandler
 import org.jetbrains.kotlin.resolve.lazy.ResolveSession
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService
+import org.jetbrains.kotlin.resolve.scopes.optimization.OptimizingOptions
 import org.jetbrains.kotlin.serialization.js.KotlinJavascriptSerializationUtil
 import org.jetbrains.kotlin.serialization.js.createKotlinJavascriptPackageFragmentProvider
 import org.jetbrains.kotlin.utils.KotlinJavascriptMetadataUtils
@@ -31,6 +39,7 @@ import kotlin.io.path.exists
 
 private val LOG = Logger.getInstance(JsResolverForModuleFactory::class.java)
 
+@K1Deprecation
 class JsResolverForModuleFactory(
     private val targetEnvironment: TargetEnvironment
 ) : ResolverForModuleFactory() {
@@ -40,7 +49,9 @@ class JsResolverForModuleFactory(
         moduleContent: ModuleContent<M>,
         resolverForProject: ResolverForProject<M>,
         languageVersionSettings: LanguageVersionSettings,
-        sealedInheritorsProvider: SealedClassInheritorsProvider
+        sealedInheritorsProvider: SealedClassInheritorsProvider,
+        resolveOptimizingOptions: OptimizingOptions?,
+        absentDescriptorHandlerClass: Class<out AbsentDescriptorHandler>?
     ): ResolverForModule {
         val (moduleInfo, syntheticFiles, moduleContentScope) = moduleContent
         val project = moduleContext.project
@@ -104,7 +115,7 @@ internal fun <M : ModuleInfo> createJsPackageFragmentProvider(
                     emptyList()
                 }
             }
-            .filter { it.version.isCompatible() }
+            .filter { it.version.isCompatibleWithCurrentCompilerVersion() }
             .map { metadata ->
                 val (header, packageFragmentProtos) =
                     KotlinJavascriptSerializationUtil.readModuleAsProto(metadata.body, metadata.version)

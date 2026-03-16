@@ -4,7 +4,15 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/i18n",
+    "//plugins/java-i18n",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+  ]
 )
 
 jvm_library(
@@ -31,7 +39,8 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.i18n.tests` end
 

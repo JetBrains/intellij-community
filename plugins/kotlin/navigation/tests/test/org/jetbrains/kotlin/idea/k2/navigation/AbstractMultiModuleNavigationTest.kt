@@ -11,7 +11,11 @@ import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveTest
 import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveTest.Companion.checkReferenceResolve
 import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveTest.Companion.readResolveData
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.TestMetadataUtil
+import org.jetbrains.kotlin.idea.test.findFileWithCaret
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import java.io.File
 
 abstract class AbstractMultiModuleNavigationTest: AbstractMultiModuleTest() {

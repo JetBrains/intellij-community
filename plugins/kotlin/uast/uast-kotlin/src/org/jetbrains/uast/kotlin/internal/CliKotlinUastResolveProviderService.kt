@@ -47,9 +47,9 @@ class UastAnalysisHandlerExtension : AnalysisHandlerExtension {
     private var typeMapper: KotlinTypeMapper? = null
     private var languageVersionSettings: LanguageVersionSettings? = null
 
-    fun getBindingContext() = context
+    fun getBindingContext(): BindingContext? = context
 
-    fun getLanguageVersionSettings() = languageVersionSettings
+    fun getLanguageVersionSettings(): LanguageVersionSettings? = languageVersionSettings
 
     override fun doAnalysis(
         project: Project,

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtProperty
 
+@K1Deprecation
 abstract class AddAccessorsIntention(
   private val addGetter: Boolean,
   private val addSetter: Boolean
@@ -63,8 +65,11 @@ abstract class AddAccessorsIntention(
     }
 }
 
+@K1Deprecation
 class AddPropertyAccessorsIntention : AddAccessorsIntention(true, true), LowPriorityAction
 
+@K1Deprecation
 class AddPropertyGetterIntention : AddAccessorsIntention(true, false)
 
+@K1Deprecation
 class AddPropertySetterIntention : AddAccessorsIntention(false, true)

@@ -2,6 +2,9 @@
   <dependencies>
     <module name="intellij.platform.compose"/>
     <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.compose.runtime.desktop"/>
+    <!-- endregion -->
   </dependencies>
   <resource-bundle>messages.NonModalWelcomeScreenBundle</resource-bundle>
 
@@ -15,9 +18,15 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.openapi.wm.ex.WelcomeScreenTabService"
+                    serviceImplementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabServiceImpl"
+                    overrides="true"/>
+    <projectFrameCapabilitiesProvider implementation="com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenProjectFrameCapabilitiesProvider"/>
     <postStartupActivity implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenProjectActivity"/>
 
     <noProjectStateHandler implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenNoProjectStateHandler" order="first"/>
+
+    <projectOpenProcessor implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenCommandLineProjectOpenProcessor" order="first"/>
 
     <actionConfigurationCustomizer implementation="com.intellij.platform.ide.nonModalWelcomeScreen.actions.WelcomeScreenAwareActionsCustomizer" />
 
@@ -28,10 +37,11 @@
     <advancedSetting id="welcome.screen.non.modal.enabled" default="true"
                      groupKey="group.advanced.settings.welcome.screen"
                      bundle="messages.NonModalWelcomeScreenBundle"/>
-    <statistics.counterUsagesCollector
-      implementationClass="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.nonModalWelcomeScreen.newProjectNotification.WelcomeScreenSingleFileOpeningCollector"/>
 
     <internalFileTemplate name="Generic Empty File"/>
+    <editorSkeletonPolicy implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenEditorSkeletonPolicy"/>
   </extensions>
 
   <actions resource-bundle="messages.NonModalWelcomeScreenBundle">

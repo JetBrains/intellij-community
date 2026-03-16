@@ -4,11 +4,20 @@ package training.lang
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.xmlb.annotations.XMap
-import training.util.*
+import training.util.LazyWeakReferenceDelegator
+import training.util.courseCanBeUsed
+import training.util.findLanguageByID
+import training.util.getAllLearnToolWindows
+import training.util.trainerPluginConfigName
 
 @State(name = "LangManager", storages = [
   Storage(value = StoragePathMacros.NON_ROAMABLE_FILE),

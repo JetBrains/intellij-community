@@ -2,7 +2,11 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
+import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.NullableNotNullManagerImpl;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;

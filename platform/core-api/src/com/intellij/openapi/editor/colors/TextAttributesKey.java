@@ -12,9 +12,19 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -148,13 +158,13 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
    *
    * @return the text attributes.
    */
-  public TextAttributes getDefaultAttributes() {
+  public @NotNull TextAttributes getDefaultAttributes() {
     TextAttributes defaultAttributes = myDefaultAttributes;
     if (defaultAttributes == null) {
       final TextAttributeKeyDefaultsProvider provider = ourDefaultsProvider.getValue();
       if (provider != null) {
         Set<String> called = CALLED_RECURSIVELY.get();
-        if (!called.add(myExternalName)) return null;
+        if (!called.add(myExternalName)) return NULL_ATTRIBUTES;
         try {
           return ObjectUtils.notNull(provider.getDefaultAttributes(this), NULL_ATTRIBUTES);
         }
@@ -163,7 +173,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
         }
       }
     }
-    return defaultAttributes;
+    return ObjectUtils.notNull(defaultAttributes, NULL_ATTRIBUTES);
   }
 
   /**

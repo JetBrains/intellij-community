@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,6 +28,7 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public abstract class FileDocumentManagerBase extends FileDocumentManager {
   public static final Key<Document> HARD_REF_TO_DOCUMENT_KEY = Key.create("HARD_REF_TO_DOCUMENT_KEY");
@@ -56,7 +57,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
       return null;
     }
 
-    boolean tooLarge = FileSizeLimit.isTooLarge(file.getLength(), file.getExtension());
+    boolean tooLarge = FileSizeLimit.isTooLargeForContentLoading(file.getLength(), file.getExtension());
     if (file.getFileType().isBinary() && tooLarge) {
       return null;
     }
@@ -190,7 +191,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   }
 
   @ApiStatus.Internal
-  public void unbindFileFromDocument(@NotNull VirtualFile file, @NotNull Document document) {
+  protected void unbindFileFromDocument(@NotNull VirtualFile file, @NotNull Document document) {
     myDocumentCache.remove(file);
     file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
     document.putUserData(FILE_KEY, null);
@@ -221,11 +222,16 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   }
 
   @ApiStatus.Internal
-  public void clearDocumentCache() {
+  protected void clearDocumentCache() {
     myDocumentCache.clear();
   }
 
   protected abstract void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document);
 
   protected abstract @NotNull DocumentListener getDocumentListener();
+
+  @ApiStatus.Internal
+  public void forEachCachedDocument(@NotNull Consumer<? super @NotNull Document> consumer) {
+    myDocumentCache.values().forEach(consumer);
+  }
 }

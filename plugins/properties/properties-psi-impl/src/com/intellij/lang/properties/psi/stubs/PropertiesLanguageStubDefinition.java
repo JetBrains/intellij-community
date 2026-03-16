@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.psi.stubs;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.parsing.PropertiesParser;
 import com.intellij.lang.properties.parsing.PropertiesParserDefinition;

@@ -3,11 +3,17 @@ package com.intellij.platform.searchEverywhere
 
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
+/**
+ * Represents search parameters for Search Everywhere requests.
+ *
+ * @property inputQuery The input string for the search.
+ * @property filter The filter state applied to refine or customize the search results.
+ */
 @ApiStatus.Experimental
-@ApiStatus.Internal
 @Serializable
-data class SeParams(
+class SeParams(
   val inputQuery: String,
   val filter: SeFilterState,
 )

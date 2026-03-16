@@ -9,7 +9,13 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.getContainingUClass
+import org.jetbrains.uast.resolveToUElement
+import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.util.isConstructorCall
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 

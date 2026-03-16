@@ -49,6 +49,33 @@ public class MavenConfigParserTest extends CodeInsightFixtureTestCase {
     Assert.assertEquals("global-settings.xml", config.getOptionValue(MavenConfigSettings.ALTERNATE_GLOBAL_SETTINGS));
   }
 
+
+  public void testParseJavaOptions() {
+    myFixture.addFileToProject(".mvn/maven.config",
+                               "-Dkey1=value -Dkey2=\"value with spaces\" " +
+                               "\"-Dkey3=another value with spaces\" -Dkey4");
+    MavenConfig config = MavenConfigParser.parse(myFixture.getTempDirPath());
+    Assert.assertEquals("value", config.getJavaProperties().get("key1"));
+    Assert.assertEquals("value with spaces", config.getJavaProperties().get("key2"));
+    Assert.assertEquals("another value with spaces", config.getJavaProperties().get("key3"));
+    Assert.assertEquals("", config.getJavaProperties().get("key4"));
+    Assert.assertNull(config.getJavaProperties().get("key"));
+  }
+
+  public void testParseJavaOptionsTogetherWithMaven() {
+    myFixture.addFileToProject(".mvn/maven.config",
+                               "-Dkey1=value -Dkey2=\"value with spaces\"  \"-Dkey3=another value with spaces\" -Dkey4 --offline --threads 3");
+    MavenConfig config = MavenConfigParser.parse(myFixture.getTempDirPath());
+    Assert.assertEquals("value", config.getJavaProperties().get("key1"));
+    Assert.assertEquals("value with spaces", config.getJavaProperties().get("key2"));
+    Assert.assertEquals("another value with spaces", config.getJavaProperties().get("key3"));
+    Assert.assertEquals("", config.getJavaProperties().get("key4"));
+    Assert.assertNull(config.getJavaProperties().get("key"));
+    Assert.assertTrue(config.hasOption(MavenConfigSettings.OFFLINE));
+    Assert.assertEquals("3", config.getOptionValue(MavenConfigSettings.THREADS));
+
+  }
+
   public void testUnknownNames() {
     myFixture.addFileToProject(".mvn/maven.config", "-unknown -ZZ --badprop");
     MavenConfig config = MavenConfigParser.parse(myFixture.getTempDirPath());

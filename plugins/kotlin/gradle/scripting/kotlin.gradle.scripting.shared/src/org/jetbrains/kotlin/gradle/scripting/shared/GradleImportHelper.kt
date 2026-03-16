@@ -35,7 +35,7 @@ fun runPartialGradleImport(project: Project, root: GradleBuildRoot) {
     if (root.isImportingInProgress()) return
 
     ExternalSystemUtil.refreshProject(
-        root.pathPrefix,
+        root.externalProjectPath,
         ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
             .withVmOptions(
                 "-D${KotlinDslModelsParameters.PROVIDER_MODE_SYSTEM_PROPERTY_NAME}=" +

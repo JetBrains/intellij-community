@@ -2,10 +2,18 @@
 package com.intellij.python.featuresTrainer.ift.lesson.refactorings
 
 import com.intellij.icons.AllIcons
-import com.intellij.refactoring.RefactoringBundle
 import com.intellij.python.featuresTrainer.ift.PythonLessonsBundle
-import training.dsl.*
+import com.intellij.refactoring.RefactoringBundle
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
+import training.dsl.TaskContext
+import training.dsl.TaskRuntimeContext
+import training.dsl.defaultRestoreDelay
+import training.dsl.parseLessonSample
+import training.dsl.prepareSampleFromCurrentState
+import training.dsl.restoreAfterStateBecomeFalse
 import training.learn.course.KLesson
 import training.util.isToStringContains
 import javax.swing.JLabel

@@ -47,7 +47,8 @@ import org.slf4j.jul.JDK14LoggerFactory
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.Locale
+import java.util.Optional
 import java.util.function.Supplier
 import java.util.regex.Pattern
 
@@ -203,6 +204,7 @@ open class MavenServerCMDState(
     classPath.add(PathUtil.getJarPathForClass(StringUtilRt::class.java)) //util-rt
     classPath.add(PathUtil.getJarPathForClass(NotNull::class.java)) //annotations-java5
     classPath.add(PathUtil.getJarPathForClass(Element::class.java)) //JDOM
+    classPath.add(PathUtil.getJarPathForClass(TelemetryContext ::class.java)) //util-8
     return classPath
   }
 

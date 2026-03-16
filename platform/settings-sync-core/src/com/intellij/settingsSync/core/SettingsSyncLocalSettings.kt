@@ -1,9 +1,14 @@
 package com.intellij.settingsSync.core
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.UUID
 
 interface SettingsSyncLocalState {
   val applicationId: UUID
@@ -11,11 +16,19 @@ interface SettingsSyncLocalState {
   var isCrossIdeSyncEnabled: Boolean
   var userId: String?
   var providerCode: String?
+  var remoteDataRemovalState: String?
 }
 
 @State(name = "SettingsSyncLocalSettings", storages = [Storage("settingsSyncLocal.xml", roamingType = RoamingType.DISABLED)])
 @Service(Service.Level.APP)
 class SettingsSyncLocalSettings : SimplePersistentStateComponent<SettingsSyncLocalSettings.State>(State()), SettingsSyncLocalState {
+
+  override fun initializeComponent() {
+    // Reset stale IN_PROGRESS state on startup
+    if (remoteDataRemovalState == "IN_PROGRESS") {
+      remoteDataRemovalState = "ERROR"
+    }
+  }
 
   companion object {
     fun getInstance(): SettingsSyncLocalSettings = ApplicationManager.getApplication().getService(SettingsSyncLocalSettings::class.java)
@@ -27,6 +40,7 @@ class SettingsSyncLocalSettings : SimplePersistentStateComponent<SettingsSyncLoc
     var crossIdeSyncEnabled by property(false)
     var userId by string(null)
     var providerCode by string(null)
+    var remoteDataRemovalState by string(null)
 
     @TestOnly
     internal fun reset() {
@@ -35,15 +49,8 @@ class SettingsSyncLocalSettings : SimplePersistentStateComponent<SettingsSyncLoc
       crossIdeSyncEnabled = false
       userId = null
       providerCode = null
+      remoteDataRemovalState = null
     }
-  }
-
-  fun applyFromState(newState: SettingsSyncLocalState) {
-    applicationId = newState.applicationId
-    knownAndAppliedServerId = newState.knownAndAppliedServerId
-    isCrossIdeSyncEnabled = newState.isCrossIdeSyncEnabled
-    userId = newState.userId
-    providerCode = newState.providerCode
   }
 
   override var applicationId: UUID
@@ -74,6 +81,12 @@ class SettingsSyncLocalSettings : SimplePersistentStateComponent<SettingsSyncLoc
     get() = state.providerCode
     set(value) {
       state.providerCode = value
+    }
+
+  override var remoteDataRemovalState: String?
+  get() = state.remoteDataRemovalState
+    set(value) {
+      state.remoteDataRemovalState = value
     }
 }
 
@@ -114,6 +127,12 @@ class SettingsSyncLocalStateHolder(
     get() = state.providerCode
     set(value) {
       state.providerCode = value
+    }
+
+  override var remoteDataRemovalState: String?
+  get() = state.remoteDataRemovalState
+    set(value) {
+      state.remoteDataRemovalState = value
     }
 
 }

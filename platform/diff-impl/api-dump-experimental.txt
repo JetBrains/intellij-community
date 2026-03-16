@@ -194,6 +194,7 @@ e:com.intellij.diff.tools.util.base.IgnorePolicy
 - a:showHintAt(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range,java.awt.Point):V
 *f:com.intellij.openapi.vcs.ex.RangeExclusionState$Partial
 - com.intellij.openapi.vcs.ex.RangeExclusionState
+- *sf:Companion:com.intellij.openapi.vcs.ex.RangeExclusionState$Partial$Companion
 - <init>(I,I,java.util.BitSet,java.util.BitSet):V
 - f:getAdditionsCount():I
 - f:getDeletionsCount():I
@@ -206,3 +207,12 @@ e:com.intellij.diff.tools.util.base.IgnorePolicy
 - f:iterateIncludedAdditionRanges(com.intellij.diff.util.Range,kotlin.jvm.functions.Function1):V
 - f:iterateIncludedDeletionRanges(com.intellij.diff.util.Range,kotlin.jvm.functions.Function1):V
 - f:validate(I,I):V
+*bf:com.intellij.openapi.vcs.ex.RangeExclusionState$Partial$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.openapi.vcs.ex.RangeExclusionState$Partial$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.openapi.vcs.ex.RangeExclusionState$Partial
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.openapi.vcs.ex.RangeExclusionState$Partial):V
+*f:com.intellij.openapi.vcs.ex.RangeExclusionState$Partial$Companion
+- f:serializer():kotlinx.serialization.KSerializer

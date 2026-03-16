@@ -3,14 +3,45 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
@@ -319,58 +350,6 @@ public final class JavaGenericsUtil {
    */
   public static @Nullable PsiType getCollectionItemType(@NotNull PsiExpression expression) {
     return getCollectionItemType(expression.getType(), expression.getResolveScope());
-  }
-
-
-  /**
-   * Substitutes all values for type parameters of the {@code baseType} from the {@code derivedType}.
-   *
-   * @return null if the calculation wasn't successful, list of substituted types otherwise.
-   *
-   * @see JavaGenericsUtil#getCollectionItemType(PsiExpression)
-   */
-  public static @Nullable List<@NotNull PsiType> getParentParameterTypeListFromDerivedType(@Nullable PsiType baseType, @Nullable PsiType derivedType) {
-    if (derivedType instanceof PsiClassType) {
-      PsiClass baseClass = PsiTypesUtil.getPsiClass(baseType);
-      if (baseClass == null) return null;
-      final PsiClassType.ClassResolveResult resolveResult = getDerivedClassTypeResolveResult((PsiClassType)derivedType);
-      PsiClass derivedClass = resolveResult.getElement();
-      if (derivedClass == null) return null;
-      PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-      PsiTypeParameter[] parameters = baseClass.getTypeParameters();
-      PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, derivedClass, substitutor);
-      if (superClassSubstitutor == null) return null;
-      return ContainerUtil.map(
-        parameters, typeParameter -> {
-          PsiType substitutedType = superClassSubstitutor.substitute(typeParameter);
-          return substitutedType == null ? PsiType.getJavaLangObject(derivedClass.getManager(), derivedClass.getResolveScope()) : substitutedType;
-        }
-      );
-    } else if (derivedType instanceof PsiIntersectionType) {
-      for (PsiType conjunct : ((PsiIntersectionType)derivedType).getConjuncts()) {
-        List<@NotNull PsiType> candidates = getParentParameterTypeListFromDerivedType(baseType, conjunct);
-        if (candidates != null) return candidates;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Retrieves the resolve result corresponding to the given {@code derivedType}. If the initial resolved
-   * result is a type parameter with an upper bound, then the upper bound is returned, otherwise the initial resolve result.
-   */
-  private static @NotNull PsiClassType.ClassResolveResult getDerivedClassTypeResolveResult(PsiClassType derivedType) {
-    final PsiClassType.ClassResolveResult resolveResult = derivedType.resolveGenerics();
-    PsiClass derivedClass = resolveResult.getElement();
-    if (derivedClass instanceof PsiTypeParameter) {
-      PsiTypeParameter typeParameter = (PsiTypeParameter)derivedClass;
-      PsiClassType[] types = typeParameter.getExtendsListTypes();
-      if (types.length > 1) return PsiClassType.ClassResolveResult.EMPTY;
-      else if (types.length == 1) {
-        return types[0].resolveGenerics();
-      }
-    }
-    return resolveResult;
   }
 
   public static @Nullable PsiType getCollectionItemType(@Nullable PsiType type, @NotNull GlobalSearchScope scope) {

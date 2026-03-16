@@ -7,7 +7,12 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.TimeoutSafeResult
+import com.intellij.platform.debugger.impl.rpc.XDebuggerEvaluatorApi
+import com.intellij.platform.debugger.impl.rpc.XDebuggerEvaluatorDto
+import com.intellij.platform.debugger.impl.rpc.XEvaluationResult
+import com.intellij.platform.debugger.impl.rpc.XStackFrameId
+import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
@@ -15,7 +20,6 @@ import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
-import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import com.intellij.xdebugger.impl.rpc.toRpc
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackWithOrigin
 import kotlinx.coroutines.CoroutineScope
@@ -65,7 +69,7 @@ internal open class FrontendXDebuggerEvaluator(
     evaluatorScope.launch(Dispatchers.EDT) {
       try {
         when (val evaluation = evaluate().await()) {
-          is XEvaluationResult.Evaluated -> callback.evaluated(FrontendXValue.create(project, evaluatorScope, evaluation.valueId, false))
+          is XEvaluationResult.Evaluated -> callback.evaluated(FrontendXValue.create(project, evaluatorScope, evaluation.xValue, false))
           is XEvaluationResult.EvaluationError -> callback.errorOccurred(evaluation.errorMessage)
           is XEvaluationResult.InvalidExpression -> callback.invalidExpression(evaluation.error)
         }

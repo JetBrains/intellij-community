@@ -9,7 +9,7 @@ import com.intellij.platform.buildScripts.testFramework.runTestBuild
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
-import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.createBuildContext
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 
@@ -38,16 +38,19 @@ class IdeaCommunityBuildTest {
   fun jpsStandalone(testInfo: TestInfo) {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
     runBlocking(Dispatchers.Default) {
-      runTestBuild(testInfo, context = {
-        val productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot)
-        val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homePath, skipDependencySetup = true, testInfo = testInfo)
-        BuildContextImpl.createContext(
-          projectHome = homePath,
-          productProperties = productProperties,
-          setupTracer = false,
-          options = options,
-        )
-      }) {
+      runTestBuild(
+        testInfo = testInfo,
+        context = {
+          val productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot)
+          val options = createBuildOptionsForTest(
+            productProperties = productProperties,
+            homeDir = homePath,
+            skipDependencySetup = true,
+            testInfo = testInfo,
+          )
+          createBuildContext(projectHome = homePath, productProperties = productProperties, setupTracer = false, options = options)
+        },
+      ) {
         buildCommunityStandaloneJpsBuilder(targetDir = it.paths.artifactDir.resolve("jps"), context = it)
       }
     }
@@ -56,8 +59,10 @@ class IdeaCommunityBuildTest {
   @Test
   fun `essential plugins depend only on essential plugins`() {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
-    runEssentialPluginsTest(homePath = homePath,
-                            productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
-                            buildTools = ProprietaryBuildTools.DUMMY)
+    runEssentialPluginsTest(
+      homePath = homePath,
+      productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
+      buildTools = ProprietaryBuildTools.DUMMY,
+    )
   }
 }

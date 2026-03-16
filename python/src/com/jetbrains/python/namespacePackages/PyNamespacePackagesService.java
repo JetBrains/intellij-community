@@ -13,6 +13,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.FoldersComponentTools;
@@ -154,7 +155,7 @@ public final class PyNamespacePackagesService implements PersistentStateComponen
     if (!ApplicationManager.getApplication().isWriteIntentLockAcquired()) return;
     if (myModule == null) return;
     Project project = myModule.getProject();
-    ProjectView.getInstance(project).refresh();
+    ProjectView.getInstance(project).refresh(ProjectViewUpdateCause.PLUGIN_PYTHON);
     PsiManager.getInstance(project).dropPsiCaches();
     DaemonCodeAnalyzer.getInstance(project).restart(this);
   }

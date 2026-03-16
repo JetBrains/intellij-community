@@ -2,9 +2,6 @@
 package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.ide.DataManager
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -35,6 +32,8 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.MarkdownBundle
@@ -77,7 +76,12 @@ class MarkdownPreviewFileEditor(
   init {
     document.addDocumentListener(ReparseContentDocumentListener(), this)
 
-    coroutineScope.launch(Dispatchers.EDT) { attachHtmlPanel() }
+    coroutineScope.launch {
+      mainEditor.filterNotNull().first()
+      coroutineScope.launch(Dispatchers.EDT) {
+        attachHtmlPanel()
+      }
+    }
 
     val messageBusConnection = project.messageBus.connect(this)
     val settingsChangedListener = UpdatePanelOnSettingsChangedListener()
@@ -135,6 +139,7 @@ class MarkdownPreviewFileEditor(
   fun setMainEditor(editor: Editor) {
     check(mainEditor.value == null)
     mainEditor.value = editor
+    logger.info("MarkdownPreviewFileEditor: the main editor has been set")
     if (Registry.`is`("markdown.experimental.boundary.precise.scroll.enable")) {
       coroutineScope.launch { setupScrollHelper() }
     }
@@ -224,14 +229,22 @@ class MarkdownPreviewFileEditor(
     val settings = MarkdownSettings.getInstance(project)
     val textPreprocessor = retrievePanelProvider(settings).sourceTextPreprocessor
     lastRenderedHtml = readAction {
-      textPreprocessor.preprocessText(project, document, file)
+      val text = textPreprocessor.preprocessText(project, document, file)
+      logger.info("MarkdownPreviewFileEditor: readAction finished")
+      text
     }
 
-    val editor = mainEditor.firstOrNull() ?: return
+    val editor = mainEditor.firstOrNull() ?: run {
+      logger.warn("MarkdownPreviewFileEditor: editor is null, cannot update preview")
+      return
+    }
+
     writeIntentReadAction {
       val offset = editor.caretModel.offset
       val line = editor.document.getLineNumber(offset)
+      logger.info("MarkdownPreviewFileEditor: setHtml length: ${lastRenderedHtml.length}, offset: $offset, line: $line")
       panel.setHtml(lastRenderedHtml, offset, line, file)
+      logger.info("MarkdownPreviewFileEditor: setHtml finished")
     }
   }
 

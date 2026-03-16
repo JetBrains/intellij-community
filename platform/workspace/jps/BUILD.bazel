@@ -34,7 +34,7 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/util/jdom",
     "//libraries/kryo5",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//platform/diagnostic/telemetry",

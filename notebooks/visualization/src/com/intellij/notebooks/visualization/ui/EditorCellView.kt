@@ -88,9 +88,9 @@ class EditorCellView(val cell: EditorCell) : EditorCellViewComponent() {
   private fun hasOutputs() = cell.interval.type == CellType.CODE
                              && (editor.editorKind != EditorKind.DIFF || Registry.`is`("jupyter.diff.viewer.output"))
 
-  fun onViewportChanges() {
-    input.onViewportChange()
-    outputs?.onViewportChange()
+  fun updateIfInVisibleRect() {
+    input.onUpdateIfInVisibleRect()
+    outputs?.onUpdateIfInVisibleRect()
   }
 
   fun updateHovered() {

@@ -4,7 +4,9 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.DefaultASTFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.impl.source.javadoc.PsiDocFormatString;
 import com.intellij.psi.impl.source.javadoc.PsiDocTagValueImpl;
 import com.intellij.psi.impl.source.javadoc.PsiDocTokenImpl;
 import com.intellij.psi.impl.source.javadoc.PsiSnippetAttributeValueImpl;
@@ -28,6 +30,9 @@ public final class JavaASTFactory extends ASTFactory {
     }
     if (type == JavaTokenType.IDENTIFIER) {
       return new PsiIdentifierImpl(text);
+    }
+    if (type == JavaDocTokenType.DOC_TAG_FORMAT_STRING) {
+      return new PsiDocFormatString(type, text);
     }
     if (ElementType.KEYWORD_BIT_SET.contains(type)) {
       return new PsiKeywordImpl(type, text);

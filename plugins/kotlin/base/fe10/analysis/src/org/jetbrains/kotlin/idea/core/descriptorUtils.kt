@@ -4,9 +4,19 @@ package org.jetbrains.kotlin.idea.core
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.*
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.DECLARATION
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.DELEGATION
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.FAKE_OVERRIDE
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.SYNTHESIZED
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.descriptors.DescriptorVisibility
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilityUtils
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
@@ -24,12 +34,13 @@ import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.resolve.scopes.utils.getImplicitReceiversHierarchy
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
-import java.util.*
 
+@K1Deprecation
 fun DeclarationDescriptorWithVisibility.isVisible(from: DeclarationDescriptor, languageVersionSettings: LanguageVersionSettings): Boolean {
     return isVisible(from, null, languageVersionSettings = languageVersionSettings)
 }
 
+@K1Deprecation
 fun DeclarationDescriptorWithVisibility.isVisible(
     context: PsiElement,
     receiverExpression: KtExpression?,
@@ -77,6 +88,7 @@ private fun compareDescriptorsText(project: Project, d1: DeclarationDescriptor, 
     return declarations1 == declarations2 && declarations1.isNotEmpty()
 }
 
+@K1Deprecation
 fun compareDescriptors(project: Project, currentDescriptor: DeclarationDescriptor?, originalDescriptor: DeclarationDescriptor?): Boolean {
     if (currentDescriptor == originalDescriptor) return true
     if (currentDescriptor == null || originalDescriptor == null) return false
@@ -102,6 +114,7 @@ fun compareDescriptors(project: Project, currentDescriptor: DeclarationDescripto
     return false
 }
 
+@K1Deprecation
 fun DescriptorVisibility.toKeywordToken(): KtModifierKeywordToken = when (val normalized = normalize()) {
     DescriptorVisibilities.PUBLIC -> KtTokens.PUBLIC_KEYWORD
     DescriptorVisibilities.PROTECTED -> KtTokens.PROTECTED_KEYWORD
@@ -115,6 +128,7 @@ fun DescriptorVisibility.toKeywordToken(): KtModifierKeywordToken = when (val no
     }
 }
 
+@K1Deprecation
 fun <D : CallableMemberDescriptor> D.getDirectlyOverriddenDeclarations(): Collection<D> {
     val result = LinkedHashSet<D>()
     for (overriddenDescriptor in overriddenDescriptors) {
@@ -131,6 +145,7 @@ fun <D : CallableMemberDescriptor> D.getDirectlyOverriddenDeclarations(): Collec
     return OverridingUtil.filterOutOverridden(result)
 }
 
+@K1Deprecation
 fun <D : CallableMemberDescriptor> D.getDeepestSuperDeclarations(withThis: Boolean = true): Collection<D> {
     val overriddenDeclarations = DescriptorUtils.getAllOverriddenDeclarations(this)
     if (overriddenDeclarations.isEmpty() && withThis) {
@@ -140,6 +155,7 @@ fun <D : CallableMemberDescriptor> D.getDeepestSuperDeclarations(withThis: Boole
     return overriddenDeclarations.filterNot(DescriptorUtils::isOverride)
 }
 
+@K1Deprecation
 fun <T : DeclarationDescriptor> T.unwrapIfFakeOverride(): T {
     return if (this is CallableMemberDescriptor) DescriptorUtils.unwrapFakeOverride(this) else this
 }

@@ -4,13 +4,13 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -opt-in=org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -opt-in=org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -Xcontext-parameters -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="21" />
-            <stringArg name="apiVersion" arg="2.2" />
-            <stringArg name="languageVersion" arg="2.2" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
@@ -41,6 +41,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
+    <orderEntry type="module" module-name="intellij.xml.analysis" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.structureView.impl" />
@@ -68,7 +69,7 @@
     <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.jvm.analysis" />
-    <orderEntry type="library" name="protobuf" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.protobuf" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
@@ -76,9 +77,9 @@
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl" />
-    <orderEntry type="library" name="netty-codec-http" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
-    <orderEntry type="library" name="netty-buffer" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.properties.backend.psi" />
@@ -103,5 +104,11 @@
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.libraries.xerces" />
     <orderEntry type="module" module-name="intellij.platform.usageView.impl" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
+    <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
+    <orderEntry type="module" module-name="intellij.platform.buildData" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
   </component>
 </module>

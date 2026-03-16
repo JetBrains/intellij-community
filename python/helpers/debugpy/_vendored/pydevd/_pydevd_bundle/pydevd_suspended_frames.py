@@ -74,6 +74,10 @@ class _AbstractVariable(object):
                 elif has_attribute_safe(self.value, '__len__') and not is_string(self.value):
                     shape = str(len(self.value))
                     attributes.append(f"shape: {shape}")
+
+            if has_attribute_safe(self.value, "dtype"):
+                dtype = str(self.value.dtype)
+                attributes.append(f"dtype: {dtype}")
         except:
             pass
 

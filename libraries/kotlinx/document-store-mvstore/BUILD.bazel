@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":libraries-kotlinx-document-store-mvstore_resources"],
-  exports = ["@lib//:kotlinx-document-store-mvstore"],
-  runtime_deps = ["@lib//:kotlinx-document-store-mvstore"]
+  exports = ["@lib//:libraries-kotlinx-document-store-mvstore-kotlinx-document-store-mvstore"],
+  runtime_deps = ["@lib//:libraries-kotlinx-document-store-mvstore-kotlinx-document-store-mvstore"]
 )
 ### auto-generated section `build intellij.libraries.kotlinx.document.store.mvstore` end

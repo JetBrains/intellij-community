@@ -8,7 +8,13 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.RightAlignedToolbarAction;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -31,8 +37,8 @@ import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Dimension;
 import java.awt.event.KeyEvent;
 import java.util.concurrent.ConcurrentHashMap;
 

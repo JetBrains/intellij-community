@@ -21,7 +21,13 @@ import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.ReplaceFunctionWithSetLiteralQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * User: catherine
- *
+ * <p>
  * Inspection to find set built-in function and replace it with set literal
  * available if the selected language level supports set literals.
  */
@@ -46,6 +52,7 @@ public final class PySetFunctionToLiteralInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyCallExpression(final @NotNull PyCallExpression node) {
       PyExpression callee = node.getCallee();
@@ -53,9 +60,10 @@ public final class PySetFunctionToLiteralInspection extends PyInspection {
         PyExpression[] arguments = node.getArguments();
         if (arguments.length == 1) {
           PyElement[] elements = getSetCallArguments(node);
-          if (elements.length != 0)
-              registerProblem(node, PyPsiBundle.message("INSP.NAME.set.function.to.literal"),
-                              new ReplaceFunctionWithSetLiteralQuickFix());
+          if (elements.length != 0) {
+            registerProblem(node, PyPsiBundle.message("INSP.NAME.set.function.to.literal"),
+                            new ReplaceFunctionWithSetLiteralQuickFix());
+          }
         }
       }
     }
@@ -67,13 +75,15 @@ public final class PySetFunctionToLiteralInspection extends PyInspection {
       return PyElement.EMPTY_ARRAY;
     }
     if ((argument instanceof PySequenceExpression || (argument instanceof PyParenthesizedExpression &&
-                  ((PyParenthesizedExpression)argument).getContainedExpression() instanceof PyTupleExpression))) {
+                                                      ((PyParenthesizedExpression)argument).getContainedExpression() instanceof PyTupleExpression))) {
 
-      if (argument instanceof PySequenceExpression)
+      if (argument instanceof PySequenceExpression) {
         return ((PySequenceExpression)argument).getElements();
+      }
       PyExpression tuple = ((PyParenthesizedExpression)argument).getContainedExpression();
-      if (tuple instanceof PyTupleExpression)
+      if (tuple instanceof PyTupleExpression) {
         return ((PyTupleExpression)(tuple)).getElements();
+      }
     }
     return PyElement.EMPTY_ARRAY;
   }

@@ -2,11 +2,11 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.devkit.core.icons.DevkitCoreIcons;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.DevKitIcons;
 
 public abstract class ExtensionPluginDescriptorDeclarationRelatedItemLineMarkerProviderTestBase
   extends LightJavaCodeInsightFixtureTestCase {
@@ -27,7 +27,7 @@ public abstract class ExtensionPluginDescriptorDeclarationRelatedItemLineMarkerP
 
     GutterMark gutter = myFixture.findGutter(file);
     DevKitGutterTargetsChecker.checkGutterTargets(gutter, "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;com.intellij.myEp<br></body></html>",
-                                                  DevKitIcons.Gutter.Plugin, "myEp");
+                                                  DevkitCoreIcons.Gutter.Plugin, "myEp");
   }
 
   protected void doTestInvalidExtension(@NotNull String file) {

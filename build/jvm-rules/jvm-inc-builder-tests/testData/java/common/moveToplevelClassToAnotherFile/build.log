@@ -1,0 +1,12 @@
+================ Step #1 =================
+Cleaning output files:
+  pkg/A.class
+  pkg/B.class
+  pkg/Local.class
+End of files
+Compiling files:
+  java/common/moveToplevelClassToAnotherFile/a/pkg/A.java
+  java/common/moveToplevelClassToAnotherFile/a/pkg/B.java
+End of files
+------------------------------------------
+Exit code: OK

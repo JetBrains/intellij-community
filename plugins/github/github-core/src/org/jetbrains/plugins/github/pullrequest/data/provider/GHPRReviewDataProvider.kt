@@ -44,6 +44,9 @@ interface GHPRReviewDataProvider {
 
   fun canComment(): Boolean
 
+  /**
+   * Only for cases when the comment is created on the diff of an individual commit and there's an active review.
+   */
   suspend fun addComment(reviewId: String,
                          body: String,
                          commitSha: String,
@@ -57,12 +60,15 @@ interface GHPRReviewDataProvider {
 
   suspend fun updateComment(commentId: String, newText: String): GHPullRequestReviewComment
 
-  suspend fun createThread(reviewId: String,
-                           body: String,
-                           line: Int,
-                           side: Side,
-                           startLine: Int,
-                           fileName: String): GHPullRequestReviewThread
+  suspend fun createThread(
+    reviewId: String,
+    body: String,
+    line: Int,
+    side: Side,
+    startLine: Int,
+    startSide: Side,
+    fileName: String,
+  ): GHPullRequestReviewThread
 
   suspend fun resolveThread(id: String): GHPullRequestReviewThread
 

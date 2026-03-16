@@ -37,6 +37,7 @@ jvm_library(
     "//platform/backend/observation",
     "//platform/workspace/storage",
     "//platform/backend/workspace",
+    "//platform/execution",
   ],
   exports = ["//platform/external-system-rt:externalSystem-rt"]
 )

@@ -29,7 +29,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/core-ui",
     "//platform/analysis-api:analysis",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/util/coroutines",
     "//platform/kernel/shared:kernel",
     "//platform/eel",

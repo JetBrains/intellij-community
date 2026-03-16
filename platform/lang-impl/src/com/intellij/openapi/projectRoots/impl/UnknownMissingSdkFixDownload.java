@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
@@ -12,11 +13,14 @@ import org.jetbrains.annotations.Nullable;
 final class UnknownMissingSdkFixDownload extends UnknownSdkFixActionDownloadBase implements UnknownSdkFixAction {
   private final @NotNull UnknownSdkDownloadableSdkFix myFix;
   private final @NotNull UnknownSdk mySdk;
+  private final @Nullable Project myProject;
 
-  UnknownMissingSdkFixDownload(@NotNull UnknownSdk sdk,
+  UnknownMissingSdkFixDownload(@Nullable Project project,
+                               @NotNull UnknownSdk sdk,
                                @NotNull UnknownSdkDownloadableSdkFix fix) {
     myFix = fix;
     mySdk = sdk;
+    myProject = project;
   }
 
   @NotNull
@@ -48,7 +52,7 @@ final class UnknownMissingSdkFixDownload extends UnknownSdkFixActionDownloadBase
                                       sdk -> {
                                         if (sdk == null) return;
                                         myFix.configureSdk(sdk);
-                                        UnknownMissingSdkFix.registerNewSdkInJdkTable(sdk.getName(), sdk);
+                                        UnknownMissingSdkFix.registerNewSdkInJdkTable(myProject, sdk.getName(), sdk);
                                       });
   }
 

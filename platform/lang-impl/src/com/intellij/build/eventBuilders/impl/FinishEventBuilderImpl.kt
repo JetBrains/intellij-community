@@ -10,19 +10,16 @@ import com.intellij.build.events.impl.FinishEventImpl
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class FinishEventBuilderImpl : FinishEventBuilder {
+class FinishEventBuilderImpl(
+  private val startId: Any,
+  private val message: @Message String,
+  private val result: EventResult,
+) : FinishEventBuilder {
 
-  private var startId: Any? = null
   private var parentId: Any? = null
   private var time: Long? = null
-  private var message: @Message String? = null
   private var hint: @Hint String? = null
   private var description: @Description String? = null
-
-  private var result: EventResult? = null
-
-  override fun withStartId(startId: Any): FinishEventBuilderImpl =
-    apply { this.startId = startId }
 
   override fun withParentId(parentId: Any?): FinishEventBuilderImpl =
     apply { this.parentId = parentId }
@@ -30,26 +27,12 @@ class FinishEventBuilderImpl : FinishEventBuilder {
   override fun withTime(time: Long?): FinishEventBuilderImpl =
     apply { this.time = time }
 
-  override fun withMessage(message: @Message String): FinishEventBuilderImpl =
-    apply { this.message = message }
-
   override fun withHint(hint: @Hint String?): FinishEventBuilderImpl =
     apply { this.hint = hint }
 
   override fun withDescription(description: @Description String?): FinishEventBuilderImpl =
     apply { this.description = description }
 
-  override fun withResult(result: EventResult): FinishEventBuilderImpl =
-    apply { this.result = result }
-
   override fun build(): FinishEventImpl =
-    FinishEventImpl(
-      startId ?: throw IllegalStateException("The FinishEvent's 'startId' property should be defined"),
-      parentId,
-      time,
-      message ?: throw IllegalStateException("The FinishEvent's 'message' property should be defined"),
-      hint,
-      description,
-      result ?: throw IllegalStateException("The FinishEvent's 'result' property should be defined")
-    )
+    FinishEventImpl(startId, parentId, time, message, hint, description, result)
 }

@@ -1,0 +1,6 @@
+- name: lib/modules/intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module.jar
+  contentModules:
+  - name: intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module
+- name: lib/platform-buildScripts-testPlugins-testPluginWithMissingDependencies.jar
+  modules:
+  - name: intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies

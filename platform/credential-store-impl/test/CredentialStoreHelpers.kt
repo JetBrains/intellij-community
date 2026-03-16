@@ -7,7 +7,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions
 import com.intellij.util.system.OS
 import org.junit.Assume.assumeTrue
-import java.util.*
+import java.util.UUID
 
 internal fun assumeLocalMac() =
   assumeTrue("Local macOS only", OS.CURRENT == OS.macOS && !UsefulTestCase.IS_UNDER_TEAMCITY)

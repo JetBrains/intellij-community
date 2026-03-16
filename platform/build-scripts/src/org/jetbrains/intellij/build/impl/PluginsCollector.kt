@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
@@ -10,55 +12,32 @@ import org.jdom.Element
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuiltinModulesFileData
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
-import java.nio.file.Path
+import org.jetbrains.intellij.build.PluginDistribution
+import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
+import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
+import org.jetbrains.intellij.build.classPath.resolveIncludes
+import org.jetbrains.intellij.build.findFileInModuleSources
 
 suspend fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, pluginsToPublish: MutableSet<PluginLayout>, context: BuildContext) {
   val availableModulesAndPlugins = HashSet<String>(builtinModuleData.layout.size)
   builtinModuleData.layout.mapTo(availableModulesAndPlugins) { it.name }
 
   val minimal = System.getProperty("intellij.build.minimal").toBoolean()
-  val descriptorMap = collectPluginDescriptors(skipImplementationDetails = !minimal, skipBundled = true, honorCompatiblePluginsToIgnore = true, context)
-  val descriptorMapWithBundled = collectPluginDescriptors(skipImplementationDetails = true, skipBundled = false, honorCompatiblePluginsToIgnore = true, context)
+  val descriptorMap = collectPluginDescriptors(skipImplementationDetails = !minimal, skipBundled = true, honorCompatiblePluginsToIgnore = true, context = context)
+  val descriptorMapWithBundled = collectPluginDescriptors(skipImplementationDetails = true, skipBundled = false, honorCompatiblePluginsToIgnore = true, context = context)
 
-  // While collecting PluginDescriptor maps above, we may have chosen incorrect PluginLayout.
-  // Let's check that and substitute an incorrectly chosen one with a more suitable one or report an error.
-  val moreThanOneLayoutMap = context.productProperties.productLayout.pluginLayouts.groupBy { it.mainModule }.filterValues { it.size > 1 }
-  val moreThanOneLayoutSubstitutors = HashMap<PluginLayout, PluginLayout>()
-  for ((module, layouts) in moreThanOneLayoutMap) {
-    Span.current().addEvent("Module '$module' have ${layouts.size} layouts: $layouts")
-    val substitutor = layouts.firstOrNull { it.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE }
-                      ?: layouts.firstOrNull { it.bundlingRestrictions == PluginBundlingRestrictions.NONE }
-                      ?: continue
-    for (layout in layouts) {
-      if (layout != substitutor) {
-        moreThanOneLayoutSubstitutors.put(layout, substitutor)
-      }
-    }
-  }
-
-  val errors = ArrayList<List<PluginLayout>>()
   for (descriptor in descriptorMap.values) {
-    if (isPluginCompatible(descriptor, availableModulesAndPlugins, nonCheckedModules = descriptorMapWithBundled)) {
-      val layout = descriptor.pluginLayout
-      val suspicious = moreThanOneLayoutMap.values.filter { it.contains(layout) }
-      if (suspicious.isNotEmpty()) {
-        check(suspicious.size == 1) { "May have only one element: $suspicious" }
-        val substitutor = moreThanOneLayoutSubstitutors.get(layout)
-        if (substitutor != null) {
-          Span.current().addEvent("Substituting plugin layout $layout with Marketplace-ready $substitutor")
-          pluginsToPublish.add(substitutor)
-        }
-        else {
-          errors.add(suspicious.first())
-        }
+    if (isPluginCompatible(plugin = descriptor, availableModulesAndPlugins = availableModulesAndPlugins, nonCheckedModules = descriptorMapWithBundled)) {
+      val layouts = descriptor.pluginLayouts.toMutableList()
+      if (layouts.size == 2 && layouts.get(0).bundlingRestrictions != layouts.get(1).bundlingRestrictions) {
+        layouts.retainAll { it.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE }
       }
-      else {
-        pluginsToPublish.add(layout)
+      layouts.retainAll { it.bundlingRestrictions.includeInDistribution != PluginDistribution.CROSS_PLATFORM_DIST_ONLY }
+      pluginsToPublish.addAll(layouts)
+      if (layouts.size > 1) {
+        Span.current().addEvent("Module '${descriptor.mainModule}' have ${layouts.size} layouts: $layouts")
       }
     }
-  }
-  check(errors.isEmpty()) {
-    "Attempt to publish plugins which have more than one layout and none of them are Marketplace-ready: $errors"
   }
 }
 
@@ -100,14 +79,14 @@ suspend fun collectPluginDescriptors(
   skipImplementationDetails: Boolean,
   skipBundled: Boolean,
   honorCompatiblePluginsToIgnore: Boolean,
-  context: BuildContext
+  context: BuildContext,
 ): MutableMap<String, PluginDescriptor> {
   val pluginDescriptors = LinkedHashMap<String, PluginDescriptor>()
   val productLayout = context.productProperties.productLayout
-  val nonTrivialPlugins = HashMap<String, PluginLayout>(productLayout.pluginLayouts.size)
+  val nonTrivialPlugins = HashMap<String, MutableList<PluginLayout>>(productLayout.pluginLayouts.size)
 
   for (pluginLayout in productLayout.pluginLayouts) {
-    nonTrivialPlugins.putIfAbsent(pluginLayout.mainModule, pluginLayout)
+    nonTrivialPlugins.getOrPut(pluginLayout.mainModule) { mutableListOf() }.add(pluginLayout)
   }
 
   val allBundledPlugins = java.util.Set.copyOf(context.getBundledPluginModules())
@@ -136,7 +115,7 @@ suspend fun collectPluginDescriptors(
       "Module '$moduleName': '$pluginXml' is empty"
     }
 
-    if (xml.getChildTextTrim("id") == "com.intellij") {
+    if (xml.getChildTextTrim("id") == "com.intellij" || hasPluginAliasThatIndicatesThatItIsAProduct(xml)) {
       Span.current().addEvent(
         "skip module",
         Attributes.of(
@@ -179,8 +158,21 @@ suspend fun collectPluginDescriptors(
       continue
     }
 
-    val pluginLayout = nonTrivialPlugins.get(moduleName) ?: PluginLayout.pluginAuto(listOf(moduleName))
-    resolveNonXIncludeElement(original = xml, base = pluginXml, pathResolver = SourcesBasedXIncludeResolver(pluginLayout = pluginLayout, context = context))
+    val pluginLayouts = nonTrivialPlugins.get(moduleName) ?: listOf(PluginLayout.pluginAuto(listOf(moduleName)))
+    val descriptorCacheContainer = DescriptorCacheContainer()
+    resolveIncludes(
+      element = xml,
+      elementResolver = XIncludeElementResolverImpl(
+        searchPath = listOf(
+          DescriptorSearchScope(
+            modules = pluginLayouts.flatMap { it.includedModules }.mapTo(LinkedHashSet()) { it.moduleName },
+            descriptorCache = descriptorCacheContainer.forPlugin(pluginXml),
+            searchInDependencies = DescriptorSearchScope.SearchMode.PLUGIN_COLLECTOR,
+          ),
+        ),
+        context = context
+      )
+    )
 
     val id = xml.getChildTextTrim("id") ?: xml.getChildTextTrim("name")
     if (id.isNullOrEmpty()) {
@@ -224,7 +216,7 @@ suspend fun collectPluginDescriptors(
         if (contentModuleName != null && !contentModuleName.isEmpty()) {
           val jpsModuleName = contentModuleName.take(contentModuleName.lastIndexOf('/').takeIf { it != -1 } ?: contentModuleName.length)
           val fileName = contentModuleName.replace("/", ".")
-          val jpsContentModule = context.findModule(jpsModuleName)
+          val jpsContentModule = context.outputProvider.findModule(jpsModuleName)
           if (jpsContentModule != null) {
             val moduleFile = findFileInModuleSources(module = jpsContentModule, relativePath = "$fileName.xml", onlyProductionSources = true)
             if (moduleFile != null) {
@@ -270,7 +262,7 @@ suspend fun collectPluginDescriptors(
 
     val description = xml.getChildTextTrim("description")
     val pluginDescriptor = PluginDescriptor(
-      id, description, declaredModules, requiredDependencies, incompatiblePlugins, optionalDependencies, pluginLayout
+      id, description, declaredModules, requiredDependencies, incompatiblePlugins, optionalDependencies, moduleName, pluginLayouts
     )
     pluginDescriptors.put(id, pluginDescriptor)
     for (module in declaredModules) {
@@ -280,6 +272,13 @@ suspend fun collectPluginDescriptors(
   return pluginDescriptors
 }
 
+private fun hasPluginAliasThatIndicatesThatItIsAProduct(xml: Element): Boolean {
+  return xml.getChildren("module").any {
+    val alias = it.getAttributeValue("value")
+    alias == "com.intellij.marketplace" || alias == "com.jetbrains.gateway"
+  }
+}
+
 class PluginDescriptor(
   @JvmField val id: String,
   @JvmField val description: String?,
@@ -287,18 +286,6 @@ class PluginDescriptor(
   @JvmField val requiredDependencies: Set<String>,
   @JvmField val incompatiblePlugins: Set<String>,
   @JvmField val optionalDependencies: List<Pair<String, String>>,
-  @JvmField val pluginLayout: PluginLayout,
+  @JvmField val mainModule: String,
+  @JvmField val pluginLayouts: List<PluginLayout>,
 )
-
-private class SourcesBasedXIncludeResolver(
-  private val pluginLayout: PluginLayout,
-  private val context: BuildContext,
-) : XIncludePathResolver {
-  override fun resolvePath(relativePath: String, base: Path?, isOptional: Boolean, isDynamic: Boolean): Path {
-    var result: Path? = null
-    for (moduleName in pluginLayout.includedModules.asSequence().map { it.moduleName }.distinct()) {
-      result = context.findFileInModuleSources(moduleName, relativePath) ?: continue
-    }
-    return result ?: (if (base == null) Path.of(relativePath) else base.resolveSibling(relativePath))
-  }
-}

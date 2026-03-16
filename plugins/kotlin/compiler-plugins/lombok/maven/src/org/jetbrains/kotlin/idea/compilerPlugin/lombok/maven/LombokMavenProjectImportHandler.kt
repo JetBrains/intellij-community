@@ -2,20 +2,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.compilerPlugin.lombok.maven
 
+import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
-import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
 import org.jetbrains.kotlin.lombok.LombokPluginNames.CONFIG_OPTION_NAME
 import org.jetbrains.kotlin.lombok.LombokPluginNames.PLUGIN_ID
 import java.io.File
+import java.nio.file.Path
 
-class LombokMavenProjectImportHandler : AbstractMavenImportHandler() {
+class LombokMavenProjectImportHandler(project: Project) : AbstractMavenImportHandler(project) {
     override val compilerPluginId: String = PLUGIN_ID
     override val pluginName: String = MAVEN_SUBPLUGIN_NAME
     override val mavenPluginArtifactName: String = "kotlin-maven-lombok"
-    override val pluginJarFileFromIdea: String = KotlinArtifacts.lombokCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
+    override val pluginJarFileFromIdea: Path = KotlinArtifacts.lombokCompilerPluginPath
 
     override fun getOptions(
         mavenProject: MavenProject,

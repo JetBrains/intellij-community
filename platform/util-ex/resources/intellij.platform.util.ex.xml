@@ -1,0 +1,15 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.jbr"/>
+    <module name="intellij.libraries.jcip"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.lz4"/>
+    <module name="intellij.libraries.mvstore"/>
+    <module name="intellij.libraries.netty.buffer"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

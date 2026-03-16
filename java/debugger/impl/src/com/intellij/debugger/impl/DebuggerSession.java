@@ -1,8 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.*;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.DebugEnvironment;
+import com.intellij.debugger.DebuggerGlobalSearchScope;
+import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessAdapterImpl;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.JavaDebugProcess;
+import com.intellij.debugger.engine.LightOrRealThreadInfo;
+import com.intellij.debugger.engine.MethodFilter;
+import com.intellij.debugger.engine.RemoteConnectionStub;
+import com.intellij.debugger.engine.RequestHint;
+import com.intellij.debugger.engine.StackFrameContext;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
@@ -33,6 +48,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.debugger.impl.shared.CoroutineUtilsKt;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElementFinder;
@@ -48,7 +64,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.impl.CoroutineUtilsKt;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
@@ -58,7 +73,11 @@ import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.StepRequest;
 import kotlinx.coroutines.flow.Flow;
 import kotlinx.coroutines.flow.MutableStateFlow;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.event.HyperlinkEvent;
 import java.lang.ref.WeakReference;
@@ -95,12 +114,14 @@ public final class DebuggerSession implements AbstractDebuggerSession {
 
   private boolean myModifiedClassesScanRequired = false;
 
-  public boolean isSteppingThrough(ThreadReferenceProxyImpl threadProxy) {
-    return Comparing.equal(mySteppingThroughThread.get(), threadProxy);
-  }
-
   public void setSteppingThrough(ThreadReferenceProxyImpl threadProxy) {
-    mySteppingThroughThread.set(threadProxy);
+    LightOrRealThreadInfo filterThread = myDebugProcess.getRequestsManager().getFilterThread();
+    if (filterThread == null || filterThread.getRealThread() != null) {
+      mySteppingThroughThread.set(threadProxy);
+    }
+    else {
+      mySteppingThroughThread.set(null);
+    }
   }
 
   public void clearSteppingThrough() {
@@ -531,9 +552,11 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     public void paused(final SuspendContextImpl suspendContext) {
       LOG.debug("paused");
 
+      boolean isSteppingEnds = myDebugProcess.mySteppingProgressTracker.onPaused(suspendContext);
+
       ThreadReferenceProxyImpl currentThread = suspendContext.getEventThread();
 
-      if (!shouldSetAsActiveContext(suspendContext)) {
+      if (!shouldSetAsActiveContext(suspendContext, isSteppingEnds)) {
         notifyThreadsRefresh();
         ThreadReferenceProxyImpl thread = suspendContext.getEventThread();
         if (thread != null) {
@@ -551,12 +574,21 @@ public final class DebuggerSession implements AbstractDebuggerSession {
           return;
         }
         else {
-          currentThread = mySteppingThroughThread.get();
+          if (suspendContext.threadFilterWasPassed) {
+            currentThread = mySteppingThroughThread.get();
+          }
+          else {
+            return;
+          }
         }
       }
       else {
-        setSteppingThrough(currentThread);
+        if (suspendContext.threadFilterWasPassed) {
+          setSteppingThrough(currentThread);
+        }
       }
+
+      myDebugProcess.cancelSteppingBreakpoints();
 
       final StackFrameContext positionContext;
       SourcePosition position;
@@ -683,14 +715,26 @@ public final class DebuggerSession implements AbstractDebuggerSession {
       }
     }
 
-    private boolean shouldSetAsActiveContext(final SuspendContextImpl suspendContext) {
-      final ThreadReferenceProxyImpl newThread = suspendContext.getEventThread();
-      if (newThread == null || suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL || isSteppingThrough(newThread)) {
+    private boolean shouldSetAsActiveContext(final SuspendContextImpl suspendContext, boolean isSteppingEnds) {
+      if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
         return true;
+      }
+
+      if (getProcess().getSuspendManager().getPausedContexts().size() > 1) {
+        return isSteppingEnds;
+      }
+
+      final ThreadReferenceProxyImpl newThread = suspendContext.getEventThread();
+      if (newThread == null || !myDebugProcess.isSteppingInProgress()) {
+        if (suspendContext.threadFilterWasPassed) {
+          return true;
+        }
       }
       final SuspendContextImpl currentSuspendContext = getContextManager().getContext().getSuspendContext();
       if (currentSuspendContext == null || currentSuspendContext.isResumed()) {
-        return mySteppingThroughThread.get() == null;
+        if (suspendContext.threadFilterWasPassed) {
+          return mySteppingThroughThread.get() == null;
+        }
       }
       if (enableBreakpointsDuringEvaluation()) {
         final ThreadReferenceProxyImpl currentThread = currentSuspendContext.getThread();
@@ -703,10 +747,10 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     @Override
     public void resumed(SuspendContextImpl suspendContext) {
       SuspendContextImpl context = getProcess().getSuspendManager().getPausedContext();
-      ThreadReferenceProxyImpl steppingThread = getSteppingThread(suspendContext);
+      ThreadReferenceProxyImpl steppingThread = suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ? suspendContext.getThread() : null;
 
       DebuggerInvocationUtil.invokeLater(getProject(), () -> {
-        if (steppingThread != null && context != null) {
+        if (myDebugProcess.isSteppingInProgress() && context != null) {
           switchToActiveSteppingContext(steppingThread);
         }
         else if (context != null) {
@@ -784,16 +828,9 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     }
   }
 
-  private void switchToActiveSteppingContext(ThreadReferenceProxyImpl steppingThread) {
+  private void switchToActiveSteppingContext(@Nullable ThreadReferenceProxyImpl steppingThread) {
     DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(DebuggerSession.this, null, steppingThread, null);
     getContextManager().setState(debuggerContext, State.IN_STEPPING, Event.CONTEXT, getDescription(debuggerContext));
-  }
-
-  public @Nullable ThreadReferenceProxyImpl getSteppingThread(@NotNull SuspendContextImpl suspendContext) {
-    if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && isSteppingThrough(suspendContext.getThread())) {
-      return suspendContext.getThread();
-    }
-    return null;
   }
 
   private static class BreakpointReachedNotificationListener extends NotificationListener.Adapter {

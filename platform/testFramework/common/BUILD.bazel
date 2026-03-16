@@ -26,7 +26,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/bootstrap/coroutine",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/jbr",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-impl",
@@ -40,6 +40,8 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/service-container",
     "//platform/indexing-api:indexing",
+    "//platform/core-impl",
+    "//platform/projectModel-impl",
     "//platform/lang-impl",
     "//platform/platform-util-netty:ide-util-netty",
     "//platform/platform-impl:ide-impl",
@@ -48,6 +50,7 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "@lib//:jetbrains-annotations",
     "//platform/platform-impl/bootstrap/kernel",
+    "//platform/build-scripts/downloader",
   ]
 )
 ### auto-generated section `build intellij.platform.testFramework.common` end

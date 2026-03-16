@@ -2,7 +2,12 @@
 package com.intellij.find.usages.impl
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
-import com.intellij.find.usages.api.*
+import com.intellij.find.usages.api.PsiUsage
+import com.intellij.find.usages.api.ReadWriteUsage
+import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.api.Usage
+import com.intellij.find.usages.api.UsageAccess
+import com.intellij.find.usages.api.UsageSearchParameters
 import com.intellij.find.usages.symbol.SearchTargetSymbol
 import com.intellij.find.usages.symbol.SymbolSearchTargetFactory
 import com.intellij.model.Pointer

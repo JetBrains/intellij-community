@@ -5,7 +5,6 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner;
 
 import java.util.List;

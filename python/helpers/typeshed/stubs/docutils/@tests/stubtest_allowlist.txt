@@ -21,18 +21,4 @@ docutils.parsers.recommonmark_wrapper
 docutils.writers.odf_odt.pygmentsformatter # import `pygments` third-party library
 
 # `TYPE_CHECKING` variable is for internal use:
-docutils.TYPE_CHECKING
-docutils.core.TYPE_CHECKING
-docutils.examples.TYPE_CHECKING
-docutils.frontend.TYPE_CHECKING
-docutils.io.TYPE_CHECKING
-docutils.languages.TYPE_CHECKING
-docutils.nodes.TYPE_CHECKING
-docutils.parsers.TYPE_CHECKING
-docutils.parsers.rst.directives.TYPE_CHECKING
-docutils.parsers.rst.directives.misc.TYPE_CHECKING
-docutils.parsers.rst.languages.TYPE_CHECKING
-docutils.readers.TYPE_CHECKING
-docutils.utils.TYPE_CHECKING
-docutils.writers.TYPE_CHECKING
-docutils.writers._html_base.TYPE_CHECKING
+docutils.*\.TYPE_CHECKING

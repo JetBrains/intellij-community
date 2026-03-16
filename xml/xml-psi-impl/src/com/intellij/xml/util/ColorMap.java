@@ -8,9 +8,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 public final class ColorMap {
   private static final Map<String, String> ourColorNameToHexCodeMap = new HashMap<>(25);

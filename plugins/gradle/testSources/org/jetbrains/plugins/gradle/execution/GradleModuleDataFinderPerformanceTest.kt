@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.execution
 
 import com.intellij.openapi.project.modules
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import kotlinx.coroutines.runBlocking
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 
+@PerformanceUnitTest
 class GradleModuleDataFinderPerformanceTest : GradleTestCase() {
 
   @ParameterizedTest

@@ -12,7 +12,12 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.testIntegration.TestFramework;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +60,14 @@ class TestClass extends TestObject {
 
   @Override
   public RefactoringElementListener getListener(final PsiElement element) {
+    String name = getConfiguration().getPersistentData().MAIN_CLASS_NAME;
+    if (element instanceof PsiNamedElement namedElement) {
+      // do not react on unrelated refactorings
+      String elementName = namedElement.getName();
+      if (elementName == null || name == null || !name.contains(elementName)) {
+        return null;
+      }
+    }
     return RefactoringListeners.getClassOrPackageListener(element, getConfiguration().myClass);
   }
 

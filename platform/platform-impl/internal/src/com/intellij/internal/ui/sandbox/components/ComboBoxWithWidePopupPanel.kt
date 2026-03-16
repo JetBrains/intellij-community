@@ -9,7 +9,7 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
-import java.util.*
+import java.util.Vector
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 

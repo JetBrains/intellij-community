@@ -4,8 +4,10 @@ package com.intellij.openapi.externalSystem.util;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.Graphics;
+import java.awt.GridBagLayout;
+import java.awt.LayoutManager;
 
 public class PaintAwarePanel extends JPanel {
 

@@ -1,0 +1,8 @@
+JsonFile: n_structure_open_object_string_with_apostrophes.json
+  JsonObject
+    PsiElement({)('{')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(SINGLE_QUOTED_STRING)(''a'')
+      PsiErrorElement:':' expected
+        <empty list>

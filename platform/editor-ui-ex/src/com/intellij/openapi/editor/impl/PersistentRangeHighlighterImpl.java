@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * Implementation of the markup element for the editor and document.
  */
 @ApiStatus.Internal
-public final class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
+final class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
   // temporary fields, to investigate exception
   short prevStartOffset;
   short prevEndOffset;

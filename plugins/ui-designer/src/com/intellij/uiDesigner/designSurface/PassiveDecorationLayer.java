@@ -10,8 +10,11 @@ import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Graphics;
+import java.awt.Point;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;

@@ -12,9 +12,14 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":testcontainers_resources"],
-  exports = ["@lib//:testcontainers"],
+  exports = [
+    "@lib//:testcontainers",
+    "@lib//:testcontainers-junit-jupiter",
+  ],
   runtime_deps = [
     "@lib//:testcontainers",
+    "@lib//:testcontainers-junit-jupiter",
+    "//libraries/junit5",
     "//libraries/junit4",
   ]
 )

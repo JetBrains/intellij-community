@@ -16,7 +16,7 @@ interface PolySymbolDeclarationProvider {
 
   fun getEquivalentDeclarations(element: PsiElement, offsetInElement: Int, target: PolySymbol): Collection<PolySymbolDeclaration> =
     getDeclarations(element, offsetInElement)
-      .filter { it.symbol.isEquivalentTo(target) }
+      .filter { it.symbol.isEquivalentTo(target) || target.isEquivalentTo(it.symbol) }
 
   @Suppress("TestOnlyProblems")
   companion object {

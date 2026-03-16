@@ -20,8 +20,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
+import javax.swing.JList;
+import java.awt.Color;
+import java.awt.Component;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;

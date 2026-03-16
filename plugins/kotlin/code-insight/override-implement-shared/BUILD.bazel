@@ -18,6 +18,7 @@ jvm_library(
     "//platform/core-ui",
     "//java/java-impl:impl",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build kotlin.code-insight.override-implement.shared` end

@@ -17,7 +17,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 public abstract class CompositePackagingElement<S> extends PackagingElement<S> implements RenameablePackagingElement {
   private static final Logger LOG = Logger.getInstance(CompositePackagingElement.class);

@@ -7,7 +7,7 @@ import com.intellij.xdebugger.frame.XSuspendContext;
 import com.jetbrains.python.debugger.pydev.AbstractCommand;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 
 

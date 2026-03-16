@@ -1,11 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.values
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.debugger.PyDebugValue
 import org.jetbrains.annotations.ApiStatus
-import java.lang.invoke.MethodHandles
 
 /**
  *
@@ -32,7 +30,6 @@ fun completeDataFrameColumns(treeColumns: DataFrameDebugValue.ColumnNode, column
   }
 }
 
-private val LOG = Logger.getInstance(MethodHandles.lookup().lookupClass())
 private val MULTI_INDEX_DATA_REGEX = Regex("\\[(\\(.*?(?=\\)).*?)+]")
 private val MULTI_INDEX_COLUMN_GROUP_REGEX = Regex("\\((.*?(?=\\).*?))\\)")
 private val COLUMN_NAMES_REGEX = Regex("'(.*?(?<!\\\\))'|\"(.*?(?<!\\\\))\"")

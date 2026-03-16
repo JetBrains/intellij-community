@@ -4,7 +4,10 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
 
 object OptInAnnotationWrongTargetFixUtils {
     fun collectQuickFixes(

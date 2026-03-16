@@ -1,0 +1,8 @@
+// WITH_STDLIB
+// FIX: Replace with 'withIndex()'
+fun test() {
+    val arr = arrayOf(1, 2, 3)
+    for ((idx, element) in arr.withIndex()) {
+        println("arr[$idx] = $element")
+    }
+}

@@ -6,11 +6,11 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class ExternalEventLogListenerProviderExtensionTest : BasePlatformTestCase() {
-  private class TestEventLogListenerProvider : ExternalEventLogListenerProviderExtension {
-    override fun forceLoggingAlwaysEnabled(): Boolean = true
-  }
+private class TestEventLogListenerProvider : ExternalEventLogListenerProviderExtension {
+  override fun forceLoggingAlwaysEnabled(): Boolean = true
+}
 
+class ExternalEventLogListenerProviderExtensionTest : BasePlatformTestCase() {
   fun testForceCollectionWithoutRecord() {
     ExtensionTestUtil.maskExtensions(ExternalEventLogListenerProviderExtension.EP_NAME, listOf(TestEventLogListenerProvider()),
                                      testRootDisposable)

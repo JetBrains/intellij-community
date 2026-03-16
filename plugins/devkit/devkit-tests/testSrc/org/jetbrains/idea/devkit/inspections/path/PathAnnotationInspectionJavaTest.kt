@@ -300,4 +300,19 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
       }      
       """.trimIndent())
   }
+
+  fun testEmptyExpression() {
+    doTest("""
+      import com.intellij.platform.eel.annotations.LocalPath;
+      
+      import java.nio.file.Paths;
+      
+      class LocalPathTest {
+          public void testMethod() {
+              @LocalPath String localPath = "/local/path";
+              Paths.get(localPath, "a", "b",<error descr="Expression expected"> </error>);
+          }
+      }
+      """.trimIndent())
+  }
 }

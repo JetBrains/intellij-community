@@ -57,6 +57,7 @@ jvm_library(
     "//platform/vcs-log/graph:vcs-log-graph-impl_test_lib",
     "//platform/vcs-api/shared",
     "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
   ]
 )
 ### auto-generated section `build intellij.vcs.git.coverage` end

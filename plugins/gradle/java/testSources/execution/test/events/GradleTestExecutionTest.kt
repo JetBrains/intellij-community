@@ -10,6 +10,7 @@ import kotlinx.coroutines.runBlocking
 import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.events.ProgressListener
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase.Companion.assertNodeWithDeprecatedGradleWarning
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
 import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase
@@ -25,7 +26,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test grouping events of the same suite comes from different tasks`(gradleVersion: GradleVersion) {
-    testJunit5Project(gradleVersion) {
+    testJunitPlatformProject(gradleVersion) {
       writeText("src/test/java/org/example/AppTest.java", """
         |package org.example;
         |import $jUnitTestAnnotationClass;
@@ -58,6 +59,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       }
       assertBuildViewTree {
         assertNode("failed") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
           assertNode(":processResources")
           assertNode(":classes")
@@ -149,6 +151,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       }
       assertBuildViewTree {
         assertNode("successful") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
           assertNode(":processResources")
           assertNode(":classes")
@@ -238,6 +241,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       }
       assertBuildViewTree {
         assertNode("successful") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
           assertNode(":processResources")
           assertNode(":classes")
@@ -263,6 +267,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       }
       assertBuildViewTree {
         assertNode("successful") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
           assertNode(":processResources")
           assertNode(":classes")
@@ -288,6 +293,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       }
       assertBuildViewTree {
         assertNode("successful") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
           assertNode(":processResources")
           assertNode(":classes")
@@ -309,6 +315,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       assertTestViewTreeIsEmpty()
       assertBuildViewTree {
         assertNode("successful") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
           assertNode(":processResources")
           assertNode(":classes")
@@ -346,6 +353,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       }
       assertBuildViewTree {
         assertNode("successful") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
           assertNode(":processResources")
           assertNode(":classes")
@@ -372,6 +380,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       }
       assertBuildViewTree {
         assertNode("successful") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
           assertNode(":processResources")
           assertNode(":classes")
@@ -393,6 +402,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       executeTasks(":allTests --rerun-tasks", isRunAsTest = false)
       assertRunViewTree {
         assertNode("successful") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
           assertNode(":processResources")
           assertNode(":classes")
@@ -407,6 +417,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       executeTasks(":allTests", isRunAsTest = false)
       assertRunViewTree {
         assertNode("successful") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
           assertNode(":processResources")
           assertNode(":classes")
@@ -447,6 +458,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       assertTestViewTreeIsEmpty()
       assertBuildViewTree {
         assertNode("failed") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode("Unknown command-line option '--tests'")
         }
       }
@@ -482,6 +494,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       executeTasks(":beforeTest :test --tests org.example.TestCase.test", isRunAsTest = true)
       assertBuildViewTree {
         assertNode("successful") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":beforeTest")
           assertNode(":compileJava")
           assertNode(":processResources")
@@ -501,6 +514,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       executeTasks(":test --tests org.example.TestCase.test :afterTest", isRunAsTest = true)
       assertBuildViewTree {
         assertNode("successful") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
           assertNode(":processResources")
           assertNode(":classes")
@@ -520,6 +534,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       executeTasks(":beforeTest :test --tests org.example.TestCase.test :afterTest", isRunAsTest = true)
       assertBuildViewTree {
         assertNode("successful") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":beforeTest")
           assertNode(":compileJava")
           assertNode(":processResources")
@@ -617,7 +632,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
         operation.addProgressListener(ProgressListener {})
       }
     }
-    testJunit5Project(gradleVersion) {
+    testJunitPlatformProject(gradleVersion) {
       writeText("src/test/java/org/example/AppTest.java", """
         |package org.example;
         |import $jUnitTestAnnotationClass;
@@ -636,6 +651,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       }
       assertBuildViewTree {
         assertNode("successful") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
           assertNode(":processResources")
           assertNode(":classes")
@@ -659,7 +675,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
   @AllGradleVersionsSource
   fun `test Gradle test distribution nodes are hidden by default`(gradleVersion: GradleVersion) {
     assumeThatGradleIsAtLeast(gradleVersion, "7.5")
-    testJunit5Project(gradleVersion) {
+    testJunitPlatformProject(gradleVersion) {
       // Project configuration without an existing directory is not allowed
       runBlocking {
         edtWriteAction {

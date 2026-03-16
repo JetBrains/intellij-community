@@ -9,10 +9,8 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 internal object DecompilerPresetChangedCollector : CounterUsagesCollector() {
   private val GROUP: EventLogGroup = EventLogGroup("java.decompiler", 1)
 
-  private val DECOMPILER_PRESET_CHANGED: EventId1<DecompilerPreset> = GROUP.registerEvent(
-    eventId = "decompiler.preset.changed",
-    eventField1 = EventFields.Enum("preset", DecompilerPreset::class.java),
-  )
+  private val DECOMPILER_PRESET_CHANGED: EventId1<DecompilerPreset> =
+    GROUP.registerEvent("decompiler.preset.changed", EventFields.Enum("preset", DecompilerPreset::class.java))
 
   override fun getGroup(): EventLogGroup = GROUP
 

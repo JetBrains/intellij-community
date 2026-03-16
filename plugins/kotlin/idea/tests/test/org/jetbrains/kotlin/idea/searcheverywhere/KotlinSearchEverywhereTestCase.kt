@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.searcheverywhere
 
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFeature
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoActionModel
@@ -22,6 +23,7 @@ abstract class KotlinSearchEverywhereTestCase : LightJavaCodeInsightFixtureTestC
     }
 
     protected fun findByPattern(pattern: String, action: (List<Any>) -> Unit) {
+        SearchEverywhereFeature.allRegistryKeys.forEach { setRegistryPropertyForTest(it, "false") }
         val disposable = Disposer.newDisposable("ui disposer")
         try {
             val event = ChooseByNameTest.createEvent(project)
@@ -47,6 +49,7 @@ abstract class KotlinSearchEverywhereTestCase : LightJavaCodeInsightFixtureTestC
     }
 
     protected fun configureAndCheckActions(text: String, expected: List<String>, pattern: String) {
+        SearchEverywhereFeature.allRegistryKeys.forEach { setRegistryPropertyForTest(it, "false") }
         myFixture.configureByText("TestFile.kt", text)
         findByPattern(pattern) { elements ->
             val actions = elements.filterIsInstance<GotoActionModel.MatchedValue>()

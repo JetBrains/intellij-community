@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
 import com.intellij.util.SmartList
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.ReflectionTypes
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.VariableAccessorDescriptor
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
+@K1Deprecation
 object CreatePropertyDelegateAccessorsActionFactory : CreateCallableMemberFromUsageFactory<KtExpression>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtExpression? {
         return diagnostic.psiElement as? KtExpression

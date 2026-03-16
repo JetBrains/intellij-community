@@ -3,8 +3,11 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.text.StringUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 /**
  * @author Alexander Lobas

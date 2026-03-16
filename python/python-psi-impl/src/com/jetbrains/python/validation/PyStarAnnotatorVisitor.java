@@ -21,7 +21,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAnnotation;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyStarExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.PyTypeParameter;
+import com.jetbrains.python.psi.PyYieldExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

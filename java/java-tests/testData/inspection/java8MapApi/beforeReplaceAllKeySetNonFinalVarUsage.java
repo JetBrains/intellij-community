@@ -1,4 +1,4 @@
-// "Replace with 'replaceAll' method call" "false"
+// "Replace with 'replaceAll()' call" "false"
 
 public class Main {
   public void test() {

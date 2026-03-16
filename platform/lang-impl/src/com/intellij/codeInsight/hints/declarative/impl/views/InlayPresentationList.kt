@@ -92,9 +92,8 @@ class InlayPresentationList(
   }
 
   override fun findEntryAtPoint(pointInsideInlay: Point, textMetricsStorage: InlayTextMetricsStorage): CapturedPointInfo {
-    val entry = forSubViewAtPoint(pointInsideInlay, textMetricsStorage) { entry, _ ->
-      entry
-    }
+    val shifted = Point(pointInsideInlay.x - (marginAndPadding.first + marginAndPadding.second), pointInsideInlay.y);
+    val entry = forSubViewAtPoint(shifted, textMetricsStorage) { entry, _ -> entry }
     return CapturedPointInfo(this, entry)
   }
 

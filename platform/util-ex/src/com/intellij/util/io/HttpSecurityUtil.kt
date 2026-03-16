@@ -3,7 +3,8 @@ package com.intellij.util.io
 
 import java.io.ByteArrayOutputStream
 import java.nio.CharBuffer
-import java.util.*
+import java.util.Arrays
+import java.util.Base64
 
 object HttpSecurityUtil {
   const val AUTHORIZATION_HEADER_NAME: String = "Authorization"

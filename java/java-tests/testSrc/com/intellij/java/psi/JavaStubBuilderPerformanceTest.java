@@ -8,6 +8,7 @@ import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.source.JavaLightStubBuilder;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,6 +17,7 @@ import java.io.IOException;
 
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_LATEST;
 
+@PerformanceUnitTest
 public class JavaStubBuilderPerformanceTest extends LightIdeaTestCase {
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {

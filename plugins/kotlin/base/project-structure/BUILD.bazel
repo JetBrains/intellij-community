@@ -114,6 +114,7 @@ jvm_library(
     "//libraries/caffeine",
     "//platform/util/jdom",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "@lib//:junit4",
     "@lib//:kotlinc-analysis-api-impl-base",
     "//libraries/fastutil",

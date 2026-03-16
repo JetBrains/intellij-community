@@ -8,7 +8,7 @@ import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Roman.Chernyatchik

@@ -3,8 +3,13 @@ package com.intellij.ide.gdpr
 
 import com.intellij.ide.gdpr.localConsents.LocalConsentOptions
 import com.intellij.testFramework.junit5.TestApplication
-import kotlin.test.*
 import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 /**
  * Tests for LocalConsent functionality

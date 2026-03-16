@@ -9,7 +9,12 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.merge.*;
+import com.intellij.openapi.vcs.merge.MergeData;
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
+import com.intellij.openapi.vcs.merge.MergeProvider;
+import com.intellij.openapi.vcs.merge.MergeProvider2;
+import com.intellij.openapi.vcs.merge.MergeSession;
+import com.intellij.openapi.vcs.merge.MergeSessionEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -29,9 +34,21 @@ import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static git4idea.merge.GitMergeUtil.*;
+import static git4idea.merge.GitMergeUtil.ORIGINAL_REVISION_NUM;
+import static git4idea.merge.GitMergeUtil.THEIRS_REVISION_NUM;
+import static git4idea.merge.GitMergeUtil.YOURS_REVISION_NUM;
+import static git4idea.merge.GitMergeUtil.acceptOneVersion;
+import static git4idea.merge.GitMergeUtil.isReverseRoot;
+import static git4idea.merge.GitMergeUtil.loadMergeData;
+import static git4idea.merge.GitMergeUtil.markConflictResolved;
 
 /**
  * Merge-changes provider for Git, used by IDEA internal 3-way merge tool
@@ -207,7 +224,7 @@ public class GitMergeProvider implements MergeProvider2 {
             String path = VcsFileUtil.relativePath(root, f);
             Conflict c = cs.get(path);
             if (c == null) {
-              LOG.error(String.format("The conflict not found for file: %s(%s)%nFull ls-files output: %n%s%nAll files: %n%s",
+              LOG.warn(String.format("The conflict not found for file: %s(%s)%nFull ls-files output: %n%s%nAll files: %n%s",
                                       f.getPath(), path, output, files));
               continue;
             }
@@ -290,7 +307,7 @@ public class GitMergeProvider implements MergeProvider2 {
       for (VirtualFile file: files) {
         GitConflict c = myConflicts.get(file);
         if (c == null) {
-          LOG.error("Conflict was not loaded for the file: " + file.getPath());
+          LOG.warn("Conflict was not loaded for the file: " + file.getPath());
           continue;
         }
 

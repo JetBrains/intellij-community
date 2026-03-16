@@ -12,7 +12,7 @@ public class MethodOnlyUsedFromInnerClassInspectionTest extends LightJavaInspect
   public void testSimple() {
     doTest("""
              class X {
-               private void /*Method 'foo()'is only used from inner class 'Inner'*/foo/**/() {}
+               private void /*Method 'foo()' is only used from inner class 'Inner'*/foo/**/() {}
               \s
                class Inner {
                  void test() {foo();}
@@ -23,7 +23,7 @@ public class MethodOnlyUsedFromInnerClassInspectionTest extends LightJavaInspect
   public void testAnonymous() {
     doTest("""
              class X {
-               private int /*Method 'foo()'is only used from an anonymous class derived from 'Inner'*/foo/**/() {return 5;}
+               private int /*Method 'foo()' is only used from an anonymous class derived from 'Inner'*/foo/**/() {return 5;}
               \s
                void test() {
                  new Inner(1) {
@@ -53,7 +53,7 @@ public class MethodOnlyUsedFromInnerClassInspectionTest extends LightJavaInspect
   public void testLocalClass() {
     doTest("""
              class X {
-               private void /*Method 'foo()'is only used from local class 'Local'*/foo/**/() {}
+               private void /*Method 'foo()' is only used from local class 'Local'*/foo/**/() {}
               \s
                 void x() {
                  class Local {

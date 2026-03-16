@@ -1,10 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find;
 
-import com.intellij.find.editorHeaderActions.*;
+import com.intellij.find.editorHeaderActions.AddOccurrenceAction;
+import com.intellij.find.editorHeaderActions.NextOccurrenceAction;
+import com.intellij.find.editorHeaderActions.PrevOccurrenceAction;
+import com.intellij.find.editorHeaderActions.RemoveOccurrenceAction;
+import com.intellij.find.editorHeaderActions.SelectAllAction;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.HeadlessDataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;

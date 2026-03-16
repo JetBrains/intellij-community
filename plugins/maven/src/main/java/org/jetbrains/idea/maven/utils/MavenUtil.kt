@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.CompositeParameterTargetedValue
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -48,6 +49,7 @@ import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
@@ -69,7 +71,6 @@ import org.jdom.JDOMException
 import org.jdom.Namespace
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.dom.MavenDomUtil
@@ -86,6 +87,7 @@ import org.jetbrains.idea.maven.utils.MavenArtifactUtil.readPluginInfo
 import org.jetbrains.idea.maven.utils.MavenEelUtil.resolveLocalRepositoryBlocking
 import org.jetbrains.idea.maven.utils.MavenEelUtil.resolveM2Dir
 import org.jetbrains.idea.maven.utils.MavenEelUtil.resolveUserSettingsPathBlocking
+import org.jetbrains.idea.maven.utils.MavenUtil.path
 import org.xml.sax.SAXException
 import org.xml.sax.SAXParseException
 import org.xml.sax.helpers.DefaultHandler
@@ -131,7 +133,6 @@ object MavenUtil {
     "http://maven.apache.org/EXTENSIONS/1.1.0",
     "http://maven.apache.org/EXTENSIONS/1.2.0"
   )
-  private val runnables: MutableSet<Runnable?> = Collections.newSetFromMap<Runnable?>(IdentityHashMap<Runnable?, Boolean?>())
   const val INTELLIJ_PLUGIN_ID: String = "org.jetbrains.idea.maven"
 
   @ApiStatus.Experimental
@@ -210,58 +211,8 @@ object MavenUtil {
   }
 
   fun invokeLater(p: Project, state: ModalityState, r: Runnable) {
-    startTestRunnable(r)
-    ApplicationManager.getApplication().invokeLater(Runnable {
-      runAndFinishTestRunnable(r)
-    }, state, p.getDisposed())
+    ApplicationManager.getApplication().invokeLater(r, state, p.getDisposed())
   }
-
-
-  private fun startTestRunnable(r: Runnable?) {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) return
-    synchronized(runnables) {
-      runnables.add(r)
-    }
-  }
-
-  private fun runAndFinishTestRunnable(r: Runnable) {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      r.run()
-      return
-    }
-
-    try {
-      r.run()
-    }
-    finally {
-      synchronized(runnables) {
-        runnables.remove(r)
-      }
-    }
-  }
-
-  @TestOnly
-  fun noUncompletedRunnables(): Boolean {
-    synchronized(runnables) {
-      return runnables.isEmpty()
-    }
-  }
-
-  fun cleanAllRunnables() {
-    synchronized(runnables) {
-      runnables.clear()
-    }
-  }
-
-  @get:TestOnly
-  val uncompletedRunnables: MutableList<Runnable?>
-    get() {
-      val result: MutableList<Runnable?>
-      synchronized(runnables) {
-        result = ArrayList<Runnable?>(runnables)
-      }
-      return result
-    }
 
   @JvmStatic
   fun invokeAndWait(p: Project, r: Runnable) {
@@ -269,34 +220,31 @@ object MavenUtil {
   }
 
   fun invokeAndWait(p: Project?, state: ModalityState, r: Runnable) {
-    startTestRunnable(r)
-    ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(Runnable { runAndFinishTestRunnable(r) }, p), state)
+    ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(r, p), state)
   }
 
 
   @JvmStatic
   fun invokeAndWaitWriteAction(p: Project, r: Runnable) {
-    startTestRunnable(r)
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      runAndFinishTestRunnable(r)
+      r.run()
     }
     else if (ApplicationManager.getApplication().isDispatchThread()) {
       ApplicationManager.getApplication().runWriteAction(r)
     }
     else {
       ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(
-        Runnable { ApplicationManager.getApplication().runWriteAction(Runnable { runAndFinishTestRunnable(r) }) }, p),
+        Runnable { ApplicationManager.getApplication().runWriteAction(r) }, p),
                                                         ModalityState.defaultModalityState())
     }
   }
 
   fun runDumbAware(project: Project, r: Runnable) {
-    startTestRunnable(r)
     if (isDumbAware(r)) {
-      runAndFinishTestRunnable(r)
+      r.run()
     }
     else {
-      DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(Runnable { runAndFinishTestRunnable(r) }, project))
+      DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(r, project))
     }
   }
 
@@ -310,8 +258,7 @@ object MavenUtil {
       runDumbAware(project, runnable)
     }
     else {
-      startTestRunnable(runnable)
-      StartupManager.getInstance(project).runAfterOpened(Runnable { runAndFinishTestRunnable(runnable) })
+      StartupManager.getInstance(project).runAfterOpened(runnable)
     }
   }
 
@@ -347,7 +294,8 @@ object MavenUtil {
   }
 
   fun groupByBasedir(projects: Collection<MavenProject>, tree: MavenProjectsTree): MultiMap<String, MavenProject> {
-    return ContainerUtil.groupBy<String, MavenProject>(projects, NullableFunction { getBaseDir(tree.findRootProject(it).directoryFile).toString() })
+    return ContainerUtil.groupBy<String, MavenProject>(projects,
+                                                       NullableFunction { getBaseDir(tree.findRootProject(it).directoryFile).toString() })
   }
 
 
@@ -370,7 +318,15 @@ object MavenUtil {
       }
       try {
         child.inputStream.use {
-          val parser = XMLInputFactory.newFactory().createXMLStreamReader(it)
+          val factory = XMLInputFactory.newFactory()
+          try {
+            factory.setProperty("http://apache.org/xml/features/disallow-doctype-decl", true)
+            factory.setProperty("http://xml.org/sax/features/external-general-entities", false)
+            factory.setProperty("http://xml.org/sax/features/external-parameter-entities", false)
+          }
+          catch (_: IllegalArgumentException) {
+          }
+          val parser = factory.createXMLStreamReader(it)
           if (parser.nextTag() != XMLStreamReader.START_ELEMENT
               || parser.getLocalName() != "project") {
             if (MavenLog.LOG.isTraceEnabled) {
@@ -586,19 +542,9 @@ object MavenUtil {
     val manager = FileTemplateManager.getInstance(project)
     val fileTemplate = manager.getJ2eeTemplate(templateName)
     val allProperties = manager.getDefaultProperties()
-    if (!interactive) {
-      allProperties.putAll(properties)
-    }
+    allProperties.putAll(properties)
     allProperties.putAll(conditions!!)
     var text = fileTemplate.getText(allProperties)
-    val pattern = Pattern.compile("\\$\\{(.*?)}")
-    val matcher = pattern.matcher(text)
-    val builder = StringBuilder()
-    while (matcher.find()) {
-      matcher.appendReplacement(builder, "\\$" + StringUtil.toUpperCase(matcher.group(1)) + "\\$")
-    }
-    matcher.appendTail(builder)
-    text = builder.toString()
 
     val template = TemplateManager.getInstance(project).createTemplate("", "", text) as TemplateImpl
     for (i in 0..<template.getSegmentsCount()) {
@@ -1172,10 +1118,12 @@ object MavenUtil {
   }
 
   /**
-   * @param path any path pointing to an environment where the repository should be searched.
+   * @param descriptor EelDescriptor pointing to an environment where the repository should be searched.
    */
   @JvmStatic
-  fun resolveDefaultLocalRepository(path: Path?): Path {
+  @ApiStatus.Obsolete
+  //do not use it, used only in Path macros contributors, waits for IJPL-234144 to be rewrited
+  fun resolveDefaultLocalRepositoryForJpsMacros(descriptor: EelDescriptor?): Path {
     val mavenRepoLocal = System.getProperty(MAVEN_REPO_LOCAL)
 
     if (mavenRepoLocal != null) {
@@ -1189,12 +1137,16 @@ object MavenUtil {
       return Path.of(forcedM2Home)
     }
 
-    val api = if (path == null || path.getEelDescriptor() is LocalEelDescriptor) localEel else path.getEelApiBlocking()
+    val api = if (descriptor == null || descriptor is LocalEelDescriptor) localEel else descriptor.toEelApiBlocking()
     val m2DirPath = api.resolveM2Dir()
     val settingsPath: Path = m2DirPath.resolve(SETTINGS_XML)
     val defaultRepo = m2DirPath.resolve(REPOSITORY_DIR)
 
-    val repoPath = getRepositoryFromSettings(settingsPath) ?: return defaultRepo
+    val repoPath = getRepositoryFromSettings(settingsPath, Properties())
+    if (repoPath == null ||
+        repoPath.contains($$"${")) { //no property resolution for JPS projects
+      return defaultRepo
+    }
     return api.fs.getPath(repoPath).asNioPath()
   }
 
@@ -1281,16 +1233,16 @@ object MavenUtil {
     return path
   }
 
-  internal fun doResolveLocalRepository(userSettingsFile: Path?, globalSettingsFile: Path?): Path? {
+  internal suspend fun doResolveLocalRepository(userSettingsFile: Path?, globalSettingsFile: Path?, properties: Properties?): Path? {
     if (userSettingsFile != null) {
-      val fromUserSettings: String? = getRepositoryFromSettings(userSettingsFile)
+      val fromUserSettings: String? = getRepositoryFromSettings(userSettingsFile, properties)
       if (!StringUtil.isEmpty(fromUserSettings)) {
         return Path.of(fromUserSettings)
       }
     }
 
     if (globalSettingsFile != null) {
-      val fromGlobalSettings: String? = getRepositoryFromSettings(globalSettingsFile)
+      val fromGlobalSettings: String? = getRepositoryFromSettings(globalSettingsFile, properties)
       if (!StringUtil.isEmpty(fromGlobalSettings)) {
         return Path.of(fromGlobalSettings)
       }
@@ -1300,18 +1252,34 @@ object MavenUtil {
   }
 
   @JvmStatic
-  fun getRepositoryFromSettings(file: Path): String? {
-    try {
-      val repository: Element? = getRepositoryElement(file)
+  fun getRepositoryFromSettings(file: Path, props: Properties?): String? {
+    val propertiesToResolve = props ?: MavenServerUtil.collectSystemProperties()
 
-      if (repository == null) {
-        return null
-      }
-      val text = repository.getText()
-      if (isEmptyOrSpaces(text)) {
-        return null
-      }
-      return expandProperties(text!!.trim { it <= ' ' })
+    val repository = try {
+      getRepositoryElement(file)
+    }
+    catch (e: IOException) {
+      MavenLog.LOG.debug("Cannot read file $file", e)
+      return null
+    }catch (e: JDOMException) {
+      MavenLog.LOG.warn("Cannot read file $file", e)
+      return null
+    }
+
+    if (repository == null) {
+      return null
+    }
+    val text = repository.getText()
+    if (isEmptyOrSpaces(text)) {
+      return null
+    }
+    return expandProperties(text!!.trim { it <= ' ' }, propertiesToResolve)
+  }
+
+  suspend fun getRepositoryFromSettings(file: Path): String? {
+    try {
+      val api = file.getEelDescriptor().toEelApi()
+      return getRepositoryFromSettings(file, MavenEelUtil.getMavenProperties(api))
     }
     catch (e: Exception) {
       return null
@@ -1695,7 +1663,8 @@ object MavenUtil {
   }
 
   @JvmStatic
-  fun getIdeaVersionToPassToMavenProcess(): String = ApplicationInfoImpl.getShadowInstance().getMajorVersion() + "." + ApplicationInfoImpl.getShadowInstance().getMinorVersion()
+  fun getIdeaVersionToPassToMavenProcess(): String =
+    ApplicationInfoImpl.getShadowInstance().getMajorVersion() + "." + ApplicationInfoImpl.getShadowInstance().getMinorVersion()
 
   @JvmStatic
   fun isPomFileName(fileName: String): Boolean {
@@ -1781,7 +1750,9 @@ object MavenUtil {
     }
 
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-    if (mavenProjectsManager.findProject(file) != null) return true
+    if (mavenProjectsManager.isMavenizedProject) {
+      if (mavenProjectsManager.findProject(file) != null) return true
+    }
 
     return ReadAction.compute<Boolean, RuntimeException>(ThrowableComputable {
       if (project.isDisposed()) return@ThrowableComputable false
@@ -1944,7 +1915,7 @@ object MavenUtil {
   }
 
   fun suggestProjectSdk(project: Project): Sdk? {
-    val projectJdkTable = ProjectJdkTable.getInstance()
+    val projectJdkTable = ProjectJdkTable.getInstance(project)
     val sdkType = ExternalSystemJdkUtil.getJavaSdkType()
     return projectJdkTable.getSdksOfType(sdkType)
       .filterNotNull()
@@ -1974,14 +1945,6 @@ object MavenUtil {
   fun shouldKeepPreviousResolutionResults(readingProblems: Collection<MavenProjectProblem>): Boolean {
     return !shouldResetDependenciesAndFolders(readingProblems)
   }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("use MavenUtil.resolveSuperPomFile")
-  fun getEffectiveSuperPom(project: Project, workingDir: String): VirtualFile? {
-    val distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDir)
-    return resolveSuperPomFile(distribution.mavenHome, MavenConstants.SUPER_POM_4_0_XML)
-  }
-
 
   @JvmStatic
   @Deprecated("use MavenUtil.resolveSuperPomFile")
@@ -2028,9 +1991,7 @@ object MavenUtil {
   }
 
   @JvmStatic
-  fun isRunningFromSources(): Boolean {
-    return path != null && (path.endsWith("production") || path.parent.endsWith("production"))
-  }
+  fun isRunningFromSources(): Boolean = PluginManagerCore.isRunningFromSources()
 
   @RequiresBackgroundThread
   fun isMaven410(xmlns: String?, schemaLocation: String?): Boolean {

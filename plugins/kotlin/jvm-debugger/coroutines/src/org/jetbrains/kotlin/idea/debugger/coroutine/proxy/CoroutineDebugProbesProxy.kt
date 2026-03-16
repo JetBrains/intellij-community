@@ -6,15 +6,17 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsImpl.logError
 import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
 import com.sun.jdi.ArrayReference
+import com.sun.jdi.IntegerValue
+import com.sun.jdi.ObjectReference
 import com.sun.jdi.StringReference
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.callMethodFromHelper
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoCache
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.executionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.CoroutineInfo
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.executionContext
 
 class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
     /**
@@ -37,6 +39,15 @@ class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
             coroutineInfoCache.fail()
         }
         return coroutineInfoCache
+    }
+
+    @Synchronized
+    fun dumpCoroutinesWithHierarchy(): CoroutineInfoCache {
+        val cache = dumpCoroutines()
+        val infos = cache.cache
+        if (cache.cache.isEmpty()) return cache
+        fetchAndSetJobNamesAndJobUniqueIds(infos)
+        return cache
     }
 
     /**
@@ -63,6 +74,28 @@ class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
         for (i in 0 until jobsWithParents.size step 2) {
             infos[i / 2].job = jobsWithParents[i]
             infos[i / 2].parentJob = jobsWithParents[i + 1]
+        }
+        return true
+    }
+
+    @ApiStatus.Internal
+    fun fetchAndSetJobNamesAndJobUniqueIds(infos: List<CoroutineInfoData>): Boolean {
+        val executionContext = suspendContext.executionContext() ?: return false
+        val debugCoroutineInfos = infos.map { it.debugCoroutineInfoRef }
+        val array = callMethodFromHelper(CoroutinesDebugHelper::class.java, executionContext, "getCoroutineJobHierarchyInfo", debugCoroutineInfos)
+        if (array == null) return false
+        val jobNames = ((array as ArrayReference).values[0] as ArrayReference).values.map { (it as StringReference).value() }
+        val jobRefs = (array.values[1] as ArrayReference).values.map { (it as ObjectReference) }
+        val parentIndexes = (array.values[2] as ArrayReference).values.map { (it as IntegerValue).value() }
+        for ((i, info) in infos.withIndex()) {
+            info.job = jobNames[i]
+            info.jobId = jobRefs[i].uniqueID()
+            val parentIndex = parentIndexes[i]
+            if (parentIndex == -1) {
+                info.parentJobId = null
+            } else {
+                info.parentJobId = jobRefs[parentIndex].uniqueID()
+            }
         }
         return true
     }

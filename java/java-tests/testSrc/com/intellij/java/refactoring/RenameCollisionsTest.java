@@ -10,6 +10,7 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -19,7 +20,7 @@ import java.util.HashMap;
 /**
  * @author sashache
  */
-public class RenameCollisionsTest extends LightRefactoringTestCase {
+public class RenameCollisionsTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/refactoring/renameCollisions/";
 
   @NotNull

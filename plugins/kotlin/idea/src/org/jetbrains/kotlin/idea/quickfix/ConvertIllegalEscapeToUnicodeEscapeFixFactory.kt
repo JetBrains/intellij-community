@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtElement
 
 internal object ConvertIllegalEscapeToUnicodeEscapeFixFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {

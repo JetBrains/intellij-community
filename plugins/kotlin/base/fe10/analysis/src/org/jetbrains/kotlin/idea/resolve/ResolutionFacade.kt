@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.resolve
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.ResolverForProject
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValueFactory
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 interface ResolutionFacade {
     val project: Project
 
@@ -51,13 +53,17 @@ interface ResolutionFacade {
     fun getResolverForProject(): ResolverForProject<out ModuleInfo>
 }
 
+@K1Deprecation
 @FrontendInternals
 inline fun <reified T : Any> ResolutionFacade.frontendService(): T = this.getFrontendService(T::class.java)
 
+@K1Deprecation
 inline fun <reified T : Any> ResolutionFacade.ideService(): T = this.getIdeService(T::class.java)
 
+@K1Deprecation
 val ResolutionFacade.languageVersionSettings: LanguageVersionSettings
     get() = @OptIn(FrontendInternals::class) frontendService()
 
+@K1Deprecation
 val ResolutionFacade.dataFlowValueFactory: DataFlowValueFactory
     get() = @OptIn(FrontendInternals::class) frontendService()

@@ -21,14 +21,23 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.NlsContexts.*;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsContexts.HintText;
+import com.intellij.openapi.util.NlsContexts.ListItem;
+import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.usages.*;
+import com.intellij.usages.TextChunk;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsagePresentation;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.codeInsight.intentions.PyAnnotateTypesIntention;
@@ -43,8 +52,9 @@ import com.jetbrains.python.ui.PyUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
+import java.awt.Font;
 import java.util.List;
 
 public final class PythonUiServiceImpl extends PythonUiService {

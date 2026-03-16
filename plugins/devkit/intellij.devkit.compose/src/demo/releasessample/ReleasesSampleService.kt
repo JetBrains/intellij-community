@@ -3,8 +3,17 @@ package com.intellij.devkit.compose.demo.releasessample
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.util.concurrency.AppExecutorUtil
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 @Service(Service.Level.PROJECT)
 internal class ReleasesSampleService : CoroutineScope, Disposable {

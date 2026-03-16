@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from collections.abc import Callable, Iterable
 
 from networkx.algorithms.flow import edmonds_karp
@@ -21,36 +20,43 @@ def local_node_connectivity(
     G: Graph[_Node],
     s: _Node,
     t: _Node,
-    flow_func: Callable[..., Incomplete] | None = None,
+    flow_func: Callable[[DiGraph[_Node], _Node, _Node], DiGraph[_Node]] | None = None,
     auxiliary: DiGraph[_Node] | None = None,
     residual: DiGraph[_Node] | None = None,
     cutoff: float | None = None,
-): ...
+) -> float: ...
 @_dispatchable
 def node_connectivity(
-    G: Graph[_Node], s: _Node | None = None, t: _Node | None = None, flow_func: Callable[..., Incomplete] | None = None
-): ...
+    G: Graph[_Node],
+    s: _Node | None = None,
+    t: _Node | None = None,
+    flow_func: Callable[[DiGraph[_Node], _Node, _Node], DiGraph[_Node]] | None = None,
+) -> float: ...
 @_dispatchable
-def average_node_connectivity(G: Graph[_Node], flow_func: Callable[..., Incomplete] | None = None) -> float: ...
+def average_node_connectivity(
+    G: Graph[_Node], flow_func: Callable[[DiGraph[_Node], _Node, _Node], DiGraph[_Node]] | None = None
+) -> float: ...
 @_dispatchable
 def all_pairs_node_connectivity(
-    G: Graph[_Node], nbunch: Iterable[Incomplete] | None = None, flow_func: Callable[..., Incomplete] | None = None
-) -> dict[Incomplete, dict[Incomplete, Incomplete]]: ...
+    G: Graph[_Node],
+    nbunch: Iterable[tuple[_Node, _Node]] | None = None,
+    flow_func: Callable[[DiGraph[_Node], _Node, _Node], DiGraph[_Node]] | None = None,
+) -> dict[_Node, dict[_Node, float]]: ...
 @_dispatchable
 def local_edge_connectivity(
     G: Graph[_Node],
     s: _Node,
     t: _Node,
-    flow_func: Callable[..., Incomplete] | None = None,
+    flow_func: Callable[[DiGraph[_Node], _Node, _Node], DiGraph[_Node]] | None = None,
     auxiliary: DiGraph[_Node] | None = None,
     residual: DiGraph[_Node] | None = None,
     cutoff: float | None = None,
-): ...
+) -> float: ...
 @_dispatchable
 def edge_connectivity(
     G: Graph[_Node],
     s: _Node | None = None,
     t: _Node | None = None,
-    flow_func: Callable[..., Incomplete] | None = None,
+    flow_func: Callable[[DiGraph[_Node], _Node, _Node], DiGraph[_Node]] | None = None,
     cutoff: float | None = None,
-): ...
+) -> float: ...

@@ -3,7 +3,9 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.psi.PsiMethod
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 object SuperMethodsSearcher {
     fun findDeepestSuperMethods(method: PsiMethod): Collection<PsiMethod> =
         method.findDeepestSuperMethods().asList()

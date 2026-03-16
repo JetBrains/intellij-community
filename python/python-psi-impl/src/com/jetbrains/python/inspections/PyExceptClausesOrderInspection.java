@@ -21,7 +21,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.PyMoveExceptQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExceptPart;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTryExceptStatement;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +35,9 @@ import java.util.Set;
 public final class PyExceptClausesOrderInspection extends PyInspection {
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -49,12 +55,13 @@ public final class PyExceptClausesOrderInspection extends PyInspection {
         for (PyExceptPart exceptPart : exceptParts) {
           PyExpression exceptClass = exceptPart.getExceptClass();
           if (exceptClass instanceof PyReferenceExpression) {
-            PsiElement element = ((PyReferenceExpression) exceptClass).followAssignmentsChain(getResolveContext()).getElement();
+            PsiElement element = ((PyReferenceExpression)exceptClass).followAssignmentsChain(getResolveContext()).getElement();
             if (element instanceof PyClass pyClass) {
               if (exceptClasses.contains(pyClass)) {
                 registerProblem(exceptClass, PyPsiBundle.message("INSP.bad.except.exception.class.already.caught", pyClass.getName()));
-              } else {
-                for (PyClass superClass: pyClass.getSuperClasses(null)) {
+              }
+              else {
+                for (PyClass superClass : pyClass.getSuperClasses(null)) {
                   if (exceptClasses.contains(superClass)) {
                     registerProblem(exceptClass, PyPsiBundle
                                       .message("INSP.bad.except.superclass.of.exception.class.already.caught", superClass.getName(), pyClass.getName()),

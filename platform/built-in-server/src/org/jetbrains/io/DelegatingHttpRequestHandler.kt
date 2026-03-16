@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.isWriteFromBrowserWithoutOrigin
@@ -16,9 +17,11 @@ import java.lang.ref.WeakReference
 private val PREV_HANDLER = AttributeKey.valueOf<WeakReference<HttpRequestHandler>>("DelegatingHttpRequestHandler.handler")
 
 @ChannelHandler.Sharable
-internal class DelegatingHttpRequestHandler() : SimpleChannelInboundHandlerAdapter<FullHttpRequest>() {
+internal class DelegatingHttpRequestHandler : SimpleChannelInboundHandlerAdapter<FullHttpRequest>() {
   override fun messageReceived(context: ChannelHandlerContext, request: FullHttpRequest) {
     logger<BuiltInServer>().debug { "\n\nIN HTTP: $request\n\n" }
+
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred) return
 
     if (!process(context, request, QueryStringDecoder(request.uri()))) {
       createStatusResponse(HttpResponseStatus.NOT_FOUND, request).send(context.channel(), request)

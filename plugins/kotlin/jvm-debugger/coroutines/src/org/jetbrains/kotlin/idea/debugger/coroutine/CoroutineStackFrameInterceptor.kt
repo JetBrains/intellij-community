@@ -2,7 +2,12 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.AsyncStacksUtils
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.MethodInvokeUtils
+import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.SuspendManagerUtil
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.impl.HelperClassNotAvailableException
@@ -14,8 +19,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
-import com.sun.jdi.*
+import com.sun.jdi.ArrayReference
+import com.sun.jdi.Location
+import com.sun.jdi.LongValue
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.Value
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
@@ -28,7 +36,12 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.CoroutineStackF
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugMetadata
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImplCoroutineOwner
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.CoroutineFrameBuilder
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.completionVariableValue
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.extractContinuation
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.findDebugProbesImplClass
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.isInvokeSuspend
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.threadAndContextSupportsEvaluation
 
 
 private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
@@ -47,7 +60,10 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
             return emptyList()
         }
 
-        val suspendContext = SuspendManagerUtil.getContextForEvaluation(debugProcess.suspendManager) ?: return null
+        val suspendContext =
+            SuspendManagerUtil.findContextByThread(debugProcess.suspendManager, frame.threadProxy())
+                ?: SuspendManagerUtil.getContextForEvaluation(debugProcess.suspendManager)
+                ?: return null
 
         val isSuspendFrame = extractContinuation(frame) != null
 
@@ -61,14 +77,7 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         val stackFrame = CoroutineFrameBuilder.coroutineExitFrame(frame, suspendContext) ?: return null
 
         if (Registry.`is`("debugger.kotlin.auto.show.coroutines.view")) {
-            val xDebugSession = debugProcess.xdebugProcess?.session as? XDebugSessionImpl
-            val sessionId = xDebugSession?.id
-            if (sessionId != null) {
-                val sessionProxy = XDebugManagerProxy.getInstance().findSessionProxy(debugProcess.project, sessionId)
-                if (sessionProxy != null) {
-                    showOrHideCoroutinePanel(sessionProxy, true)
-                }
-            }
+            showOrHideCoroutinePanel(debugProcess, true)
         }
 
         if (!threadAndContextSupportsEvaluation(suspendContext, frame)) {

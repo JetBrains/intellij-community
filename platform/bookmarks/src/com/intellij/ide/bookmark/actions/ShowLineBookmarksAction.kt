@@ -29,7 +29,7 @@ internal class ShowLineBookmarksAction : DumbAwareAction() {
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
     val panel = BookmarksView(project, null)
-    panel.preferredSize = JBUI.size(640, 240)
+    panel.preferredSize = JBUI.DialogSizes.large()
 
     val popup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(panel, panel.tree)

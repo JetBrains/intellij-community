@@ -8,3 +8,5 @@ class C {
 
 // EXIST: lazy
 // EXIST: listOf
+
+// IGNORE_K2

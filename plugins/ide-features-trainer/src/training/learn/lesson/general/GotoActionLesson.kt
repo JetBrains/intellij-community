@@ -3,16 +3,17 @@ package training.learn.lesson.general
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
-import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.client.ClientSystemInfo
-import com.intellij.openapi.editor.actions.ToggleShowLineNumbersGloballyAction
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import training.dsl.*
 import training.dsl.EditorSettingsState.isLineNumbersShown
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.checkInsideSearchEverywhere
 import training.dsl.LessonUtil.showWarningIfSearchPopupClosed
+import training.dsl.firstLessonCompletedMessage
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
@@ -79,12 +80,13 @@ class GotoActionLesson(private val sample: LessonSample,
       task {
         val prefix = LearnBundle.message("show.line.number.prefix.to.show.first")
         text(LessonsBundle.message("goto.action.show.line.numbers.request", strong(prefix), strong(showLineNumbersName)))
+
+        val localActionDescription = ActionsBundle.actionDescription("EditorToggleShowLineNumbers")
+        val globalActionText = ActionsBundle.actionText("EditorGutterToggleGlobalLineNumbers")
         triggerAndBorderHighlight().listItem { item ->
-          val matchedValue = item as? GotoActionModel.MatchedValue
-          val actionWrapper = matchedValue?.value as? GotoActionModel.ActionWrapper
-          val action = actionWrapper?.action
-          action is ToggleShowLineNumbersGloballyAction
+          item.isToStringContains(globalActionText) && !item.isToStringContains(localActionDescription)
         }
+
         restoreState { !checkInsideSearchEverywhere() }
         test {
           waitComponent(SearchEverywhereUI::class.java)

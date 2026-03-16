@@ -16,7 +16,9 @@ import java.util.Map;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_LONG;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_MATH_BIG_INTEGER;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class LiteralTest extends GroovyLatestTest implements BaseTest {
   @Test

@@ -11,7 +11,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 // cannot be final because of backward compatibility (1 external usage)
 /**

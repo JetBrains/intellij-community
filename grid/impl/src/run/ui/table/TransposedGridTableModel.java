@@ -1,13 +1,17 @@
 package com.intellij.database.run.ui.table;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtil;
+import com.intellij.database.datagrid.ModelIndexSet;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.Range;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 public class TransposedGridTableModel extends GridTableModel {

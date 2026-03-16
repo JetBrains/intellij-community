@@ -2,7 +2,11 @@
 package com.jetbrains.python.codeInsight.mlcompletion
 
 import com.intellij.codeInsight.completion.CompletionLocation
-import com.intellij.codeInsight.completion.ml.*
+import com.intellij.codeInsight.completion.ml.CompletionEnvironment
+import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
+import com.intellij.codeInsight.completion.ml.ContextFeatures
+import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
+import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 
 class PyAdapterElementFeatureProvider(private val delegate: ElementFeatureProvider) : ElementFeatureProvider {

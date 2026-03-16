@@ -16,7 +16,11 @@
 package com.intellij.psi.formatter;
 
 import com.intellij.html.embedding.HtmlRawTextElementType;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.DefaultLineWrapPositionStrategy;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.GenericLineWrapPositionStrategy;
+import com.intellij.openapi.editor.LineWrapPositionStrategy;
+import com.intellij.openapi.editor.PsiAwareDefaultLineWrapPositionStrategy;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
@@ -28,8 +32,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * {@link LineWrapPositionStrategy} for markup languages like XML, HTML etc.
  */
-public class MarkupLineWrapPositionStrategy extends PsiAwareDefaultLineWrapPositionStrategy {
-
+public final class MarkupLineWrapPositionStrategy extends PsiAwareDefaultLineWrapPositionStrategy {
   private static final IElementType[] TEXT_TOKENS = IElementType.enumerate(
     t -> t == XmlElementType.XML_TEXT ||
          t == XmlTokenType.XML_COMMENT_CHARACTERS ||

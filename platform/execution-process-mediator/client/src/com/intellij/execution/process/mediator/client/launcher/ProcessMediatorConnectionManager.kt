@@ -52,7 +52,7 @@ class ProcessMediatorConnectionManager(private val connectionProvider: () -> Pro
     }
   }
 
-  fun adjustQuota(quotaOptions: QuotaOptions) = synchronized(this) {
+  fun adjustQuota(quotaOptions: QuotaOptions): Unit = synchronized(this) {
     val connection = getActiveConnectionOrNull() ?: return
     connection.client.adjustQuotaBlocking(quotaOptions)
   }

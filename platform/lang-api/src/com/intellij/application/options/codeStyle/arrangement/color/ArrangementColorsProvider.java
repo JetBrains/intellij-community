@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 
 public interface ArrangementColorsProvider {
   

@@ -5,7 +5,13 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
 import com.intellij.openapi.ui.ErrorBorderCapable
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import java.awt.*
+import java.awt.AlphaComposite
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.Rectangle
+import java.awt.RenderingHints
 import java.awt.geom.Path2D
 import javax.swing.JComboBox
 import javax.swing.UIManager

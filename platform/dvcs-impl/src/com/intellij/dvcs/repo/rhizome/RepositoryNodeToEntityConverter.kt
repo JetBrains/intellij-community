@@ -9,7 +9,7 @@ import com.intellij.platform.vcs.impl.shared.rhizome.NodeEntity
 import com.intellij.platform.vcs.impl.shared.rhizome.RepositoryNodeEntity
 import com.intellij.vcs.branch.BranchPresentation
 import com.intellij.vcs.shelf.NodeToEntityConverter
-import fleet.kernel.SharedChangeScope
+import fleet.kernel.rebase.SharedChangeScope
 
 internal class RepositoryNodeToEntityConverter : NodeToEntityConverter<RepositoryChangesBrowserNode>(RepositoryChangesBrowserNode::class) {
   override fun SharedChangeScope.convert(node: RepositoryChangesBrowserNode, orderInParent: Int, project: Project): NodeEntity {

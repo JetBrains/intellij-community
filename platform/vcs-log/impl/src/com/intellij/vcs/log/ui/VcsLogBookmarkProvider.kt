@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui
 
-import com.intellij.ide.bookmark.*
+import com.intellij.ide.bookmark.Bookmark
+import com.intellij.ide.bookmark.BookmarkGroup
+import com.intellij.ide.bookmark.BookmarkProvider
+import com.intellij.ide.bookmark.BookmarkType
+import com.intellij.ide.bookmark.BookmarksListener
+import com.intellij.ide.bookmark.BookmarksManager
 import com.intellij.ide.bookmark.ui.tree.BookmarkNode
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
@@ -23,7 +28,8 @@ import com.intellij.vcs.log.impl.VcsLogNavigationUtil
 import com.intellij.vcs.log.impl.VcsProjectLog
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.EventListener
+import java.util.Objects
 
 private const val ROOT_KEY = "root"
 private const val HASH_KEY = "hash"

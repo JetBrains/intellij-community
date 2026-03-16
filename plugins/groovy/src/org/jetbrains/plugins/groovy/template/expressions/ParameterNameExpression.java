@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ParameterNameExpression extends Expression {
   @Override
   public Result calculateResult(ExpressionContext context) {
-    PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getEditor().getDocument());
+    PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getPsiFile().getFileDocument());
     SuggestedNameInfo info = getNameInfo(context);
     if (info == null) return new TextResult("p");
     String[] names = info.names;

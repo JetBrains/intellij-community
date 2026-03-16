@@ -7,7 +7,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.LayoutManager;
 
 public final class GridChangeUtil {
   private GridChangeUtil() {

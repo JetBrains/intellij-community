@@ -7,7 +7,11 @@ import com.intellij.json.JsonBundle;
 import com.intellij.openapi.util.NlsSafe;
 import com.jetbrains.jsonSchema.extension.JsonErrorPriority;
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
-import com.jetbrains.jsonSchema.impl.fixes.*;
+import com.jetbrains.jsonSchema.impl.fixes.AddMissingPropertyFix;
+import com.jetbrains.jsonSchema.impl.fixes.FixPropertyNameTypoFix;
+import com.jetbrains.jsonSchema.impl.fixes.RemoveDuplicateArrayItemsFix;
+import com.jetbrains.jsonSchema.impl.fixes.RemoveProhibitedPropertyFix;
+import com.jetbrains.jsonSchema.impl.fixes.SuggestEnumValuesFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

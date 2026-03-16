@@ -9,3 +9,5 @@ fun bar(o: Any) {
 // EXIST: { lookupString:"List", itemText:"List<String>", tailText: " (kotlin.collections)" }
 // EXIST: { lookupString:"Map", itemText:"Map<String, Int>", tailText: " (kotlin.collections)" }
 // NOTHING_ELSE
+
+// IGNORE_K2

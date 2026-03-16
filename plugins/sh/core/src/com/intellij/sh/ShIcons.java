@@ -3,7 +3,7 @@ package com.intellij.sh;
 import com.intellij.icons.AllIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class ShIcons {
   /**

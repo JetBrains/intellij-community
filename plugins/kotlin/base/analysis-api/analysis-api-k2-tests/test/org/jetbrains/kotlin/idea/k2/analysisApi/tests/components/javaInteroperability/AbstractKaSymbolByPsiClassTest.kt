@@ -12,10 +12,10 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclaratio
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KaClassifierBodyRenderer
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.test.util.invalidateCaches
 import java.io.File
 
 abstract class AbstractKaSymbolByPsiClassTest : KotlinLightCodeInsightFixtureTestCase() {

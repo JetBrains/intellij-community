@@ -3,7 +3,6 @@ package com.intellij.platform.debugger.impl.frontend.tests
 
 import com.intellij.openapi.util.Ref
 import com.intellij.platform.debugger.impl.frontend.findOrAwaitElement
-import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -12,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.util.concurrent.ConcurrentHashMap
 
 internal class FindOrAwaitElementTest {
   @Test

@@ -5,7 +5,7 @@ import com.intellij.platform.execution.serviceView.splitApi.ServiceViewRpc
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
 
-private class BackendServiceViewRpcApiProvider : RemoteApiProvider {
+internal class BackendServiceViewRpcApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<ServiceViewRpc>()) {
       ServiceViewRpcImpl()

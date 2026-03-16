@@ -27,8 +27,8 @@ public final class BuildIssueEventImpl extends AbstractBuildEvent implements Bui
     @Nullable Object parentId,
     @Nullable Long time,
     @Nullable @BuildEventsNls.Hint String hint,
-    @NotNull Kind kind,
-    @NotNull BuildIssue buildIssue
+    @NotNull BuildIssue buildIssue,
+    @NotNull Kind kind
   ) {
     super(id, parentId, time, buildIssue.getTitle(), hint, buildIssue.getDescription());
     myIssue = buildIssue;
@@ -40,7 +40,7 @@ public final class BuildIssueEventImpl extends AbstractBuildEvent implements Bui
     @NotNull BuildIssue buildIssue,
     @NotNull Kind kind
   ) {
-    this(null, parentId, null, null, kind, buildIssue);
+    this(null, parentId, null, null, buildIssue, kind);
   }
 
   @Override

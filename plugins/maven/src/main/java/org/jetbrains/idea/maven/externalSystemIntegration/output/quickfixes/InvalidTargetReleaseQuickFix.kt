@@ -73,7 +73,7 @@ class InvalidTargetReleaseQuickFix : MavenSpyLoggedEventParser {
     if (jreName == null) {
       return ProjectRootManager.getInstance(project).projectSdkName
     }
-    return ExternalSystemJdkUtil.resolveJdkName(ProjectRootManager.getInstance(project).projectSdk, jreName)?.name
+    return ExternalSystemJdkUtil.resolveJdkName(project, jreName)?.name
   }
 
 

@@ -21,7 +21,14 @@ import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.findParentOfType
@@ -45,6 +52,7 @@ import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.hasApplicableAllowedTarget
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isApplicableTargetSet
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -60,8 +68,30 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.name.*
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSuperTypeList
+import org.jetbrains.kotlin.psi.KtVariableDeclaration
+import org.jetbrains.kotlin.psi.getOrCreateBody
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
@@ -262,6 +292,15 @@ object K2CreatePropertyFromUsageBuilder {
                     classOrFileName.toString()
                 )
             }
+        }
+
+        override fun generatePreview(
+            project: Project,
+            editor: Editor,
+            psiFile: PsiFile
+        ): IntentionPreviewInfo {
+            val container = (pointer.element as? PsiNamedElement)?.name ?: return super.generatePreview(project, editor, psiFile)
+            return IntentionPreviewInfo.CustomDiff(KotlinFileType.INSTANCE, container, "", declarationText)
         }
 
         private var declarationText: String = computeDeclarationText()

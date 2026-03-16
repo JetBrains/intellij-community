@@ -16,7 +16,30 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.psi.impl.source.tree.JavaElementType.*;
+import static com.intellij.psi.impl.source.tree.JavaElementType.ANONYMOUS_CLASS;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CATCH_SECTION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CLASS;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CODE_BLOCK;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DECLARATION_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.FIELD;
+import static com.intellij.psi.impl.source.tree.JavaElementType.FOREACH_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.FOR_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.JAVA_CODE_REFERENCE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.LAMBDA_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.LOCAL_VARIABLE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.METHOD;
+import static com.intellij.psi.impl.source.tree.JavaElementType.METHOD_CALL_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.MODIFIER_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PARAMETER;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PARAMETER_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.RECORD_COMPONENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.RECORD_HEADER;
+import static com.intellij.psi.impl.source.tree.JavaElementType.RESOURCE_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.RESOURCE_VARIABLE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TRY_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE_PARAMETER;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE_PARAMETER_LIST;
 
 /**
  * Resolves unambiguous Java identifiers inside a file (if it can), using {@link LighterAST}. Can be used during indexing.

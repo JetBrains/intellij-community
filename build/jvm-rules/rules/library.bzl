@@ -13,6 +13,9 @@ def _jvm_library(ctx):
 
     providers = kt_jvm_produce_jar_actions(ctx, False)
     files = [ctx.outputs.jar]
+    kotlin_cri_storage_file = providers.kt.outputs.kotlin_cri_storage_file
+    if kotlin_cri_storage_file:
+        files.append(kotlin_cri_storage_file)
     return [
         providers.java,
         providers.kt,

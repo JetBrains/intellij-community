@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.indices.names
 import com.intellij.openapi.module.Module
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import java.io.File
@@ -21,6 +22,8 @@ import kotlin.io.path.name
  * on this behavior.)
  */
 class KotlinBinaryRootToPackageIndexTest : AbstractMultiModuleTest() {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+
     override fun getTestDataDirectory(): File = KotlinRoot.DIR.resolve("base/indices/tests/testData/kotlinBinaryRootToPackageIndex")
 
     private val fooBarJarPath = Path.of("jars", "fooBar.jar")

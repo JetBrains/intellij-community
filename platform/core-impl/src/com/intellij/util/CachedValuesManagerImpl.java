@@ -9,7 +9,11 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class CachedValuesManagerImpl extends CachedValuesManager implements Disposable {
   private static final Object NULL = new Object();
 
@@ -65,13 +70,22 @@ public final class CachedValuesManagerImpl extends CachedValuesManager implement
     return myFactory.createParameterizedCachedValue(userDataHolder, provider, trackValue);
   }
 
+  private boolean isFromMyProject(@NotNull CachedValue<?> v) {
+    if (v instanceof CachedValueBase<?>) {
+      return ((CachedValueBase<?>)v).isFromMyProject(myProject);
+    }
+    else {
+      return true;
+    }
+  }
+
   @Override
   public @Nullable <T> T getCachedValue(@NotNull UserDataHolder dataHolder,
                                         @NotNull Key<CachedValue<T>> key,
                                         @NotNull CachedValueProvider<T> provider,
                                         boolean trackValue) {
     CachedValue<T> value = dataHolder.getUserData(key);
-    if (value instanceof CachedValueBase && ((CachedValueBase<?>)value).isFromMyProject(myProject)) {
+    if (value != null && isFromMyProject(value)) {
       Supplier<T> data = value.getUpToDateOrNull();
       if (data != null) {
         return data.get();
@@ -123,7 +137,7 @@ public final class CachedValuesManagerImpl extends CachedValuesManager implement
   private <T> CachedValue<T> freshCachedValue(UserDataHolder dh, Key<CachedValue<T>> key, CachedValueProvider<T> provider, boolean trackValue) {
     CachedValueLeakChecker.checkProviderDoesNotLeakPSI(provider, key, dh);
     CachedValue<T> value = myFactory.createCachedValue(dh, provider, trackValue);
-    assert ((CachedValueBase<?>)value).isFromMyProject(myProject);
+    assert isFromMyProject(value);
     return value;
   }
 

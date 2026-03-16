@@ -1,7 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Objects;
 
 public abstract class DefaultVcsRootPolicy {
   protected final @NotNull Project myProject;
@@ -32,10 +34,25 @@ public abstract class DefaultVcsRootPolicy {
   public @Nls String getProjectConfigurationMessage() {
     boolean isDirectoryBased = ProjectKt.isDirectoryBased(myProject);
     if (isDirectoryBased) {
-      String fileName = ProjectKt.getStateStore(myProject).getDirectoryStorePath().getFileName().toString();
+      String fileName = Objects.requireNonNull(ProjectKt.getStateStore(myProject).getDirectoryStorePath()).getFileName().toString();
       return VcsBundle.message("settings.vcs.mapping.project.description.with.idea.directory", fileName);
     }
     return VcsBundle.message("settings.vcs.mapping.project.description");
+  }
+
+  public @Nls String getProjectMappingInDialogDescription() {
+    boolean isDirectoryBased = ProjectKt.isDirectoryBased(myProject);
+    String message;
+    if (isDirectoryBased) {
+      String fileName = Objects.requireNonNull(ProjectKt.getStateStore(myProject).getDirectoryStorePath()).getFileName().toString();
+      message = VcsBundle.message("settings.vcs.mapping.project.in.dialog.description.with.idea.directory", fileName);
+    }
+    else {
+      message = VcsBundle.message("settings.vcs.mapping.project.description");
+    }
+
+    message = message.replace('\n', ' ');
+    return StringUtil.escapeXmlEntities(ProjectBundle.message("project.roots.project.display.name") + ": " + message);
   }
 
   protected void scheduleMappedRootsUpdate() {

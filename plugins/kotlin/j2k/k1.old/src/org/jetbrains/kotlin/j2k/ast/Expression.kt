@@ -2,8 +2,10 @@
 
 package org.jetbrains.kotlin.j2k.ast
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 
+@K1Deprecation
 abstract class Expression : Statement() {
     open val isNullable: Boolean get() = false
 

@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.content.Content
 
@@ -26,9 +25,7 @@ internal abstract class ToolWindowMoveToSplitterAction(
     val component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT)
     val topDecorator = InternalDecoratorImpl.findTopLevelDecorator(component)
     e.presentation.isEnabled = topDecorator?.mode?.isSplit == true
-    e.presentation.isVisible = (e.presentation.isEnabled || !e.isFromContextMenu) &&
-                               ToolWindowContentUi.isTabsReorderingAllowed(toolWindow)
-
+    e.presentation.isVisible = (e.presentation.isEnabled || !e.isFromContextMenu) && toolWindow.canSplitTabs()
   }
 }
 

@@ -4,13 +4,21 @@ package com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.*
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.DownloadResult
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.InstallationResult
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.UltimateInstallationInfo
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.UltimateInstaller
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.runCommand
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.util.SystemProperties.getUserHome
 import com.intellij.util.system.CpuArch
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyToRecursively
+import kotlin.io.path.createDirectories
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.pathString
 
 internal class MacOsInstaller(scope: CoroutineScope, project: Project) : UltimateInstaller(scope, project) {
   override val postfix = if (CpuArch.isArm64()) "-aarch64.dmg" else ".dmg"

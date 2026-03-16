@@ -2,8 +2,9 @@
 package git4idea.remoteApi
 
 import com.intellij.dvcs.repo.Repository
-import com.intellij.ide.vfs.rpcId
+import com.intellij.dvcs.repo.repositoryId
 import com.intellij.openapi.components.service
+import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
 import com.intellij.vcs.git.ref.GitCurrentRef
 import com.intellij.vcs.git.ref.GitFavoriteRefs
 import com.intellij.vcs.git.repo.GitHash
@@ -17,16 +18,18 @@ import git4idea.branch.GitTagType
 import git4idea.repo.GitBranchTrackInfo
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
+import git4idea.repo.tags
 import git4idea.ui.branch.GitBranchManager
+import org.jetbrains.annotations.VisibleForTesting
 
 internal object GitRepositoryToDtoConverter {
   fun convertToDto(repository: GitRepository): GitRepositoryDto {
     return GitRepositoryDto(
-      repositoryId = repository.rpcId,
+      repositoryId = repository.repositoryId(),
       shortName = VcsUtil.getShortVcsRootName(repository.project, repository.root),
       state = convertRepositoryState(repository),
       favoriteRefs = collectFavorites(repository),
-      root = repository.root.rpcId(),
+      root = FilePathDto.toDto(VcsUtil.getFilePath(repository.root)),
     )
   }
 
@@ -38,7 +41,8 @@ internal object GitRepositoryToDtoConverter {
       revision = repository.currentRevision?.let { GitHash(it) },
       localBranches = repoInfo.localBranchesWithHashes.keys,
       remoteBranches = repoInfo.remoteBranchesWithHashes.keys.filterIsInstance<GitStandardRemoteBranch>().toSet(),
-      tags = repository.tagHolder.getTags().keys,
+      tags = repository.tagsHolder.tags,
+      workingTrees = repository.workingTreeHolder.getWorkingTrees(),
       recentBranches = repository.branches.recentCheckoutBranches,
       operationState = convertOperationState(repository),
       trackingInfo = convertTrackingInfo(repoInfo.branchTrackInfosMap)
@@ -63,7 +67,8 @@ internal object GitRepositoryToDtoConverter {
     Repository.State.DETACHED -> GitOperationState.DETACHED_HEAD
   }
 
-  private fun convertTrackingInfo(trackingInfo: Map<String, GitBranchTrackInfo>): Map<String, GitStandardRemoteBranch> {
+  @VisibleForTesting
+  fun convertTrackingInfo(trackingInfo: Map<String, GitBranchTrackInfo>): Map<String, GitStandardRemoteBranch> {
     val result = HashMap<String, GitStandardRemoteBranch>(trackingInfo.size)
 
     trackingInfo.forEach { (branchName, trackInfo) ->

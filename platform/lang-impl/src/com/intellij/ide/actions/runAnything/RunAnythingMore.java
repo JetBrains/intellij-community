@@ -5,7 +5,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 
 final class RunAnythingMore extends JLabel {
 

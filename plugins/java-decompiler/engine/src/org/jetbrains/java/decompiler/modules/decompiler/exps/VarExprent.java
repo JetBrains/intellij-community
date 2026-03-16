@@ -317,7 +317,9 @@ public class VarExprent extends Exprent {
 
   public String getName() {
     VarVersion varVersion = getVarVersion();
-    if (lvtEntry != null && TextUtil.isValidIdentifier(lvtEntry.getName(), CodeConstants.BYTECODE_JAVA_22))
+    if (lvtEntry != null &&
+        DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES) &&
+        TextUtil.isValidIdentifier(lvtEntry.getName(), CodeConstants.BYTECODE_JAVA_22))
       return lvtEntry.getName();
 
     if (processor != null) {

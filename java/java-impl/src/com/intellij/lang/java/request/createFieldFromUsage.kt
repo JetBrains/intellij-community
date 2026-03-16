@@ -13,10 +13,25 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.EP_NAME
 import com.intellij.lang.jvm.actions.groupActionsByType
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiAnnotationMethod
+import com.intellij.psi.PsiCaseLabelElementList
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiNameValuePair
+import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.impl.PsiImplUtil
-import com.intellij.psi.util.*
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.PsiUtil.resolveClassInClassTypeOnly
+import com.intellij.psi.util.PsiUtilCore
+import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.parentOfTypes
 
 public fun generateActions(ref: PsiReferenceExpression): List<IntentionAction> {
   if (!checkReference(ref)) return emptyList()

@@ -152,14 +152,30 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       }
     }
 
+    fun loadLastCompatiblePluginUpdate(
+      allIds: Set<PluginId>,
+      buildNumber: BuildNumber? = null,
+      throwExceptions: Boolean = false,
+    ): List<IdeCompatibleUpdate> {
+      return loadLastCompatiblePluginUpdate(allIds, buildNumber, throwExceptions, sendMachineId = false)
+    }
+
+    fun checkInstalledPluginUpdate(
+      allIds: Set<PluginId>,
+      buildNumber: BuildNumber? = null,
+      throwExceptions: Boolean = false,
+    ): List<IdeCompatibleUpdate> {
+      return loadLastCompatiblePluginUpdate(allIds, buildNumber, throwExceptions, sendMachineId = true)
+    }
+
     private fun loadLastCompatiblePluginUpdate(
       allIds: Set<PluginId>,
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false,
-      updateCheck: Boolean = false,
+      sendMachineId: Boolean,
     ): List<IdeCompatibleUpdate> {
       LOG.info("Looking for the last compatible plugin updates for:\n$allIds\n" +
-               "Is update check: $updateCheck")
+               "send machine ID: $sendMachineId")
 
       val chunks = mutableListOf<MutableList<PluginId>>()
       chunks.add(ArrayList(100))
@@ -182,20 +198,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       }
 
       return chunks.flatMap {
-        loadLastCompatiblePluginsUpdate(it, buildNumber, throwExceptions, updateCheck)
+        loadLastCompatiblePluginsUpdate(it, buildNumber, throwExceptions, sendMachineId)
       }
-    }
-
-    /**
-     * Must be used only from [com.intellij.openapi.updateSettings.impl.UpdateChecker].
-     */
-    fun checkLastCompatiblePluginUpdate(
-      allIds: Set<PluginId>,
-      buildNumber: BuildNumber? = null,
-      throwExceptions: Boolean = false,
-      updateCheck: Boolean = false,
-    ): List<IdeCompatibleUpdate> {
-      return loadLastCompatiblePluginUpdate(allIds, buildNumber, throwExceptions, updateCheck)
     }
 
     @RequiresBackgroundThread
@@ -214,7 +218,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       ids: Collection<PluginId>,
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false,
-      updateCheck: Boolean = false,
+      sendMachineId: Boolean = false,
     ): List<IdeCompatibleUpdate> {
       try {
         if (ids.isEmpty()) return emptyList()
@@ -231,7 +235,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
           "os" to buildOsParameter(),
           "arch" to CpuArch.CURRENT.name
         ).apply {
-          if (machineId != null && updateCheck) {
+          if (machineId != null && sendMachineId) {
             add("mid" to machineId)
           }
           addAll(ids.map { "pluginXmlId" to it.idString })
@@ -750,14 +754,23 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
   fun getCompatibleUpdateByModule(module: String): PluginId? {
     try {
-      val data = objectMapper.writeValueAsString(CompatibleUpdateForModuleRequest(module))
+      val params = mapOf(
+        "build" to ApplicationInfoImpl.orFromPluginCompatibleBuild(null),
+        "module" to module,
+        "os" to buildOsParameter(),
+        "arch" to CpuArch.CURRENT.name
+      )
 
-      @Suppress("DEPRECATION")
-      return HttpRequests.post(MarketplaceUrls.getSearchCompatibleUpdatesUrl(), HttpRequests.JSON_CONTENT_TYPE)
+      val url = Urls.newFromEncoded(MarketplaceUrls.getSearchPluginsUpdatesUrl())
+        .addParameters(params)
+        .toExternalForm()
+
+      return HttpRequests.request(url)
+        .accept(HttpRequests.JSON_CONTENT_TYPE)
+        .setHeadersViaTuner()
         .productNameAsUserAgent()
         .throwStatusCodeException(false)
         .connect {
-          it.write(data)
           objectMapper.readValue(it.inputStream, object : TypeReference<List<IdeCompatibleUpdate>>() {})
         }.firstOrNull()
         ?.pluginId
@@ -968,23 +981,6 @@ private data class CompatibleUpdateRequest(
   ) : this(
     ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber),
     pluginIds.map { it.idString },
-  )
-}
-
-private data class CompatibleUpdateForModuleRequest(
-  val module: String,
-  val build: String,
-  val os: String = OS.CURRENT.name,
-  val arch: String = CpuArch.CURRENT.name,
-) {
-
-  @JvmOverloads
-  constructor(
-    module: String,
-    buildNumber: BuildNumber? = null,
-  ) : this(
-    module,
-    ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber),
   )
 }
 

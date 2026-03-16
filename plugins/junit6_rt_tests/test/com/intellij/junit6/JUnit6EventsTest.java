@@ -1,8 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit6;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.OSProcessUtil;
+import com.intellij.idea.IJIgnore;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -11,17 +14,22 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PlatformTestUtil;
-import jetbrains.buildServer.messages.serviceMessages.*;
+import jetbrains.buildServer.messages.serviceMessages.BaseTestMessage;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
+import jetbrains.buildServer.messages.serviceMessages.TestStarted;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.intellij.junit6.ServiceMessageUtil.replaceAttributes;
+import static com.intellij.junit6.ServiceMessageUtil.normalizedTestOutput;
 
 @SuppressWarnings("SSBasedInspection")
 public class JUnit6EventsTest extends AbstractTestFrameworkCompilingIntegrationTest {
@@ -44,39 +52,21 @@ public class JUnit6EventsTest extends AbstractTestFrameworkCompilingIntegrationT
     ProcessOutput output = doStartTestsProcess(createRunMethodConfiguration("com.intellij.junit6.testData.MyTestClass", "test1"));
     assertEmpty(output.err);
 
-    List<ServiceMessage> messages = output.messages;
+    String tests = output.messages.stream().filter(m -> m instanceof BaseTestMessage)
+      .map(m -> normalizedTestOutput(m, Map.of("details", (value) -> {
+        int idx = value.indexOf("\n", 2);
+        return idx > 0 ? value.substring(0, idx).trim().replaceAll(":[0-9]+", ":<line>") : value;
+      })))
+      .collect(Collectors.joining("\n"));
 
-    Map<String, TestStarted> tests = getStartedTests(messages);
-    // Ensure our test method started with a proper location hint
-    TestStarted started = tests.values().stream()
-      .filter(t -> "java:test://com.intellij.junit6.testData.MyTestClass/test1".equals(t.getAttributes().get("locationHint")))
-      .findFirst().orElse(null);
-    assertNotNull(started);
-    assertEquals("java:test://com.intellij.junit6.testData.MyTestClass/test1", started.getAttributes().get("locationHint"));
-    String nodeId = started.getAttributes().get("nodeId");
-
-    // There should be multiple failures reported for the same test
-    List<ServiceMessage> failed = messages.stream()
-      .filter(m -> nodeId.equals(m.getAttributes().get("nodeId")))
-      .filter(m -> m instanceof TestFailed).toList();
-    assertSize(3, failed);
-
-    Set<String> errors = failed.stream().filter(m -> m.getAttributes().get("expected") != null)
-      .map(m -> "expected='" + m.getAttributes().get("expected") + "', actual='" + m.getAttributes().get("actual") + "'")
-      .collect(Collectors.toSet());
-    assertEquals(Set.of(
-      "expected='expected1', actual='actual1'",
-      "expected='expected2', actual='actual2'"
-    ), errors);
-
-    // StdOut message should include our published entries
-    Set<String> outs = messages.stream()
-      .filter(m -> nodeId.equals(m.getAttributes().get("nodeId")))
-      .filter(m -> m instanceof TestStdOut)
-      .map(m -> m.getAttributes().get("out"))
-      .map(s -> s.replaceAll("timestamp = [0-9\\-:.T]+", "timestamp = ##timestamp##"))
-      .collect(Collectors.toSet());
-    assertEquals(Set.of("timestamp = ##timestamp##, key1 = value1, stdout = out1\n"), outs);
+    assertEquals("""
+                   ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.MyTestClass/test1' metainfo='org.junit.jupiter.api.TestReporter']
+                   ##TC[testStdOut id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' out='timestamp = ##timestamp##, key1 = value1, stdout = out1|n']
+                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##' message='message1 ==> expected: <expected1> but was: <actual1>|nComparison Failure: ' expected='expected1' actual='actual1' details='org.opentest4j.AssertionFailedError: message1 ==> expected: <expected1> but was: <actual1>']
+                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##' message='message2 ==> expected: <expected2> but was: <actual2>|nComparison Failure: ' expected='expected2' actual='actual2' details='org.opentest4j.AssertionFailedError: message2 ==> expected: <expected2> but was: <actual2>']
+                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##' message='2 errors (2 failures)|n	org.opentest4j.AssertionFailedError: message1 ==> expected: <expected1> but was: <actual1>|n	org.opentest4j.AssertionFailedError: message2 ==> expected: <expected2> but was: <actual2>' details='org.opentest4j.MultipleFailuresError: 2 errors (2 failures)']
+                   ##TC[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##']""",
+                 tests);
   }
 
   public void testContainerFailure() throws Exception {
@@ -84,46 +74,141 @@ public class JUnit6EventsTest extends AbstractTestFrameworkCompilingIntegrationT
     assertEmpty(output.err);
 
     // Expect a configuration failure
-    List<String> test = output.messages.stream().filter(BaseTestMessage.class::isInstance)
+    String test = output.messages.stream().filter(BaseTestMessage.class::isInstance)
       .map(BaseTestMessage.class::cast)
       .filter(m -> m.getTestName().equals("Class Configuration"))
-      .map(m -> replaceAttributes(m, Map.of("details", "##details##")))
-      .toList();
-    assertEquals(List.of(
-      "##teamcity[testStarted name='Class Configuration' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0']",
-      "##teamcity[testFailed name='Class Configuration' id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0' error='true' message='java.lang.IllegalStateException: broken' details='##details##']",
-      "##teamcity[testFinished name='Class Configuration' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0']"
-    ), test);
+      .map(m -> normalizedTestOutput(m, Map.of("details", (value) -> {
+        int idx = value.indexOf("\n", 2);
+        return idx > 0 ? value.substring(0, idx).trim().replaceAll(":[0-9]+", ":<line>") : value;
+      })))
+      .collect(Collectors.joining("\n"));
+    assertEquals("""
+                   ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' name='Class Configuration' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.MyTestClass/brokenStream' metainfo='']
+                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' name='Class Configuration' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0' error='true' message='java.lang.IllegalStateException: broken' details='at com.intellij.junit6.testData.MyTestClass.brokenStream(MyTestClass.java:<line>)']
+                   ##TC[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' name='Class Configuration' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0']""",
+                 test);
   }
 
   public void testContainerDisabled() throws Exception {
     ProcessOutput output = doStartTestsProcess(createRunClassConfiguration("com.intellij.junit6.testData.MyTestClass"));
     assertEmpty(output.err);
 
-    List<String> tests = output.messages.stream().filter(m -> m instanceof BaseTestMessage)
-      .map(m -> replaceAttributes(m, Map.of(
-        "timestamp", "##timestamp##",
-        "duration", "##duration##",
-        "message", "##message##",
-        "details", "##details##"
+    String tests = output.messages.stream().filter(m -> m instanceof BaseTestMessage)
+      .map(m -> normalizedTestOutput(m, Map.of(
+        "message", (value) -> "##message##",
+        "details", (value) -> "##details##"
       )))
-      .map(s -> s.replaceAll("timestamp = [0-9\\-:.T]+", "timestamp = ##timestamp##")).toList();
+      .collect(Collectors.joining("\n"));
 
-    assertEquals(List.of(
-      "##teamcity[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:disabledTest()|]' name='disabledTest()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:disabledTest()|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.MyTestClass/disabledTest' metainfo='']",
-      "##teamcity[testIgnored name='disabledTest()' id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:disabledTest()|]' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:disabledTest()|]' parentNodeId='0' message='##message##']",
-      "##teamcity[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:disabledTest()|]' name='disabledTest()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:disabledTest()|]' parentNodeId='0']",
-      "##teamcity[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.MyTestClass/test1' metainfo='org.junit.jupiter.api.TestReporter']",
-      "##teamcity[testStdOut id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' out='timestamp = ##timestamp##, key1 = value1, stdout = out1|n']",
-      "##teamcity[testFailed name='test1(TestReporter)' id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##' message='##message##' expected='expected1' actual='actual1' details='##details##']",
-      "##teamcity[testFailed name='test1(TestReporter)' id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##' message='##message##' expected='expected2' actual='actual2' details='##details##']",
-      "##teamcity[testFailed name='test1(TestReporter)' id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##' message='##message##' details='##details##']",
-      "##teamcity[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##']",
-      "##teamcity[testIgnored name='brokenStreamDisabled()' id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStreamDisabled()|]' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStreamDisabled()|]' parentNodeId='0' message='##message##']",
-      "##teamcity[testStarted name='Class Configuration' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0']",
-      "##teamcity[testFailed name='Class Configuration' id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0' error='true' message='##message##' details='##details##']",
-      "##teamcity[testFinished name='Class Configuration' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0']"
-      ), tests);
+    assertEquals("""
+                   ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:disabledTest()|]' name='disabledTest()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:disabledTest()|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.MyTestClass/disabledTest' metainfo='']
+                   ##TC[testIgnored id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:disabledTest()|]' name='disabledTest()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:disabledTest()|]' parentNodeId='0' message='##message##']
+                   ##TC[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:disabledTest()|]' name='disabledTest()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:disabledTest()|]' parentNodeId='0']
+                   ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.MyTestClass/test1' metainfo='org.junit.jupiter.api.TestReporter']
+                   ##TC[testStdOut id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' out='timestamp = ##timestamp##, key1 = value1, stdout = out1|n']
+                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##' message='##message##' expected='expected1' actual='actual1' details='##details##']
+                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##' message='##message##' expected='expected2' actual='actual2' details='##details##']
+                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##' message='##message##' details='##details##']
+                   ##TC[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##']
+                   ##TC[testIgnored id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStreamDisabled()|]' name='brokenStreamDisabled()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStreamDisabled()|]' parentNodeId='0' message='##message##']
+                   ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' name='Class Configuration' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.MyTestClass/brokenStream' metainfo='']
+                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' name='Class Configuration' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0' error='true' message='##message##' details='##details##']
+                   ##TC[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' name='Class Configuration' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0']""",
+                 tests);
+  }
+
+  @IJIgnore(issue = "TW-71208")
+  public void testStopExecution() throws Exception {
+    ProcessOutput output =
+      doStartTestsProcessAsync(createRunClassConfiguration("com.intellij.junit6.testData.CancelCheckTest"), Collections.emptySet());
+    OSProcessHandler process = output.process;
+
+    {
+      // tests should be started - wait for lock file path in output
+      Path lock = getLock(output);
+
+      // stop process (SIGINT)
+      OSProcessUtil.terminateProcessGracefully(process.getProcess());
+
+      // wait for shutdown hook to execute
+      Thread.sleep(1000);
+      unlock(lock);
+
+      // wait finalization
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+      process.waitFor(10000);
+      process.destroyProcess();
+    }
+    String tests = output.messages.stream().filter(m -> m instanceof BaseTestMessage)
+      .map(m -> normalizedTestOutput(m, Map.of(
+        "message", (value) -> "##message##",
+        "details", (value) -> "##details##"
+      ))).collect(Collectors.joining("\n"));
+
+    assertEmpty(output.err);
+    assertEquals(
+      """
+        ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test1()|]' name='test1()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test1()|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.CancelCheckTest/test1' metainfo='']
+        ##TC[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test1()|]' name='test1()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test1()|]' parentNodeId='0' duration='##duration##']
+        ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test2()|]' name='test2()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test2()|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.CancelCheckTest/test2' metainfo='']
+        ##TC[testIgnored id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test2()|]' name='test2()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test2()|]' parentNodeId='0' message='##message##']
+        ##TC[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test2()|]' name='test2()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test2()|]' parentNodeId='0']
+        ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test3()|]' name='test3()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test3()|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.CancelCheckTest/test3' metainfo='']
+        ##TC[testIgnored id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test3()|]' name='test3()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test3()|]' parentNodeId='0' message='##message##']
+        ##TC[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test3()|]' name='test3()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test3()|]' parentNodeId='0']""",
+      tests);
+    assertTrue("@AfterAll must finish the tests correctly", output.out.contains("finish"));
+  }
+
+  private static void unlock(@NotNull Path lock) throws IOException {
+    // unlock tests
+    if (Files.exists(lock)) {
+      Files.delete(lock);
+    }
+    else {
+      fail("tests not started");
+    }
+  }
+
+  private static @NotNull Path getLock(ProcessOutput output) throws InterruptedException {
+    int maxIterations = 100;
+    Path lock = null;
+    while (lock == null && maxIterations-- > 0) {
+      Thread.sleep(100);
+      lock = output.out.stream()
+        .filter(line -> line.startsWith("lock:"))
+        .map(line -> line.substring("lock:".length()).trim())
+        .map(Path::of)
+        .findFirst()
+        .orElse(null);
+    }
+    if (lock == null) {
+      fail("tests not started - lock file path not received in time");
+    }
+    return lock;
+  }
+
+  public void testFailWithMessage() throws Exception {
+    ProcessOutput output = doStartTestsProcess(createRunClassConfiguration("com.intellij.junit6.testData.SimpleFailTest"));
+    assertEmpty(output.err);
+
+    assertEmpty(output.err);
+
+    String tests = output.messages.stream().filter(m -> m instanceof BaseTestMessage)
+      .map(m -> normalizedTestOutput(m, Map.of("details", (value) -> {
+        int idx = value.indexOf("\n", 2);
+        return idx > 0 ? value.substring(0, idx).trim().replaceAll(":[0-9]+", ":<line>") : value;
+      })))
+      .collect(Collectors.joining("\n"));
+
+    assertEquals("""
+                   ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test1()|]' name='test1()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test1()|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.SimpleFailTest/test1' metainfo='']
+                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test1()|]' name='test1()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test1()|]' parentNodeId='0' duration='##duration##' message='org.opentest4j.AssertionFailedError: 123' details='at org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:<line>)']
+                   ##TC[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test1()|]' name='test1()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test1()|]' parentNodeId='0' duration='##duration##']
+                   ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test2()|]' name='test2()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test2()|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.SimpleFailTest/test2' metainfo='']
+                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test2()|]' name='test2()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test2()|]' parentNodeId='0' duration='##duration##' message='expected: <123> but was: <321>|nComparison Failure: ' expected='123' actual='321' details='org.opentest4j.AssertionFailedError: expected: <123> but was: <321>']
+                   ##TC[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test2()|]' name='test2()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test2()|]' parentNodeId='0' duration='##duration##']""",
+                 tests);
   }
 
   public void testEscaping() throws Exception {

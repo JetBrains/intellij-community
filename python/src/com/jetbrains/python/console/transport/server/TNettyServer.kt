@@ -25,8 +25,6 @@ class TNettyServer private constructor(transport: TServerTransport, processor: T
     transport.awaitTermination(timeout, unit)
   })
 
-  constructor(transport: TServerTransport, processor: TProcessor) : this(transport, processor, { _, _ -> true })
-
   fun serve() {
     server.serve()
   }

@@ -7,7 +7,7 @@ import org.jetbrains.plugins.textmate.TestUtil.scopeFromString
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
 import org.jetbrains.plugins.textmate.plist.XmlPlistReaderForTests
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue

@@ -3,7 +3,7 @@ package com.intellij.collaboration.ui.codereview.list
 
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Date
 import javax.swing.Icon
 
 interface ReviewListItemPresentation {

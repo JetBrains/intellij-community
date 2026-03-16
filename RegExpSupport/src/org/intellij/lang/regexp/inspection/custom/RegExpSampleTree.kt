@@ -4,7 +4,11 @@ package org.intellij.lang.regexp.inspection.custom
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.*
+import com.intellij.ui.ColoredText
+import com.intellij.ui.ColoredTreeCellRenderer
+import com.intellij.ui.DoubleClickListener
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.tree.TreePathUtil
 import com.intellij.ui.treeStructure.Tree
@@ -14,7 +18,11 @@ import java.awt.event.MouseEvent
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JTree
-import javax.swing.tree.*
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreeModel
+import javax.swing.tree.TreePath
+import javax.swing.tree.TreeSelectionModel
 
 data class RegExpSample(
   @NlsSafe val name: String,

@@ -3,6 +3,7 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.ui.dsl.builder.SegmentedButton.Companion.DEFAULT_MAX_BUTTONS_COUNT
 import com.intellij.ui.dsl.builder.impl.ItemPresentationImpl
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.validation.CellValidation

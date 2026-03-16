@@ -2,7 +2,15 @@
 package com.intellij.codeInspection.logging
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.LambdaUtil
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiDisjunctionType
+import com.intellij.psi.PsiEllipsisType
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.SyntheticElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.InheritanceUtil
@@ -12,8 +20,26 @@ import com.siyeh.ig.callMatcher.CallMapper
 import com.siyeh.ig.callMatcher.CallMatcher
 import com.siyeh.ig.format.FormatDecode
 import com.siyeh.ig.psiutils.TypeUtils
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UCallableReferenceExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.UVariable
 import org.jetbrains.uast.UastBinaryOperator.Companion.ASSIGN
+import org.jetbrains.uast.UastErrorType
+import org.jetbrains.uast.getContainingUFile
+import org.jetbrains.uast.getOutermostQualified
+import org.jetbrains.uast.resolveToUElement
+import org.jetbrains.uast.skipParenthesizedExprDown
+import org.jetbrains.uast.textRange
+import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 internal const val MAX_BUILDER_LENGTH = 20

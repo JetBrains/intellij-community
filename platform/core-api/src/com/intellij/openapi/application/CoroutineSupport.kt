@@ -2,7 +2,6 @@
 package com.intellij.openapi.application
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 

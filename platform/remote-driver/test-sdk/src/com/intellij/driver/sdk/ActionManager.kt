@@ -10,6 +10,8 @@ import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.openapi.diagnostic.fileLogger
 import java.awt.event.InputEvent
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 @Remote(value = "com.intellij.openapi.actionSystem.ActionManager")
 interface ActionManager {
@@ -96,15 +98,17 @@ fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Compon
 
 fun Driver.invokeActionWithRetries(
   actionId: String,
+  maxAttempts: Int = 10,
+  delay: Duration = 500.milliseconds,
 ) {
-  doWithRetries {
+  doWithRetries(maxAttempts = maxAttempts, delay = delay) {
     invokeAction(actionId)
   }
 }
 
 private fun doWithRetries(
-  maxAttempts: Int = 10,
-  delayMs: Long = 500,
+  maxAttempts: Int,
+  delay: Duration,
   action: () -> Unit,
 ) {
   var currentAttempt = 0
@@ -117,7 +121,7 @@ private fun doWithRetries(
       if (currentAttempt++ > maxAttempts) {
         throw e
       }
-      Thread.sleep(delayMs)
+      Thread.sleep(delay.inWholeMilliseconds)
     }
   }
 }

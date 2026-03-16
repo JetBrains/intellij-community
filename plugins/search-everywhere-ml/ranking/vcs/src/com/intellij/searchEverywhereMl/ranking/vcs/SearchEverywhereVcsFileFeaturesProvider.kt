@@ -16,10 +16,10 @@ import com.intellij.searchEverywhereMl.ranking.vcs.SearchEverywhereVcsFileFeatur
 
 class SearchEverywhereVcsFileFeaturesProvider : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java) {
   object Fields {
-    val IS_IGNORED_DATA_KEY = EventFields.Boolean("isIgnored")
-    val IS_CHANGED_DATA_KEY = EventFields.Boolean("isChanged")
+    val IS_IGNORED_DATA_KEY = EventFields.Boolean("is_ignored")
+    val IS_CHANGED_DATA_KEY = EventFields.Boolean("is_changed")
     val FILE_STATUS_DATA_KEY = EventFields.String(
-      "fileStatus",
+      "file_status",
       listOf(
         "NOT_CHANGED", "NOT_CHANGED_IMMEDIATE", "NOT_CHANGED_RECURSIVE",
         "DELETED", "MODIFIED", "ADDED", "MERGED", "UNKNOWN",

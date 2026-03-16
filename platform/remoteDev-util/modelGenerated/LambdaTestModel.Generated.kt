@@ -27,13 +27,12 @@ class LambdaTestModel private constructor(
         
         override fun registerSerializersCore(serializers: ISerializers)  {
             val classLoader = javaClass.classLoader
-            serializers.register(LazyCompanionMarshaller(RdId(-3520458110972730548), classLoader, "com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeInfo"))
             serializers.register(LazyCompanionMarshaller(RdId(-3520458110972391976), classLoader, "com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType"))
             serializers.register(LazyCompanionMarshaller(RdId(-8183511780297815289), classLoader, "com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSessionStackTraceElement"))
             serializers.register(LazyCompanionMarshaller(RdId(-1877965166079974414), classLoader, "com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSessionExceptionCause"))
             serializers.register(LazyCompanionMarshaller(RdId(-1075846985405547849), classLoader, "com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSessionException"))
             serializers.register(LazyCompanionMarshaller(RdId(-3702464714964495074), classLoader, "com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestActionParameters"))
-            serializers.register(LazyCompanionMarshaller(RdId(8102378001204643169), classLoader, "com.intellij.remoteDev.tests.modelGenerated.LambdaRdSerializedLambdaParameters"))
+            serializers.register(LazyCompanionMarshaller(RdId(-8227259315004769232), classLoader, "com.intellij.remoteDev.tests.modelGenerated.LambdaRdSerialized"))
             serializers.register(LazyCompanionMarshaller(RdId(3210199037986225272), classLoader, "com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession"))
         }
         
@@ -56,7 +55,7 @@ class LambdaTestModel private constructor(
         
         private val __LambdaRdTestSessionNullableSerializer = LambdaRdTestSession.nullable()
         
-        const val serializationHash = 5786835075688093446L
+        const val serializationHash = 7766307017172391987L
         
     }
     override val serializersOwner: ISerializersOwner get() = LambdaTestModel
@@ -103,71 +102,6 @@ val IProtocol.lambdaTestModel get() = getOrCreateExtension(LambdaTestModel::clas
 /**
  * #### Generated from [LambdaTestModel.kt]
  */
-data class LambdaRdIdeInfo (
-    val id: String,
-    val ideType: LambdaRdIdeType
-) : IPrintable {
-    //companion
-    
-    companion object : IMarshaller<LambdaRdIdeInfo> {
-        override val _type: KClass<LambdaRdIdeInfo> = LambdaRdIdeInfo::class
-        override val id: RdId get() = RdId(-3520458110972730548)
-        
-        @Suppress("UNCHECKED_CAST")
-        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): LambdaRdIdeInfo  {
-            val id = buffer.readString()
-            val ideType = buffer.readEnum<LambdaRdIdeType>()
-            return LambdaRdIdeInfo(id, ideType)
-        }
-        
-        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdIdeInfo)  {
-            buffer.writeString(value.id)
-            buffer.writeEnum(value.ideType)
-        }
-        
-        
-    }
-    //fields
-    //methods
-    //initializer
-    //secondary constructor
-    //equals trait
-    override fun equals(other: Any?): Boolean  {
-        if (this === other) return true
-        if (other == null || other::class != this::class) return false
-        
-        other as LambdaRdIdeInfo
-        
-        if (id != other.id) return false
-        if (ideType != other.ideType) return false
-        
-        return true
-    }
-    //hash code trait
-    override fun hashCode(): Int  {
-        var __r = 0
-        __r = __r*31 + id.hashCode()
-        __r = __r*31 + ideType.hashCode()
-        return __r
-    }
-    //pretty print
-    override fun print(printer: PrettyPrinter)  {
-        printer.println("LambdaRdIdeInfo (")
-        printer.indent {
-            print("id = "); id.print(printer); println()
-            print("ideType = "); ideType.print(printer); println()
-        }
-        printer.print(")")
-    }
-    //deepClone
-    //contexts
-    //threading
-}
-
-
-/**
- * #### Generated from [LambdaTestModel.kt]
- */
 enum class LambdaRdIdeType {
     BACKEND, 
     FRONTEND, 
@@ -194,29 +128,39 @@ enum class LambdaRdIdeType {
 /**
  * #### Generated from [LambdaTestModel.kt]
  */
-data class LambdaRdSerializedLambdaParameters (
-    val clazzName: String,
-    val methodName: String,
-    val serializedDataBase64: String
+data class LambdaRdSerialized (
+    val stepName: String,
+    val serializedDataBase64: String,
+    val classPath: List<String>,
+    val parametersBase64: List<String>,
+    val globalTestScope: Boolean
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(stepName)
+        buffer.writeString(serializedDataBase64)
+        buffer.writeList(classPath) { v -> buffer.writeString(v) }
+        buffer.writeList(parametersBase64) { v -> buffer.writeString(v) }
+        buffer.writeBool(globalTestScope)
+    }
     //companion
     
-    companion object : IMarshaller<LambdaRdSerializedLambdaParameters> {
-        override val _type: KClass<LambdaRdSerializedLambdaParameters> = LambdaRdSerializedLambdaParameters::class
-        override val id: RdId get() = RdId(8102378001204643169)
+    companion object : IMarshaller<LambdaRdSerialized> {
+        override val _type: KClass<LambdaRdSerialized> = LambdaRdSerialized::class
+        override val id: RdId get() = RdId(-8227259315004769232)
         
         @Suppress("UNCHECKED_CAST")
-        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): LambdaRdSerializedLambdaParameters  {
-            val clazzName = buffer.readString()
-            val methodName = buffer.readString()
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): LambdaRdSerialized  {
+            val stepName = buffer.readString()
             val serializedDataBase64 = buffer.readString()
-            return LambdaRdSerializedLambdaParameters(clazzName, methodName, serializedDataBase64)
+            val classPath = buffer.readList { buffer.readString() }
+            val parametersBase64 = buffer.readList { buffer.readString() }
+            val globalTestScope = buffer.readBool()
+            return LambdaRdSerialized(stepName, serializedDataBase64, classPath, parametersBase64, globalTestScope)
         }
         
-        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdSerializedLambdaParameters)  {
-            buffer.writeString(value.clazzName)
-            buffer.writeString(value.methodName)
-            buffer.writeString(value.serializedDataBase64)
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdSerialized)  {
+            value.write(ctx, buffer)
         }
         
         
@@ -230,29 +174,35 @@ data class LambdaRdSerializedLambdaParameters (
         if (this === other) return true
         if (other == null || other::class != this::class) return false
         
-        other as LambdaRdSerializedLambdaParameters
+        other as LambdaRdSerialized
         
-        if (clazzName != other.clazzName) return false
-        if (methodName != other.methodName) return false
+        if (stepName != other.stepName) return false
         if (serializedDataBase64 != other.serializedDataBase64) return false
+        if (classPath != other.classPath) return false
+        if (parametersBase64 != other.parametersBase64) return false
+        if (globalTestScope != other.globalTestScope) return false
         
         return true
     }
     //hash code trait
     override fun hashCode(): Int  {
         var __r = 0
-        __r = __r*31 + clazzName.hashCode()
-        __r = __r*31 + methodName.hashCode()
+        __r = __r*31 + stepName.hashCode()
         __r = __r*31 + serializedDataBase64.hashCode()
+        __r = __r*31 + classPath.hashCode()
+        __r = __r*31 + parametersBase64.hashCode()
+        __r = __r*31 + globalTestScope.hashCode()
         return __r
     }
     //pretty print
     override fun print(printer: PrettyPrinter)  {
-        printer.println("LambdaRdSerializedLambdaParameters (")
+        printer.println("LambdaRdSerialized (")
         printer.indent {
-            print("clazzName = "); clazzName.print(printer); println()
-            print("methodName = "); methodName.print(printer); println()
+            print("stepName = "); stepName.print(printer); println()
             print("serializedDataBase64 = "); serializedDataBase64.print(printer); println()
+            print("classPath = "); classPath.print(printer); println()
+            print("parametersBase64 = "); parametersBase64.print(printer); println()
+            print("globalTestScope = "); globalTestScope.print(printer); println()
         }
         printer.print(")")
     }
@@ -267,8 +217,17 @@ data class LambdaRdSerializedLambdaParameters (
  */
 data class LambdaRdTestActionParameters (
     val reference: String,
-    val parameters: List<String>?
+    val testClass: String,
+    val testMethod: String,
+    val methodArgumentssBase64: List<String>
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(reference)
+        buffer.writeString(testClass)
+        buffer.writeString(testMethod)
+        buffer.writeList(methodArgumentssBase64) { v -> buffer.writeString(v) }
+    }
     //companion
     
     companion object : IMarshaller<LambdaRdTestActionParameters> {
@@ -278,13 +237,14 @@ data class LambdaRdTestActionParameters (
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): LambdaRdTestActionParameters  {
             val reference = buffer.readString()
-            val parameters = buffer.readNullable { buffer.readList { buffer.readString() } }
-            return LambdaRdTestActionParameters(reference, parameters)
+            val testClass = buffer.readString()
+            val testMethod = buffer.readString()
+            val methodArgumentssBase64 = buffer.readList { buffer.readString() }
+            return LambdaRdTestActionParameters(reference, testClass, testMethod, methodArgumentssBase64)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdTestActionParameters)  {
-            buffer.writeString(value.reference)
-            buffer.writeNullable(value.parameters) { buffer.writeList(it) { v -> buffer.writeString(v) } }
+            value.write(ctx, buffer)
         }
         
         
@@ -301,7 +261,9 @@ data class LambdaRdTestActionParameters (
         other as LambdaRdTestActionParameters
         
         if (reference != other.reference) return false
-        if (parameters != other.parameters) return false
+        if (testClass != other.testClass) return false
+        if (testMethod != other.testMethod) return false
+        if (methodArgumentssBase64 != other.methodArgumentssBase64) return false
         
         return true
     }
@@ -309,7 +271,9 @@ data class LambdaRdTestActionParameters (
     override fun hashCode(): Int  {
         var __r = 0
         __r = __r*31 + reference.hashCode()
-        __r = __r*31 + if (parameters != null) parameters.hashCode() else 0
+        __r = __r*31 + testClass.hashCode()
+        __r = __r*31 + testMethod.hashCode()
+        __r = __r*31 + methodArgumentssBase64.hashCode()
         return __r
     }
     //pretty print
@@ -317,7 +281,9 @@ data class LambdaRdTestActionParameters (
         printer.println("LambdaRdTestActionParameters (")
         printer.indent {
             print("reference = "); reference.print(printer); println()
-            print("parameters = "); parameters.print(printer); println()
+            print("testClass = "); testClass.print(printer); println()
+            print("testMethod = "); testMethod.print(printer); println()
+            print("methodArgumentssBase64 = "); methodArgumentssBase64.print(printer); println()
         }
         printer.print(")")
     }
@@ -331,20 +297,31 @@ data class LambdaRdTestActionParameters (
  * #### Generated from [LambdaTestModel.kt]
  */
 class LambdaRdTestSession private constructor(
-    val rdIdeInfo: LambdaRdIdeInfo,
+    val rdIdeType: LambdaRdIdeType,
     private val _ready: RdProperty<Boolean?>,
     private val _sendException: RdSignal<LambdaRdTestSessionException>,
-    private val _closeAllOpenedProjects: RdCall<Unit, Boolean>,
     private val _runLambda: RdCall<LambdaRdTestActionParameters, Unit>,
-    private val _runSerializedLambda: RdCall<LambdaRdSerializedLambdaParameters, Unit>,
-    private val _requestFocus: RdCall<Boolean, Boolean>,
-    private val _isFocused: RdCall<Unit, Boolean>,
-    private val _visibleFrameNames: RdCall<Unit, List<String>>,
-    private val _projectsNames: RdCall<Unit, List<String>>,
-    private val _makeScreenshot: RdCall<String, Boolean>,
-    private val _isResponding: RdCall<Unit, Boolean>,
-    private val _projectsAreInitialised: RdCall<Unit, Boolean>
+    private val _runSerializedLambda: RdCall<LambdaRdSerialized, String>,
+    private val _beforeEach: RdCall<String, Unit>,
+    private val _beforeAll: RdCall<String, Unit>,
+    private val _afterEach: RdCall<String, Unit>,
+    private val _afterAll: RdCall<String, Unit>,
+    private val _isResponding: RdCall<Unit, Boolean>
 ) : RdBindableBase() {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        buffer.writeEnum(rdIdeType)
+        RdProperty.write(ctx, buffer, _ready)
+        RdSignal.write(ctx, buffer, _sendException)
+        RdCall.write(ctx, buffer, _runLambda)
+        RdCall.write(ctx, buffer, _runSerializedLambda)
+        RdCall.write(ctx, buffer, _beforeEach)
+        RdCall.write(ctx, buffer, _beforeAll)
+        RdCall.write(ctx, buffer, _afterEach)
+        RdCall.write(ctx, buffer, _afterAll)
+        RdCall.write(ctx, buffer, _isResponding)
+    }
     //companion
     
     companion object : IMarshaller<LambdaRdTestSession> {
@@ -354,56 +331,36 @@ class LambdaRdTestSession private constructor(
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): LambdaRdTestSession  {
             val _id = RdId.read(buffer)
-            val rdIdeInfo = LambdaRdIdeInfo.read(ctx, buffer)
+            val rdIdeType = buffer.readEnum<LambdaRdIdeType>()
             val _ready = RdProperty.read(ctx, buffer, __BoolNullableSerializer)
             val _sendException = RdSignal.read(ctx, buffer, LambdaRdTestSessionException)
-            val _closeAllOpenedProjects = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _runLambda = RdCall.read(ctx, buffer, LambdaRdTestActionParameters, FrameworkMarshallers.Void)
-            val _runSerializedLambda = RdCall.read(ctx, buffer, LambdaRdSerializedLambdaParameters, FrameworkMarshallers.Void)
-            val _requestFocus = RdCall.read(ctx, buffer, FrameworkMarshallers.Bool, FrameworkMarshallers.Bool)
-            val _isFocused = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
-            val _visibleFrameNames = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, __StringListSerializer)
-            val _projectsNames = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, __StringListSerializer)
-            val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
+            val _runSerializedLambda = RdCall.read(ctx, buffer, LambdaRdSerialized, FrameworkMarshallers.String)
+            val _beforeEach = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Void)
+            val _beforeAll = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Void)
+            val _afterEach = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Void)
+            val _afterAll = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Void)
             val _isResponding = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
-            val _projectsAreInitialised = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
-            return LambdaRdTestSession(rdIdeInfo, _ready, _sendException, _closeAllOpenedProjects, _runLambda, _runSerializedLambda, _requestFocus, _isFocused, _visibleFrameNames, _projectsNames, _makeScreenshot, _isResponding, _projectsAreInitialised).withId(_id)
+            return LambdaRdTestSession(rdIdeType, _ready, _sendException, _runLambda, _runSerializedLambda, _beforeEach, _beforeAll, _afterEach, _afterAll, _isResponding).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdTestSession)  {
-            value.rdid.write(buffer)
-            LambdaRdIdeInfo.write(ctx, buffer, value.rdIdeInfo)
-            RdProperty.write(ctx, buffer, value._ready)
-            RdSignal.write(ctx, buffer, value._sendException)
-            RdCall.write(ctx, buffer, value._closeAllOpenedProjects)
-            RdCall.write(ctx, buffer, value._runLambda)
-            RdCall.write(ctx, buffer, value._runSerializedLambda)
-            RdCall.write(ctx, buffer, value._requestFocus)
-            RdCall.write(ctx, buffer, value._isFocused)
-            RdCall.write(ctx, buffer, value._visibleFrameNames)
-            RdCall.write(ctx, buffer, value._projectsNames)
-            RdCall.write(ctx, buffer, value._makeScreenshot)
-            RdCall.write(ctx, buffer, value._isResponding)
-            RdCall.write(ctx, buffer, value._projectsAreInitialised)
+            value.write(ctx, buffer)
         }
         
         private val __BoolNullableSerializer = FrameworkMarshallers.Bool.nullable()
-        private val __StringListSerializer = FrameworkMarshallers.String.list()
         
     }
     //fields
     val ready: IProperty<Boolean?> get() = _ready
     val sendException: IAsyncSignal<LambdaRdTestSessionException> get() = _sendException
-    val closeAllOpenedProjects: RdCall<Unit, Boolean> get() = _closeAllOpenedProjects
     val runLambda: RdCall<LambdaRdTestActionParameters, Unit> get() = _runLambda
-    val runSerializedLambda: RdCall<LambdaRdSerializedLambdaParameters, Unit> get() = _runSerializedLambda
-    val requestFocus: RdCall<Boolean, Boolean> get() = _requestFocus
-    val isFocused: RdCall<Unit, Boolean> get() = _isFocused
-    val visibleFrameNames: RdCall<Unit, List<String>> get() = _visibleFrameNames
-    val projectsNames: RdCall<Unit, List<String>> get() = _projectsNames
-    val makeScreenshot: RdCall<String, Boolean> get() = _makeScreenshot
+    val runSerializedLambda: RdCall<LambdaRdSerialized, String> get() = _runSerializedLambda
+    val beforeEach: RdCall<String, Unit> get() = _beforeEach
+    val beforeAll: RdCall<String, Unit> get() = _beforeAll
+    val afterEach: RdCall<String, Unit> get() = _afterEach
+    val afterAll: RdCall<String, Unit> get() = _afterAll
     val isResponding: RdCall<Unit, Boolean> get() = _isResponding
-    val projectsAreInitialised: RdCall<Unit, Boolean> get() = _projectsAreInitialised
     //methods
     //initializer
     init {
@@ -412,49 +369,40 @@ class LambdaRdTestSession private constructor(
     
     init {
         _sendException.async = true
-        _closeAllOpenedProjects.async = true
         _runLambda.async = true
         _runSerializedLambda.async = true
-        _requestFocus.async = true
-        _isFocused.async = true
-        _visibleFrameNames.async = true
-        _projectsNames.async = true
-        _makeScreenshot.async = true
+        _beforeEach.async = true
+        _beforeAll.async = true
+        _afterEach.async = true
+        _afterAll.async = true
         _isResponding.async = true
-        _projectsAreInitialised.async = true
     }
     
     init {
         bindableChildren.add("ready" to _ready)
         bindableChildren.add("sendException" to _sendException)
-        bindableChildren.add("closeAllOpenedProjects" to _closeAllOpenedProjects)
         bindableChildren.add("runLambda" to _runLambda)
         bindableChildren.add("runSerializedLambda" to _runSerializedLambda)
-        bindableChildren.add("requestFocus" to _requestFocus)
-        bindableChildren.add("isFocused" to _isFocused)
-        bindableChildren.add("visibleFrameNames" to _visibleFrameNames)
-        bindableChildren.add("projectsNames" to _projectsNames)
-        bindableChildren.add("makeScreenshot" to _makeScreenshot)
+        bindableChildren.add("beforeEach" to _beforeEach)
+        bindableChildren.add("beforeAll" to _beforeAll)
+        bindableChildren.add("afterEach" to _afterEach)
+        bindableChildren.add("afterAll" to _afterAll)
         bindableChildren.add("isResponding" to _isResponding)
-        bindableChildren.add("projectsAreInitialised" to _projectsAreInitialised)
     }
     
     //secondary constructor
     constructor(
-        rdIdeInfo: LambdaRdIdeInfo
+        rdIdeType: LambdaRdIdeType
     ) : this(
-        rdIdeInfo,
+        rdIdeType,
         RdProperty<Boolean?>(null, __BoolNullableSerializer),
         RdSignal<LambdaRdTestSessionException>(LambdaRdTestSessionException),
-        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<LambdaRdTestActionParameters, Unit>(LambdaRdTestActionParameters, FrameworkMarshallers.Void),
-        RdCall<LambdaRdSerializedLambdaParameters, Unit>(LambdaRdSerializedLambdaParameters, FrameworkMarshallers.Void),
-        RdCall<Boolean, Boolean>(FrameworkMarshallers.Bool, FrameworkMarshallers.Bool),
-        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
-        RdCall<Unit, List<String>>(FrameworkMarshallers.Void, __StringListSerializer),
-        RdCall<Unit, List<String>>(FrameworkMarshallers.Void, __StringListSerializer),
-        RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool),
-        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
+        RdCall<LambdaRdSerialized, String>(LambdaRdSerialized, FrameworkMarshallers.String),
+        RdCall<String, Unit>(FrameworkMarshallers.String, FrameworkMarshallers.Void),
+        RdCall<String, Unit>(FrameworkMarshallers.String, FrameworkMarshallers.Void),
+        RdCall<String, Unit>(FrameworkMarshallers.String, FrameworkMarshallers.Void),
+        RdCall<String, Unit>(FrameworkMarshallers.String, FrameworkMarshallers.Void),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
     )
     
@@ -464,38 +412,32 @@ class LambdaRdTestSession private constructor(
     override fun print(printer: PrettyPrinter)  {
         printer.println("LambdaRdTestSession (")
         printer.indent {
-            print("rdIdeInfo = "); rdIdeInfo.print(printer); println()
+            print("rdIdeType = "); rdIdeType.print(printer); println()
             print("ready = "); _ready.print(printer); println()
             print("sendException = "); _sendException.print(printer); println()
-            print("closeAllOpenedProjects = "); _closeAllOpenedProjects.print(printer); println()
             print("runLambda = "); _runLambda.print(printer); println()
             print("runSerializedLambda = "); _runSerializedLambda.print(printer); println()
-            print("requestFocus = "); _requestFocus.print(printer); println()
-            print("isFocused = "); _isFocused.print(printer); println()
-            print("visibleFrameNames = "); _visibleFrameNames.print(printer); println()
-            print("projectsNames = "); _projectsNames.print(printer); println()
-            print("makeScreenshot = "); _makeScreenshot.print(printer); println()
+            print("beforeEach = "); _beforeEach.print(printer); println()
+            print("beforeAll = "); _beforeAll.print(printer); println()
+            print("afterEach = "); _afterEach.print(printer); println()
+            print("afterAll = "); _afterAll.print(printer); println()
             print("isResponding = "); _isResponding.print(printer); println()
-            print("projectsAreInitialised = "); _projectsAreInitialised.print(printer); println()
         }
         printer.print(")")
     }
     //deepClone
     override fun deepClone(): LambdaRdTestSession   {
         return LambdaRdTestSession(
-            rdIdeInfo,
+            rdIdeType,
             _ready.deepClonePolymorphic(),
             _sendException.deepClonePolymorphic(),
-            _closeAllOpenedProjects.deepClonePolymorphic(),
             _runLambda.deepClonePolymorphic(),
             _runSerializedLambda.deepClonePolymorphic(),
-            _requestFocus.deepClonePolymorphic(),
-            _isFocused.deepClonePolymorphic(),
-            _visibleFrameNames.deepClonePolymorphic(),
-            _projectsNames.deepClonePolymorphic(),
-            _makeScreenshot.deepClonePolymorphic(),
-            _isResponding.deepClonePolymorphic(),
-            _projectsAreInitialised.deepClonePolymorphic()
+            _beforeEach.deepClonePolymorphic(),
+            _beforeAll.deepClonePolymorphic(),
+            _afterEach.deepClonePolymorphic(),
+            _afterAll.deepClonePolymorphic(),
+            _isResponding.deepClonePolymorphic()
         )
     }
     //contexts
@@ -513,6 +455,14 @@ data class LambdaRdTestSessionException (
     val stacktrace: List<LambdaRdTestSessionStackTraceElement>,
     val cause: LambdaRdTestSessionExceptionCause?
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(type)
+        buffer.writeNullable(originalType) { buffer.writeString(it) }
+        buffer.writeNullable(message) { buffer.writeString(it) }
+        buffer.writeList(stacktrace) { v -> LambdaRdTestSessionStackTraceElement.write(ctx, buffer, v) }
+        buffer.writeNullable(cause) { LambdaRdTestSessionExceptionCause.write(ctx, buffer, it) }
+    }
     //companion
     
     companion object : IMarshaller<LambdaRdTestSessionException> {
@@ -530,11 +480,7 @@ data class LambdaRdTestSessionException (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdTestSessionException)  {
-            buffer.writeString(value.type)
-            buffer.writeNullable(value.originalType) { buffer.writeString(it) }
-            buffer.writeNullable(value.message) { buffer.writeString(it) }
-            buffer.writeList(value.stacktrace) { v -> LambdaRdTestSessionStackTraceElement.write(ctx, buffer, v) }
-            buffer.writeNullable(value.cause) { LambdaRdTestSessionExceptionCause.write(ctx, buffer, it) }
+            value.write(ctx, buffer)
         }
         
         
@@ -594,6 +540,12 @@ data class LambdaRdTestSessionExceptionCause (
     val message: String?,
     val stacktrace: List<LambdaRdTestSessionStackTraceElement>
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(type)
+        buffer.writeNullable(message) { buffer.writeString(it) }
+        buffer.writeList(stacktrace) { v -> LambdaRdTestSessionStackTraceElement.write(ctx, buffer, v) }
+    }
     //companion
     
     companion object : IMarshaller<LambdaRdTestSessionExceptionCause> {
@@ -609,9 +561,7 @@ data class LambdaRdTestSessionExceptionCause (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdTestSessionExceptionCause)  {
-            buffer.writeString(value.type)
-            buffer.writeNullable(value.message) { buffer.writeString(it) }
-            buffer.writeList(value.stacktrace) { v -> LambdaRdTestSessionStackTraceElement.write(ctx, buffer, v) }
+            value.write(ctx, buffer)
         }
         
         
@@ -666,6 +616,13 @@ data class LambdaRdTestSessionStackTraceElement (
     val fileName: String,
     val lineNumber: Int
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(declaringClass)
+        buffer.writeString(methodName)
+        buffer.writeString(fileName)
+        buffer.writeInt(lineNumber)
+    }
     //companion
     
     companion object : IMarshaller<LambdaRdTestSessionStackTraceElement> {
@@ -682,10 +639,7 @@ data class LambdaRdTestSessionStackTraceElement (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdTestSessionStackTraceElement)  {
-            buffer.writeString(value.declaringClass)
-            buffer.writeString(value.methodName)
-            buffer.writeString(value.fileName)
-            buffer.writeInt(value.lineNumber)
+            value.write(ctx, buffer)
         }
         
         

@@ -53,9 +53,9 @@ public class AnnotateRevisionFromHistoryAction extends FileHistoryMetadataAction
     VirtualFile vcsVirtualFile = FileHistoryUtil.createVcsVirtualFile(revision);
 
     if (!VcsHistoryUtil.isEmpty(revision) && vcsVirtualFile != null) {
-      AnnotateRevisionActionBase.annotate(vcsVirtualFile, revision,
-                                          Objects.requireNonNull(VcsUtil.findVcsByKey(project, vcsKey)),
-                                          null, 0);
+      AnnotateRevisionActionBase.annotateAsync(vcsVirtualFile, revision,
+                                               Objects.requireNonNull(VcsUtil.findVcsByKey(project, vcsKey)),
+                                               null, 0);
     }
   }
 }

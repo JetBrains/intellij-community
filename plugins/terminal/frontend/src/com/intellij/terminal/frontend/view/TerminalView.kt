@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.terminal.TerminalTitle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
@@ -67,6 +68,20 @@ interface TerminalView {
    * Represents the current state of the connection to the shell process.
    */
   val sessionState: StateFlow<TerminalViewSessionState>
+
+  /**
+   * Flow of key events that are typed in the terminal.
+   * Events consumed by the action system are not included here.
+   *
+   * Each key event is emitted after sending input to the shell process.
+   * Note that [TerminalOutputModel] is updated asynchronously after shell receives the input and updates the screen text.
+   * So, when collecting this flow, the result of typing may not be reflected in the [TerminalOutputModel] yet.
+   *
+   * If you need to perform some action on some specific shortcut,
+   * prefer implementing [com.intellij.openapi.actionSystem.AnAction] and registering it using [TerminalAllowedActionsProvider]
+   * instead of handling key events directly.
+   */
+  val keyEventsFlow: Flow<TerminalKeyEvent>
 
   /**
    * Can be used to get or await the shell integration initialization.

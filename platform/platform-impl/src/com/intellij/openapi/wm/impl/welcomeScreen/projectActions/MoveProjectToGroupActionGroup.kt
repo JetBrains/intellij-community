@@ -2,7 +2,11 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.projectActions
 
 import com.intellij.ide.RecentProjectsManager
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RecentProjectsWelcomeScreenActionBase.Companion.getSelectedItems

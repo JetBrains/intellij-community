@@ -6,6 +6,10 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentAutoImpor
 import java.nio.file.Paths
 
 abstract class AbstractK2CodeFragmentAutoImportTest : AbstractCodeFragmentAutoImportTest() {
+    override fun configureByCodeFragment(filePath: String) {
+        myFixture.configureByK2ModeCodeFragment(filePath)
+    }
+
     override fun doTest(filePath: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             Paths.get(filePath),

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.mutability
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundType
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeCalculatorImpl
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 
+@K1Deprecation
 class MutabilityBoundTypeCalculator(
     private val resolutionFacade: ResolutionFacade,
     enhancer: BoundTypeEnhancer

@@ -16,7 +16,11 @@ import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
+import javax.swing.UIManager
 import javax.swing.plaf.ComponentUI
 import javax.swing.plaf.basic.BasicHTML
 import javax.swing.text.BadLocationException

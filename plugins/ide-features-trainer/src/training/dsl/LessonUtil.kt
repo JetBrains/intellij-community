@@ -13,6 +13,7 @@ import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings
 import com.intellij.find.impl.FindPopupItem
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.util.gotoByName.QuickSearchComponent
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -53,7 +54,6 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.content.Content
-import com.intellij.ui.searchComponents.ExtendableSearchTextField
 import com.intellij.usageView.UsageViewContentManager
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.UIUtil
@@ -72,8 +72,14 @@ import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
-import training.ui.*
+import training.ui.LEARN_TOOL_WINDOW_ID
+import training.ui.LearningUiHighlightingManager
+import training.ui.LearningUiManager
+import training.ui.LearningUiUtil
 import training.ui.LearningUiUtil.findComponentWithTimeout
+import training.ui.LessonMessagePane
+import training.ui.UISettings
+import training.ui.showOnboardingFeedbackNotification
 import training.util.LessonEndInfo
 import training.util.getActionById
 import training.util.learningToolWindow
@@ -84,7 +90,7 @@ import java.awt.Rectangle
 import java.awt.Window
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.JComponent
@@ -243,8 +249,16 @@ object LessonUtil {
     return change.replace(" ", "") == needChange
   }
 
-  fun TaskRuntimeContext.checkInsideSearchEverywhere(): Boolean {
-    return UIUtil.getParentOfType(ExtendableSearchTextField::class.java, focusOwner) != null
+  /**
+   * The check is intended to cover two cases:
+   * 1. `com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI`
+   * 2. `com.intellij.platform.searchEverywhere.frontend.ui.SePopupContentPane` (new Search Everywhere)
+   *
+   * Have to use `QuickSearchComponent` for matching here,
+   * because can't reference `SePopupContentPane` directly (it requires adding a dependency on SE frontend).
+   */
+  fun TaskRuntimeContext.checkInsideSearchEverywhere(component: Component? = focusOwner): Boolean {
+    return UIUtil.getParentOfType(QuickSearchComponent::class.java, component) != null
   }
 
   fun isMainEditorComponent(component: Component?): Boolean {

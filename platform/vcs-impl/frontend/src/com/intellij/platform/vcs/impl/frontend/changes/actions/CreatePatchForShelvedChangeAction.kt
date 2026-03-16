@@ -5,11 +5,11 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.platform.vcs.impl.frontend.changes.CHANGE_LISTS_KEY
 import com.intellij.platform.vcs.impl.frontend.changes.ChangeList
 import com.intellij.platform.vcs.impl.frontend.shelf.ShelfService
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.ShelfTree
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

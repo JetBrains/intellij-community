@@ -8,6 +8,7 @@ import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalSizeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.toDto
 import org.jetbrains.plugins.terminal.session.impl.dto.toTermSize
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 
 /**
  * DTO for [org.jetbrains.plugins.terminal.ShellStartupOptions].
@@ -21,6 +22,7 @@ data class ShellStartupOptionsDto(
   @Contextual
   val initialTermSize: TerminalSizeDto?,
   val envVariables: Map<String, String>,
+  val processType: TerminalProcessType,
 )
 
 @ApiStatus.Internal
@@ -30,6 +32,7 @@ fun ShellStartupOptions.toDto(): ShellStartupOptionsDto {
     shellCommand,
     initialTermSize?.toDto(),
     envVariables,
+    processType,
   )
 }
 
@@ -40,5 +43,6 @@ fun ShellStartupOptionsDto.toShellStartupOptions(): ShellStartupOptions {
     .shellCommand(shellCommand)
     .initialTermSize(initialTermSize?.toTermSize())
     .envVariables(envVariables)
+    .processType(processType)
     .build()
 }

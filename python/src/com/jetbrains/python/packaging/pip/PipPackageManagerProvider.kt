@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @ApiStatus.Internal
 class PipPackageManagerProvider : PythonPackageManagerProvider {
-  override suspend fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager {
+  override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager {
     return PipPythonPackageManager(project, sdk)
   }
 }

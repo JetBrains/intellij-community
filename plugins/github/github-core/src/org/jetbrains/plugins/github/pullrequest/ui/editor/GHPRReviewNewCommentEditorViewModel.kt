@@ -4,10 +4,11 @@ package org.jetbrains.plugins.github.pullrequest.ui.editor
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModel
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.diff.DiffLineRange
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.filePath
 import com.intellij.collaboration.util.getOrNull
-import com.intellij.diff.util.LineRange
 import com.intellij.openapi.project.Project
 import com.intellij.util.asSafely
 import com.intellij.vcsUtil.VcsFileUtil.relativePath
@@ -40,7 +41,7 @@ interface GHPRReviewNewCommentEditorViewModel : CodeReviewSubmittableTextViewMod
   val submitActions: StateFlow<List<SubmitAction>>
 
   fun cancel()
-  fun updateLineRange(range: LineRange?)
+  fun updateLineRange(newStartLocation: DiffLineLocation?, newEndLocation: DiffLineLocation?)
 
   sealed interface SubmitAction : () -> Unit {
     fun interface CreateSingleComment : SubmitAction
@@ -65,19 +66,27 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
   private val changesState: StateFlow<ComputedResult<GitBranchComparisonResult>> =
     dataProvider.changesData.changesComputationState().stateInNow(cs, ComputedResult.loading())
 
-  private val side = pos.location.side
   private val change = pos.change
   private val _position: MutableStateFlow<GHPRReviewCommentPosition> = MutableStateFlow(pos)
   override val position: StateFlow<GHPRReviewCommentPosition> = _position.asStateFlow()
 
-  override fun updateLineRange(range: LineRange?) {
-    if (range == null) return
-    _position.value = if (range.start == range.end) {
-      GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.SingleLine(side, range.end))
+  override fun updateLineRange(newStartLocation: DiffLineLocation?, newEndLocation: DiffLineLocation?) {
+    val (oldStartLocation, oldEndLocation) = when (val location = position.value.location) {
+      is GHPRReviewCommentLocation.SingleLine -> (location.side to location.lineIdx).let { DiffLineRange(it, it) }
+      is GHPRReviewCommentLocation.MultiLine -> DiffLineRange(DiffLineLocation(location.startSide, location.startLineIdx),
+                                                              DiffLineLocation(location.side, location.lineIdx))
+    }
+    val newRange = DiffLineRange(newStartLocation ?: oldStartLocation, newEndLocation ?: oldEndLocation)
+    _position.value = if (newRange.first.second == newRange.second.second) {
+      GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.SingleLine(newRange.second.first, newRange.second.second))
     }
     else {
-      GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.MultiLine(side, range.start, range.end))
+      GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.MultiLine(
+        newRange.first.first, newRange.first.second,
+        newRange.second.first, newRange.second.second)
+      )
     }
+    GHPRStatisticsCollector.logResizedComments(project)
   }
 
   private val pendingReviewState: StateFlow<ComputedResult<GHPullRequestPendingReview?>> =
@@ -134,8 +143,10 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
       val location = position.value.location
       val line = location.lineIdx.inc()
       if (isCumulative) {
-        val startLine = location.asSafely<GHPRReviewCommentLocation.MultiLine>()?.startLineIdx?.inc() ?: line
-        reviewDataProvider.createThread(reviewId, it, line, location.side, startLine, filePath)
+        val (startSide, startLine) = location.asSafely<GHPRReviewCommentLocation.MultiLine>().let {
+          (it?.startSide ?: location.side) to (it?.startLineIdx?.inc() ?: line)
+        }
+        reviewDataProvider.createThread(reviewId, it, line, location.side, startLine, startSide, filePath)
         if (startLine < line) {
           GHPRStatisticsCollector.logMultilineCommentsCreated(project)
         }
@@ -152,7 +163,7 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
     val filePath = relativePath(repository.root, position.value.change.filePath)
     return when (val location = position.value.location) {
       is GHPRReviewCommentLocation.MultiLine ->
-        GHPullRequestDraftReviewThread(body, location.lineIdx.inc(), filePath, location.side, location.startLineIdx.inc(), location.side)
+        GHPullRequestDraftReviewThread(body, location.lineIdx.inc(), filePath, location.side, location.startLineIdx.inc(), location.startSide)
       is GHPRReviewCommentLocation.SingleLine ->
         GHPullRequestDraftReviewThread(body, location.lineIdx.inc(), filePath, location.side, null, null)
     }

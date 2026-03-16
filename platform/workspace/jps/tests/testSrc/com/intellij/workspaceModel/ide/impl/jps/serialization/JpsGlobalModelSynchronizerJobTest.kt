@@ -1,12 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.platform.eel.EelMachine
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Semaphore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -27,7 +35,7 @@ private class TestableJpsGlobalModelSynchronizer(
   override val delayDuration: Duration
     get() = testDelayDuration
 
-  override suspend fun delayLoadGlobalWorkspaceModel(environmentName: InternalEnvironmentName) {
+  override suspend fun delayLoadGlobalWorkspaceModel(eelMachine: EelMachine, environmentName: InternalEnvironmentName) {
     onDelayLoadCalled()
     // skip the actual loading for the test
   }
@@ -78,6 +86,7 @@ class JpsGlobalModelSynchronizerJobTest {
 
     // Load initial state (this should trigger the delayed global loading)
     val callback = synchronizer.loadInitialState(
+      eelMachine = LocalEelMachine,
       environmentName = environmentName,
       mutableStorage = mutableStorage,
       initialEntityStorage = entityStorage,
@@ -155,6 +164,7 @@ class JpsGlobalModelSynchronizerJobTest {
 
     // Load initial state
     val callback = synchronizer.loadInitialState(
+      eelMachine = LocalEelMachine,
       environmentName = environmentName,
       mutableStorage = mutableStorage,
       initialEntityStorage = entityStorage,
@@ -196,6 +206,7 @@ class JpsGlobalModelSynchronizerJobTest {
 
     // Don't set any project synchronization job
     val callback = synchronizer.loadInitialState(
+      eelMachine = LocalEelMachine,
       environmentName = environmentName,
       mutableStorage = mutableStorage,
       initialEntityStorage = entityStorage,
@@ -250,6 +261,7 @@ class JpsGlobalModelSynchronizerJobTest {
 
     // Load initial state (this should trigger the delayed global loading)
     val callback = synchronizer.loadInitialState(
+      eelMachine = LocalEelMachine,
       environmentName = environmentName,
       mutableStorage = mutableStorage,
       initialEntityStorage = entityStorage,
@@ -321,6 +333,7 @@ class JpsGlobalModelSynchronizerJobTest {
 
     // Load initial state
     val callback = synchronizer.loadInitialState(
+      eelMachine = LocalEelMachine,
       environmentName = environmentName,
       mutableStorage = mutableStorage,
       initialEntityStorage = entityStorage,

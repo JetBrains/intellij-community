@@ -1,17 +1,24 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.SerializablePersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.XCollection
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
 @State(name = "ProjectRoots", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 @ApiStatus.Internal
-class ProjectRootPersistentStateComponent(val scope: CoroutineScope) :
-  SerializablePersistentStateComponent<ProjectRootPersistentStateComponent.State>(State()) {
+class ProjectRootPersistentStateComponent : SerializablePersistentStateComponent<ProjectRootPersistentStateComponent.State>(State()) {
+  fun addProjectRoot(projectRootUrl: String) {
+    updateState {
+      it.copy(projectRootUrls = it.projectRootUrls + projectRootUrl)
+    }
+  }
 
   var projectRootUrls: List<String>
     get() = state.projectRootUrls

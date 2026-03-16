@@ -1,4 +1,3 @@
-// "Remove variable 'a'" "true"
+// "Remove variable 'a' (may change semantics)" "true"
 fun test() {
-    { s: String -> s + s }
 }

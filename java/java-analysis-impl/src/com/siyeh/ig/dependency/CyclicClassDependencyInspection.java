@@ -16,7 +16,11 @@
 package com.siyeh.ig.dependency;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;

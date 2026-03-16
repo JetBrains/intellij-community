@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.completion;
 
@@ -50,16 +50,6 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
         @TestMetadata("AfterClasses.kt")
         public void testAfterClasses() throws Exception {
             runTest("../../completion/testData/keywords/AfterClasses.kt");
-        }
-
-        @TestMetadata("AfterClasses_LangLevel10.kt")
-        public void testAfterClasses_LangLevel10() throws Exception {
-            runTest("../../completion/testData/keywords/AfterClasses_LangLevel10.kt");
-        }
-
-        @TestMetadata("AfterClasses_LangLevel11.kt")
-        public void testAfterClasses_LangLevel11() throws Exception {
-            runTest("../../completion/testData/keywords/AfterClasses_LangLevel11.kt");
         }
 
         @TestMetadata("AfterDot.kt")

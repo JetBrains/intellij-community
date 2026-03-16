@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleTooling
 
+import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry
 import org.gradle.api.Project
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.Message
@@ -28,12 +29,14 @@ class KotlinMPPGradleModelBinaryBuilder : AbstractModelBuilderService() {
             modelName = KotlinMPPGradleModel::class.java.name, project, context
         ) ?: return null
 
-        val serializedModel = ByteArrayOutputStream().use { baos ->
-            ObjectOutputStream(baos).use { oos -> oos.writeObject(model) }
-            baos.toByteArray()
-        }
+        return GradleOpenTelemetry.callWithSpan("kotlin_import_daemon_mpp_binary_buildAll") {
+            val serializedModel = ByteArrayOutputStream().use { baos ->
+                ObjectOutputStream(baos).use { oos -> oos.writeObject(model) }
+                baos.toByteArray()
+            }
 
-        return KotlinMPPGradleModelBinaryImpl(serializedModel)
+            KotlinMPPGradleModelBinaryImpl(serializedModel)
+        }
     }
 
     override fun reportErrorMessage(modelName: String, project: Project, context: ModelBuilderContext, exception: Exception) {

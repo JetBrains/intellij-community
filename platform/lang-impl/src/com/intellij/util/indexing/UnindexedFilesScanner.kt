@@ -1,12 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readActionUndispatched
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.FilesScanningTask
 import com.intellij.openapi.project.InitialVfsRefreshService
@@ -32,12 +36,18 @@ import com.intellij.util.gist.GistManagerImpl
 import com.intellij.util.indexing.FilesFilterScanningHandler.IdleFilesFilterScanningHandler
 import com.intellij.util.indexing.FilesFilterScanningHandler.UpdatingFilesFilterScanningHandler
 import com.intellij.util.indexing.IndexingProgressReporter.CheckPauseOnlyProgressIndicator
+import com.intellij.util.indexing.UnindexedFilesScanner.Companion.SCANNING_DISPATCHER
+import com.intellij.util.indexing.UnindexedFilesScanner.Companion.SCANNING_PARALLELISM
 import com.intellij.util.indexing.dependencies.FileIndexingStamp
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import com.intellij.util.indexing.dependencies.ScanningRequestToken
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark
-import com.intellij.util.indexing.diagnostic.*
+import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
+import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
+import com.intellij.util.indexing.diagnostic.ProjectScanningHistoryImpl
+import com.intellij.util.indexing.diagnostic.ScanningStatistics
+import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.roots.IndexableFileScanner
 import com.intellij.util.indexing.roots.IndexableFileScanner.ScanSession
@@ -47,7 +57,15 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.SdkOrigin
 import com.intellij.util.indexing.roots.origin.GenericContentEntityOrigin
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -79,10 +97,28 @@ class ScanningIterators(
   }
 }
 
+/**
+ * A task in [UnindexedFilesScannerExecutor]: (re-)scan files to index.
+ * Typical usage is `UnindexedFilesScanner(...).queue()` -- submits the `UnindexedFilesScanner` as a task into a shared
+ * [UnindexedFilesScannerExecutor], don't wait, return a [Future] to control async execution.
+ *
+ * By default, files to scan are defined in [FileBasedIndexImpl.getIndexableFilesProviders] (=project's indexable files), but
+ * could be overriden with [ScanningParameters], see [ScanningIterators.predefinedIndexableFilesIterators].
+ *
+ * [com.intellij.openapi.roots.impl.FilePropertyPusher]s are applied to the scanned files, before enqueueing them into
+ * [PerProjectIndexingQueue]
+ *
+ * Scanning is done in [SCANNING_PARALLELISM] parallel workers, on [SCANNING_DISPATCHER].
+ *
+ * BEWARE: Scanner implements [Closeable], but usually it doesn't need try-with-resources, because [close] actually called async,
+ * while processed by [UnindexedFilesScannerExecutor]. The only case there [close] should be called explicitly is when the scanner
+ * object is created, but does NOT [queue]-ed.
+ * MAYBE RC: drop Closeable, just leave [close] method? -- avoids 'Closeable without try-w-resources' inspection warnings
+ */
 @ApiStatus.Internal
 class UnindexedFilesScanner (
-  private val myProject: Project,
-  private val myOnProjectOpen: Boolean,
+  private val project: Project,
+  private val onProjectOpen: Boolean,
   isIndexingFilesFilterUpToDate: Boolean,
   private val startCondition: Future<*>?,
   private val shouldHideProgressInSmartMode: Boolean? = null,
@@ -95,14 +131,14 @@ class UnindexedFilesScanner (
     PUSHING, PUSHING_AND_SCANNING
   }
 
-  private val myIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
-  private val myFilterHandler: FilesFilterScanningHandler
-  private val taskToken = myProject.getService(ProjectIndexingDependenciesService::class.java).newIncompleteTaskToken()
+  private val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+  private val filterHandler: FilesFilterScanningHandler
+  private val taskToken = project.getService(ProjectIndexingDependenciesService::class.java).newIncompleteTaskToken()
   private lateinit var scanningHistory: ProjectScanningHistoryImpl
 
   constructor(project: Project, scanningParameters: Deferred<ScanningParameters>)
-    : this(myProject = project,
-           myOnProjectOpen = false,
+    : this(project = project,
+           onProjectOpen = false,
            isIndexingFilesFilterUpToDate = false,
            startCondition = null,
            scanningParameters = scanningParameters)
@@ -111,8 +147,8 @@ class UnindexedFilesScanner (
     project: Project,
     indexingReason: String,
     shouldHideProgressInSmartMode: Boolean?,
-  ) : this(myProject = project,
-           myOnProjectOpen = false,
+  ) : this(project = project,
+           onProjectOpen = false,
            isIndexingFilesFilterUpToDate = false,
            startCondition = null,
            shouldHideProgressInSmartMode = shouldHideProgressInSmartMode,
@@ -133,17 +169,17 @@ class UnindexedFilesScanner (
     : this(project, CompletableDeferred(ScanningIterators("<unknown>")))
 
   init {
-    val filterHolder = myIndex.indexableFilesFilterHolder
-    myFilterHandler = if (isIndexingFilesFilterUpToDate) IdleFilesFilterScanningHandler()
+    val filterHolder = fileBasedIndex.indexableFilesFilterHolder
+    filterHandler = if (isIndexingFilesFilterUpToDate) IdleFilesFilterScanningHandler()
     else UpdatingFilesFilterScanningHandler(filterHolder)
   }
 
-  private fun prepareLogMessage(message: String) = "[${myProject.locationHash}] $message"
+  private fun prepareLogMessage(message: String) = "[${project.locationHash}] $message"
   private fun logInfo(message: String) = LOG.info(prepareLogMessage(message))
 
   private fun defaultHideProgressInSmartModeStrategy(): Boolean {
     return Registry.`is`("scanning.hide.progress.in.smart.mode", true) &&
-           myProject.getUserData(FIRST_SCANNING_REQUESTED) == FirstScanningState.REQUESTED
+           project.getUserData(FIRST_SCANNING_REQUESTED) == FirstScanningState.REQUESTED
   }
 
   fun shouldHideProgressInSmartMode(): Boolean {
@@ -154,10 +190,7 @@ class UnindexedFilesScanner (
    * We may not have information about whether it's a full update or not, in which case we return null
    */
   override fun isFullIndexUpdate(): Boolean? {
-    val parameters = scanningParameters.getCompletedSafe()
-    if (parameters == null) {
-      return null
-    }
+    val parameters = scanningParameters.getCompletedSafe() ?: return null
     return parameters is ScanningIterators && parameters.isFullIndexUpdate()
   }
 
@@ -168,7 +201,7 @@ class UnindexedFilesScanner (
   fun tryMergeWith(oldTask: FilesScanningTask, mergeScope: CoroutineScope): UnindexedFilesScanner {
     oldTask as UnindexedFilesScanner
 
-    LOG.assertTrue(myProject == oldTask.myProject)
+    LOG.assertTrue(project == oldTask.project)
 
     val mergedParameters = mergeScope.async {
       val parameters = scanningParameters.await()
@@ -202,15 +235,14 @@ class UnindexedFilesScanner (
     }
 
     LOG.assertTrue(!(startCondition != null && oldTask.startCondition != null), "Merge of two start conditions is not implemented")
-    val mergedHideProgress: Boolean?
-    if (shouldHideProgressInSmartMode == null) {
-      mergedHideProgress = oldTask.shouldHideProgressInSmartMode
+    val mergedHideProgress = if (shouldHideProgressInSmartMode == null) {
+      oldTask.shouldHideProgressInSmartMode
     }
     else if (oldTask.shouldHideProgressInSmartMode != null) {
-      mergedHideProgress = (shouldHideProgressInSmartMode && oldTask.shouldHideProgressInSmartMode)
+      (shouldHideProgressInSmartMode && oldTask.shouldHideProgressInSmartMode)
     }
     else {
-      mergedHideProgress = shouldHideProgressInSmartMode
+      shouldHideProgressInSmartMode
     }
 
     val triggerA = forceReindexingTrigger
@@ -225,14 +257,14 @@ class UnindexedFilesScanner (
       }
     }
     return UnindexedFilesScanner(
-      myProject,
-      false,
-      false,
-      startCondition ?: oldTask.startCondition,
-      mergedHideProgress,
-      mergedPredicate,
-      forceCheckingForOutdatedIndexesUsingFileModCount || oldTask.forceCheckingForOutdatedIndexesUsingFileModCount,
-      mergedParameters,
+      project,
+      onProjectOpen = false,
+      isIndexingFilesFilterUpToDate = false,
+      startCondition = startCondition ?: oldTask.startCondition,
+      shouldHideProgressInSmartMode = mergedHideProgress,
+      forceReindexingTrigger = mergedPredicate,
+      forceCheckingForOutdatedIndexesUsingFileModCount = forceCheckingForOutdatedIndexesUsingFileModCount || oldTask.forceCheckingForOutdatedIndexesUsingFileModCount,
+      scanningParameters = mergedParameters,
     )
   }
 
@@ -245,16 +277,16 @@ class UnindexedFilesScanner (
     val orderedProviders: List<IndexableFilesIterator> = getIndexableFilesIterators(markRef, scanningIterators)
 
     markStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles) {
-      val projectIndexingDependenciesService = myProject.getService(ProjectIndexingDependenciesService::class.java)
-      val scanningRequest = if (myOnProjectOpen) projectIndexingDependenciesService.newScanningTokenOnProjectOpen(forceCheckingForOutdatedIndexesUsingFileModCount)
+      val projectIndexingDependenciesService = project.getService(ProjectIndexingDependenciesService::class.java)
+      val scanningRequest = if (onProjectOpen) projectIndexingDependenciesService.newScanningTokenOnProjectOpen(forceCheckingForOutdatedIndexesUsingFileModCount)
       else projectIndexingDependenciesService.newScanningToken()
 
       try {
-        ScanningSession(myProject, scanningHistory, forceReindexingTrigger, myFilterHandler, indicator, progressReporter, scanningRequest)
+        ScanningSession(project, scanningHistory, forceReindexingTrigger, filterHandler, indicator, progressReporter, scanningRequest)
           .collectIndexableFilesConcurrently(orderedProviders)
       }
       finally {
-        myProject.getServiceIfCreated(ProjectIndexingDependenciesService::class.java)
+        project.getServiceIfCreated(ProjectIndexingDependenciesService::class.java)
           ?.completeToken(scanningRequest, scanningIterators.isFullIndexUpdate())
       }
     }
@@ -266,7 +298,7 @@ class UnindexedFilesScanner (
     markStage(ProjectScanningHistoryImpl.Stage.CreatingIterators) {
       val predefinedIndexableFilesIterators = scanningIterators.predefinedIndexableFilesIterators
       if (predefinedIndexableFilesIterators == null) {
-        val pair = collectProviders(myProject, myIndex)
+        val pair = collectProviders(project, fileBasedIndex)
         markRef.set(pair.second)
         pair.first
       }
@@ -278,7 +310,7 @@ class UnindexedFilesScanner (
   internal suspend fun applyDelayedPushOperations(scanningHistory: ProjectScanningHistoryImpl) {
     this.scanningHistory = scanningHistory
     markStageSus(ProjectScanningHistoryImpl.Stage.DelayedPushProperties) {
-      val pusher = PushedFilePropertiesUpdater.getInstance(myProject)
+      val pusher = PushedFilePropertiesUpdater.getInstance(project)
       if (pusher is PushedFilePropertiesUpdaterImpl) {
         pusher.performDelayedPushTasks()
       }
@@ -358,12 +390,13 @@ class UnindexedFilesScanner (
   ) {
     try {
       if (!IndexInfrastructure.hasIndices()) {
+        scanningHistory.setWasCancelled("'idea.skip.indices.initialization' flag is set")
         return
       }
       scanUnindexedFiles(indicator, progressReporter, markRef, scanningIterators)
     }
     finally {
-      (myProject as UserDataHolderEx).replace(FIRST_SCANNING_REQUESTED, FirstScanningState.REQUESTED, FirstScanningState.PERFORMED)
+      (project as UserDataHolderEx).replace(FIRST_SCANNING_REQUESTED, FirstScanningState.REQUESTED, FirstScanningState.PERFORMED)
     }
   }
 
@@ -373,18 +406,18 @@ class UnindexedFilesScanner (
     markRef: Ref<StatusMark>,
     scanningIterators: ScanningIterators,
   ) {
-    logInfo("Started scanning for indexing of " + myProject.name + ". Reason: " + scanningIterators.indexingReason)
+    logInfo("Started scanning for indexing of [" + project.name + "]. Reason: " + scanningIterators.indexingReason)
 
     progressReporter.setText(IndexingBundle.message("progress.indexing.scanning"))
 
     if (scanningIterators.isFullIndexUpdate()) {
-      myIndex.clearIndicesIfNecessary()
+      fileBasedIndex.clearIndicesIfNecessary()
     }
 
     scan(indicator, progressReporter, markRef, scanningIterators)
 
     // the full VFS refresh makes sense only after it's loaded, i.e., after scanning files to index is finished
-    val service = myProject.getService(InitialVfsRefreshService::class.java)
+    val service = project.getService(InitialVfsRefreshService::class.java)
     if (ApplicationManager.getApplication().isCommandLine && !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
       service.runInitialVfsRefresh()
     }
@@ -413,7 +446,7 @@ class UnindexedFilesScanner (
 
       val indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create()
 
-      LOG.info("Scanning of " + project.name + " uses " + UnindexedFilesUpdater.getNumberOfScanningThreads() + " scanning threads")
+      LOG.info("Scanning of [" + project.name + "] uses " + UnindexedFilesUpdater.getNumberOfScanningThreads() + " scanning threads")
       progressReporter.setText(IndexingBundle.message("progress.indexing.scanning"))
       progressReporter.setSubTasksCount(providers.size)
 
@@ -607,7 +640,7 @@ class UnindexedFilesScanner (
     getInstance().getTracer(Indexes).spanBuilder("UnindexedFilesScanner.perform").use {
       try {
         this.scanningHistory = scanningHistory
-        myFilterHandler.scanningStarted(myProject, scanningParameters.isFullIndexUpdate())
+        filterHandler.scanningStarted(project, scanningParameters.isFullIndexUpdate())
         prepareScanningHistoryAndRun(indicator) {
           waitForPreconditions()
           val markRef = Ref<StatusMark>()
@@ -620,13 +653,13 @@ class UnindexedFilesScanner (
           }
           finally {
             if (DependenciesIndexedStatusService.shouldBeUsed() && IndexInfrastructure.hasIndices()) {
-              DependenciesIndexedStatusService.getInstance(myProject).indexingFinished(successfullyFinished, markRef.get())
+              DependenciesIndexedStatusService.getInstance(project).indexingFinished(successfullyFinished, markRef.get())
             }
           }
         }
       }
       finally {
-        myFilterHandler.scanningCompleted(myProject)
+        filterHandler.scanningCompleted(project)
       }
     }
   }
@@ -645,12 +678,12 @@ class UnindexedFilesScanner (
     diagnosticDumper.onScanningStarted(scanningHistory)
     try {
       getInstance().getTracer(Indexes).spanBuilder("InternalSpanForScanningDiagnostic").use {
-        ProjectScanningHistoryImpl.startDumbModeBeginningTracking(myProject, scanningHistory)
+        ProjectScanningHistoryImpl.startDumbModeBeginningTracking(project, scanningHistory)
         try {
           block()
         }
         finally {
-          ProjectScanningHistoryImpl.finishDumbModeBeginningTracking(myProject)
+          ProjectScanningHistoryImpl.finishDumbModeBeginningTracking(project)
         }
       }
     }
@@ -665,30 +698,30 @@ class UnindexedFilesScanner (
   }
 
   private fun waitForPreconditions() {
-    myIndex.loadIndexes()
-    myIndex.registeredIndexes.waitUntilAllIndicesAreInitialized() // wait until stale ids are deleted
+    fileBasedIndex.loadIndexes()
+    fileBasedIndex.registeredIndexes.waitUntilAllIndicesAreInitialized() // wait until stale ids are deleted
     if (startCondition != null) { // wait until indexes for dirty files are cleared
       ProgressIndicatorUtils.awaitWithCheckCanceled(startCondition)
     }
     // Not sure that ensureUpToDate is really needed, but it wouldn't hurt to clear up queue not from EDT
     // It was added in this commit: 'Process vfs events asynchronously (IDEA-109525), first cut Maxim.Mossienko 13.11.16, 14:15'
-    myIndex.changedFilesCollector.ensureUpToDate()
+    fileBasedIndex.changedFilesCollector.ensureUpToDate()
   }
 
   override fun toString(): String {
     val filesIterators = tryGetPredefinedIndexableFileIterators()
     val partialInfo = if (filesIterators != null) ", " + filesIterators.size + " iterators" else ""
-    return "UnindexedFilesScanner[" + myProject.name + partialInfo + "]"
+    return "UnindexedFilesScanner[" + project.name + partialInfo + "]"
   }
 
   fun queue(): Future<ProjectScanningHistory> {
     @Suppress("UNCHECKED_CAST")
-    return UnindexedFilesScannerExecutor.getInstance(myProject).submitTask(this) as Future<ProjectScanningHistory>
+    return UnindexedFilesScannerExecutor.getInstance(project).submitTask(this) as Future<ProjectScanningHistory>
   }
 
   override fun close() {
-    if (!myProject.isDisposed) {
-      myProject.getServiceIfCreated(ProjectIndexingDependenciesService::class.java)?.completeToken(taskToken)
+    if (!project.isDisposed) {
+      project.getServiceIfCreated(ProjectIndexingDependenciesService::class.java)?.completeToken(taskToken)
     }
   }
 
@@ -724,10 +757,10 @@ class UnindexedFilesScanner (
 
   private fun getLogScanningCompletedStageMessage(): String {
     val statistics = scanningHistory.scanningStatistics
-    val numberOfScannedFiles = statistics.map(JsonScanningStatistics::numberOfScannedFiles).sum()
-    val numberOfFilesForIndexing = statistics.map(JsonScanningStatistics::numberOfFilesForIndexing).sum()
-    return "Scanning completed for " + scanningHistory.project.name + '.' +
-           " Number of scanned files: " + numberOfScannedFiles + "; number of files for indexing: " + numberOfFilesForIndexing
+    val numberOfScannedFiles = statistics.sumOf(JsonScanningStatistics::numberOfScannedFiles)
+    val numberOfFilesForIndexing = statistics.sumOf(JsonScanningStatistics::numberOfFilesForIndexing)
+    return "Scanning completed for [${scanningHistory.project.name}]. " +
+           "Number of scanned files: $numberOfScannedFiles; number of files for indexing: $numberOfFilesForIndexing"
   }
 
   companion object {

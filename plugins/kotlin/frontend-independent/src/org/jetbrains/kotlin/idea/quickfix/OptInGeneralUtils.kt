@@ -1,22 +1,38 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.modcommand.ModCommandAction
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotated
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassBody
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
 // TODO: migrate from FqName to ClassId fully when the K1 plugin is dropped.
 abstract class OptInGeneralUtilsBase {
-    data class CandidateData(val element: KtElement, val kind: AddAnnotationFix.Kind)
+    data class CandidateData(val element: KtElement, val kind: AddAnnotationFix.Kind) {
+        fun addTo(destination: MutableList<CandidateData>) {
+            if (destination.any { this.element == it.element }) return
+            destination.add(this)
+        }
+    }
 
     abstract fun KtDeclaration.isSubclassOptPropagateApplicable(annotationFqName: FqName): Boolean
 
@@ -69,7 +85,7 @@ abstract class OptInGeneralUtilsBase {
         }
     }
 
-    fun collectCandidates(element: PsiElement): List<CandidateData> {
+    fun collectCandidates(element: KtElement): List<CandidateData> {
         val result = mutableListOf<CandidateData>()
 
         val containingDeclaration: KtDeclaration = element.getParentOfTypesAndPredicate(
@@ -85,8 +101,10 @@ abstract class OptInGeneralUtilsBase {
         val containingDeclarationCandidate = findContainingDeclarationCandidate(containingDeclaration)
         result.add(containingDeclarationCandidate)
         if (containingDeclaration is KtCallableDeclaration) {
-            findContainingClassOrObjectCandidate(containingDeclaration)?.let(result::add)
+            findContainingClassOrObjectCandidate(containingDeclaration)?.addTo(result)
         }
+
+        findStatementCandidate(element)?.addTo(result)
 
         return result
     }
@@ -102,5 +120,13 @@ abstract class OptInGeneralUtilsBase {
     fun findContainingClassOrObjectCandidate(element: KtDeclaration): CandidateData? {
         val containingClassOrObject = element as? KtClassOrObject ?: (element.containingClassOrObject ?: return null)
         return CandidateData(containingClassOrObject, AddAnnotationFix.Kind.ContainingClass(containingClassOrObject.name))
+    }
+
+    fun findStatementCandidate(element: KtElement): CandidateData? {
+        var statementElement: KtElement = element
+        while (statementElement.parent !is KtBlockExpression && statementElement.parent !is KtClassBody) statementElement =
+            statementElement.parent as? KtElement ?: return null
+        if (statementElement is KtDestructuringDeclaration) return null
+        return CandidateData(statementElement, AddAnnotationFix.Kind.Self)
     }
 }

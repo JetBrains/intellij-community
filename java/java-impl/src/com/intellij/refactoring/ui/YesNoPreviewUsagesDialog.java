@@ -10,8 +10,12 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 public class YesNoPreviewUsagesDialog extends DialogWrapper {
   private JCheckBox myCbPreviewResults;

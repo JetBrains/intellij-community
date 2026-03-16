@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.core
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.idea.util.FuzzyType
@@ -23,8 +24,8 @@ import org.jetbrains.kotlin.types.expressions.ExpressionTypingContext
 import org.jetbrains.kotlin.types.expressions.ForLoopConventionsChecker
 import org.jetbrains.kotlin.util.isValidOperator
 import org.jetbrains.kotlin.utils.getOrPutNullable
-import java.util.*
 
+@K1Deprecation
 class IterableTypesDetection(
     private val project: Project,
     private val forLoopConventionsChecker: ForLoopConventionsChecker,
@@ -85,6 +86,7 @@ class IterableTypesDetection(
     }
 }
 
+@K1Deprecation
 interface IterableTypesDetector {
     fun isIterable(type: KotlinType, loopVarType: KotlinType? = null): Boolean
 

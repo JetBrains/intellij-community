@@ -17,13 +17,13 @@
 package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.Facet;
+import com.intellij.facet.FacetInfo;
+import com.intellij.facet.FacetType;
+import com.intellij.facet.FacetTypeId;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.facet.FacetType;
-import com.intellij.facet.FacetInfo;
-import com.intellij.facet.FacetTypeId;
-import com.intellij.openapi.module.ModuleType;
 
 import java.util.Collection;
 

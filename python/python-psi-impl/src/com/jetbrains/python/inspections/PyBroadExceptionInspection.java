@@ -21,7 +21,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExceptPart;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyRaiseStatement;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -53,10 +59,11 @@ public final class PyBroadExceptionInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyExceptBlock(final @NotNull PyExceptPart node){
+    public void visitPyExceptBlock(final @NotNull PyExceptPart node) {
       PyExpression exceptClass = node.getExceptClass();
-      if (reRaised(node))
+      if (reRaised(node)) {
         return;
+      }
       if (exceptClass == null) {
         registerProblem(node.getFirstChild(), PyPsiBundle.message("INSP.too.broad.exception.clause"));
       }

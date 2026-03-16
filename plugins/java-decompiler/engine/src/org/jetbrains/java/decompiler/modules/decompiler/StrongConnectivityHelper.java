@@ -7,7 +7,12 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.util.ListStack;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * The class finds the strongly connected components (SCCs) of a directed graph,

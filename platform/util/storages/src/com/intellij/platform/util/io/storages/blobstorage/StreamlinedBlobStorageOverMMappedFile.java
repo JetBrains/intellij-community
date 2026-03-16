@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage.Page;
+import com.intellij.util.BitUtil;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
@@ -74,6 +75,7 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
 
     headerPage = storage.pageByOffset(0L);
 
+    int fileStatusBitmask;
     if (length == 0) {//new empty file
       putHeaderInt(HeaderLayout.MAGIC_WORD_OFFSET, MAGIC_WORD);
       putHeaderInt(HeaderLayout.STORAGE_VERSION_OFFSET, STORAGE_VERSION_CURRENT);
@@ -81,7 +83,9 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
 
       updateNextRecordId(offsetToId(recordsStartOffset()));
 
-      this.wasClosedProperly.set(true);
+      wasClosedProperly = true;
+      wasAlwaysClosedProperly = true;
+      fileStatusBitmask = HeaderLayout.FILE_STATUS_CLOSED_PROPERLY_MASK | HeaderLayout.FILE_STATUS_ALWAYS_CLOSED_PROPERLY_MASK;
     }
     else {
       int magicWord = readHeaderInt(HeaderLayout.MAGIC_WORD_OFFSET);
@@ -102,8 +106,7 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
                               " but current storage.pageSize=" + pageSize);
       }
 
-      //No need to copy from the header into field: we read/update header
-      // slot directly:
+      //No need to copy from the header into field: we read/update header slot directly:
       //updateNextRecordId(readHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET));
 
       recordsAllocated.set(readHeaderInt(HeaderLayout.RECORDS_ALLOCATED_OFFSET));
@@ -112,11 +115,17 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
       totalLiveRecordsPayloadBytes.set(readHeaderLong(HeaderLayout.RECORDS_LIVE_TOTAL_PAYLOAD_SIZE_OFFSET));
       totalLiveRecordsCapacityBytes.set(readHeaderLong(HeaderLayout.RECORDS_LIVE_TOTAL_CAPACITY_SIZE_OFFSET));
 
-      boolean wasClosedProperly = readHeaderInt(HeaderLayout.FILE_STATUS_OFFSET) == FILE_STATUS_PROPERLY_CLOSED;
-      this.wasClosedProperly.set(wasClosedProperly);
+      fileStatusBitmask = readHeaderInt(HeaderLayout.FILE_STATUS_OFFSET);
+      boolean wasClosedProperlyLastTime = BitUtil.isSet(fileStatusBitmask, HeaderLayout.FILE_STATUS_CLOSED_PROPERLY_MASK);
+      wasClosedProperly = wasClosedProperlyLastTime;
+      wasAlwaysClosedProperly = wasClosedProperlyLastTime
+                                     && BitUtil.isSet(fileStatusBitmask, HeaderLayout.FILE_STATUS_ALWAYS_CLOSED_PROPERLY_MASK);
+      fileStatusBitmask = BitUtil.set(fileStatusBitmask, HeaderLayout.FILE_STATUS_ALWAYS_CLOSED_PROPERLY_MASK, wasAlwaysClosedProperly);
     }
 
-    putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, FILE_STATUS_OPENED);
+    //set 'closed properly' to false: will set back to true in .close(), but will remain false if not closed properly:
+    fileStatusBitmask = BitUtil.set(fileStatusBitmask, HeaderLayout.FILE_STATUS_CLOSED_PROPERLY_MASK, false);
+    putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, fileStatusBitmask);
     storage.fsync();//ensure status is persisted
 
     openTelemetryCallback = setupReportingToOpenTelemetry(storage.storagePath().getFileName(), this);
@@ -235,26 +244,28 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
   }
 
   /**
-   * Writer is called with writeable ByteBuffer represented current record content (payload).
-   * Buffer is prepared for read: position=0, limit=payload.length, capacity=[current record capacity].
+   * Writer is called with a writeable {@link ByteBuffer} representing current record content (payload).
+   * The buffer is prepared for reading: position=0, limit=payload.length, capacity=[current record capacity].
    * <br> <br>
    * Writer is free to read and/or modify the buffer, and return it in an 'after puts' state, i.e.
    * position=[#last byte of payload], new payload content = buffer[0..position].
    * <br> <br>
-   * NOTE: this implies that even if the writer writes nothing, only reads -- it is still required to
-   * set buffer.position=limit, because otherwise storage will treat the buffer state as if record
-   * should be set length=0. This is a bit unnatural, so there is a shortcut: if the writer changes
-   * nothing, it could just return null.
+   * NOTE: this implies that even if the writer makes no changes, only reads the buffer -- it is still required
+   * to set buffer.position=limit, because otherwise storage will treat the buffer state as if the new payload
+   * length is 0.
+   * This is a bit unnatural, so there is a shortcut: if the writer changes nothing, it could just return null.
    * <br> <br>
-   * Capacity: if new payload fits into buffer passed in -> it could be written right into it. If new
-   * payload requires more space, writer should allocate its own buffer with enough capacity, write
-   * new payload into it, and return that buffer (in an 'after puts' state), instead of buffer passed
-   * in. Storage will re-allocate space for the record with capacity >= returned buffer capacity.
+   * Capacity: if a new payload fits into the buffer passed in -> it could be written right into it.
+   * If the new payload requires more space, a writer should allocate its own buffer with enough capacity,
+   * write the new payload into it, and return that buffer (in the same 'after puts' state mentioned above),
+   * instead of the buffer passed in.
+   * Storage will then re-allocate space for the record with capacity >= returned buffer capacity.
    *
-   * @param expectedRecordSizeHint          hint to a storage about how big data writer intend to write. May be used for allocating buffer
-   *                                        of that size. <=0 means 'no hints, use default buffer allocation strategy'
-   * @param leaveRedirectOnRecordRelocation if current record is relocated during writing, old record could be either removed right now,
-   *                                        or remain as 'redirect-to' record, so new content could still be accesses by old recordId.
+   * @param expectedRecordSizeHint          hint to a storage about how big data a writer intends to write. May be used for allocating
+   *                                        buffer of that size. <=0 means 'no hints, use default buffer allocation strategy'
+   * @param leaveRedirectOnRecordRelocation if the current record is relocated during writing, the old record could be either removed right
+   *                                        now (false) or remain as a 'redirect-to' record, so new content could still be accessed by old
+   *                                        recordId (true)
    */
   @Override
   public int writeToRecord(int recordId,
@@ -410,8 +421,10 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
       case RecordLayout.RECORD_TYPE_MOVED -> {
         int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
         if (redirectToId == NULL_ID) {
-          throw new RecordAlreadyDeletedException("Can't delete record[" + recordId + "]: it was already deleted, "+
-                                                  "(wasClosedProperly: " + wasClosedProperly() + ")");
+          throw new RecordAlreadyDeletedException(
+            "Can't delete record[" + recordId + "]: it was already deleted, " +
+            "(wasClosedProperly: " + wasClosedProperly() + ", wasAlwaysClosedProperly: " + wasAlwaysClosedProperly() + ")"
+          );
         }
 
         // (redirectToId=NULL) <=> 'record deleted' ('moved nowhere')
@@ -463,11 +476,11 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
           int recordActualLength = isActual ? recordLayout.length(buffer, offsetOnPage) : -1;
           ByteBuffer slice = isActual ?
                              buffer.slice(offsetOnPage + headerSize, recordActualLength)
-                               .asReadOnlyBuffer()
-                               .order(buffer.order()) :
+                             .asReadOnlyBuffer()
+                             .order(buffer.order()) :
                              buffer.slice(offsetOnPage + headerSize, 0)
-                               .asReadOnlyBuffer()
-                               .order(buffer.order());
+                             .asReadOnlyBuffer()
+                             .order(buffer.order());
           boolean ok = processor.processRecord(currentId, recordCapacity, recordActualLength, slice);
           if (!ok) {
             return recordNo + 1;
@@ -519,15 +532,17 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
     //.close() methods are better to be idempotent, i.e. not throw exceptions on repeating calls,
     // but just silently ignore attempts to 'close already closed'. And storage conforms with
     // that. But in .force() we write file status and other header fields, and without .closed
-    // flag we'll do that even on already closed storage, which leads to exception.
+    // flag we'll do that even on already closed storage, which leads to an exception.
     if (!closed.get()) {
       //Class in general doesn't provide thread-safety guarantees, and need external synchronization if used in
       // multithreading. But since it uses mmapped files, concurrency errors in closing/reclaiming may lead to
-      // JVM crash, not just program bugs -- hence, a bit of protection do no harm:
+      // JVM crash, not just program bugs -- hence, a bit of protection does no harm:
       synchronized (this) {//also ensures updateNextRecordId() is finished
         if (!closed.get()) {
-          putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, FILE_STATUS_PROPERLY_CLOSED);
-
+          int fileStatusMask = BitUtil.set(
+            HeaderLayout.FILE_STATUS_CLOSED_PROPERLY_MASK, HeaderLayout.FILE_STATUS_ALWAYS_CLOSED_PROPERLY_MASK, wasAlwaysClosedProperly
+          );
+          putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, fileStatusMask);
           force();
 
           closed.set(true);

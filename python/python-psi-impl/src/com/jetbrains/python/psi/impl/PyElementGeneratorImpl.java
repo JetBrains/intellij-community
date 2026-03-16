@@ -17,7 +17,34 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.NotNullPredicate;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyEllipsisLiteralExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyListLiteralExpression;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyPattern;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PySingleStarParameter;
+import com.jetbrains.python.psi.PySlashParameter;
+import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,9 +103,9 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
 
   @Override
   protected PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination,
-                                                                 @NotNull String unescaped,
-                                                                 final boolean preferUTF8,
-                                                                 boolean preferDoubleQuotes) {
+                                                                    @NotNull String unescaped,
+                                                                    final boolean preferUTF8,
+                                                                    boolean preferDoubleQuotes) {
     boolean useDouble = (!unescaped.contains("\"") && preferDoubleQuotes) || unescaped.contains("'");
     boolean useMulti = unescaped.matches(".*(\r|\n).*");
     String quotes;
@@ -344,7 +371,9 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   @Override
-  public @NotNull PyImportStatement createImportStatement(@NotNull LanguageLevel languageLevel, @NotNull String name, @Nullable String alias) {
+  public @NotNull PyImportStatement createImportStatement(@NotNull LanguageLevel languageLevel,
+                                                          @NotNull String name,
+                                                          @Nullable String alias) {
     final String asClause = StringUtil.isNotEmpty(alias) ? " as " + alias : "";
     final String statement = "import " + name + asClause;
     return createFromText(languageLevel, PyImportStatement.class, statement);

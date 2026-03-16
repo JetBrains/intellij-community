@@ -4,13 +4,27 @@ package com.intellij.util.graph.impl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Chunk;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.graph.*;
+import com.intellij.util.graph.CachingSemiGraph;
+import com.intellij.util.graph.DFSTBuilder;
+import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.GraphAlgorithms;
+import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal

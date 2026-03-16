@@ -2,9 +2,15 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Objects;
@@ -95,15 +101,27 @@ public final class HighlightDisplayKey {
     return highlightDisplayKey;
   }
 
+  /**
+   * @param offender Instance of {@link InspectionToolWrapper} for which this key is registered, or some other object of the class relevant to the plugin, to be reported in case of register failure
+   */
+  @ApiStatus.Internal
   public static @Nullable HighlightDisplayKey register(@NonNls @NotNull String shortName,
                                                        @NotNull Computable<@Nls(capitalization = Sentence) String> displayName,
-                                                       @NonNls @NotNull String id,
-                                                       @NonNls @Nullable String alternativeID) {
-    HighlightDisplayKey key = register(shortName, displayName, id);
-    if (alternativeID != null) {
-      ourKeyToAlternativeIDMap.put(key, alternativeID);
+                                                       @NotNull @NonNls String id,
+                                                       @NonNls @Nullable String alternativeID,
+                                                       @NotNull Object offender) {
+    HighlightDisplayKey key = find(shortName);
+    if (key != null) {
+      Class<?> pluginClass = offender instanceof InspectionToolWrapper<?,?> tw ? tw.getDescriptionContextClass() : offender.getClass();
+      PluginException.logPluginError(LOG, "Key with shortName '" + shortName + "' already registered with display name: '" + getDisplayNameByKey(key) + "' while calling register(Display name='" + displayName.compute() + "', ID='" + id + "')", null, pluginClass);
+      return null;
     }
-    return key;
+    HighlightDisplayKey newKey = new HighlightDisplayKey(shortName, id);
+    ourKeyToDisplayNameMap.put(newKey, displayName);
+    if (alternativeID != null) {
+      ourKeyToAlternativeIDMap.put(newKey, alternativeID);
+    }
+    return newKey;
   }
 
   public static void unregister(@NotNull String shortName) {

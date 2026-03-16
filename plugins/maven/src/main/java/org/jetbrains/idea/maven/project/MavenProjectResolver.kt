@@ -92,7 +92,7 @@ class MavenProjectResolver(private val myProject: Project) {
     val projectsWithUnresolvedPlugins = HashMap<String, Collection<MavenProject>>()
     val projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, tree)
     for ((baseDir, mavenProjectsInBaseDir) in projectMultiMap.entrySet()) {
-      val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
+      val embedder = mavenEmbedderWrappers.getEmbedder(Path.of(baseDir))
       try {
         val userProperties = Properties()
         for (mavenProject in mavenProjectsInBaseDir) {
@@ -235,7 +235,7 @@ class MavenProjectResolver(private val myProject: Project) {
   ) {
     val projectMultiMap = MavenUtil.groupByBasedir(tree.projects, tree)
     for ((baseDir, mavenProjectsForBaseDir) in projectMultiMap.entrySet()) {
-      val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
+      val embedder = mavenEmbedderWrappers.getEmbedder(Path.of(baseDir))
       updateSnapshotsAfterIncrementalSync(mavenProjectsForBaseDir, fileToDependencyHash, embedder, progressReporter, eventHandler)
     }
   }

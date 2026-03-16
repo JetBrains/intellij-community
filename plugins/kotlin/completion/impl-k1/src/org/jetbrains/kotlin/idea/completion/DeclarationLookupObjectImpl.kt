@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocCommentOwner
 import com.intellij.psi.PsiNamedElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.util.descriptorsEqualWithSubstitution
  * Stores information about resolved descriptor and position of that descriptor.
  * Position will be used for sorting
  */
+@K1Deprecation
 abstract class DeclarationLookupObjectImpl(
     final override val descriptor: DeclarationDescriptor?
 ) : DescriptorBasedDeclarationLookupObject {
@@ -62,6 +64,7 @@ abstract class DeclarationLookupObjectImpl(
 }
 
 // This function is kind of a hack to avoid using DeprecationResolver as it's hard to preserve same resolutionFacade for descriptor
+@K1Deprecation
 fun isDeprecatedAtCallSite(descriptor: DeclarationDescriptor, languageVersionSettings: () -> LanguageVersionSettings?): Boolean {
     if (!KotlinBuiltIns.isDeprecated(descriptor)) return false
 

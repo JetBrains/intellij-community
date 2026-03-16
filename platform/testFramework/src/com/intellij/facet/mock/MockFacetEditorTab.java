@@ -6,7 +6,8 @@ import com.intellij.facet.ui.FacetEditorTab;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 public class MockFacetEditorTab extends FacetEditorTab {
   private String myDataTextField = "";

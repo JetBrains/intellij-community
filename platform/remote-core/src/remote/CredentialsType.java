@@ -9,7 +9,15 @@ import com.intellij.remote.ext.CredentialsCase;
 import com.intellij.remote.ext.RemoteCredentialsHandler;
 import com.intellij.remote.ext.UnknownCredentialsHolder;
 import com.intellij.remote.ext.UnknownTypeRemoteCredentialHandler;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class CredentialsType<T> {
   public static final ExtensionPointName<CredentialsType<?>> EP_NAME = new ExtensionPointName<>("com.intellij.remote.credentialsType");
@@ -34,15 +42,17 @@ public abstract class CredentialsType<T> {
   };
 
   private final @Nls(capitalization = Nls.Capitalization.Title) String myName;
-  private final String myPrefix;
-  private final String mySystemIndependentPrefix;
-  private final String mySystemDependentPrefix;
+  private final @NotNull Set<String> myPrefixes;
 
   protected CredentialsType(@Nls(capitalization = Nls.Capitalization.Title) String name, String prefix) {
+    this(name, List.of(prefix));
+  }
+
+  protected CredentialsType(@Nls(capitalization = Nls.Capitalization.Title) String name, Collection<String> prefixes) {
     myName = name;
-    myPrefix = prefix;
-    mySystemDependentPrefix = FileUtil.toSystemDependentName(prefix);
-    mySystemIndependentPrefix = FileUtil.toSystemIndependentName(prefix);
+    myPrefixes = prefixes.stream()
+      .flatMap(prefix -> Stream.of(prefix, FileUtil.toSystemDependentName(prefix), FileUtil.toSystemIndependentName(prefix)))
+      .collect(Collectors.toUnmodifiableSet());
   }
 
   public @Nls(capitalization = Nls.Capitalization.Title) String getName() {
@@ -62,7 +72,7 @@ public abstract class CredentialsType<T> {
   public abstract RemoteCredentialsHandler getHandler(T credentials);
 
   public boolean hasPrefix(String path) {
-    return path.startsWith(myPrefix) || path.startsWith(mySystemDependentPrefix) || path.startsWith(mySystemIndependentPrefix);
+    return ContainerUtil.exists(myPrefixes, prefix -> path.startsWith(prefix));
   }
 
   public abstract T createCredentials();

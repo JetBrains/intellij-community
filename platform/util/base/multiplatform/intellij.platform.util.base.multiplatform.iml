@@ -4,17 +4,17 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 1.8" allPlatforms="JVM [1.8]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="1.8" />
-            <stringArg name="apiVersion" arg="2.2" />
-            <stringArg name="languageVersion" arg="2.2" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.2.20-0.1/expects-compiler-plugin-2.2.20-0.1.jar</args>
+              <args>$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.3.20-RC2-0.1/expects-compiler-plugin-2.3.20-RC2-0.1.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -31,8 +31,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-debug" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.syntax.multiplatformSupport" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.debug" />
+    <orderEntry type="module" module-name="intellij.platform.multiplatformSupport" scope="PROVIDED" />
   </component>
 </module>

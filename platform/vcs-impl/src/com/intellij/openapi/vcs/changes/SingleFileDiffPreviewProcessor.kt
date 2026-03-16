@@ -3,9 +3,9 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.impl.CacheDiffRequestProcessor
 import com.intellij.diff.requests.NoDiffRequest
-import com.intellij.openapi.project.Project;
-import com.intellij.util.ui.UIUtil
+import com.intellij.openapi.project.Project
 import com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

@@ -10,7 +10,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -18,7 +23,25 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionCodeFragment;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyPassStatement;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +82,7 @@ public final class PyPsiUtils {
 
   /**
    * Finds first sibling that is neither comment, nor whitespace before given element.
+   *
    * @param strict prohibit returning element itself
    */
   public static @Nullable PsiElement getPrevNonCommentSibling(@Nullable PsiElement start, boolean strict) {
@@ -109,6 +133,7 @@ public final class PyPsiUtils {
 
   /**
    * Finds first sibling that is neither comment, nor whitespace after given element.
+   *
    * @param strict prohibit returning element itself
    */
   public static @Nullable PsiElement getNextNonCommentSibling(@Nullable PsiElement start, boolean strict) {
@@ -117,6 +142,7 @@ public final class PyPsiUtils {
 
   /**
    * Finds first token after given element that doesn't consist solely of spaces and is not empty (e.g. error marker).
+   *
    * @param ignoreComments ignore commentaries as well
    */
   public static @Nullable PsiElement getNextSignificantLeaf(@Nullable PsiElement element, boolean ignoreComments) {
@@ -128,6 +154,7 @@ public final class PyPsiUtils {
 
   /**
    * Finds first token before given element that doesn't consist solely of spaces and is not empty (e.g. error marker).
+   *
    * @param ignoreComments ignore commentaries as well
    */
   public static @Nullable PsiElement getPrevSignificantLeaf(@Nullable PsiElement element, boolean ignoreComments) {
@@ -261,7 +288,8 @@ public final class PyPsiUtils {
   public static boolean isMethodContext(final PsiElement element) {
     final PsiNamedElement parent = PsiTreeUtil.getParentOfType(element, PyFile.class, PyFunction.class, PyClass.class);
     // In case if element is inside method which is inside class
-    if (parent instanceof PyFunction && PsiTreeUtil.getParentOfType(parent, PyFile.class, PyFunction.class, PyClass.class) instanceof PyClass) {
+    if (parent instanceof PyFunction &&
+        PsiTreeUtil.getParentOfType(parent, PyFile.class, PyFunction.class, PyClass.class) instanceof PyClass) {
       return true;
     }
     return false;
@@ -302,6 +330,7 @@ public final class PyPsiUtils {
   /**
    * Returns comments preceding given elements as pair of the first and the last such comments. Comments should not be
    * separated by any empty line.
+   *
    * @param element element comments should be adjacent to
    * @return described range or {@code null} if there are no such comments
    */
@@ -348,7 +377,7 @@ public final class PyPsiUtils {
    * def func():
    *     pass
    * }</pre>
-   *
+   * <p>
    * Note that in the following case it will additionally return an empty list of comments as the last element
    * to distinguish between the cases when there is a blank line above the provided element and when there is not.
    *

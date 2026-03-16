@@ -45,9 +45,9 @@ jvm_library(
     "//platform/core-ui",
     "//plugins/kotlin/base/compiler-configuration",
     "//plugins/performanceTesting/vcs",
-    "//plugins/kotlin/idea",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/j2k/shared",
   ]
 )
 ### auto-generated section `build intellij.kotlin.performanceExtendedPlugin` end

@@ -8,12 +8,14 @@ import com.intellij.ide.hierarchy.HierarchyTreeStructure
 import com.intellij.openapi.project.Project
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.ArrayUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
+@K1Deprecation
 class KotlinOverrideTreeStructure(project: Project, declaration: KtCallableDeclaration) : HierarchyTreeStructure(project, null) {
     init {
         setBaseElement(KotlinOverrideHierarchyNodeDescriptor(null, declaration.containingClassOrObject!!, declaration))

@@ -1,9 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorClientUtils;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,15 +42,18 @@ import java.util.List;
 final class CanISilentlyChange {
   private static boolean canUndo(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     ThreadingAssertions.assertEventDispatchThread();
-    List<FileEditor> editors = FileEditorManager.getInstance(project).getEditorList(virtualFile);
+    List<FileEditor> editors = FileEditorManager.getInstance(project).getAllEditorList(virtualFile);
     if (editors.isEmpty()) {
       return false;
     }
 
     UndoManager undoManager = UndoManager.getInstance(project);
     for (FileEditor editor : editors) {
-      if (undoManager.isUndoAvailable(editor)) {
-        return true;
+      ClientId clientId = FileEditorClientUtils.getClientId(editor);
+      try (AccessToken ignored = ClientId.withExplicitClientId(clientId)) {
+        if (undoManager.isUndoAvailable(editor)) {
+          return true;
+        }
       }
     }
     return false;

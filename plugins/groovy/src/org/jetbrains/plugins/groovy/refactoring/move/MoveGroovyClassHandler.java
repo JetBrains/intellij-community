@@ -6,7 +6,17 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
@@ -44,7 +54,7 @@ import java.util.Iterator;
  * @author Maxim.Medvedev
  */
 public final class MoveGroovyClassHandler implements MoveClassHandler {
-  Logger LOG = Logger.getInstance(MoveGroovyClassHandler.class);
+  private final static Logger LOG = Logger.getInstance(MoveGroovyClassHandler.class);
 
   @Override
   public PsiClass doMoveClass(@NotNull PsiClass aClass, @NotNull PsiDirectory moveDestination) throws IncorrectOperationException {
@@ -136,7 +146,7 @@ public final class MoveGroovyClassHandler implements MoveClassHandler {
     return newClass;
   }
 
-  private static void setPackageDefinition(GroovyFile file, GroovyFile newFile, String newPackageName) {
+  private static void setPackageDefinition(@NotNull GroovyFile file, GroovyFile newFile, String newPackageName) {
     String modifiersText = null;
 
     final GrPackageDefinition packageDefinition = file.getPackageDefinition();
@@ -157,7 +167,7 @@ public final class MoveGroovyClassHandler implements MoveClassHandler {
     }
   }
 
-  private static GroovyFile generateNewScript(GroovyFile file, PsiPackage newPackage) {
+  private static @NotNull GroovyFile generateNewScript(@NotNull GroovyFile file, PsiPackage newPackage) {
     for (GrImportStatement importStatement : file.getImportStatements()) {
       importStatement.delete();
     }
@@ -177,7 +187,7 @@ public final class MoveGroovyClassHandler implements MoveClassHandler {
     if (packageDefinition != null) packageDefinition.delete();
 
     PsiElement cur = newFile.getFirstChild();
-    while (cur != null && PsiImplUtil.isWhiteSpaceOrNls(cur)) {
+    while (PsiImplUtil.isWhiteSpaceOrNls(cur)) {
       cur = cur.getNextSibling();
     }
     if (cur != null && cur != newFile.getFirstChild()) {
@@ -186,7 +196,7 @@ public final class MoveGroovyClassHandler implements MoveClassHandler {
     }
 
     cur = newFile.getLastChild();
-    while (cur != null && PsiImplUtil.isWhiteSpaceOrNls(cur)) {
+    while (PsiImplUtil.isWhiteSpaceOrNls(cur)) {
       cur = cur.getPrevSibling();
     }
     if (cur != null && cur != newFile.getLastChild()) {
@@ -202,21 +212,21 @@ public final class MoveGroovyClassHandler implements MoveClassHandler {
   }
 
   @Override
-  public @Nullable String getName(PsiClass clazz) {
+  public @Nullable String getName(@NotNull PsiClass clazz) {
     final PsiFile file = clazz.getContainingFile();
     if (!(file instanceof GroovyFile)) return null;
     return ((GroovyFile)file).getClasses().length > 1 ? clazz.getName() + "." + GroovyFileType.DEFAULT_EXTENSION : file.getName();
   }
 
   @Override
-  public void preprocessUsages(Collection<UsageInfo> results) {
+  public void preprocessUsages(@NotNull Collection<UsageInfo> results) {
     removeAllAliasImportedUsages(results);
   }
 
   /**
    * Remove all alias-imported Groovy usages from collection
    */
-  static void removeAllAliasImportedUsages(Collection<UsageInfo> results) {
+  static void removeAllAliasImportedUsages(@NotNull Collection<UsageInfo> results) {
     for (Iterator<UsageInfo> iterator = results.iterator(); iterator.hasNext(); ) {
       UsageInfo info = iterator.next();
       if (info == null) continue;
@@ -254,7 +264,7 @@ public final class MoveGroovyClassHandler implements MoveClassHandler {
     return aClass instanceof GroovyScriptClass ? aClass.getContainingFile() : aClass;
   }
 
-  private static void correctOldClassReferences(final PsiClass newClass, final PsiClass oldClass) {
+  private static void correctOldClassReferences(final @NotNull PsiClass newClass, final PsiClass oldClass) {
     final Collection<PsiReference> all = ReferencesSearch.search(oldClass, new LocalSearchScope(newClass.getContainingFile())).findAll();
     for (PsiReference reference : all) {
       final PsiElement element = reference.getElement();
@@ -266,7 +276,7 @@ public final class MoveGroovyClassHandler implements MoveClassHandler {
     }
   }
 
-  private static void correctSelfReferences(final PsiClass aClass, final PsiPackage newContainingPackage) {
+  private static void correctSelfReferences(final @NotNull PsiClass aClass, final PsiPackage newContainingPackage) {
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(aClass.getContainingFile().getContainingDirectory());
     if (aPackage == null) {
       return;

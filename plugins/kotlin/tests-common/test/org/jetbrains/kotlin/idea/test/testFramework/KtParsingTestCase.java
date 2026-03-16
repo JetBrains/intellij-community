@@ -2,9 +2,20 @@
 
 package org.jetbrains.kotlin.idea.test.testFramework;
 
-import com.intellij.lang.*;
+import com.intellij.lang.DefaultASTFactory;
+import com.intellij.lang.DefaultASTFactoryImpl;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
-import com.intellij.mock.*;
+import com.intellij.mock.MockEditorFactory;
+import com.intellij.mock.MockFileDocumentManagerImpl;
+import com.intellij.mock.MockFileTypeManager;
+import com.intellij.mock.MockLanguageFileType;
+import com.intellij.mock.MockPsiDocumentManager;
+import com.intellij.mock.MockPsiManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Document;
@@ -25,8 +36,17 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.pom.tree.TreeAspect;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.BlockSupportImpl;
+import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.DiffLog;
+import com.intellij.psi.impl.PsiCachedValuesFactory;
+import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.MockSchemeManagerFactory;
@@ -38,6 +58,7 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.KotlinFileType;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.picocontainer.ComponentAdapter;
 
 import java.io.File;
@@ -278,7 +299,7 @@ public abstract class KtParsingTestCase extends KtPlatformLiteFixture {
 
     public static void doCheckResult(String fullPath, String targetDataName, String actual) throws IOException {
         String expectedFileName = fullPath + File.separatorChar + targetDataName;
-        KtUsefulTestCase.assertSameLinesWithFile(expectedFileName, actual);
+        KotlinTestUtils.assertSameLinesWithFile(expectedFileName, actual);
     }
 
     protected static String toParseTreeText(PsiElement file,  boolean skipSpaces, boolean printRanges) {

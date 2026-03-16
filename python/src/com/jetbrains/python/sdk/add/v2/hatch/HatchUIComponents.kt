@@ -25,14 +25,22 @@ import com.intellij.util.lateinitVal
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.isFailure
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
-import com.jetbrains.python.sdk.add.v2.*
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterComboBox
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
+import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers
+import com.jetbrains.python.sdk.add.v2.ValidatedPath
+import com.jetbrains.python.sdk.add.v2.ValidatedPathField
+import com.jetbrains.python.sdk.add.v2.Version
+import com.jetbrains.python.sdk.add.v2.pythonInterpreterComboBox
+import com.jetbrains.python.sdk.add.v2.validatablePathField
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
@@ -52,11 +60,6 @@ internal sealed class HatchUIError(message: String) : MessageError(message) {
             hatchExecutablePath)
   )
 
-  class HatchExecutionFailure(execError: ExecError) : HatchUIError(
-    message("sdk.create.custom.hatch.error.execution.failed",
-            execError.asCommand
-    )
-  )
 }
 
 internal fun String.toPath(): PyResult<Path> {

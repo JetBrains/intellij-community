@@ -6,7 +6,10 @@ import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
-import com.intellij.xdebugger.*
+import com.intellij.xdebugger.XAlternativeSourceHandler
+import com.intellij.xdebugger.XDebugProcess
+import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XDropFrameHandler
@@ -19,6 +22,7 @@ import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.Exited
 import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighLevelDebuggerStepRequested
 import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighLevelPositionReached
 import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighLevelRunToAddress
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighLevelSetNextStatementRequested
 import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighRun
 import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighStarted
 import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.LowLevelPositionReached
@@ -31,7 +35,6 @@ import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.PauseRequ
 import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.ResumeRequested
 import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.StepType
 import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.Stop
-import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighLevelSetNextStatementRequested
 import com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
 import com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizer
 import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcessExtension
@@ -41,11 +44,13 @@ import com.intellij.xdebugger.mixedMode.XMixedModeProcessesConfiguration
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.asPromise
 import javax.swing.event.HyperlinkListener
 
 /**
@@ -69,29 +74,27 @@ class XMixedModeCombinedDebugProcess(
   private val lowExtension get() = low.mixedModeDebugProcessExtension as XMixedModeLowLevelDebugProcessExtension
   private val highExtension get() = high.mixedModeDebugProcessExtension as XMixedModeHighLevelDebugProcessExtension
   private var positionReachedInProgress: Boolean = false
-  init {
-    coroutineScope.launch(Dispatchers.Default) {
-      while (true) {
-        when(val newState = stateMachine.stateChannel.receive()) {
-          is BothStopped -> {
-            val ctx = XMixedModeSuspendContext(session, newState.low, newState.high, lowExtension, stateMachine.suspendContextCoroutine)
-            withContext(Dispatchers.EDT) {
-              positionReachedInProgress = true
-              try {
-                session.positionReached(ctx, myAttract)
-              }
-              finally {
-                positionReachedInProgress = false
-                myAttract = false
-              }
+  private val stateMachineRunningJob : Job = coroutineScope.launch(Dispatchers.Default) {
+    while (true) {
+      when(val newState = stateMachine.stateChannel.receive()) {
+        is BothStopped -> {
+          val ctx = XMixedModeSuspendContext(session, newState.low, newState.high, lowExtension, stateMachine.suspendContextCoroutine)
+          withContext(Dispatchers.EDT) {
+            positionReachedInProgress = true
+            try {
+              session.positionReached(ctx, myAttract)
+            }
+            finally {
+              positionReachedInProgress = false
+              myAttract = false
             }
           }
-          is BothRunningBase -> {
-            highLevelDebugProcessReady = true
-            withContext(Dispatchers.EDT) { session.sessionResumed() }
-          }
-          is Exited -> break
         }
+        is BothRunningBase -> {
+          highLevelDebugProcessReady = true
+          withContext(Dispatchers.EDT) { session.sessionResumed() }
+        }
+        is Exited -> break
       }
     }
   }
@@ -163,7 +166,9 @@ class XMixedModeCombinedDebugProcess(
 
   override fun stopAsync(): Promise<in Any> {
     stateMachine.set(Stop)
-    return high.stopAsync().thenAsync { low.stopAsync() }
+
+    @Suppress("UNCHECKED_CAST")
+    return high.stopAsync().thenAsync { low.stopAsync() }.thenAsync { stateMachineRunningJob.asPromise() as Promise<Any> }
   }
 
   override fun resume(context: XSuspendContext?) {

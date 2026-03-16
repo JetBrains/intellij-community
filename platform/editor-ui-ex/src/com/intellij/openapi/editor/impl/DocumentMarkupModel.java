@@ -14,7 +14,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -66,7 +70,7 @@ public final class DocumentMarkupModel {
     DocumentMarkupModelManager documentMarkupModelManager =
       project.isDisposed() ? null : DocumentMarkupModelManager.getInstance(project);
     if (documentMarkupModelManager == null || documentMarkupModelManager.isDisposed() || project.isDisposed()) {
-      return new EmptyMarkupModel(document);
+      return new EmptyImmutableMarkupModel(document);
     }
 
     ConcurrentMap<Project, MarkupModelImpl> markupModelMap = getMarkupModelMap(document);

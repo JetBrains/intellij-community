@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.collaboration.async.nestedDisposable
@@ -26,7 +26,12 @@ import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListe
 import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchInProgressListener
 import git4idea.i18n.GitBundle.message
-import git4idea.repo.*
+import git4idea.repo.GitRepoInfo
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
+import git4idea.repo.GitRepositoryStateChangeListener
+import git4idea.repo.GitRepositoryTagsHolder
+import git4idea.repo.GitTagsHolderListener
 import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -157,7 +162,7 @@ abstract class BranchesDashboardTreeModelBase(
         }
       }
     })
-    project.messageBus.connect(this).subscribe(GitTagHolder.GIT_TAGS_LOADED, GitTagLoaderListener {
+    project.messageBus.connect(this).subscribe(GitRepositoryTagsHolder.TAGS_UPDATED, GitTagsHolderListener {
       runInEdt {
         updateBranchesTree()
       }
@@ -260,9 +265,7 @@ abstract class BranchesDashboardTreeModelBase(
       localBranch.incomingOutgoingState = incomingOutgoing
     }
 
-    runInEdt {
-      onTreeDataChange()
-    }
+    refreshTree()
   }
 
   private fun updateBranchesIsMyState() {

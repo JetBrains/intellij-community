@@ -3,12 +3,24 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.psi.KtObjectLiteralExpression
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UObjectLiteralExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UastErrorType
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.convertOpt
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
 @ApiStatus.Internal
@@ -30,7 +42,7 @@ class KotlinUObjectLiteralExpression(
                 ?: KotlinInvalidUClass("<invalid object code>", sourcePsi, this)
         }
 
-    override fun getExpressionType() =
+    override fun getExpressionType(): PsiType =
         sourcePsi.objectDeclaration.toPsiType()
 
     private val superClassConstructorCall: KtSuperTypeCallEntry?
@@ -63,7 +75,7 @@ class KotlinUObjectLiteralExpression(
             }
         }
 
-    override fun resolve() =
+    override fun resolve(): PsiMethod? =
         superClassConstructorCall?.let { baseResolveProviderService.resolveCall(it) }
 
     override fun getArgumentForParameter(i: Int): UExpression? =

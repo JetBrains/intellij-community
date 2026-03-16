@@ -15,14 +15,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.swing.SwingUtilities2;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JRootPane;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.LinkedList;
 
-import static com.intellij.ui.paint.PaintUtil.RoundingMode.*;
+import static com.intellij.ui.paint.PaintUtil.RoundingMode.CEIL;
+import static com.intellij.ui.paint.PaintUtil.RoundingMode.FLOOR;
+import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
 import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
 import static com.intellij.ui.scale.ScaleType.USR_SCALE;
 

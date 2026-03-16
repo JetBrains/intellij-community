@@ -7,7 +7,11 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapProgress;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
@@ -21,6 +25,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -32,7 +37,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,7 +58,7 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
 
   public HotSwapProgressImpl(Project project) {
     super(project);
-    assert EventQueue.isDispatchThread();
+    assert EDT.isCurrentThreadEdt();
     myProgressWindow = new BackgroundableProcessIndicator(getProject(), myTitle, null, null, true);
     myProgressWindow.setIndeterminate(false);
     myProgressWindow.addStateDelegate(new AbstractProgressIndicatorExBase() {

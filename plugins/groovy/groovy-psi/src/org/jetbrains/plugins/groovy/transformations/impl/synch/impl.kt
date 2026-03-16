@@ -3,8 +3,12 @@ package org.jetbrains.plugins.groovy.transformations.impl.synch
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.patterns.ElementPattern
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns

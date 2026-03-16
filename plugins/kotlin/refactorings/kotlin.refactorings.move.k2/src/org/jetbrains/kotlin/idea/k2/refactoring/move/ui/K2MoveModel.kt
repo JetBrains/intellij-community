@@ -2,6 +2,10 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.MutableBooleanProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsContexts
@@ -12,7 +16,13 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.plus
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
@@ -30,15 +40,17 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 /**
  * @see K2MoveDescriptor
  */
-sealed class K2MoveModel {
+sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings) : K2MoveModelObservableSettings {
+    init {
+        observableUiSettings.registerK2MoveModelSettings(this)
+    }
+
     abstract val project: Project
 
     abstract val source: K2MoveSourceModel<*>
@@ -69,6 +81,10 @@ sealed class K2MoveModel {
     }
 
     open fun buildPanel(panel: Panel): Unit = with(panel) {
+        val mppDeclarationSelectedObservable = observableUiSettings.mppDeclarationsSelected.transform { isSelected ->
+            isSelected && inSourceRoot
+        }
+
         row {
             panel {
                 searchForText.createComboBox(this)
@@ -76,10 +92,17 @@ sealed class K2MoveModel {
             }.align(AlignY.TOP + AlignX.LEFT)
             panel {
                 searchInComments.createComboBox(this)
-                mppDeclarations.createComboBox(this, inSourceRoot && this@K2MoveModel is Declarations)
+                mppDeclarations.createComboBox(
+                    panel = this,
+                    visible = mppDeclarationSelectedObservable,
+                    enabled = mppDeclarationSelectedObservable,
+                )
             }.align(AlignY.TOP + AlignX.RIGHT)
         }
     }
+
+    override val mppDeclarationsSetting: ObservableProperty<Boolean>
+        get() = mppDeclarations.observableProperty
 
     enum class Setting(private val text: @NlsContexts.Checkbox String) {
         SEARCH_FOR_TEXT(KotlinBundle.message("search.for.text.occurrences")) {
@@ -124,15 +147,36 @@ sealed class K2MoveModel {
         };
 
         abstract var state: Boolean
+        // lazy to avoid service access from constructor
+        internal val observableProperty: MutableBooleanProperty by lazy { AtomicBooleanProperty(state) }
 
-        fun createComboBox(panel: Panel, enabled: Boolean = true) {
+        fun createComboBox(
+            panel: Panel,
+            enabled: Boolean = true,
+            visible: Boolean = true,
+        ) {
+            createComboBox(
+                panel = panel,
+                enabled = ConstantBooleanObservableProperty(enabled),
+                visible = ConstantBooleanObservableProperty(visible)
+            )
+        }
+
+        fun createComboBox(
+            panel: Panel,
+            enabled: ObservableProperty<Boolean>,
+            visible: ObservableProperty<Boolean>,
+        ) {
             panel.row {
-                val checkBox = checkBox(text).enabled(enabled)
-                if (enabled) {
-                    checkBox.bindSelected(::state)
-                } else {
-                    checkBox.selected(false)
-                }
+                val checkBox = checkBox(text).enabledIf(enabled).visibleIf(visible)
+                checkBox.onChanged { observableProperty.set(it.isSelected) }
+                // reset only is intentional
+                enabled.afterChange { isEnabled -> if (!isEnabled) checkBox.selected(false) }
+                checkBox.bindSelected(::state)
+                // value set in bindSelected doesn't trigger listeners
+                val initial = enabled.get() && state
+                checkBox.selected(initial)
+                observableProperty.set(initial)
             }.layout(RowLayout.PARENT_GRID)
         }
     }
@@ -145,8 +189,9 @@ sealed class K2MoveModel {
         override val source: K2MoveSourceModel.FileSource,
         override val target: K2MoveTargetModel.SourceDirectory,
         override val inSourceRoot: Boolean,
-        override val moveCallBack: MoveCallback? = null
-    ) : K2MoveModel() {
+        observableUiSettings: ObservableUiSettings,
+        override val moveCallBack: MoveCallback? = null,
+    ) : K2MoveModel(observableUiSettings) {
         private fun PsiFile.isAlreadyInTarget(): Boolean {
             return parent == target.directory && when (this) {
                 is PsiJavaFile -> packageName == target.pkgName.asString()
@@ -192,8 +237,9 @@ sealed class K2MoveModel {
         override val source: K2MoveSourceModel.ElementSource,
         override val target: K2MoveTargetModel,
         override val inSourceRoot: Boolean,
+        observableUiSettings: ObservableUiSettings,
         override val moveCallBack: MoveCallback? = null
-    ) : K2MoveModel() {
+    ) : K2MoveModel(observableUiSettings) {
         private fun isValidFileRefactoring(fileName: String): Boolean {
             fun KtFile.isTargetFile(): Boolean {
                 return containingDirectory == target.directory
@@ -201,7 +247,7 @@ sealed class K2MoveModel {
                         && name == fileName
             }
             if (!fileName.isValidKotlinFile()) return false
-            val files = source.elements.map { it.containingFile }
+            val files = source.elements.map { it.containingFile }.toSet()
             return files.size != 1 || !(files.single() as KtFile).isTargetFile() || target.isMoveToExplicitPackage()
         }
 
@@ -233,7 +279,7 @@ sealed class K2MoveModel {
             val searchForReferences = if (inSourceRoot) searchReferences.state else false
             val searchForText = searchForText.state
             val searchInComments = searchInComments.state
-            if (mppDeclarations.state && declarations.any { it.isExpectDeclaration() || it.hasActualModifier() }) {
+            if (mppDeclarations.state && declarations.any { it.isExpectOrActual() }) {
                 val descriptors = declarations.flatMap { elem ->
                     ExpectActualUtils.withExpectedActuals(elem).filterIsInstance<KtNamedDeclaration>()
                 }.groupBy { elem ->
@@ -307,6 +353,7 @@ sealed class K2MoveModel {
             }
             val inSourceRoot = isInSourceRoot(project, elementsToMove, targetContainer)
             val explicitPkgMoveFqName = findExplicitPkgMoveFqName(elementsToMove)
+            val observableUiSettings = ObservableUiSettingsImpl()
 
             return when {
                 (elementsToMove.all { it is KtFile } && targetContainer is PsiDirectory)
@@ -314,29 +361,30 @@ sealed class K2MoveModel {
                         || declarationsFromFiles.isEmpty()
                         || (targetContainer is PsiDirectory && targetContainer.getPackage() == null) -> {
                     // this move can contain foreign language files
-                    val source = K2MoveSourceModel.FileSource(elementsToMove.toFileElements().toSet())
+                    val source = K2MoveSourceModel.FileSource(elementsToMove.toFileElements().toSet(), observableUiSettings)
                     val target = if (targetContainer is PsiDirectory) {
                         val pkg = targetContainer.getFqNameWithImplicitPrefixOrRoot()
                         K2MoveTargetModel.SourceDirectory(
                             pkgName = pkg,
                             directory = targetContainer,
                             explicitPkgMoveFqName = explicitPkgMoveFqName,
+                            observableUiSettings = observableUiSettings,
                         )
                     } else { // no default target is provided, happens when invoking refactoring via keyboard instead of drag-and-drop
                         val file = elementsToMove.firstOrNull { it.containingFile != null }?.containingFile
                             ?: error("No default target found")
                         val directory = file.containingDirectory ?: error("No default target found")
                         val pkgName = elementsToMove.firstIsInstanceOrNull<KtElement>()?.containingKtFile?.packageFqName ?: FqName.ROOT
-                        K2MoveTargetModel.SourceDirectory(pkgName, directory, explicitPkgMoveFqName = null)
+                        K2MoveTargetModel.SourceDirectory(pkgName, directory, explicitPkgMoveFqName = null, observableUiSettings)
                     }
-                    Files(project, source, target, inSourceRoot, moveCallBack)
+                    Files(project, source, target, inSourceRoot, observableUiSettings, moveCallBack)
                 }
 
                 targetContainer is KtFile || targetContainer.isSingleClassContainer() || isSingleFileMove(elementsToMove) -> {
-                    val source = K2MoveSourceModel.ElementSource(declarationsFromFiles.toSet())
+                    val source = K2MoveSourceModel.ElementSource(declarationsFromFiles.toSet(), observableUiSettings)
                     val targetFile = targetContainer?.containingFile
                     val target = if (targetFile is KtFile) {
-                        K2MoveTargetModel.File(targetFile)
+                        K2MoveTargetModel.File(targetFile, observableUiSettings)
                     } else if (targetContainer is PsiDirectory) {
                         val pkg = targetContainer.getFqNameWithImplicitPrefixOrRoot()
                         K2MoveTargetModel.File(
@@ -344,6 +392,7 @@ sealed class K2MoveModel {
                             pkg = pkg,
                             directory = targetContainer,
                             explicitPkgMoveFqName = explicitPkgMoveFqName,
+                            observableUiSettings = observableUiSettings,
                         )
                     } else { // no default target is provided, happens when invoking refactoring via keyboard instead of drag-and-drop
                         val firstElem = elementsToMove.firstOrNull() as KtElement
@@ -352,7 +401,8 @@ sealed class K2MoveModel {
                         K2MoveTargetModel.Declarations(
                             defaultDirectory = psiDirectory,
                             defaultPkgName = containingFile.packageFqName,
-                            defaultFileName = findSourceFileNameByMovedElements(elementsToMove)
+                            defaultFileName = findSourceFileNameByMovedElements(elementsToMove),
+                            observableUiSettings = observableUiSettings,
                         )
                     }
 
@@ -361,6 +411,7 @@ sealed class K2MoveModel {
                         source = source,
                         target = target,
                         inSourceRoot = inSourceRoot,
+                        observableUiSettings = observableUiSettings,
                         moveCallBack = moveCallBack
                     )
                 }

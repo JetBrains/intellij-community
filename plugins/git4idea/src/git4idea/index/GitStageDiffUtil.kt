@@ -28,7 +28,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ContentRevision
+import com.intellij.openapi.vcs.changes.CurrentContentRevision
+import com.intellij.openapi.vcs.changes.TextRevisionNumber
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain

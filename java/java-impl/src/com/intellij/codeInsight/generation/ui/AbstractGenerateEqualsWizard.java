@@ -11,12 +11,17 @@ import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.ui.AbstractMemberSelectionPanel;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import java.awt.*;
-import java.util.*;
+import java.awt.Component;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Nikolay.Tropin

@@ -1,9 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.diff
 
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.combineStates
+import com.intellij.collaboration.async.computationStateFlow
+import com.intellij.collaboration.async.mapNullableScoped
+import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.mapStatefulToStateful
+import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
-import com.intellij.collaboration.ui.codereview.diff.model.*
+import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
+import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffProcessorViewModel
+import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiscussionsViewModel
+import com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest
+import com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate
+import com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
@@ -15,7 +27,14 @@ import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -26,8 +45,9 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewUnifiedPosition
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
+import org.jetbrains.plugins.github.pullrequest.ui.comment.lineLocation
 import org.jetbrains.plugins.github.pullrequest.ui.review.DelegatingGHPRReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
@@ -57,7 +77,7 @@ interface GHPRDiffViewModel : CodeReviewDiffProcessorViewModel<GHPRDiffChangeVie
    *
    * @return The ID of the next comment to move to, or `null` if no next comment could be found.
    */
-  fun nextComment(cursorLocation: GHPRReviewUnifiedPosition): String?
+  fun nextComment(cursorLocation: UnifiedCodeReviewItemPosition): String?
 
   /**
    * Tries to find the previous comment, given that a comment is currently focused.
@@ -71,7 +91,7 @@ interface GHPRDiffViewModel : CodeReviewDiffProcessorViewModel<GHPRDiffChangeVie
    *
    * @return The ID of the previous comment to move to, or `null` if no previous comment could be found.
    */
-  fun previousComment(cursorLocation: GHPRReviewUnifiedPosition): String?
+  fun previousComment(cursorLocation: UnifiedCodeReviewItemPosition): String?
 
   fun showDiffFor(changes: ChangesSelection)
   fun showDiffAtComment(commentId: String)
@@ -195,19 +215,21 @@ internal class GHPRDiffViewModelImpl(
   override fun nextComment(focused: String): String? =
     threadsVm.lookupNextComment(focused, this::threadIsVisible)
 
-  override fun nextComment(cursorLocation: GHPRReviewUnifiedPosition): String? =
+  override fun nextComment(cursorLocation: UnifiedCodeReviewItemPosition): String? =
+    // TODO: Find a good way to map cursorLocations here (only broken for per-commit nav)
     threadsVm.lookupNextComment(cursorLocation, this::threadIsVisible)
 
   override fun previousComment(focused: String): String? =
     threadsVm.lookupPreviousComment(focused, this::threadIsVisible)
 
-  override fun previousComment(cursorLocation: GHPRReviewUnifiedPosition): String? =
+  override fun previousComment(cursorLocation: UnifiedCodeReviewItemPosition): String? =
+    // TODO: Find a good way to map cursorLocations here (only broken for per-commit nav)
     threadsVm.lookupPreviousComment(cursorLocation, this::threadIsVisible)
 
   override fun showDiffAtComment(commentId: String) {
     val mapping = threadMappings.value[commentId] ?: return
     if (mapping.change == null) return
-    showChange(mapping.change, mapping.location?.let(DiffViewerScrollRequest::toLine))
+    showChange(mapping.change, mapping.location?.lineLocation?.let(DiffViewerScrollRequest::toLine))
     mappedThreads.value.find { it.id == commentId }?.requestFocus()
   }
 
@@ -245,7 +267,15 @@ private fun mapThreadToChange(
   val change = changeVm.change
   val isVisible = threadData.isVisible(viewOption)
   val diffData = changeVm.diffData ?: return GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, null)
-
-  val commentRange = threadData.mapToRange(diffData)
-  return GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, commentRange)
+  val sideToRange = threadData.mapToRange(diffData) ?: return GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, null)
+  val startLineLocation = sideToRange.first
+  val endLineLocation = sideToRange.second
+  val location = if (sideToRange.let { startLineLocation.second == endLineLocation.second }) {
+    GHPRReviewCommentLocation.SingleLine(endLineLocation.first, startLineLocation.second)
+  }
+  else {
+    GHPRReviewCommentLocation.MultiLine(startLineLocation.first, startLineLocation.second,
+                                        endLineLocation.first, endLineLocation.second)
+  }
+  return GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, location)
 }

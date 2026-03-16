@@ -4,6 +4,7 @@ package com.intellij.psi.impl;
 import com.intellij.ide.FileIconUtil;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.INativeFileType;
@@ -17,7 +18,11 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.CoreAwareIconManager;
 import com.intellij.ui.IconManager;
@@ -28,13 +33,17 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.PsiIconUtil;
 import com.intellij.util.ui.EDT;
 import kotlin.jvm.functions.Function1;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class ElementBase extends UserDataHolderBase implements Iconable {
   private static final Logger LOG = Logger.getInstance(ElementBase.class);
+
+  private static boolean forceDeferredIconsInTests = false;
 
   public static final int FLAGS_LOCKED = 0x800;
   private static final Function1<ElementIconRequest,Icon> ICON_COMPUTE = request -> {
@@ -83,8 +92,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       if (baseIcon == null) {
         return null;
       }
-      return IconManager.getInstance().createDeferredIcon(
-        baseIcon, new ElementIconRequest(psiElement, psiElement.getProject(), flags), ICON_COMPUTE);
+      ElementIconRequest param = ReadAction.compute(() -> new ElementIconRequest(psiElement, psiElement.getProject(), flags));
+      return IconManager.getInstance().createDeferredIcon(baseIcon, param, ICON_COMPUTE);
     }
 
     return computeIconNow(psiElement, flags);
@@ -95,7 +104,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (EDT.isCurrentThreadEdt()) return true;
     // Unit tests often don't create actual UI, so the deferred icon is never resolved.
     // Sometimes this causes tests to fail in really unpredictable ways.
-    return !ApplicationManager.getApplication().isUnitTestMode();
+    return !ApplicationManager.getApplication().isUnitTestMode() || forceDeferredIconsInTests;
   }
 
   private static @Nullable Icon computeIconNow(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
@@ -263,5 +272,17 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     boolean isLocked = BitUtil.isSet(_flags, ICON_FLAG_READ_STATUS) && !element.isWritable();
     if (isLocked) flags |= FLAGS_LOCKED;
     return flags;
+  }
+
+  @ApiStatus.Internal
+  @TestOnly
+  public static void withForcedDeferredIcons(@NotNull Runnable runnable) {
+    forceDeferredIconsInTests = true;
+    try {
+      runnable.run();
+    }
+    finally {
+      forceDeferredIconsInTests = false;
+    }
   }
 }

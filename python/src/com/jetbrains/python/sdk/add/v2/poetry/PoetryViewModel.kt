@@ -4,8 +4,11 @@ package com.jetbrains.python.sdk.add.v2.poetry
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.platform.eel.provider.localEel
-import com.jetbrains.python.getOrNull
-import com.jetbrains.python.sdk.add.v2.*
+import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.PythonToolViewModel
+import com.jetbrains.python.sdk.add.v2.ToolValidator
+import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.poetry.getPoetryExecutable
 import kotlinx.coroutines.CoroutineScope
 
@@ -23,7 +26,7 @@ class PoetryViewModel<P : PathHolder>(
     defaultPathSupplier = {
       when (fileSystem) {
         is FileSystem.Eel -> {
-          if (fileSystem.eelApi == localEel) getPoetryExecutable().getOrNull()?.let { PathHolder.Eel(it) } as P?
+          if (fileSystem.eelApi == localEel) getPoetryExecutable()?.let { PathHolder.Eel(it) } as P?
           else null // getPoetryExecutable() works only with localEel currently
         }
         else -> null

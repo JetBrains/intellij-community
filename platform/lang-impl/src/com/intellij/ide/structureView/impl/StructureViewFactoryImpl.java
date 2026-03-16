@@ -4,7 +4,11 @@ package com.intellij.ide.structureView.impl;
 import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.structureView.*;
+import com.intellij.ide.structureView.StructureView;
+import com.intellij.ide.structureView.StructureViewExtension;
+import com.intellij.ide.structureView.StructureViewFactoryEx;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.StructureViewWrapper;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -25,7 +29,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @ApiStatus.Internal

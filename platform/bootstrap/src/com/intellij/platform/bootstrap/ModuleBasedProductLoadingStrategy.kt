@@ -1,28 +1,47 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.bootstrap
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.ClassPathXmlPathResolver
+import com.intellij.ide.plugins.DiscoveredPluginsList
+import com.intellij.ide.plugins.ImmutableZipFileDataLoader
+import com.intellij.ide.plugins.LocalFsDataLoader
+import com.intellij.ide.plugins.ModuleLoadingRule
+import com.intellij.ide.plugins.PluginDescriptorLoadingContext
+import com.intellij.ide.plugins.PluginMainDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginModuleId
+import com.intellij.ide.plugins.PluginXmlPathResolver
+import com.intellij.ide.plugins.PluginsSourceContext
+import com.intellij.ide.plugins.ProductLoadingStrategy
+import com.intellij.ide.plugins.deprecatedLoadCorePluginForModuleBasedLoader
+import com.intellij.ide.plugins.loadDescriptorFromDir
+import com.intellij.ide.plugins.loadDescriptorFromFileOrDir
+import com.intellij.ide.plugins.loadDescriptorFromJar
 import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.platform.runtime.product.IncludedRuntimeModule
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorFromXmlStreamConsumer
+import com.intellij.platform.pluginSystem.parser.impl.consume
 import com.intellij.platform.runtime.product.PluginModuleGroup
 import com.intellij.platform.runtime.product.ProductMode
-import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
-import com.intellij.platform.runtime.product.impl.IncludedRuntimeModuleImpl
 import com.intellij.platform.runtime.product.impl.ServiceModuleMapping
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
-import com.intellij.platform.runtime.repository.MalformedRepositoryException
+import com.intellij.platform.runtime.repository.IncludedRuntimeModule
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.RuntimeModuleId
+import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
-import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl
-import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
+import com.intellij.platform.runtime.repository.impl.IncludedRuntimeModuleImpl
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.ZipEntryResolverPool
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -81,16 +100,19 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     customPluginDir: Path,
     bundledPluginDir: Path?,
     isUnitTestMode: Boolean,
+    isInDevServerMode: Boolean,
     isRunningFromSources: Boolean,
     zipPool: ZipEntryResolverPool,
     mainClassLoader: ClassLoader,
   ): Deferred<List<DiscoveredPluginsList>> {
     val platformPrefix = PlatformUtils.getPlatformPrefix()
-    val isInDevServerMode = AppMode.isRunningFromDevBuild()
     val isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode
-    val classpathPathResolver = ClassPathXmlPathResolver(mainClassLoader, isRunningFromSourcesWithoutDevBuild = isRunningFromSourcesWithoutDevBuild)
-    val useCoreClassLoader = platformPrefix.startsWith("CodeServer") ||
-                             java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
+    val classpathPathResolver = ClassPathXmlPathResolver(
+      classLoader = mainClassLoader,
+      isRunningFromSourcesWithoutDevBuild = isRunningFromSourcesWithoutDevBuild,
+      isOptionalProductModule = { moduleId -> this@ModuleBasedProductLoadingStrategy.isOptionalProductModule(moduleId) },
+    )
+    val useCoreClassLoader = platformPrefix.startsWith("CodeServer") || java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
     val pathResolver = if (isRunningFromSourcesWithoutDevBuild) {
       RunningFromSourceModuleBasedPathResolver(moduleRepository, fallbackResolver = classpathPathResolver)
     }
@@ -98,7 +120,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       classpathPathResolver
     }
     val corePlugin = scope.async(Dispatchers.IO) {
-      loadCorePlugin(
+      deprecatedLoadCorePluginForModuleBasedLoader(
         platformPrefix = platformPrefix,
         isInDevServerMode = isInDevServerMode,
         isUnitTestMode = isUnitTestMode,
@@ -107,6 +129,8 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         pathResolver = pathResolver,
         useCoreClassLoader = useCoreClassLoader,
         classLoader = mainClassLoader,
+        jarFileForModule = { moduleId, _ -> findProductContentModuleClassesRoot(moduleId) },
+        pool = zipPool,
       )
     }
     val custom = loadCustomPluginDescriptors(scope, customPluginDir, loadingContext, zipPool)
@@ -130,12 +154,28 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     val serviceModuleMappingDeferred = scope.async { 
       ServiceModuleMapping.buildMapping(productModules)
     }
+
+    productModules.notLoadedBundledPluginModules.forEach { (notLoadedId, failedDependencyPath) ->
+      // todo: convert this to an error after fixing the problem with intellij.performanceTesting.async plugin: IJPL-186414
+      logger<ModuleBasedProductLoadingStrategy>().warn("""
+        |Bundled plugin module '${notLoadedId.presentableName}' couldn't be loaded because of missing dependency:
+        |${failedDependencyPath.joinToString(" -> ") { it.presentableName }}
+        |""".trimMargin())
+    }
+
     val bundled = productModules.bundledPluginModuleGroups.map { moduleGroup ->
       scope.async {
-        if (moduleGroup.includedModules.none { it.moduleDescriptor.moduleId in mainGroupModulesSet }) {
+        if (moduleGroup.includedModules.none { it.moduleDescriptor.moduleId in mainGroupModulesSet } || isPluginWithUseIdeaClassLoader(moduleGroup, context, zipFilePool)) {
           val serviceModuleMapping = serviceModuleMappingDeferred.await()
-          loadPluginDescriptorFromRuntimeModule(moduleGroup, context, zipFilePool, serviceModuleMapping, mainGroupResourceRootSet,
-                                                isBundled = true, pluginDir = null)
+          loadPluginDescriptorFromRuntimeModule(
+            pluginModuleGroup = moduleGroup,
+            context = context,
+            zipFilePool = zipFilePool,
+            serviceModuleMapping = serviceModuleMapping,
+            mainGroupResourceRootSet = mainGroupResourceRootSet,
+            isBundled = true,
+            pluginDir = null,
+          )
         }
         else {
           /* todo: intellij.performanceTesting.async plugin has different distributions for different IDEs, in some IDEs it has dependencies 
@@ -148,6 +188,51 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       }
     }
     return scope.async { DiscoveredPluginsList(bundled.awaitAll().filterNotNull(), PluginsSourceContext.Bundled) }
+  }
+
+  /**
+   * Returns true if [pluginModuleGroup] is a plugin with `use-idea-classloader` which should be loaded by platform.
+   * Content modules of these plugins always should be loaded.
+   */
+  private fun isPluginWithUseIdeaClassLoader(
+    pluginModuleGroup: PluginModuleGroup,
+    loadingContext: PluginDescriptorLoadingContext,
+    zipFilePool: ZipEntryResolverPool,
+  ): Boolean {
+    val mainResourceRoot = pluginModuleGroup.mainModule.resourceRootPaths.singleOrNull() ?: return false
+    val input = readMainModulePluginXml(mainResourceRoot, zipFilePool, pluginModuleGroup) ?: return false
+    // TODO: do we need to support xIncludes in this case?
+    @Suppress("TestOnlyProblems")
+    val rawDescriptor = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, xIncludeLoader = null).let {
+      it.consume(input, mainResourceRoot.toString())
+      it.build()
+    }
+    return rawDescriptor.isUseIdeaClassLoader
+  }
+
+  private fun readMainModulePluginXml(
+    mainResourceRoot: Path,
+    zipFilePool: ZipEntryResolverPool,
+    pluginModuleGroup: PluginModuleGroup,
+  ): ByteArray? {
+    if (Files.isDirectory(mainResourceRoot)) {
+      val dataLoader = LocalFsDataLoader(mainResourceRoot)
+      return dataLoader.load(path = PluginManagerCore.PLUGIN_XML_PATH, pluginDescriptorSourceOnly = true)
+    }
+    // mainResourceRoot is a JAR file
+    var resolver: ZipEntryResolverPool.EntryResolver? = null
+    try {
+      resolver = zipFilePool.load(mainResourceRoot)
+      val dataLoader = ImmutableZipFileDataLoader(resolver = resolver, zipPath = mainResourceRoot)
+      return dataLoader.load(path = PluginManagerCore.PLUGIN_XML_PATH, pluginDescriptorSourceOnly = true)
+    }
+    catch (e: Throwable) {
+      logger<ModuleBasedProductLoadingStrategy>().warn("Failed to load ${PluginManagerCore.PLUGIN_XML_PATH} from '${pluginModuleGroup.mainModule.moduleId.presentableName}' module: $e", e)
+      return null
+    }
+    finally {
+      resolver?.close()
+    }
   }
 
   private fun loadCustomPluginDescriptors(
@@ -177,62 +262,8 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
           })
         }
       }
-      deferredDescriptors.addAll(loadPluginDescriptorsFromAdditionalRepositories(scope, additionalRepositoryPaths, context, zipFilePool))
     }
     return scope.async { DiscoveredPluginsList(deferredDescriptors.awaitAll().filterNotNull(), PluginsSourceContext.Custom) }
-  }
-
-  private fun loadPluginDescriptorsFromAdditionalRepositories(scope: CoroutineScope,
-                                                              repositoryPaths: List<Path>,
-                                                              context: PluginDescriptorLoadingContext,
-                                                              zipFilePool: ZipEntryResolverPool): Collection<Deferred<PluginMainDescriptor?>> {
-    val repositoriesByPaths = scope.async {
-      val repositoriesByPaths = repositoryPaths.associateWith {
-        try {
-          RuntimeModuleRepositorySerialization.loadFromJar(it)
-        }
-        catch (e: MalformedRepositoryException) {
-          logger<ModuleBasedProductLoadingStrategy>().warn("Failed to load module repository for a custom plugin: $e", e)
-          null
-        } 
-      }
-      (moduleRepository as RuntimeModuleRepositoryImpl).loadAdditionalRepositories(repositoriesByPaths.values.filterNotNull())
-      repositoriesByPaths
-    }
-    return repositoryPaths.map { path -> 
-      scope.async { 
-        val repositoryDataMap = repositoriesByPaths.await()
-        val repositoryData = repositoryDataMap[path] ?: return@async null
-        val mainModuleId = repositoryData.mainPluginModuleId ?: return@async null
-        try {
-          val mainModule = moduleRepository.getModule(RuntimeModuleId.raw(mainModuleId))
-          /* 
-            It would be probably better to reuse PluginModuleGroup here, and load information about additional modules from plugin.xml. 
-            However, currently this won't work because plugin model v2 requires that there is an XML configuration file for each module
-            mentioned in the <content> tag, but in the test plugins we have modules without configuration files. 
-          */
-          val descriptors = ArrayList<RuntimeModuleDescriptor>()
-          descriptors.add(mainModule)
-          repositoryData.allIds.asSequence()
-            .filter { it != mainModuleId }
-            .mapTo(descriptors) { moduleRepository.getModule(RuntimeModuleId.raw(it)) }
-          val moduleGroup = CustomPluginModuleGroup(descriptors, mainModule)
-          loadPluginDescriptorFromRuntimeModule(
-            pluginModuleGroup = moduleGroup,
-            context = context,
-            zipFilePool = zipFilePool,
-            serviceModuleMapping = null,
-            mainGroupResourceRootSet = emptySet(),
-            isBundled = false,
-            pluginDir = path.parent,
-          )
-        }
-        catch (t: Throwable) {
-          logger<ModuleBasedProductLoadingStrategy>().warn("Failed to load custom plugin '$mainModuleId': $t", t)
-          null
-        }
-      }
-    }
   }
 
   private fun loadPluginDescriptorFromRuntimeModule(
@@ -244,11 +275,10 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     isBundled: Boolean,
     pluginDir: Path?,
   ): PluginMainDescriptor? {
-    val mainResourceRoot = pluginModuleGroup.mainModule.resourceRootPaths.singleOrNull()
-    if (mainResourceRoot == null) {
+    val resourceRoots = pluginModuleGroup.mainModule.resourceRootPaths
+    if (resourceRoots.isEmpty()) {
       thisLogger().warn(
-        "Main plugin module must have single resource root, so '${pluginModuleGroup.mainModule.moduleId.stringId}'" +
-        " with roots ${pluginModuleGroup.mainModule.resourceRootPaths} won't be loaded"
+        "Main plugin module must have at least one resource root, so '${pluginModuleGroup.mainModule.moduleId.presentableName}' won't be loaded"
       )
       return null
     }
@@ -265,13 +295,43 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
     val allResourceRootsList = allResourceRoots.toList()
 
-    val descriptor = if (Files.isDirectory(mainResourceRoot)) {
+    val descriptor = resourceRoots.firstNotNullOfOrNull { resourceRoot ->
+      tryLoadingPluginDescriptorFromJarOrDirectory(resourceRoot, allResourceRootsList, zipFilePool,
+                                                   pluginModuleGroup, context, isBundled, pluginDir)
+    }
+    val modulesWithJarFiles = descriptor?.contentModules?.flatMap { moduleItem ->
+      val jarFiles = moduleItem.jarFiles
+      if (moduleItem.moduleLoadingRule != ModuleLoadingRule.EMBEDDED && jarFiles != null) jarFiles else emptyList()
+    }
+    descriptor?.jarFiles = allResourceRootsList.filter { modulesWithJarFiles == null || it !in modulesWithJarFiles }
+    return descriptor
+  }
+
+  private fun tryLoadingPluginDescriptorFromJarOrDirectory(
+    resourceRoot: Path,
+    allResourceRootsList: List<Path>,
+    zipFilePool: ZipEntryResolverPool,
+    pluginModuleGroup: PluginModuleGroup,
+    context: PluginDescriptorLoadingContext,
+    isBundled: Boolean,
+    pluginDir: Path?,
+  ): PluginMainDescriptor? {
+    return if (Files.isDirectory(resourceRoot)) {
       val fallbackResolver = PluginXmlPathResolver(allResourceRootsList.filter { it.extension == "jar" }, zipFilePool)
-      val resolver = ModuleBasedPluginXmlPathResolver(includedModules,
-                                                      pluginModuleGroup.optionalModuleIds,
-                                                      pluginModuleGroup.notLoadedModuleIds,
-                                                      fallbackResolver)
-      loadDescriptorFromDir(mainResourceRoot, context, zipFilePool, resolver, isBundled = isBundled, pluginDir = pluginDir)
+      val resolver = ModuleBasedPluginXmlPathResolver(
+        includedModules = pluginModuleGroup.includedModules,
+        optionalModuleIds = pluginModuleGroup.optionalModuleIds,
+        notLoadedModuleIds = pluginModuleGroup.notLoadedModuleIds,
+        fallbackResolver = fallbackResolver,
+      )
+      loadDescriptorFromDir(
+        dir = resourceRoot,
+        loadingContext = context,
+        pool = zipFilePool,
+        pathResolver = resolver,
+        isBundled = isBundled,
+        pluginDir = pluginDir,
+      )
         .also { descriptor ->
           descriptor?.contentModules?.forEach { module ->
             if (module.packagePrefix == null) {
@@ -280,22 +340,30 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
             }
           }
         }
-    }
-    else {
+      }
+      else {
       val defaultResolver = PluginXmlPathResolver(allResourceRootsList, zipFilePool)
-      val pathResolver = if (allResourceRootsList.size == 1 && pluginModuleGroup.notLoadedModuleIds.isEmpty())
+      val pathResolver = if (allResourceRootsList.size == 1 && pluginModuleGroup.notLoadedModuleIds.isEmpty()) {
         defaultResolver
-      else
-        ModuleBasedPluginXmlPathResolver(includedModules, pluginModuleGroup.optionalModuleIds, pluginModuleGroup.notLoadedModuleIds, defaultResolver)
-      val pluginDir = pluginDir ?: mainResourceRoot.parent.parent
-      loadDescriptorFromJar(mainResourceRoot, context, zipFilePool, pathResolver, isBundled = isBundled, pluginDir = pluginDir)
+      }
+      else {
+        ModuleBasedPluginXmlPathResolver(
+          includedModules = pluginModuleGroup.includedModules,
+          optionalModuleIds = pluginModuleGroup.optionalModuleIds,
+          notLoadedModuleIds = pluginModuleGroup.notLoadedModuleIds,
+          fallbackResolver = defaultResolver,
+        )
+      }
+      val pluginDir = pluginDir ?: resourceRoot.parent.parent
+      loadDescriptorFromJar(
+        file = resourceRoot,
+        loadingContext = context,
+        pool = zipFilePool,
+        pathResolver = pathResolver,
+        isBundled = isBundled,
+        pluginDir = pluginDir,
+      )
     }
-    val modulesWithJarFiles = descriptor?.contentModules?.flatMap { moduleItem ->
-      val jarFiles = moduleItem.jarFiles
-      if (moduleItem.moduleLoadingRule != ModuleLoadingRule.EMBEDDED && jarFiles != null) jarFiles else emptyList()
-    }
-    descriptor?.jarFiles = allResourceRootsList.filter { modulesWithJarFiles == null || it !in modulesWithJarFiles }
-    return descriptor
   }
 
   /* TODO: reuse ServiceModuleMapping instead */
@@ -309,10 +377,15 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
   }
 
-  override fun isOptionalProductModule(moduleId: String): Boolean =
-    productModules.mainModuleGroup.optionalModuleIds.contains(RuntimeModuleId.raw(moduleId))
+  override fun isOptionalProductModule(moduleId: String): Boolean {
+    return productModules.mainModuleGroup.optionalModuleIds.contains(RuntimeModuleId.module(moduleId))
+  }
 
   override fun findProductContentModuleClassesRoot(moduleId: PluginModuleId, moduleDir: Path): Path? {
+    return findProductContentModuleClassesRoot(moduleId)
+  }
+
+  private fun findProductContentModuleClassesRoot(moduleId: PluginModuleId): Path? {
     val resolvedModule = moduleRepository.resolveModule(RuntimeModuleId.module(moduleId.name)).resolvedModule
     if (resolvedModule == null) {
       // https://youtrack.jetbrains.com/issue/CPP-38280
@@ -322,8 +395,16 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
 
     val paths = resolvedModule.resourceRootPaths
-    return paths.singleOrNull() 
-           ?: error("Content modules are supposed to have only one resource root, but $moduleId have multiple: $paths")
+    val singlePath = paths.singleOrNull()
+    val isRunningFromSourcesWithoutDevBuild = PluginManagerCore.isRunningFromSources() && !AppMode.isRunningFromDevBuild()
+    /* when running from sources without dev build, resources of a content module may include the module output directory and paths to its
+       module-level libraries, so this function may return null so resolveModuleFile and resolveCustomModuleClassesRoots from
+       ModuleBasedPluginXmlPathResolver will be used to load the module */
+    if (singlePath == null && !isRunningFromSourcesWithoutDevBuild) {
+      error("Content modules are supposed to have only one resource root, but $moduleId have multiple: $paths")
+    }
+
+    return singlePath
   }
 }
 

@@ -3,7 +3,6 @@ package com.intellij.platform.testFramework.junit5.eel.impl.nio
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.path.EelPath
 import java.io.File
 import java.nio.file.FileStore
 import java.nio.file.FileSystem

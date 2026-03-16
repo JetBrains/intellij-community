@@ -4,12 +4,14 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactoryWithDelegate
 import org.jetbrains.kotlin.idea.quickfix.QuickFixWithDelegateFactory
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.psi.KtElement
 
+@K1Deprecation
 data class CreateParameterData<out E : KtElement>(
     val parameterInfo: KotlinParameterInfo,
     val originalExpression: E,
@@ -17,6 +19,7 @@ data class CreateParameterData<out E : KtElement>(
     val onComplete: ((Editor?) -> Unit)? = null
 )
 
+@K1Deprecation
 abstract class CreateParameterFromUsageFactory<E : KtElement> :
     KotlinSingleIntentionActionFactoryWithDelegate<E, CreateParameterData<E>>() {
 

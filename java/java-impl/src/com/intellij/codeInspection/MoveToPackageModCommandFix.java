@@ -3,7 +3,14 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.java.JavaBundle;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.FutureVirtualFile;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCreateFile;
+import com.intellij.modcommand.ModMoveFile;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.roots.ProjectFileIndex;

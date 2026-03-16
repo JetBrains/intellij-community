@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  qqq/C.class
+End of files
+Cleaning output files:
+  ppp/A.class
+  ppp/B.class
+End of files
+Compiling files:
+  java/common/compileDependenciesOnMovedClassesInFirstRound/a/ppp/A.java
+  java/common/compileDependenciesOnMovedClassesInFirstRound/a/ppp/B.java
+  java/common/compileDependenciesOnMovedClassesInFirstRound/a/ppp/C.java
+End of files
+------------------------------------------
+Exit code: OK

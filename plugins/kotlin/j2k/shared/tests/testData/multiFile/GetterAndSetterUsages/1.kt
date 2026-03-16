@@ -1,4 +1,5 @@
-// ERROR: Unresolved reference: yy
+// ERROR: Unresolved reference 'getYY'.
+// IGNORE_K1
 package test
 
 class AAA {
@@ -6,10 +7,10 @@ class AAA {
     var x: Int = 42
 
     fun foo() {
-        x = x + 1
+        this.x = this.x + 1
     }
 
     fun bar(b: B) {
-        println(b.yy)
+        println(b.getYY())
     }
 }

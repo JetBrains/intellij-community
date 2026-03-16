@@ -7,17 +7,29 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -131,7 +143,7 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
             element.getPrevSibling() !=null &&
             element.getPrevSibling().getText().equals("<")) {
           // tag is started and there is another text in the end
-          EditorModificationUtil.insertStringAtCaret(editor, "</" + element.getText() + ">", false, 0);
+          EditorModificationUtilEx.insertStringAtCaret(editor, "</" + element.getText() + ">", false, 0);
         }
         return Result.CONTINUE;
       }

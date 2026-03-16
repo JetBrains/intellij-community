@@ -123,7 +123,7 @@ class DerivedValue:
 class Inherit(DerivedValue):
     def getValue(self, renderer, attr): ...
 
-inherit: Incomplete
+inherit: Inherit
 
 class NumericAlign(str):
     def __new__(cls, dp: str = ".", dpLen: int = 0): ...

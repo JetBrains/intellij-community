@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JList;
 
 public class ModuleListCellRenderer extends SimpleListCellRenderer<Module> {
   private final @NlsContexts.ListItem String myEmptySelectionText;

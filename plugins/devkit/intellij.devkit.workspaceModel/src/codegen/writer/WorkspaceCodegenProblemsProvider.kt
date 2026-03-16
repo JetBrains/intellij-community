@@ -7,6 +7,7 @@ import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewToolWindowUtils.selectProjectErrorsTab
 import com.intellij.codeHighlighting.HighlightDisplayLevel
+import com.intellij.devkit.workspaceModel.metaModel.MetaProblem
 import com.intellij.devkit.workspaceModel.metaModel.ObjMetaElementWithPsi
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -14,6 +15,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.util.startOffset
 import com.intellij.workspaceModel.codegen.engine.GenerationProblem
@@ -21,11 +23,28 @@ import com.intellij.workspaceModel.codegen.engine.ProblemLocation
 import javax.swing.Icon
 
 @Service(Service.Level.PROJECT)
-class WorkspaceCodegenProblemsProvider(override val project: Project): ProblemsProvider {
+class WorkspaceCodegenProblemsProvider(override val project: Project) : ProblemsProvider {
   private var currentProblems = emptyList<WorkspaceModelCodeGenerationProblem>()
-  
+
   companion object {
     fun getInstance(project: Project): WorkspaceCodegenProblemsProvider = project.service()
+  }
+  
+  fun reportMetaProblem(metaProblems: List<MetaProblem>) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      val firstProblem = metaProblems.firstOrNull() ?: return
+      error("Failed to collect metadata: ${firstProblem.message}")
+    }
+
+    for (currentProblem in currentProblems) {
+      ProblemsCollector.getInstance(project).problemDisappeared(currentProblem)
+    }
+    val problems = metaProblems.map { it.toProblem() }
+    currentProblems = problems
+    for (currentProblem in problems) {
+      ProblemsCollector.getInstance(project).problemAppeared(currentProblem)
+    }
+    selectProjectErrorsTab(project)
   }
 
   fun reportProblems(generationProblems: List<GenerationProblem>) {
@@ -33,7 +52,7 @@ class WorkspaceCodegenProblemsProvider(override val project: Project): ProblemsP
       val problem = generationProblems.first()
       error("Failed to generate code for ${problem.location}: ${problem.message}")
     }
-    
+
     val problems = generationProblems.map { it.toProblem() }
     for (currentProblem in currentProblems) {
       ProblemsCollector.getInstance(project).problemDisappeared(currentProblem)
@@ -46,39 +65,45 @@ class WorkspaceCodegenProblemsProvider(override val project: Project): ProblemsP
       selectProjectErrorsTab(project)
     }
   }
+  
+  private fun MetaProblem.toProblem(): WorkspaceModelCodeGenerationProblem {
+    if (psiToHighlight == null) return WorkspaceModelCodeGenerationProblem(message, HighlightDisplayLevel.ERROR.icon)
+    return problemWithPsi(psiToHighlight, message, HighlightDisplayLevel.ERROR.icon)
+  }
+  
 
   private fun GenerationProblem.toProblem(): WorkspaceModelCodeGenerationProblem {
+    val icon = when (level) {
+      GenerationProblem.Level.WARNING -> HighlightDisplayLevel.WARNING.icon
+      else -> HighlightDisplayLevel.ERROR.icon
+    }
     val psiElement = when (val problemLocation = location) {
-      is ProblemLocation.Class -> (problemLocation.objClass as ObjMetaElementWithPsi).sourcePsi
-      is ProblemLocation.Property -> (problemLocation.property as ObjMetaElementWithPsi).sourcePsi
-    } ?: return WorkspaceModelCodeGenerationProblem(this)
+                       is ProblemLocation.Class -> (problemLocation.objClass as ObjMetaElementWithPsi).sourcePsi
+                       is ProblemLocation.Property -> (problemLocation.property as ObjMetaElementWithPsi).sourcePsi
+                     } ?: return WorkspaceModelCodeGenerationProblem(message, icon)
+    return problemWithPsi(psiElement, message, icon)
+  }
+
+  private fun problemWithPsi(psiElement: PsiElement, text: String, icon: Icon): WorkspaceModelCodeGenerationProblem {
     val psiToHighlight = (psiElement as? PsiNameIdentifierOwner)?.nameIdentifier ?: psiElement
     val file = psiToHighlight.containingFile.virtualFile
-    val document = FileDocumentManager.getInstance().getDocument(file) ?: return WorkspaceModelCodeGenerationProblem(this)
+    val document = FileDocumentManager.getInstance().getDocument(file) ?: return WorkspaceModelCodeGenerationProblem(text, icon)
     val offset = psiToHighlight.startOffset
     val line = document.getLineNumber(offset)
     val column = offset - document.getLineStartOffset(line)
-    return WorkspaceModelCodeGenerationProblemInFile(this, file, line, column)
+    return WorkspaceModelCodeGenerationProblemInFile(text, icon, file, line, column)
   }
 
-  private open inner class WorkspaceModelCodeGenerationProblem(private val originalProblem: GenerationProblem) : Problem {
+  private open inner class WorkspaceModelCodeGenerationProblem(override val text: String, override val icon: Icon) : Problem {
     override val provider: ProblemsProvider
       get() = this@WorkspaceCodegenProblemsProvider
-    
-    override val text: String
-      get() = originalProblem.message
-
-    override val icon: Icon
-      get() = when (originalProblem.level) {
-        GenerationProblem.Level.ERROR -> HighlightDisplayLevel.ERROR.icon
-        GenerationProblem.Level.WARNING -> HighlightDisplayLevel.WARNING.icon
-      }
   }
-  
-  private open inner class WorkspaceModelCodeGenerationProblemInFile(
-    originalProblem: GenerationProblem,
+
+  private inner class WorkspaceModelCodeGenerationProblemInFile(
+    text: String,
+    icon: Icon,
     override val file: VirtualFile,
     override val line: Int,
-    override val column: Int
-  ) : WorkspaceModelCodeGenerationProblem(originalProblem), FileProblem
+    override val column: Int,
+  ) : WorkspaceModelCodeGenerationProblem(text, icon), FileProblem
 }

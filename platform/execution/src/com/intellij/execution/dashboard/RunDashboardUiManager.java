@@ -2,6 +2,7 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.Executor;
+import com.intellij.execution.RunContentDescriptorId;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
@@ -44,4 +45,6 @@ public interface RunDashboardUiManager {
 
   //todo: split temporary method to disable run executor in Services tool window
   boolean isSupported(@NotNull Executor executor);
+
+  void navigateToServiceOnRun(@NotNull RunContentDescriptorId descriptorId, Boolean focus);
 }

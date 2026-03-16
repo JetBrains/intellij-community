@@ -10,11 +10,12 @@ import java.util.List;
 
 
 public interface PyUnresolvedReferenceQuickFixProvider {
-  ExtensionPointName<PyUnresolvedReferenceQuickFixProvider> EP_NAME = ExtensionPointName.create("Pythonid.unresolvedReferenceQuickFixProvider");
+  ExtensionPointName<PyUnresolvedReferenceQuickFixProvider> EP_NAME =
+    ExtensionPointName.create("Pythonid.unresolvedReferenceQuickFixProvider");
 
   /**
    * @param reference The reference containing an unresolved import.
-   * @param existing All already suggested quick fixes, including not only import fixes.
+   * @param existing  All already suggested quick fixes, including not only import fixes.
    */
   void registerQuickFixes(@NotNull PsiReference reference, @NotNull List<LocalQuickFix> existing);
 }

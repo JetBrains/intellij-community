@@ -25,8 +25,20 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKnownDecorator;
+import com.jetbrains.python.psi.PyKnownDecoratorUtil;
+import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -39,7 +51,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public final class PyiUtil {
-  private PyiUtil() {}
+  private PyiUtil() { }
 
   public static boolean isInsideStub(@NotNull PsiElement element) {
     return PyiUtilCore.isInsideStub(element);
@@ -79,7 +91,7 @@ public final class PyiUtil {
     if (originalFile == null) return null;
 
     PsiElement result = findSimilarElement(element, originalFile);
-    
+
     // If a name is defined in a .pyi stub and the corresponding .py module in a different manner, e.g.
     // it's exported through an assignment to a top-level attribute in a .pyi stub, but though a regular
     // "from" import in .py file, we might end up in another stub file again. It happens because resolving 
@@ -155,10 +167,10 @@ public final class PyiUtil {
     }
     final PyQualifiedNameResolveContext context = PyResolveImportUtil.fromFoothold(file);
     return PyUtil.as(PyResolveImportUtil.resolveQualifiedName(name, context)
-      .stream()
-      .findFirst()
-      .map(PyUtil::turnDirIntoInitPyi)
-      .orElse(null), PyiFile.class);
+                       .stream()
+                       .findFirst()
+                       .map(PyUtil::turnDirIntoInitPyi)
+                       .orElse(null), PyiFile.class);
   }
 
   private static @Nullable PyFile getOriginalFile(@NotNull PyiFile file) {

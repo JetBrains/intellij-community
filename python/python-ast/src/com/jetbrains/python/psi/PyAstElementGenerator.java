@@ -11,7 +11,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyLanguageFacade;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.ast.*;
+import com.jetbrains.python.ast.PyAstExpression;
+import com.jetbrains.python.ast.PyAstExpressionStatement;
+import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.ast.PyAstPassStatement;
+import com.jetbrains.python.ast.PyAstStatementList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

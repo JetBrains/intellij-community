@@ -9,9 +9,13 @@ import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
 import org.cef.network.CefRequest;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
 
-import javax.swing.*;
+import javax.swing.JFrame;
 import java.util.concurrent.CountDownLatch;
 
 import static com.intellij.ui.jcef.JBCefTestHelper.await;

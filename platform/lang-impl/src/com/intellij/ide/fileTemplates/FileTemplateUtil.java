@@ -29,15 +29,28 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.exception.VelocityException;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.apache.velocity.runtime.parser.Token;
-import org.apache.velocity.runtime.parser.node.*;
+import org.apache.velocity.runtime.parser.node.ASTDirective;
+import org.apache.velocity.runtime.parser.node.ASTReference;
+import org.apache.velocity.runtime.parser.node.ASTSetDirective;
+import org.apache.velocity.runtime.parser.node.ASTStringLiteral;
+import org.apache.velocity.runtime.parser.node.Node;
+import org.apache.velocity.runtime.parser.node.SimpleNode;
 import org.apache.velocity.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
@@ -200,15 +213,7 @@ public final class FileTemplateUtil {
                                                @Nullable Consumer<? super VelocityException> exceptionHandler) {
     final StringWriter stringWriter = new StringWriter();
     try {
-      Project project;
-      final Object projectName = context.get(FileTemplateManager.PROJECT_NAME_VARIABLE);
-      if (projectName instanceof String) {
-        Project[] projects = ProjectManager.getInstance().getOpenProjects();
-        project = ContainerUtil.find(projects, project1 -> projectName.equals(project1.getName()));
-      }
-      else {
-        project = null;
-      }
+      Project project = getProject(context);
       VelocityTemplateContext.withContext(project, () -> VelocityWrapper.evaluate(project, context, stringWriter, templateContent));
     }
     catch (final VelocityException e) {
@@ -235,6 +240,18 @@ public final class FileTemplateUtil {
     }
 
     return result;
+  }
+
+  private static @Nullable Project getProject(VelocityContext context) {
+    Project project = (Project)context.get(FileTemplateManager.PROJECT_CONTEXT_VARIABLE);
+    if (project == null) {
+      final Object projectName = context.get(FileTemplateManager.PROJECT_NAME_VARIABLE);
+      if (projectName instanceof String) {
+        Project[] projects = ProjectManager.getInstance().getOpenProjects();
+        return ContainerUtil.find(projects, project1 -> projectName.equals(project1.getName()));
+      }
+    }
+    return project;
   }
 
   public static @NotNull PsiElement createFromTemplate(final @NotNull FileTemplate template,
@@ -363,7 +380,11 @@ public final class FileTemplateUtil {
   }
 
   private static @NotNull FileType getFileType(@NotNull FileTemplate template) {
-    FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
+    // Try to match by full filename first (handles files like "Dockerfile", "CMakeLists.txt", etc.)
+    FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByFileName(template.getName());
+    if (!fileType.equals(FileTypes.UNKNOWN)) return fileType;
+
+    fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
     if (fileType.equals(FileTypes.UNKNOWN)) {
       return FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(FileUtilRt.getExtension(template.getExtension()));
     }

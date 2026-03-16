@@ -1,6 +1,10 @@
 package de.plushnikov.intellij.plugin.navigation;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 

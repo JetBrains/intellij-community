@@ -3,7 +3,7 @@ package org.jetbrains.yaml.helm
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestion
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.buildSuggestionIfNeeded
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.buildSuggestionForFileIfNeeded
 import com.intellij.openapi.vfs.VirtualFile
 
 class GoTemplatePluginSuggestionProvider : PluginSuggestionProvider {
@@ -15,7 +15,7 @@ class GoTemplatePluginSuggestionProvider : PluginSuggestionProvider {
   override fun getSuggestion(project: Project, file: VirtualFile): PluginSuggestion? {
     if (!isHelmTemplateFile(file)) return null
 
-    return buildSuggestionIfNeeded(
+    return buildSuggestionForFileIfNeeded(
       project,
       GO_TEMPLATE_PLUGIN_ID,
       GO_TEMPLATE_PLUGIN_NAME,

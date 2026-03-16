@@ -2,7 +2,11 @@
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.classLoading
 
-import com.sun.jdi.*
+import com.sun.jdi.ArrayReference
+import com.sun.jdi.ClassLoaderReference
+import com.sun.jdi.ClassType
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.ReferenceType
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 
 abstract class AbstractAndroidClassLoadingAdapter : ClassLoadingAdapter {

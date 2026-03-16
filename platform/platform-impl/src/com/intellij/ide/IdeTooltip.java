@@ -23,9 +23,14 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.ComparableObject;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Insets;
+import java.awt.Point;
 
 public class IdeTooltip extends ComparableObject.Impl {
   public static final Object TOOLTIP_DISMISS_DELAY_KEY = "TOOLTIP_DISMISS_DELAY_KEY";
@@ -50,6 +55,7 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   private int myCalloutShift = 4;
   private boolean myExplicitClose;
+  private boolean isCalloutEnabled = true;
 
   private int myPositionChangeX;
   private int myPositionChangeY;
@@ -238,6 +244,15 @@ public class IdeTooltip extends ComparableObject.Impl {
   public IdeTooltip setCalloutShift(int calloutShift) {
     myCalloutShift = calloutShift;
     return this;
+  }
+
+  public IdeTooltip setShowCallout(boolean showCallout) {
+    isCalloutEnabled = showCallout;
+    return this;
+  }
+
+  public boolean isCalloutEnabled() {
+    return isCalloutEnabled;
   }
 
   public void setComponent(Component component) {

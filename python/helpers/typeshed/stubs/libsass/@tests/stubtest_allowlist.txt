@@ -1,6 +1,0 @@
-# Error: is not present in stub
-# =============================
-# These are only implemented for the purposes of emitting an error
-# we don't want these to appear mutable in a type checking context
-sass.SassMap.__delitem__
-sass.SassMap.__setitem__

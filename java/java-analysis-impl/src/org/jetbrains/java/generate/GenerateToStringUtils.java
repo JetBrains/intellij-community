@@ -16,7 +16,13 @@
 package org.jetbrains.java.generate;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.config.Config;

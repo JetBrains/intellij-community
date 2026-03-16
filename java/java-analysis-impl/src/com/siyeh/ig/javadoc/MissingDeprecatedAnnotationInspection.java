@@ -23,10 +23,21 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaDocTokenType;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaDocumentedElement;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -119,7 +130,7 @@ public final class MissingDeprecatedAnnotationInspection extends BaseInspection 
         PsiDocTag addedTag = existingTag != null
                              ? (PsiDocTag)existingTag.replace(deprecatedTag)
                              : (PsiDocTag)docComment.add(deprecatedTag);
-        moveCaretAfter(addedTag, updater);
+        updater.moveCaretTo(addedTag.getTextRange().getStartOffset());
       }
       else {
         @NlsSafe PsiDocComment newDocComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText(
@@ -128,20 +139,8 @@ public final class MissingDeprecatedAnnotationInspection extends BaseInspection 
         PsiDocComment addedComment = (PsiDocComment)documentedElement.addBefore(newDocComment, documentedElement.getFirstChild());
         PsiDocTag addedTag = addedComment.findTagByName(DEPRECATED_TAG_NAME);
         if (addedTag != null) {
-          moveCaretAfter(addedTag, updater);
+          updater.moveCaretTo(addedTag.getTextRange().getStartOffset());
         }
-      }
-    }
-
-    private static void moveCaretAfter(PsiDocTag tag, @NotNull ModPsiUpdater updater) {
-      PsiDocTagValue valueElement = tag.getValueElement();
-      if (valueElement != null) {
-        int start = valueElement.getTextRange().getStartOffset();
-        int end = valueElement.getTextRange().getEndOffset();
-        updater.select(TextRange.create(start, end));
-      }
-      else {
-        updater.moveCaretTo(tag.getTextRange().getStartOffset());
       }
     }
   }

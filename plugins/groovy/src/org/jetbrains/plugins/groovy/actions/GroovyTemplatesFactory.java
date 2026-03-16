@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
-import java.util.Properties;
+import java.util.Map;
 
 public final class GroovyTemplatesFactory {
 
@@ -34,12 +34,12 @@ public final class GroovyTemplatesFactory {
 
     Project project = directory.getProject();
 
-    Properties properties = new Properties(FileTemplateManager.getInstance(project).getDefaultProperties());
+    Map<String, Object> properties = FileTemplateManager.getInstance(project).getDefaultContextMap();
     JavaTemplateUtil.setPackageNameAttribute(properties, directory);
-    properties.setProperty(NAME_TEMPLATE_PROPERTY, name);
-    properties.setProperty(LOW_CASE_NAME_TEMPLATE_PROPERTY, StringUtil.decapitalize(name));
+    properties.put(NAME_TEMPLATE_PROPERTY, name);
+    properties.put(LOW_CASE_NAME_TEMPLATE_PROPERTY, StringUtil.decapitalize(name));
     for (int i = 0; i < parameters.length; i += 2) {
-      properties.setProperty(parameters[i], parameters[i + 1]);
+      properties.put(parameters[i], parameters[i + 1]);
     }
     String text;
     try {

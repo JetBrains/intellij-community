@@ -1,7 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.settings;
 
-import com.intellij.application.options.colors.*;
+import com.intellij.application.options.colors.ColorAndFontDescription;
+import com.intellij.application.options.colors.ColorAndFontDescriptionPanel;
+import com.intellij.application.options.colors.ColorAndFontOptions;
+import com.intellij.application.options.colors.ColorAndFontPanelFactory;
+import com.intellij.application.options.colors.ColorAndFontSettingsListener;
+import com.intellij.application.options.colors.CompositeColorDescriptionPanel;
+import com.intellij.application.options.colors.NewColorAndFontPanel;
+import com.intellij.application.options.colors.OptionsPanelImpl;
+import com.intellij.application.options.colors.SchemesPanel;
+import com.intellij.application.options.colors.TextAttributesDescription;
 import com.intellij.diff.util.DiffLineSeparatorRenderer;
 import com.intellij.diff.util.TextDiffTypeFactory;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -14,6 +23,7 @@ import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -69,6 +79,11 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
   @Override
   public @NotNull String getDisplayName() {
     return getDiffGroup();
+  }
+
+  @Override
+  public @NotNull @NonNls String getConfigurableId() {
+    return "DiffAndMerge";
   }
 
   @Override

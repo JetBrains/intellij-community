@@ -8,10 +8,15 @@ import com.intellij.debugger.streams.core.wrapper.CallArgument
 import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.core.wrapper.QualifierExpression
 import com.intellij.debugger.streams.core.wrapper.StreamChain
-import com.intellij.debugger.streams.core.wrapper.impl.*
+import com.intellij.debugger.streams.core.wrapper.impl.CallArgumentImpl
+import com.intellij.debugger.streams.core.wrapper.impl.IntermediateStreamCallImpl
+import com.intellij.debugger.streams.core.wrapper.impl.QualifierExpressionImpl
+import com.intellij.debugger.streams.core.wrapper.impl.StreamChainImpl
+import com.intellij.debugger.streams.core.wrapper.impl.TerminatorStreamCallImpl
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.CallTypeExtractor
@@ -23,6 +28,7 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
+@K1Deprecation
 class KotlinChainTransformerImpl(private val typeExtractor: CallTypeExtractor) : ChainTransformer<KtCallExpression> {
     override fun transform(callChain: List<KtCallExpression>, context: PsiElement): StreamChain {
         val intermediateCalls = mutableListOf<IntermediateStreamCall>()

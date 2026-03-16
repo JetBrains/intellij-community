@@ -2,7 +2,11 @@
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
-import com.intellij.facet.*;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetInfo;
+import com.intellij.facet.FacetModel;
+import com.intellij.facet.FacetType;
+import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.FacetEditorFacade;
 import com.intellij.facet.impl.ui.FacetTreeModel;
@@ -14,7 +18,11 @@ import com.intellij.openapi.ui.MasterDetailsComponent;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FacetEditorFacadeImpl implements FacetEditorFacade {
   private static final Logger LOG = Logger.getInstance(FacetEditorFacadeImpl.class);

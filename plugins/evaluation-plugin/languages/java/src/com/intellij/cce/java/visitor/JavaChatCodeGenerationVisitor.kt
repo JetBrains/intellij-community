@@ -1,7 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.java.visitor
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.CodeToken
+import com.intellij.cce.core.Language
+import com.intellij.cce.core.SimpleTokenProperties
+import com.intellij.cce.core.SymbolLocation
+import com.intellij.cce.core.TokenLocationProperty
+import com.intellij.cce.core.TypeProperty
 import com.intellij.cce.evaluable.EXTERNAL_API_CALLS_PROPERTY
 import com.intellij.cce.evaluable.INTERNAL_API_CALLS_PROPERTY
 import com.intellij.cce.evaluable.INTERNAL_RELEVANT_FILES_PROPERTY
@@ -49,6 +55,9 @@ class JavaChatCodeGenerationVisitor : EvaluationVisitor, JavaRecursiveElementVis
           put(EXTERNAL_API_CALLS_PROPERTY, externalApiCalls.distinct().sorted().joinToString("\n"))
           put(INTERNAL_RELEVANT_FILES_PROPERTY, internalRelevantFiles.distinct().joinToString("\n"))
           put(METHOD_NAME_PROPERTY, method.name)
+          QualifiedNameProviderUtil.getQualifiedName(method)?.let {
+            put(TokenLocationProperty.METHOD_QUALIFIED_NAME.key, it)
+          }
         })
     )
   }

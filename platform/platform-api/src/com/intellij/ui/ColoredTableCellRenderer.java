@@ -20,9 +20,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 
 /**
  * @author max

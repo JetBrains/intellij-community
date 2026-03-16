@@ -9,4 +9,8 @@ public interface PyKeywordPattern extends PyAstKeywordPattern, PyPattern {
   default @Nullable PyPattern getValuePattern() {
     return (PyPattern)PyAstKeywordPattern.super.getValuePattern();
   }
+
+  default @Nullable PyClassPattern getContainingClassPattern() {
+    return getParent().getParent() instanceof PyClassPattern classPattern ? classPattern : null;
+  }
 }

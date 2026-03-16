@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WslDistributionManager
@@ -8,13 +8,17 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.*
+import com.intellij.openapi.projectRoots.impl.DependentSdkType
+import com.intellij.openapi.projectRoots.impl.UnknownSdkCollector
+import com.intellij.openapi.projectRoots.impl.UnknownSdkCollectorQueue
+import com.intellij.openapi.projectRoots.impl.UnknownSdkContributor
+import com.intellij.openapi.projectRoots.impl.UnknownSdkSnapshot
+import com.intellij.openapi.projectRoots.impl.UnknownSdkTrackerTask
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.SystemInfo
@@ -22,7 +26,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.time.Duration.Companion.seconds
 
@@ -47,7 +54,7 @@ private fun isEnabled(project: Project): Boolean {
          !ApplicationManager.getApplication().isHeadlessEnvironment
 }
 
-private class JdkUpdaterStartup : ProjectActivity {
+internal class JdkUpdaterStartup : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()
@@ -63,8 +70,10 @@ private class JdkUpdaterStartup : ProjectActivity {
   }
 
   suspend fun updateNotifications(project: Project) {
+    val jdkUpdaterService = project.service<JdkUpdatesCollectorQueue>()
+
     val knownSdks = suspendCancellableCoroutine<Collection<Sdk>> { continuation ->
-      project.service<JdkUpdatesCollectorQueue>().queue(object: UnknownSdkTrackerTask {
+      jdkUpdaterService.queue(object: UnknownSdkTrackerTask {
         override fun createCollector(): UnknownSdkCollector {
           return object : UnknownSdkCollector(project) {
             override fun getContributors(): List<UnknownSdkContributor> {
@@ -95,9 +104,12 @@ private class JdkUpdaterStartup : ProjectActivity {
 
     if (knownSdks.isEmpty()) return
 
-    withBackgroundProgress(project, ProjectBundle.message("progress.title.checking.for.jdk.updates")) {
-      coroutineToIndicator {
-        updateWithSnapshot(knownSdks.distinct().sortedBy { it.name }, ProgressManager.getInstance().progressIndicator)
+    jdkUpdaterService.updateJob?.cancel()
+    jdkUpdaterService.updateJob = jdkUpdaterService.coroutineScope.launch(Dispatchers.IO) {
+      withBackgroundProgress (project, ProjectBundle.message("progress.title.checking.for.jdk.updates")) {
+        coroutineToIndicator {
+          updateWithSnapshot(knownSdks.distinct().sortedBy { it.name }, it)
+        }
       }
     }
   }
@@ -137,7 +149,7 @@ private class JdkUpdaterStartup : ProjectActivity {
       noUpdatesFor -= jdk
     }
 
-    // handle the case, when a JDK is no longer requiring an update
+    // handle the case when a JDK no longer requires an update
     for (jdk in noUpdatesFor) {
       notifications.hideNotification(jdk)
     }
@@ -145,5 +157,7 @@ private class JdkUpdaterStartup : ProjectActivity {
 }
 
 @Service(Service.Level.PROJECT)
-private class JdkUpdatesCollectorQueue(coroutineScope: CoroutineScope)
-  : UnknownSdkCollectorQueue(mergingTimeSpaceMillis = 7_000, coroutineScope = coroutineScope)
+private class JdkUpdatesCollectorQueue(val coroutineScope: CoroutineScope)
+  : UnknownSdkCollectorQueue(mergingTimeSpaceMillis = 7_000, coroutineScope = coroutineScope) {
+  var updateJob: Job? = null
+}

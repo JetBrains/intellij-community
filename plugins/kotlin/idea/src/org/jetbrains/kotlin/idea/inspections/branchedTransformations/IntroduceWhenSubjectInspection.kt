@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.idea.intentions.branchedTransformations.getSubjectTo
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.introduceSubject
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
+@K1Deprecation
 class IntroduceWhenSubjectInspection : AbstractApplicabilityBasedInspection<KtWhenExpression>(KtWhenExpression::class.java) {
 
     override fun isApplicable(element: KtWhenExpression) = element.getSubjectToIntroduce() != null

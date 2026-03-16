@@ -1,3 +1,0 @@
-# stubtest does not understand that the adapter argument type is an adapter and not abc.ABC
-hvac.Client.__init__
-hvac.v1.Client.__init__

@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/structureView/fileStructure")
-public class KotlinFileStructureTestGenerated extends AbstractKotlinFileStructureTest {
+public class KotlinFileStructureTestGenerated extends AbstractK1KotlinFileStructureTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
@@ -103,6 +103,11 @@ public class KotlinFileStructureTestGenerated extends AbstractKotlinFileStructur
     @TestMetadata("LocalElements.kt")
     public void testLocalElements() throws Exception {
         runTest("testData/structureView/fileStructure/LocalElements.kt");
+    }
+
+    @TestMetadata("PropertyWithAccessors.kt")
+    public void testPropertyWithAccessors() throws Exception {
+        runTest("testData/structureView/fileStructure/PropertyWithAccessors.kt");
     }
 
     @TestMetadata("Render.kt")

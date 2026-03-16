@@ -30,6 +30,11 @@ public class NavigateJavaSourceToLibraryTestGenerated extends AbstractNavigateJa
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("CapitalizedProperties.java")
+    public void testCapitalizedProperties() throws Exception {
+        runTest("testData/decompiler/navigation/userJavaCode/CapitalizedProperties.java");
+    }
+
     @TestMetadata("ClassAndConstuctors.java")
     public void testClassAndConstuctors() throws Exception {
         runTest("testData/decompiler/navigation/userJavaCode/ClassAndConstuctors.java");
@@ -78,6 +83,16 @@ public class NavigateJavaSourceToLibraryTestGenerated extends AbstractNavigateJa
     @TestMetadata("GlobalProperty.java")
     public void testGlobalProperty() throws Exception {
         runTest("testData/decompiler/navigation/userJavaCode/GlobalProperty.java");
+    }
+
+    @TestMetadata("JvmStatics.java")
+    public void testJvmStatics() throws Exception {
+        runTest("testData/decompiler/navigation/userJavaCode/JvmStatics.java");
+    }
+
+    @TestMetadata("JvmStaticsProperties.java")
+    public void testJvmStaticsProperties() throws Exception {
+        runTest("testData/decompiler/navigation/userJavaCode/JvmStaticsProperties.java");
     }
 
     @TestMetadata("NamedObject.java")

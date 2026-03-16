@@ -10,19 +10,6 @@ public final class MavenWorkspaceSettings {
   private MavenGeneralSettings generalSettings = new MavenGeneralSettings();
   private MavenImportingSettings importingSettings = new MavenImportingSettings();
 
-  public List<String> enabledProfiles = new ArrayList<>();
-  public List<String> disabledProfiles = new ArrayList<>();
-
-  public void setEnabledProfiles(Collection<String> profiles) {
-    enabledProfiles.clear();
-    enabledProfiles.addAll(profiles);
-  }
-
-  public void setDisabledProfiles(Collection<String> profiles) {
-    disabledProfiles.clear();
-    disabledProfiles.addAll(profiles);
-  }
-
   public MavenGeneralSettings getGeneralSettings() {
     return generalSettings;
   }

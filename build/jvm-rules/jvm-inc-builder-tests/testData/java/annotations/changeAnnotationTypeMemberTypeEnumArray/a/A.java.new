@@ -1,0 +1,3 @@
+public @interface A {
+Val value() default Val.V1;
+}

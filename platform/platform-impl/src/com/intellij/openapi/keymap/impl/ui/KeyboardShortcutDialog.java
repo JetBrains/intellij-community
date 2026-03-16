@@ -10,10 +10,16 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 final class KeyboardShortcutDialog extends ShortcutDialog<KeyboardShortcut> {
   private final JComponent myPreferredFocusedComponent;

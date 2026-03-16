@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.ktor.utils.jar
   modules:
   - name: intellij.libraries.ktor.utils
     libraries:

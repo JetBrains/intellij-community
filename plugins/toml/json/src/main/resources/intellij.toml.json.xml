@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal" package="org.toml.ide.json">
+<idea-plugin visibility="internal">
     <dependencies>
         <module name="intellij.toml.core"/>
         <module name="intellij.platform.backend"/>

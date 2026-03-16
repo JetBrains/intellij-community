@@ -23,9 +23,10 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectProcessor;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtractMethodObjectWithMultipleExitPointsTest extends LightRefactoringTestCase {
+public class ExtractMethodObjectWithMultipleExitPointsTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {

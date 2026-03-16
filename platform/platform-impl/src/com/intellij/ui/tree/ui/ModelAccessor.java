@@ -15,7 +15,7 @@ import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Obsolescent;
 
 import javax.swing.tree.TreeModel;
-import java.awt.*;
+import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;

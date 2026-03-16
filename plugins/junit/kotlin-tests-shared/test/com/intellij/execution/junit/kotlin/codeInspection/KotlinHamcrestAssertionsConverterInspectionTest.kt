@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
+import com.intellij.idea.IJIgnore
 import com.intellij.junit.testFramework.HamcrestAssertionsConverterInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
@@ -55,20 +56,53 @@ abstract class KotlinHamcrestAssertionsConverterInspectionTest : HamcrestAsserti
     """.trimIndent())
   }
 
-  fun `test quickfix binary expression`() {
+  @IJIgnore(issue = "KTIJ-37248")
+  fun `test quickfix nested expression`() {
     myFixture.testAllQuickfixes(JvmLanguage.KOTLIN, """
       import org.junit.Assert
 
       class MigrationTest {
           fun migrate() {
               Assert.assertTrue(2 != 3)
+              Assert.assertFalse(2 == 3)
+          }
+          
+          fun migrate(c: Collection<String>, o: String) {
+              Assert.assertFalse(c.contains(o))
+          }
+      }
+    """.trimIndent(), """
+      import org.hamcrest.MatcherAssert
+      import org.hamcrest.MatcherAssert.*
+      import org.hamcrest.Matchers
+      import org.hamcrest.Matchers.*
+      import org.junit.Assert
+      
+      class MigrationTest {
+          fun migrate() {
+              assertThat(2, not(`is`(3)))
+              assertThat(2, not(`is`(3)))
+          }
+          
+          fun migrate(c: Collection<String>, o: String) {
+              assertThat(c, not(hasItem(o)))
+          }
+      }
+    """.trimIndent(), "Replace with 'assertThat()'")
+  }
+
+  fun `test quickfix binary expression`() {
+    myFixture.testAllQuickfixes(JvmLanguage.KOTLIN, """
+      import org.junit.Assert
+
+      class MigrationTest {
+          fun migrate() {
               Assert.assertTrue(2 == 3)
               Assert.assertTrue(2 > 3)
               Assert.assertTrue(2 < 3)
               Assert.assertTrue(2 >= 3)
               Assert.assertTrue(2 <= 3)
               Assert.assertFalse(2 != 3)
-              Assert.assertFalse(2 == 3)
               Assert.assertFalse(2 > 3)
               Assert.assertFalse(2 < 3)
               Assert.assertFalse(2 >= 3)
@@ -84,14 +118,12 @@ abstract class KotlinHamcrestAssertionsConverterInspectionTest : HamcrestAsserti
       
       class MigrationTest {
           fun migrate() {
-              assertThat(2, not(`is`(3)))
               assertThat(2, `is`(3))
               assertThat(2, greaterThan(3))
               assertThat(2, lessThan(3))
               assertThat(2, greaterThanOrEqualTo(3))
               assertThat(2, lessThanOrEqualTo(3))
               assertThat(2, `is`(3))
-              assertThat(2, not(`is`(3)))
               assertThat(2, lessThanOrEqualTo(3))
               assertThat(2, greaterThanOrEqualTo(3))
               assertThat(2, lessThan(3))
@@ -140,7 +172,6 @@ abstract class KotlinHamcrestAssertionsConverterInspectionTest : HamcrestAsserti
               Assert.assertEquals("msg", c, o)
               Assert.assertNotNull(c)
               Assert.assertNull(c)
-              Assert.assertFalse(c.contains(o))
           }
       }
     """.trimIndent(), """
@@ -157,7 +188,6 @@ abstract class KotlinHamcrestAssertionsConverterInspectionTest : HamcrestAsserti
               assertThat("msg", o, `is`(c))
               assertThat(c, notNullValue())
               assertThat(c, nullValue())
-              assertThat(c, not(hasItem(o)))
           }
       }
     """.trimIndent(), "Replace with 'assertThat()'")

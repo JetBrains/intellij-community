@@ -11,7 +11,17 @@ import org.jetbrains.idea.svn.checkin.CommitInfo
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription
 import org.jetbrains.idea.svn.info.Info
 import org.jetbrains.idea.svn.lock.Lock
-import org.jetbrains.idea.svn.status.StatusType.*
+import org.jetbrains.idea.svn.status.StatusType.STATUS_ADDED
+import org.jetbrains.idea.svn.status.StatusType.STATUS_CONFLICTED
+import org.jetbrains.idea.svn.status.StatusType.STATUS_DELETED
+import org.jetbrains.idea.svn.status.StatusType.STATUS_EXTERNAL
+import org.jetbrains.idea.svn.status.StatusType.STATUS_IGNORED
+import org.jetbrains.idea.svn.status.StatusType.STATUS_MISSING
+import org.jetbrains.idea.svn.status.StatusType.STATUS_MODIFIED
+import org.jetbrains.idea.svn.status.StatusType.STATUS_NONE
+import org.jetbrains.idea.svn.status.StatusType.STATUS_OBSTRUCTED
+import org.jetbrains.idea.svn.status.StatusType.STATUS_REPLACED
+import org.jetbrains.idea.svn.status.StatusType.STATUS_UNVERSIONED
 import java.io.File
 import java.util.function.Supplier
 

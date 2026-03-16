@@ -2,7 +2,13 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSynchronizedStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;

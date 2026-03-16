@@ -2,7 +2,14 @@
 package com.intellij.psi.filters.getters;
 
 import com.intellij.java.syntax.parser.JavaKeywords;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;

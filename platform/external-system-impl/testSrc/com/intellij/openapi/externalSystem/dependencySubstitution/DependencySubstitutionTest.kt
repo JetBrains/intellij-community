@@ -4,8 +4,15 @@ package com.intellij.openapi.externalSystem.dependencySubstitution
 import com.intellij.platform.externalSystem.impl.dependencySubstitution.DependencySubstitutionUtil
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
-import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.jps.entities.DependencyScope.*
+import com.intellij.platform.workspace.jps.entities.DependencyScope.COMPILE
+import com.intellij.platform.workspace.jps.entities.DependencyScope.PROVIDED
+import com.intellij.platform.workspace.jps.entities.DependencyScope.RUNTIME
+import com.intellij.platform.workspace.jps.entities.DependencyScope.TEST
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource

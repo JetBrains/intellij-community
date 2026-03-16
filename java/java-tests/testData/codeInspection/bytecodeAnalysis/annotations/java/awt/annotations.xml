@@ -179,15 +179,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.awt.Component java.awt.Component getComponentAt(int, int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.awt.Component java.awt.Component getNextFocusCandidate()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.awt.Component java.awt.Component locate(int, int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.awt.Component java.awt.Component.BaselineResizeBehavior getBaselineResizeBehavior()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -244,7 +235,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.awt.Component java.lang.String paramString()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -434,24 +424,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;_,_-&gt;param2&quot;"/>
         </annotation>
-    </item>
-    <item name='java.awt.Container java.awt.Component findComponentAt(int, int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.awt.Container java.awt.Component findComponentAt(int, int, boolean)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.awt.Container java.awt.Component findComponentAtImpl(int, int, boolean)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.awt.Container java.awt.Component getComponentAt(int, int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.awt.Container java.awt.Component getMouseEventTargetImpl(int, int, boolean, java.awt.Container.EventTargetFilter, boolean, boolean)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.awt.Container java.awt.Component locate(int, int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.awt.Container java.lang.String paramString()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -665,12 +637,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.awt.Window java.awt.Component getFocusOwner()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.awt.Window java.awt.Component getMostRecentFocusOwner()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.awt.Window java.awt.Component getTemporaryLostComponent()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -680,13 +646,11 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.awt.Window java.awt.Container getFocusCycleRootAncestor()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.awt.Window java.awt.Window getOwner()'>
         <annotation name='org.jetbrains.annotations.Contract'>

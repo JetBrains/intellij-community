@@ -5,7 +5,11 @@ import com.intellij.execution.KillableProcess
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
-import com.intellij.execution.rpc.*
+import com.intellij.execution.rpc.KillableProcessInfo
+import com.intellij.execution.rpc.ProcessHandlerApi
+import com.intellij.execution.rpc.ProcessHandlerDto
+import com.intellij.execution.rpc.ProcessHandlerEvent
+import com.intellij.execution.rpc.ProcessHandlerId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -29,7 +33,12 @@ import java.util.concurrent.CompletableFuture
 fun createFrontendProcessHandler(
   project: Project,
   processHandlerDto: ProcessHandlerDto,
-): FrontendSessionProcessHandler {
+): ProcessHandler {
+  val local = processHandlerDto.localProcessHandler
+  // Prefer to have the same instance in monolith, as it may be passed to other services,
+  // which rely on having the exact same instance.
+  if (local != null) return local
+
   val killableProcessInfo = processHandlerDto.killableProcessInfo
   return if (killableProcessInfo != null) {
     FrontendSessionKillableProcessHandler(project, processHandlerDto, killableProcessInfo)

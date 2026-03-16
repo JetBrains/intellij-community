@@ -2,7 +2,9 @@
 package com.intellij.designer.designSurface.feedbacks;
 
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
 
 /**
  * @author Alexander Lobas

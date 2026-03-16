@@ -7,7 +7,7 @@ import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.asString
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Objects
 
 internal sealed interface Match {
   /**

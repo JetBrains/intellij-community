@@ -5,7 +5,11 @@ package com.intellij.openapi.roots.ui.componentsList.layout;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Point;
 
 @ApiStatus.Internal
 public abstract class ComponentOperation {

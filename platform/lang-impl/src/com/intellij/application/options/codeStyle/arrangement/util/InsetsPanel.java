@@ -5,8 +5,10 @@ import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Dimension;
+import java.awt.GridBagLayout;
 
 /**
  * Panel which occupies horizontal and vertical space even if it's content is invisible.

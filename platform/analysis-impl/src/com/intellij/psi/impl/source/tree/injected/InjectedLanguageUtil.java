@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -20,11 +20,20 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.LanguageSubstitutors;
+import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.BooleanRunnable;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
@@ -36,10 +45,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-/**
- * @deprecated Use {@link InjectedLanguageManager} instead
- */
-@Deprecated
 public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
   static final class ImplServiceImpl implements InjectedLanguageEditorUtil.ImplService {
     @Override
@@ -340,7 +345,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
                                         @NotNull ProgressIndicator indicator,
                                         @NotNull ASTNode oldRoot,
                                         @NotNull ASTNode newRoot,
-                                        @NotNull PsiDocumentManagerBase documentManager) {
+                                        @NotNull PsiDocumentManager documentManager) {
     Language language = injectedPsiFile.getLanguage();
     InjectedFileViewProvider provider = (InjectedFileViewProvider)injectedPsiFile.getViewProvider();
     VirtualFile oldInjectedVFile = provider.getVirtualFile();

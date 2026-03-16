@@ -1,16 +1,36 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.components
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.key.*
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.launch
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-import org.jetbrains.jewel.foundation.lazy.*
+import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
+import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
+import org.jetbrains.jewel.foundation.lazy.SelectionMode
+import org.jetbrains.jewel.foundation.lazy.itemsIndexed
+import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
+import org.jetbrains.jewel.foundation.lazy.visibleItemsRange
 import org.jetbrains.jewel.foundation.modifier.onMove
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -111,28 +131,22 @@ internal fun WelcomeScreenCustomListComboBox(
     maxPopupHeight = popupMaxHeight,
     minPopupWidth = minPopupWidth,
     onArrowDownPress = {
-      var currentSelectedIndex = listState.selectedItemIndex()
-
-      // When there is a preview-selected item, pressing down will actually change the
-      // selected value to the one underneath it (unless it's the last one)
-      if (previewSelectedIndex >= 0 && previewSelectedIndex < items.lastIndex) {
-        currentSelectedIndex = previewSelectedIndex
-        previewSelectedIndex = -1
+      // Move preview selection down without committing; commit happens on Enter.
+      val baseIndex = if (previewSelectedIndex >= 0) previewSelectedIndex else listState.selectedItemIndex().coerceAtLeast(0)
+      val nextIndex = (baseIndex + 1).coerceAtMost(items.lastIndex)
+      if (nextIndex != previewSelectedIndex) {
+        previewSelectedIndex = nextIndex
+        scope.launch { listState.lazyListState.scrollToIndex(nextIndex) }
       }
-
-      setSelectedItem((currentSelectedIndex + 1).coerceAtMost(items.lastIndex))
     },
     onArrowUpPress = {
-      var currentSelectedIndex = listState.selectedItemIndex()
-
-      // When there is a preview-selected item, pressing up will actually change the
-      // selected value to the one above it (unless it's the first one)
-      if (previewSelectedIndex > 0) {
-        currentSelectedIndex = previewSelectedIndex
-        previewSelectedIndex = -1
+      // Move preview selection up without committing; commit happens on Enter.
+      val baseIndex = if (previewSelectedIndex >= 0) previewSelectedIndex else listState.selectedItemIndex().coerceAtLeast(0)
+      val prevIndex = (baseIndex - 1).coerceAtLeast(0)
+      if (prevIndex != previewSelectedIndex) {
+        previewSelectedIndex = prevIndex
+        scope.launch { listState.lazyListState.scrollToIndex(prevIndex) }
       }
-
-      setSelectedItem((currentSelectedIndex - 1).coerceAtLeast(0))
     },
     style = style,
     textStyle = textStyle,

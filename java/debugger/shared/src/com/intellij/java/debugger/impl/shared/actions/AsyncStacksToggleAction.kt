@@ -5,16 +5,16 @@ import com.intellij.java.debugger.impl.shared.SharedJavaDebuggerSession
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionApi
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-class AsyncStacksToggleAction : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+class AsyncStacksToggleAction : DumbAwareToggleAction(), SplitDebuggerAction {
   override fun isSelected(e: AnActionEvent): Boolean {
     return getJavaSession(e)?.isAsyncStacksEnabled ?: true
   }

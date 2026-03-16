@@ -1,7 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.ActionUpdateThreadAware;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
@@ -9,19 +16,26 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.File;
 import java.util.List;
 
@@ -83,8 +97,10 @@ public class CopyPasteDelegator implements CopyPasteSupport {
 
     @Override
     public void performCopy(@NotNull DataContext dataContext) {
-      PsiElement[] elements = validate(getSelectedElements(dataContext));
-      PsiCopyPasteManager.getInstance().setElements(elements, true);
+      ReadAction.run(() -> {
+        PsiElement[] elements = validate(getSelectedElements(dataContext));
+        PsiCopyPasteManager.getInstance().setElements(elements, true);
+      });
       updateView();
     }
 
@@ -102,13 +118,15 @@ public class CopyPasteDelegator implements CopyPasteSupport {
 
     @Override
     public void performCut(@NotNull DataContext dataContext) {
-      PsiElement[] elements = validate(getSelectedElements(dataContext));
-      if (MoveHandler.adjustForMove(myProject, elements, null) == null) {
-        return;
-      }
-      // 'elements' passed instead of result of 'adjustForMove' because otherwise ProjectView would
-      // not recognize adjusted elements when graying them
-      PsiCopyPasteManager.getInstance().setElements(elements, false);
+      ReadAction.run(() -> {
+        PsiElement[] elements = validate(getSelectedElements(dataContext));
+        if (MoveHandler.adjustForMove(myProject, elements, null) == null) {
+          return;
+        }
+        // 'elements' passed instead of result of 'adjustForMove' because otherwise ProjectView would
+        // not recognize adjusted elements when graying them
+        PsiCopyPasteManager.getInstance().setElements(elements, false);
+      });
       updateView();
     }
 
@@ -125,18 +143,21 @@ public class CopyPasteDelegator implements CopyPasteSupport {
 
     @Override
     public void performPaste(@NotNull DataContext dataContext) {
-      if (!performDefaultPaste(dataContext)) {
-        for(PasteProvider provider: EP_NAME.getExtensionList()) {
-          if (provider.isPasteEnabled(dataContext)) {
-            provider.performPaste(dataContext);
-            break;
+      WriteIntentReadAction.run(() -> {
+        if (!performDefaultPaste(dataContext)) {
+          for(PasteProvider provider: EP_NAME.getExtensionList()) {
+            if (provider.isPasteEnabled(dataContext)) {
+              provider.performPaste(dataContext);
+              break;
+            }
           }
         }
-      }
+      });
     }
 
     @VisibleForTesting
     @ApiStatus.Internal
+    @RequiresReadLock
     public boolean performDefaultPaste(@NotNull DataContext dataContext) {
       final boolean[] isCopied = new boolean[1];
       final PsiElement[] elements = PsiCopyPasteManager.getInstance().getElements(isCopied);

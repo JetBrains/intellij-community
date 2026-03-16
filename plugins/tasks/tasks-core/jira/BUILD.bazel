@@ -28,6 +28,7 @@ jvm_library(
     "//libraries/gson",
     "//platform/core-ui",
     "//platform/util/jdom",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.tasks.jira` end

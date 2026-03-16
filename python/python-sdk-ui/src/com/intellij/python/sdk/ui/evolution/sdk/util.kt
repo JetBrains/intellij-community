@@ -6,12 +6,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.system.OS
 import com.jetbrains.python.sdk.PySdkUtil
-import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.baseDir
 import java.nio.file.Path
 
 
 fun Module?.executeInModuleDir(executable: String, vararg arguments: String): ProcessOutput {
-  val pyProjectPath = this?.basePath
+  val pyProjectPath = this?.baseDir?.path
   val commandLine = GeneralCommandLine(executable, *arguments)
   return PySdkUtil.getProcessOutput(commandLine, pyProjectPath, emptyMap(), 5_000)
 }

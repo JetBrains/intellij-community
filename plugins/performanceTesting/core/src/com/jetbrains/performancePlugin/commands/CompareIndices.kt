@@ -26,7 +26,18 @@ import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.util.Processor
 import com.intellij.util.Processors
 import com.intellij.util.SystemProperties
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexExtension
+import com.intellij.util.indexing.FileBasedIndexImpl
+import com.intellij.util.indexing.FileBasedIndexInfrastructureExtension
+import com.intellij.util.indexing.FileContent
+import com.intellij.util.indexing.ID
+import com.intellij.util.indexing.IndexDataComparer
+import com.intellij.util.indexing.IndexDataPresenter
+import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.indexing.SingleEntryFileBasedIndexExtension
+import com.intellij.util.indexing.UpdatableIndex
+import com.intellij.util.indexing.ValueContainer
 import com.intellij.util.indexing.diagnostic.dump.IndexContentDiagnostic
 import com.intellij.util.indexing.diagnostic.dump.IndexContentDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePath
@@ -36,6 +47,7 @@ import com.intellij.util.indexing.diagnostic.dump.paths.hasPresentablePathMatchi
 import com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex.IndexerIdHolder
+import com.intellij.util.indexing.withDataOf
 import com.intellij.util.progress.ConcurrentTasksProgressManager
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
@@ -49,7 +61,7 @@ import org.jetbrains.concurrency.toPromise
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.readText
 

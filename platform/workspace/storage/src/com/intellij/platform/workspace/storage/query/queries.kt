@@ -3,7 +3,15 @@ package com.intellij.platform.workspace.storage.query
 
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.query.*
+import com.intellij.platform.workspace.storage.impl.query.Cell
+import com.intellij.platform.workspace.storage.impl.query.CellChain
+import com.intellij.platform.workspace.storage.impl.query.CellId
+import com.intellij.platform.workspace.storage.impl.query.DiffCollectorCell
+import com.intellij.platform.workspace.storage.impl.query.EntityCell
+import com.intellij.platform.workspace.storage.impl.query.FlatMapCell
+import com.intellij.platform.workspace.storage.impl.query.GroupByCell
+import com.intellij.platform.workspace.storage.impl.query.MapCell
+import com.intellij.platform.workspace.storage.impl.query.QueryId
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.annotations.ApiStatus

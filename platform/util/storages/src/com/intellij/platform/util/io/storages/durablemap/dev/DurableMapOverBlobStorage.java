@@ -7,7 +7,10 @@ import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.DataExternalizerEx.KnownSizeRecordWriter;
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.StorageFactory;
-import com.intellij.platform.util.io.storages.durablemap.*;
+import com.intellij.platform.util.io.storages.durablemap.DurableMap;
+import com.intellij.platform.util.io.storages.durablemap.DurableMapFactory;
+import com.intellij.platform.util.io.storages.durablemap.DurableMapOverAppendOnlyLog;
+import com.intellij.platform.util.io.storages.durablemap.EntryExternalizer;
 import com.intellij.platform.util.io.storages.durablemap.EntryExternalizer.Entry;
 import com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntMap;
 import com.intellij.platform.util.io.storages.intmultimaps.HashUtils;
@@ -16,6 +19,7 @@ import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.Ext
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.hash.EqualityPolicy;
+import com.intellij.util.io.AppendablePersistentMap;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.Unmappable;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
@@ -32,14 +36,14 @@ import static com.intellij.platform.util.io.storages.durablemap.DurableMapFactor
 import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.IGNORE_AND_HOPE_FOR_THE_BEST;
 
 /**
- * FIXME this implementation is an experiment -- quick-n-dirty prototype for a 'appendable DurableMap over memory-mapped files',
- * to test performance and viability. It is not a good implementation, nor good API design: implementation is mostly copy-pasted
- * from {@link DurableMapOverAppendOnlyLog}, API -- from {@link AppendablePersistentMap}.
+ * TODO this implementation is an experiment -- a prototype for an 'appendable DurableMap over memory-mapped files',
+ * to test performance and viability in application to Indexes -- which is why the API is mostly shaped by
+ * {@link AppendablePersistentMap}, used in Indexes now.
+ * <p/>
+ * It works, and has a good performance, but the API design could be better. Use on your own risk.
  */
 @ApiStatus.Internal
 public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Unmappable {
-
-  public static final int DATA_FORMAT_VERSION = 1;
 
   private final StreamlinedBlobStorage keyValuesStorage;
   private final DurableIntToMultiIntMap keyHashToIdMap;

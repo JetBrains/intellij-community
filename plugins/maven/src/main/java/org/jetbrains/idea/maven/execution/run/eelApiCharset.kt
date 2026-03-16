@@ -1,11 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution.run
 
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.EelExecPosixApi
+import com.intellij.platform.eel.EelExecWindowsApi
+import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly

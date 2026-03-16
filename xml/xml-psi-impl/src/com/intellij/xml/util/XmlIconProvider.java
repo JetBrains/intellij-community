@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 final class XmlIconProvider extends IconProvider implements DumbAware {
   private static final @NonNls String XSD_FILE_EXTENSION = "xsd";

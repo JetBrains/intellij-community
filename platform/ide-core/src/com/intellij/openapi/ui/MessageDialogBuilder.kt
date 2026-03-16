@@ -3,7 +3,11 @@ package com.intellij.openapi.ui
 
 import com.intellij.CommonBundle
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageConstants.*
+import com.intellij.openapi.ui.MessageConstants.CANCEL
+import com.intellij.openapi.ui.MessageConstants.NO
+import com.intellij.openapi.ui.MessageConstants.YES
+import com.intellij.openapi.ui.MessageConstants.YesNoCancelResult
+import com.intellij.openapi.ui.MessageConstants.YesNoResult
 import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.UIUtil

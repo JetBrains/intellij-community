@@ -1,5 +1,6 @@
 package com.intellij.collaboration.ui.codereview.create
 
+import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.util.ui.JBUI
@@ -20,6 +21,8 @@ class CodeReviewCreateReviewLayoutBuilder @Internal constructor() {
   private var addSeparator = false
 
   private val componentsWithConstraints = mutableListOf<ComponentWithConstrains>()
+  private var firstWithBorder = false
+  private var lastWithBorder = false
 
   fun addComponent(component: JComponent,
                    zeroMinWidth: Boolean = false,
@@ -34,6 +37,10 @@ class CodeReviewCreateReviewLayoutBuilder @Internal constructor() {
         growY(stretchYWithWeight).pushY(stretchYWithWeight)
       }
     }
+    if (componentsWithConstraints.isEmpty()) {
+      firstWithBorder = !withoutBorder
+    }
+    lastWithBorder = !withoutBorder
     componentsWithConstraints.add(ComponentWithConstrains(component, cc))
     setupBorderAndBackground(component, withoutBorder, withListBackground)
     return this
@@ -69,6 +76,9 @@ class CodeReviewCreateReviewLayoutBuilder @Internal constructor() {
     layout = MigLayout(LC().gridGap("0", "0").insets("0").fill().flowY().hideMode(HideMode.DISREGARD))
     isFocusCycleRoot = true
     componentsWithConstraints.forEach { (c, cc) -> add(c, cc) }
+    val top = ReviewDetailsUIUtil.topGap - if (firstWithBorder) BASE_GAP else 0
+    val bottom = ReviewDetailsUIUtil.bottomGap - if (lastWithBorder) BASE_GAP else 0
+    border = JBUI.Borders.empty(top, 0, bottom, 0)
   }
 
   private data class ComponentWithConstrains(

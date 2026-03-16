@@ -12,12 +12,12 @@ from typing import Literal, assert_type, reveal_type
 # > attribute
 
 
-class Pet(Enum):  # E?: Uninitialized attributes (pyre)
+class Pet(Enum):
     genus: str  # Non-member attribute
     species: str  # Non-member attribute
 
-    CAT = 1  # Member attribute
-    DOG = 2  # Member attribute
+    CAT = "felis", "catus"  # Member attribute
+    DOG = "canis", "lupus"  # Member attribute
 
     def __init__(self, genus: str, species: str) -> None:
         self.genus = genus
@@ -79,10 +79,10 @@ class Pet4(Enum):
 
 assert_type(Pet4.CAT, Literal[Pet4.CAT])
 assert_type(Pet4.DOG, Literal[Pet4.DOG])
-assert_type(Pet4.converter, Literal[Pet4.converter])  # E
-assert_type(Pet4.transform, Literal[Pet4.transform])  # E
-assert_type(Pet4.species, Literal[Pet4.species])  # E
-assert_type(Pet4.speak, Literal[Pet4.speak])  # E
+converter: Literal[Pet4.converter]  # E
+transform: Literal[Pet4.transform]  # E
+species: Literal[Pet4.species]  # E
+speak: Literal[Pet4.speak]  # E
 
 
 # > An attribute that is assigned the value of another member of the same

@@ -15,14 +15,14 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFileHistoryProvider
 import com.intellij.vcsUtil.VcsUtil
 
-private class ShowInFileHistoryAnnotationActionProvider : AnnotationGutterActionProvider {
+internal class ShowInFileHistoryAnnotationActionProvider : AnnotationGutterActionProvider {
   override fun createAction(annotation: FileAnnotation): AnAction {
     val service = annotation.project.service<VcsLogFileHistoryProvider>()
     return ShowInFileHistoryAnnotationAction(service, annotation)
   }
 }
 
-private class ShowInFileHistoryAnnotationAction(
+internal class ShowInFileHistoryAnnotationAction(
   private val service: VcsLogFileHistoryProvider,
   private val annotation: FileAnnotation,
 ) : DumbAwareAction(VcsLogBundle.message("vcs.log.action.show.in.file.history.text")) {

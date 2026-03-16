@@ -84,6 +84,8 @@ internal fun initializeNamedColors(theme: UIThemeBean, warn: (String, Throwable?
     return
   }
 
+  val namedNamedValues = mutableListOf<Pair<String, String>>()
+
   // it is critically important to use our JB Color to apply theme on the fly - e.g., dark to light
   val colorMap = HashMap<String, Color>(rawColorMap.size)
   theme.colorMap.map = colorMap
@@ -100,7 +102,24 @@ internal fun initializeNamedColors(theme: UIThemeBean, warn: (String, Throwable?
         colorMap.put(key, Gray.TRANSPARENT)
       }
       is AwtColorValue -> colorMap.put(key, color.color)
-      else -> warn("Can't handle value $color for key '$key'", null)
+      is NamedColorValue -> {
+        if (colorName == color.name) {
+          warn("Can't handle value $color for key '$key'", null)
+        }
+        else {
+          namedNamedValues.add(key to color.name)
+        }
+      }
+    }
+  }
+
+  for (colorInfo in namedNamedValues) {
+    val color = colorMap.get(colorInfo.second)
+    if (color != null) {
+      colorMap.put(colorInfo.first, color)
+    }
+    else {
+      warn("Can't handle value ${colorInfo.second} for key '${colorInfo.first}'", null)
     }
   }
 

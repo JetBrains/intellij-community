@@ -1,0 +1,10 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="training"/>
+    <module name="intellij.java.featuresTrainer"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <startPagePromoter id="JavaOnboardingTourPromoter" implementation="com.intellij.java.ide.customization.training.JavaOnboardingTourPromoter"/>
+  </extensions>
+</idea-plugin>

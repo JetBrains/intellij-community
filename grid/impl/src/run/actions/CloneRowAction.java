@@ -2,7 +2,12 @@ package com.intellij.database.run.actions;
 
 import com.intellij.database.DataGridBundle;
 import com.intellij.database.DatabaseDataKeys;
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridMutator;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtil;
+import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.remote.jdbc.LobInfo;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.grid.GridCopyProvider.ChangeLimitHyperlinkListener;
@@ -19,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.database.datagrid.GridUtil.newInsertOrCloneRowRequestSource;
 
-public class CloneRowAction extends DumbAwareAction implements GridAction {
+public class CloneRowAction extends DumbAwareAction implements GridEditAction {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;

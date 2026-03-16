@@ -15,7 +15,7 @@ import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
 import java.lang.reflect.Method;
 
 

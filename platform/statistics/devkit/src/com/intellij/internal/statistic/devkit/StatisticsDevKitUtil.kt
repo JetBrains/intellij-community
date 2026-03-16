@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.devkit
 
 import com.intellij.internal.statistic.StatisticsBundle
+import com.intellij.internal.statistic.eventLog.FUS_RECORDER
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
@@ -10,7 +11,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 
 internal object StatisticsDevKitUtil {
-  const val DEFAULT_RECORDER = "FUS"
+  const val DEFAULT_RECORDER = FUS_RECORDER
   const val STATISTICS_NOTIFICATION_GROUP_ID = "FeatureUsageStatistics"
 
   fun getLogProvidersInTestMode(): List<StatisticsEventLoggerProvider> {

@@ -7,7 +7,7 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class GitUpdateConfigurable implements Configurable {
   private final GitVcsSettings mySettings;

@@ -2,11 +2,11 @@
 package org.jetbrains.plugins.gradle.importing.syncAction
 
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
-import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.platform.externalSystem.testFramework.utils.module.assertNoSourceRoots
 import com.intellij.platform.externalSystem.testFramework.utils.module.assertSourceRoots
+import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions.assertContentRoots
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase

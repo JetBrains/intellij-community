@@ -5,9 +5,11 @@ package org.jetbrains.kotlin.idea.refactoring.inline
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiReference
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtProperty
 
+@K1Deprecation
 class KotlinInlinePropertyHandler(withPrompt: Boolean = true) : AbstractKotlinInlinePropertyHandler(withPrompt) {
     override fun createProcessor(
         declaration: KtProperty,

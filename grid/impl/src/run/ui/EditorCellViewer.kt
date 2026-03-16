@@ -1,6 +1,14 @@
 package com.intellij.database.run.ui
 
-import com.intellij.database.datagrid.*
+import com.intellij.database.datagrid.DataGrid
+import com.intellij.database.datagrid.DataGridCellTypeListener
+import com.intellij.database.datagrid.DataGridListener
+import com.intellij.database.datagrid.GridColumn
+import com.intellij.database.datagrid.GridHelper
+import com.intellij.database.datagrid.GridRequestSource
+import com.intellij.database.datagrid.GridRow
+import com.intellij.database.datagrid.GridUtilCore
+import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.extractors.DisplayType
 import com.intellij.database.run.ReservedCellValue
 import com.intellij.database.run.ui.CellViewer.Companion.CELL_VIEWER_KEY
@@ -18,6 +26,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -90,6 +99,11 @@ class EditorCellViewer(private val project: Project,
 
   init {
     editor.document.addDocumentListener(updateDocumentListener)
+
+    val reason = GridEditGuard.get(grid)?.getReasonText(grid)
+    if (reason != null && reason.isNotEmpty()) {
+      EditorModificationUtil.setReadOnlyHint(editor, reason)
+    }
 
     DataGridCellTypeListener.addDataGridListener(grid, { rows, columns ->
       if (rows.asIterable().any { it == valueParserCache.row } && columns.asIterable().any { it == valueParserCache.column }) {

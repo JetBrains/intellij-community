@@ -7,7 +7,9 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.codeInspection.options.OptPane
-import com.intellij.codeInspection.options.OptPane.*
+import com.intellij.codeInspection.options.OptPane.group
+import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.codeInspection.options.OptPane.string
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.IntelliJProjectUtil

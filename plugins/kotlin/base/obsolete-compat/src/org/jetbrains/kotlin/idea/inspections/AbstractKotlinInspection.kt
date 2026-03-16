@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import org.jetbrains.kotlin.K1Deprecation
 
+
+@K1Deprecation
 @Deprecated("Please use org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection")
 abstract class AbstractKotlinInspection : org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection()

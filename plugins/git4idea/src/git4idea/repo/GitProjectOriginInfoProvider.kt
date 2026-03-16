@@ -9,16 +9,18 @@ import kotlin.io.path.exists
 class GitProjectOriginInfoProvider : ProjectOriginInfoProvider {
   override fun getOriginUrl(projectDir: Path): String? {
     try {
-      var dir : Path? = projectDir
+      var dir: Path? = projectDir
       while (dir != null) {
         val gitConfig = dir.resolve(".git/config")
         if (gitConfig.exists()) {
-          return GitConfig.read(gitConfig.toFile()).parseRemotes().find { it.name == GitRemote.ORIGIN }?.firstUrl
+          return GitConfig.read(null, dir).parseRemotes()
+            .find { it.name == GitRemote.ORIGIN }?.firstUrl
         }
         dir = dir.parent
       }
       return null
-    } catch (e: Exception) {
+    }
+    catch (e: Exception) {
       LOG.warn(e)
       return null
     }

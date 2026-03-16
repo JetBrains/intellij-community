@@ -3,7 +3,12 @@ package com.intellij.psi.util;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import org.jetbrains.annotations.NotNull;
 
 public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {

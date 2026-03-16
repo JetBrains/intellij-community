@@ -5,7 +5,9 @@ import com.intellij.util.ui.JBInsets;
 
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Insets;
 
 /**
  * @author Konstantin Bulenkov

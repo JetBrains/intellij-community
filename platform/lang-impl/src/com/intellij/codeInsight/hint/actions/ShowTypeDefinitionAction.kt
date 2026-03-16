@@ -3,7 +3,11 @@ package com.intellij.codeInsight.hint.actions
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.documentation.DocumentationManager
-import com.intellij.codeInsight.hint.*
+import com.intellij.codeInsight.hint.ImplementationViewElement
+import com.intellij.codeInsight.hint.ImplementationViewSession
+import com.intellij.codeInsight.hint.ImplementationViewSessionFactory
+import com.intellij.codeInsight.hint.PsiImplementationViewElement
+import com.intellij.codeInsight.hint.PsiImplementationViewSession
 import com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -112,7 +116,7 @@ open class ShowTypeDefinitionAction : ShowRelatedElementsActionBase() {
       return showTypeDefinitionAction.definitions.get().map { element -> (element as PsiImplementationViewElement).getPsiElement()!! }
     }
 
-    private class ShowTypeDefinitionActionForTest(val definitions: Ref<List<ImplementationViewElement>> = Ref()) : ShowTypeDefinitionAction() {
+    internal class ShowTypeDefinitionActionForTest(val definitions: Ref<List<ImplementationViewElement>> = Ref()) : ShowTypeDefinitionAction() {
       override fun showImplementations(session: ImplementationViewSession, invokedFromEditor: Boolean, invokedByShortcut: Boolean) =
         definitions.set(session.implementationElements)
     }

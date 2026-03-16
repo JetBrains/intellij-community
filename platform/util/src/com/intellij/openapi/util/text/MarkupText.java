@@ -4,6 +4,7 @@ package com.intellij.openapi.util.text;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,7 +34,7 @@ public final class MarkupText {
   public List<Fragment> fragments() { return fragments; }
 
   @Override
-  public boolean equals(Object obj) {
+  public boolean equals(@Nullable Object obj) {
     if (obj == this) return true;
     if (obj == null || obj.getClass() != this.getClass()) return false;
     MarkupText that = (MarkupText)obj;
@@ -159,6 +160,23 @@ public final class MarkupText {
   }
 
   /**
+   * @param kind highlighting kind
+   * @return a markup text whose highlighting is completely replaced with the specified one
+   */
+  public MarkupText highlightAll(Kind kind) {
+    if (isEmpty()) return this;
+    String text;
+    if (fragments.size() == 1) {
+      Fragment fragment = fragments.get(0);
+      if (fragment.kind == kind) return this;
+      text = fragment.text;
+    } else {
+      text = StringUtil.join(fragments, fragment -> fragment.text, "");
+    }
+    return new MarkupText(Collections.singletonList(new Fragment(text, kind)));
+  }
+
+  /**
    * Creates a MarkupText with a single plain text fragment.
    * 
    * @param text text to be displayed in the UI
@@ -174,6 +192,13 @@ public final class MarkupText {
    */
   public static MarkupTextBuilder builder() {
     return new MarkupTextBuilder();
+  }
+
+  /**
+   * @return an empty MarkupText.
+   */
+  public static MarkupText empty() {
+    return EMPTY;
   }
 
   /**
@@ -316,7 +341,7 @@ public final class MarkupText {
     public Kind kind() { return kind; }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
       if (obj == this) return true;
       if (obj == null || obj.getClass() != this.getClass()) return false;
       Fragment that = (Fragment)obj;

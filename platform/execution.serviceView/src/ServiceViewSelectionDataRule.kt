@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.serviceView
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataSnapshot
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.UiDataRule
 import com.intellij.openapi.project.Project
 import com.intellij.platform.execution.serviceView.ServiceViewActionProvider.SERVICES_SELECTED_DESCRIPTOR_IDS
 import com.intellij.pom.Navigatable

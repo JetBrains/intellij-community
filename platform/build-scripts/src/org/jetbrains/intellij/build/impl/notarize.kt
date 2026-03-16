@@ -11,8 +11,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions.Companion.MAC_NOTARIZE_STEP
-import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.executeStep
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption

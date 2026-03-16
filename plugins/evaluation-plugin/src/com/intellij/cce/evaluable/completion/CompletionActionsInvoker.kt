@@ -2,8 +2,17 @@
 package com.intellij.cce.evaluable.completion
 
 
-import com.intellij.cce.core.*
-import com.intellij.cce.evaluable.common.*
+import com.intellij.cce.core.CommonFeatures
+import com.intellij.cce.core.Features
+import com.intellij.cce.core.Language
+import com.intellij.cce.core.Lookup
+import com.intellij.cce.core.Session
+import com.intellij.cce.core.TokenProperties
+import com.intellij.cce.evaluable.common.CommonActionsInvoker
+import com.intellij.cce.evaluable.common.asSuggestion
+import com.intellij.cce.evaluable.common.getEditorSafe
+import com.intellij.cce.evaluable.common.positionToString
+import com.intellij.cce.evaluable.common.readActionInSmartMode
 import com.intellij.cce.interpreter.ActionsInvoker
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl

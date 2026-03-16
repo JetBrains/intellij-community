@@ -47,7 +47,7 @@ public abstract class LightCompletionTestCase extends LightJavaCodeInsightTestCa
 
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(getEditor());
     myItems = lookup == null ? null : lookup.getItems().toArray(LookupElement.EMPTY_ARRAY);
-    myPrefix = lookup == null ? null : lookup.itemPattern(lookup.getItems().get(0));
+    myPrefix = lookup == null ? null : lookup.itemPattern(lookup.getItems().getFirst());
   }
 
   public void setType(CompletionType type) {

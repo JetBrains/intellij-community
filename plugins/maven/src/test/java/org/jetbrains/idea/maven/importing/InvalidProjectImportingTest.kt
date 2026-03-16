@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildIssueEvent
-import com.intellij.build.events.MessageEvent
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.testFramework.UsefulTestCase
@@ -30,7 +29,7 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.junit.Test
 
 class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
-
+  override fun skipPluginResolution() = false
 
   @Test
   fun testSubprojectsWithOldModel() = runBlocking {
@@ -61,7 +60,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     project.replaceService(SyncViewManager::class.java, myTestSyncViewManager, testRootDisposable)
     importProjectAsync()
 
-    val issues = events.filterIsInstance<BuildIssueEvent>().filter { it.kind == MessageEvent.Kind.WARNING }
+    val issues = events.filterIsInstance<BuildIssueEvent>().filter { it.description!=null && it.description!!.contains(" 'subprojects' unexpected subprojects element")}
     assertSize(1, issues)
     assertEquals(SyncBundle.message("maven.sync.incorrect.model.version"), issues[0].issue.title)
 
@@ -551,6 +550,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoNotFailIfDistributionRepositoryHasEmptyValues() = runBlocking {
+    assumeMaven3()
     importProjectAsync("""
                               <groupId>test</groupId>
                               <artifactId>project</artifactId>
@@ -816,6 +816,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testUnresolvedBuildExtensionsInModules() = runBlocking {
+    assumeMaven3()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

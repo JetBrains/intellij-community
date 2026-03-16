@@ -21,8 +21,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.Icon;
+import javax.swing.JComboBox;
+import javax.swing.JTable;
+import java.awt.Component;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

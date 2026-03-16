@@ -19,7 +19,7 @@ import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getEelMachine
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
@@ -28,12 +28,14 @@ import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
+import com.intellij.workspaceModel.ide.impl.jsonDump.DumpWorkspaceEntitiesWsmChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
-import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
 private val LOG: Logger
   get() = logger<ModuleBridgeLoaderService>()
@@ -51,9 +53,11 @@ private fun setupOpenTelemetryReporting(meter: Meter) {
   )
 }
 
-private class ModuleBridgeLoaderService : InitProjectActivity {
+@ApiStatus.Internal
+class ModuleBridgeLoaderService : InitProjectActivity {
   override suspend fun run(project: Project) {
     coroutineScope {
+      project.serviceAsync<DumpWorkspaceEntitiesWsmChangeListener>()
       val projectModelSynchronizer = project.serviceAsync<JpsProjectModelSynchronizer>()
       val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
 
@@ -65,12 +69,13 @@ private class ModuleBridgeLoaderService : InitProjectActivity {
 
       val start = Milliseconds.now()
 
-      val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceAsync(project.getEelDescriptor().machine)
+      val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceAsync(project.getEelMachine())
       globalWorkspaceModel.registerInitializingProjectForUpdatesFromGlobalModel(project)
 
       if (workspaceModel.loadedFromCache) {
         val globalWsmAppliedToProjectWsm = CompletableDeferred<Project>()
         span("modules loading with cache") {
+          LOG.info("Workspace model loaded from cache.")
           if (projectModelSynchronizer.hasNoSerializedJpsModules()) {
             LOG.warn("Loaded from cache, but no serialized modules found. " +
                      "Workspace model cache will be ignored, project structure will be recreated.")
@@ -122,13 +127,14 @@ private class ModuleBridgeLoaderService : InitProjectActivity {
       }
 
       span("tracked libraries setup") {
-        val projectRootManager = coroutineScope {
+        val moduleDependencyIndex = coroutineScope {
           // required for setupTrackedLibrariesAndJdks - make sure that it is created to avoid blocking of EDT
           launch { serviceAsync<ProjectJdkTable>() }
-          project.serviceAsync<ProjectRootManager>() as ProjectRootManagerBridge
+          project.serviceAsync<ProjectRootManager>()
+          ModuleDependencyIndex.getInstance(project)
         }
         backgroundWriteAction {
-          projectRootManager.setupTrackedLibrariesAndJdks()
+          moduleDependencyIndex.setupTrackedLibrariesAndJdks()
         }
       }
 

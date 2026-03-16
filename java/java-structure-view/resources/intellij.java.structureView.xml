@@ -1,0 +1,11 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.java.analysis.impl"/>
+
+    <module name="intellij.platform.backend"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+  </dependencies>
+</idea-plugin>

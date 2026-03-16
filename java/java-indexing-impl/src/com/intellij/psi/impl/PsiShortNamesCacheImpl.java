@@ -4,7 +4,12 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.java.stubs.index.JavaFieldNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaMethodNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex;
@@ -24,7 +29,13 @@ import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   private final @NotNull Project myProject;

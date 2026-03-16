@@ -18,7 +18,7 @@ import org.junit.Assert.assertFalse
 import java.util.regex.Pattern
 
 
-class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
+open class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
 
   companion object {
     val pattern: Pattern = Pattern.compile("(<caret>)|(<selection>)|(</selection>)|<(hint|HINT|Hint|hINT)\\s+text=\"([^\n\r]+?(?=\"\\s*/>))\"\\s*/>")
@@ -126,10 +126,12 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
           isHighlighted = false
           isCurrent = false
         }
-        InlayInfo(it.offset, inlayPresenter(it),  isHighlighted, isCurrent)
+        InlayInfo(getInlayOffset(it), inlayPresenter(it), isHighlighted, isCurrent)
       }
       .sortedBy { it.offset }
   }
+
+  protected open fun getInlayOffset(inlay: Inlay<*>): Int = inlay.offset
 
   fun extractInlaysAndCaretInfo(document: Document): CaretAndInlaysInfo {
     val text = document.text

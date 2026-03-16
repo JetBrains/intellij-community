@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.jvmIncBuilder;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 public interface ZipOutputBuilder extends CloseableExt {
 
@@ -14,6 +16,8 @@ public interface ZipOutputBuilder extends CloseableExt {
   byte @Nullable [] getContent(String entryName);
 
   void putEntry(String entryName, byte[] content);
+
+  void putEntry(String entryName, @NotNull Path content);
 
   boolean deleteEntry(String entryName);
 

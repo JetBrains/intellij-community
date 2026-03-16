@@ -19,19 +19,19 @@ class ExtendedShape(Shape):  # Enum class 'Shape' is final and cannot be subclas
     TRIANGLE = 3
 </code></pre>
 <pre><code>
-  from enum import Enum
+from enum import Enum
 
 
-  class Color(Enum):
+class Color(Enum):
     _value_: int
     RED = 1
     GREEN = "green"  # Type 'str' is not assignable to declared type 'int'
 </code></pre>
 <pre><code>
-  from enum import Enum
+from enum import Enum
 
 
-  class Pet(Enum):
+class Pet(Enum):
     CAT = 1
     DOG: int = 2  # Type annotations are not allowed for enum members
 </code></pre>

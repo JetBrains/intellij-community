@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddToStringFix
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtProperty
 
 internal object AddToStringFixFactories {
 
@@ -33,7 +32,7 @@ internal object AddToStringFixFactories {
     }
 
     val assignmentTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
-        getFixes(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
+        getFixes(diagnostic.expression, diagnostic.expectedType, diagnostic.actualType)
     }
 
     val returnTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReturnTypeMismatch ->
@@ -41,6 +40,6 @@ internal object AddToStringFixFactories {
     }
 
     val initializerTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
-        getFixes((diagnostic.psi as? KtProperty)?.initializer, diagnostic.expectedType, diagnostic.actualType)
+        getFixes(diagnostic.initializer, diagnostic.expectedType, diagnostic.actualType)
     }
 }

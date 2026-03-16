@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution;
 
+import com.intellij.build.events.MessageEvent;
+import com.intellij.build.events.impl.BuildIssueEventImpl;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.application.Application;
@@ -12,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
@@ -20,13 +23,24 @@ import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
-import org.gradle.tooling.*;
+import org.gradle.tooling.BuildLauncher;
+import org.gradle.tooling.CancellationToken;
+import org.gradle.tooling.GradleConnector;
+import org.gradle.tooling.LongRunningOperation;
+import org.gradle.tooling.ModelBuilder;
+import org.gradle.tooling.ProgressListener;
+import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.TestLauncher;
 import org.gradle.tooling.events.OperationType;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
@@ -35,6 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.connection.GradleConnectorService;
+import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
@@ -85,61 +100,6 @@ public final class GradleExecutionHelper {
   public static final Key<Boolean> AUTO_JAVA_HOME = Key.create("AUTO_JAVA_HOME");
 
   /**
-   * @deprecated Use the {@link ProjectConnection#newBuild} function directly.
-   * Or use the {@link com.intellij.openapi.externalSystem.util.ExternalSystemUtil#runTask} API for the high-level Gradle task execution.
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull BuildLauncher getBuildLauncher(
-    @NotNull ProjectConnection connection,
-    @NotNull ExternalSystemTaskId id,
-    @NotNull List<String> tasksAndArguments,
-    @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskNotificationListener listener
-  ) {
-    BuildLauncher operation = connection.newBuild();
-    prepare(connection, operation, id, tasksAndArguments, settings, listener);
-    return operation;
-  }
-
-  /**
-   * @deprecated Use the {@link ProjectConnection#newTestLauncher} function directly.
-   * Or use the {@link com.intellij.openapi.externalSystem.util.ExternalSystemUtil#runTask} API for the high-level Gradle task execution.
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull TestLauncher getTestLauncher(
-    @NotNull ProjectConnection connection,
-    @NotNull ExternalSystemTaskId id,
-    @NotNull List<String> tasksAndArguments,
-    @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskNotificationListener listener
-  ) {
-    var operation = connection.newTestLauncher();
-    prepare(connection, operation, id, tasksAndArguments, settings, listener);
-    return operation;
-  }
-
-  /**
-   * @deprecated Existed for the {@link #getBuildLauncher} and {@link #getTestLauncher} functions.
-   */
-  @Deprecated
-  private static void prepare(
-    @NotNull ProjectConnection connection,
-    @NotNull LongRunningOperation operation,
-    @NotNull ExternalSystemTaskId id,
-    @NotNull List<String> tasksAndArguments,
-    @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskNotificationListener listener
-  ) {
-    GradleExecutionSettings effectiveSettings = new GradleExecutionSettings(settings);
-    effectiveSettings.setTasks(ContainerUtil.concat(effectiveSettings.getTasks(), tasksAndArguments));
-    CancellationToken cancellationToken = GradleConnector.newCancellationTokenSource().token();
-    GradleExecutionContextImpl context = new GradleExecutionContextImpl("", id, effectiveSettings, listener, cancellationToken);
-    BuildEnvironment buildEnvironment = getBuildEnvironment(connection, context);
-    context.setBuildEnvironment(buildEnvironment);
-    prepareForExecution(operation, context);
-  }
-
-  /**
    * @deprecated use the {@link GradleExecutionHelper#execute} function with {@link GradleExecutionContext} instead.
    * The {@link BuildEnvironment} model will be automatically provided to {@link GradleExecutionContext}.
    */
@@ -161,6 +121,48 @@ public final class GradleExecutionHelper {
       "", taskId, effectiveSettings, listener, effectiveCancellationToken
     );
     return getBuildEnvironment(connection, context);
+  }
+
+  public static <Model> @NotNull Model getModel(
+    @NotNull ProjectConnection connection,
+    @NotNull GradleExecutionContext context,
+    @NotNull Class<Model> modelClass
+  ) {
+    Span span = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
+      .spanBuilder("GetModel")
+      .setAttribute("modelClass", modelClass.getName())
+      .startSpan();
+    try (Scope ignore = span.makeCurrent()) {
+      ExternalSystemTaskId taskId = context.getTaskId();
+      ExternalSystemTaskNotificationListener listener = context.getListener();
+
+      ModelBuilder<Model> modelBuilder = connection.model(modelClass);
+
+      modelBuilder.withCancellationToken(context.getCancellationToken());
+
+      setupJavaHome(modelBuilder, context.getSettings(), taskId, listener, null);
+
+      // do not use connection.getModel methods since it doesn't allow to handle progress events
+      // and we can miss gradle tooling client side events like distribution download.
+      GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId, context.getProjectPath());
+      modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
+      modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
+      modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));
+      modelBuilder.setStandardError(new OutputWrapper(listener, taskId, false));
+
+      return modelBuilder.get();
+    }
+    catch (CancellationException ce) {
+      throw ce;
+    }
+    catch (Exception ex) {
+      span.recordException(ex);
+      span.setStatus(StatusCode.ERROR);
+      throw new RuntimeException(String.format("Failed to obtain model %s from Gradle daemon.", modelClass.getSimpleName()), ex);
+    }
+    finally {
+      span.end();
+    }
   }
 
   /**
@@ -236,8 +238,8 @@ public final class GradleExecutionHelper {
           context.setBuildEnvironment(buildEnvironment);
           return action.apply(connection);
         }
-        catch (CancellationException ce) {
-          throw ce;
+        catch (CancellationException | ExternalSystemException e) {
+          throw e;
         }
         catch (Exception ex) {
           throw GradleProjectResolver.createProjectResolverChain()
@@ -248,19 +250,21 @@ public final class GradleExecutionHelper {
 
   public static void prepareForExecution(
     @NotNull LongRunningOperation operation,
-    @NotNull GradleExecutionContext context
+    @NotNull GradleExecutionContextImpl context
   ) {
-    var id = context.getTaskId();
-    var settings = context.getSettings();
-    var listener = context.getListener();
-    var buildEnvironment = context.getBuildEnvironment();
+    var effectiveContext = new GradleExecutionContextImpl(context);
+
+    var id = effectiveContext.getTaskId();
+    var settings = effectiveContext.getSettings();
+    var listener = effectiveContext.getListener();
+    var buildEnvironment = effectiveContext.getBuildEnvironment();
 
     applyIdeaParameters(settings);
 
     setupLogging(settings, buildEnvironment);
 
     GradleExecutionHelperExtension.EP_NAME.forEachExtensionSafe(proc -> {
-      proc.configureSettings(settings, context);
+      proc.configureSettings(settings, effectiveContext);
     });
 
     clearSystemProperties(operation);
@@ -277,10 +281,10 @@ public final class GradleExecutionHelper {
 
     setupStandardIO(operation, settings, id, listener);
 
-    operation.withCancellationToken(context.getCancellationToken());
+    operation.withCancellationToken(effectiveContext.getCancellationToken());
 
     GradleExecutionHelperExtension.EP_NAME.forEachExtensionSafe(proc -> {
-      proc.configureOperation(operation, context);
+      proc.configureOperation(operation, effectiveContext);
     });
   }
 
@@ -303,10 +307,10 @@ public final class GradleExecutionHelper {
     @NotNull GradleExecutionSettings settings,
     @NotNull ExternalSystemTaskId id,
     @NotNull ExternalSystemTaskNotificationListener listener,
-    @Nullable BuildEnvironment buildEnvironment
+    @NotNull BuildEnvironment buildEnvironment
   ) {
     var buildRootDir = getBuildRoot(buildEnvironment);
-    var progressListener = new GradleProgressListener(listener, id, buildRootDir);
+    var progressListener = new GradleProgressListener(listener, id, buildRootDir.toString());
     operation.addProgressListener((ProgressListener)progressListener);
     operation.addProgressListener(
       progressListener,
@@ -547,7 +551,7 @@ public final class GradleExecutionHelper {
 
         // do not use connection.getModel methods since it doesn't allow to handle progress events
         // and we can miss gradle tooling client side events like distribution download.
-        GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId);
+        GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId, context.getProjectPath());
         modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
         modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
         modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));
@@ -555,12 +559,19 @@ public final class GradleExecutionHelper {
 
         buildEnvironment = modelBuilder.get();
       }
+      catch (ExternalSystemException e) {
+        throw e;
+      }
       catch (Exception ex) {
         throw new RuntimeException("Failed to obtain build environment from Gradle daemon.", ex);
       }
 
       checkThatGradleBuildEnvironmentIsSupportedByIdea(buildEnvironment);
-
+      checkThatGradleBuildEnvironmentIsDeprecatedByIdea(context, buildEnvironment);
+      var checkers = GradleExecutionChecker.EP_NAME.getExtensionList();
+      for (var checker : checkers) {
+        checker.checkExecution(context, buildEnvironment);
+      }
       return buildEnvironment;
     }
     catch (CancellationException ce) {
@@ -573,6 +584,23 @@ public final class GradleExecutionHelper {
     }
     finally {
       span.end();
+    }
+  }
+
+  private static void checkThatGradleBuildEnvironmentIsDeprecatedByIdea(
+    @NotNull GradleExecutionContext context,
+    @NotNull BuildEnvironment buildEnvironment
+  ) {
+    final GradleVersion gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
+    if (GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
+      final String projectPath = context.getProjectPath();
+      final var issue = new DeprecatedGradleVersionIssue(gradleVersion, projectPath);
+      context.getListener().onStatusChange(
+        new ExternalSystemBuildEvent(
+          context.getTaskId(),
+          new BuildIssueEventImpl(context.getTaskId(), issue, MessageEvent.Kind.WARNING)
+        )
+      );
     }
   }
 

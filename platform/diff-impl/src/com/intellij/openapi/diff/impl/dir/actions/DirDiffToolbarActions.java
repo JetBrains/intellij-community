@@ -2,7 +2,15 @@
 package com.intellij.openapi.diff.impl.dir.actions;
 
 import com.intellij.ide.diff.DirDiffModelHolder;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.project.DumbAware;
@@ -10,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

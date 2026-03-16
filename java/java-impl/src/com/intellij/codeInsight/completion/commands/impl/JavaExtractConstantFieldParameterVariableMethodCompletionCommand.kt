@@ -1,11 +1,29 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.command.commands.*
+import com.intellij.codeInsight.completion.command.commands.AbstractExtractConstantCompletionCommandProvider
+import com.intellij.codeInsight.completion.command.commands.AbstractExtractFieldCompletionCommandProvider
+import com.intellij.codeInsight.completion.command.commands.AbstractExtractLocalVariableCompletionCommandProvider
+import com.intellij.codeInsight.completion.command.commands.AbstractExtractMethodCompletionCommandProvider
+import com.intellij.codeInsight.completion.command.commands.AbstractExtractParameterCompletionCommandProvider
 import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.*
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiBlockStatement
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiIfStatement
+import com.intellij.psi.PsiLiteral
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiLoopStatement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.findParentOfType

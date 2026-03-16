@@ -2,7 +2,16 @@
 package com.intellij.devkit.apiDump.lang.usages
 
 import com.intellij.devkit.apiDump.lang.ApiDumpLangBundle
-import com.intellij.devkit.apiDump.lang.psi.*
+import com.intellij.devkit.apiDump.lang.psi.ADClassHeader
+import com.intellij.devkit.apiDump.lang.psi.ADCompanion
+import com.intellij.devkit.apiDump.lang.psi.ADConstructorReference
+import com.intellij.devkit.apiDump.lang.psi.ADField
+import com.intellij.devkit.apiDump.lang.psi.ADFieldReference
+import com.intellij.devkit.apiDump.lang.psi.ADMethod
+import com.intellij.devkit.apiDump.lang.psi.ADMethodReference
+import com.intellij.devkit.apiDump.lang.psi.ADParameter
+import com.intellij.devkit.apiDump.lang.psi.ADSuperType
+import com.intellij.devkit.apiDump.lang.psi.ADTypeReference
 import com.intellij.psi.PsiElement
 import com.intellij.usages.impl.rules.UsageType
 import com.intellij.usages.impl.rules.UsageTypeProvider

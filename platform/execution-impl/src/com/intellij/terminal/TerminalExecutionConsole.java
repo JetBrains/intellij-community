@@ -8,14 +8,24 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.InputFilter;
 import com.intellij.execution.impl.ConsoleViewUtil;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.BaseProcessHandler;
+import com.intellij.execution.process.ColoredProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.PtyBasedProcess;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +42,7 @@ import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.jediterm.core.util.CellPosition;
-import com.jediterm.terminal.HyperlinkStyle;
+import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.JediTerminal;
@@ -46,13 +56,18 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BoundedRangeModel;
+import javax.swing.JComponent;
 import javax.swing.event.ChangeEvent;
-import java.awt.*;
+import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.terminal.TerminalExecutionConsoleBuilderKt.DEFAULT_CONVERT_LF_TO_CRLF_FOR_PROCESS_WITHOUT_PTY;
+import static com.intellij.terminal.TerminalExecutionConsoleBuilderKt.DEFAULT_INITIAL_TERM_SIZE;
+import static com.intellij.terminal.TerminalExecutionConsoleBuilderKt.createDefaultConsoleSettingsProvider;
 
 public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleView {
   private static final Logger LOG = Logger.getInstance(TerminalExecutionConsole.class);
@@ -66,44 +81,71 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private final TerminalConsoleContentHelper myContentHelper = new TerminalConsoleContentHelper(this);
 
   private boolean myEnterKeyDefaultCodeEnabled = true;
-  private boolean myConvertLfToCrlfForNonPtyProcess = false;
+  private boolean myConvertLfToCrlfForNonPtyProcess = DEFAULT_CONVERT_LF_TO_CRLF_FOR_PROCESS_WITHOUT_PTY;
   private final AtomicBoolean myFirstOutput = new AtomicBoolean(false);
 
+  /**
+   * @deprecated use {@link TerminalExecutionConsoleBuilder} and {@link #attachToProcess(ProcessHandler)} instead
+   */
+  @Deprecated
   public TerminalExecutionConsole(@NotNull Project project, @Nullable ProcessHandler processHandler) {
-    this(project, processHandler, getProvider());
+    this(project, DEFAULT_INITIAL_TERM_SIZE, createDefaultConsoleSettingsProvider(), processHandler);
   }
 
+  /**
+   * @deprecated use {@link TerminalExecutionConsoleBuilder} and {@link #attachToProcess(ProcessHandler)} instead
+   */
+  @Deprecated
   public TerminalExecutionConsole(@NotNull Project project,
                                   @Nullable ProcessHandler processHandler,
                                   @NotNull JBTerminalSystemSettingsProviderBase settingsProvider) {
-    this(project, 200, 24, processHandler, settingsProvider);
+    this(project, DEFAULT_INITIAL_TERM_SIZE, settingsProvider, processHandler);
   }
 
+  /**
+   * @deprecated use {@link TerminalExecutionConsoleBuilder} and {@link #attachToProcess(ProcessHandler)} instead
+   */
+  @Deprecated
   public TerminalExecutionConsole(@NotNull Project project, int columns, int lines, @Nullable ProcessHandler processHandler) {
-    this(project, columns, lines, processHandler, getProvider());
+    this(project, new TermSize(columns, lines), createDefaultConsoleSettingsProvider(), processHandler);
   }
 
+  /**
+   * @deprecated use {@link TerminalExecutionConsoleBuilder} and {@link #attachToProcess(ProcessHandler)} instead
+   */
+  @Deprecated
   public TerminalExecutionConsole(@NotNull Project project,
                                   int columns,
                                   int lines,
                                   @Nullable ProcessHandler processHandler,
                                   @NotNull JBTerminalSystemSettingsProviderBase settingsProvider) {
+    this(project, new TermSize(columns, lines), settingsProvider, processHandler);
+  }
+
+  private TerminalExecutionConsole(
+    @NotNull Project project,
+    @NotNull TermSize initialTermSize,
+    @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
+    @Nullable ProcessHandler processHandler
+  ) {
+    this(project, initialTermSize, settingsProvider, DEFAULT_CONVERT_LF_TO_CRLF_FOR_PROCESS_WITHOUT_PTY, processHandler);
+  }
+
+  TerminalExecutionConsole(
+    @NotNull Project project,
+    @NotNull TermSize initialTermSize,
+    @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
+    boolean convertLfToCrlfForNonPtyProcess,
+    @Nullable ProcessHandler processHandler
+  ) {
     myProject = project;
     myDataStream = new AppendableTerminalDataStream();
-    myTerminalWidget = new ConsoleTerminalWidget(project, columns, lines, settingsProvider);
+    myTerminalWidget = new ConsoleTerminalWidget(project, initialTermSize.getColumns(), initialTermSize.getRows(), settingsProvider);
     myInputMessageFilter = ConsoleViewUtil.computeInputFilter(this, project, GlobalSearchScope.allScope(project));
+    myConvertLfToCrlfForNonPtyProcess = convertLfToCrlfForNonPtyProcess;
     if (processHandler != null) {
       attachToProcess(processHandler);
     }
-  }
-
-  private static @NotNull JBTerminalSystemSettingsProviderBase getProvider() {
-    return new JBTerminalSystemSettingsProviderBase() {
-      @Override
-      public HyperlinkStyle.HighlightMode getHyperlinkHighlightingMode() {
-        return HyperlinkStyle.HighlightMode.ALWAYS;
-      }
-    };
   }
 
   public @NotNull JBTerminalWidget getTerminalWidget() {
@@ -128,7 +170,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
     if (myFirstOutput.compareAndSet(false, true) &&
         contentType == ConsoleViewContentType.SYSTEM_OUTPUT &&
-        getPtyProcess() instanceof WinConPtyProcess) {
+        getProcess() instanceof WinConPtyProcess winConPtyProcess &&
+        !winConPtyProcess.isConPtyInheritCursor()) {
       moveScreenToScrollbackBufferAndShowAllOutput();
     }
   }
@@ -240,6 +283,10 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     return this;
   }
 
+  /**
+   * @deprecated use {@link TerminalExecutionConsoleBuilder#convertLfToCrlfForProcessWithoutPty(boolean)} instead
+   */
+  @Deprecated
   public @NotNull TerminalExecutionConsole withConvertLfToCrlfForNonPtyProcess(boolean convertLfToCrlfForNonPtyProcess) {
     myConvertLfToCrlfForNonPtyProcess = convertLfToCrlfForNonPtyProcess;
     return this;
@@ -495,7 +542,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
         @Override
         public byte[] getCode(int key, int modifiers) {
           if (key == KeyEvent.VK_ENTER && modifiers == 0 && myEnterKeyDefaultCodeEnabled) {
-            PtyProcess process = getPtyProcess();
+            PtyProcess process = ObjectUtils.tryCast(getProcess(), PtyProcess.class);
             return process != null ? new byte[]{process.getEnterKeyCode()} : LineSeparator.CR.getSeparatorBytes();
           }
           return super.getCode(key, modifiers);
@@ -510,9 +557,9 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     }
   }
 
-  private @Nullable PtyProcess getPtyProcess() {
+  private @Nullable Process getProcess() {
     ProcessHandlerTtyConnector phc = ObjectUtils.tryCast(myTerminalWidget.getTtyConnector(), ProcessHandlerTtyConnector.class);
-    return phc != null ? phc.getPtyProcess() : null;
+    return phc != null ? phc.getProcess() : null;
   }
 
   private final class ClearAction extends DumbAwareAction {

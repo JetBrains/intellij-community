@@ -11,17 +11,44 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.vcs.impl.shared.rpc.VcsMappingsApi
 import com.intellij.platform.vcs.impl.shared.rpc.VcsMappingsDto
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
+interface VcsMappingsHolder {
+  fun getRootFor(filePath: FilePath): FilePath?
+
+  fun getRepositoryIdFor(filePath: FilePath): RepositoryId?
+
+  fun getAllRoots(): List<FilePath>
+
+  fun hasMultipleRoots(): Boolean
+
+  companion object {
+    fun getInstance(project: Project): VcsMappingsHolder = project.service<VcsMappingsHolderImpl>()
+  }
+}
 
 @Service(Service.Level.PROJECT)
-internal class VcsMappingsHolder(project: Project, cs: CoroutineScope) {
+private class VcsMappingsHolderImpl(val project: Project, cs: CoroutineScope) : VcsMappingsHolder {
   private val mappings: StateFlow<FilePathMapping<VcsMappedRoot>> = flow {
     emitAll(VcsMappingsApi.getInstance().getMappings(project.projectId()).map { it.convertMapping() })
   }.stateIn(cs, SharingStarted.Eagerly, FilePathMapping(false))
 
-  fun getRootFor(filePath: FilePath): FilePath? = getMappingFor(filePath)?.path
+  override fun getRootFor(filePath: FilePath): FilePath? = getMappingFor(filePath)?.path
 
-  fun getAllRoots(): List<FilePath> = mappings.value.values().map { it.path }
+  override fun getRepositoryIdFor(filePath: FilePath): RepositoryId? {
+    return getMappingFor(filePath)?.repositoryId(project)
+  }
+
+  override fun getAllRoots(): List<FilePath> = mappings.value.values().map { it.path }
+
+  override fun hasMultipleRoots(): Boolean = mappings.value.values().filter { it.vcs != null }.size > 1
 
   private fun getMappingFor(filePath: FilePath): VcsMappedRoot? = mappings.value.getMappingFor(filePath.path)
 
@@ -33,13 +60,12 @@ internal class VcsMappingsHolder(project: Project, cs: CoroutineScope) {
     }
     return resultMapping
   }
-
-  companion object {
-    fun getInstance(project: Project): VcsMappingsHolder = project.service()
-  }
 }
 
 private data class VcsMappedRoot(
   val path: FilePath,
   val vcs: VcsKey?,
-)
+) {
+  fun repositoryId(project: Project): RepositoryId? =
+    if (vcs != null) RepositoryId.from(project.projectId(), path) else null
+}

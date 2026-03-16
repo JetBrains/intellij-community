@@ -38,7 +38,7 @@ public final class PathVariableDeclaringReference extends PsiReferenceBase<PsiEl
 
   @Override
   public String toString() {
-    return "PathVariableReference(" + getValue() + ", " + getRangeInElement() + ")";
+    return "PathVariableDeclaringReference(" + getValue() + ", " + getRangeInElement() + ")";
   }
 
   @Override

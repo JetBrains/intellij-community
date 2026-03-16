@@ -2,13 +2,19 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
+@OptIn(KaPlatformInterface::class)
 internal fun KtFile.fileCanBeAffectedByCompilerPlugins(project: Project): Boolean {
     if (isCompiled) {
         // files from libraries cannot have compiler plugins, this is a fast path as calling `getKaModule` is more expensive

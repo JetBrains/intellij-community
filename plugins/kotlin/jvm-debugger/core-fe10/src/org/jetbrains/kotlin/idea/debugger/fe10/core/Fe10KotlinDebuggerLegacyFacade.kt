@@ -2,9 +2,9 @@
 package org.jetbrains.kotlin.idea.debugger.fe10.core
 
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculatorForIde
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinFileSelector
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerLegacyFacade
 import org.jetbrains.kotlin.idea.debugger.core.KotlinEditorTextProvider
+import org.jetbrains.kotlin.idea.debugger.core.KotlinFileSelector
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.ActualDeclarationProvider
 
 internal class Fe10KotlinDebuggerLegacyFacade : KotlinDebuggerLegacyFacade {

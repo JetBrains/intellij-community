@@ -6,7 +6,13 @@ import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsControll
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.Product
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup

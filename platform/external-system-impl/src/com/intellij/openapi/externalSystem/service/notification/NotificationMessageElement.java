@@ -2,7 +2,11 @@
 package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.errorTreeView.*;
+import com.intellij.ide.errorTreeView.CustomizeColoredTreeCellRendererReplacement;
+import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
+import com.intellij.ide.errorTreeView.GroupingElement;
+import com.intellij.ide.errorTreeView.NavigatableMessageElement;
+import com.intellij.ide.errorTreeView.NewErrorTreeRenderer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
@@ -20,14 +24,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JEditorPane;
+import javax.swing.JTree;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
-import java.awt.*;
+import java.awt.Component;
 
 import static com.intellij.util.ui.EmptyIcon.ICON_16;
 

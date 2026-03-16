@@ -3,12 +3,21 @@ package com.intellij.ide.lightEdit
 
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention
+import com.intellij.ide.lightEdit.project.LightEditProjectImpl
 import com.intellij.ide.lightEdit.project.LightEditProjectManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.application.*
-import com.intellij.openapi.components.*
+import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.CoroutineSupport
+import com.intellij.openapi.application.ui
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
@@ -426,6 +435,10 @@ class LightEditServiceImpl(private val coroutineScope: CoroutineScope)
 
   override fun isLightEditEnabled(): Boolean {
     return LightEditUtil.isLightEditEnabled()
+  }
+
+  override fun isLightEditProject(project: Project): Boolean {
+    return project is LightEditProjectImpl
   }
 
   override fun openFile(path: Path, suggestSwitchToProject: Boolean): Project? {

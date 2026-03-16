@@ -16,7 +16,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.ui.IconTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.IOException;
 import java.util.List;
 

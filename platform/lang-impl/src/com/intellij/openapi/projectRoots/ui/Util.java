@@ -7,7 +7,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.net.MalformedURLException;
 import java.net.URL;
 

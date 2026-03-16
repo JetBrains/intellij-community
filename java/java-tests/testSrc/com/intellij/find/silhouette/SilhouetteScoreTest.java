@@ -4,6 +4,7 @@ package com.intellij.find.silhouette;
 import com.intellij.JavaTestUtil;
 import com.intellij.find.findUsages.JavaFindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
+import com.intellij.find.findUsages.similarity.SilhouetteScore;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -13,7 +14,6 @@ import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.usages.UsageInfoToUsageConverter;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
-import com.intellij.find.findUsages.similarity.SilhouetteScore;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 

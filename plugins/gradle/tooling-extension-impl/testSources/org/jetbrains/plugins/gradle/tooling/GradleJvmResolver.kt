@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling
 
-import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleAtLeast
-import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleOlderThan
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -15,6 +13,7 @@ import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
+import org.junit.AssumptionViolatedException
 
 class GradleJvmResolver(
   private val gradleVersion: GradleVersion,
@@ -31,7 +30,6 @@ class GradleJvmResolver(
   private fun isSdkSupported(javaVersion: JavaVersion): Boolean {
     return GradleJvmSupportMatrix.isJavaSupportedByIdea(javaVersion)
            && GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)
-           && isJavaSupportedByGradleToolingApi(gradleVersion, javaVersion)
            && !javaVersionRestriction.isRestricted(gradleVersion, javaVersion)
   }
 
@@ -49,11 +47,19 @@ class GradleJvmResolver(
   }
 
   private fun resolveGradleJvmHomePathImpl(): String {
-    return requireNotNull(findSdkHomePathOnDisk()) {
+    return findSdkHomePathOnDisk()?.also { homePath ->
+      println("""
+        |
+        |Resolved Gradle JVM for the Gradle ${gradleVersion.version}
+        |Gradle JVM version: ${sdkType.getVersionString(homePath)}
+        |Gradle JVM path: $homePath
+        |
+      """.trimMargin())
+    } ?: run {
       val supportedJavaVersions = GradleJvmSupportMatrix.getSupportedJavaVersions(gradleVersion)
       val restrictedJavaVersions = supportedJavaVersions.filter { isSdkSupported(it) }
       val suggestedJavaHomePaths = sdkType.suggestHomePaths().sortedWith(NaturalComparator.INSTANCE)
-      """
+      val exceptionText = """
         |
         |Cannot find JDK for the Gradle ${gradleVersion.version}.
         |Please, research JDK restrictions or discuss it with test author, and install JDK manually.
@@ -66,25 +72,12 @@ class GradleJvmResolver(
         |]
         |
       """.trimMargin()
-    }.also { homePath ->
-      println("""
-        |
-        |Resolved Gradle JVM for the Gradle ${gradleVersion.version}
-        |Gradle JVM version: ${sdkType.getVersionString(homePath)}
-        |Gradle JVM path: $homePath
-        |
-      """.trimMargin())
-    }
-  }
-
-  private fun isJavaSupportedByGradleToolingApi(gradleVersion: GradleVersion, javaVersion: JavaVersion): Boolean {
-    // https://github.com/gradle/gradle/issues/9339
-    if (isGradleAtLeast(gradleVersion, "5.6") && isGradleOlderThan(gradleVersion, "7.3")) {
-      if (javaVersion.feature < 11) {
-        return false
+      if (restrictedJavaVersions.isNotEmpty()) {
+        throw IllegalStateException(exceptionText)
+      } else {
+        throw AssumptionViolatedException(exceptionText)
       }
     }
-    return true
   }
 
   private fun findSdkHomePathOnDisk(): String? {

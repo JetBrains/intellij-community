@@ -11,7 +11,16 @@ import com.intellij.database.extractors.DataExtractorProperties;
 import com.intellij.database.extractors.ExtractorsHelper;
 import com.intellij.database.settings.CsvSettings;
 import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -28,7 +37,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
 import java.awt.event.InputEvent;
 import java.io.File;
 import java.util.Comparator;
@@ -36,7 +46,12 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
-import static com.intellij.database.extractors.DataExtractorFactories.*;
+import static com.intellij.database.extractors.DataExtractorFactories.getBuiltInFactories;
+import static com.intellij.database.extractors.DataExtractorFactories.getCsvFormats;
+import static com.intellij.database.extractors.DataExtractorFactories.getDisplayName;
+import static com.intellij.database.extractors.DataExtractorFactories.getExtractorFactory;
+import static com.intellij.database.extractors.DataExtractorFactories.getExtractorScripts;
+import static com.intellij.database.extractors.DataExtractorFactories.setExtractorFactory;
 import static com.intellij.database.util.DataGridUIUtil.updateAllToolbarsUnder;
 
 final class ChooseExtractorAction extends ActionGroup implements GridAction, DumbAware {

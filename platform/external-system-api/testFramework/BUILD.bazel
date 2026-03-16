@@ -19,6 +19,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/platform-util-io:ide-util-io",
     "@lib//:assert_j",
+    "//platform/execution",
     "//java/java-impl:impl",
     "//platform/workspace/storage",
     "//platform/workspace/jps",

@@ -48,6 +48,7 @@ internal object FirKotlinUastConstantEvaluator {
         }
         return (variableSymbol as? KaPropertySymbol)?.initializer?.initializerPsi
             ?: variableSymbol.psiSafe<KtVariableDeclaration>()?.initializer
+            ?: this
     }
 
     private fun evaluateConstLike(uExpression: UExpression): Any? {

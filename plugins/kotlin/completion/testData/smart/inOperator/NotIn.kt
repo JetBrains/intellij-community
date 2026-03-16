@@ -4,3 +4,5 @@ fun foo(s: String, list: List<String>, o: Any) {
 
 // EXIST: list
 // ABSENT: o
+
+// IGNORE_K2

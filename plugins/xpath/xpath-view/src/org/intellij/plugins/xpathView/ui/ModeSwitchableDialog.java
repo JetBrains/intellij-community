@@ -22,8 +22,12 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.SwingUtilities;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;

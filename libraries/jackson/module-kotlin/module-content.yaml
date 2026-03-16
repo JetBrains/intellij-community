@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.jackson.module.kotlin.jar
   modules:
   - name: intellij.libraries.jackson.module.kotlin
   library: jackson-module-kotlin

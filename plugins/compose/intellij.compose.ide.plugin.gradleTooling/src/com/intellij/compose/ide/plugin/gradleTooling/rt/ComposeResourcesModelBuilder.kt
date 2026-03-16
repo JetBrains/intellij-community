@@ -6,7 +6,6 @@ import org.gradle.api.Project
 import org.gradle.api.file.Directory
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.provider.Provider
-import org.jetbrains.kotlin.idea.gradleTooling.getMethodOrNull
 import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
@@ -60,3 +59,10 @@ class ComposeResourcesModelBuilder : ModelBuilderService {
     )
   }
 }
+
+private fun Class<*>.getMethodOrNull(name: String, vararg parameterTypes: Class<*>) =
+  try {
+    getMethod(name, *parameterTypes)
+  } catch (e: Exception) {
+    null
+  }

@@ -38,7 +38,7 @@ jvm_library(
     "//platform/util/progress",
     "@lib//:jna",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/util/jdom",
     "//platform/util-ex",
     "//platform/util/concurrency",
@@ -50,6 +50,8 @@ jvm_library(
     "//platform/credential-store",
     "//platform/remote-core",
     "//platform/ide-core",
+    "//platform/project-frame",
+    "//platform/welcome-screen",
     "//platform/util/text-matching",
     "//platform/diagnostic",
     "//libraries/jackson/jackson",
@@ -57,13 +59,14 @@ jvm_library(
     "//platform/progress/shared:ide-progress",
     "//platform/util/diff",
     "//platform/runtime/product",
+    "//platform/util/coroutines",
   ],
   exports = [
     "//platform/util",
-    "//platform/forms_rt:java-guiForms-rt",
     "//platform/editor-ui-api:editor-ui",
     "//platform/util:util-ui",
     "//platform/ide-core",
+    "//platform/welcome-screen",
     "//platform/progress/shared:ide-progress",
   ]
 )

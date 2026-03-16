@@ -11,7 +11,11 @@ import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;

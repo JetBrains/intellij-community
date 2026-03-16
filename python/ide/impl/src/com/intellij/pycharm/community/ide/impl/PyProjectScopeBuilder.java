@@ -5,7 +5,11 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectAndLibrariesScope;
+import com.intellij.psi.search.ProjectAwareVirtualFile;
+import com.intellij.psi.search.ProjectScopeBuilderImpl;
+import com.intellij.psi.search.ProjectScopeImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;

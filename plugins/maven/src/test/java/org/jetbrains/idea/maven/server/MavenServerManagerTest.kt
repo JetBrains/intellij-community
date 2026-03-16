@@ -15,7 +15,11 @@ import com.intellij.util.WaitFor
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
-import java.util.concurrent.*
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Future
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
 
 class MavenServerManagerTest : MavenTestCase() {

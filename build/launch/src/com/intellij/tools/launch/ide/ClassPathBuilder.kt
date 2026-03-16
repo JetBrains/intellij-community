@@ -14,7 +14,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.UUID
 import java.util.logging.Logger
 import kotlin.io.path.name
 import kotlin.io.path.pathString

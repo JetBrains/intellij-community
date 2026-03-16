@@ -24,7 +24,9 @@ import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.application
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.write
-import org.junit.Assert.*
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith

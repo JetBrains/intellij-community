@@ -1,0 +1,20 @@
+<idea-plugin>
+  <id>org.jetbrains.idea.reposearch</id>
+  <name>Artifacts Repository Search</name>
+  <vendor>JetBrains</vendor>
+  <category>Build Tools</category>
+  <description><![CDATA[
+    Provides API for artifact search such as Maven/Gradle dependencies.
+  ]]></description>
+
+  <content namespace="jetbrains">
+    <module name="intellij.repository.search.common"/>
+  </content>
+
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
+  </dependencies>
+  <!-- endregion -->
+
+</idea-plugin>

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.StandardNames.KOTLIN_REFLECT_FQ_NAME
@@ -21,7 +22,12 @@ import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParenthesesIfPossible
 import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContext.DOUBLE_COLON_LHS
 import org.jetbrains.kotlin.resolve.BindingContext.REFERENCE_TARGET
@@ -33,12 +39,14 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 @Suppress("DEPRECATION")
 class ConvertReferenceToLambdaInspection : IntentionBasedInspection<KtCallableReferenceExpression>(
     ConvertReferenceToLambdaIntention::class,
     problemText = KotlinBundle.message("convert.reference.to.lambda.before.text")
 )
 
+@K1Deprecation
 class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntention<KtCallableReferenceExpression>(
     KtCallableReferenceExpression::class.java, KotlinBundle.messagePointer("convert.reference.to.lambda")
 ) {

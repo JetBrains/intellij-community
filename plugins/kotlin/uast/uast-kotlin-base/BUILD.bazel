@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.uast.uast-kotlin-base` start
+### auto-generated section `build intellij.kotlin.uast.base` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "uast-kotlin-base",
-  module_name = "kotlin.uast.uast-kotlin-base",
+  name = "kotlin-uast-base",
+  module_name = "intellij.kotlin.uast.base",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k11",
@@ -11,7 +11,6 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/asm",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-analysis-api",
     "//uast/uast-common:uast",
     "//platform/core-api:core",
@@ -20,4 +19,4 @@ jvm_library(
     "//uast/uast-java:java-uast",
   ]
 )
-### auto-generated section `build kotlin.uast.uast-kotlin-base` end
+### auto-generated section `build intellij.kotlin.uast.base` end

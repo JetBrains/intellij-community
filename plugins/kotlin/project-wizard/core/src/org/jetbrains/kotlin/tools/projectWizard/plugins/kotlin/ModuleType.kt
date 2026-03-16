@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.StdlibType
-import java.util.*
+import java.util.EnumSet
 
 //TODO maybe split into interfaces like it made with module configurators
 @Suppress("EnumEntryName")

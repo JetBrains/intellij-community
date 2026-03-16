@@ -22,10 +22,12 @@ jvm_library(
     "//platform/util-ex",
     "//platform/projectModel-impl",
     "//libraries/fastutil",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/instanceContainer",
     "//platform/diagnostic",
     "//platform/util/coroutines",
+    "//libraries/asm",
+    "//platform/util-class-loader:util-classLoader",
   ]
 )
 
@@ -45,10 +47,13 @@ jvm_library(
     "@lib//:junit4",
     "@lib//:assert_j",
     "//libraries/fastutil",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/instanceContainer",
     "//platform/diagnostic",
     "//platform/util/coroutines",
+    "//libraries/junit5",
+    "//libraries/asm",
+    "//platform/util-class-loader:util-classLoader",
   ]
 )
 ### auto-generated section `build intellij.platform.serviceContainer` end

@@ -12,10 +12,11 @@
   tokens=[
     COMMENT="regexp:#.*"
 
-    BOOLEAN
-
     BARE_KEY_OR_NUMBER="regexp:\d+"
     BARE_KEY_OR_DATE="regexp:\d{4}-\d{2}-\d{2}"
+    BARE_KEY_OR_BOOLEAN="regexp:true|false"
+
+    BOOLEAN
     NUMBER
     BARE_KEY
     DATE_TIME
@@ -39,7 +40,7 @@ File ::= FileForm*
 
 private FileForm ::= NewLineKeyValue | ArrayTable | Table { recoverWhile = FileForm_recover }
 private FileForm_recover ::=
-  !<<atNewLine (BARE_KEY | BARE_KEY_OR_NUMBER | BARE_KEY_OR_DATE | BASIC_STRING | LITERAL_STRING | '[')>>
+  !<<atNewLine (BARE_KEY | BARE_KEY_OR_NUMBER | BARE_KEY_OR_DATE | BARE_KEY_OR_BOOLEAN | BASIC_STRING | LITERAL_STRING | '[')>>
 private EatUntilNextLine_recover ::= !<<atNewLine <<any>>>>
 
 KeyValue ::= Key '=' <<atSameLine Value>> { pin = 1 }
@@ -53,19 +54,21 @@ KeySegment ::= BareKey | BASIC_STRING | LITERAL_STRING
 private BareKey ::= BARE_KEY
   | <<remap 'BARE_KEY_OR_NUMBER' 'BARE_KEY'>>
   | <<remap 'BARE_KEY_OR_DATE' 'BARE_KEY'>>
+  | <<remap 'BARE_KEY_OR_BOOLEAN' 'BARE_KEY'>>
 
 
 private Value ::= Literal | Array | InlineTable
 
-Literal ::= Number | Date | BOOLEAN
+Literal ::= Number | Date | Boolean
   | BASIC_STRING | LITERAL_STRING
   | MULTILINE_BASIC_STRING | MULTILINE_LITERAL_STRING
 
 private Number ::= <<remap 'BARE_KEY_OR_NUMBER' 'NUMBER'>> | NUMBER
 private Date ::= <<remap 'BARE_KEY_OR_DATE' 'DATE_TIME'>> | DATE_TIME
+private Boolean ::= <<remap 'BARE_KEY_OR_BOOLEAN' 'BOOLEAN'>> | BOOLEAN
 
 private Value_first ::= BARE_KEY_OR_NUMBER | NUMBER | BARE_KEY_OR_DATE | DATE_TIME
-                      | BOOLEAN
+                      | BARE_KEY_OR_BOOLEAN | BOOLEAN
                       | BASIC_STRING | LITERAL_STRING
                       | MULTILINE_BASIC_STRING | MULTILINE_LITERAL_STRING
                       | '[' | '{'

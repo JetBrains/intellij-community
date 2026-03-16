@@ -86,6 +86,7 @@ suspend fun createProcessHandlerDto(coroutineScope: CoroutineScope, processHandl
     flow.toRpc(),
     processHandler.nativePid?.asDeferred(),
     killableProcessInfo,
+    processHandler,
   )
 }
 

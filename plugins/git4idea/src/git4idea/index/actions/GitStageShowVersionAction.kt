@@ -16,7 +16,13 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.OpenSourceUtil
 import git4idea.GitDisposable
 import git4idea.i18n.GitBundle
-import git4idea.index.*
+import git4idea.index.ContentVersion
+import git4idea.index.GitStageLineStatusTracker
+import git4idea.index.GitStageTracker
+import git4idea.index.getRoot
+import git4idea.index.has
+import git4idea.index.isStagingAreaAvailable
+import git4idea.index.status
 import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.index.vfs.GitIndexVirtualFile
 import git4idea.index.vfs.filePath

@@ -19,7 +19,7 @@ class PyElementFeatureProvider : ElementFeatureProvider {
     val result = HashMap<String, MLFeatureValue>()
 
     val lookupString = element.lookupString
-    val locationPsi = location.completionParameters.position
+    val locationPsi = location.baseCompletionParameters.position
     val lookupPsiElement = element.psiElement
 
     PyCompletionFeatures.getPyLookupElementInfo(element)?.let { info ->
@@ -101,7 +101,7 @@ class PyElementFeatureProvider : ElementFeatureProvider {
       }}
     }
 
-    element.getUserData(PyMultipleArgumentsCompletionContributor.MULTIPLE_ARGUMENTS_VARIANT_KEY)?.let {
+    element.getUserData(PyMultipleArgumentsCompletionContributor.Helper.MULTIPLE_ARGUMENTS_VARIANT_KEY)?.let {
       result["is_multiple_arguments"] = MLFeatureValue.binary(true)
     }
 

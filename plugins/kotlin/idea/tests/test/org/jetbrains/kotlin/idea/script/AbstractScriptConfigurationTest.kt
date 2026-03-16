@@ -19,16 +19,20 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jdom.Element
-import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.completion.test.KotlinCompletionTestCase
-import org.jetbrains.kotlin.idea.core.script.shared.getScriptReports
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
+import org.jetbrains.kotlin.idea.core.script.shared.getScriptReports
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationTest.Companion.useDefaultTemplate
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
+import org.jetbrains.kotlin.idea.test.addDependency
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.projectStructure.getModuleDir
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -36,7 +40,7 @@ import org.jetbrains.kotlin.test.TestJdkKind
 import org.jetbrains.kotlin.test.util.projectLibrary
 import java.io.File
 import java.nio.file.Paths
-import java.util.*
+import java.util.Locale
 import kotlin.script.dependencies.Environment
 import kotlin.script.experimental.api.ScriptDiagnostic
 

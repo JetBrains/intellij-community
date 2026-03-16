@@ -54,9 +54,6 @@ object MarketplaceUrls {
     "${getPluginManagerUrl()}/api/search/aggregation/$field"
   ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
-  @Deprecated("Use getSearchPluginsUpdatesUrl() instead")
-  fun getSearchCompatibleUpdatesUrl(): String = Urls.newFromEncoded("${getPluginManagerUrl()}/api/search/compatibleUpdates").toExternalForm()
-
   fun getSearchPluginsUpdatesUrl(): String = Urls.newFromEncoded("${getPluginManagerUrl()}/api/search/updates/compatible").toExternalForm()
 
   fun getSearchNearestUpdate(): String = Urls.newFromEncoded("${getPluginManagerUrl()}/api/search/updates/nearest").toExternalForm()
@@ -106,7 +103,9 @@ object MarketplaceUrls {
       "id" to descriptor.pluginId.idString,
       "build" to ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber),
       "uuid" to uuid,
-      "updatedFrom" to updatedFrom
+      "updatedFrom" to updatedFrom,
+      "os" to buildOsParameter(),
+      "arch" to CpuArch.CURRENT.name
     )
    descriptor.channel?.let {
       parameters["channel"] = it
@@ -120,4 +119,4 @@ object MarketplaceUrls {
   private fun PluginId.urlEncode(): String = URLUtil.encodeURIComponent(idString)
 }
 
-internal fun buildOsParameter(): String? = "${OS.CURRENT} ${OS.CURRENT.version()}"
+internal fun buildOsParameter(): String = "${OS.CURRENT} ${OS.CURRENT.version()}"

@@ -17,8 +17,20 @@ package com.intellij.util.ui.accessibility;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.accessibility.*;
-import java.awt.*;
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleAction;
+import javax.accessibility.AccessibleComponent;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleEditableText;
+import javax.accessibility.AccessibleIcon;
+import javax.accessibility.AccessibleRelationSet;
+import javax.accessibility.AccessibleRole;
+import javax.accessibility.AccessibleSelection;
+import javax.accessibility.AccessibleStateSet;
+import javax.accessibility.AccessibleTable;
+import javax.accessibility.AccessibleText;
+import javax.accessibility.AccessibleValue;
+import java.awt.IllegalComponentStateException;
 import java.beans.PropertyChangeListener;
 import java.util.Locale;
 

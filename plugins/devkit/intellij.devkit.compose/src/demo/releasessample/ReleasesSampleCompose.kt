@@ -2,14 +2,38 @@ package com.intellij.devkit.compose.demo.releasessample
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.interaction.HoverInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.onClick
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -28,7 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.intellij.devkit.compose.demo.JewelIcons
+import com.intellij.devkit.compose.icons.DevkitComposeIcons
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.JBUI
@@ -41,7 +65,16 @@ import org.jetbrains.jewel.foundation.lazy.items
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.ui.component.*
+import org.jetbrains.jewel.ui.component.HorizontalSplitLayout
+import org.jetbrains.jewel.ui.component.Icon
+import org.jetbrains.jewel.ui.component.IconButton
+import org.jetbrains.jewel.ui.component.PopupMenu
+import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.TextField
+import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
+import org.jetbrains.jewel.ui.component.items
+import org.jetbrains.jewel.ui.component.rememberSplitLayoutState
+import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
@@ -332,7 +365,7 @@ private fun RightColumn(selectedItem: ContentItem?, modifier: Modifier = Modifie
 
 @Composable
 private fun ReleaseImage(imagePath: String) {
-  val painterProvider = rememberResourcePainterProvider(imagePath, JewelIcons::class.java)
+  val painterProvider = rememberResourcePainterProvider(imagePath, DevkitComposeIcons::class.java)
   val painter by painterProvider.getPainter()
   val controller = rememberFoilInteractionController()
 

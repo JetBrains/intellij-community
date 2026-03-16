@@ -2,7 +2,12 @@
 package com.intellij.ide.util;
 
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.StandardProgressIndicator;
+import com.intellij.openapi.progress.WrappedProgressIndicator;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.Nls;

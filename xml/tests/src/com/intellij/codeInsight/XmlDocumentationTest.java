@@ -4,11 +4,11 @@ package com.intellij.codeInsight;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.polySymbols.testFramework.WebTestUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.polySymbols.testFramework.WebTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

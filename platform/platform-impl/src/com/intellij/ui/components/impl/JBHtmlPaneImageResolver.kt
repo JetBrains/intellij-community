@@ -13,7 +13,8 @@ import java.awt.Toolkit
 import java.awt.image.renderable.RenderableImageProducer
 import java.net.MalformedURLException
 import java.net.URL
-import java.util.*
+import java.util.Dictionary
+import java.util.Enumeration
 
 @ApiStatus.Internal
 class JBHtmlPaneImageResolver(

@@ -22,7 +22,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.concurrency.ThreadingAssertions
 
-private class NavigationRequestsImpl : NavigationRequests {
+internal class NavigationRequestsImpl : NavigationRequests {
   override fun sourceNavigationRequest(project: Project, file: VirtualFile, offset: Int, elementRange: TextRange?): NavigationRequest? {
     return sharedSourceNavigationRequest(project, file, anyContext(), offset, elementRange)
   }

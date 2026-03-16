@@ -1,5 +1,7 @@
 package com.intellij.terminal.tests.reworked.util
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelResult.Error
@@ -16,7 +18,7 @@ import kotlin.time.Duration
 internal fun <T> withShellPathAndShellIntegration(
   eelApi: EelApi,
   timeout: Duration = DEFAULT_TEST_TIMEOUT,
-  action: suspend CoroutineScope.(shellPath: EelPath, shellIntegration: Boolean) -> T,
+  action: suspend CoroutineScope.(shellPath: EelPath, shellIntegration: Boolean, dynamicTestDisposable: Disposable) -> T,
 ): List<DynamicTest> {
   val shellPaths = timeoutRunBlocking(timeout) {
     listAvailableShellPaths(eelApi)
@@ -24,7 +26,13 @@ internal fun <T> withShellPathAndShellIntegration(
   return shellPaths.flatMap { listOf(it to false, it to true) }.map { (shellPath, shellIntegration) ->
     DynamicTest.dynamicTest("$shellPath, shell_integration=$shellIntegration") {
       timeoutRunBlocking(timeout) {
-        action(shellPath, shellIntegration)
+        val disposable = Disposer.newDisposable()
+        try {
+          action(shellPath, shellIntegration, disposable)
+        }
+        finally {
+          Disposer.dispose(disposable)
+        }
       }
     }
   }

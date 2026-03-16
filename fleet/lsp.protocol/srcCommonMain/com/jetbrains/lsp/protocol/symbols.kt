@@ -9,17 +9,27 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlin.jvm.JvmInline
 
-@Serializable
-data class WorkspaceSymbolOptions(
+interface WorkspaceSymbolOptions : WorkDoneProgressOptions{
     /**
      * The server provides support to resolve additional
      * information for a workspace symbol.
      *
      * @since 3.17.0
      */
-    val resolveProvider: Boolean?,
-    override val workDoneProgress: Boolean?,
-) : WorkDoneProgressOptions
+    val resolveProvider: Boolean?
+}
+
+@Serializable
+data class WorkspaceSymbolRegistrationOptions(
+    /**
+     * The server provides support to resolve additional
+     * information for a workspace symbol.
+     *
+     * @since 3.17.0
+     */
+    override val resolveProvider: Boolean?,
+    override val workDoneProgress: Boolean? = null,
+) : WorkspaceSymbolOptions
 
 /**
  * The parameters of a Workspace Symbol Request.

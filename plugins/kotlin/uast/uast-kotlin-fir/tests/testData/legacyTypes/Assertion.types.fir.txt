@@ -4,8 +4,8 @@ UFile (package = ) [public final class AssertionKt {...]
             UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
                 UDeclarationsExpression [var s: java.lang.String = "Not Null"]
                     ULocalVariable (name = s) [var s: java.lang.String = "Not Null"]
-                        UPolyadicExpression (operator = +) ["Not Null"] : java.lang.String
+                        UPolyadicExpression (operator = +) ["Not Null"] : @org.jetbrains.annotations.NotNull() java.lang.String
                             ULiteralExpression (value = "Not Null") ["Not Null"] : java.lang.String
                 UReturnExpression [return s!!] : @org.jetbrains.annotations.NotNull() java.lang.Void
-                    UPostfixExpression (operator = !!) [s!!] : java.lang.String
-                        USimpleNameReferenceExpression (identifier = s) [s] : java.lang.String
+                    UPostfixExpression (operator = !!) [s!!] : @org.jetbrains.annotations.NotNull() java.lang.String
+                        USimpleNameReferenceExpression (identifier = s) [s] : @org.jetbrains.annotations.Nullable() java.lang.String

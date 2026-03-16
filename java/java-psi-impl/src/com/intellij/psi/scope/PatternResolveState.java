@@ -2,7 +2,18 @@
 package com.intellij.psi.scope;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiDeconstructionList;
+import com.intellij.psi.PsiDeconstructionPattern;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPattern;
+import com.intellij.psi.PsiPatternVariable;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.ResolveState;
 import org.jetbrains.annotations.NotNull;
 
 public enum PatternResolveState {

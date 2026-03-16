@@ -9,6 +9,6 @@ class Test {
 
     @NotNull Map<@NotNull String, @NotNull ArrayList<@Nullable String>> map = new HashMap<>();
     map.put("x", arrayList);
-    return <warning descr="Returning a class with nullable type parameters when a class with non-null type parameters is expected">map</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">map</warning>;
   }
 }

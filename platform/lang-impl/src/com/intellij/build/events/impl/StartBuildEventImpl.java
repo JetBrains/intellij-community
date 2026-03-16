@@ -4,7 +4,6 @@ package com.intellij.build.events.impl;
 import com.intellij.build.BuildDescriptor;
 import com.intellij.build.BuildViewSettingsProvider;
 import com.intellij.build.DefaultBuildDescriptor;
-import com.intellij.build.events.BuildEvents;
 import com.intellij.build.events.BuildEventsNls.Description;
 import com.intellij.build.events.BuildEventsNls.Hint;
 import com.intellij.build.events.BuildEventsNls.Message;
@@ -43,7 +42,7 @@ public final class StartBuildEventImpl extends StartEventImpl implements StartBu
   }
 
   /**
-   * @deprecated Use {@link BuildEvents#startBuild()} event builder instead.
+   * @deprecated Use {@link StartBuildEvent#builder} event builder instead.
    */
   @Deprecated
   public StartBuildEventImpl(
@@ -91,7 +90,7 @@ public final class StartBuildEventImpl extends StartEventImpl implements StartBu
   }
 
   /**
-   * @deprecated Use {@link BuildEvents#startBuild} event builder instead.
+   * @deprecated Use {@link StartBuildEvent#builder} event builder instead.
    */
   @Deprecated
   @Experimental

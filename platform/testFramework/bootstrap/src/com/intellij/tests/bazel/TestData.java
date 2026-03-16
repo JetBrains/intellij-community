@@ -6,6 +6,12 @@
  */
 package com.intellij.tests.bazel;
 
+import com.intellij.tests.IgnoreException;
+import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.reporting.ReportEntry;
+import org.junit.platform.launcher.TestIdentifier;
+import org.opentest4j.TestAbortedException;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -13,12 +19,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-
-import com.intellij.tests.IgnoreException;
-import org.junit.platform.engine.TestExecutionResult;
-import org.junit.platform.engine.reporting.ReportEntry;
-import org.junit.platform.launcher.TestIdentifier;
-import org.opentest4j.TestAbortedException;
 
 class TestData {
   private final TestIdentifier id;

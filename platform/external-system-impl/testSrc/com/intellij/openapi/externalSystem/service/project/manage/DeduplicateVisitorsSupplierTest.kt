@@ -4,7 +4,11 @@ package com.intellij.openapi.externalSystem.service.project.manage
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.model.project.*
+import com.intellij.openapi.externalSystem.model.project.LibraryData
+import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData
+import com.intellij.openapi.externalSystem.model.project.LibraryLevel
+import com.intellij.openapi.externalSystem.model.project.ModuleData
+import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData
 import org.junit.Assert.assertTrue
 import org.junit.Test
 

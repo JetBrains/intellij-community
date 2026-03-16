@@ -2,7 +2,11 @@
 package com.intellij.execution.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.Executor;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -12,6 +16,7 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunConfigurationStartHistory;
 import com.intellij.icons.AllIcons;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -73,7 +78,11 @@ public class RunContextAction extends BaseRunConfigurationAction {
       String configurationClass = configuration.getConfiguration().getClass().getName();
       LOG.debug(String.format("Execute run configuration: %s", configurationClass));
     }
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+
+    // Unfortunately, some unit tests try to invoke this action and fail.
+    // Meanwhile, some dev-build–based integration tests need to invoke it.
+    // As a workaround, allow the action to run in dev-build tests.
+    if (ApplicationManager.getApplication().isUnitTestMode() && !AppMode.isRunningFromDevBuild()) {
       return;
     }
     ExecutionUtil.doRunConfiguration(configuration, myExecutor, null, null, dataContext);

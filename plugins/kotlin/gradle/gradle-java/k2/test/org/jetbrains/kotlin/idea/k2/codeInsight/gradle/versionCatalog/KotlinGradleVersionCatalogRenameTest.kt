@@ -1,12 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.versionCatalog
 
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.testFramework.utils.editor.getVirtualFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.AbstractGradleCodeInsightTest
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -16,6 +20,8 @@ import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertNotNull
 
@@ -59,26 +65,49 @@ class KotlinGradleVersionCatalogRenameTest : AbstractGradleCodeInsightTest() {
         test(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE) {
             val mainFile = mainTestDataPsiFile.virtualFile
             val newName = getDirectiveValue(mainFile, "## RENAME_TO: ")
-            val fileToCheckPath = getDirectiveValue(mainFile, "## FILE_TO_CHECK: ")
-            codeInsightFixture.configureFromExistingVirtualFile(mainFile)
+            val usagePath = getDirectiveValue(mainFile, "## FILE_TO_CHECK: ")
+            fixture.configureFromExistingVirtualFile(mainFile)
             runInEdtAndWait {
                 TestDialogManager.setTestDialog(TestDialog.OK)
-                codeInsightFixture.renameElementAtCaret(newName)
+                fixture.renameElementAtCaret(newName)
 
-                codeInsightFixture.openFileInEditor(getFile(fileToCheckPath))
-                val expectedResult = getFile("$fileToCheckPath.after").readText()
-                codeInsightFixture.checkResult(expectedResult, true)
-                // TODO: check navigation from the renamed reference to is declaration in `mainFile` - when IDEA-302835 is implemented
-                // There is a problem with resolving renamed reference in build script to the corresponding element in a version catalog.
-                // The resolving relies on accessor classes that Gradle generates in .gradle/{Gradle version}/dependencies-accessors/{hash}.
-                // The accessors are generated when Gradle sync is executed which does not happen while renaming in version catalog.
-                // Hence, some parts of renamed references are unresolved and navigation from them is not possible.
+                openUsageAndAssertRenamed(usagePath)
+                assertUsageNavigatesToDeclaration(mainFile, newName)
             }
         }
+    }
+
+    private fun openUsageAndAssertRenamed(usagePath: String) {
+        fixture.openFileInEditor(getFile(usagePath))
+        val expectedResult = getFile("$usagePath.after").readText()
+        fixture.checkResult(expectedResult, true)
+    }
+
+    private fun assertUsageNavigatesToDeclaration(expectedDeclarationFile: @NlsSafe VirtualFile, expectedElementName: String) {
+        fixture.performEditorAction(IdeActions.ACTION_GOTO_DECLARATION)
+        val afterNavigationPath = document.getVirtualFile().path
+        assertEquals(expectedDeclarationFile.path, afterNavigationPath) {
+            "After renaming the declaration element, navigation from its usage should lead to the declaration file."
+        }
+        // TODO verify that the caret is located exactly at the declaration element
+        // The commented assertion below fails because `fixture.elementAtCaret` leads to a getter in the version catalog accessor,
+        // despite the opened document is a version catalog file, not accessor class. Most probably, it's a test infrastructure issue.
+        //
+        //assertEquals(expectedElementName, fixture.elementAtCaret.text) {
+        //    "After renaming the declaration element, the caret should be located at the declaration element."
+        //}
     }
 
     private fun getDirectiveValue(mainFile: VirtualFile, directiveKey: String): String {
         val directiveValue = InTextDirectivesUtils.findStringWithPrefixes(mainFile.readText(), directiveKey)
         return assertNotNull(directiveValue, "'$directiveKey' directive is not found in the test file")
+    }
+
+    private fun assertOpenedFileHasText(expectedText: String, messageSupplier: () -> String) {
+        try {
+            fixture.checkResult(expectedText)
+        } catch (e: FileComparisonFailedError) {
+            fail(e)
+        }
     }
 }

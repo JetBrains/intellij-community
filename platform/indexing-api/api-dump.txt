@@ -181,7 +181,6 @@ f:com.intellij.model.search.SearchContext
 - sf:IN_CODE:com.intellij.model.search.SearchContext
 - sf:IN_CODE_HOSTS:com.intellij.model.search.SearchContext
 - sf:IN_COMMENTS:com.intellij.model.search.SearchContext
-- sf:IN_PLAIN_TEXT:com.intellij.model.search.SearchContext
 - sf:IN_STRINGS:com.intellij.model.search.SearchContext
 - s:inCode():com.intellij.model.search.SearchContext
 - s:inCodeHosts():com.intellij.model.search.SearchContext

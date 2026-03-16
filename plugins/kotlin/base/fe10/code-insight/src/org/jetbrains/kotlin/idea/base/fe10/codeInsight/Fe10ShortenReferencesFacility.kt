@@ -2,17 +2,18 @@
 package org.jetbrains.kotlin.idea.base.fe10.codeInsight
 
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
 internal class Fe10ShortenReferencesFacility : ShortenReferencesFacility {
-    private fun createFe10Shortener(commonShortenOptions: ShortenOptions): ShortenReferences {
+    private fun createFe10Shortener(commonShortenOptions: ShortenOptionsForIde): ShortenReferences {
         val matchingFe10Options = ShortenReferences.Options.DEFAULT.copy(
             removeThis = commonShortenOptions.removeThis,
             removeThisLabels = commonShortenOptions.removeThisLabels,
+            removeExplicitCompanion = commonShortenOptions.removeExplicitCompanionReferences,
         )
 
         // do not create a new instance of reference shortener if the options are default ones
@@ -21,11 +22,11 @@ internal class Fe10ShortenReferencesFacility : ShortenReferencesFacility {
         return ShortenReferences(options = { matchingFe10Options })
     }
 
-    override fun shorten(file: KtFile, range: TextRange, shortenOptions: ShortenOptions) {
+    override fun shorten(file: KtFile, range: TextRange, shortenOptions: ShortenOptionsForIde) {
         createFe10Shortener(shortenOptions).process(file, range.startOffset, range.endOffset)
     }
 
-    override fun shorten(element: KtElement, shortenOptions: ShortenOptions): KtElement {
+    override fun shorten(element: KtElement, shortenOptions: ShortenOptionsForIde): KtElement {
         return createFe10Shortener(shortenOptions).process(element)
     }
 }

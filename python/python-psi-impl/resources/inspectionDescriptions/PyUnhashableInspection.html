@@ -1,0 +1,11 @@
+<html>
+<body>
+<p>Reports unhashable expressions used as dictionary keys, set values, or <code>hash</code> arguments.</p>
+<p><b>Examples:</b></p>
+<pre><code>
+d = {[]: 3}  # list is unhashable
+set().add({1: 2})  # dict is unhashable
+hash([])  # list is unhashable
+</code></pre>
+</body>
+</html>

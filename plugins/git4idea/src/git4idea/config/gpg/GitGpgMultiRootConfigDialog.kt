@@ -18,9 +18,18 @@ import com.intellij.util.FontUtil
 import com.intellij.util.ui.JBUI
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JTable
+import javax.swing.ListSelectionModel
 import javax.swing.table.AbstractTableModel
 
 class GitGpgMultiRootConfigDialog(val project: Project,

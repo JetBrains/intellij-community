@@ -1,4 +1,5 @@
 // "Change type of 'x' to 'String?'" "true"
+// K2_ACTION: "Specify 'String?' type for 'x'" "true"
 fun foo(condition: Boolean) {
     var x = null
     if (condition) {

@@ -4,7 +4,15 @@ package com.intellij.ide.actions;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.UpdateSession;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +32,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 
 @ApiStatus.Internal
 @ApiStatus.NonExtendable

@@ -21,13 +21,19 @@ import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout.standaloneCompilerVersion
-import org.jetbrains.kotlin.idea.configuration.*
+import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
+import org.jetbrains.kotlin.idea.configuration.ModuleName
+import org.jetbrains.kotlin.idea.configuration.TargetJvm
+import org.jetbrains.kotlin.idea.configuration.checkModuleJvmTargetCompatibility
+import org.jetbrains.kotlin.idea.configuration.getKotlinVersionsAndModules
+import org.jetbrains.kotlin.idea.configuration.getRepositoryForVersion
+import org.jetbrains.kotlin.idea.configuration.getRootModule
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle.message
-import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
+import org.jetbrains.kotlin.idea.statistics.KotlinProjectSetupFUSCollector
 import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.TimeUnit
 import javax.swing.JComponent
 
@@ -59,7 +65,7 @@ class ConfigureDialogWithModulesAndVersion(
     val modulesAndJvmTargets: Map<ModuleName, TargetJvm>
 
     init {
-        KotlinJ2KOnboardingFUSCollector.logShowConfigureKtWindow(project)
+        KotlinProjectSetupFUSCollector.logShowConfigureKtWindow(project)
         title = message("configure.kotlin.title", configurator.presentableText)
         val compatibility = checkModuleJvmTargetCompatibility(
             chooseModulePanel.modules, defaultKotlinVersion

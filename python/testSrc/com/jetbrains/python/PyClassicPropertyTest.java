@@ -16,7 +16,12 @@
 package com.jetbrains.python;
 
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.Property;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;

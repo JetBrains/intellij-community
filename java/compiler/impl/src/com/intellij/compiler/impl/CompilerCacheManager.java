@@ -2,8 +2,13 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.Compiler;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.CompilerPaths;
+import com.intellij.openapi.compiler.FileProcessingCompiler;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
+import com.intellij.openapi.compiler.Validator;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;

@@ -8,7 +8,6 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
@@ -16,19 +15,15 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.updateSettings.PluginUpdateCheckService
+import com.intellij.openapi.updateSettings.PluginUpdateInfo
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
-import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.io.HttpRequests
-import com.intellij.util.text.VersionComparatorUtil
 import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
-import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
@@ -40,31 +35,10 @@ sealed class PluginUpdateStatus {
 
   class Update(
     val pluginDescriptor: IdeaPluginDescriptor,
-    val hostToInstallFrom: String?
+    val pluginDownloader: PluginDownloader,
   ) : PluginUpdateStatus()
 
   class CheckFailed(val message: String, val detail: String? = null) : PluginUpdateStatus()
-
-  class Unverified(val verifierName: String, val reason: String?, val updateStatus: Update) : PluginUpdateStatus()
-
-  fun mergeWith(other: PluginUpdateStatus): PluginUpdateStatus {
-    if (other is Update) {
-      when (this) {
-        is LatestVersionInstalled -> return other
-        is Update -> {
-          if (VersionComparatorUtil.compare(other.pluginDescriptor.version, pluginDescriptor.version) > 0) {
-            return other
-          }
-        }
-
-        is CheckFailed, is Unverified -> {
-          // proceed to return this
-        }
-      }
-    }
-
-    return this
-  }
 
   companion object {
     fun fromException(message: String, e: Exception): PluginUpdateStatus {
@@ -82,13 +56,10 @@ open class StandalonePluginUpdateChecker(
   val pluginId: PluginId,
   private val updateTimestampProperty: String,
   private val notificationGroup: NotificationGroup?,
-  private val notificationIcon: Icon?
-): Disposable {
+  private val notificationIcon: Icon?,
+) : Disposable {
 
   private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
-
-  @Volatile
-  protected var lastUpdateStatus: PluginUpdateStatus? = null
 
   @Volatile
   private var updateDelay = INITIAL_UPDATE_DELAY
@@ -98,8 +69,6 @@ open class StandalonePluginUpdateChecker(
     get() = PluginManagerCore.getPlugin(pluginId)!!.version
 
   open fun skipUpdateCheck(): Boolean = false
-
-  open fun verifyUpdate(status: PluginUpdateStatus.Update): PluginUpdateStatus = status
 
   fun pluginUsed() {
     if (!UpdateSettings.getInstance().isPluginsCheckNeeded) return
@@ -126,7 +95,8 @@ open class StandalonePluginUpdateChecker(
         {
           try {
             updateCheck(callback)
-          } finally {
+          }
+          finally {
             checkQueued.set(false)
           }
         },
@@ -139,23 +109,23 @@ open class StandalonePluginUpdateChecker(
 
   protected fun updateCheck(callback: (PluginUpdateStatus) -> Boolean) {
     var updateStatus: PluginUpdateStatus
+
     if (skipUpdateCheck()) {
       updateStatus = PluginUpdateStatus.LatestVersionInstalled
-    } else {
-      try {
-        updateStatus = checkUpdatesInMainRepository()
-        for (host in RepositoryHelper.getCustomPluginRepositoryHosts()) {
-          val customUpdateStatus = checkUpdatesInCustomRepository(host)
-          updateStatus = updateStatus.mergeWith(customUpdateStatus)
-        }
-      } catch (e: Exception) {
-        updateStatus = PluginUpdateStatus.fromException(IdeBundle.message("plugin.updater.error.check.failed"), e)
-      }
     }
+    else {
+      val checkResult = PluginUpdateCheckService.getInstance().getPluginUpdate(pluginId)
 
-    lastUpdateStatus = updateStatus
-    if (updateStatus is PluginUpdateStatus.Update) {
-      updateStatus = verifyUpdate(updateStatus)
+      updateStatus = when (checkResult) {
+        is PluginUpdateInfo.CheckFailed ->
+          PluginUpdateStatus.fromException(IdeBundle.message("plugin.updater.error.check.failed"),
+                                           checkResult.errors.values.first())
+
+        is PluginUpdateInfo.UpdateAvailable ->
+          PluginUpdateStatus.Update(initPluginDescriptor(checkResult.update.pluginVersion), checkResult.update)
+
+        else -> PluginUpdateStatus.LatestVersionInstalled
+      }
     }
 
     if (updateStatus !is PluginUpdateStatus.CheckFailed) {
@@ -177,60 +147,8 @@ open class StandalonePluginUpdateChecker(
     }
   }
 
-  private fun findPluginDescriptor() = PluginManagerCore.getPlugin(pluginId) ?: error("Plugin ID $pluginId not found when checking updates")
-
-  private fun checkUpdatesInMainRepository(): PluginUpdateStatus {
-    val buildNumber = ApplicationInfo.getInstance().apiVersion
-    val os = URLEncoder.encode(SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION, CharsetToolkit.UTF8)
-    val pluginId = pluginId.idString
-    val url = "https://plugins.jetbrains.com/plugins/list?pluginId=$pluginId&build=$buildNumber&pluginVersion=$currentVersion&os=$os"
-
-    val responseDoc = HttpRequests.request(url).connect { JDOMUtil.load(it.inputStream) }
-    if (responseDoc.name != "plugin-repository") {
-      return PluginUpdateStatus.CheckFailed(
-        IdeBundle.message("plugin.updater.error.unexpected.repository.response"),
-        JDOMUtil.writeElement(responseDoc, "\n")
-      )
-    }
-
-    if (responseDoc.children.isEmpty()) {
-      // No plugin version compatible with current IDEA build; don't retry updates
-      return PluginUpdateStatus.LatestVersionInstalled
-    }
-
-    val newVersion = responseDoc.getChild("category")
-                       ?.getChild("idea-plugin")
-                       ?.getChild("version")
-                       ?.text
-                     ?: return PluginUpdateStatus.CheckFailed(
-                       IdeBundle.message("plugin.updater.error.cant.find.plugin.version"),
-                       JDOMUtil.writeElement(responseDoc, "\n"),
-                     )
-
-    val pluginDescriptor = initPluginDescriptor(newVersion)
-    return updateIfNotLatest(pluginDescriptor, null)
-  }
-
-  private fun checkUpdatesInCustomRepository(host: String): PluginUpdateStatus {
-    val plugins = try {
-      RepositoryHelper.loadPlugins(/* repositoryUrl = */ host, /* build = */ null, /* indicator = */ null)
-    } catch (e: Exception) {
-      return PluginUpdateStatus.fromException(IdeBundle.message("plugin.updater.error.custom.repository", host), e)
-    }
-
-    val newPlugin = plugins.find { pluginDescriptor ->
-      pluginDescriptor.pluginId == pluginId && PluginManagerCore.isCompatible(pluginDescriptor)
-    } ?: return PluginUpdateStatus.LatestVersionInstalled
-
-    return updateIfNotLatest(newPlugin, host)
-  }
-
-  private fun updateIfNotLatest(newPlugin: IdeaPluginDescriptor, host: String?): PluginUpdateStatus {
-    if (VersionComparatorUtil.compare(newPlugin.version, currentVersion) <= 0) {
-      return PluginUpdateStatus.LatestVersionInstalled
-    }
-
-    return PluginUpdateStatus.Update(newPlugin, host)
+  private fun findPluginDescriptor(): IdeaPluginDescriptor {
+    return PluginManagerCore.getPlugin(pluginId) ?: error("Plugin ID $pluginId not found when checking updates")
   }
 
   private fun recordSuccessfulUpdateCheck() {
@@ -251,9 +169,7 @@ open class StandalonePluginUpdateChecker(
       .setSuggestionType(true)
       .addAction(
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugin.updater.install")) {
-          installPluginUpdate(update) {
-            notifyPluginUpdateAvailable(update)
-          }
+          installPluginUpdate(update)
         }
       )
       .setIcon(notificationIcon)
@@ -266,8 +182,7 @@ open class StandalonePluginUpdateChecker(
     cancelCallback: () -> Unit = {},
     errorCallback: () -> Unit = {},
   ) {
-    val descriptor = update.pluginDescriptor
-    val pluginDownloader = PluginDownloader.createDownloader(descriptor, update.hostToInstallFrom, null)
+    val pluginDownloader = update.pluginDownloader
     ProgressManager.getInstance().run(object : Task.Backgroundable(
       /* project = */ null,
       /* title = */ IdeBundle.message("plugin.updater.downloading"),
@@ -279,7 +194,8 @@ open class StandalonePluginUpdateChecker(
         var message: String? = null
         val prepareResult = try {
           pluginDownloader.prepareToInstall(indicator)
-        } catch (e: IOException) {
+        }
+        catch (e: IOException) {
           LOG.info(e)
           message = e.message
           false
@@ -298,7 +214,8 @@ open class StandalonePluginUpdateChecker(
           if (!installed) {
             errorCallback()
             notifyNotInstalled(message)
-          } else {
+          }
+          else {
             successCallback()
           }
         }
@@ -332,6 +249,7 @@ open class StandalonePluginUpdateChecker(
 
   companion object {
     private const val INITIAL_UPDATE_DELAY = 2000L
+
     @JvmStatic
     protected val CACHED_REQUEST_DELAY: Long = TimeUnit.DAYS.toMillis(1)
     private val LOG = Logger.getInstance(StandalonePluginUpdateChecker::class.java)

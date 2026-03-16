@@ -113,9 +113,15 @@ private fun parseBorderColorOrBorderClass(value: String, classLoader: ClassLoade
   val color = parseColorOrNull(value = value, key = null)
   if (color == null) {
     return UIDefaults.LazyValue {
-      val aClass = classLoader.loadClass(value)
-      val constructor = MethodHandles.privateLookupIn(aClass, LOOKUP).findConstructor(aClass, MethodType.methodType(Void.TYPE))
-      constructor.invoke()
+      try {
+        val aClass = classLoader.loadClass(value)
+        val constructor = MethodHandles.privateLookupIn(aClass, LOOKUP).findConstructor(aClass, MethodType.methodType(Void.TYPE))
+        constructor.invoke()
+      }
+      catch (e: ClassNotFoundException) {
+        logger<UITheme>().warn(e)
+        JBUI.asUIResource(JBUI.Borders.empty())
+      }
     }
   }
   else {

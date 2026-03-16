@@ -4,7 +4,19 @@ package org.jetbrains.eval4j.jdi
 
 import com.sun.jdi.ClassObjectReference
 import com.sun.jdi.VirtualMachine
-import org.jetbrains.eval4j.*
+import org.jetbrains.eval4j.DoubleValue
+import org.jetbrains.eval4j.FloatValue
+import org.jetbrains.eval4j.IntValue
+import org.jetbrains.eval4j.LongValue
+import org.jetbrains.eval4j.NOT_A_VALUE
+import org.jetbrains.eval4j.NULL_VALUE
+import org.jetbrains.eval4j.ObjectValue
+import org.jetbrains.eval4j.VOID_VALUE
+import org.jetbrains.eval4j.Value
+import org.jetbrains.eval4j.boolean
+import org.jetbrains.eval4j.int
+import org.jetbrains.eval4j.makeNotInitializedValue
+import org.jetbrains.eval4j.obj
 import org.jetbrains.org.objectweb.asm.Opcodes.ACC_STATIC
 import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter.OBJECT_TYPE
@@ -18,8 +30,8 @@ import com.sun.jdi.FloatValue as jdi_FloatValue
 import com.sun.jdi.IntegerValue as jdi_IntegerValue
 import com.sun.jdi.LongValue as jdi_LongValue
 import com.sun.jdi.ObjectReference as jdi_ObjectReference
-import com.sun.jdi.StringReference as jdi_StringReference
 import com.sun.jdi.ShortValue as jdi_ShortValue
+import com.sun.jdi.StringReference as jdi_StringReference
 import com.sun.jdi.Type as jdi_Type
 import com.sun.jdi.Value as jdi_Value
 import com.sun.jdi.VoidValue as jdi_VoidValue

@@ -1,6 +1,13 @@
 package com.intellij.mcpserver.impl
 
-import com.intellij.mcpserver.clientConfiguration.*
+import com.intellij.mcpserver.clients.McpClient
+import com.intellij.mcpserver.clients.McpClientInfo
+import com.intellij.mcpserver.clients.impl.ClaudeClient
+import com.intellij.mcpserver.clients.impl.ClaudeCodeClient
+import com.intellij.mcpserver.clients.impl.CodexClient
+import com.intellij.mcpserver.clients.impl.CursorClient
+import com.intellij.mcpserver.clients.impl.VSCodeClient
+import com.intellij.mcpserver.clients.impl.WindsurfClient
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
@@ -41,6 +48,9 @@ object McpClientDetector {
     runCatching {
       globalClients.addIfNotNull(detectWindsurf())
     }
+    runCatching {
+      globalClients.addIfNotNull(detectCodex())
+    }
 
     return globalClients
   }
@@ -56,6 +66,9 @@ object McpClientDetector {
     }
     runCatching {
       projectClients.addIfNotNull(detectClaudeCode(project))
+    }
+    runCatching {
+      projectClients.addIfNotNull(detectCodex(project))
     }
 
     return projectClients
@@ -80,7 +93,7 @@ object McpClientDetector {
     if (configPath == null) return null
     val path = Paths.get(OSAgnosticPathUtil.expandUserHome(configPath))
     if (path.exists() && path.isRegularFile()) {
-      return VSCodeClient(path)
+      return VSCodeClient(McpClientInfo.Scope.GLOBAL, path)
     }
     return null
   }
@@ -96,7 +109,7 @@ object McpClientDetector {
     val path = Paths.get(OSAgnosticPathUtil.expandUserHome(configPath))
 
     if (path.exists() && path.isRegularFile()) {
-      return ClaudeCodeMcpClient(path)
+      return ClaudeCodeClient(McpClientInfo.Scope.GLOBAL, path)
     }
     return null
   }
@@ -112,7 +125,7 @@ object McpClientDetector {
     val path = Paths.get(OSAgnosticPathUtil.expandUserHome(configPath))
 
     if (path.parent.exists() && path.parent.toFile().isDirectory()) {
-      return ClaudeMcpClient(path)
+      return ClaudeClient(McpClientInfo.Scope.GLOBAL, path)
     }
     return null
   }
@@ -120,7 +133,7 @@ object McpClientDetector {
   private fun detectCursorGlobal(): McpClient? {
     val path = Paths.get(OSAgnosticPathUtil.expandUserHome("~/.cursor/mcp.json"))
     if (path.parent.exists() && path.parent.toFile().isDirectory()) {
-      return CursorClient(path)
+      return CursorClient(McpClientInfo.Scope.GLOBAL, path)
     }
     return null
   }
@@ -128,29 +141,35 @@ object McpClientDetector {
   private fun detectWindsurf(): McpClient? {
     val path = Paths.get(OSAgnosticPathUtil.expandUserHome("~/.codeium/windsurf/mcp_config.json"))
     if (path.parent.exists() && path.parent.toFile().isDirectory()) {
-      return WindsurfClient(path)
+      return WindsurfClient(McpClientInfo.Scope.GLOBAL, path)
     }
     return null
   }
 
-  private fun detectProjectLevelClient(project: Project, configDirName: String, clientName: MCPClientNames): McpClient? {
-    val projectBasePath = project.basePath ?: return null
-    val configPath = Paths.get(projectBasePath, configDirName, "mcp.json")
-
-    if (looksLikeMcpJson(configPath)) {
-      return McpClient(clientName, configPath)
-    }
-    return null
+  private fun detectCodex(): McpClient? {
+    val path = resolveCodexConfigPath() ?: return null
+    return CodexClient(McpClientInfo.Scope.GLOBAL, path)
   }
 
   private fun detectVSCode(project: Project): McpClient? {
     val configDirName = ".vscode"
-    return detectProjectLevelClient(project, configDirName, MCPClientNames.VS_CODE_PROJECT)
+    val projectBasePath = project.basePath ?: return null
+    val configPath = Paths.get(projectBasePath, configDirName, "mcp.json")
+    if (looksLikeMcpJson(configPath)) {
+      return VSCodeClient(McpClientInfo.Scope.PROJECT, configPath)
+    }
+    return null
   }
 
   private fun detectCursorProject(project: Project): McpClient? {
     val configDirName = ".cursor"
-    return detectProjectLevelClient(project, configDirName, MCPClientNames.CURSOR_PROJECT)
+    val projectBasePath = project.basePath ?: return null
+    val configPath = Paths.get(projectBasePath, configDirName, "mcp.json")
+
+    if (looksLikeMcpJson(configPath)) {
+      return CursorClient(McpClientInfo.Scope.PROJECT, configPath)
+    }
+    return null
   }
 
   private fun detectClaudeCode(project: Project): McpClient? {
@@ -158,8 +177,45 @@ object McpClientDetector {
     val claudeCodeConfigPath = Paths.get(projectBasePath, ".mcp.json")
 
     if (looksLikeMcpJson(claudeCodeConfigPath)) {
-      return McpClient(MCPClientNames.CLAUDE_CODE_PROJECT, claudeCodeConfigPath)
+      return ClaudeCodeClient(McpClientInfo.Scope.PROJECT, claudeCodeConfigPath)
     }
     return null
+  }
+
+  private fun detectCodex(project: Project): McpClient? {
+    val projectBasePath = project.basePath ?: return null
+    val configPath = Paths.get(projectBasePath, ".codex", "config.toml")
+    val parent = configPath.parent
+    if (configPath.exists() && configPath.isRegularFile() || parent != null && parent.exists() && parent.toFile().isDirectory()) {
+      return CodexClient(McpClientInfo.Scope.PROJECT, configPath)
+    }
+    if (parent != null && !parent.exists()) {
+      return CodexClient(McpClientInfo.Scope.PROJECT, configPath)
+    }
+    return null
+  }
+
+  private fun resolveCodexConfigPath(): Path? {
+    val candidates = buildList<Path> {
+      add(Paths.get(OSAgnosticPathUtil.expandUserHome("~/.codex/config.toml")))
+      if (SystemInfo.isMac) {
+        add(Paths.get(OSAgnosticPathUtil.expandUserHome("~/Library/Application Support/Codex/config.toml")))
+      }
+      if (SystemInfo.isLinux) {
+        add(Paths.get(OSAgnosticPathUtil.expandUserHome("~/.config/codex/config.toml")))
+      }
+      if (SystemInfo.isWindows) {
+        System.getenv("APPDATA")?.let { add(Paths.get(it, "Codex", "config.toml")) }
+      }
+    }
+
+    if (candidates.isEmpty()) return null
+
+    candidates.firstOrNull { it.exists() && it.isRegularFile() }?.let { return it }
+    candidates.firstOrNull { path ->
+      val parent = path.parent
+      parent != null && parent.exists() && parent.toFile().isDirectory()
+    }?.let { return it }
+    return candidates.first()
   }
 }

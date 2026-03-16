@@ -28,8 +28,8 @@ public interface PyCallSiteExpression extends PyAstCallSiteExpression, PyExpress
     return (PyExpression)getReceiver((PyAstCallable)resolvedCallee);
   }
 
-  default @NotNull List<PyExpression> getArguments(@Nullable PyCallable resolvedCallee) {
+  default @NotNull List<@NotNull PyExpression> getArguments(@Nullable PyCallable resolvedCallee) {
     //noinspection unchecked
-    return (List<PyExpression>)getArguments((PyAstCallable)resolvedCallee);
+    return (List<@NotNull PyExpression>)getArguments((PyAstCallable)resolvedCallee);
   }
 }

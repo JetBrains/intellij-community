@@ -16,7 +16,11 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

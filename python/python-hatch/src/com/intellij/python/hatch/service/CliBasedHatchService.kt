@@ -1,13 +1,18 @@
 package com.intellij.python.hatch.service
 
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.eel.fs.EelFileSystemApi
-import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove.DO_NOT_REPLACE_DIRECTORIES
-import com.intellij.platform.eel.fs.move
+import com.intellij.platform.eel.fs.EelFileUtils
 import com.intellij.platform.eel.getOr
-import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.python.hatch.*
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.python.hatch.EnvironmentCreationHatchError
+import com.intellij.python.hatch.FileSystemOperationHatchError
+import com.intellij.python.hatch.HatchService
+import com.intellij.python.hatch.HatchVirtualEnvironment
+import com.intellij.python.hatch.ProjectStructure
+import com.intellij.python.hatch.PythonVirtualEnvironment
 import com.intellij.python.hatch.cli.ENV_TYPE_VIRTUAL
 import com.intellij.python.hatch.cli.HatchEnvironment
 import com.intellij.python.hatch.cli.HatchEnvironments
@@ -18,9 +23,14 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
+import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
@@ -61,7 +71,7 @@ internal class CliBasedHatchService private constructor(
     }
   }
 
-  override suspend fun isHatchManagedProject(): PyResult<Boolean> {
+  override suspend fun isHatchManagedProject(): Boolean {
     val isHatchManaged = withContext(Dispatchers.IO) {
       when {
         workingDirectoryPath.resolve("hatch.toml").exists() -> true
@@ -72,7 +82,7 @@ internal class CliBasedHatchService private constructor(
         }
       }
     }
-    return Result.success(isHatchManaged)
+    return isHatchManaged
   }
 
 
@@ -104,14 +114,20 @@ internal class CliBasedHatchService private constructor(
     }
 
     hatchRuntime.hatchCli().new(projectName, tempDir.asNioPath()).getOr { return it }
-    val target = workingDirectoryPath.asEelPath()
-    eelApi.fs.move(tempDir, target).replaceExisting(DO_NOT_REPLACE_DIRECTORIES).eelIt().getOr { failure ->
-      return Result.failure(FileSystemOperationHatchError(failure.error))
+    try {
+      withContext(Dispatchers.IO) {
+        val source = tempDir.asNioPath()
+        NioFiles.copyRecursively(source, workingDirectoryPath)
+        EelFileUtils.deleteRecursively(source)
+      }
+    }
+    catch (e: IOException) {
+      return Result.failure(FileSystemOperationHatchError(e.localizedMessage ?: e.toString()))
     }
 
     return Result.success(ProjectStructure(
-      sourceRoot = target.asNioPath().resolve("src").takeIf { it.isDirectory() },
-      testRoot = target.asNioPath().resolve("tests").takeIf { it.isDirectory() },
+      sourceRoot = workingDirectoryPath.resolve("src").takeIf { it.isDirectory() },
+      testRoot = workingDirectoryPath.resolve("tests").takeIf { it.isDirectory() },
     ))
   }
 

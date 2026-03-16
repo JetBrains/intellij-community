@@ -1,5 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <javaCoverageEngineExtension implementation="org.jetbrains.plugins.gradle.execution.test.runner.GradleCoverageExtension"/>
-  </extensions>
-</idea-plugin>

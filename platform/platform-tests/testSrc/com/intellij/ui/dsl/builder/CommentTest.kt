@@ -1,21 +1,23 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import javax.swing.JTextField
-import kotlin.test.assertEquals
 
 class CommentTest {
 
   @Test
   fun testAccessibleDescription() {
-    assertEquals(createTextField().accessibleContext.accessibleDescription, null)
-    assertEquals(createTextField(commentRight = "").accessibleContext.accessibleDescription, null)
-    assertEquals(createTextField(comment = "").accessibleContext.accessibleDescription, null)
-    assertEquals(createTextField(commentRight = "    \n    \t").accessibleContext.accessibleDescription, null)
-    assertEquals(createTextField(comment = "    \n    \t").accessibleContext.accessibleDescription, null)
-    assertEquals(createTextField("    Some right text  ", "    Some text  ").accessibleContext.accessibleDescription, "Some right text\nSome text")
-    assertEquals(createTextField("    <a>Some link</a> and text ", "<a>Some link</a>").accessibleContext.accessibleDescription, "Some link and text\nSome link")
+    assertThat(createTextField().accessibleContext.accessibleDescription).isEqualTo(null)
+    assertThat(createTextField(commentRight = "").accessibleContext.accessibleDescription).isEqualTo(null)
+    assertThat(createTextField(comment = "").accessibleContext.accessibleDescription).isEqualTo(null)
+    assertThat(createTextField(commentRight = "    \n    \t").accessibleContext.accessibleDescription).isEqualTo(null)
+    assertThat(createTextField(comment = "    \n    \t").accessibleContext.accessibleDescription).isEqualTo(null)
+    assertThat(createTextField("    Some right text  ", "    Some text  ").accessibleContext.accessibleDescription)
+      .isEqualTo("Some right text\nSome text")
+    assertThat(createTextField("    <a>Some link</a> and text ", "<a>Some link</a>").accessibleContext.accessibleDescription)
+      .isEqualTo("Some link and text\nSome link")
   }
 
   @Test
@@ -24,23 +26,23 @@ class CommentTest {
       accessibleDescription("Custom description")
       commentRight("Some comment")
     }.component
-    assertEquals(contextBeforeCommentRight.accessibleContext.accessibleDescription, "Custom description")
+    assertThat(contextBeforeCommentRight.accessibleContext.accessibleDescription).isEqualTo("Custom description")
     val contextBeforeComment = createTextField {
       accessibleDescription("Custom description")
       comment("Some comment")
     }.component
-    assertEquals(contextBeforeComment.accessibleContext.accessibleDescription, "Custom description")
+    assertThat(contextBeforeComment.accessibleContext.accessibleDescription).isEqualTo("Custom description")
 
     val contextAfterCommentRight = createTextField {
       commentRight("Some comment")
       accessibleDescription("Custom description")
     }.component
-    assertEquals(contextAfterCommentRight.accessibleContext.accessibleDescription, "Custom description")
+    assertThat(contextAfterCommentRight.accessibleContext.accessibleDescription).isEqualTo("Custom description")
     val contextAfterComment = createTextField {
       comment("Some comment")
       accessibleDescription("Custom description")
     }.component
-    assertEquals(contextAfterComment.accessibleContext.accessibleDescription, "Custom description")
+    assertThat(contextAfterComment.accessibleContext.accessibleDescription).isEqualTo("Custom description")
   }
 
   @Test
@@ -49,18 +51,18 @@ class CommentTest {
       commentRight("1")
       comment("2")
     }
-    assertEquals(cell.component.accessibleContext.accessibleDescription, "1\n2")
+    assertThat(cell.component.accessibleContext.accessibleDescription).isEqualTo("1\n2")
 
     cell.comment!!.text = "3"
-    assertEquals(cell.component.accessibleContext.accessibleDescription, "1\n3")
+    assertThat(cell.component.accessibleContext.accessibleDescription).isEqualTo("1\n3")
 
     cell.commentRight!!.text = ""
-    assertEquals(cell.component.accessibleContext.accessibleDescription, "3")
+    assertThat(cell.component.accessibleContext.accessibleDescription).isEqualTo("3")
 
     cell.accessibleDescription("4")
-    assertEquals(cell.component.accessibleContext.accessibleDescription, "4")
+    assertThat(cell.component.accessibleContext.accessibleDescription).isEqualTo("4")
     cell.comment!!.text = "5"
-    assertEquals(cell.component.accessibleContext.accessibleDescription, "4")
+    assertThat(cell.component.accessibleContext.accessibleDescription).isEqualTo("4")
   }
 
   private fun createTextField(commentRight: String? = null, comment: String? = null): JTextField {

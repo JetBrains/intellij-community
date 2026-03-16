@@ -3,7 +3,14 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddDefaultConstructorFix;
 import com.intellij.java.JavaBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.ArrayUtil;
@@ -11,7 +18,12 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 public final class MoveInitializerToConstructorAction extends BaseMoveInitializerToMethodAction {
   @Override

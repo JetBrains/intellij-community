@@ -22,7 +22,7 @@ jvm_library(
     "//platform/util",
     "//platform/workspace/storage",
     "//platform/core-api:core",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
   ]
 )
 ### auto-generated section `build intellij.platform.backend.workspace` end

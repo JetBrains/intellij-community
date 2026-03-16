@@ -8,8 +8,14 @@ import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.codeInspection.options.OptPane.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.group;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class OptControlTest {
   private static class MyInspection extends LocalInspectionTool {

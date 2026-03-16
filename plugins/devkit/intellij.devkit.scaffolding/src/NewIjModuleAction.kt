@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.DumbAware
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +26,7 @@ internal class NewIjModuleAction : AnAction(), DumbAware {
 
   override fun actionPerformed(e: AnActionEvent) {
     val dc = e.dataContext
-    currentThreadCoroutineScope().launch(start = CoroutineStart.UNDISPATCHED) {
+    e.coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
       actionPerformed(dc)
     }
   }

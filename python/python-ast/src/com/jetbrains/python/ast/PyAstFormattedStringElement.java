@@ -16,7 +16,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.jetbrains.python.ast.PyAstElementKt.*;
+import static com.jetbrains.python.ast.PyAstElementKt.findChildByType;
+import static com.jetbrains.python.ast.PyAstElementKt.findChildByTypeNotNull;
+import static com.jetbrains.python.ast.PyAstElementKt.findChildrenByType;
 
 /**
  * Represents an f-string, a special kind of interpolated string literal introduced in Python 3.6.

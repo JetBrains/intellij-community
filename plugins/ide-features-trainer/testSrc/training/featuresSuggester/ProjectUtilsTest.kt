@@ -17,7 +17,12 @@ import training.lang.LangManager
 import training.lang.LangSupport
 import training.project.ProjectUtils
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createDirectory
+import kotlin.io.path.createFile
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.exists
+import kotlin.io.path.pathString
 
 @TestApplication
 class ProjectUtilsTest {

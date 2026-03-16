@@ -12,7 +12,14 @@ import com.intellij.openapi.vcs.vfs.VcsVirtualFile
 import com.intellij.openapi.vcs.vfs.VcsVirtualFolder
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogDataPack
+import com.intellij.vcs.log.VcsLogDiffHandler
+import com.intellij.vcs.log.VcsLogFilter
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.VcsLogProperties
+import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.history.FileHistoryPaths.filePath
 import com.intellij.vcs.log.history.FileHistoryPaths.isDeletedInCommit

@@ -5,7 +5,7 @@ import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.tools.apiDump.packageName
 import java.io.InputStream
 import java.nio.file.Path
-import java.util.*
+import java.util.TreeSet
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 

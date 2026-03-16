@@ -113,6 +113,7 @@
   - name: kotlin.base.scripting.k1
   - name: intellij.kotlin.base.scripting
   - name: intellij.kotlin.base.scripting.shared
+  - name: intellij.kotlin.base.scripting.scratch.definition
   - name: intellij.kotlin.base.analysis.platform
   - name: intellij.kotlin.base.analysis
   - name: intellij.kotlin.base.codeInsight
@@ -135,7 +136,7 @@
   - name: intellij.kotlin.jvm
   - name: kotlin.jvm.k1
   - name: intellij.kotlin.compilerReferenceIndex
-  - name: kotlin.compiler-plugins.parcelize.common
+  - name: intellij.kotlin.compilerPlugins.parcelize.common
   - name: kotlin.compiler-plugins.parcelize.k1
   - name: intellij.kotlin.compilerPlugins.parcelize
   - name: kotlin.compiler-plugins.parcelize.gradle
@@ -181,6 +182,7 @@
   - name: kotlin.gradle.scripting.shared
   - name: intellij.kotlin.gradle.codeInsight.groovy
   - name: intellij.kotlin.gradle.codeInsight.toml
+  - name: intellij.kotlin.gradle.codeInsight.toml.k2
   - name: intellij.kotlin.native
   - name: intellij.kotlin.grazie
   - name: intellij.kotlin.runConfigurations.jvm
@@ -226,9 +228,9 @@
   - name: intellij.kotlin.jvm.debugger.coroutines
   - name: kotlin.jvm-debugger.sequence.k1
   - name: intellij.kotlin.jvm.debugger.eval4j
-  - name: kotlin.uast.uast-kotlin-base
+  - name: intellij.kotlin.uast.base
   - name: kotlin.uast.uast-kotlin
-  - name: kotlin.uast.uast-kotlin-idea-base
+  - name: intellij.kotlin.uast.idea.base
   - name: kotlin.uast.uast-kotlin-idea
   - name: intellij.kotlin.i18n
   - name: intellij.kotlin.migration
@@ -278,7 +280,7 @@
   - name: intellij.kotlin.refactorings.move
   - name: intellij.kotlin.refactorings.rename
   - name: intellij.kotlin.performanceExtendedPlugin
-  - name: kotlin.bundled-compiler-plugins-support
+  - name: intellij.kotlin.compilerPlugins.support.bundled
   - name: kotlin.jsr223
   - name: intellij.kotlin.internal
   - name: intellij.kotlin.base.serialization
@@ -290,6 +292,8 @@
   - name: kotlin-ultimate.wasm.debugger
   - name: kotlin-ultimate.profiler
   - name: kotlin-ultimate.ultimate-plugin
+  - name: intellij.kotlin.duplicate.scope
+  - name: intellij.debugger.jvm.advanced.kotlin
   - name: kotlin.plugin
 - name: lib/kotlinc.allopen-compiler-plugin.jar
   library: kotlinc.allopen-compiler-plugin

@@ -8,11 +8,11 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.browsers.BrowserLauncher;
 import com.intellij.ide.browsers.BrowserLauncherAppless;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +45,8 @@ public final class BrowserUtil {
     return anchorMatcher.find() ? anchorMatcher.reset().replaceAll("") : url;
   }
 
+  /** @deprecated use {@link URI#toURL} instead; see the note on {@link URL} constructor deprecation for more details */
+  @Deprecated(forRemoval = true)
   public static @Nullable URL getURL(String url) throws MalformedURLException {
     return isAbsoluteURL(url) ? VfsUtilCore.convertToURL(url) : new URL("file", "", url);
   }
@@ -98,7 +100,7 @@ public final class BrowserUtil {
 
     var path = NioFiles.toPath(browserPathOrName);
     if (path == null || !Files.isRegularFile(path)) {
-      if (SystemInfo.isMac) {
+      if (OS.CURRENT == OS.macOS) {
         command.addAll(List.of(ExecUtil.getOpenCommandPath(), "-a", browserPathOrName));
         if (newWindowIfPossible) {
           command.add("-n");
@@ -111,7 +113,7 @@ public final class BrowserUtil {
           command.addAll(parameters);
         }
       }
-      else if (SystemInfo.isWindows) {
+      else if (OS.CURRENT == OS.Windows) {
         command.addAll(List.of(CommandLineUtil.getWinShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""), browserPathOrName));
         command.addAll(parameters);
         if (url != null) {

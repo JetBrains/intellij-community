@@ -15,7 +15,7 @@ import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

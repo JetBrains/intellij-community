@@ -139,16 +139,10 @@
     <item name='org.apache.commons.collections.BeanMap java.lang.Object convertType(java.lang.Class, java.lang.Object) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.collections.BeanMap java.lang.Object get(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.BeanMap java.lang.Object getBean()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.collections.BeanMap java.lang.Object put(java.lang.Object, java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.BeanMap java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -714,7 +708,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;_,null-&gt;null;null,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.CollectionUtils java.lang.Object find(java.util.Collection, org.apache.commons.collections.Predicate) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1486,23 +1479,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object doGet(java.lang.Comparable, int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object doGet(java.lang.Comparable, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object doRemove(java.lang.Comparable, int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object get(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object get(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object getKeyForValue(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object getKeyForValue(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1511,7 +1492,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;_,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object put(java.lang.Object, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1519,17 +1499,10 @@
     <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object put(java.lang.Object, java.lang.Object) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object remove(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object removeValue(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap org.apache.commons.collections.DoubleOrderedMap.Node getGrandParent(org.apache.commons.collections.DoubleOrderedMap.Node, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap org.apache.commons.collections.DoubleOrderedMap.Node getGrandParent(org.apache.commons.collections.DoubleOrderedMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1539,7 +1512,6 @@
             <val name="value" val="&quot;null,_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap org.apache.commons.collections.DoubleOrderedMap.Node getLeftChild(org.apache.commons.collections.DoubleOrderedMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1549,7 +1521,6 @@
             <val name="value" val="&quot;null,_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap org.apache.commons.collections.DoubleOrderedMap.Node getParent(org.apache.commons.collections.DoubleOrderedMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1559,7 +1530,6 @@
             <val name="value" val="&quot;null,_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap org.apache.commons.collections.DoubleOrderedMap.Node getRightChild(org.apache.commons.collections.DoubleOrderedMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1570,15 +1540,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap org.apache.commons.collections.DoubleOrderedMap.Node lookup(java.lang.Comparable, int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap org.apache.commons.collections.DoubleOrderedMap.Node nextGreater(org.apache.commons.collections.DoubleOrderedMap.Node, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;null,_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap org.apache.commons.collections.DoubleOrderedMap.Node nextGreater(org.apache.commons.collections.DoubleOrderedMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1763,19 +1729,12 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.ExtendedProperties java.lang.String interpolate(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.ExtendedProperties java.lang.String interpolateHelper(java.lang.String, java.util.List)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.ExtendedProperties java.lang.String interpolateHelper(java.lang.String, java.util.List) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.ExtendedProperties java.lang.String testBoolean(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.ExtendedProperties java.lang.String testBoolean(java.lang.String) 0'>
@@ -1811,9 +1770,6 @@
     <item name='org.apache.commons.collections.ExtendedProperties org.apache.commons.collections.ExtendedProperties convertProperties(java.util.Properties) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.collections.ExtendedProperties org.apache.commons.collections.ExtendedProperties subset(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.ExtendedProperties void combine(org.apache.commons.collections.ExtendedProperties) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1824,9 +1780,6 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.ExtendedProperties void setInclude(java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.ExtendedProperties.PropertiesReader java.lang.String readProperty()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.ExtendedProperties.PropertiesTokenizer java.lang.String nextToken()'>
@@ -2586,12 +2539,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.LRUMap java.lang.Object get(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.LRUMap java.lang.Object put(java.lang.Object, java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.LRUMap void processRemovedLRU(java.lang.Object, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -2811,15 +2758,11 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Boolean getBoolean(java.util.Map, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Boolean getBoolean(java.util.Map, java.lang.Object, java.lang.Boolean) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.MapUtils java.lang.Byte getByte(java.util.Map, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Byte getByte(java.util.Map, java.lang.Object) 0'>
@@ -2828,16 +2771,10 @@
     <item name='org.apache.commons.collections.MapUtils java.lang.Byte getByte(java.util.Map, java.lang.Object, java.lang.Byte) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='org.apache.commons.collections.MapUtils java.lang.Double getDouble(java.util.Map, java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Double getDouble(java.util.Map, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Double getDouble(java.util.Map, java.lang.Object, java.lang.Double) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.MapUtils java.lang.Float getFloat(java.util.Map, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Float getFloat(java.util.Map, java.lang.Object) 0'>
@@ -2846,16 +2783,10 @@
     <item name='org.apache.commons.collections.MapUtils java.lang.Float getFloat(java.util.Map, java.lang.Object, java.lang.Float) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='org.apache.commons.collections.MapUtils java.lang.Integer getInteger(java.util.Map, java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Integer getInteger(java.util.Map, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Integer getInteger(java.util.Map, java.lang.Object, java.lang.Integer) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.MapUtils java.lang.Long getLong(java.util.Map, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Long getLong(java.util.Map, java.lang.Object) 0'>
@@ -2868,7 +2799,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Number getNumber(java.util.Map, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -2880,15 +2810,11 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Object getObject(java.util.Map, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Object getObject(java.util.Map, java.lang.Object, java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.MapUtils java.lang.Short getShort(java.util.Map, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Short getShort(java.util.Map, java.lang.Object) 0'>
@@ -2901,7 +2827,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.String getString(java.util.Map, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -2922,7 +2847,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.Map getMap(java.util.Map, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -3221,13 +3145,11 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;_,null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MultiHashMap java.lang.Object remove(java.lang.Object, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;_,null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MultiHashMap java.util.Collection createCollection(java.util.Collection)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -3478,13 +3400,7 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.ReferenceMap java.lang.Object get(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.ReferenceMap java.lang.Object get(java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.ReferenceMap java.lang.Object put(java.lang.Object, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.ReferenceMap java.lang.Object put(java.lang.Object, java.lang.Object) 0'>
@@ -3497,7 +3413,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.ReferenceMap java.lang.Object remove(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -3526,7 +3441,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.ReferenceMap org.apache.commons.collections.ReferenceMap.Entry getEntry(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -3595,18 +3509,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.SequencedHashMap java.lang.Object get(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.SequencedHashMap java.lang.Object put(java.lang.Object, java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.SequencedHashMap java.lang.Object remove(int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.SequencedHashMap java.lang.Object remove(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.SequencedHashMap java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -3629,12 +3531,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.SequencedHashMap java.util.Map.Entry getFirst()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.SequencedHashMap java.util.Map.Entry getLast()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.SequencedHashMap java.util.Set entrySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -3653,9 +3549,6 @@
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.SequencedHashMap org.apache.commons.collections.SequencedHashMap.Entry removeImpl(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.SequencedHashMap void insertEntry(org.apache.commons.collections.SequencedHashMap.Entry) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3867,15 +3760,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.collections.StaticBucketMap java.lang.Object get(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.StaticBucketMap java.lang.Object put(java.lang.Object, java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.StaticBucketMap java.lang.Object remove(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.StaticBucketMap java.util.Collection values()'>
         <annotation name='org.jetbrains.annotations.Contract'>

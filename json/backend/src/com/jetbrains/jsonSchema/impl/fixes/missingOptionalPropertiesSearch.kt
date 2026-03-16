@@ -12,7 +12,9 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.JsonComplianceCheckerOptions
 import com.jetbrains.jsonSchema.impl.JsonSchemaAnnotatorChecker
 import com.jetbrains.jsonSchema.impl.JsonValidationError
-import com.jetbrains.jsonSchema.impl.JsonValidationError.*
+import com.jetbrains.jsonSchema.impl.JsonValidationError.FixableIssueKind
+import com.jetbrains.jsonSchema.impl.JsonValidationError.MissingMultiplePropsIssueData
+import com.jetbrains.jsonSchema.impl.JsonValidationError.MissingPropertyIssueData
 
 @RequiresReadLock
 fun collectMissingPropertiesFromSchema(objectNodePointer: SmartPsiElementPointer<out PsiElement>,

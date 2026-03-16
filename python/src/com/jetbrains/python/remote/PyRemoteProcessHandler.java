@@ -3,7 +3,6 @@ package com.jetbrains.python.remote;
 
 import com.google.common.net.HostAndPort;
 import com.intellij.execution.KillableProcess;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -61,6 +60,7 @@ public final class PyRemoteProcessHandler extends BaseRemoteProcessHandler<Remot
     return myPathMapper;
   }
 
+
   @Override
   public Pair<String, Integer> getRemoteSocket(int localPort) throws RemoteSdkException {
     try {
@@ -70,6 +70,7 @@ public final class PyRemoteProcessHandler extends BaseRemoteProcessHandler<Remot
       throw new RuntimeException(e);
     }
   }
+
 
   @Override
   public @Nullable HostAndPort getLocalTunnel(int remotePort) {
@@ -88,16 +89,6 @@ public final class PyRemoteProcessHandler extends BaseRemoteProcessHandler<Remot
   }
 
 
-  public static @NotNull PyRemoteProcessHandler createProcessHandler(@NotNull RemoteProcess remoteProcess,
-                                                                     @Nullable String fullInterpreterPath,
-                                                                     @NotNull GeneralCommandLine commandLine,
-                                                                     @Nullable PyRemotePathMapper pathMapper,
-                                                                     @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider)
-    throws RemoteSdkException {
-    return new PyRemoteProcessHandler(remoteProcess,
-                                      commandLine.getCommandLineString(fullInterpreterPath), commandLine.getCharset(),
-                                      pathMapper, remoteSocketProvider, false);
-  }
 
   public static @NotNull PyRemoteProcessHandler createProcessHandler(@NotNull RemoteProcess remoteProcess,
                                                                      @NotNull String commandLine,
@@ -106,14 +97,6 @@ public final class PyRemoteProcessHandler extends BaseRemoteProcessHandler<Remot
                                                                      @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider,
                                                                      boolean isRunWithPty) {
     return new PyRemoteProcessHandler(remoteProcess, commandLine, charset, pathMapper, remoteSocketProvider, isRunWithPty);
-  }
-
-  public static @NotNull PyRemoteProcessHandler createProcessHandler(@NotNull RemoteProcess remoteProcess,
-                                                                     @NotNull String commandLine,
-                                                                     @NotNull Charset charset,
-                                                                     @Nullable PyRemotePathMapper pathMapper,
-                                                                     @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider) {
-    return createProcessHandler(remoteProcess, commandLine, charset, pathMapper, remoteSocketProvider, false);
   }
 
   @Override
@@ -173,13 +156,9 @@ public final class PyRemoteProcessHandler extends BaseRemoteProcessHandler<Remot
     return myFileMappings;
   }
 
+
   @Override
   public @NotNull PyPositionConverter createPositionConverter(@NotNull PyDebugProcess debugProcess) {
     return new PyRemotePositionConverter(debugProcess, myPathMapper);
-  }
-
-  @Override
-  public PyRemoteSocketToLocalHostProvider getRemoteSocketToLocalHostProvider() {
-    return myRemoteSocketProvider;
   }
 }

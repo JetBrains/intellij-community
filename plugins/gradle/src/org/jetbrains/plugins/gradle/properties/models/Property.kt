@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.properties.models
 
 import java.nio.file.Path
-import java.util.*
+import java.util.Properties
 
 /**
  * Represents property in the properties file that is described by [location]

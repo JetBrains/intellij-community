@@ -2,9 +2,9 @@
 package org.jetbrains.kotlin.idea.fir.navigation
 
 
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.navigation.AbstractKotlinGotoRelatedSymbolMultiModuleTest
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.test.util.invalidateCaches
 
 abstract class AbstractFirGotoRelatedSymbolMultiModuleTest: AbstractKotlinGotoRelatedSymbolMultiModuleTest() {
 

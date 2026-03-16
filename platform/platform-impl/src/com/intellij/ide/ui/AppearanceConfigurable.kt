@@ -49,11 +49,30 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.toolWindow.ResizeStripeManager
-import com.intellij.ui.*
+import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.FontComboBox
+import com.intellij.ui.MacCustomAppIcon
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.MutableProperty
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindIntText
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindValue
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.labelTable
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.dsl.builder.showValueHint
+import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
@@ -73,7 +92,12 @@ import java.awt.Window
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.nio.file.Path
-import javax.swing.*
+import javax.swing.ComboBoxModel
+import javax.swing.DefaultComboBoxModel
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.KeyStroke
+import javax.swing.ListCellRenderer
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import kotlin.io.path.deleteIfExists
@@ -417,8 +441,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             yield { checkBox(cdDnDWithAlt) }
             yield {
               checkBox(cdSmoothScrolling)
-                .gap(RightGap.SMALL)
-              contextHelp(message("checkbox.smooth.scrolling.description"))
+                .contextHelp(message("checkbox.smooth.scrolling.description"))
             }
           }
           if (ProjectWindowCustomizerService.getInstance().isAvailable()) {
@@ -441,8 +464,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             yield { checkBox(cdDnDWithAlt) }
             yield {
               checkBox(cdSmoothScrolling)
-                .gap(RightGap.SMALL)
-              contextHelp(message("checkbox.smooth.scrolling.description"))
+                .contextHelp(message("checkbox.smooth.scrolling.description"))
             }
           }
           yield { checkBox(cdEnableControlsMnemonics) }
@@ -540,8 +562,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             twoColumnsRow(
               {
                 checkBox(cdWidescreenToolWindowLayout)
-                  .gap(RightGap.SMALL)
-                contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
+                  .contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
               },
               { checkBox(cdRememberSizeForEachToolWindowNewUI) },
             )
@@ -550,8 +571,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             twoColumnsRow(
               {
                 checkBox(cdWidescreenToolWindowLayout)
-                  .gap(RightGap.SMALL)
-                contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
+                  .contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
               },
               { checkBox(cdRightToolWindowLayout) },
             )
@@ -564,8 +584,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           twoColumnsRow(
             {
               checkBox(cdWidescreenToolWindowLayout)
-                .gap(RightGap.SMALL)
-              contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
+                .contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
             },
             { checkBox(cdRightToolWindowLayout) },
           )

@@ -11,7 +11,7 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiManager
 
-private class JavaEditorTabTitleProvider : EditorTabTitleProvider {
+internal class JavaEditorTabTitleProvider : EditorTabTitleProvider {
   override suspend fun getEditorTabTitleAsync(project: Project, file: VirtualFile): String? {
     val fileName = file.name
     if (PsiJavaModule.MODULE_INFO_FILE != fileName) {

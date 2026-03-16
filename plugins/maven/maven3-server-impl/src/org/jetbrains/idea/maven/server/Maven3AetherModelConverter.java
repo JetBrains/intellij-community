@@ -11,11 +11,22 @@ import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenArtifactNode;
+import org.jetbrains.idea.maven.model.MavenArtifactState;
+import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.model.MavenParent;
 
 import java.io.File;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
 
 /**
  * {@link Maven3AetherModelConverter} provides adapted methods of {@link Maven3ModelConverter} for aether models conversion

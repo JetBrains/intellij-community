@@ -10,7 +10,14 @@ import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.MacUIUtil
-import java.awt.*
+import java.awt.Component
+import java.awt.GradientPaint
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Paint
+import java.awt.Rectangle
+import java.awt.RenderingHints
+import java.awt.Shape
 import java.awt.geom.Area
 import java.awt.geom.Path2D
 import java.awt.geom.Rectangle2D

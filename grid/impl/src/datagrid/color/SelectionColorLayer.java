@@ -1,14 +1,18 @@
 package com.intellij.database.datagrid.color;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.editor.DataGridColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JTable;
+import java.awt.Color;
 
 import static com.intellij.database.util.DataGridUIUtil.softHighlightOf;
 import static com.intellij.ui.hover.TableHoverListener.getHoveredRow;

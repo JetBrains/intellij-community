@@ -5,7 +5,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.Iterators;
-import org.jetbrains.jps.util.Iterators.Function;
 import org.jetbrains.jps.util.Pair;
 import org.jetbrains.jps.util.Ref;
 
@@ -18,13 +17,26 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticListener;
+import javax.tools.FileObject;
+import javax.tools.JavaFileManager;
+import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public final class APIWrappers {
 
@@ -86,12 +98,7 @@ public final class APIWrappers {
     }
 
     Iterable<Processor> wrapProcessors(Iterable<? extends Processor> processors) {
-      return myAllProcessors = Iterators.map(processors, new Function<Processor, Processor>() {
-        @Override
-        public Processor fun(Processor processor) {
-          return wrap(Processor.class, new ProcessorWrapper(processor, ProcessingContext.this));
-        }
-      });
+      return myAllProcessors = Iterators.map(processors, proc -> wrap(Processor.class, new ProcessorWrapper(proc, this)));
     }
 
     @Nullable
@@ -366,7 +373,7 @@ public final class APIWrappers {
 
     private void addMapping(CharSequence resourceName, final Collection<? extends Element> elements) {
       if (resourceName != null && resourceName.length() > 0 && !elements.isEmpty()) {
-        myFileManager.addAnnotationProcessingClassMapping(resourceName.toString(), Iterators.filter(Iterators.map(elements, convertToClassName), Iterators.notNullFilter()));
+        myFileManager.addAnnotationProcessingClassMapping(resourceName.toString(), Iterators.filter(Iterators.map(elements, convertToClassName), (Predicate<? super String>) Objects::nonNull));
       }
     }
   }
@@ -447,7 +454,7 @@ public final class APIWrappers {
     }
 
     @Override
-    public String fun(Element element) {
+    public String apply(Element element) {
       Name qName = null;
       while (element != null) {
         if (element instanceof TypeElement) {

@@ -20,7 +20,11 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.SystemProperties
 import com.intellij.vcs.log.VcsUser
 import git4idea.config.GitVcsSettings

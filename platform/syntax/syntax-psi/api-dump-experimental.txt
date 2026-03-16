@@ -29,7 +29,9 @@
 *f:com.intellij.platform.syntax.psi.ParsingDiagnostics
 - *sf:registerLexing(com.intellij.lang.Language,J,J):V
 - *sf:registerParse(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.lang.Language,J):V
+- *sf:registerParse(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.lang.Language,kotlin.jvm.functions.Function0):java.lang.Object
 - *sf:registerParse(com.intellij.platform.syntax.psi.PsiSyntaxBuilder,com.intellij.lang.Language,J):V
+- *sf:registerParse(com.intellij.platform.syntax.psi.PsiSyntaxBuilder,com.intellij.lang.Language,kotlin.jvm.functions.Function0):java.lang.Object
 *:com.intellij.platform.syntax.psi.ParsingDiagnosticsHandler
 - a:registerLexing(com.intellij.lang.Language,J,J):V
 - a:registerParse(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.lang.Language,J):V
@@ -50,10 +52,14 @@
 *f:com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory$Companion
 - f:defaultBuilderFactory():com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
 - f:getInstance():com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
-*f:com.intellij.platform.syntax.psi.SyntaxGrammarKitFileElementType
+*f:com.intellij.platform.syntax.psi.SyntaxGeneratedParserRuntimeFactoryKt
+- sf:createSyntaxGeneratedParserRuntime(com.intellij.lang.Language,com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.util.runtime.ParserUserState):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
+- bs:createSyntaxGeneratedParserRuntime$default(com.intellij.lang.Language,com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.util.runtime.ParserUserState,I,java.lang.Object):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
+*c:com.intellij.platform.syntax.psi.SyntaxGrammarKitFileElementType
 - com.intellij.psi.tree.IFileElementType
 - <init>(com.intellij.lang.Language):V
-- createExtendedParserUserState():com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ParserUserState
+- createExtendedParserUserState():com.intellij.platform.syntax.util.runtime.ParserUserState
+- p:doParseContents(com.intellij.lang.ASTNode,com.intellij.psi.PsiElement):com.intellij.lang.ASTNode
 *f:com.intellij.platform.syntax.psi.extensions.IntelliJSyntaxLanguageSupportKt
 - sf:asIntelliJLanguage(com.intellij.platform.syntax.SyntaxLanguage):com.intellij.lang.Language
 *f:com.intellij.platform.syntax.psi.impl.PsiSyntaxParserRuntimeFactoryImplKt

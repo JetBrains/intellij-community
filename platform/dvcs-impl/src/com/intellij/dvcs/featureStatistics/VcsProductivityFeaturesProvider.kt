@@ -6,7 +6,7 @@ import com.intellij.featureStatistics.ApplicabilityFilter
 import com.intellij.featureStatistics.ProductivityFeaturesProvider
 import com.intellij.openapi.project.Project
 
-private class VcsProductivityFeaturesProvider : ProductivityFeaturesProvider() {
+internal class VcsProductivityFeaturesProvider : ProductivityFeaturesProvider() {
   override fun getXmlFilesUrls() = listOf("VcsProductivityFeatures.xml")
 
   override fun getApplicabilityFilters(): Array<ApplicabilityFilter> = arrayOf(VcsFeaturesApplicabilityFilter())

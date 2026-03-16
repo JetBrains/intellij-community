@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.plugins.newui.ListPluginComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
@@ -12,34 +11,35 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.io.InputStream;
 import java.net.URL;
 
 public final class WelcomeScreenUIManager {
 
-  static @NotNull Font getProductFont(int size) {
+  public static @NotNull Font getProductFont(int size) {
     try {
       return loadFont().deriveFont((float)JBUIScale.scale(size));
     }
     catch (Throwable t) {
-      Logger.getInstance(AppUIUtil.class).warn(t);
+      Logger.getInstance(WelcomeScreenUIManager.class).warn(t);
     }
     return StartupUiUtil.getLabelFont().deriveFont(JBUIScale.scale((float)size));
   }
 
   private static @NotNull Font loadFont() {
     @NonNls String fontPath = "/fonts/Roboto-Light.ttf";
-    URL url = AppUIUtil.class.getResource(fontPath);
+    URL url = WelcomeScreenUIManager.class.getResource(fontPath);
     if (url == null) {
-      Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + fontPath);
+      Logger.getInstance(WelcomeScreenUIManager.class).warn("Resource missing: " + fontPath);
     }
     else {
       try (InputStream is = url.openStream()) {
         return Font.createFont(Font.TRUETYPE_FONT, is);
       }
       catch (Throwable t) {
-        Logger.getInstance(AppUIUtil.class).warn("Cannot load font: " + url, t);
+        Logger.getInstance(WelcomeScreenUIManager.class).warn("Cannot load font: " + url, t);
       }
     }
     return StartupUiUtil.getLabelFont();

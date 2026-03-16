@@ -1,0 +1,100 @@
+<!--suppress PluginXmlRegistrationCheck -->
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.compiler" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.Compiler"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compilerFactory" area="IDEA_PROJECT"
+                    interface="com.intellij.openapi.compiler.CompilerFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compilableFileTypesProvider" area="IDEA_PROJECT"
+                    interface="com.intellij.openapi.compiler.CompilableFileTypesProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compiler.task" area="IDEA_PROJECT" beanClass="com.intellij.compiler.CompileTaskBean"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.intellij.openapi.compiler.CompileTask"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.compileServer.plugin" beanClass="com.intellij.compiler.server.CompileServerPlugin"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.buildProcess.parametersProvider" area="IDEA_PROJECT"
+                    interface="com.intellij.compiler.server.BuildProcessParametersProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compiler.buildIssueContributor" dynamic="true"
+                    interface="com.intellij.compiler.progress.BuildIssueContributor"/>
+
+    <extensionPoint qualifiedName="com.intellij.attachSourcesProvider" interface="com.intellij.codeInsight.AttachSourcesProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.java.compiler" area="IDEA_PROJECT"
+                    interface="com.intellij.compiler.impl.javaCompiler.BackendCompiler" dynamic="true"/>
+  </extensionPoints>
+  
+  <extensions defaultExtensionNs="com.intellij">
+    <sdkType implementation="com.intellij.openapi.projectRoots.impl.JavaSdkImpl"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
+                        serviceImplementation="com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl"
+                        overrides="true"/>
+
+    <applicationService serviceInterface="com.intellij.execution.runners.ProcessProxyFactory"
+                        serviceImplementation="com.intellij.execution.runners.ProcessProxyFactoryImpl"/>
+
+    <applicationService serviceImplementation="com.intellij.debugger.settings.NodeRendererSettings"/>
+    <applicationService serviceImplementation="com.intellij.debugger.settings.ViewsGeneralSettings"/>
+    <applicationService serviceImplementation="com.intellij.debugger.settings.DebuggerSettings"/>
+    <applicationService serviceImplementation="com.intellij.refactoring.JavaRefactoringSettings"/>
+    <projectService serviceImplementation="com.intellij.debugger.settings.DebuggerProjectSettings"/>
+    <applicationService serviceImplementation="com.intellij.debugger.settings.ThreadsViewSettings"/>
+    <applicationService serviceImplementation="com.intellij.debugger.settings.TraceSettings"/>
+    <projectService serviceInterface="com.intellij.debugger.ui.HotSwapUI" serviceImplementation="com.intellij.debugger.ui.HotSwapUIImpl"/>
+    <projectService serviceInterface="com.intellij.debugger.DebuggerManager" serviceImplementation="com.intellij.debugger.impl.DebuggerManagerImpl"/>
+
+    <statistics.counterUsagesCollector groupId="java.find.usages" version="1"/>
+    <statistics.counterUsagesCollector groupId="java.extract.method" version="1"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.debugger.settings.DebuggerSettingsStatisticsCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.refactoring.JavaRefactoringUsageCollector"/>
+
+    <applicationService serviceInterface="com.intellij.packaging.elements.PackagingElementFactory"
+                        serviceImplementation="com.intellij.packaging.impl.elements.PackagingElementFactoryImpl"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.roots.ui.OrderEntryAppearanceService"
+                        serviceImplementation="com.intellij.openapi.roots.ui.OrderEntryAppearanceServiceImpl"/>
+
+    <projectService serviceInterface="com.intellij.packaging.artifacts.ArtifactPointerManager"
+                    serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl"/>
+    <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder"
+                    serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinderImpl"/>
+    <applicationService serviceImplementation="com.intellij.packaging.impl.artifacts.InvalidArtifactType"/>
+
+    <applicationService serviceImplementation="com.intellij.compiler.server.BuildManager" preload="true"/>
+
+    <projectService serviceInterface="com.intellij.compiler.CompilerConfiguration"
+                    serviceImplementation="com.intellij.compiler.CompilerConfigurationImpl" preload="await"/>
+
+    <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl" key="jrt" physical="true"/>
+
+    <registryKey key="jps.build.use.workspace.model" description="Use workspace model inside JPS build process. The implementation isn't finished yet, refer to https://youtrack.jetbrains.com/issue/IJPL-409 for details." defaultValue="false"/>
+
+    <sdkType implementation="com.intellij.openapi.projectRoots.impl.JavaSdkImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.projectRoots.DefaultJdkConfigurator"
+                        serviceImplementation="com.intellij.openapi.projectRoots.impl.DefaultJdkConfiguratorImpl"/>
+    <orderRootType implementation="com.intellij.openapi.roots.JavadocOrderRootType"/>
+    <orderRootType implementation="com.intellij.openapi.roots.AnnotationOrderRootType"/>
+
+    <dynamicActionConfigurationCustomizer  implementation="jetbrains.mps.ide.projectPane.ProjectPaneActionsCustomizer"/>
+
+    <projectService serviceImplementation="com.intellij.compiler.CompilerConfigurationSettings" configurationSchemaKey="compiler"/>
+
+    <advancedSetting id="compiler.automake.allow.when.app.running" groupKey="advanced.settings.group.compiler" default="false"
+                     bundle="messages.JavaBundle"/>
+    <advancedSetting id="compiler.lower.process.priority" groupKey="advanced.settings.group.compiler" default="true"
+                     bundle="messages.JavaBundle"/>
+    <advancedSetting id="compiler.unified.ic.implementation" groupKey="advanced.settings.group.compiler" default="true"
+                     bundle="messages.JavaBundle"/>
+    <advancedSetting id="compiler.inMemoryLogger" groupKey="advanced.settings.group.compiler" default="false"
+                     bundle="messages.JavaBundle"/>
+    <advancedSetting id="code.vision.java.minimal.usages" groupKey="advanced.settings.group.java" default="0" bundle="messages.JavaBundle"/>
+    <advancedSetting id="java.completion.qualifier.as.argument" groupKey="advanced.settings.group.java" default="true"
+                     bundle="messages.JavaBundle"/>
+    <advancedSetting id="java.sdkmanrc.watcher" groupKey="advanced.settings.group.java" default="true" bundle="messages.JavaBundle"/>
+
+  </extensions>
+
+</idea-plugin>

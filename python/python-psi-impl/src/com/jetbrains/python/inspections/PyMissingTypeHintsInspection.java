@@ -32,7 +32,9 @@ public final class PyMissingTypeHintsInspection extends PyInspection {
   public boolean m_onlyWhenTypesAreKnown = true;
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new PyInspectionVisitor(holder, PyInspectionVisitor.getContext(session)) {
       @Override
       public void visitPyFunction(@NotNull PyFunction function) {
@@ -59,7 +61,8 @@ public final class PyMissingTypeHintsInspection extends PyInspection {
       if (instance != null) {
         PySignature signature = instance.findSignature(function);
         return signature != null && canAnnotate(signature);
-      } else {
+      }
+      else {
         return false;
       }
     }

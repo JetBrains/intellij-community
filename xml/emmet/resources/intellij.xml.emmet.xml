@@ -1,0 +1,63 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.xml.psi.impl"/>
+    <module name="intellij.xml.parser"/>
+    <module name="intellij.xml.ui.common"/>
+    <module name="intellij.libraries.xerces"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.xml.zenCodingFilter"
+                    interface="com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xml.zenCodingGenerator"
+                    interface="com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.application.options.emmet.EmmetOptions"/>
+    <customLiveTemplate implementation="com.intellij.codeInsight.template.emmet.ZenCodingTemplate"/>
+    <completion.contributor language="any"
+                            implementationClass="com.intellij.codeInsight.template.emmet.completion.EmmetCompletionContributor"
+                            id="xml.emmet"
+                            order="after xml"/>
+
+    <editorTypedHandler implementationClass="com.intellij.codeInsight.template.emmet.EmmetPreviewTypedHandler" id="emmetPreview"/>
+
+    <xml.zenCodingGenerator implementation="com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorImpl" order="last"/>
+
+    <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.XslZenCodingFilter"/>
+    <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.CommentZenCodingFilter"/>
+    <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.EscapeZenCodingFilter"/>
+    <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.SingleLineEmmetFilter"/>
+    <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.BemEmmetFilter"/>
+    <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.TrimZenCodingFilter"/>
+  </extensions>
+
+  <actions>
+    <group id="Emmet">
+      <action id="SurroundWithEmmet" class="com.intellij.codeInsight.template.emmet.SurroundWithEmmetAction"/>
+      <action id="EmmetPreview" class="com.intellij.codeInsight.template.emmet.EmmetPreviewAction"/>
+      <action id="EmmetUpdateTag" class="com.intellij.codeInsight.template.emmet.EmmetUpdateTagAction">
+        <add-to-group group-id="EditorLangPopupMenu" anchor="last"/>
+      </action>
+
+      <group id="GoToEditPointGroup">
+        <separator/>
+        <add-to-group group-id="GoToMenu" anchor="after" relative-to-action="GoToErrorGroup"/>
+
+        <action id="EmmetNextEditPoint" class="com.intellij.codeInsight.template.emmet.actions.GoToEditPointAction$Forward">
+          <keyboard-shortcut first-keystroke="alt shift CLOSE_BRACKET" keymap="$default"/>
+          <keyboard-shortcut first-keystroke="control alt RIGHT" keymap="Mac OS X" replace-all="true"/>
+          <keyboard-shortcut first-keystroke="control alt RIGHT" keymap="Mac OS X 10.5+" replace-all="true"/>
+        </action>
+
+        <action id="EmmetPreviousEditPoint" class="com.intellij.codeInsight.template.emmet.actions.GoToEditPointAction$Backward">
+          <keyboard-shortcut first-keystroke="alt shift OPEN_BRACKET" keymap="$default"/>
+          <keyboard-shortcut first-keystroke="control alt LEFT" keymap="Mac OS X" replace-all="true"/>
+          <keyboard-shortcut first-keystroke="control alt LEFT" keymap="Mac OS X 10.5+" replace-all="true"/>
+        </action>
+      </group>
+    </group>
+  </actions>
+</idea-plugin>

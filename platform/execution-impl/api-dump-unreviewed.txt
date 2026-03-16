@@ -20,7 +20,7 @@ c:com.intellij.diagnostic.logging.DefaultLogFormatter
 - formatPrefix(java.lang.String):java.lang.String
 f:com.intellij.diagnostic.logging.LogConfigurationPanel
 - com.intellij.openapi.options.SettingsEditor
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>():V
 - refreshPredefinedLogFiles(com.intellij.execution.configurations.RunConfigurationBase):V
 a:com.intellij.diagnostic.logging.LogConsoleBase
@@ -2147,8 +2147,6 @@ c:com.intellij.terminal.JBTerminalWidget
 - dispose():V
 - p:executeCommand(java.lang.String):V
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
-- getFontSize():I
-- getFontSize2D():F
 - getListener():com.intellij.terminal.JBTerminalWidgetListener
 - getProcessTtyConnector():com.jediterm.terminal.ProcessTtyConnector
 - getProject():com.intellij.openapi.project.Project
@@ -2160,9 +2158,6 @@ c:com.intellij.terminal.JBTerminalWidget
 - getText():java.lang.String
 - p:hasRunningCommands():Z
 - notifyStarted():V
-- resetFontSize():V
-- setFontSize(F):V
-- setFontSize(I):V
 - setListener(com.intellij.terminal.JBTerminalWidgetListener):V
 - p:setShellCommand(java.util.List):V
 - start(com.jediterm.terminal.TtyConnector):V
@@ -2192,38 +2187,6 @@ a:com.intellij.terminal.TerminalColorPalette
 - a:getDefaultForeground():com.jediterm.core.Color
 - p:getForegroundByColorIndex(I):com.jediterm.core.Color
 f:com.intellij.terminal.TerminalColorPalette$Companion
-c:com.intellij.terminal.TerminalExecutionConsole
-- com.intellij.execution.ui.ConsoleView
-- com.intellij.execution.ui.ObservableConsoleView
-- <init>(com.intellij.openapi.project.Project,I,I,com.intellij.execution.process.ProcessHandler):V
-- <init>(com.intellij.openapi.project.Project,I,I,com.intellij.execution.process.ProcessHandler,com.intellij.terminal.JBTerminalSystemSettingsProviderBase):V
-- <init>(com.intellij.openapi.project.Project,com.intellij.execution.process.ProcessHandler):V
-- <init>(com.intellij.openapi.project.Project,com.intellij.execution.process.ProcessHandler,com.intellij.terminal.JBTerminalSystemSettingsProviderBase):V
-- addChangeListener(com.intellij.execution.ui.ObservableConsoleView$ChangeListener,com.intellij.openapi.Disposable):V
-- addMessageFilter(com.intellij.execution.filters.Filter):V
-- allowHeavyFilters():V
-- attachToProcess(com.intellij.execution.process.ProcessHandler):V
-- f:attachToProcess(com.intellij.execution.process.ProcessHandler,com.jediterm.terminal.TtyConnector,Z):V
-- pf:attachToProcess(com.intellij.execution.process.ProcessHandler,Z):V
-- canPause():Z
-- clear():V
-- createConsoleActions():com.intellij.openapi.actionSystem.AnAction[]
-- dispose():V
-- getComponent():javax.swing.JComponent
-- getContentSize():I
-- getPreferredFocusableComponent():javax.swing.JComponent
-- getTerminalWidget():com.intellij.terminal.JBTerminalWidget
-- hasDeferredOutput():Z
-- s:isAcceptable(com.intellij.execution.process.ProcessHandler):Z
-- isOutputPaused():Z
-- performWhenNoDeferredOutput(java.lang.Runnable):V
-- print(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
-- printHyperlink(java.lang.String,com.intellij.execution.filters.HyperlinkInfo):V
-- scrollTo(I):V
-- setHelpId(java.lang.String):V
-- setOutputPaused(Z):V
-- withConvertLfToCrlfForNonPtyProcess(Z):com.intellij.terminal.TerminalExecutionConsole
-- withEnterKeyDefaultCodeEnabled(Z):com.intellij.terminal.TerminalExecutionConsole
 f:com.intellij.terminal.TerminalExecutorServiceManagerImpl
 - com.jediterm.terminal.TerminalExecutorServiceManager
 - <init>():V

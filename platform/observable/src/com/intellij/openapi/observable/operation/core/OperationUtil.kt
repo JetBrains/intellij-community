@@ -4,7 +4,9 @@ package com.intellij.openapi.observable.operation.core
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.operation.OperationExecutionId
 import com.intellij.openapi.observable.operation.OperationExecutionStatus
-import com.intellij.openapi.observable.operation.core.ObservableOperationStatus.*
+import com.intellij.openapi.observable.operation.core.ObservableOperationStatus.COMPLETED
+import com.intellij.openapi.observable.operation.core.ObservableOperationStatus.IN_PROGRESS
+import com.intellij.openapi.observable.operation.core.ObservableOperationStatus.SCHEDULED
 import com.intellij.openapi.observable.properties.ObservableBooleanProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.progress.ProcessCanceledException

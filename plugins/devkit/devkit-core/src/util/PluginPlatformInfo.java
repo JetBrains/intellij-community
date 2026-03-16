@@ -3,9 +3,7 @@ package org.jetbrains.idea.devkit.util;
 
 import com.intellij.java.library.JavaLibraryModificationTracker;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
@@ -15,9 +13,11 @@ import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.workspaceModel.ide.LibraryEntities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -103,12 +103,13 @@ public final class PluginPlatformInfo {
       return UNRESOLVED_INSTANCE;
     }
 
-    final OrderEntry entry = LibraryUtil.findLibraryEntry(markerClass.getContainingFile().getVirtualFile(), module.getProject());
-    if ((!(entry instanceof LibraryOrderEntry))) {
+    var libraryEntity = ContainerUtil.getFirstItem(ProjectFileIndex
+                                 .getInstance(module.getProject()).findContainingLibraries(markerClass.getContainingFile().getVirtualFile()));
+    if (libraryEntity == null) {
       return UNRESOLVED_INSTANCE;
     }
 
-    final String libraryName = entry.getPresentableName();
+    final String libraryName = LibraryEntities.getPresentableName(libraryEntity);
 
     String version = StringUtil.substringAfterLast(libraryName, ":");
     if (StringUtil.isEmpty(version)) {

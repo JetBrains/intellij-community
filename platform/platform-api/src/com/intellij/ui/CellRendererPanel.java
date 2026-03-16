@@ -6,8 +6,16 @@ import sun.awt.AWTAccessor;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.LayoutManager;
+import java.awt.LayoutManager2;
+import java.awt.Rectangle;
 
 /**
  * Cell renderer CPU optimization.

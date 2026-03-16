@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.EventListener;
 
 public interface GridSearchSession<Row, Column> extends SearchSession {

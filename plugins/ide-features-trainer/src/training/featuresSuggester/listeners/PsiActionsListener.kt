@@ -6,7 +6,18 @@ import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
 import training.featuresSuggester.SuggesterSupport
 import training.featuresSuggester.SuggestingUtils.handleAction
-import training.featuresSuggester.actions.*
+import training.featuresSuggester.actions.BeforeChildAddedAction
+import training.featuresSuggester.actions.BeforeChildMovedAction
+import training.featuresSuggester.actions.BeforeChildRemovedAction
+import training.featuresSuggester.actions.BeforeChildReplacedAction
+import training.featuresSuggester.actions.BeforeChildrenChangedAction
+import training.featuresSuggester.actions.BeforePropertyChangedAction
+import training.featuresSuggester.actions.ChildAddedAction
+import training.featuresSuggester.actions.ChildMovedAction
+import training.featuresSuggester.actions.ChildRemovedAction
+import training.featuresSuggester.actions.ChildReplacedAction
+import training.featuresSuggester.actions.ChildrenChangedAction
+import training.featuresSuggester.actions.PropertyChangedAction
 
 class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() {
   override fun beforePropertyChange(event: PsiTreeChangeEvent) {

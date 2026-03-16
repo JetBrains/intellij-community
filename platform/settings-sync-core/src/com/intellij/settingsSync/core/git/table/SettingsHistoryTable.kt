@@ -13,7 +13,12 @@ import com.intellij.settingsSync.core.SettingsSyncBundle
 import com.intellij.settingsSync.core.SettingsSyncEvents
 import com.intellij.settingsSync.core.SyncSettingsEvent
 import com.intellij.settingsSync.core.git.record.HistoryRecord
-import com.intellij.settingsSync.core.git.renderers.*
+import com.intellij.settingsSync.core.git.renderers.SettingsHistoryEmptyCellRenderer
+import com.intellij.settingsSync.core.git.renderers.SettingsHistoryFileCellRenderer
+import com.intellij.settingsSync.core.git.renderers.SettingsHistoryNodeCellRenderer
+import com.intellij.settingsSync.core.git.renderers.SettingsHistoryRestoreCellRenderer
+import com.intellij.settingsSync.core.git.renderers.SettingsHistorySubtitleRenderer
+import com.intellij.settingsSync.core.git.renderers.SettingsHistoryTitleCellRenderer
 import com.intellij.ui.SingleSelectionModel
 import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.render.RenderingUtil

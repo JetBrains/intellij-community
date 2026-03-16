@@ -1,7 +1,14 @@
 package org.intellij.plugins.markdown.lang.psi;
 
 import com.intellij.psi.PsiElementVisitor;
-import org.intellij.plugins.markdown.lang.psi.impl.*;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable;
 import org.jetbrains.annotations.NotNull;
 
 public class MarkdownElementVisitor extends PsiElementVisitor {

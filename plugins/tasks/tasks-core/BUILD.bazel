@@ -23,10 +23,11 @@ jvm_library(
     "//platform/vcs-api:vcs",
     "//platform/lang-impl",
     "//platform/vcs-impl",
-    "//plugins/tasks/tasks-core/lib:axis-1-4",
+    "//plugins/tasks/tasks-core/lib:tasks-core-axis-1-4",
     "//libraries/gson",
     "//xml/impl",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "//RegExpSupport:regexp",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",
@@ -38,10 +39,14 @@ jvm_library(
     "//libraries/javax/annotation",
     "//platform/core-ui",
     "//libraries/jsonpath",
+    "//platform/core-impl",
     "//platform/statistics",
     "//platform/util/jdom",
     "//platform/markdown-utils",
+    "//platform/util/text-matching",
+    "//platform/polySymbols",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
-  exports = ["//plugins/tasks/tasks-core/lib:axis-1-4"]
+  exports = ["//plugins/tasks/tasks-core/lib:tasks-core-axis-1-4"]
 )
 ### auto-generated section `build intellij.tasks.core` end

@@ -28,8 +28,7 @@ import java.util.regex.Pattern;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.string;
 
-public class XmlDeprecatedElementInspection extends XmlSuppressableInspectionTool {
-
+public final class XmlDeprecatedElementInspection extends XmlSuppressableInspectionTool {
   @Language("RegExp")
   public String regexp = "(?i)deprecated.*";
 

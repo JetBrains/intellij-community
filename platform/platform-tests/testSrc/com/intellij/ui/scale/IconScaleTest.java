@@ -20,8 +20,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
@@ -33,8 +36,12 @@ import static com.intellij.ui.icons.CustomIconUtilKt.loadIconCustomVersionOrScal
 import static com.intellij.ui.icons.CustomIconUtilKt.scaleIconOrLoadCustomVersion;
 import static com.intellij.ui.scale.DerivedScaleType.DEV_SCALE;
 import static com.intellij.ui.scale.DerivedScaleType.EFF_USR_SCALE;
-import static com.intellij.ui.scale.ScaleType.*;
-import static com.intellij.ui.scale.TestScaleHelper.*;
+import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
+import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
+import static com.intellij.ui.scale.ScaleType.USR_SCALE;
+import static com.intellij.ui.scale.TestScaleHelper.createImageAndGraphics;
+import static com.intellij.ui.scale.TestScaleHelper.loadImage;
+import static com.intellij.ui.scale.TestScaleHelper.overrideJreHiDPIEnabled;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 

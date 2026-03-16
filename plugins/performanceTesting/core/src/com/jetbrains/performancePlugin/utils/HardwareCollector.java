@@ -29,9 +29,24 @@ import com.intellij.openapi.project.Project;
 import com.intellij.troubleshooting.TroubleInfoCollector;
 import org.jetbrains.annotations.NotNull;
 import oshi.SystemInfo;
-import oshi.hardware.*;
+import oshi.hardware.CentralProcessor;
 import oshi.hardware.CentralProcessor.TickType;
-import oshi.software.os.*;
+import oshi.hardware.ComputerSystem;
+import oshi.hardware.Display;
+import oshi.hardware.GlobalMemory;
+import oshi.hardware.GraphicsCard;
+import oshi.hardware.HWDiskStore;
+import oshi.hardware.HWPartition;
+import oshi.hardware.HardwareAbstractionLayer;
+import oshi.hardware.LogicalVolumeGroup;
+import oshi.hardware.NetworkIF;
+import oshi.hardware.PhysicalMemory;
+import oshi.hardware.VirtualMemory;
+import oshi.software.os.FileSystem;
+import oshi.software.os.NetworkParams;
+import oshi.software.os.OSFileStore;
+import oshi.software.os.OSProcess;
+import oshi.software.os.OperatingSystem;
 import oshi.util.FormatUtil;
 import oshi.util.Util;
 
@@ -51,6 +66,10 @@ public final class HardwareCollector implements TroubleInfoCollector {
   }
 
   public String collectHardwareInfo() {
+    return collectHardwareInfo(true);
+  }
+
+  public String collectHardwareInfo(Boolean skipNetworkReporting) {
     if (!JnaLoader.isLoaded()) {
       return "Failed to collect computer system info: JNA is not loaded)";
     }
@@ -105,24 +124,25 @@ public final class HardwareCollector implements TroubleInfoCollector {
         logger.warn("Failed to collect filesystem info", e);
         info.add("Failed to collect filesystem info: " + e.getMessage());
       }
-
-      try {
-        info.add("\n=====NETWORK SUMMARY=====\n");
-        printNetworkInterfaces(hal.getNetworkIFs());
-        printNetworkParameters(os.getNetworkParams());
+      // getaddrinfo() throws nodename nor servname provided, or not known locally on macOS, allow skipping it for local runs
+      if (skipNetworkReporting) {
+        try {
+          info.add("\n=====NETWORK SUMMARY=====\n");
+          printNetworkInterfaces(hal.getNetworkIFs());
+          printNetworkParameters(os.getNetworkParams());
+        }
+        catch (Throwable e) {
+          logger.warn("Failed to collect network info", e);
+          info.add("Failed to collect network info: " + e.getMessage());
+        }
       }
-      catch (Throwable e) {
-        logger.warn("Failed to collect network info", e);
-        info.add("Failed to collect network info: " + e.getMessage());
-      }
-
       try {
         info.add("\n=====GRAPHICS SUMMARY=====\n");
         printDisplays(hal.getDisplays());
         printGraphicsCards(hal.getGraphicsCards());
       }
       catch (Throwable e) {
-        logger.warn("Failed to collect network info", e);
+        logger.warn("Failed to collect graphic system info", e);
         info.add("Failed to collect network info: " + e.getMessage());
       }
       StringBuilder output = new StringBuilder();

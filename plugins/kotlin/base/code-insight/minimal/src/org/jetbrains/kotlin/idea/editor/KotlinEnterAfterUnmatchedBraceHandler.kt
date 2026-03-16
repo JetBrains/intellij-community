@@ -12,11 +12,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclarationWithInitializer
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtWhenConditionWithExpression
+import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespace
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import kotlin.collections.firstOrNull
 
 internal fun getElementAtOffsetIgnoreWhitespaceAfter(file: PsiFile, offset: Int): PsiElement? {
     val element = file.findElementAt(offset - 1)
@@ -26,7 +30,7 @@ internal fun getElementAtOffsetIgnoreWhitespaceAfter(file: PsiFile, offset: Int)
     return element
 }
 
-class KotlinEnterAfterUnmatchedBraceHandler : EnterAfterUnmatchedBraceHandler() {
+private class KotlinEnterAfterUnmatchedBraceHandler : EnterAfterUnmatchedBraceHandler() {
     override fun preprocessEnter(
         file: PsiFile,
         editor: Editor,

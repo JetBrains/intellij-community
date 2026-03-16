@@ -6,9 +6,11 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 
+@K1Deprecation
 class KtThisDescriptor(val descriptor: DeclarationDescriptor, private val dfType : DfType) : VariableDescriptor  {
     override fun isStable(): Boolean {
         return true

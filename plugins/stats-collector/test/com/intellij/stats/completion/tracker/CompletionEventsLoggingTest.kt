@@ -3,7 +3,14 @@ package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.stats.completion.Action.*
+import com.intellij.stats.completion.Action.BACKSPACE
+import com.intellij.stats.completion.Action.COMPLETION_CANCELED
+import com.intellij.stats.completion.Action.COMPLETION_STARTED
+import com.intellij.stats.completion.Action.DOWN
+import com.intellij.stats.completion.Action.EXPLICIT_SELECT
+import com.intellij.stats.completion.Action.TYPE
+import com.intellij.stats.completion.Action.TYPED_SELECT
+import com.intellij.stats.completion.Action.UP
 import com.intellij.stats.completion.events.ExplicitSelectEvent
 import com.intellij.stats.completion.events.LogEvent
 import com.intellij.stats.completion.events.TypedSelectEvent

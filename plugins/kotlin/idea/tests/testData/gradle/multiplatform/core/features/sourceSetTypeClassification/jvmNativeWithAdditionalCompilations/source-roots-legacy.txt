@@ -8,15 +8,19 @@ rootProject.commonTest
     src/commonTest/kotlin (Test)
 
 rootProject.jvmAdditionalNonTest
+    src/jvmAdditionalNonTest/java (Java)
     src/jvmAdditionalNonTest/kotlin (Java)
 
 rootProject.jvmAdditionalTest
+    src/jvmAdditionalTest/java (Java)
     src/jvmAdditionalTest/kotlin (Java)
 
 rootProject.jvmMain
+    src/jvmMain/java (Java)
     src/jvmMain/kotlin (Java)
 
 rootProject.jvmTest
+    src/jvmTest/java (Java, Test)
     src/jvmTest/kotlin (Java, Test)
 
 rootProject.linuxMain

@@ -4,7 +4,12 @@
 package com.intellij.internal.statistic.service.fus.collectors
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId
+import com.intellij.internal.statistic.eventLog.events.EventId1
+import com.intellij.internal.statistic.eventLog.events.EventId2
+import com.intellij.internal.statistic.eventLog.events.EventId3
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.FileType
 import org.jetbrains.annotations.ApiStatus

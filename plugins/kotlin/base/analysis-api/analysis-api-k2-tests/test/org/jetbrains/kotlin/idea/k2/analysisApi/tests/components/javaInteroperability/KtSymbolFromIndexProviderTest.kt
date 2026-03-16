@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.application
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.name.ClassId
 
@@ -38,8 +38,7 @@ class KtSymbolFromIndexProviderTest : JavaCodeInsightFixtureTestCase() {
         }
 
         val fqname = ReadAction.compute<String, Exception> {
-            val projectStructureProvider = project.getService(KotlinProjectStructureProvider::class.java)!!
-            val kaModule = projectStructureProvider.getModule(myFixture.file, null)
+            val kaModule = KaModuleProvider.getModule(project, myFixture.file, useSiteModule = null)
             analyze(kaModule) {
                 val user = findClass(ClassId.fromString("com/example/app/User"))!!
                 val index = KtSymbolFromIndexProvider(null)

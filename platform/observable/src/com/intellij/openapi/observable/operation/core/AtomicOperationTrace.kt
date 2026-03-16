@@ -3,13 +3,13 @@ package com.intellij.openapi.observable.operation.core
 
 import com.intellij.openapi.observable.operation.OperationExecutionId
 import com.intellij.openapi.observable.operation.OperationExecutionStatus
-import org.jetbrains.annotations.ApiStatus
-import com.intellij.openapi.observable.operation.core.ObservableOperationStatus.*
+import com.intellij.openapi.observable.operation.core.ObservableOperationStatus.COMPLETED
+import com.intellij.openapi.observable.operation.core.ObservableOperationStatus.IN_PROGRESS
+import com.intellij.openapi.observable.operation.core.ObservableOperationStatus.SCHEDULED
 import com.intellij.openapi.util.text.NaturalComparator
-import java.util.*
+import org.jetbrains.annotations.ApiStatus
+import java.util.StringJoiner
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.collections.plus
-import kotlin.collections.minus
 
 @ApiStatus.Experimental
 class AtomicOperationTrace(

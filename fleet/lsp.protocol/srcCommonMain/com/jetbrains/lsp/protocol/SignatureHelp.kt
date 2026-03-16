@@ -17,13 +17,13 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.jvm.JvmInline
 
-@Serializable
-data class SignatureHelpOptions(
+interface SignatureHelpOptions : WorkDoneProgressOptions {
   /**
    * The characters that trigger signature help
    * automatically.
    */
-  val triggerCharacters: List<String>?,
+  val triggerCharacters: List<String>?
+
   /**
    * List of characters that re-trigger signature help.
    *
@@ -33,9 +33,30 @@ data class SignatureHelpOptions(
    *
    * @since 3.15.0
    */
-  val retriggerCharacters: List<String>?,
-  override val workDoneProgress: Boolean?,
-) : WorkDoneProgressOptions
+  val retriggerCharacters: List<String>?
+}
+
+@Serializable
+data class SignatureHelpRegistrationOptions(
+  /**
+   * The characters that trigger signature help
+   * automatically.
+   */
+  override val triggerCharacters: List<String>?,
+
+  /**
+   * List of characters that re-trigger signature help.
+   *
+   * These trigger characters are only active when signature help is already
+   * showing. All trigger characters are also counted as re-trigger
+   * characters.
+   *
+   * @since 3.15.0
+   */
+  override val retriggerCharacters: List<String>?,
+  override val workDoneProgress: Boolean? = null,
+  override val documentSelector: DocumentSelector? = null,
+) : SignatureHelpOptions, TextDocumentRegistrationOptions
 
 @Serializable
 data class SignatureHelpParams(

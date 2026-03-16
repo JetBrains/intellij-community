@@ -7,8 +7,15 @@ import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.util.ui.UIUtil
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
+import training.dsl.TaskContext
+import training.dsl.TaskRuntimeContext
+import training.dsl.parseLessonSample
+import training.dsl.restoreAfterStateBecomeFalse
+import training.dsl.restoreRefactoringOptionsInformer
+import training.dsl.showWarningIfInplaceRefactoringsDisabled
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import javax.swing.JDialog

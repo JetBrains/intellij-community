@@ -20,7 +20,7 @@ source.cpp;comment.line.double-slash.cpp;punctuation.definition.comment.cpp: [42
 source.cpp;comment.line.double-slash.cpp: [44, 74], { Function to swap two elements}
 source.cpp: [74, 75], {
 }
-source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;meta.qualified_type.cpp: [75, 79], {void}
+source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;meta.qualified_type.cpp;storage.type.primitive.cpp;storage.type.built-in.primitive.cpp: [75, 79], {void}
 source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp: [79, 80], { }
 source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;entity.name.function.definition.cpp: [80, 84], {swap}
 source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;punctuation.section.parameters.begin.bracket.round.cpp: [84, 85], {(}
@@ -76,7 +76,7 @@ source.cpp;comment.line.double-slash.cpp;punctuation.definition.comment.cpp: [15
 source.cpp;comment.line.double-slash.cpp: [155, 214], { Function to partition the array and return the pivot index}
 source.cpp: [214, 215], {
 }
-source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;meta.qualified_type.cpp: [215, 218], {int}
+source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;meta.qualified_type.cpp;storage.type.primitive.cpp;storage.type.built-in.primitive.cpp: [215, 218], {int}
 source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp: [218, 219], { }
 source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;entity.name.function.definition.cpp: [219, 228], {partition}
 source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;punctuation.section.parameters.begin.bracket.round.cpp: [228, 229], {(}
@@ -248,7 +248,7 @@ source.cpp;comment.line.double-slash.cpp;punctuation.definition.comment.cpp: [58
 source.cpp;comment.line.double-slash.cpp: [587, 618], { Function to perform Quick Sort}
 source.cpp: [618, 619], {
 }
-source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;meta.qualified_type.cpp: [619, 623], {void}
+source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;meta.qualified_type.cpp;storage.type.primitive.cpp;storage.type.built-in.primitive.cpp: [619, 623], {void}
 source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp: [623, 624], { }
 source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;entity.name.function.definition.cpp: [624, 633], {quickSort}
 source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;punctuation.section.parameters.begin.bracket.round.cpp: [633, 634], {(}
@@ -350,7 +350,7 @@ source.cpp;comment.line.double-slash.cpp;punctuation.definition.comment.cpp: [90
 source.cpp;comment.line.double-slash.cpp: [907, 935], { Function to print the array}
 source.cpp: [935, 936], {
 }
-source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;meta.qualified_type.cpp: [936, 940], {void}
+source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;meta.qualified_type.cpp;storage.type.primitive.cpp;storage.type.built-in.primitive.cpp: [936, 940], {void}
 source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp: [940, 941], { }
 source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;entity.name.function.definition.cpp: [941, 951], {printArray}
 source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;punctuation.section.parameters.begin.bracket.round.cpp: [951, 952], {(}
@@ -421,7 +421,7 @@ source.cpp: [1068, 1069], {
 }
 source.cpp: [1069, 1070], {
 }
-source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;meta.qualified_type.cpp: [1070, 1073], {int}
+source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;meta.qualified_type.cpp;storage.type.primitive.cpp;storage.type.built-in.primitive.cpp: [1070, 1073], {int}
 source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp: [1073, 1074], { }
 source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;entity.name.function.definition.cpp: [1074, 1078], {main}
 source.cpp;meta.function.definition.cpp;meta.head.function.definition.cpp;punctuation.section.parameters.begin.bracket.round.cpp: [1078, 1079], {(}

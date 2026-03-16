@@ -20,7 +20,7 @@ import static com.intellij.database.run.actions.NotebookGridPatcherKt.RESULTS_PA
 /**
  * @author Gregory.Shrago
  */
-public class AddRowAction extends DumbAwareAction implements GridAction {
+public class AddRowAction extends DumbAwareAction implements GridEditAction {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;

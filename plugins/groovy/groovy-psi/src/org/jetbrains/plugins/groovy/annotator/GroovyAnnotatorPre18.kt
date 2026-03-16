@@ -5,7 +5,10 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.groovy.GroovyBundle.message
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.DOLLAR_SLASHY_BEGIN
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.DOLLAR_SLASHY_LITERAL
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SLASHY_BEGIN
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SLASHY_LITERAL
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall

@@ -5,10 +5,22 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiPackage;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.DefinesXml;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.NameValue;
+import com.intellij.util.xml.Required;
+import com.intellij.util.xml.Stubbed;
+import com.intellij.util.xml.SubTag;
+import com.intellij.util.xml.SubTagList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.impl.IdeaPluginConverter;
 import org.jetbrains.idea.devkit.dom.impl.IdeaPluginPackageConverter;
 
 import java.util.List;
@@ -122,8 +134,9 @@ public interface IdeaPlugin extends DomElement {
   @SubTagList("depends")
   Dependency addDependency();
 
+  @Convert(IdeaPluginConverter.class)
   @SubTagList("incompatible-with")
-  @NotNull List<GenericDomValue<String>> getIncompatibilities();
+  @NotNull List<GenericDomValue<IdeaPlugin>> getIncompatibilities();
 
   @Stubbed
   @SubTagList("module")
@@ -178,6 +191,6 @@ public interface IdeaPlugin extends DomElement {
    * @deprecated the corresponding tag in plugin.xml is not supported anymore, this method is used to highlight occurrences of such a tag
    */
   @SuppressWarnings("SpellCheckingInspection")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull List<? extends Helpset> getHelpsets();
 }

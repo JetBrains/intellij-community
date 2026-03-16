@@ -4,13 +4,38 @@ package com.intellij.psi.util;
 import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.ide.util.JavaLocalClassesHelper;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeVisitor;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.containers.ObjectIntMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,6 +179,8 @@ public final class ClassUtil {
 
   /**
    * Looks for inner and anonymous classes by FQN in a javac notation ('pkg.Top$Inner').
+   *
+   * @see #findPsiClassWithSourcePriority
    */
   public static @Nullable PsiClass findPsiClass(@NotNull PsiManager manager, @NotNull String name) {
     return findPsiClass(manager, name, null, false);
@@ -165,6 +192,31 @@ public final class ClassUtil {
                                                 boolean jvmCompatible) {
     GlobalSearchScope scope = GlobalSearchScope.allScope(manager.getProject());
     return findPsiClass(manager, name, parent, jvmCompatible, scope);
+  }
+
+  /**
+   * Looks for inner and anonymous classes by FQN in a javac notation ('pkg.Top$Inner').
+   * If there are several classes with the same FQN, it prefers the one from the content roots of the project.
+   *
+   * @deprecated use {@link JavaPsiFacade#findClasses(String, GlobalSearchScope)} instead and gracefully process possible duplicates.
+   */
+  @ApiStatus.Internal
+  @Deprecated
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  public static @Nullable PsiClass findPsiClassWithSourcePriority(@NotNull PsiManager manager,
+                                                                  @NotNull String qualifiedName,
+                                                                  boolean jvmCompatible) {
+    Project project = manager.getProject();
+    GlobalSearchScope contentScope = ProjectScope.getContentScope(project);
+
+    PsiClass psiClass = findPsiClass(manager, qualifiedName, null, jvmCompatible, contentScope);
+    if (psiClass != null) {
+      return psiClass;
+    }
+
+    GlobalSearchScope allScope = ProjectScope.getAllScope(project);
+    return findPsiClass(manager, qualifiedName, null, jvmCompatible, allScope);
   }
 
   public static @Nullable PsiClass findPsiClass(@NotNull PsiManager manager,

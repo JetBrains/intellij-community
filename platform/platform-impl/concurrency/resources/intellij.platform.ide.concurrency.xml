@@ -1,0 +1,22 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.concurrency.JobLauncher"
+                        serviceImplementation="com.intellij.concurrency.JobLauncherImpl"/>
+    <!--suppress DeprecatedClassUsageInspection -->
+    <applicationService serviceInterface="com.intellij.concurrency.AsyncFutureFactory"
+                        serviceImplementation="com.intellij.concurrency.AsyncFutureFactoryImpl"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.application.CoroutineSupport"
+                        serviceImplementation="com.intellij.application.impl.AssertingPlatformCoroutineSupport" overrides="true"/>
+  </extensions>
+</idea-plugin>

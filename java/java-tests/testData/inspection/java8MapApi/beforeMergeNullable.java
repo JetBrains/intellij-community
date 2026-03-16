@@ -1,4 +1,4 @@
-// "Replace with 'merge' method call" "false"
+// "Replace with 'merge()' call" "false"
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;

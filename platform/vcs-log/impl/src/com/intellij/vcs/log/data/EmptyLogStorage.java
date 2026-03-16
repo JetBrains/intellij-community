@@ -5,12 +5,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.function.Predicate;
 
-class EmptyLogStorage implements VcsLogStorage {
+@ApiStatus.Internal
+@VisibleForTesting
+public class EmptyLogStorage implements VcsLogStorage {
   public static final @NotNull VcsLogStorage INSTANCE = new EmptyLogStorage();
 
   private EmptyLogStorage() { }

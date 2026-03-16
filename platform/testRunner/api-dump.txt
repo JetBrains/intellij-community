@@ -122,6 +122,7 @@ a:com.intellij.execution.testframework.TestConsoleProperties
 - sf:HIDE_SUCCESSFUL_CONFIG:com.intellij.util.config.BooleanProperty
 - sf:INCLUDE_NON_STARTED_IN_RERUN_FAILED:com.intellij.util.config.BooleanProperty
 - sf:OPEN_FAILURE_LINE:com.intellij.util.config.BooleanProperty
+- sf:SCROLL_TO_BOTTOM:com.intellij.util.config.BooleanProperty
 - sf:SCROLL_TO_SOURCE:com.intellij.util.config.BooleanProperty
 - sf:SCROLL_TO_STACK_TRACE:com.intellij.util.config.BooleanProperty
 - sf:SELECT_FIRST_DEFECT:com.intellij.util.config.BooleanProperty
@@ -462,12 +463,10 @@ c:com.intellij.execution.testframework.ui.TestStatusLine
 - <init>():V
 - formatTestMessage(I,I,I,I,java.lang.Long,J):V
 - getStateText():java.lang.String
-- getStatusColor():java.awt.Color
 - onTestsDone(java.util.function.Supplier):V
 - setFraction(D):V
 - setIndeterminate(Z):V
 - setStatus(java.lang.String):V
-- setStatusColor(java.awt.Color):V
 - setText(java.lang.String):V
 c:com.intellij.execution.testframework.ui.TestsConsoleBuilderImpl
 - com.intellij.execution.filters.TextConsoleBuilderImpl

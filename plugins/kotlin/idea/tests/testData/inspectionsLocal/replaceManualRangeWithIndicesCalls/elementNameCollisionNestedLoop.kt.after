@@ -1,0 +1,10 @@
+// WITH_STDLIB
+// FIX: Replace with loop over elements
+fun test() {
+    val outer = listOf(listOf("a", "b"), listOf("c", "d"))
+    for (element in outer) {
+        for (element1 in element) {
+            element1.length
+        }
+    }
+}

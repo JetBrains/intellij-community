@@ -12,20 +12,23 @@ public final class RegistryKeyDescriptor {
   private final @NotNull String myDescription;
   private final boolean myRestartRequired;
   private final boolean myOverrides;
-  private final String myPluginId;
+  private final @Nullable String myPluginId;
+  private final @Nullable String myPluginDescriptorPath;
 
   public RegistryKeyDescriptor(@NotNull String name,
                                @NotNull String description,
                                @NotNull String defaultValue,
                                boolean restartRequired,
                                boolean overrides,
-                               @Nullable String pluginId) {
+                               @Nullable String pluginId,
+                               @Nullable String pluginDescriptorPath) {
     myName = name;
     myDefaultValue = defaultValue;
     myDescription = description;
     myRestartRequired = restartRequired;
     myOverrides = overrides;
     myPluginId = pluginId;
+    myPluginDescriptorPath = pluginDescriptorPath;
   }
 
   public @NotNull String getName() {
@@ -50,5 +53,12 @@ public final class RegistryKeyDescriptor {
 
   public @Nullable String getPluginId() {
     return myPluginId;
+  }
+
+  /**
+   * Path to the descriptor file declaring this bean, relative to the plugin location.
+   */
+  public @Nullable String getPluginDescriptorPath() {
+    return myPluginDescriptorPath;
   }
 }

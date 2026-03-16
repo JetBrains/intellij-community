@@ -33,7 +33,7 @@ jvm_library(
     "//platform/platform-impl/rpc",
     "//platform/project/shared:project",
     "//platform/kernel/rpc",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:kotlin-stdlib",
     "//platform/util:util-ui",
     "//platform/kernel/shared:kernel",

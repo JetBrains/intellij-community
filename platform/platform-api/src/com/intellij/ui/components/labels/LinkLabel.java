@@ -3,6 +3,7 @@ package com.intellij.ui.components.labels;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -11,6 +12,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.paint.RectanglePainter;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBRectangle;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -21,9 +23,26 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.AccessibleAction;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -353,10 +372,6 @@ public class LinkLabel<T> extends JLabel {
     disableUnderline();
   }
 
-  public void pressed(MouseEvent e) {
-    doClick(e);
-  }
-
   private class MyMouseHandler extends MouseAdapter implements MouseMotionListener {
     @Override
     public void mousePressed(MouseEvent e) {
@@ -369,8 +384,12 @@ public class LinkLabel<T> extends JLabel {
     @Override
     public void mouseReleased(MouseEvent e) {
       if (isEnabled() && myIsLinkActive && isInClickableArea(e.getPoint())) {
-        doClick(e);
-        e.consume();
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+          doClick(e);
+        }
+        finally {
+          e.consume();
+        }
       }
       setActive(false);
     }

@@ -5,12 +5,14 @@ package org.jetbrains.kotlin.idea.structureView
 import com.intellij.ide.util.InheritedMembersNodeProvider
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.psi.NavigatablePsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class KotlinInheritedMembersNodeProvider : InheritedMembersNodeProvider<TreeElement>() {
     override fun provideNodes(node: TreeElement): Collection<TreeElement> {
         if (node !is KotlinStructureViewElement) return listOf()

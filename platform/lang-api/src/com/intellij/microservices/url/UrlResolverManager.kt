@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Objects
 
 class UrlResolverManager(project: Project) {
   private val all: List<UrlResolver> = UrlResolverFactory.EP_NAME.extensionList.mapNotNull { it.forProject(project) }

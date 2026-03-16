@@ -18,8 +18,19 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.yaml.*;
-import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.YAMLBundle;
+import org.jetbrains.yaml.YAMLElementGenerator;
+import org.jetbrains.yaml.YAMLElementTypes;
+import org.jetbrains.yaml.YAMLTokenTypes;
+import org.jetbrains.yaml.YAMLUtil;
+import org.jetbrains.yaml.psi.YAMLCompoundValue;
+import org.jetbrains.yaml.psi.YAMLDocument;
+import org.jetbrains.yaml.psi.YAMLFile;
+import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLMapping;
+import org.jetbrains.yaml.psi.YAMLSequence;
+import org.jetbrains.yaml.psi.YAMLSequenceItem;
+import org.jetbrains.yaml.psi.YAMLValue;
 
 import java.util.List;
 

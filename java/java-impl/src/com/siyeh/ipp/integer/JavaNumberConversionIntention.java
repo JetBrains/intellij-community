@@ -12,7 +12,11 @@ import com.intellij.modcommand.ModChooseAction;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -26,7 +30,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static com.siyeh.ipp.integer.JavaNumberConverters.*;
+import static com.siyeh.ipp.integer.JavaNumberConverters.FLOAT_TO_DECIMAL;
+import static com.siyeh.ipp.integer.JavaNumberConverters.FLOAT_TO_HEX;
+import static com.siyeh.ipp.integer.JavaNumberConverters.FLOAT_TO_PLAIN;
+import static com.siyeh.ipp.integer.JavaNumberConverters.FLOAT_TO_SCIENTIFIC;
+import static com.siyeh.ipp.integer.JavaNumberConverters.INTEGER_TO_BINARY;
+import static com.siyeh.ipp.integer.JavaNumberConverters.INTEGER_TO_DECIMAL;
+import static com.siyeh.ipp.integer.JavaNumberConverters.INTEGER_TO_HEX;
+import static com.siyeh.ipp.integer.JavaNumberConverters.INTEGER_TO_OCTAL;
 
 public final class JavaNumberConversionIntention extends AbstractNumberConversionIntention {
 

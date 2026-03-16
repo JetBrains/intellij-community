@@ -13,7 +13,12 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.utils.*
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.utils.RemoveExplicitTypeArgumentsUtils
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
+import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.isCallingAnyOf
+import org.jetbrains.kotlin.idea.codeinsight.utils.plus
 import org.jetbrains.kotlin.idea.k2.refactoring.util.areTypeArgumentsRedundant
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -25,7 +30,6 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.qualifiedExpressionVisitor
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 
 internal class RedundantAsSequenceInspection : KotlinApplicableInspectionBase.Simple<KtQualifiedExpression, Unit>() {
 

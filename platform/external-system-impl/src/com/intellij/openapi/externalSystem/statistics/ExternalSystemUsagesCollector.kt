@@ -31,7 +31,7 @@ object ExternalSystemUsageFields {
 
   fun getJreVersion(project: Project, jreName: String?): String {
     val jdk = try {
-      ExternalSystemJdkUtil.getJdk(project, jreName)
+      ExternalSystemJdkUtil.resolveJdkName(project, jreName)
     }
     catch (ignored: Throwable) {
       return UNKNOWN

@@ -3,16 +3,19 @@ package org.jetbrains.kotlin.idea.core.script.k2.definitions
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsScriptConfigurationProvider
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.configurationResolverDelegate
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.scriptWorkspaceModelManagerDelegate
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsEntityProvider
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.scriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.v1.NewScriptFileInfo
 import org.jetbrains.kotlin.idea.core.script.v1.kotlinScriptTemplateInfo
 import org.jetbrains.kotlin.idea.core.script.v1.loggingReporter
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsFromClasspathDiscoverySource
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.dependenciesSources
+import kotlin.script.experimental.api.hostConfiguration
+import kotlin.script.experimental.api.ide
+import kotlin.script.experimental.api.with
 import kotlin.script.experimental.dependencies.withTransformedResolvers
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
@@ -27,11 +30,11 @@ class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSou
                 ::loggingReporter
             ).definitions
 
-            val mainKtsScriptConfigurationProvider = MainKtsScriptConfigurationProvider.getInstance(project)
+            val mainKtsConfigurationProvider = MainKtsEntityProvider.getInstance(project)
 
             return discoveredDefinitions.map { definition ->
                 val compilationConfiguration = definition.compilationConfiguration.withTransformedResolvers {
-                    ReportingExternalDependenciesResolver(it, mainKtsScriptConfigurationProvider)
+                    ReportingExternalDependenciesResolver(it, mainKtsConfigurationProvider)
                 }.with {
                     ide.dependenciesSources(JvmDependency(KotlinArtifacts.kotlinStdlibSources))
                     ide {
@@ -40,11 +43,8 @@ class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSou
                             title = ".main.kts"
                             templateName = "Kotlin Script MainKts"
                         })
-                        configurationResolverDelegate {
-                            mainKtsScriptConfigurationProvider
-                        }
-                        scriptWorkspaceModelManagerDelegate {
-                            mainKtsScriptConfigurationProvider
+                        scriptEntityProvider {
+                            mainKtsConfigurationProvider
                         }
                     }
                 }

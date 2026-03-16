@@ -25,20 +25,20 @@ public class TestStartedEvent extends BaseStartedNodeEvent {
 
   public TestStartedEvent(@NotNull TestStarted testStarted,
                           @Nullable String locationUrl) {
-    this(testStarted, locationUrl, BaseStartedNodeEvent.getMetainfo(testStarted));
+    this(testStarted, locationUrl, getMetainfo(testStarted));
   }
 
   public TestStartedEvent(@NotNull TestStarted testStarted,
                           @Nullable String locationUrl,
                           @Nullable String metainfo) {
     super(testStarted.getTestName(),
-          TreeNodeEvent.getNodeId(testStarted),
+          getNodeId(testStarted),
           getParentNodeId(testStarted),
           locationUrl,
           metainfo,
-          BaseStartedNodeEvent.getNodeType(testStarted),
-          BaseStartedNodeEvent.getNodeArgs(testStarted),
-          BaseStartedNodeEvent.isRunning(testStarted));
+          getNodeType(testStarted),
+          getNodeArgs(testStarted),
+          isRunning(testStarted));
   }
 
   public TestStartedEvent(@Nullable String name,

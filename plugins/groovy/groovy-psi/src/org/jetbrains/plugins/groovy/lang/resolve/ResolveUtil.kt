@@ -4,7 +4,17 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiPackage
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.ElementClassHint.DeclarationKind
 import com.intellij.psi.scope.NameHint

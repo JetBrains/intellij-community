@@ -15,13 +15,16 @@ jvm_library(
   resources = [":ant_resources"],
   deps = [
     "//java/openapi:java",
-    "@lib//ant/lib:ant-antlr",
+    "@lib//ant/lib:ant",
     "//platform/analysis-api:analysis",
+    "//xml/xml-analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",
+    "//platform/forms_rt:java-guiForms-rt",
     "//java/compiler/impl",
     "//platform/indexing-api:indexing",
+    "//platform/core-impl",
     "//platform/lang-core",
     "//platform/lvcs-api:lvcs",
     "//platform/macro",
@@ -54,6 +57,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
     "//xml/xml-psi-api:psi",
+    "//platform/execution",
   ]
 )
 
@@ -66,13 +70,16 @@ jvm_library(
     "//java/openapi:java",
     "//java/testFramework",
     "@lib//:junit4",
-    "@lib//ant/lib:ant-antlr",
+    "@lib//ant/lib:ant",
     "//platform/analysis-api:analysis",
+    "//xml/xml-analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",
+    "//platform/forms_rt:java-guiForms-rt",
     "//java/compiler/impl",
     "//platform/indexing-api:indexing",
+    "//platform/core-impl",
     "//platform/lang-core",
     "//platform/lvcs-api:lvcs",
     "//platform/macro",
@@ -111,6 +118,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//xml/xml-psi-api:psi",
     "//xml/testFramework",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.ant` end

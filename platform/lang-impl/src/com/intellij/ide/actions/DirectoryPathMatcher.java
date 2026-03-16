@@ -2,16 +2,22 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.util.gotoByName.GotoFileModel;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
+import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -20,14 +26,15 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IdFilter;
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
@@ -162,22 +169,7 @@ final class DirectoryPathMatcher {
 
   @ApiStatus.Internal
   static @NotNull List<Pair<VirtualFile, String>> getProjectRoots(GotoFileModel model) {
-    var workspaceFileIndex = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(model.getProject());
     Set<VirtualFile> roots = new HashSet<>(BaseProjectDirectories.getBaseDirectories(model.getProject()));
-
-    if (Registry.is("search.in.non.indexable")) {
-      var nonIndexableRoots = ReadAction.nonBlocking(() -> {
-        var contentNonIndexable = VirtualFilePrefixTree.INSTANCE.createSet();
-        workspaceFileIndex.visitFileSets((fileSet, entity) -> {
-          boolean isRecursive = ((WorkspaceFileSetWithCustomData<?>)fileSet).getRecursive();
-          if (isRecursive && fileSet.getKind().isContent() && !fileSet.getKind().isIndexable()) {
-            contentNonIndexable.add(fileSet.getRoot());
-          }
-        });
-        return contentNonIndexable.getRoots();
-      }).executeSynchronously();
-      roots.addAll(nonIndexableRoots);
-    }
 
     for (Module module : ModuleManager.getInstance(model.getProject()).getModules()) {
       for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {

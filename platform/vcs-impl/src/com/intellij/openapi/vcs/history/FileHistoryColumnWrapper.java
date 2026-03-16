@@ -8,11 +8,12 @@ import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTable;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.util.Comparator;
 import java.util.Enumeration;
 

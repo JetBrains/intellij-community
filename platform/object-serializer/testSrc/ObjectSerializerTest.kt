@@ -9,7 +9,7 @@ import org.junit.Test
 import org.junit.rules.TestName
 import java.io.File
 import java.nio.file.Paths
-import java.util.*
+import java.util.Base64
 
 class ObjectSerializerTest {
   @Rule

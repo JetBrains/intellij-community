@@ -18,14 +18,29 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.isArm64
+import com.intellij.platform.eel.isLinux
+import com.intellij.platform.eel.isMac
+import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.isX86_64
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.write
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.longOrNull
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.model.java.JdkVersionDetector
@@ -39,6 +54,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.io.path.readText
+import kotlin.time.Duration.Companion.seconds
 
 /** describes vendor + product part of the UI **/
 @Internal
@@ -516,13 +532,19 @@ class JdkListDownloader : JdkListDownloaderBase() {
 
 @Internal
 abstract class JdkListDownloaderBase {
+  companion object {
+    private val CONNECT_TIMEOUT = 15.seconds
+    private val REQUEST_TIMEOUT = 60.seconds
+  }
+
   protected abstract val feedUrl: String
 
   private fun downloadJdkList(feedUrl: String, progress: ProgressIndicator?) =
     HttpRequests
       .request(feedUrl)
+      .connectTimeout(CONNECT_TIMEOUT.inWholeMilliseconds.toInt())
+      .readTimeout(REQUEST_TIMEOUT.inWholeMilliseconds.toInt())
       .productNameAsUserAgent()
-      //timeouts are handled inside
       .readBytes(progress)
 
   /**

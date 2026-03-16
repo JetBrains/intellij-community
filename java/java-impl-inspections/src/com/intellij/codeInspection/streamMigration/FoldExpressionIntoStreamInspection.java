@@ -1,14 +1,32 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
+import com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
@@ -17,14 +35,24 @@ import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.StreamApiUtil;
+import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.codeInsight.intention.impl.StreamRefactoringUtil.getMapOperationName;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHAR_SEQUENCE;
@@ -94,7 +122,7 @@ public final class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLo
         }
         elements.add(left);
       }
-      else if (elements.get(0) != left) {
+      else if (elements.getFirst() != left) {
         return Collections.emptyList();
       }
       if (!Objects.equals(left.getType(), right.getType()) ||
@@ -198,7 +226,7 @@ public final class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLo
       if (diffs.isEmpty()) return;
 
       PsiExpression[] operands = expression.getOperands();
-      PsiExpression firstExpression = diffs.get(0);
+      PsiExpression firstExpression = diffs.getFirst();
       assert PsiTreeUtil.isAncestor(operands[0], firstExpression, false);
       Object marker = new Object();
       PsiTreeUtil.mark(firstExpression, marker);
@@ -262,7 +290,7 @@ public final class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLo
     public boolean isStringJoin(PsiPolyadicExpression expression, List<? extends PsiExpression> diff) {
       if (!myMapToString.isEmpty()) return false;
       PsiExpression[] operands = getOperands(expression);
-      return operands[0] == diff.get(0);
+      return operands[0] == diff.getFirst();
     }
 
     @Override

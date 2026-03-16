@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal.view.shellIntegration.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.containers.DisposableWrapperList
-import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
@@ -14,7 +13,15 @@ import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
-import org.jetbrains.plugins.terminal.view.shellIntegration.*
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockAddedEvent
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockBase
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockIdImpl
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockRemovedEvent
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksModel
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksModelEvent
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksModelListener
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksReplacedEvent
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 
 @ApiStatus.Internal
 class TerminalBlocksModelImpl(
@@ -170,7 +177,7 @@ class TerminalBlocksModelImpl(
       endOffset = outputModel.endOffset,
       commandStartOffset = null,
       outputStartOffset = null,
-      workingDirectory = sessionModel.terminalState.value.currentDirectory.nullize(), // it can be empty string, so use nullize()
+      workingDirectory = sessionModel.terminalState.value.currentDirectory,
       executedCommand = null,
       exitCode = null,
     )

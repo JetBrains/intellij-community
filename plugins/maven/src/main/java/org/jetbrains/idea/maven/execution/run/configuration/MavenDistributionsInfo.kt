@@ -11,7 +11,14 @@ import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.idea.maven.maven3.Bundled3DistributionInfo
 import org.jetbrains.idea.maven.maven4.Bundled4DistributionInfo
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.BundledMaven3
+import org.jetbrains.idea.maven.project.BundledMaven4
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle
+import org.jetbrains.idea.maven.project.MavenHomeType
+import org.jetbrains.idea.maven.project.MavenInSpecificPath
+import org.jetbrains.idea.maven.project.MavenProjectBundle
+import org.jetbrains.idea.maven.project.MavenWrapper
+import org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenDistributionsInfo(private val project: Project) : AsyncDistributionsInfo {

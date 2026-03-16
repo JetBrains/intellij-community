@@ -37,7 +37,11 @@ import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.ui.popup.PopupChooserBuilder
+import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
@@ -58,11 +62,23 @@ import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics
 import java.awt.event.ActionEvent
-import java.util.*
+import java.util.Arrays
 import java.util.function.Supplier
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.BorderFactory
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.KeyStroke
 
 private val GO_TO_EP_NAME = ExtensionPointName<GotoRelatedProvider>("com.intellij.gotoRelatedProvider")
 

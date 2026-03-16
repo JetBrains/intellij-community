@@ -2,7 +2,11 @@
 package andel.tokens.impl
 
 import andel.rope.Metric
-import andel.tokens.*
+import andel.tokens.MutableTokensView
+import andel.tokens.Token2
+import andel.tokens.TokenIndex
+import andel.tokens.Tokens
+import andel.tokens.tokenIndex
 import kotlin.math.min
 
 internal class MutableTokensViewImpl<T>(

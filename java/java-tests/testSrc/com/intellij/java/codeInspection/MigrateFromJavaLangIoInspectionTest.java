@@ -25,11 +25,8 @@ public class MigrateFromJavaLangIoInspectionTest extends LightJavaCodeInsightFix
   }
 
   public void testPrintlnResolved() {
-    MigrateToJavaLangIoInspectionTest.addIOClass(myFixture);
     doTest("Replace with 'System.out.println()'");
   }
-
-  public void testPrintUnresolved() { doTest("Replace with 'System.out.print()'"); }
 
   public void testPrintArrayChar() {
     doNotFind(getFixAllMessage());
@@ -46,7 +43,6 @@ public class MigrateFromJavaLangIoInspectionTest extends LightJavaCodeInsightFix
   }
 
   private void doNotFind(String message) {
-    MigrateToJavaLangIoInspectionTest.addIOClass(myFixture);
     MigrateFromJavaLangIoInspection inspection = new MigrateFromJavaLangIoInspection();
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, true, true, "before" + getTestName(false) + ".java");

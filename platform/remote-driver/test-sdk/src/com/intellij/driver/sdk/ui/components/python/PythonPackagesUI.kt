@@ -16,6 +16,10 @@ class PythonPackagesToolWindowUiComponent(data: ComponentData) : UiComponent(dat
   val searchField
     get() = x("//div[@class='PyPackageSearchTextField']", UiComponent::class.java)
 
+  // Gear button in the Python Packages tool window toolbar
+  val settingsButton
+    get() = x("//div[@myicon='settings.svg']", UiComponent::class.java)
+
   val installButton = x { and((byClass("JBOptionButton")), (byAccessibleName("Install"))) }
 
   val uninstallButton = x { byAccessibleName("Uninstall") }

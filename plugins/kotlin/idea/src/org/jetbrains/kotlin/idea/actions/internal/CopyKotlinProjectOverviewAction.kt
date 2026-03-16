@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.EmptyClipboardOwner
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.hasKotlinFilesInSources
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 
+@K1Deprecation
 class CopyKotlinProjectOverviewAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return

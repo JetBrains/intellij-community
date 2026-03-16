@@ -1,4 +1,4 @@
-version = "~=4.25.1"
+version = "~=4.26.0"
 upstream_repository = "https://github.com/python-jsonschema/jsonschema"
 requires = ["referencing"]
 

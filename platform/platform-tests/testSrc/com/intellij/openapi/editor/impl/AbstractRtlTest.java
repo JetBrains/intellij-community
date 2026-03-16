@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 
-import java.awt.*;
+import java.awt.Point;
 import java.util.ArrayList;
 
 /**

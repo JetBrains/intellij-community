@@ -1,19 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common
 
-import com.intellij.testFramework.common.bazel.BazelLabel
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.bazelEnvironment.BazelLabel
+import org.jetbrains.intellij.bazelEnvironment.BazelRunfiles
 import java.nio.file.Path
 import kotlin.io.path.absolute
 import kotlin.io.path.isDirectory
-import kotlin.io.path.isRegularFile
-import kotlin.io.path.useLines
 
 @ApiStatus.Experimental
 object BazelTestUtil {
   // see https://bazel.build/reference/test-encyclopedia#initial-conditions
   // also https://leimao.github.io/blog/Bazel-Test-Outputs/
   private const val TEST_SRCDIR_ENV_NAME = "TEST_SRCDIR"
+  private const val TEST_TMPDIR_ENV_NAME = "TEST_TMPDIR"
   private const val TEST_UNDECLARED_OUTPUTS_DIR_ENV_NAME = "TEST_UNDECLARED_OUTPUTS_DIR"
 
   @JvmStatic
@@ -21,34 +21,15 @@ object BazelTestUtil {
     System.getenv(TEST_SRCDIR_ENV_NAME) != null &&
     System.getenv(TEST_UNDECLARED_OUTPUTS_DIR_ENV_NAME) != null
 
-  /**
-   * https://fuchsia.googlesource.com/fuchsia/+/HEAD/build/bazel/BAZEL_RUNFILES.md
-   * repo -> (repo, path) based on _repo_mapping file to resolve as a subdirectory of bazelTestRunfilesPath
-   */
   @JvmStatic
-  val bazelTestRepoMapping: Map<String, RepoMappingEntry> by lazy {
-    bazelTestRunfilesPath.resolve("_repo_mapping").useLines { lines ->
-      lines
-        .filter { it.isNotBlank() && it.isNotEmpty() }
-        .map { parseRepoEntry(it) }
-        .distinct()
-        .associateBy { it.repoName }
-    }
-  }
-
-  /**
-   * Absolute path to the base of the runfiles tree (your test dependencies too),
-   * see [Test encyclopedia](https://bazel.build/reference/test-encyclopedia#initial-conditions)
-   */
-  @JvmStatic
-  val bazelTestRunfilesPath: Path by lazy {
-    val value = System.getenv(TEST_SRCDIR_ENV_NAME)
+  val bazelTestTmpDirPath: Path by lazy {
+    val value = System.getenv(TEST_TMPDIR_ENV_NAME)
     if (value == null) {
-      error("Not running under `bazel test` because $TEST_SRCDIR_ENV_NAME env is not set. Check isUnderBazelTest first.")
+      error("Not running under `bazel test` because $TEST_TMPDIR_ENV_NAME env is not set. Check isUnderBazelTest first.")
     }
     val path = Path.of(value).absolute()
     if (!path.isDirectory()) {
-      error("Bazel test env '$TEST_SRCDIR_ENV_NAME' points to non-directory: $path")
+      error("Bazel test env '$TEST_TMPDIR_ENV_NAME' points to non-directory: $path")
     }
     path
   }
@@ -68,19 +49,7 @@ object BazelTestUtil {
 
   @JvmStatic
   fun getFileFromBazelRuntime(label: BazelLabel): Path {
-    val repoEntry = bazelTestRepoMapping.getOrElse(label.repo) {
-      error("Unable to determine dependency path '${label.asLabel}'")
-    }
-    val file = bazelTestRunfilesPath
-      .resolve(repoEntry.runfilesRelativePath)
-      .let { if (label.packageName.isNotEmpty()) it.resolve(label.packageName) else it }
-      .resolve(label.target)
-    return when {
-      file.isRegularFile() || file.isDirectory() -> file.toAbsolutePath()
-      else -> {
-        error("Unable to find test dependency '${label.asLabel}' at $file")
-      }
-    }
+    return BazelRunfiles.getFileByLabel(label)
   }
 
   /**
@@ -98,31 +67,6 @@ object BazelTestUtil {
    */
   @JvmStatic
   fun findRunfilesDirectoryUnderCommunityOrUltimate(relativePath: String): Path {
-    val root1 = bazelTestRunfilesPath.resolve("community+").resolve(relativePath)
-    val root2 = bazelTestRunfilesPath.resolve("_main").resolve(relativePath)
-
-    val root1exists = root1.isDirectory()
-    val root2exists = root2.isDirectory()
-    if (!root1exists && !root2exists) {
-      error("Cannot find runfiles directory $relativePath under community+ or _main. " +
-            "TEST_SRCDIR (runfiles root) = ${bazelTestRunfilesPath}. " +
-            "Tried $root1 and $root2. " +
-            "Please check that you passed this directory via data attribute of test rule")
-    }
-    if (root1exists && root2exists) {
-      error("Both $root1 and $root2 exist. " +
-            "Meaning $relativePath is available both under community and ultimate roots. " +
-            "This ambitious setup might cause problems. " +
-            "Please remove $root1 or $root2 or use a different relative path for test rule")
-    }
-    return if (root1exists) root1 else root2
-  }
-
-  data class RepoMappingEntry(val repoName: String, val runfilesRelativePath: String)
-
-  private fun parseRepoEntry(line: String): RepoMappingEntry {
-    val parts = line.split(",", limit = 3)
-    require(parts.size == 3) { "_repo_mapping line must have exactly 3 comma-separated values: '$line'" }
-    return RepoMappingEntry( parts[1], parts[2])
+    return BazelRunfiles.findRunfilesDirectoryUnderCommunityOrUltimate(relativePath)
   }
 }

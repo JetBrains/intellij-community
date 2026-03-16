@@ -7,7 +7,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
@@ -29,8 +28,12 @@ import com.jetbrains.python.module.PyModuleService;
 import com.jetbrains.python.sdk.CustomSdkHomePattern;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
 import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.venvReader.VirtualEnvReader;
-import org.jetbrains.annotations.*;
+import com.jetbrains.python.venvReader.VirtualEnvReaderKt;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -38,8 +41,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import static com.intellij.ide.plugins.PluginManagerCore.ULTIMATE_PLUGIN_ID;
 
 /**
  * Utility methods for Python {@link Sdk} based on the project model and the file system.
@@ -84,7 +85,9 @@ public final class PythonSdkUtil {
    * @return PyCharm with Pro mode disabled
    */
   public static boolean isFreeTier() {
-    return PlatformUtils.isPyCharm() && (!PlatformUtils.isDataSpell()) && PluginManagerCore.isDisabled(ULTIMATE_PLUGIN_ID);
+    return PlatformUtils.isPyCharm() &&
+           (!PlatformUtils.isDataSpell()) &&
+           PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID);
   }
 
   public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks() {
@@ -95,17 +98,15 @@ public final class PythonSdkUtil {
     return ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(), sdk -> isPythonSdk(sdk, allowRemoteInFreeTier));
   }
 
+  /**
+   * Consider to use suspended {@link com.jetbrains.python.sdk.ModuleExKt#findPythonSdk} instead, it waits for project model to be ready
+   */
+  @ApiStatus.Obsolete
   public static @Nullable Sdk findPythonSdk(@Nullable Module module) {
     if (module == null || module.isDisposed()) {
       return null;
     }
-
-    Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-    if (sdk != null && isPythonSdk(sdk)) {
-      return sdk;
-    }
-
-    sdk = PyModuleService.getInstance().findPythonSdk(module);
+    var sdk = PyModuleService.getInstance(module.getProject()).findPythonSdk(module);
     if (sdk != null && isPythonSdk(sdk)) {
       return sdk;
     }
@@ -207,7 +208,7 @@ public final class PythonSdkUtil {
   // It is only here for external plugins
   @RequiresBackgroundThread(generateAssertion = false)
   public static @Nullable String getPythonExecutable(@NotNull String rootPath) {
-    var python = VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(rootPath));
+    var python = VirtualEnvReaderKt.VirtualEnvReader().findPythonInPythonRoot(Path.of(rootPath));
     return (python != null) ? python.toString() : null;
   }
 

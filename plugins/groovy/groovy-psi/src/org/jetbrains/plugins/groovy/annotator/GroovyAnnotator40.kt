@@ -30,9 +30,20 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrPermitsClause
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrRecordDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.util.*
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.getAllPermittedClassElements
+import org.jetbrains.plugins.groovy.lang.psi.util.getAllPermittedClasses
+import org.jetbrains.plugins.groovy.lang.psi.util.getSealedElement
+import org.jetbrains.plugins.groovy.lang.psi.util.isCompactConstructor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.transformations.immutable.isImmutable
 

@@ -13,7 +13,11 @@ import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.codeInspection.options.StringValidator;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModEditOptions;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -29,7 +33,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.string;
 import static java.util.Objects.requireNonNullElse;
 
 public final class EditContractIntention implements ModCommandAction {

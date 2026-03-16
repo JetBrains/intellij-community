@@ -19,7 +19,12 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.ElementManipulators
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.PsiVariable
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.injection.Injectable
 import com.intellij.psi.util.parentOfType

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents a tuple parameter as stubbed element.
  */
 public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub> implements PyTupleParameter {
-  
+
   public PyTupleParameterImpl(ASTNode astNode) {
     super(astNode);
   }

@@ -19,10 +19,18 @@ import org.jetbrains.jps.builders.artifacts.impl.ArtifactOutToSourceStorageProvi
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.BuildOperations;
+import org.jetbrains.jps.incremental.BuildTask;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.TargetBuilder;
 import org.jetbrains.jps.incremental.artifacts.impl.ArtifactSorter;
 import org.jetbrains.jps.incremental.artifacts.impl.JarsBuilder;
-import org.jetbrains.jps.incremental.artifacts.instructions.*;
+import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
+import org.jetbrains.jps.incremental.artifacts.instructions.DestinationInfo;
+import org.jetbrains.jps.incremental.artifacts.instructions.ExplodedDestinationInfo;
+import org.jetbrains.jps.incremental.artifacts.instructions.JarDestinationInfo;
+import org.jetbrains.jps.incremental.artifacts.instructions.JarInfo;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -31,7 +39,13 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, ArtifactBuildTarget> {

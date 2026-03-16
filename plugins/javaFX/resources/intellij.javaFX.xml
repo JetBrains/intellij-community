@@ -2,7 +2,7 @@
   <dependencies>
     <module name="intellij.spellchecker"/>
     <module name="intellij.xml.impl"/>
-    <plugin id="com.intellij.java"/>
+    <module name="intellij.java.backend"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -105,6 +105,11 @@
     <internalFileTemplate name="FxmlFile"/>
 
     <spellchecker.bundledDictionaryProvider implementation="org.jetbrains.plugins.javaFX.JavafxBundledDictionaryProvider"/>
+
+    <registryKey key="javafx.fxml.controller.from.loader" defaultValue="false"
+                 description="Resolve FXML controllers specified with FXMLLoader.setController()"/>
+    <registryKey key="embed.scene.builder" defaultValue="true"
+                 description="Show SceneBuilder embedded into an IntelliJ IDEA frame"/>
   </extensions>
 
   <projectListeners>

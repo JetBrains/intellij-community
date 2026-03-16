@@ -27,7 +27,7 @@ import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.Locale
 
 /**
  * Stores list of hprof files and keeps the temporary directory where they are stored clean.

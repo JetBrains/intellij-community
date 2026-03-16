@@ -2,11 +2,14 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.base.fe10.analysis.classId
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -20,6 +23,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  * to replace it with an allowed annotation variant
  * (e.g., annotate a property instead of a getter or a value parameter).
  */
+@K1Deprecation
 object OptInAnnotationWrongTargetFixesFactory : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         if (diagnostic.factory != Errors.OPT_IN_MARKER_ON_WRONG_TARGET) return emptyList()

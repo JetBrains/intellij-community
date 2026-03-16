@@ -15,7 +15,6 @@ import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.kotlin.idea.maven.PomFile
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
-import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Companion.kotlinPluginId
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.utils.PathUtil
 
@@ -53,7 +52,7 @@ private class KotlinMavenPluginProvider :
         }
 
         val pom = PomFile.forFileOrNull(DomUtil.getFile(parent)) ?: return null
-        return pom.addPlugin(kotlinPluginId(version))
+        return pom.addKotlinPlugin(version)
     }
 
     override fun getElementToNavigate(t: MavenDomPlugin?) = t?.version

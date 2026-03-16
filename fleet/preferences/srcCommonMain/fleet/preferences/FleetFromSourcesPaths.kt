@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.preferences
 
-import kotlinx.io.IOException
+import fleet.util.multiplatform.linkToActual
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 
@@ -12,10 +12,10 @@ object FleetFromSourcesPaths {
     !isFleetDistributionMode && findRepositoryRoot() != null
   }
 
-  val intellijProjectRoot: Path by lazy {
+  val intellijProjectRoot: String by lazy {
     requireNotNull(findRepositoryRoot()) {
       "Cannot find IntelliJ repository root"
-    }.let { SystemFileSystem.resolve(it) }
+    }
   }
 
   val projectRoot: Path by lazy {
@@ -43,22 +43,6 @@ object FleetFromSourcesPaths {
     }
     skiko
   }
-
-  private fun findRepositoryRoot(): Path? {
-    var directory: Path? = findFleetRootByClass()
-    while (directory != null) {
-      if (directory.name != "community") {
-        try {
-          val children = SystemFileSystem.list(directory).map(Path::name).toSet()
-          if (children.contains(".idea") && children.contains("fleet")) {
-            return directory
-          }
-        }
-        catch (_: IOException) {
-        }
-      }
-      directory = directory.parent
-    }
-    return null
-  }
 }
+
+internal fun findRepositoryRoot(): String? = linkToActual()

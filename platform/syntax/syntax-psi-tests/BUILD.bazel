@@ -32,7 +32,8 @@ jvm_library(
     "@lib//:junit5",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-  ]
+  ],
+  runtime_deps = [":psi-tests"]
 )
 ### auto-generated section `build intellij.platform.syntax.psi.tests` end
 

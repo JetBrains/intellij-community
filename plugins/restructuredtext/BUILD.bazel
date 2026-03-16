@@ -54,6 +54,7 @@ jvm_library(
     "//platform/util/jdom",
     "//libraries/jcef",
     "//platform/indexing-api:indexing",
+    "//platform/core-impl",
     ":platform_lang-impl_provided",
     ":platform_execution-impl_provided",
     ":platform_core-ui_provided",

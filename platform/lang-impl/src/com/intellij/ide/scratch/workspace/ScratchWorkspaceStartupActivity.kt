@@ -12,7 +12,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
-private class ScratchWorkspaceStartupActivity : ProjectActivity {
+internal class ScratchWorkspaceStartupActivity : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()

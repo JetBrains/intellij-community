@@ -4,7 +4,10 @@ package com.intellij.internal.rulerguide;
 import com.intellij.ui.Graphics2DDelegate;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.text.AttributedCharacterIterator;
 import java.util.Collection;

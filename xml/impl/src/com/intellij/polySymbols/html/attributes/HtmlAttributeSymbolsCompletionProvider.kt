@@ -1,20 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.html.attributes
 
-import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.XmlAttributeInsertHandler
 import com.intellij.codeInsight.completion.XmlTagInsertHandler
-import com.intellij.polySymbols.html.HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors
-import com.intellij.polySymbols.html.HtmlFrameworkSymbolsSupport
-import com.intellij.polySymbols.html.StandardHtmlSymbol
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
+import com.intellij.polySymbols.framework.framework
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
+import com.intellij.polySymbols.html.HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors
+import com.intellij.polySymbols.html.HtmlFrameworkSymbolsSupport
+import com.intellij.polySymbols.html.StandardHtmlSymbol
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.utils.asSingleSymbol
@@ -41,7 +42,7 @@ class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase
 
     val providedAttributes = tag.attributes.asSequence().mapNotNull { it.name }.toMutableSet()
 
-    val attributesFilter = HtmlFrameworkSymbolsSupport.get(queryExecutor.framework)
+    val attributesFilter = HtmlFrameworkSymbolsSupport.get(queryExecutor.context.framework)
       .getAttributeNameCodeCompletionFilter(tag)
 
     val filteredOutStandardSymbols = getStandardHtmlAttributeDescriptors(tag)
@@ -111,7 +112,7 @@ class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase
     item: PolySymbolCodeCompletionItem,
     info: HtmlAttributeSymbolInfo,
   ): InsertHandler<LookupElement> {
-    return HtmlFrameworkSymbolsSupport.get(info.symbol.origin.framework)
+    return HtmlFrameworkSymbolsSupport.get(info.symbol)
              .createAttributeInsertHandler(parameters, item, info)
            ?: XmlAttributeInsertHandler.INSTANCE
   }
@@ -121,7 +122,7 @@ class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase
     item: PolySymbolCodeCompletionItem,
     info: HtmlAttributeSymbolInfo,
   ): Boolean {
-    return HtmlFrameworkSymbolsSupport.get(info.symbol.origin.framework)
+    return HtmlFrameworkSymbolsSupport.get(info.symbol)
       .shouldInsertAttributeValue(parameters, item, info)
   }
 }

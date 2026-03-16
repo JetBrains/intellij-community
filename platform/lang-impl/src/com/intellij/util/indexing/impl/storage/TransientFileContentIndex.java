@@ -7,7 +7,11 @@ import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.indexing.FileBasedIndexEx;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.DirectInputDataDiffBuilder;
+import com.intellij.util.indexing.impl.IndexDebugProperties;
+import com.intellij.util.indexing.impl.IndexStorage;
+import com.intellij.util.indexing.impl.InputData;
+import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
@@ -17,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -124,7 +129,7 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
   @Override
   public void removeTransientDataForFile(int inputId) {
     if (IndexDebugProperties.DEBUG) {
-      LOG.assertTrue(ProgressManager.getInstance().isInNonCancelableSection());
+      LOG.assertTrue(ProgressManager.getInstance().isInNonCancelableSection(), "Must be called in a nonCancellableSection");
     }
     //TODO RC: do we need a lock around here?
     if (FileBasedIndexEx.doTraceStubUpdates(indexId())) {
@@ -138,8 +143,8 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
       InputDataDiffBuilder<Key, Value> builder = getKeysDiffBuilder(inputId);
       removeTransientDataForKeys(inputId, builder);
     }
-    catch (IOException throwable) {
-      throw new RuntimeException(throwable);
+    catch (IOException ex) {
+      throw new UncheckedIOException(ex);
     }
   }
 

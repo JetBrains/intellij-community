@@ -12,6 +12,9 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":kotlin-gradle-tooling_resources"],
-  runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
+  runtime_deps = [
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/gradle/tooling-extension-api:toolingExtension",
+  ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.tooling` end

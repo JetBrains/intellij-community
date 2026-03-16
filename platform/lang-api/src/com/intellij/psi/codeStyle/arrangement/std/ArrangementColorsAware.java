@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * Callback which allows to customize colors used at the arrangement UI on the basis of existing coloring scheme.

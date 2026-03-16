@@ -1,8 +1,12 @@
 package com.intellij.dev.psiViewer.properties.tree.nodes
 
-import com.intellij.dev.psiViewer.properties.tree.*
+import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertyNode
+import com.intellij.dev.psiViewer.properties.tree.appendPresentation
 import com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods.PsiViewerApiMethod
 import com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods.psiViewerApiMethods
+import com.intellij.dev.psiViewer.properties.tree.prependPresentation
+import com.intellij.dev.psiViewer.properties.tree.withApiClass
+import com.intellij.dev.psiViewer.properties.tree.withApiMethod
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.ui.SimpleTextAttributes
@@ -124,7 +128,7 @@ suspend fun psiViewerPropertyNodeForApiClass(
 ): PsiViewerPropertyNode? {
   val childrenNodesForApiClass = computePsiViewerPropertyNodesByCallingApiMethods(nodeContext, apiMethods)
     .map { it.withApiClass(apiClass) }
-  if (childrenNodesForApiClass.isEmpty()) return null
+  //if (childrenNodesForApiClass.isEmpty()) return null
 
   val presentation = PsiViewerPropertyNode.Presentation {
     it.icon = if (apiClass.isInterface) AllIcons.Nodes.Interface else AllIcons.Nodes.Class

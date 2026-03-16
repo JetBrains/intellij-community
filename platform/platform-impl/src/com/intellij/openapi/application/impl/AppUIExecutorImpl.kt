@@ -14,7 +14,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.psi.impl.PsiDocumentManagerEx
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -152,7 +152,7 @@ fun AppUIExecutor.coroutineDispatchingContext(): ContinuationInterceptor {
 
 internal class WithDocumentsCommitted(private val project: Project, private val modality: ModalityState) : ContextConstraint {
   override fun isCorrectContext(): Boolean {
-    val manager = PsiDocumentManager.getInstance(project) as PsiDocumentManagerBase
+    val manager = PsiDocumentManager.getInstance(project) as PsiDocumentManagerEx
     return !manager.isCommitInProgress && !manager.hasEventSystemEnabledUncommittedDocuments()
   }
 
@@ -166,7 +166,7 @@ internal class WithDocumentsCommitted(private val project: Project, private val 
       ""
     }
     else {
-      val manager = PsiDocumentManager.getInstance(project) as PsiDocumentManagerBase
+      val manager = PsiDocumentManager.getInstance(project) as PsiDocumentManagerEx
       ", isCommitInProgress()=${manager.isCommitInProgress}" +
       ", hasEventSystemEnabledUncommittedDocuments()=${manager.hasEventSystemEnabledUncommittedDocuments()}"
     }

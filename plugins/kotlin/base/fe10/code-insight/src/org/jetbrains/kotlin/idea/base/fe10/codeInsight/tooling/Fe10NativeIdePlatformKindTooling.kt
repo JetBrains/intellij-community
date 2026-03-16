@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.MainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractGenericTestIconProvider
@@ -45,6 +46,7 @@ private class Fe10NativeIdePlatformKindTooling : AbstractNativeIdePlatformKindTo
     }
 }
 
+@K1Deprecation
 @ApiStatus.Internal
 fun KtElement.isMainFunction(computedDescriptor: DeclarationDescriptor? = null): Boolean {
     if (this !is KtNamedFunction) return false

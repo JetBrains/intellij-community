@@ -8,9 +8,9 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -28,16 +28,13 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryPropertiesEntityData) : LibraryPropertiesEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryPropertiesEntityData) : LibraryPropertiesEntity,
+                                                                                                  WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, LibraryPropertiesEntity::class.java,
-                                                                           ConnectionId.ConnectionType.ONE_TO_ONE, false)
-
-    private val connections = listOf<ConnectionId>(
-      LIBRARY_CONNECTION_ID,
-    )
+    internal val LIBRARY_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(LibraryEntity::class.java, LibraryPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    private val connections = listOf<ConnectionId>(LIBRARY_CONNECTION_ID)
 
   }
 
@@ -46,7 +43,6 @@ internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryProper
       readField("propertiesXmlTag")
       return dataSource.propertiesXmlTag
     }
-
   override val library: LibraryEntity
     get() = snapshot.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)!!
 
@@ -61,8 +57,8 @@ internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryProper
   }
 
 
-  internal class Builder(result: LibraryPropertiesEntityData?) : ModifiableWorkspaceEntityBase<LibraryPropertiesEntity, LibraryPropertiesEntityData>(
-    result), LibraryPropertiesEntity.Builder {
+  internal class Builder(result: LibraryPropertiesEntityData?) :
+    ModifiableWorkspaceEntityBase<LibraryPropertiesEntity, LibraryPropertiesEntityData>(result), LibraryPropertiesEntity.Builder {
     internal constructor() : this(LibraryPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -75,15 +71,13 @@ internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryProper
           error("Entity LibraryPropertiesEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -126,7 +120,6 @@ internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryProper
         changedProperty.add("entitySource")
 
       }
-
     override var propertiesXmlTag: String?
       get() = getEntityData().propertiesXmlTag
       set(value) {
@@ -134,7 +127,6 @@ internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryProper
         getEntityData(true).propertiesXmlTag = value
         changedProperty.add("propertiesXmlTag")
       }
-
     override var library: LibraryEntityBuilder
       get() {
         val _diff = diff
@@ -154,7 +146,7 @@ internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryProper
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
+// else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -164,8 +156,7 @@ internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryProper
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
+// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] = value
         }
         changedProperty.add("library")
@@ -173,6 +164,7 @@ internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryProper
 
     override fun getEntityClass(): Class<LibraryPropertiesEntity> = LibraryPropertiesEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -199,8 +191,7 @@ internal class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryProperti
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -223,9 +214,7 @@ internal class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryProperti
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as LibraryPropertiesEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.propertiesXmlTag != other.propertiesXmlTag) return false
     return true
@@ -234,9 +223,7 @@ internal class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryProperti
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as LibraryPropertiesEntityData
-
     if (this.propertiesXmlTag != other.propertiesXmlTag) return false
     return true
   }

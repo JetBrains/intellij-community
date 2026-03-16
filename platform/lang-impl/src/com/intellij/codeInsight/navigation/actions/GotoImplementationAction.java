@@ -23,7 +23,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.codeInsight.navigation.CtrlMouseDataKt.*;
+import static com.intellij.codeInsight.navigation.CtrlMouseDataKt.getReferenceRanges;
+import static com.intellij.codeInsight.navigation.CtrlMouseDataKt.multipleTargetsCtrlMouseData;
+import static com.intellij.codeInsight.navigation.CtrlMouseDataKt.psiCtrlMouseData;
 
 public class GotoImplementationAction extends BaseCodeInsightAction implements CtrlMouseAction {
 

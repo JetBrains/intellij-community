@@ -1,13 +1,23 @@
 package com.intellij.cce.kotlin.visitor
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.CodeToken
+import com.intellij.cce.core.Language
+import com.intellij.cce.core.SimpleTokenProperties
+import com.intellij.cce.core.SymbolLocation
+import com.intellij.cce.core.TypeProperty
 import com.intellij.cce.visitor.RenameVisitorBase
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.startOffset
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 
 class KotlinRenameVisitor : RenameVisitorBase(Language.KOTLIN) {
   override fun createPsiVisitor(codeFragment: CodeFragment): PsiElementVisitor {

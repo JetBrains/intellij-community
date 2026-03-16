@@ -28,14 +28,24 @@ import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.xml.*;
+import com.intellij.xml.XmlDeprecationOwnerDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlExtension;
+import com.intellij.xml.XmlNamespaceHelper;
+import com.intellij.xml.XmlTagNameProvider;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.index.XsdNamespaceBuilder;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 final class DefaultXmlTagNameProvider implements XmlTagNameProvider {
   private static final Logger LOG = Logger.getInstance(DefaultXmlTagNameProvider.class);

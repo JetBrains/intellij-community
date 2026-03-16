@@ -7,15 +7,25 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-internal class FrontendViewportDataCacheTest {
-  private fun createSimpleDataIdentityCache(): FrontendViewportDataCache<Int> {
-    return FrontendViewportDataCache(
-      loadData = { firstIndex, lastIndexInclusive ->
-        (firstIndex..lastIndexInclusive).toList()
-      }
-    )
-  }
+private class CountingCache {
+  var invocationsCount = 0
+  val cache = FrontendViewportDataCache(
+    loadData = { firstIndex, lastIndexInclusive ->
+      invocationsCount++
+      (firstIndex..lastIndexInclusive).toList()
+    }
+  )
+}
 
+private fun createCountingCache(): CountingCache {
+  return CountingCache()
+}
+
+private fun createSimpleDataIdentityCache(): FrontendViewportDataCache<Int> {
+  return createCountingCache().cache
+}
+
+internal class FrontendViewportDataCacheTest {
   @Test
   fun `test viewport covers all content`() = runBlocking {
     val cache = createSimpleDataIdentityCache()
@@ -73,10 +83,12 @@ internal class FrontendViewportDataCacheTest {
 
   @Test
   fun `test small change in viewport doesn't change cache`() = runBlocking {
-    val cache = createSimpleDataIdentityCache()
+    val countingCache = createCountingCache()
+    val cache = countingCache.cache
     val stamp = 0L
     val viewportOld = FrontendViewportDataCache.ViewportInfo(250, 552)
     cache.update(viewportOld, 5000, stamp)
+    assertEquals(1, countingCache.invocationsCount)
     val cachedLines = mutableListOf<Int>()
     for (i in 0..5000) {
       val cachedData = cache.getData(i, stamp) ?: continue
@@ -85,6 +97,7 @@ internal class FrontendViewportDataCacheTest {
 
     val viewportNew = FrontendViewportDataCache.ViewportInfo(250, 553)
     cache.update(viewportNew, 5000, stamp)
+    assertEquals(1, countingCache.invocationsCount)
     val cachedLinesNew = mutableListOf<Int>()
     for (i in 0..5000) {
       val cachedData = cache.getData(i, stamp) ?: continue

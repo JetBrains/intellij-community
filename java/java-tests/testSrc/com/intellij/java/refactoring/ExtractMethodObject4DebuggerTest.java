@@ -12,9 +12,10 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
+public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {

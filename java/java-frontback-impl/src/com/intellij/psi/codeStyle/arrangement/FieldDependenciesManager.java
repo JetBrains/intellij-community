@@ -4,7 +4,11 @@ package com.intellij.psi.codeStyle.arrangement;
 import com.intellij.psi.PsiField;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class FieldDependenciesManager {
   private final Map<PsiField, Set<PsiField>> myFieldDependencies;

@@ -1,14 +1,22 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n.inconsistentResourceBundle;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.GlobalSimpleInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemDescriptionsProcessor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,7 +25,12 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class InconsistentResourceBundleInspection extends GlobalSimpleInspectionTool {
   private static final Key<Set<ResourceBundle>> VISITED_BUNDLES_KEY = Key.create("VISITED_BUNDLES_KEY");

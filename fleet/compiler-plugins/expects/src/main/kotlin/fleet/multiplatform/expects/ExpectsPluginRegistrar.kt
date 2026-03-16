@@ -8,6 +8,9 @@ import org.jetbrains.kotlin.config.messageCollector
 
 @OptIn(ExperimentalCompilerApi::class)
 class ExpectsPluginRegistrar : CompilerPluginRegistrar() {
+  override val pluginId: String
+    get() = "expects-compiler-plugin"
+
   override val supportsK2: Boolean
     get() = true
 

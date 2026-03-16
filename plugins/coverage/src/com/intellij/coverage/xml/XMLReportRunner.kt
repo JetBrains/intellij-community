@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.xml
 
-import com.intellij.coverage.*
+import com.intellij.coverage.CoverageEngine
+import com.intellij.coverage.CoverageLoadErrorReporter
+import com.intellij.coverage.CoverageLoadingResult
+import com.intellij.coverage.CoverageRunner
+import com.intellij.coverage.CoverageSuite
 import com.intellij.java.coverage.JavaCoverageBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.rt.coverage.report.XMLCoverageReport

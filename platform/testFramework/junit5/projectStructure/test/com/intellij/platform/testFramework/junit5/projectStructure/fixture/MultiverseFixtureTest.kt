@@ -29,7 +29,7 @@ internal class MultiverseFixtureTest {
   }
 
   @Test
-  fun `assert project structure`() = timeoutRunBlocking {
+  fun `assert project structure`(): Unit = timeoutRunBlocking {
     readAction {
       val project = projectFixture.get()
       val moduleManager = ModuleManager.getInstance(project)

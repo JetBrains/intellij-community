@@ -2,7 +2,13 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.idea.TestFor
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.OoChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoChildWithNullableParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyOoChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyOoParentEntity
 import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals

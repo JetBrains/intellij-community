@@ -14,7 +14,7 @@ internal interface CombinedDiffTool : DiffTool
  * This tool intended only for persistence purpose.
  * Combined diff viewer will be created by the corresponding [CombinedDiffComponentProcessor].
  */
-private class CombinedSideBySideDiffTool : CombinedDiffTool {
+internal class CombinedSideBySideDiffTool : CombinedDiffTool {
   override fun canShow(context: DiffContext, request: DiffRequest): Boolean = false
 
   override fun getName(): String = DiffBundle.message("combined.side.by.side.viewer")

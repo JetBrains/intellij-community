@@ -5,11 +5,19 @@ import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.ExitStatus;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.java.testFramework.backend.CompilerTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompilationStatusListener;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -27,24 +35,34 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.CompilerTester;
+import com.intellij.testFramework.JavaModuleTestCase;
+import com.intellij.testFramework.OpenProjectTaskBuilder;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.TestLoggerFactory;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.DirectoryContentSpec;
 import com.intellij.util.io.DirectoryContentSpecKt;
 import com.intellij.util.io.TestFileSystemBuilder;
+import com.intellij.util.ui.EDT;
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.junit.Assert;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
@@ -271,11 +289,11 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
         if (!BuildManager.getInstance().isBuildProcessDebuggingEnabled() && System.currentTimeMillis() - start > 5 * 60 * 1000) {
           throw new RuntimeException("timeout");
         }
-        if (SwingUtilities.isEventDispatchThread()) {
+        if (EDT.isCurrentThreadEdt()) {
           PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
         }
       }
-      if (SwingUtilities.isEventDispatchThread()) {
+      if (EDT.isCurrentThreadEdt()) {
         PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
       }
     }

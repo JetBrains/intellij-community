@@ -21,7 +21,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
-import java.util.*
+import java.util.Locale
 
 enum class ShortNameType(private val typeId: @NonNls String,
                          private val descriptionKey: @PropertyKey(resourceBundle = VcsBundle.BUNDLE) String) {

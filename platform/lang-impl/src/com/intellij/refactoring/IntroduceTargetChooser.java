@@ -1,14 +1,22 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
@@ -21,11 +29,13 @@ import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UiReadExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.ListSelectionModel;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -96,6 +106,8 @@ public final class IntroduceTargetChooser {
                                                                             @Nullable JComponent southComponent,
                                                                             int selection) {
     AtomicReference<ScopeHighlighter> highlighter = new AtomicReference<>(new ScopeHighlighter(editor));
+    Disposable disposable = Disposer.newDisposable();
+    UiReadExecutor executor = UiReadExecutor.conflatedUiReadExecutor(editor.getComponent(), disposable, "introduce target chooser");
 
     IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance().<T>createPopupChooserBuilder(expressions)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
@@ -108,11 +120,13 @@ public final class IntroduceTargetChooser {
       .setItemSelectedCallback(expr -> {
         ScopeHighlighter h = highlighter.get();
         if (h == null) return;
-        h.dropHighlight();
-        if (expr != null && expr.isValid()) {
-          TextRange range = expr.getTextRange();
-          h.highlight(Pair.create(range, Collections.singletonList(range)));
-        }
+        executor.executeWithReadAccess(() -> {
+          h.dropHighlight();
+          if (expr != null && expr.isValid()) {
+            TextRange range = expr.getTextRange();
+            h.highlight(Pair.create(range, Collections.singletonList(range)));
+          }
+        });
       })
       .setItemChosenCallback(expr -> {
         if (expr.isValid()) {
@@ -139,6 +153,7 @@ public final class IntroduceTargetChooser {
       ((PopupChooserBuilder<T>)builder).setSouthComponent(southComponent);
     }
     JBPopup popup = builder.createPopup();
+    Disposer.register(popup, disposable);
     popup.showInBestPositionFor(editor);
     Project project = editor.getProject();
     if (project != null && !popup.isDisposed()) {

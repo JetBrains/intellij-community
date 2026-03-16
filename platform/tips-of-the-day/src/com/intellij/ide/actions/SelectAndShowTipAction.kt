@@ -12,7 +12,7 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
 import kotlinx.coroutines.launch
 
-private class SelectAndShowTipAction : DumbAwareAction() {
+internal class SelectAndShowTipAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val tips = TipAndTrickBean.EP_NAME.extensionList.sortedBy { tip -> tip.id.lowercase() }

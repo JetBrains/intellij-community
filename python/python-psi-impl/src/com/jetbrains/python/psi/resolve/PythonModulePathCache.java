@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity;
 import com.intellij.platform.workspace.storage.EntityChange;
 import com.intellij.platform.workspace.storage.VersionedStorageChange;
 import com.intellij.util.messages.MessageBusConnection;
@@ -77,6 +78,26 @@ public final class PythonModulePathCache extends PythonPathCache implements Disp
           }
         }
       }
+
+      // Invalidate caches if source roots are added or removed for this module
+      List<EntityChange<SourceRootEntity>> sourceRootChanges = event.getChanges(SourceRootEntity.class);
+      for (EntityChange<SourceRootEntity> change : sourceRootChanges) {
+        SourceRootEntity sourceRootEntity = null;
+        if (change instanceof EntityChange.Added) {
+          sourceRootEntity = ((EntityChange.Added<SourceRootEntity>)change).getNewEntity();
+        }
+        else if (change instanceof EntityChange.Removed) {
+          sourceRootEntity = ((EntityChange.Removed<SourceRootEntity>)change).getOldEntity();
+        }
+        if (sourceRootEntity != null) {
+          ModuleEntity moduleEntity = sourceRootEntity.getContentRoot().getModule();
+          var module = ModuleEntityUtils.findModule(moduleEntity, event.getStorageBefore());
+          if (module == myModule) {
+            clearCache();
+            return;
+          }
+        }
+      }
     }
   }
 
@@ -90,5 +111,5 @@ public final class PythonModulePathCache extends PythonPathCache implements Disp
 
   @Override
   public void dispose() {
- }
+  }
 }

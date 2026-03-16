@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 object MiscProjectUsageCollector : CounterUsagesCollector() {
-  private val GROUP: EventLogGroup = EventLogGroup("pycharm.misc.project", 4)
+  private val GROUP = EventLogGroup("pycharm.misc.project", 4)
 
   private val MISC_FILE_TYPE = EventFields.StringValidatedByCustomRule(
     "file_type",
@@ -22,8 +22,8 @@ object MiscProjectUsageCollector : CounterUsagesCollector() {
     "The type of a newly created misc project"
   )
 
-  private val MISC_PROJECT_CREATED: VarargEventId = GROUP.registerVarargEvent("misc.project.created", "Misc project created (user clicked on the button on the welcome screen)", MISC_FILE_TYPE)
-  private val MISC_PROJECT_RENAMED: EventId = GROUP.registerEvent("misc.project.renamed", "Misc project renamed")
+  private val MISC_PROJECT_CREATED: VarargEventId = GROUP.registerVarargEvent("misc.project.created", MISC_FILE_TYPE)
+  private val MISC_PROJECT_RENAMED: EventId = GROUP.registerEvent("misc.project.renamed")
 
   override fun getGroup(): EventLogGroup = GROUP
 

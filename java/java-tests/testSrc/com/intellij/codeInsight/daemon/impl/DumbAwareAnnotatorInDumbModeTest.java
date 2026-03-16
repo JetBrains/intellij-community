@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
@@ -14,6 +13,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
 
 public class DumbAwareAnnotatorInDumbModeTest extends LightJavaCodeInsightFixtureTestCase {
@@ -22,7 +22,7 @@ public class DumbAwareAnnotatorInDumbModeTest extends LightJavaCodeInsightFixtur
     Language javaLanguage = JavaFileType.INSTANCE.getLanguage();
     MyDumbAwareAnnotator dumbAwareAnnotator = new MyDumbAwareAnnotator();
     LanguageAnnotators.INSTANCE.addExplicitExtension(javaLanguage, dumbAwareAnnotator);
-    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).mustWaitForSmartMode(false, getTestRootDisposable());
+    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, getTestRootDisposable());
     try {
       DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
         myFixture.testHighlighting();

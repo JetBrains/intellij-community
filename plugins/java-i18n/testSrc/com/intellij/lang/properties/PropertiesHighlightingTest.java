@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.properties.codeInspection.unused.UnusedPropertyInspection;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -10,7 +8,6 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -31,7 +28,6 @@ public class PropertiesHighlightingTest extends JavaCodeInsightFixtureTestCase {
 
   private void doTest(boolean checkWarnings) {
     myFixture.configureByFile(getTestName(false) + ".properties");
-    ((CodeInsightTestFixtureImpl)myFixture).setVirtualFileFilter(VirtualFileFilter.NONE);
     myFixture.checkHighlighting(checkWarnings, false, false);
   }
 
@@ -56,7 +52,7 @@ public class PropertiesHighlightingTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testInvalidEscapeSequenceFixDumbMode() {
-    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).mustWaitForSmartMode(false, getTestRootDisposable());
+    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, getTestRootDisposable());
     DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> { doQuickFixTest(); });
   }
 

@@ -27,6 +27,7 @@ suspend fun <T> withRetry(
       return retryAction()
     }
     catch (e: NoRetryException) {
+      logOutput("NoRetryException caught: ${e.stackTraceToString()}")
       throw e
     }
     catch (t: Throwable) {
@@ -37,8 +38,7 @@ suspend fun <T> withRetry(
       when (printFailuresMode) {
         PrintFailuresMode.ALL_FAILURES -> t.printStackTrace()
         PrintFailuresMode.ONLY_LAST_FAILURE -> if (failureCount == retries) {
-          logError("Last failure:")
-          t.printStackTrace()
+          logError("Last failure: ${t.stackTraceToString()}")
         }
       }
 

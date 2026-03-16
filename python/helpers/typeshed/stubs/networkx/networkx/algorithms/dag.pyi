@@ -21,7 +21,6 @@ __all__ = [
     "dag_longest_path",
     "dag_longest_path_length",
     "dag_to_branching",
-    "compute_v_structures",
 ]
 
 @_dispatchable
@@ -60,6 +59,4 @@ def dag_longest_path(
 @_dispatchable
 def dag_longest_path_length(G: DiGraph[_Node], weight: str | None = "weight", default_weight: int | None = 1) -> int: ...
 @_dispatchable
-def dag_to_branching(G: Graph[_Node]) -> DiGraph[_Node]: ...
-@_dispatchable
-def compute_v_structures(G) -> Generator[tuple[Incomplete, Incomplete, Incomplete]]: ...
+def dag_to_branching(G: DiGraph[_Node]) -> DiGraph[_Node]: ...

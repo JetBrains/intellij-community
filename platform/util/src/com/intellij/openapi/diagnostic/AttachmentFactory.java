@@ -28,7 +28,10 @@ public final class AttachmentFactory {
     }
   }
 
-  public static Attachment createAttachment(String path, InputStream content, long contentLength, boolean isBinary) throws IOException {
+  public static @NotNull Attachment createAttachment(@NotNull String path,
+                                                     @NotNull InputStream content,
+                                                     long contentLength,
+                                                     boolean isBinary) throws IOException {
     if (contentLength >= BIG_FILE_THRESHOLD_BYTES) {
       Path tempFile = FileUtil.createTempFile("ij-attachment-" + PathUtilRt.getFileName(path) + '.', isBinary ? ".bin" : ".txt", true).toPath();
       Files.copy(content, tempFile, StandardCopyOption.REPLACE_EXISTING);

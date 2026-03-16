@@ -17,11 +17,12 @@ jvm_library(
     "//platform/eel",
     "//platform/util",
     "//platform/core-api:core",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:kotlin-stdlib",
     "//platform/util/coroutines",
     "//libraries/hash4j",
     "//platform/core-nio-fs",
+    "//platform/external-process-auth-helper/rt",
   ],
   exports = ["//platform/eel"]
 )

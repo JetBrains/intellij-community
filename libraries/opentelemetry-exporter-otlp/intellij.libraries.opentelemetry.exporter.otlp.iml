@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.backend" />
+    <orderEntry type="module-library" exported="">
+      <library name="opentelemetry-exporter-otlp-library" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.opentelemetry:opentelemetry-exporter-otlp:1.48.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp/1.48.0/opentelemetry-exporter-otlp-1.48.0.jar">
+              <sha256sum>b66cfe7da3afc1274f93e4c0faa5a7ac52b5f2a4d9567fc27ac84397f03f83c1</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp/1.48.0/opentelemetry-exporter-otlp-1.48.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp/1.48.0/opentelemetry-exporter-otlp-1.48.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

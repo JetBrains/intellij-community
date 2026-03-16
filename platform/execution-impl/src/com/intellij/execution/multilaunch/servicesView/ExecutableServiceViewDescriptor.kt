@@ -1,6 +1,10 @@
 package com.intellij.execution.multilaunch.servicesView
 
 import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.multilaunch.execution.ExecutableExecutionModel
+import com.intellij.execution.multilaunch.execution.ExecutionStatus
+import com.intellij.execution.multilaunch.execution.MultiLaunchExecutionModel
+import com.intellij.execution.multilaunch.servicesView.actions.executable.CancelExecutableAction
 import com.intellij.execution.services.ServiceViewDescriptor
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
@@ -11,10 +15,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBPanelWithEmptyText
-import com.intellij.execution.multilaunch.execution.ExecutableExecutionModel
-import com.intellij.execution.multilaunch.execution.ExecutionStatus
-import com.intellij.execution.multilaunch.execution.MultiLaunchExecutionModel
-import com.intellij.execution.multilaunch.servicesView.actions.executable.CancelExecutableAction
 import javax.swing.Icon
 import javax.swing.JComponent
 

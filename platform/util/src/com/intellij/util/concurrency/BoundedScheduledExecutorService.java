@@ -2,7 +2,11 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -20,8 +24,7 @@ import java.util.concurrent.TimeUnit;
 public final class BoundedScheduledExecutorService extends SchedulingWrapper {
   @VisibleForTesting
   public BoundedScheduledExecutorService(@NotNull @NonNls String name, @NotNull ExecutorService backendExecutor, int maxThreads) {
-    super(new BoundedTaskExecutor(name, backendExecutor, maxThreads, true),
-          ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).delayQueue);
+    super(new BoundedTaskExecutor(name, backendExecutor, maxThreads, true));
     assert !(backendExecutor instanceof ScheduledExecutorService) : "backendExecutor is already ScheduledExecutorService: " + backendExecutor;
   }
 

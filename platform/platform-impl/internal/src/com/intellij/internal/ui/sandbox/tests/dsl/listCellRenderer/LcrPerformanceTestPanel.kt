@@ -23,7 +23,11 @@ import com.intellij.ui.speedSearch.ListWithFilter
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.util.ReflectionUtil
 import org.jetbrains.annotations.Nls
-import javax.swing.*
+import javax.swing.DefaultListModel
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
 import kotlin.time.measureTime
 
 internal class LcrPerformanceTestPanel : UISandboxPanel {

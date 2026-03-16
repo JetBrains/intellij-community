@@ -6,20 +6,28 @@ import com.intellij.ide.util.gotoByName.FileTypeRef
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeExtendedInfoProvider
+import com.intellij.platform.searchEverywhere.SeItem
+import com.intellij.platform.searchEverywhere.SeItemsPreviewProvider
+import com.intellij.platform.searchEverywhere.SeItemsProvider
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SePreviewInfo
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
+import com.intellij.platform.searchEverywhere.SeSearchScopesProvider
+import com.intellij.platform.searchEverywhere.SeTypeVisibilityStateProvider
 import com.intellij.platform.searchEverywhere.backend.providers.target.SeTargetsProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
-@Internal
-class SeFilesProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider(),
-                                                                                        SeSearchScopesProvider,
-                                                                                        SeTypeVisibilityStateProvider,
-                                                                                        SeItemsPreviewProvider,
-                                                                                        SeExtendedInfoProvider {
+internal class SeFilesProvider(
+  private val contributorWrapper: SeAsyncContributorWrapper<Any>,
+) : SeWrappedLegacyContributorItemsProvider(),
+    SeSearchScopesProvider,
+    SeTypeVisibilityStateProvider,
+    SeItemsPreviewProvider,
+    SeExtendedInfoProvider {
   override val id: String get() = SeProviderIdUtils.FILES_ID
   override val displayName: @Nls String
     get() = contributorWrapper.contributor.fullGroupName

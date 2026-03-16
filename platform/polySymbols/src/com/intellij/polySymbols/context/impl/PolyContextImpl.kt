@@ -12,6 +12,13 @@ internal class PolyContextImpl(private val map: Map<PolyContextKind, PolyContext
   override fun toString(): String =
     map.toString()
 
+  override fun equals(other: Any?): Boolean =
+    other === this
+    || other is PolyContextImpl && other.map == map
+
+  override fun hashCode(): Int =
+    map.hashCode()
+
   companion object {
     val empty = object : PolyContext {
       override fun get(kind: PolyContextKind): PolyContextName? = null

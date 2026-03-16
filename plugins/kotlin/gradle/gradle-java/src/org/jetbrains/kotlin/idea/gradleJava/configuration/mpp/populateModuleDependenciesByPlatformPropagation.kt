@@ -7,7 +7,8 @@ import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.findCompilation
 import org.jetbrains.kotlin.idea.gradleTooling.getCompilations
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
-import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform.*
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform.ANDROID
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform.JVM
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -31,7 +32,7 @@ private typealias CompilationDependencies = Set<KotlinDependency>
 
 private fun KotlinMppGradleProjectResolver.Companion.populateModuleDependenciesByPlatformPropagation(
     context: KotlinMppPopulateModuleDependenciesContext, sourceSet: KotlinSourceSet
-) = with(context) {
+): Unit = with(context) {
     val sourceSetDataNode = getSiblingKotlinModuleData(sourceSet, gradleIdeaModule, ideModule, resolverCtx)?.cast<GradleSourceSetData>()
         ?: return
 

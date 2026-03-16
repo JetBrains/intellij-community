@@ -22,7 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.modcommand.ModCommand.*;
+import static com.intellij.modcommand.ModCommand.nop;
+import static com.intellij.modcommand.ModCommand.psiUpdate;
+import static com.intellij.modcommand.ModCommand.showConflicts;
 import static com.intellij.psi.PsiModifier.ABSTRACT;
 import static com.intellij.psi.PsiModifier.FINAL;
 

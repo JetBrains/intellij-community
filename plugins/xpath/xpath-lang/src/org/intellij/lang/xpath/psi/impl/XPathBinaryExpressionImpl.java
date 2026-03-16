@@ -24,7 +24,11 @@ import org.intellij.lang.xpath.XPath2ElementTypes;
 import org.intellij.lang.xpath.XPath2TokenTypes;
 import org.intellij.lang.xpath.XPathElementType;
 import org.intellij.lang.xpath.XPathTokenTypes;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.XPath2Type;
+import org.intellij.lang.xpath.psi.XPathBinaryExpression;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

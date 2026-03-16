@@ -5,8 +5,10 @@ package org.jetbrains.kotlin.idea.structuralsearch.visitor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.util.containers.Stack
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 
+@K1Deprecation
 abstract class KotlinRecursiveElementVisitor : SSRKtVisitor(), PsiRecursiveVisitor {
     private val myRefsExprsInVisit = Stack<KtReferenceExpression>()
 

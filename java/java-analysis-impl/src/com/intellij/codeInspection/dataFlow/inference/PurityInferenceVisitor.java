@@ -16,7 +16,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.psi.impl.source.tree.JavaElementType.*;
+import static com.intellij.psi.impl.source.tree.JavaElementType.ANONYMOUS_CLASS;
+import static com.intellij.psi.impl.source.tree.JavaElementType.ASSIGNMENT_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EXPRESSION_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.FIELD;
+import static com.intellij.psi.impl.source.tree.JavaElementType.METHOD_CALL_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.NEW_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.POSTFIX_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PREFIX_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.REFERENCE_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.THIS_EXPRESSION;
 
 class PurityInferenceVisitor {
   private final LighterAST tree;

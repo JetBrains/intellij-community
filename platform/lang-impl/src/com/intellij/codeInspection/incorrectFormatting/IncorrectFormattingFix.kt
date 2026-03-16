@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.incorrectFormatting
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
@@ -6,7 +6,9 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo.EMPTY
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.lang.LangBundle
-import com.intellij.modcommand.*
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandQuickFix
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
@@ -53,7 +55,7 @@ object ReformatQuickFix : ModCommandQuickFix() {
 
   override fun perform(project: Project, descriptor: ProblemDescriptor): ModCommand {
     return ModCommand.psiUpdate(descriptor.psiElement.containingFile) { mutableFile: PsiFile, _: ModPsiUpdater ->
-      val file = mutableFile.viewProvider.getPsi(mutableFile.viewProvider.baseLanguage)
+      val file = mutableFile.viewProvider.getPsi(mutableFile.viewProvider.baseLanguage)!!
       CodeStyleManager.getInstance(project).reformatText(file, 0, file.textLength)
     }
   }

@@ -103,19 +103,20 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
   }
 }
 
-internal fun isNotApplicableClass(type: Class<*>): Boolean {
-  return type.isPrimitive ||
-         type.isAnnotation ||
-         type.isSynthetic ||
-         type.isEnum ||
-         type.isArray ||
-         type === java.lang.String::class.java ||
-         type === Class::class.java ||
-         type === File::class.java ||
-         type === Path::class.java ||
-         java.lang.Number::class.java.isAssignableFrom(type) ||
-         java.util.Collection::class.java.isAssignableFrom(type) ||
-         java.util.Map::class.java.isAssignableFrom(type)
+internal fun isApplicableClass(type: Class<*>): Boolean {
+  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+  return !type.isPrimitive &&
+         !type.isAnnotation &&
+         !type.isSynthetic &&
+         !type.isEnum &&
+         !type.isArray &&
+         type !== java.lang.String::class.java &&
+         type !== Class::class.java &&
+         type !== File::class.java &&
+         type !== Path::class.java &&
+         !java.lang.Number::class.java.isAssignableFrom(type) &&
+         !java.util.Collection::class.java.isAssignableFrom(type) &&
+         !java.util.Map::class.java.isAssignableFrom(type)
 }
 
 private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
@@ -147,7 +148,7 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
     }
 
     // first, perform fast check to ensure that assert about getComponentAdapterOfType is thrown only if the constructor is applicable
-    if (parameterTypes.any(::isNotApplicableClass)) {
+    if (!parameterTypes.all(::isApplicableClass)) {
       continue
     }
 

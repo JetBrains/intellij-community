@@ -17,23 +17,44 @@ package com.jetbrains.python.psi.impl.references;
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.completion.PyClassNameCompletionContributor;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -44,13 +65,25 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyClassTypeImpl;
+import com.jetbrains.python.psi.types.PyModuleType;
+import com.jetbrains.python.psi.types.PyStructuralType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 
 public class PyQualifiedReference extends PyReferenceImpl {
@@ -147,8 +180,8 @@ public class PyQualifiedReference extends PyReferenceImpl {
 
   private void addDocReference(ResolveResultList ret, PyExpression qualifier, PyType qualifierType) {
     PsiElement docstring = null;
-    if (qualifierType instanceof PyClassType) {
-      PyClass qualClass = ((PyClassType)qualifierType).getPyClass();
+    if (qualifierType instanceof PyClassType classType) {
+      PyClass qualClass = classType.getPyClass();
       docstring = qualClass.getDocStringExpression();
     }
     else if (qualifierType instanceof PyModuleType) {
@@ -213,7 +246,20 @@ public class PyQualifiedReference extends PyReferenceImpl {
     else {
       final PyClassType guessedType = guessClassTypeByName();
       if (guessedType != null) {
-        Collections.addAll(variants, guessedType.getCompletionVariants(myElement.getName(), myElement, ctx));
+        ContainerUtil.addAll(variants, ContainerUtil.map(guessedType.getCompletionVariants(myElement.getName(), myElement, ctx), entry ->
+          entry instanceof LookupElementBuilder e
+            ? e.withInsertHandler(new InsertHandler<LookupElement>() {
+              @Override
+              public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
+                PyClassNameCompletionContributor.InsertHandlers.addImportForLookupElement(context, item, context.getTailOffset() - 1);
+                if (e.getInsertHandler() != null) {
+                  PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
+                  e.handleInsert(context);
+                }
+              }
+            })
+            : element)
+        );
       }
       if (qualifier instanceof PyReferenceExpression) {
         Collections.addAll(variants, collectSeenMembers(qualifier.getText(), ctx));
@@ -235,7 +281,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
         Collection<PyClass> classes = PyClassNameIndexInsensitive.find(className, getElement().getProject());
         classes = filterByImports(classes, myElement.getContainingFile());
         if (classes.size() == 1) {
-          return new PyClassTypeImpl(classes.iterator().next(), false);
+          return new PyClassTypeImpl(classes.iterator().next(), true);
         }
       }
     }

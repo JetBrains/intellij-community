@@ -1,9 +1,10 @@
 <idea-plugin package="org.jetbrains.kotlin.onboarding.gradle">
   <dependencies>
-    <plugin id="org.jetbrains.plugins.gradle"/>
+    <module name="intellij.kotlin.gradle.tooling"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.kotlin.onboarding"/>
     <module name="kotlin.gradle.gradle-java"/>
-    <module name="intellij.kotlin.gradle.tooling"/>
+    <!-- endregion -->
   </dependencies>
 
   <resource-bundle>messages.GradleFeedbackBundle</resource-bundle>

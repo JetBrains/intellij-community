@@ -16,5 +16,6 @@ public interface PyQualifiedNameOwner extends PyAstQualifiedNameOwner, PyElement
    * is contained inside an element that doesn't have a qualified name.
    */
   @Nullable
-  @NlsSafe String getQualifiedName();
+  @NlsSafe
+  String getQualifiedName();
 }

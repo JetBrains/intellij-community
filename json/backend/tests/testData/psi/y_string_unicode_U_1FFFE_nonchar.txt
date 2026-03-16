@@ -1,0 +1,6 @@
+JsonFile: y_string_unicode_U_1FFFE_nonchar.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"\uD83F\uDFFE"')
+    PsiElement(])(']')

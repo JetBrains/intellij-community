@@ -50,7 +50,12 @@ import java.awt.Font
 import java.awt.Toolkit
 import java.awt.event.ItemEvent
 import java.awt.event.ItemListener
-import javax.swing.*
+import javax.swing.BoxLayout
+import javax.swing.JCheckBox
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JTable
 
 abstract class KotlinBaseChangeSignatureDialog<P : KotlinModifiableParameterInfo, V, M : KotlinModifiableMethodDescriptor<P, V>>(
     project: Project,

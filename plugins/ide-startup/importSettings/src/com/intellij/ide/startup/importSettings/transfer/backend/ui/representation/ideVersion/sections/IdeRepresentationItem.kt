@@ -11,7 +11,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.EventDispatcher

@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.statistics
 
 import com.intellij.internal.statistic.FUCollectorTestCase.collectProjectStateCollectorEvents
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.jetbrains.fus.reporting.api.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.maven.testFramework.MavenImportingTestCase
 import kotlinx.coroutines.runBlocking

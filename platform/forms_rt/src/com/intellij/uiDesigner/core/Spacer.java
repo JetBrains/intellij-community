@@ -15,8 +15,8 @@
  */
 package com.intellij.uiDesigner.core;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Dimension;
 
 public class Spacer extends JComponent{
   @Override

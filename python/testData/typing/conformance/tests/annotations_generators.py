@@ -84,12 +84,12 @@ def generator7() -> Iterator[dict[str, int]]:
 
 
 def generator8() -> int:  # E: incompatible return type
-    yield None  # E
+    yield None  # E?
     return 0
 
 
 async def generator9() -> int:  # E: incompatible return type
-    yield None  # E
+    yield None  # E?
 
 
 class IntIterator(Protocol):

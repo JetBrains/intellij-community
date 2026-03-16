@@ -5,7 +5,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class GroovyScriptType {
 

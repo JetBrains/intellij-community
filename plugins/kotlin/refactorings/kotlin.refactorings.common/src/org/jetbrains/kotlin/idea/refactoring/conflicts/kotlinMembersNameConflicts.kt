@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.conflicts
 
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiNameHelper
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.descendantsOfType
@@ -18,7 +23,25 @@ import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.components.packageScope
 import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.findPackage
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.asJava.accessorNameByPropertyName
@@ -30,7 +53,18 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUsageInfo
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.findPropertyByName
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -109,11 +143,17 @@ fun checkDeclarationNewNameConflicts(
     fun getPotentialConflictCandidates(symbol: KaDeclarationSymbol, declaration: KtNamedDeclaration, newName: Name): Sequence<KaDeclarationSymbol> {
         val containingSymbol = symbol.containingDeclaration ?: findPackage(declaration.containingKtFile.packageFqName)
 
-        if (symbol is KaValueParameterSymbol || symbol is KaContextParameterSymbol) {
-            val functionLikeSymbol = containingSymbol as KaFunctionSymbol
-            val locals = functionLikeSymbol.psi?.descendantsOfType<KtVariableDeclaration>()?.filter { it.nameAsName == newName }
-                ?.mapNotNull { it.symbol } ?: emptySequence()
-            return functionLikeSymbol.valueParameters.filter { it.name == newName }.asSequence() + locals
+        if (symbol is KaValueParameterSymbol || symbol is KaContextParameterSymbol || symbol is KaLocalVariableSymbol) {
+            val functionLikeSymbol = containingSymbol as? KaFunctionSymbol ?: return emptySequence()
+            val functionPsi = functionLikeSymbol.psi
+
+            val locals = functionPsi?.descendantsOfType<KtVariableDeclaration>()
+                ?.filter { it.nameAsName == newName }
+                ?.map { it.symbol } ?: emptySequence()
+            val destructuringEntries = functionPsi?.descendantsOfType<KtDestructuringDeclarationEntry>()
+                ?.filter { it.nameAsName == newName }
+                ?.map { it.symbol } ?: emptySequence()
+            return functionLikeSymbol.valueParameters.filter { it.name == newName }.asSequence() + locals + destructuringEntries
         }
 
         if (symbol is KaTypeParameterSymbol) {
@@ -161,7 +201,7 @@ fun checkDeclarationNewNameConflicts(
                     if (it.name != newName.asString()) return@mapNotNull null
                     val isAccepted = when (symbol) {
                         is KaClassSymbol -> it is KtClassOrObject
-                        is KaPropertySymbol, is KaJavaFieldSymbol, is KaLocalVariableSymbol -> it is KtProperty
+                        is KaPropertySymbol, is KaJavaFieldSymbol -> it is KtProperty || it is KtDestructuringDeclarationEntry
                         is KaFunctionSymbol -> it is KtNamedFunction
                         else -> false
                     }
@@ -341,7 +381,7 @@ fun registerRetargetJobOnPotentialCandidates(
                 if (it == declaration || it.name != name) return@mapNotNull null
                 val isAccepted = when (declarationSymbol) {
                     is KaClassSymbol -> it is KtClassOrObject
-                    is KaPropertySymbol, is KaJavaFieldSymbol, is KaLocalVariableSymbol -> it is KtProperty
+                    is KaPropertySymbol, is KaJavaFieldSymbol, is KaLocalVariableSymbol -> it is KtProperty || it is KtDestructuringDeclarationEntry
                     is KaFunctionSymbol -> it is KtNamedFunction
                     else -> false
                 }

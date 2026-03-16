@@ -1,0 +1,24 @@
+<code_scheme name="Code Style" version="173">
+  <JavaCodeStyleSettings>
+    <option name="IMPORT_LAYOUT_TABLE">
+      <value>
+        <package name="" withSubpackages="true" static="false"/>
+        <package name="" withSubpackages="true" static="false" module="true"/>
+        <package name="com" withSubpackages="true" static="false"/>
+        <emptyLine/>
+        <package name="edu" withSubpackages="true" static="false"/>
+        <emptyLine/>
+        <package name="net" withSubpackages="true" static="false"/>
+        <emptyLine/>
+        <package name="org" withSubpackages="true" static="false"/>
+        <emptyLine/>
+        <package name="javax" withSubpackages="true" static="false"/>
+        <emptyLine/>
+        <package name="java" withSubpackages="true" static="false"/>
+        <emptyLine/>
+        <package name="" withSubpackages="true" static="true"/>
+      </value>
+    </option>
+  </JavaCodeStyleSettings>
+
+</code_scheme>

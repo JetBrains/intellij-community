@@ -7,7 +7,7 @@ from os import _ScandirIterator, stat_result
 from typing import AnyStr, overload
 
 from aiofiles import ospath
-from aiofiles.ospath import wrap as wrap
+from aiofiles.base import wrap as wrap
 
 __all__ = [
     "path",

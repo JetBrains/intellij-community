@@ -13,7 +13,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.time.Duration
 import kotlin.time.Duration.Companion.milliseconds

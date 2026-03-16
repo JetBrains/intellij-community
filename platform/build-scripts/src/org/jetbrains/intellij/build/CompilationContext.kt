@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.CompilationTasksImpl
@@ -20,6 +20,10 @@ interface CompilationContext {
   val dependenciesProperties: DependenciesProperties
   val bundledRuntime: BundledRuntime
   val compilationData: JpsCompilationData
+
+  val outputProvider: ModuleOutputProvider
+
+  fun findRequiredModule(moduleName: String): JpsModule = outputProvider.findRequiredModule(moduleName)
 
   fun isStepSkipped(step: String): Boolean = options.buildStepsToSkip.contains(step)
 
@@ -40,50 +44,27 @@ interface CompilationContext {
 
   suspend fun getOriginalModuleRepository(): OriginalModuleRepository
 
-  fun findRequiredModule(name: String): JpsModule
-
-  fun findModule(name: String): JpsModule?
-
-  /**
-   * A directory or a .jar file.
-   */
-  @Deprecated(message = "Please use `getModuleOutputRoots`", replaceWith = ReplaceWith("getModuleOutputRoots(module, forTests)"))
-  suspend fun getModuleOutputDir(module: JpsModule, forTests: Boolean = false): Path {
-    val outputRoots = getModuleOutputRoots(module, forTests)
-    return outputRoots.singleOrNull() ?: error("More than one output root for module '${module.name}': ${outputRoots.joinToString()}")
-  }
-
-  /**
-   * A directory or a .jar file.
-   */
-  @Deprecated(message = "Please use `getModuleOutputRoots`", replaceWith = ReplaceWith("getModuleOutputRoots(module, forTests = true)"))
-  suspend fun getModuleTestsOutputDir(module: JpsModule): Path {
-    val outputRoots = getModuleOutputRoots(module, forTests = true)
-    return outputRoots.singleOrNull() ?: error("More than one output root for module '${module.name}': ${outputRoots.joinToString()}")
-  }
-
-  suspend fun getModuleOutputRoots(module: JpsModule, forTests: Boolean = false): List<Path>
-
-  suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): List<String>
+  suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): Collection<Path>
 
   fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean = false): Path?
 
   fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean = false): Path?
 
-  @ApiStatus.Internal
-  suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean = false): ByteArray?
-
   fun notifyArtifactBuilt(artifactPath: Path)
 
-  @ApiStatus.Internal
+  @Internal
   fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext
 
-  @ApiStatus.Internal
+  @Internal
   suspend fun prepareForBuild()
 
   suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>? = emptyList())
 
-  @ApiStatus.Internal
+  suspend fun compileProductionModules() {
+    compileModules(moduleNames = null, includingTestsInModules = emptyList())
+  }
+
+  @Internal
   suspend fun withCompilationLock(block: suspend () -> Unit)
 }
 
@@ -92,20 +73,7 @@ interface CompilationTasks {
     fun create(context: CompilationContext): CompilationTasks = CompilationTasksImpl(context)
   }
 
-  /**
-   * See [compileModules]
-   */
   suspend fun compileAllModulesAndTests()
-
-  /**
-   * [resolveProjectDependencies] is guaranteed to be called
-   */
-  suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>? = emptyList())
-
-  /**
-   * [compileModules] is called if required
-   */
-  suspend fun buildProjectArtifacts(artifactNames: Set<String>)
 
   suspend fun resolveProjectDependencies()
 }

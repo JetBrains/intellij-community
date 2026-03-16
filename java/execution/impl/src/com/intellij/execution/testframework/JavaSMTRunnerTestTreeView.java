@@ -4,7 +4,11 @@ package com.intellij.execution.testframework;
 import com.intellij.execution.testframework.actions.TestFrameworkActions;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.events.TestDurationStrategy;
-import com.intellij.execution.testframework.sm.runner.ui.*;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeViewProvider;
+import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
+import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer;
+import com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.Key;
@@ -15,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.TimeUnit;
 

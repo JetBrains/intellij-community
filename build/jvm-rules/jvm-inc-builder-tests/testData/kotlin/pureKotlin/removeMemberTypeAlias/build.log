@@ -1,0 +1,18 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_removeMemberTypeAlias-a.kotlin_module
+  a/Outer$B.class
+  a/Outer.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/removeMemberTypeAlias/a/a.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_removeMemberTypeAlias-a.kotlin_module
+  usage/A1UsageKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/removeMemberTypeAlias/a/a1Usage.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -13,13 +13,6 @@
   files:
   - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2/schema-kenerator-serialization-2.jar
   reason: <- intellij.mcpserver
-- name: lib/ktor-server-cio-internal.jar
-  library: ktor-server-cio-internal
-  module: intellij.mcpserver
-  files:
-  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-cio-jvm/3/ktor-server-cio-jvm-3.jar
-  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-core-jvm/3/ktor-server-core-jvm-3.jar
-  - name: $MAVEN_REPOSITORY$/com/typesafe/config/1/config-1.jar
 - name: lib/mcpserver-frontend.jar
   projectLibraries:
   - name: io.github.oshai.kotlin.logging.jvm
@@ -43,3 +36,8 @@
 - name: lib/mcpserver.jar
   modules:
   - name: intellij.mcpserver
+- name: lib/toml4j.jar
+  library: toml4j
+  module: intellij.mcpserver
+  files:
+  - name: $MAVEN_REPOSITORY$/com/moandjiezana/toml/toml4j/0/toml4j-0.jar

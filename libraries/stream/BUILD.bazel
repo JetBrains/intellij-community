@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":stream_resources"],
-  exports = ["@lib//:stream_ex"],
-  runtime_deps = ["@lib//:stream_ex"]
+  exports = ["@lib//:libraries-stream-_stream_ex"],
+  runtime_deps = ["@lib//:libraries-stream-_stream_ex"]
 )
 ### auto-generated section `build intellij.libraries.stream` end

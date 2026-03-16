@@ -3,6 +3,7 @@ package com.jetbrains.python.hatch.packaging
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.hatch.HatchService
 import com.intellij.python.hatch.getHatchService
 import com.jetbrains.python.errorProcessing.PyResult
@@ -10,6 +11,7 @@ import com.jetbrains.python.hatch.sdk.HatchSdkAdditionalData
 import com.jetbrains.python.hatch.sdk.isHatch
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
+import com.jetbrains.python.packaging.management.resolvePyProjectToml
 import com.jetbrains.python.packaging.pip.PipPythonPackageManager
 
 internal class HatchPackageManager(project: Project, sdk: Sdk) : PipPythonPackageManager(project, sdk) {
@@ -30,12 +32,17 @@ internal class HatchPackageManager(project: Project, sdk: Sdk) : PipPythonPackag
     val workingDirectory = data.hatchWorkingDirectory
     return workingDirectory.getHatchService(hatchEnvironmentName = data.hatchEnvironmentName)
   }
+
+  override fun getDependencyFile(): VirtualFile? {
+    val data = sdk.sdkAdditionalData as? HatchSdkAdditionalData ?: return null
+    val workingDirectory = data.hatchWorkingDirectory ?: return null
+    return resolvePyProjectToml(workingDirectory)
+  }
 }
 
 internal class HatchPackageManagerProvider : PythonPackageManagerProvider {
-  override suspend fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? = when {
+  override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? = when {
     sdk.isHatch -> HatchPackageManager(project, sdk)
     else -> null
   }
 }
-

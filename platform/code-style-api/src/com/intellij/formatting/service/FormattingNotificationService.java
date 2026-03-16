@@ -3,7 +3,6 @@ package com.intellij.formatting.service;
 
 import com.intellij.formatting.FormattingContext;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
@@ -11,12 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 public interface FormattingNotificationService {
   static @NotNull FormattingNotificationService getInstance(@NotNull Project project) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      return HeadlessNotificationService.INSTANCE;
-    }
-    else {
-      return project.getService(FormattingNotificationService.class);
-    }
+    return project.getService(FormattingNotificationService.class);
   }
 
   default void reportError(@NotNull String groupId,

@@ -2,23 +2,16 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.util.MathUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * Used to override caret attributes such as shape, size or painting color.
  */
 public final class CaretVisualAttributes {
-
-  /**
-   * @deprecated use {@link #getDefault()} instead
-   */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public static final CaretVisualAttributes DEFAULT = new CaretVisualAttributes(null, Weight.NORMAL, Shape.DEFAULT, 1.0f);
+  private static final CaretVisualAttributes DEFAULT = new CaretVisualAttributes(null, Weight.NORMAL, Shape.DEFAULT, 1.0f);
 
   public static CaretVisualAttributes getDefault() {
     return DEFAULT;

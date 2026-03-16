@@ -52,5 +52,11 @@
     <orderEntry type="module" module-name="intellij.libraries.bouncy.castle.provider" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.eelJava" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" />
+    <orderEntry type="module" module-name="intellij.xml.analysis" />
+    <orderEntry type="module" module-name="intellij.xml.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.java.testFramework.backend" />
+    <orderEntry type="module" module-name="intellij.repository.search.common" />
   </component>
 </module>

@@ -11,7 +11,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import org.intellij.lang.regexp.RegExpBundle;
-import org.intellij.lang.regexp.psi.*;
+import org.intellij.lang.regexp.psi.RegExpChar;
+import org.intellij.lang.regexp.psi.RegExpClass;
+import org.intellij.lang.regexp.psi.RegExpClassElement;
+import org.intellij.lang.regexp.psi.RegExpElement;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.intellij.lang.regexp.psi.RegExpIntersection;
+import org.intellij.lang.regexp.psi.RegExpSimpleClass;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;

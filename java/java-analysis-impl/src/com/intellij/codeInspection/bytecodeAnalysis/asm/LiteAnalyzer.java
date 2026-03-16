@@ -3,7 +3,14 @@ package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
-import org.jetbrains.org.objectweb.asm.tree.*;
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.InsnList;
+import org.jetbrains.org.objectweb.asm.tree.JumpInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.LabelNode;
+import org.jetbrains.org.objectweb.asm.tree.LookupSwitchInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.MethodNode;
+import org.jetbrains.org.objectweb.asm.tree.TableSwitchInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.TryCatchBlockNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Interpreter;

@@ -19,8 +19,17 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
+
+import static com.intellij.grazie.utils.HighlightingUtil.isSpace;
 
 @ApiStatus.Internal
 public final class TextContentImpl extends UserDataHolderBase implements TextContent {
@@ -316,8 +325,8 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
     String text = toString();
     int start = 0;
     int end = text.length();
-    while (start < end && isSpace(text, start)) start++;
-    while (start < end && isSpace(text, end - 1)) end--;
+    while (start < end && isSpace(text.charAt(start))) start++;
+    while (start < end && isSpace(text.charAt(end - 1))) end--;
     if (start >= end) {
       return null;
     }
@@ -408,10 +417,6 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
         return sb.toString();
       }
     };
-  }
-
-  private static boolean isSpace(String text, int start) {
-    return Character.isWhitespace(text.charAt(start)) || Character.isSpaceChar(text.charAt(start));
   }
 
   private static @Nullable TokenInfo merge(TokenInfo t1, TokenInfo t2) {

@@ -18,7 +18,12 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
@@ -31,7 +36,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.eel.path.EelPath;
 import com.intellij.platform.eel.path.EelPathException;
 import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
-import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
@@ -48,14 +52,27 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.changes.GitCommittedChangeList;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitHandler;
+import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
-import git4idea.repo.*;
+import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitRemote;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryFiles;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitSimplePathsBrowser;
 import git4idea.util.GitUIUtil;
 import git4idea.util.StringScanner;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,7 +82,16 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
@@ -142,37 +168,24 @@ public final class GitUtil {
 
   private static @Nullable Path findRealRepositoryDir(@NotNull @NonNls Path rootPath, @NotNull @NonNls String path) {
     EelPath rootPathEel = EelNioBridgeServiceKt.asEelPath(rootPath);
-    // TODO there is no need of processing local case separately
-    if (!(rootPathEel.getDescriptor() instanceof LocalEelDescriptor)) {
-      EelPath eelResolved;
+    EelPath eelResolved;
+    try {
+      eelResolved = EelPath.parse(path, rootPathEel.getDescriptor());
+    }
+    catch (EelPathException e) {
       try {
-        eelResolved = EelPath.parse(path, rootPathEel.getDescriptor());
-      }
-      catch (EelPathException e) {
-        try {
-          eelResolved = rootPathEel.resolve(path);
-        } catch (EelPathException e1) {
-          return null;
-        }
-      }
-      Path result = EelNioBridgeServiceKt.asNioPath(eelResolved);
-      if (Files.isDirectory(result)) {
-        return result;
-      }
-      else {
+        eelResolved = rootPathEel.resolve(path);
+      } catch (EelPathException e1) {
         return null;
       }
     }
-    if (!FileUtil.isAbsolute(path)) {
-      String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootPath.toString(), path), true);
-      path = FileUtil.toSystemIndependentName(canonicalPath);
+    Path result = EelNioBridgeServiceKt.asNioPath(eelResolved);
+    if (Files.isDirectory(result)) {
+      return result;
     }
-
-    Path file = Path.of(path);
-    if (!Files.isDirectory(file)) {
+    else {
       return null;
     }
-    return file;
   }
 
   @ApiStatus.Internal
@@ -949,22 +962,28 @@ public final class GitUtil {
       FilePath after = afterPathGetter.convert(change);
       FilePath before = beforePathGetter.convert(change);
       if (before == null) {
-        return "A: " + getRelativePath(root, after);
+        return "A: " + getLogString(root, after);
       }
       else if (after == null) {
-        return "D: " + getRelativePath(root, before);
+        return "D: " + getLogString(root, before);
       }
       else if (ChangesUtil.equalsCaseSensitive(before, after)) {
-        return "M: " + getRelativePath(root, after);
+        return "M: " + getLogString(root, after);
       }
       else {
-        return "R: " + getRelativePath(root, before) + " -> " + getRelativePath(root, after);
+        return "R: " + getLogString(root, before) + " -> " + getLogString(root, after);
       }
     }, ", ");
   }
 
-  public static @Nullable String getRelativePath(@NotNull String root, @NotNull FilePath after) {
-    return FileUtil.getRelativePath(root, after.getPath(), File.separatorChar);
+  public static @NotNull String getLogString(@NotNull String root, @NotNull FilePath filePath) {
+    String path = getRelativePath(root, filePath);
+    if (path != null) return path;
+    return filePath.getPath();
+  }
+
+  public static @Nullable String getRelativePath(@NotNull String root, @NotNull FilePath filePath) {
+    return FileUtil.getRelativePath(root, filePath.getPath(), File.separatorChar);
   }
 
   /**

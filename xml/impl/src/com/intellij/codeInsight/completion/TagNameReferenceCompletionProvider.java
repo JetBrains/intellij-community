@@ -2,7 +2,11 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.SchemaPrefixReference;

@@ -3,8 +3,26 @@ package com.intellij.database.run.ui
 import com.intellij.database.DataGridBundle
 import com.intellij.database.connection.throwable.info.ErrorInfo
 import com.intellij.database.connection.throwable.info.SimpleErrorInfo
-import com.intellij.database.datagrid.*
+import com.intellij.database.datagrid.DataGrid
+import com.intellij.database.datagrid.DataGridAppearance
+import com.intellij.database.datagrid.DataGridWithNestedTables
+import com.intellij.database.datagrid.GridColumn
+import com.intellij.database.datagrid.GridDataHookUp
+import com.intellij.database.datagrid.GridModel
+import com.intellij.database.datagrid.GridModelWithNestedTables
+import com.intellij.database.datagrid.GridRequestSource
+import com.intellij.database.datagrid.GridRow
+import com.intellij.database.datagrid.GridUtil
+import com.intellij.database.datagrid.HierarchicalColumnsCollapseManager
 import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.HierarchicalGridColumn
+import com.intellij.database.datagrid.ModelIndex
+import com.intellij.database.datagrid.ModelIndexSet
+import com.intellij.database.datagrid.NestedTable
+import com.intellij.database.datagrid.NestedTableGridPagingModel
+import com.intellij.database.datagrid.NestedTablesDataGridModel
+import com.intellij.database.datagrid.NestedTablesGridLoader
+import com.intellij.database.datagrid.NestedTablesSortingModel
+import com.intellij.database.datagrid.StaticNestedTable
 import com.intellij.database.run.ui.table.FilterStateControllerForNestedTables
 import com.intellij.database.run.ui.table.LocalFilterState
 import com.intellij.icons.AllIcons
@@ -21,7 +39,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.LinkedList
 import java.util.function.BiConsumer
 import kotlin.math.max
 

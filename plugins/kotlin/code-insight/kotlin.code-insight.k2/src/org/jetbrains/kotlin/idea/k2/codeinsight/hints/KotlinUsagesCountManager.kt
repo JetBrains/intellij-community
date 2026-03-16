@@ -21,7 +21,11 @@ import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesO
 import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindClassUsagesHandler
 import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindMemberUsagesHandler
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isCheapEnoughToSearchUsages
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
 import java.util.concurrent.atomic.AtomicInteger
 
 @Service(Service.Level.PROJECT)

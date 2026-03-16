@@ -2,7 +2,7 @@
 package com.intellij.collaboration.auth
 
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.UUID
 
 /**
  * Base class to represent an account for some external system

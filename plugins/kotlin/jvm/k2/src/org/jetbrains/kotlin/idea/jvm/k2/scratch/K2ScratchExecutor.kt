@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.jvm.k2.scratch
 
+import com.intellij.execution.JavaParametersBuilder
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -21,19 +23,20 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.core.script.k2.definitions.KOTLIN_SCRATCH_EXPLAIN_FILE
-import org.jetbrains.kotlin.idea.core.script.k2.definitions.KotlinScratchScript
+import org.jetbrains.kotlin.idea.core.script.scratch.definition.KOTLIN_SCRATCH_EXPLAIN_FILE
+import org.jetbrains.kotlin.idea.core.script.scratch.definition.KotlinScratchScript
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExecutor
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ExplainInfo
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutput
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutputType
-import org.jetbrains.kotlin.idea.util.JavaParametersBuilder
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.readLines
+
+private val log = Logger.getInstance(K2ScratchExecutor::class.java)
 
 class K2ScratchExecutor(override val scratchFile: K2KotlinScratchFile, val project: Project, val scope: CoroutineScope) :
     ScratchExecutor(scratchFile) {
@@ -143,7 +146,10 @@ class K2ScratchExecutor(override val scratchFile: K2KotlinScratchFile, val proje
             "plugin:kotlin.scripting:enable-script-explanation=true",
         )
 
-        return javaParameters.toCommandLine()
+        val commandLine = javaParameters.toCommandLine()
+        log.info("commandLine=${commandLine.commandLineString}")
+
+        return commandLine
     }
 
     private val requiredKotlinArtifacts by lazy {

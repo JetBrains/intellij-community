@@ -10,11 +10,11 @@
   <incompatible-with>com.intellij.modules.appcode.ide</incompatible-with>
 
   <dependencies>
-    <plugin id="com.intellij.java"/>
+    <module name="intellij.java.backend"/>
   </dependencies>
 
   <content namespace="jetbrains">
-    <module name="intellij.java.ide.customization/training"/>
+    <module name="intellij.java.ide.customization.training"/>
   </content>
 
   <resource-bundle>messages.ActionsBundle</resource-bundle>

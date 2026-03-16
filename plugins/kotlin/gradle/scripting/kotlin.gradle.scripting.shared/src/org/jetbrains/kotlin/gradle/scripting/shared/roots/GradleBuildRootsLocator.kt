@@ -9,8 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.gradle.scripting.shared.LastModifiedFiles
 import org.jetbrains.kotlin.gradle.scripting.shared.getGradleVersion
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslGradleBuildSync
@@ -25,55 +23,13 @@ import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicBoolean
 
-abstract class GradleBuildRootsLocator(private val project: Project, private val coroutineScope: CoroutineScope) {
+abstract class GradleBuildRootsLocator(private val project: Project) {
     val roots: GradleBuildRootIndex = GradleBuildRootIndex(project)
-
-    fun fileChanged(filePath: String, ts: Long = System.currentTimeMillis()) {
-        findAffectedFileRoot(filePath)?.fileChanged(filePath, ts)
-        scheduleModifiedFilesCheck(filePath)
-    }
-
-    private val modifiedFilesCheckScheduled = AtomicBoolean()
-    private val modifiedFiles = ConcurrentLinkedQueue<String>()
-
-    private fun scheduleModifiedFilesCheck(filePath: String) {
-        modifiedFiles.add(filePath)
-        if (modifiedFilesCheckScheduled.compareAndSet(false, true)) {
-            coroutineScope.launch {
-                if (modifiedFilesCheckScheduled.compareAndSet(true, false)) {
-                    checkModifiedFiles()
-                }
-            }
-        }
-    }
-
-    private fun checkModifiedFiles() {
-        updateNotifications(restartAnalyzer = false) { true }
-
-        roots.list.forEach {
-            it.saveLastModifiedFiles()
-        }
-
-        // process modifiedFiles queue
-        while (true) {
-            val file = modifiedFiles.poll() ?: break
-
-            // detect gradle version change
-            val buildDir = findGradleWrapperPropertiesBuildDir(file)
-            if (buildDir != null) {
-                actualizeBuildRoot(buildDir, null)
-            }
-        }
-    }
 
     abstract fun getScriptInfo(localPath: String): GradleScriptInfo?
 
     abstract fun loadLinkedRoot(settings: GradleProjectSettings, version: String): GradleBuildRoot
-
-    fun getAllRoots(): Collection<GradleBuildRoot> = roots.list
 
     fun getBuildRootByWorkingDir(gradleWorkingDir: String): GradleBuildRoot? =
         roots.getBuildByRootDir(gradleWorkingDir)
@@ -128,7 +84,7 @@ abstract class GradleBuildRootsLocator(private val project: Project, private val
             add(newRoot)
         } catch (e: Exception) {
             markImportingInProgress(sync.workingDir, false)
-            scriptingErrorLog("Couldn't update Gradle build root: ${oldRoot.pathPrefix}", e)
+            scriptingErrorLog("Couldn't update Gradle build root: ${oldRoot.externalProjectPath}", e)
             return
         }
     }
@@ -195,7 +151,7 @@ abstract class GradleBuildRootsLocator(private val project: Project, private val
     protected fun removeData(rootPath: String) {
         val buildRoot = LocalFileSystem.getInstance().findFileByPath(rootPath)
         if (buildRoot != null) {
-            GradleBuildRootDataSerializer.getInstance().remove(buildRoot)
+            AbstractGradleBuildRootDataSerializer.getInstance().remove(buildRoot)
             LastModifiedFiles.remove(buildRoot)
         }
     }
@@ -243,7 +199,7 @@ abstract class GradleBuildRootsLocator(private val project: Project, private val
         val newRoot = tryCreateImportedRoot(sync.workingDir, LastModifiedFiles()) { mergedData } ?: return null
         val buildRootDir = newRoot.dir ?: return null
 
-        GradleBuildRootDataSerializer.getInstance().write(buildRootDir, mergedData)
+        AbstractGradleBuildRootDataSerializer.getInstance().write(buildRootDir, mergedData)
         newRoot.saveLastModifiedFiles()
 
         return newRoot

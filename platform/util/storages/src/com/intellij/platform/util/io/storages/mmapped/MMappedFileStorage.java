@@ -1,11 +1,15 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.mmapped;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.*;
+import com.intellij.util.io.ByteBufferUtil;
+import com.intellij.util.io.CleanableStorage;
+import com.intellij.util.io.ClosedStorageException;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.Unmappable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +35,9 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.channels.FileChannel.MapMode.READ_WRITE;
-import static java.nio.file.StandardOpenOption.*;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.READ;
+import static java.nio.file.StandardOpenOption.WRITE;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
@@ -403,13 +409,23 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
     if (actuallyClosed && WARN_OF_DELETED_STORAGES_USE) {
       Path parent = storagePath.getParent();
       if (!Files.exists(parent)) {
-        LOG.warn("Storage parent dir[" + parent.toAbsolutePath() + "] is not exist: storage files were removed while wasn't yet closed!");
+        LOG.warn("Storage parent dir[" + parent.toAbsolutePath() + "] is not exist: storage files were removed while wasn't yet closed!",
+                 new IOException("Storage parent dir has disappeared")
+        );
       }
       else {
         if (!Files.exists(storagePath)) {
-          LOG.warn("Storage[" + storagePath.toAbsolutePath() + "] is not exist: storage file was removed while wasn't yet closed!");
+          LOG.warn("Storage[" + storagePath.toAbsolutePath() + "] is not exist: storage file was removed while wasn't yet closed!",
+                   new IOException("Storage parent file has disappeared"));
         }
       }
+    }
+  }
+
+  /** @return stacktrace of place there storage was closed, or null, if it not yet closed */
+  public @Nullable Exception getCloseStackTrace() {
+    synchronized (pagesLock) {
+      return closeStackTrace;
     }
   }
 
@@ -556,7 +572,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
 
     @Override
     public String toString() {
-      return "Page[#" + pageIndex + "][offset: " + offsetInFile + ", length: " + pageBuffer.capacity() + " b)";
+      return "Page[#" + pageIndex + "]{offset: " + offsetInFile + ", length: " + pageBuffer.capacity() + " b}";
     }
 
 

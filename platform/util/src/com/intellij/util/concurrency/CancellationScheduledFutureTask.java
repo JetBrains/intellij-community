@@ -16,24 +16,22 @@ final class CancellationScheduledFutureTask<V> extends SchedulingWrapper.MySched
 
   CancellationScheduledFutureTask(@NotNull SchedulingWrapper self,
                                   @NotNull ChildContext context,
-                                  @Nullable Job job,
                                   @NotNull AtomicBoolean executionTracker,
                                   @NotNull Callable<V> callable,
                                   long ns) {
     self.super(callable, ns);
-    myJob = job;
+    myJob = context.getJob();
     myChildContext = context;
     myExecutionTracker = executionTracker;
   }
 
   CancellationScheduledFutureTask(@NotNull SchedulingWrapper self,
                                   @NotNull ChildContext context,
-                                  @Nullable Job job,
-                                  @NotNull Runnable r,
+                                  @NotNull Runnable runnable,
                                   long ns,
                                   long period) {
-    self.super(r, null, ns, period);
-    myJob = job;
+    self.super(runnable, null, ns, period);
+    myJob = context.getJob();
     myChildContext = context;
     myExecutionTracker = new AtomicBoolean(false);
   }

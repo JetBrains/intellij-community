@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.syntax.parser
 
 import com.intellij.java.syntax.JavaSyntaxBundle.message
@@ -42,7 +42,8 @@ class PatternParser(private val myParser: JavaParser) {
 
   fun preParsePattern(builder: SyntaxTreeBuilder): SyntaxTreeBuilder.Marker? {
     val patternStart = builder.mark()
-    val hasNoModifier = myParser.declarationParser.parseModifierList(builder, PATTERN_MODIFIERS).second
+    val modList = myParser.declarationParser.parseModifierList(builder, PATTERN_MODIFIERS)
+    val hasNoModifier = modList.getStartOffset() == modList.getEndOffset()
     val type = myParser.referenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT or ReferenceParser.WILDCARD)
     val isPattern = type != null &&
                     (builder.tokenType === JavaSyntaxTokenType.IDENTIFIER || (builder.tokenType === JavaSyntaxTokenType.LPARENTH && hasNoModifier))
@@ -109,7 +110,8 @@ class PatternParser(private val myParser: JavaParser) {
   private fun parseTypeOrRecordPattern(builder: SyntaxTreeBuilder, expectVar: Boolean): SyntaxTreeBuilder.Marker {
     val pattern = builder.mark()
     val patternVariable = builder.mark()
-    val hasNoModifiers = myParser.declarationParser.parseModifierList(builder, PATTERN_MODIFIERS).second
+    val modList = myParser.declarationParser.parseModifierList(builder, PATTERN_MODIFIERS)
+    val hasNoModifiers = modList.getStartOffset() == modList.getEndOffset()
 
     var flags = ReferenceParser.EAT_LAST_DOT or ReferenceParser.WILDCARD
     if (expectVar) {

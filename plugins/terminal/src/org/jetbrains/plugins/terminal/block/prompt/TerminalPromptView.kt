@@ -37,7 +37,12 @@ import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
 import org.jetbrains.plugins.terminal.block.ui.getCharSize
 import org.jetbrains.plugins.terminal.block.ui.invokeLater
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Insets
+import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.geom.Dimension2D

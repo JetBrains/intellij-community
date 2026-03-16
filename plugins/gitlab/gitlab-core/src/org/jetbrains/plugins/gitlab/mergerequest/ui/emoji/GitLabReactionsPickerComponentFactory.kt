@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabReaction
 import java.awt.FlowLayout
-import java.util.*
+import java.util.Locale
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel

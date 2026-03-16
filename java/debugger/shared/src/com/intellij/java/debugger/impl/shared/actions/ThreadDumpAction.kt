@@ -13,17 +13,17 @@ import com.intellij.java.debugger.impl.shared.rpc.JavaThreadDumpItemDto
 import com.intellij.java.debugger.impl.shared.rpc.ThreadDumpWithAwaitingDependencies
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.debugger.impl.rpc.toSimpleTextAttributes
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.unscramble.DumpItem
 import com.intellij.util.BitUtil
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import fleet.rpc.core.util.map
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.event.InputEvent
 import javax.swing.Icon
 
-private class ThreadDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+internal class ThreadDumpAction : DumbAwareAction(), SplitDebuggerAction {
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun actionPerformed(e: AnActionEvent) {
@@ -131,8 +131,15 @@ private class FrontendDumpItem(
   override val attributes: SimpleTextAttributes get() = attributesCache[itemDto.attributesIndex.toInt().toUInt().toInt()]
   override val isDeadLocked: Boolean get() = itemDto.isDeadLocked
   override val awaitingDumpItems: Set<DumpItem> get() = internalAwaitingItems
+  override val id: Long get() = itemDto.id
+  override val parentId: Long? get() = itemDto.parentId
+  override val isContainer: Boolean get() = itemDto.isContainer
+  override val canBeHidden: Boolean get() = itemDto.canBeHidden
 
   fun setAwaitingItems(items: Set<DumpItem>) {
     internalAwaitingItems = items
   }
+
+  override fun toString(): String =
+    "FrontendDumpItem(name=$name)"
 }

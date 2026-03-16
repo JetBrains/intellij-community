@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
+import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

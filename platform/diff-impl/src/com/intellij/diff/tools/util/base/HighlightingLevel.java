@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.function.Predicate;
 
 public enum HighlightingLevel {

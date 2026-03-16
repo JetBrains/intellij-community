@@ -22,7 +22,7 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.EnumSet
 import java.util.concurrent.TimeUnit
 
 // https://github.com/jaegertracing/jaeger-ui/issues/381

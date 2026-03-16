@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Unmodifiable
-import java.util.*
+import java.util.Spliterator
 import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Predicate

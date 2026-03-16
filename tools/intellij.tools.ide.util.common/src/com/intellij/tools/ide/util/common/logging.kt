@@ -32,6 +32,5 @@ fun logError(any: Any?) = log(any?.toString() ?: "null") { System.err.println(it
 
 fun logError(message: String) = log(message) { System.err.println(it) }
 fun logError(message: String, t: Throwable?) {
-  log(message) { System.err.println(it) }
-  t?.printStackTrace(System.err)
+  log(message) { System.err.println(it + t?.let { "\n" + t.stackTraceToString() }.orEmpty()) }
 }

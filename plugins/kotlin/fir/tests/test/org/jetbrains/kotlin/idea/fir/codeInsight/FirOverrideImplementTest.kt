@@ -7,12 +7,12 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.OverrideImplementTest
 import org.jetbrains.kotlin.idea.core.overrideImplement.AbstractGenerateMembersHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.test.util.invalidateCaches
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 

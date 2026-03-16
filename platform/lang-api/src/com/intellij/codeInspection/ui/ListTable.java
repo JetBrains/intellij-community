@@ -5,11 +5,12 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
-import java.awt.*;
+import java.awt.Component;
 
 public class ListTable extends JBTable {
 

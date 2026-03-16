@@ -3,7 +3,12 @@ package org.jetbrains.uast.java.expressions
 
 import com.intellij.psi.PsiNameValuePair
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UNamedExpression
+import org.jetbrains.uast.UastEmptyExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.java.JavaAbstractUExpression
 import org.jetbrains.uast.java.JavaConverter
 

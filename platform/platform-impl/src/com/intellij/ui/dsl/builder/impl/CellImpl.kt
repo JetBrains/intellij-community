@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceIsEmptyWithIfEmpty")
+
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.ide.TooltipTitle
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidation
@@ -8,11 +11,24 @@ import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.invoke
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.dsl.UiDslException
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.ChangeContext
+import com.intellij.ui.dsl.builder.HyperlinkEventAction
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
+import com.intellij.ui.dsl.builder.MutableProperty
+import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.components.DslLabel
-import com.intellij.ui.dsl.gridLayout.*
+import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.gridLayout.toUnscaled
 import com.intellij.ui.dsl.validation.CellValidation
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValidationInfoBuilder
@@ -33,7 +49,10 @@ internal class CellImpl<T : JComponent>(
   private val dialogPanelConfig: DialogPanelConfig,
   component: T,
   private val parent: RowImpl,
-  val viewComponent: JComponent = component) : CellBaseImpl<Cell<T>>(), Cell<T> {
+  val viewComponent: JComponent = component,
+) : CellBaseImpl<Cell<T>>(), Cell<T> {
+
+  data class ContextHelpInfo(val description: @NlsContexts.Tooltip String, val title: @TooltipTitle String?)
 
   override var component: T = component
     private set
@@ -42,6 +61,12 @@ internal class CellImpl<T : JComponent>(
     private set
 
   override var commentRight: DslLabel? = null
+    private set
+
+  var contextHelpLabel: ContextHelpLabel? = null
+    private set
+
+  var contextHelpInfo: ContextHelpInfo? = null
     private set
 
   var label: JLabel? = null
@@ -59,7 +84,7 @@ internal class CellImpl<T : JComponent>(
   private var enabled = viewComponent.isEnabled
 
   private val cellValidation = CellValidationImpl(dialogPanelConfig, component, component.interactiveComponent)
-  private var lastAccessibleDescriptionFromComment: @NlsSafe String? = null
+  private var lastAutoCalculatedAccessibleDescription: @NlsSafe String? = null
 
   val onChangeManager: OnChangeManager<T> = OnChangeManager(component)
 
@@ -159,7 +184,8 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<T> {
-    this.comment = if (comment == null) null else createComment(comment, maxLineLength, action).apply {
+    this.comment = if (comment == null) null
+    else createComment(comment, maxLineLength, action).apply {
       registerCreationStacktrace(this)
       document.addDocumentListener(object : DocumentAdapter() {
         override fun textChanged(e: DocumentEvent) {
@@ -172,7 +198,8 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun commentRight(comment: String?, action: HyperlinkEventAction): Cell<T> {
-    this.commentRight = if (comment == null) null else createComment(comment, MAX_LINE_LENGTH_NO_WRAP, action).apply {
+    this.commentRight = if (comment == null) null
+    else createComment(comment, MAX_LINE_LENGTH_NO_WRAP, action).apply {
       registerCreationStacktrace(this)
       document.addDocumentListener(object : DocumentAdapter() {
         override fun textChanged(e: DocumentEvent) {
@@ -181,6 +208,22 @@ internal class CellImpl<T : JComponent>(
       })
     }
     updateAccessibleContextDescription()
+    return this
+  }
+
+  override fun contextHelp(@NlsContexts.Tooltip description: String, @TooltipTitle title: String?): Cell<T> {
+    checkDeniedHtmlTags(description)
+    if (title != null) {
+      checkDeniedHtmlTags(title)
+    }
+
+    val contextHelpLabel = createContextHelp(description, title)
+    this.contextHelpLabel = contextHelpLabel
+    contextHelpInfo = ContextHelpInfo(description, title)
+
+    registerCreationStacktrace(contextHelpLabel)
+    updateAccessibleContextDescription()
+
     return this
   }
 
@@ -353,6 +396,7 @@ internal class CellImpl<T : JComponent>(
       viewComponent.isVisible = isVisible
       comment?.let { it.isVisible = isVisible }
       commentRight?.let { it.isVisible = isVisible }
+      contextHelpLabel?.let { it.isVisible = isVisible }
       label?.let { it.isVisible = isVisible }
 
       // Force parent to re-layout
@@ -361,34 +405,43 @@ internal class CellImpl<T : JComponent>(
   }
 
   private fun doEnabled(isEnabled: Boolean) {
-    if (viewComponent is JScrollPane) {
-      if (viewComponent === component) {
-        // ScrollPane was added via [Row.cell] method
-        viewComponent.viewport?.view?.isEnabled = isEnabled
+    when (viewComponent) {
+      is JScrollPane -> {
+        if (viewComponent === component) {
+          // ScrollPane was added via [Row.cell] method
+          viewComponent.viewport?.view?.isEnabled = isEnabled
+        }
+        else {
+          component.isEnabled = isEnabled
+        }
       }
-      else {
-        component.isEnabled = isEnabled
-      }
-    }
-    else {
-      viewComponent.isEnabled = isEnabled
+
+      is JLabel -> patchedEnableJLabel(viewComponent, isEnabled)
+      else -> viewComponent.isEnabled = isEnabled
     }
     comment?.let { it.isEnabled = isEnabled }
     commentRight?.let { it.isEnabled = isEnabled }
-    label?.let { it.isEnabled = isEnabled }
+    contextHelpLabel?.let { it.isEnabled = isEnabled }
+    label?.let { patchedEnableJLabel(it, isEnabled) }
   }
 
   private fun updateAccessibleContextDescription() {
     val accessibleContext = component.accessibleContext ?: return
     val currentDescription = accessibleContext.accessibleDescription
 
-    if (currentDescription != null && currentDescription != lastAccessibleDescriptionFromComment) {
+    if (currentDescription != null && currentDescription != lastAutoCalculatedAccessibleDescription) {
       // Description is set from another place, don't change it
       return
     }
 
-    lastAccessibleDescriptionFromComment = AccessibleContextUtil.combineAccessibleStrings(commentRight?.getPlainText(), "\n", comment?.getPlainText())
-    component.accessibleContext.accessibleDescription = lastAccessibleDescriptionFromComment
+    lastAutoCalculatedAccessibleDescription = AccessibleContextUtil.joinAccessibleStrings("\n",
+      commentRight?.getPlainText(),
+      comment?.getPlainText(),
+      contextHelpInfo?.title?.stripHtml(),
+      contextHelpInfo?.description?.stripHtml(),
+    )
+
+    component.accessibleContext.accessibleDescription = lastAutoCalculatedAccessibleDescription
   }
 
   /**
@@ -409,6 +462,24 @@ internal class CellImpl<T : JComponent>(
   companion object {
     internal fun Cell<*>.installValidationRequestor(property: ObservableProperty<*>) {
       CellValidationImpl.installDefaultValidationRequestor(component.interactiveComponent, property)
+    }
+  }
+}
+
+/**
+ * Changing JLabel.isEnabled can lead to icon change and therefore requires revalidation
+ */
+private fun patchedEnableJLabel(label: JLabel, enabled: Boolean) {
+  if (label.isEnabled == enabled) return
+
+  val initialIcon = if (label.isEnabled) label.icon else label.getDisabledIcon()
+  label.isEnabled = enabled
+
+  val newIcon = if (label.isEnabled) label.icon else label.getDisabledIcon()
+  if (initialIcon !== newIcon) {
+    label.parent?.apply {
+      revalidate()
+      repaint()
     }
   }
 }

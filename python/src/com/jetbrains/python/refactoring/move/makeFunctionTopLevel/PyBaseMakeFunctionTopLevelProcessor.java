@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -22,7 +23,15 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNonlocalStatement;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -33,9 +42,17 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import static com.jetbrains.python.psi.PyUtil.*;
+import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.PyUtil.inSameFile;
+import static com.jetbrains.python.psi.PyUtil.multiResolveTopPriority;
+import static com.jetbrains.python.psi.PyUtil.turnConstructorIntoClass;
 import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isInNamespacePackage;
 
 /**
@@ -241,6 +258,20 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     return inSameFile(element, myFunction) &&
            !belongsToFunction(element) &&
            !(ScopeUtil.getScopeOwner(element) instanceof PsiFile); 
+  }
+
+  @Override
+  protected @Nullable RefactoringEventData getBeforeData() {
+    final RefactoringEventData data = new RefactoringEventData();
+    data.addElements(List.of(myFunction));
+    return data;
+  }
+
+  @Override
+  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+    final RefactoringEventData data = new RefactoringEventData();
+    data.addElements(List.of(myFunction));
+    return data;
   }
 
   protected static class AnalysisResult {

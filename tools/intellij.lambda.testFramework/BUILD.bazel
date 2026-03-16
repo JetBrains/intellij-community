@@ -1,0 +1,62 @@
+### auto-generated section `build intellij.lambda.testFramework` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_lambda-testFramework",
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "lambda-testFramework_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "lambda-testFramework",
+  module_name = "intellij.lambda.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":lambda-testFramework_resources"],
+  kotlinc_opts = ":custom_lambda-testFramework",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlin-test",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "@lib//:assert_j",
+    "//platform/lang-impl",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/testFramework",
+    "//platform/testFramework/junit5",
+    "//libraries/junit5",
+    "//libraries/junit5-launcher",
+    "//libraries/junit5-params",
+    "//platform/code-style-api:codeStyle",
+    "//platform/lang-api:lang",
+    "//platform/execution-impl",
+    "//platform/remoteDev-util",
+    "//platform/analysis-api:analysis",
+    "//plugins/performanceTesting/core:performanceTesting",
+    "//platform/core-ui",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/util/concurrency",
+    "//platform/usageView",
+    "@lib//:kodein-di-jvm",
+    "//tools/intellij.tools.ide.starter:ide-starter",
+    "//tools/intellij.tools.ide.util.common:ide-util-common",
+    "//tools/intellij.tools.ide.starter.junit5:ide-starter-junit5",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+    "//tools/intellij.tools.ide.starter.driver:ide-starter-driver",
+    "//libraries/rd/framework",
+    "//libraries/rd/core",
+    "//platform/projectModel-api:projectModel",
+  ]
+)
+### auto-generated section `build intellij.lambda.testFramework` end

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.modificationEvents
 
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.psi.PsiDocumentManager.getInstance
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventKind
 import org.jetbrains.kotlin.analysis.api.platform.modification.isGlobalLevel
 import org.jetbrains.kotlin.analysis.api.platform.modification.isModuleLevel
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.psi.KtFile
+import org.junit.Assert
 import java.io.File
 
 abstract class AbstractKotlinModificationEventTest : AbstractMultiModuleTest() {
@@ -69,5 +71,12 @@ abstract class AbstractKotlinModificationEventTest : AbstractMultiModuleTest() {
             additionalAllowedEventKinds + defaultAllowedEventKinds,
             testRootDisposable,
         )
+    }
+
+    protected fun KtFile.modify(textAfterModification: String, targetOffset: Int? = null, edit: () -> Unit) {
+        targetOffset?.let(editor.caretModel::moveToOffset)
+        edit()
+        getInstance(this.project).commitAllDocuments()
+        Assert.assertEquals(textAfterModification, this.text)
     }
 }

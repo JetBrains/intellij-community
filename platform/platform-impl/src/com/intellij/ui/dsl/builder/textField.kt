@@ -3,7 +3,9 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.observable.util.*
+import com.intellij.openapi.observable.util.backwardFilter
+import com.intellij.openapi.observable.util.bind
+import com.intellij.openapi.observable.util.toStringIntProperty
 import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.openapi.ui.validation.forTextComponent
 import com.intellij.openapi.ui.validation.trimParameter

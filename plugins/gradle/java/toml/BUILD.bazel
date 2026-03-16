@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.gradle.java.toml` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "toml_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "toml",
+  module_name = "intellij.gradle.java.toml",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":toml_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//plugins/toml/core",
+    "//platform/util/multiplatform",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/util",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/usageView",
+    "//plugins/gradle/java",
+    "//java/java-psi-api:psi",
+    "//platform/refactoring",
+    "//platform/projectModel-api:projectModel",
+  ]
+)
+### auto-generated section `build intellij.gradle.java.toml` end

@@ -12,7 +12,7 @@ import com.intellij.ui.GotItTooltipService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private class TipAndTrickManagerImpl : TipAndTrickManager {
+internal class TipAndTrickManagerImpl : TipAndTrickManager {
   private var openedDialog: TipDialog? = null
 
   override suspend fun showTipDialog(project: Project?) = showTipDialog(project = project, tips = TipAndTrickBean.EP_NAME.extensionList)

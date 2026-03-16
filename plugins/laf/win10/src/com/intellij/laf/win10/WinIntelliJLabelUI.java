@@ -3,7 +3,7 @@ package com.intellij.laf.win10;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaLabelUI;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.plaf.ComponentUI;
 
 public final class WinIntelliJLabelUI extends DarculaLabelUI {

@@ -9,12 +9,13 @@ import com.intellij.build.events.impl.ProgressBuildEventImpl
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class ProgressBuildEventBuilderImpl : ProgressBuildEventBuilder {
+class ProgressBuildEventBuilderImpl(
+  private val startId: Any,
+  private val message: @Message String
+) : ProgressBuildEventBuilder {
 
-  private var startId: Any? = null
   private var parentId: Any? = null
   private var time: Long? = null
-  private var message: @Message String? = null
   private var hint: @Hint String? = null
   private var description: @Description String? = null
 
@@ -22,17 +23,11 @@ class ProgressBuildEventBuilderImpl : ProgressBuildEventBuilder {
   private var progress: Long? = null
   private var unit: String? = null
 
-  override fun withStartId(startId: Any): ProgressBuildEventBuilderImpl =
-    apply { this.startId = startId }
-
   override fun withParentId(parentId: Any?): ProgressBuildEventBuilderImpl =
     apply { this.parentId = parentId }
 
   override fun withTime(time: Long?): ProgressBuildEventBuilderImpl =
     apply { this.time = time }
-
-  override fun withMessage(message: @Message String): ProgressBuildEventBuilderImpl =
-    apply { this.message = message }
 
   override fun withHint(hint: @Hint String?): ProgressBuildEventBuilderImpl =
     apply { this.hint = hint }
@@ -50,15 +45,5 @@ class ProgressBuildEventBuilderImpl : ProgressBuildEventBuilder {
     apply { this.unit = unit }
 
   override fun build(): ProgressBuildEventImpl =
-    ProgressBuildEventImpl(
-      startId ?: throw IllegalStateException("The ProgressBuildEvent's 'startId' property should be defined"),
-      parentId,
-      time,
-      message ?: throw IllegalStateException("The ProgressBuildEvent's 'message' property should be defined"),
-      hint,
-      description,
-      total,
-      progress,
-      unit
-    )
+    ProgressBuildEventImpl(startId, parentId, time, message, hint, description, total, progress, unit)
 }

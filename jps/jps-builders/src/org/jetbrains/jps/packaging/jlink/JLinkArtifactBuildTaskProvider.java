@@ -35,7 +35,12 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {

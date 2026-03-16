@@ -4,8 +4,18 @@ package com.intellij.openapi.fileEditor;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
 import com.intellij.mock.Mock;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.fileEditor.impl.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.ex.FileEditorOpenRequest;
+import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -17,12 +27,18 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.DumbModeTestUtils;
+import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.FileEditorManagerTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -398,6 +414,28 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals(expectedFile, actualFile);
   }
 
+  public void testFileEditorOpenRequestOptions() {
+    FileEditorManagerEx exManager = this.manager;
+
+    VirtualFile file = getFile("/src/1.txt");
+    VirtualFile file2 = getFile("/src/2.txt");
+
+    exManager.openFile(file, false);
+    EditorWindow primaryWindow = exManager.getCurrentWindow();
+    assertNotNull(primaryWindow);
+    exManager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
+
+    EditorWindow secondaryWindow = exManager.getNextWindow(primaryWindow);
+    exManager.openFile(file2,
+                     new FileEditorOpenRequest()
+                       .withTargetWindow(secondaryWindow)
+                       .withSelectAsCurrent(true)
+                       .withPin(true)
+                       .withRequestFocus(true)
+    );
+    exManager.closeFile(file, secondaryWindow);
+  }
+
   @Language("XML")
   private static final String STRING = """
     <component name="FileEditorManager">
@@ -450,7 +488,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     List<String> expectedNames = Arrays.asList(allNames);
     List<String> actualNames = ContainerUtil.map(editors, FileEditor::getName);
     if (!actualNames.containsAll(expectedNames)) {
-      fail("Expected file editors names:\n"+expectedNames+ "\nActual names:\n"+actualNames);
+      fail("Expected file editors names:\n" + expectedNames + "\nActual names:\n" + actualNames);
     }
   }
 

@@ -3,7 +3,7 @@ package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.structuralsearch.NamedScriptableDefinition;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @author Bas Leijdekkers

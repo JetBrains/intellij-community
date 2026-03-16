@@ -11,8 +11,14 @@ import com.intellij.psi.PsiModifierListOwner
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.UVariable
 import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.getContainingUMethod
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 /**
@@ -116,6 +122,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                 *PathAnnotationInfo.MultiRouting.quickFixesFor(arg.sourcePsi).toTypedArray()
               )
             }
+            is PathAnnotationInfo.Invalid -> { }
           }
         }
       }
@@ -185,6 +192,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                 *PathAnnotationInfo.MultiRouting.quickFixesFor(arg.sourcePsi).toTypedArray()
               )
             }
+            is PathAnnotationInfo.Invalid -> { }
           }
         }
       }
@@ -226,6 +234,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                 *PathAnnotationInfo.Native.quickFixesFor(firstArg.sourcePsi).toTypedArray()
               )
             }
+            is PathAnnotationInfo.Invalid -> { }
           }
 
           // Check remaining arguments (should be annotated with either @NativePath or @Filename)
@@ -283,6 +292,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                     *PathAnnotationInfo.Native.quickFixesFor(arg.sourcePsi).toTypedArray()
                   )
                 }
+                is PathAnnotationInfo.Invalid -> { }
               }
             }
           }
@@ -305,6 +315,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
         when (expectedInfo) {
           is PathAnnotationInfo.Specified -> Unit
           is PathAnnotationInfo.Unspecified -> continue
+          is PathAnnotationInfo.Invalid -> continue
         }
         val actualInfo = PathAnnotationInfo.forExpression(arg)
 
@@ -352,6 +363,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
               )
             }
           }
+          is PathAnnotationInfo.Invalid -> { }
         }
       }
 
@@ -400,6 +412,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
           // If the method doesn't have a path annotation, don't register any problems
           return true
         }
+        is PathAnnotationInfo.Invalid -> { return true }
       }
 
       // Check if the return value has a path annotation
@@ -424,6 +437,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
             )
           }
         }
+        is PathAnnotationInfo.Invalid -> { }
       }
 
       return true

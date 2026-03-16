@@ -16,9 +16,11 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceImportAlias.KotlinIntroduceImportAliasHandler
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 class IntroduceImportAliasIntention : SelfTargetingRangeIntention<KtNameReferenceExpression>(
     KtNameReferenceExpression::class.java,
@@ -26,6 +28,8 @@ class IntroduceImportAliasIntention : SelfTargetingRangeIntention<KtNameReferenc
 ), LowPriorityAction {
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun applicabilityRange(element: KtNameReferenceExpression): TextRange? {
+        val importDirective = element.getParentOfType<KtImportDirective>(false)
+        if (importDirective != null && importDirective.alias != null) return null
         if (element.parent is KtInstanceExpressionWithLabel || element.mainReference.getImportAlias() != null) return null
 
         val declaration = element.mainReference.resolve() ?: return null

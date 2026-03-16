@@ -86,7 +86,7 @@ internal class LocalHistoryEventDispatcher(private val facade: LocalHistoryFacad
 
     val content = gateway.acquireActualContentAndForgetSavedContent(f, cachedDocument) ?: return
     //TODO RC: e.path already contains a path, compute it via f.getPath() is a waste of time
-    facade.contentChanged(gateway.getPathOrUrl(f), content.first, content.second)
+    facade.contentChanged(gateway.getPathOrUrl(f), content.content, content.timestamp)
   }
 
   private fun handleBeforeEvent(event: VFileEvent) {
@@ -139,6 +139,7 @@ internal class LocalHistoryEventDispatcher(private val facade: LocalHistoryFacad
 
   private fun beforeFileDeletion(e: VFileDeleteEvent) {
     val f = e.file
+    if (LocalHistoryFilesDeletionHandler.wasProcessed(f)) return
     val entry = gateway.createEntryForDeletion(f) ?: return
     facade.deleted(gateway.getPathOrUrl(f), entry)
   }

@@ -17,7 +17,13 @@ package com.intellij.diagnostic.hprof.visitors
 
 import com.intellij.diagnostic.hprof.classstore.ClassDefinition
 import com.intellij.diagnostic.hprof.classstore.ClassStore
-import com.intellij.diagnostic.hprof.parser.*
+import com.intellij.diagnostic.hprof.parser.ConstantPoolEntry
+import com.intellij.diagnostic.hprof.parser.HProfEventBasedParser
+import com.intellij.diagnostic.hprof.parser.HProfVisitor
+import com.intellij.diagnostic.hprof.parser.HeapDumpRecordType
+import com.intellij.diagnostic.hprof.parser.InstanceFieldEntry
+import com.intellij.diagnostic.hprof.parser.StaticFieldEntry
+import com.intellij.diagnostic.hprof.parser.Type
 import com.intellij.diagnostic.hprof.util.FileChannelBackedWriteBuffer
 import com.intellij.openapi.diagnostic.Logger
 import java.nio.ByteBuffer

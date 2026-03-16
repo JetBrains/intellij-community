@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * Represents the postfix template editor used for creating and editing editable templates.

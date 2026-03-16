@@ -5,29 +5,28 @@ import com.intellij.ide.rpc.DocumentId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.UID
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.evaluation.ExpressionInfo
-import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.frame.XDescriptor
 import com.intellij.xdebugger.frame.XPinToTopData
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
-import com.intellij.xdebugger.impl.rpc.XStackFrameId
-import com.intellij.xdebugger.impl.rpc.XValueGroupId
-import com.intellij.xdebugger.impl.rpc.XValueId
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.DeferredSerializer
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.SendChannelSerializer
 import fleet.rpc.remoteApiDescriptor
-import fleet.util.UID
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 @Rpc
@@ -61,21 +60,34 @@ sealed interface XValueComputeChildrenEvent {
     val topValues: List<XValueDto>,
   ) : XValueComputeChildrenEvent
 
+  /**
+   * This event is introduced as an optimization for fast node expand on frontend.
+   * Having [XValueSerializedPresentation] passed as [XValueComputeChildrenEvent] helps to avoid an additional round-trip.
+   */
+  @Serializable
+  data class XValuePresentationEvent(val xValueId: XValueId, val presentation: XValueSerializedPresentation) : XValueComputeChildrenEvent
+
+  /**
+   * @see XValuePresentationEvent
+   */
+  @Serializable
+  data class XValueFullValueEvaluatorEvent(val xValueId: XValueId, val fullValueEvaluator: XFullValueEvaluatorDto?) : XValueComputeChildrenEvent
+
+  @Serializable
+  data class XValueAdditionalLinkEvent(val xValueId: XValueId, val link: XDebuggerTreeNodeHyperlinkDto?) : XValueComputeChildrenEvent
+
   @Serializable
   data class SetAlreadySorted(val value: Boolean) : XValueComputeChildrenEvent
 
-  // TODO[IJPL-160146]: support XDebuggerTreeNodeHyperlink serialization
   @Serializable
-  data class SetErrorMessage(val message: String, @Transient val link: XDebuggerTreeNodeHyperlink? = null) : XValueComputeChildrenEvent
+  data class SetErrorMessage(val message: String, val link: XDebuggerTreeNodeHyperlinkDto?) : XValueComputeChildrenEvent
 
-  // TODO[IJPL-160146]: support XDebuggerTreeNodeHyperlink serialization
-  // TODO[IJPL-160146]: support SimpleTextAttributes serialization
   @Serializable
   data class SetMessage(
     val message: String,
     val icon: IconId?,
-    @Transient val attributes: SimpleTextAttributes? = null,
-    @Transient val link: XDebuggerTreeNodeHyperlink? = null,
+    val attributes: SerializableSimpleTextAttributes,
+    val link: XDebuggerTreeNodeHyperlinkDto?,
   ) : XValueComputeChildrenEvent
 
   @Serializable
@@ -89,7 +101,7 @@ sealed interface XValueComputeChildrenEvent {
 @Serializable
 sealed interface XEvaluationResult {
   @Serializable
-  data class Evaluated(val valueId: XValueDto) : XEvaluationResult
+  data class Evaluated(val xValue: XValueDtoWithPresentation) : XEvaluationResult
 
   @Serializable
   data class EvaluationError(val errorMessage: @NlsContexts.DialogMessage String) : XEvaluationResult
@@ -106,12 +118,20 @@ data class XValueDto(
   val canNavigateToSource: Boolean,
   @Serializable(with = DeferredSerializer::class) val canNavigateToTypeSource: Deferred<Boolean>,
   @Serializable(with = DeferredSerializer::class) val canBeModified: Deferred<Boolean>,
+  @Serializable(with = DeferredSerializer::class) val canMarkValue: Deferred<Boolean>,
   val valueMark: RpcFlow<XValueMarkerDto?>,
-  val presentation: RpcFlow<XValueSerializedPresentation>,
-  val fullValueEvaluator: RpcFlow<XFullValueEvaluatorDto?>,
   val name: String?,
   val textProvider: RpcFlow<XValueTextProviderDto>?,
   @Serializable(with = DeferredSerializer::class) val pinToTopData: Deferred<XPinToTopData>?,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XValueDtoWithPresentation(
+  val value: XValueDto,
+  val presentation: RpcFlow<XValueSerializedPresentation>,
+  val fullValueEvaluator: RpcFlow<XFullValueEvaluatorDto?>,
+  val additionalLink: RpcFlow<XDebuggerTreeNodeHyperlinkDto?>,
 )
 
 @ApiStatus.Internal
@@ -146,7 +166,7 @@ data class XDebuggerEvaluatorDto(val canEvaluateInDocument: Boolean)
 @Serializable
 data class XFullValueEvaluatorDto(
   @NlsSafe @JvmField val linkText: String,
-  @JvmField val isEnabled: Boolean,
+  @JvmField val isEnabledFlow: RpcFlow<Boolean>,
   @JvmField val isShowValuePopup: Boolean,
   @JvmField val attributes: FullValueEvaluatorLinkAttributes?,
 ) {
@@ -170,3 +190,19 @@ sealed interface XFullValueEvaluatorResult {
   data class EvaluationError(val errorMessage: @NlsContexts.DialogMessage String) : XFullValueEvaluatorResult
 }
 
+@ApiStatus.Internal
+@Serializable
+data class XDebuggerHyperlinkId(override val uid: UID) : Id
+
+@ApiStatus.Internal
+@Serializable
+data class XDebuggerTreeNodeHyperlinkDto(
+  val id: XDebuggerHyperlinkId,
+  val text: @Nls String,
+  val tooltip: @Nls String?,
+  val icon: IconId?,
+  val shortcut: String?,
+  val alwaysOnScreen: Boolean,
+  @Transient val attributes: SimpleTextAttributes? = null,
+  @Transient val local: XDebuggerTreeNodeHyperlink? = null,
+)

@@ -5,7 +5,7 @@ import com.intellij.ide.ui.customization.CustomizableActionGroupProvider
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.ui.VcsLogActionIds
 
-private class VcsLogCustomizableActionGroupProvider : CustomizableActionGroupProvider() {
+internal class VcsLogCustomizableActionGroupProvider : CustomizableActionGroupProvider() {
   override fun registerGroups(registrar: CustomizableActionGroupRegistrar) {
     registrar.addCustomizableActionGroup(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP,
                                          VcsLogBundle.message("vcs.log.right.corner.toolbar"))

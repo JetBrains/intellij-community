@@ -3,8 +3,16 @@ package com.intellij.lang.documentation
 
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageParserDefinitions
-import com.intellij.lang.documentation.DocumentationMarkup.*
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_BOTTOM
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_CONTENT
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_DEFINITION
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_SECTIONS
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_TOP
 import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode
+import com.intellij.lang.documentation.QuickDocHighlightingHelper.CODE_BLOCK_PREFIX
+import com.intellij.lang.documentation.QuickDocHighlightingHelper.CODE_BLOCK_SUFFIX
+import com.intellij.lang.documentation.QuickDocHighlightingHelper.INLINE_CODE_PREFIX
+import com.intellij.lang.documentation.QuickDocHighlightingHelper.INLINE_CODE_SUFFIX
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsScheme

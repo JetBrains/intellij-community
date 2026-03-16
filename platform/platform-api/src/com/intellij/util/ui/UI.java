@@ -6,7 +6,8 @@ import com.intellij.openapi.ui.panel.PanelGridBuilder;
 import com.intellij.openapi.ui.panel.ProgressPanelBuilder;
 import com.intellij.ui.scale.JBUIScale;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JProgressBar;
 
 /**
  * @author Konstantin Bulenkov

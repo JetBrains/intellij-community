@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion.smart
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
 import org.jetbrains.kotlin.idea.completion.LambdaSignatureTemplates
 import org.jetbrains.kotlin.idea.completion.suppressAutoInsertion
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.idea.core.fuzzyType
 import org.jetbrains.kotlin.resolve.calls.util.getValueParametersCountFromFunctionType
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 object LambdaItems {
     fun collect(functionExpectedInfos: Collection<ExpectedInfo>): Collection<LookupElement> {
         val list = ArrayList<LookupElement>()

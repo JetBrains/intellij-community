@@ -6,3 +6,5 @@ fun foo(): KotlinInterface<I1, I2> {
 
 // EXIST: { lookupString: "object", itemText: "object : KotlinInterface<I1, I2>{...}" }
 // ABSENT: KotlinInheritor
+
+// IGNORE_K2

@@ -2,9 +2,9 @@
 package com.intellij.sh.lexer;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LexerTestCase;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.application.PluginPathManager;
 
 public class ShOldLexerVersion4Test extends LexerTestCase {
   @Override

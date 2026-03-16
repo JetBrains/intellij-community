@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.resolve.jvm.annotations.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 
+@K1Deprecation
 class MayBeConstantInspection : MayBeConstantInspectionBase() {
     override fun createAddConstModifierFix(property: KtProperty): LocalQuickFix {
         return AddConstModifierFix(property).asQuickFix()

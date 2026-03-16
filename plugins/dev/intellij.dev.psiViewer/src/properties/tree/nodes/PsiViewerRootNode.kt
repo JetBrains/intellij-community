@@ -30,7 +30,9 @@ class PsiViewerRootNode(
 
   private suspend fun psiReferenceResolveNode(): PsiViewerPropertyNode? {
     val resolved: PsiElement? = readAction {
-      element.reference?.resolve()
+      val result = element.reference?.resolve()
+      if (result == element) return@readAction null
+      return@readAction result
     }
     val node = methodReturnValuePsiViewerNode(
       value = resolved,

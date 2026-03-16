@@ -4,11 +4,11 @@
 package com.intellij.lang.properties;
 
 import com.intellij.openapi.vfs.VirtualFileManager;
-import java.util.HashSet;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 

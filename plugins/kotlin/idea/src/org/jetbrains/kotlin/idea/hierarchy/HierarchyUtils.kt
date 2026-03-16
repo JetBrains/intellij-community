@@ -8,9 +8,11 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 
+@K1Deprecation
 fun getCurrentElement(dataContext: DataContext, project: Project): PsiElement? {
     val editor = CommonDataKeys.EDITOR.getData(dataContext)
     if (editor != null) {

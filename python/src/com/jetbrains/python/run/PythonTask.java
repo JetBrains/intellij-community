@@ -8,7 +8,11 @@ import com.intellij.execution.OutputListener;
 import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetProgressIndicator;
@@ -31,11 +35,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EDT;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.console.PydevConsoleRunnerUtil;
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -45,7 +49,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -169,10 +172,7 @@ public class PythonTask {
     var additionalData = mySdk.getSdkAdditionalData();
     if (additionalData instanceof PyRemoteSdkAdditionalDataMarker) {
       // Either legacy remote or target SDK
-      if (additionalData instanceof PyRemoteSdkAdditionalData) {
-        handler = executeLegacyRemoteProcess(commandLine, (PyRemoteSdkAdditionalData)additionalData);
-      }
-      else if (additionalData instanceof PyTargetAwareAdditionalData) {
+      if (additionalData instanceof PyTargetAwareAdditionalData) {
         handler = executeTargetBasedProcess((PyTargetAwareAdditionalData)additionalData);
       }
       else {
@@ -311,15 +311,6 @@ public class PythonTask {
     ProcessHandler handler = PythonProcessRunner.createProcessHandlingCtrlC(commandLine);
     ProcessTerminatedListener.attach(handler);
     return handler;
-  }
-
-  private @NotNull ProcessHandler executeLegacyRemoteProcess(@NotNull GeneralCommandLine commandLine,
-                                                             @NotNull PyRemoteSdkAdditionalData additionalData)
-    throws ExecutionException {
-    // give the hint for Docker Compose process starter that this process should be run with `docker-compose run` command
-    // (yep, this is hacky)
-    commandLine.putUserData(PyRemoteProcessStarter.RUN_AS_AUXILIARY_PROCESS, true);
-    return PyRemoteProcessStarter.startLegacyRemoteProcess(additionalData, commandLine, myModule.getProject(), null);
   }
 
 
@@ -488,7 +479,7 @@ public class PythonTask {
   public final @NotNull String runNoConsole() throws ExecutionException {
     final ProgressManager manager = ProgressManager.getInstance();
     final Output output;
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (EDT.isCurrentThreadEdt()) {
       assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "This method can't run under write action";
       output = manager.runProcessWithProgressSynchronously(() -> getOutputInternal(), myRunTabTitle, false, myModule.getProject());
     }
@@ -504,7 +495,7 @@ public class PythonTask {
   }
 
   private @NotNull Output getOutputInternal() throws ExecutionException {
-    assert !SwingUtilities.isEventDispatchThread();
+    assert !EDT.isCurrentThreadEdt();
     final ProcessHandler process = createProcess(new HashMap<>());
     final OutputListener listener = new OutputListener();
     process.addProcessListener(listener);

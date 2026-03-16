@@ -14,8 +14,10 @@ import com.intellij.uiDesigner.palette.Palette;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 public final class RadScrollPane extends RadContainer {
   public static final Class COMPONENT_CLASS = JScrollPane.class;

@@ -3,7 +3,11 @@ package com.intellij.testFramework.junit5.impl
 
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import org.jetbrains.annotations.TestOnly
-import org.junit.jupiter.api.extension.*
+import org.junit.jupiter.api.extension.AfterAllCallback
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeAllCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 
 /**
  * Cleans VFS before/after all/each tests have passed.

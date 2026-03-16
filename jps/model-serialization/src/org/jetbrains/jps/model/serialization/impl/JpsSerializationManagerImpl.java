@@ -6,7 +6,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.serialization.*;
+import org.jetbrains.jps.model.serialization.JpsGlobalSettingsLoading;
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
+import org.jetbrains.jps.model.serialization.JpsPathMapper;
+import org.jetbrains.jps.model.serialization.JpsProjectConfigurationLoading;
+import org.jetbrains.jps.model.serialization.JpsProjectLoader;
+import org.jetbrains.jps.model.serialization.JpsSerializationManager;
 
 import java.io.IOException;
 import java.nio.file.Path;

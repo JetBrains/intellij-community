@@ -23,7 +23,7 @@ import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
 import java.time.LocalDate
 import java.time.ZoneId
-import java.util.*
+import java.util.Date
 import kotlin.io.path.absolute
 import kotlin.io.path.exists
 
@@ -33,7 +33,7 @@ import kotlin.io.path.exists
  * %filterVcsLogTab -name <user_name> -path<slash/divided/path>
  * Example - '%filterVcsLogTab -name "Alexander Kass -path 'srs/SomeImpl.java'"
  */
-class FilterVcsLogTabCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+internal class FilterVcsLogTabCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
   companion object {
     const val NAME = "filterVcsLogTab"
@@ -51,7 +51,8 @@ class FilterVcsLogTabCommand(text: String, line: Int) : PerformanceCommandCorout
     withContext(Dispatchers.IO) {
       val vcsLogData = logManager.dataManager
       val (dataPack, commitStage) = VcsLogFiltererImpl(vcsLogData)
-        .filter(vcsLogData.dataPack, VisiblePack.EMPTY, PermanentGraph.Options.Default,
+        .filter(
+          vcsLogData.graphData, VisiblePack.EMPTY, PermanentGraph.Options.Default,
                 generateVcsFilter(context.project.guessProjectDir(), extractCommandArgument(PREFIX), vcsLogData),
                 CommitCountStage.ALL)
 

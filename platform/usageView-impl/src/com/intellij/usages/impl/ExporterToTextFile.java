@@ -39,7 +39,7 @@ public class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
       childIndent = indent;
     }
 
-    Enumeration enumeration = node.children();
+    Enumeration<?> enumeration = node.children();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode child = (DefaultMutableTreeNode)enumeration.nextElement();
       appendNode(buf, child, lineSeparator, childIndent);

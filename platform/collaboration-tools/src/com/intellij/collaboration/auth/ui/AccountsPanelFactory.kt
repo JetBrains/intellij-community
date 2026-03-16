@@ -12,7 +12,11 @@ import com.intellij.collaboration.ui.util.JListHoveredRowMaterialiser
 import com.intellij.credentialStore.PasswordSafeConfigurable
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.Settings
@@ -38,7 +42,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
+import javax.swing.ListSelectionModel
+import javax.swing.SwingConstants
 
 class AccountsPanelFactory<A : Account, Cred>
 private constructor(private val accountManager: AccountManager<A, Cred>,

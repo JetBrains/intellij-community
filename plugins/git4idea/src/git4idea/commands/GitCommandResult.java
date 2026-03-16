@@ -180,14 +180,6 @@ public class GitCommandResult {
     return new GitCommandResult(false, 1, Collections.singletonList(error), Collections.emptyList(), null);
   }
 
-  /**
-   * @deprecated {@link GitHandler} throws {@link com.intellij.openapi.progress.ProcessCanceledException} instead of returning this state.
-   */
-  @Deprecated(forRemoval = true)
-  public boolean cancelled() {
-    return false;
-  }
-
   private static @NotNull Collection<String> cleanup(@NotNull Collection<String> errorOutput) {
     return ContainerUtil.map(errorOutput, errorMessage -> GitUtil.cleanupErrorPrefixes(errorMessage));
   }

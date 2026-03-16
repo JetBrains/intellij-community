@@ -4,6 +4,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.completion.method.JavaMethodCallInsertHandlerHelper;
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
@@ -15,13 +16,38 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.JavaStaticMethodNameCache;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.ImportsUtil;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -30,7 +56,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.psi.util.PsiFormatUtil.formatVariable;
@@ -333,7 +363,8 @@ public final class JavaQualifierAsArgumentContributor extends CompletionContribu
                                                     new BeforeInsertHandler(),
                                                     new AfterInsertHandler(),
                                                     myShouldImportOrQualify,
-                                                    false);
+                                                    false,
+                                                    this);
       handler.handleInsert(context, this);
     }
 
@@ -406,7 +437,7 @@ public final class JavaQualifierAsArgumentContributor extends CompletionContribu
     private class AfterInsertHandler implements InsertHandler<JavaMethodCallElement> {
       @Override
       public void handleInsert(@NotNull InsertionContext context, @NotNull JavaMethodCallElement item) {
-        PsiCallExpression call = JavaMethodCallInsertHandler.findInsertedCall(item, context);
+        PsiCallExpression call = JavaMethodCallInsertHandlerHelper.findInsertedCall(item, context);
         context.commitDocument();
         PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
         if (call != null) {

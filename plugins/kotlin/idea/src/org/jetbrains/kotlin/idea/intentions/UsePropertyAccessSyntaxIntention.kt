@@ -6,7 +6,9 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.codeInspection.options.OptPane
-import com.intellij.codeInspection.options.OptPane.*
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.codeInspection.options.OptPane.stringList
 import com.intellij.codeInspection.options.OptionController
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -17,6 +19,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.compiled.ClsMethodImpl
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -27,7 +30,11 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.*
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
@@ -41,7 +48,23 @@ import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSuperExpression
+import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.LambdaArgument
+import org.jetbrains.kotlin.psi.ValueArgument
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.renderer.render
@@ -70,6 +93,7 @@ import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.shouldNotConvertToProperty
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
+@K1Deprecation
 @Suppress("DEPRECATION")
 class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtExpression>(UsePropertyAccessSyntaxIntention::class),
                                           CleanupLocalInspectionTool {
@@ -160,6 +184,7 @@ class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtExpression>
     }
 }
 
+@K1Deprecation
 class NotPropertiesServiceImpl(private val project: Project) : NotPropertiesService {
     override fun getNotProperties(element: PsiElement): Set<FqNameUnsafe> {
         val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
@@ -178,6 +203,7 @@ class NotPropertiesServiceImpl(private val project: Project) : NotPropertiesServ
  * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.UsePropertyAccessSyntax]
  * [org.jetbrains.kotlin.idea.inspections.MultiFileLocalInspectionTestGenerated]
  */
+@K1Deprecation
 @ApiStatus.Internal
 class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention<KtExpression>(
     KtExpression::class.java,

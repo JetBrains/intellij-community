@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 
-import java.awt.*;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;

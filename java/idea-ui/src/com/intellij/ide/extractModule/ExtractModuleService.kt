@@ -6,40 +6,46 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.CompilerModuleExtension
+import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.JavaProjectDependenciesAnalyzer
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.OrderEnumerator
+import com.intellij.openapi.roots.PackageIndex
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.platform.util.progress.reportSequentialProgress
-import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiManager
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil
+import com.intellij.task.ProjectTaskManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.extension
-import kotlin.io.path.walk
 
 private val LOG = logger<ExtractModuleService>()
 
@@ -55,18 +61,33 @@ internal class DependentModule(
   val oldModuleDependencyScope: ModuleDependencyScope,
 )
 
-internal suspend fun compilerOutputPath(module: Module): Path? = readAction {
-  CompilerModuleExtension.getInstance(module)?.compilerOutputPath?.toNioPath()
+private fun compilerOutputs(module: Module, includeTests: Boolean): List<Path> {
+  return CompilerModuleExtension.getInstance(module)
+    ?.getOutputRoots(/* includeTests = */ includeTests)
+    ?.map { it.toNioPath() } ?: emptyList()
 }
 
-internal suspend fun compilerOutputPathForTests(module: Module): Path? = readAction {
-  CompilerModuleExtension.getInstance(module)?.compilerOutputPathForTests?.toNioPath()
+internal suspend fun compilerOutputPath(module: Module): List<Path> = readAction {
+  compilerOutputs(module, includeTests = false)
 }
 
-internal suspend fun Path.forEachClassfile(action: suspend (Path) -> Unit) {
-  walk().filter { it.extension == "class" }.forEach { path ->
-    action(path)
-  }
+internal suspend fun compilerOutputPathForTests(module: Module): List<Path> = readAction {
+  /**
+   * Temporary use this workaround due to delegating build to Bazel overrides only
+   * [CompilerModuleExtension.getOutputRoots] and [CompilerModuleExtension.getOutputRootUrls]
+   *
+   * After switching monorepo compilation fully to Bazel without JPS model, this
+   * code can be reverted to origin state of calling [CompilerModuleExtension.getCompilerOutputPathForTests]
+   */
+  @Suppress("ConvertArgumentToSet")
+  compilerOutputs(module, includeTests = true) - compilerOutputs(module, includeTests = false)
+}
+
+interface TargetModuleCreator {
+  @RequiresWriteLock
+  fun createExtractedModule(originalModule: Module, directory: VirtualFile): ExtractedModuleData
+
+  class ExtractedModuleData(val module: Module, val directoryToMoveClassesTo: VirtualFile?)
 }
 
 @Service(Service.Level.PROJECT)
@@ -76,18 +97,18 @@ class ExtractModuleService(
 ) {
   @RequiresEdt
   fun analyzeDependenciesAndCreateModuleInBackground(
-    directory: PsiDirectory,
+    directory: VirtualFile,
     module: Module,
-    moduleName: @NlsSafe String,
-    targetSourceRootPath: String?,
+    targetModuleCreator: TargetModuleCreator,
   ) {
-    CompilerManager.getInstance(project).make { aborted, errors, _, _ ->
-      if (aborted || errors > 0) {
-        return@make
+    ProjectTaskManager.getInstance(project).buildAllModules().onSuccess {
+      if (it.isAborted || it.hasErrors()) {
+        return@onSuccess
       }
+
       coroutineScope.launch {
         withBackgroundProgress(project, JavaUiBundle.message("progress.title.extract.module.from.package", directory.name)) {
-          analyzeDependenciesAndCreateModule(directory, module, moduleName, targetSourceRootPath)
+          analyzeDependenciesAndCreateModule(directory, module, targetModuleCreator)
         }
       }
     }
@@ -95,31 +116,36 @@ class ExtractModuleService(
 
   @OptIn(ExperimentalPathApi::class)
   private suspend fun analyzeDependenciesAndCreateModule(
-    directory: PsiDirectory,
+    directory: VirtualFile,
     module: Module,
-    moduleName: @NlsSafe String,
-    targetSourceRootPath: String?,
+    targetModuleCreator: TargetModuleCreator,
   ) {
     reportSequentialProgress(6) { progressReporter ->
       val usedModules = LinkedHashSet<Module>()
       val usedLibraries = LinkedHashSet<Library>()
-      val compilerOutputPath = compilerOutputPath(module) ?: return@reportSequentialProgress
+      val compilerOutputPaths = compilerOutputPath(module)
+      if (compilerOutputPaths.isEmpty()) return@reportSequentialProgress
 
       val packageName = readAction {
-        JavaDirectoryService.getInstance().getPackage(directory)?.qualifiedName
+        PackageIndex.getInstance(project).getPackageName(directory)
       } ?: return@reportSequentialProgress
-      val compiledPackagePath = packageName.replace('.', '/').let { compilerOutputPath.resolve(it) }
+      val packageRelativePathPrefix = packageName.replace('.', '/') + "/"
 
       progressReporter.itemStep(JavaUiBundle.message("progress.step.extract.module.collecting.used.classes", directory.name))
-      val packageFileProcessor = ExtractModuleFileProcessor()
-      compiledPackagePath.forEachClassfile { path ->
-        packageFileProcessor.processFile(path)
-      }
-      val moduleFileProcessor = ExtractModuleFileProcessor()
-      compilerOutputPath.forEachClassfile { path ->
-        if (!path.startsWith(compiledPackagePath)) {
-          moduleFileProcessor.processFile(path)
+
+      val moduleClasspathSet = LinkedHashSet<Path>()
+      readAction {
+        OrderEnumerator.orderEntries(module).productionOnly().recursively().exportedOnly().forEachModule { module ->
+          moduleClasspathSet.addAll(compilerOutputs(module, includeTests = false))
         }
+      }
+      val moduleClasspath = moduleClasspathSet.toList()
+      val packageFileProcessor = ExtractModuleFileProcessor(moduleClasspath)
+      val moduleFileProcessor = ExtractModuleFileProcessor(moduleClasspath)
+
+      for (outputPath in compilerOutputPaths) {
+        packageFileProcessor.processClassFiles(outputPath) { it.startsWith(packageRelativePathPrefix) }
+        moduleFileProcessor.processClassFiles(outputPath) { !it.startsWith(packageRelativePathPrefix) }
       }
 
       progressReporter.itemStep(JavaUiBundle.message("progress.step.extract.module.building.dependencies"))
@@ -131,13 +157,23 @@ class ExtractModuleService(
           val virtualFile = file?.virtualFile ?: return@forEach
           val depModule = fileIndex.getModuleForFile(virtualFile)
           if (depModule != null) {
-            usedModules.add(depModule)
+            if (depModule == module && className.startsWith("$packageName.")) {
+              //skip references from classes which will be extracted
+              return@forEach
+            }
+            if (usedModules.add(depModule)) {
+              LOG.debug { "Module ${depModule.name} contains class $className referenced from some class under $packageName package" }
+            }
             return@forEach
           }
-          val library = fileIndex.getOrderEntriesForFile(virtualFile).asSequence()
-            .filterIsInstance<LibraryOrderEntry>().filter { !it.isModuleLevel }.mapNotNull { it.library }.firstOrNull()
+
+          val library = fileIndex.findContainingLibraries(virtualFile).asSequence()
+            .filterNot { it.tableId.level == JpsLibraryTableSerializer.MODULE_LEVEL }
+            .firstNotNullOfOrNull { it.findLibraryBridge(WorkspaceModel.getInstance(project).currentSnapshot) }
           if (library != null) {
-            usedLibraries.add(library)
+            if (usedLibraries.add(library)) {
+              LOG.debug { "Library ${library.name} contains class $className referenced from some class under $packageName package" }
+            }
           }
         }
       }
@@ -151,14 +187,14 @@ class ExtractModuleService(
         val moduleClasses = moduleFileProcessor.gatheredClassLinks.keys.filterTo(HashSet()) { it !in packageClasses }
 
         progressReporter.itemStep(JavaUiBundle.message("progress.step.extract.module.analyzing.dependent.modules"))
-        val packageDependentModules = filterDependentModules(allDependentModules, packageClasses, moduleClasses)
+        val packageDependentModules = filterDependentModules(allDependentModules, packageClasses, moduleClasses, module, packageName)
 
         progressReporter.itemStep(JavaUiBundle.message("progress.step.extract.module.preparing.to.extract"))
         val dependencyCleaner = ModuleDependenciesCleaner(module, usedModules)
         val dependenciesToRemove = dependencyCleaner.findDependenciesToRemove(moduleFileProcessor)
         progressReporter.itemStep(JavaUiBundle.message("progress.step.extract.module.extracting"))
         writeAction {
-          extractModule(directory, module, moduleName, usedModules, usedLibraries, targetSourceRootPath, packageDependentModules)
+          extractModule(directory, module, targetModuleCreator, usedModules, usedLibraries, packageDependentModules)
           dependencyCleaner.removeDependencies(dependenciesToRemove)
         }
       }
@@ -174,18 +210,37 @@ class ExtractModuleService(
   }
 
   @OptIn(ExperimentalPathApi::class)
-  private suspend fun filterDependentModules(dependentModules: Set<Module>, packageClasses: Set<String>, moduleClasses: Set<String>) =
+  private suspend fun filterDependentModules(
+    dependentModules: Set<Module>,
+    packageClasses: Set<String>,
+    moduleClasses: Set<String>,
+    moduleContainingExtractedPackage: Module,
+    extractedPackageName: String
+  ) =
     dependentModules.mapWithProgress { dependentModule ->
       val compilerOutputPath = compilerOutputPath(dependentModule)
       val compilerOutputPathForTests = compilerOutputPathForTests(dependentModule)
-      if (compilerOutputPath == null && compilerOutputPathForTests == null) return@mapWithProgress null
+      if (compilerOutputPath.isEmpty() && compilerOutputPathForTests.isEmpty()) return@mapWithProgress null
 
-      val (prodDependsOnPackage, prodDependsOnModule) = rootDependsOnPackageAndModule(compilerOutputPath, packageClasses, moduleClasses)
+      val packagePathToExclude =
+        if (dependentModule == moduleContainingExtractedPackage) extractedPackageName.replace('.', '/') + "/"
+        else null
+      val (prodDependsOnPackage, prodDependsOnModule) = rootDependsOnPackageAndModule(
+        compilerOutputPath,
+        packageClasses,
+        moduleClasses,
+        packagePathToExclude
+      )
       if (prodDependsOnPackage && prodDependsOnModule) { // no need to check tests
         return@mapWithProgress DependentModule(dependentModule, ModuleDependencyScope.PRODUCTION, ModuleDependencyScope.PRODUCTION)
       }
 
-      val (testDependsOnPackage, testDependsOnModule) = rootDependsOnPackageAndModule(compilerOutputPathForTests, packageClasses, moduleClasses)
+      val (testDependsOnPackage, testDependsOnModule) = rootDependsOnPackageAndModule(
+        compilerOutputPathForTests,
+        packageClasses,
+        moduleClasses,
+        packagePathToExclude = null
+      )
       if (!prodDependsOnPackage && !testDependsOnPackage) { // no need to do anything
         return@mapWithProgress null
       }
@@ -204,20 +259,23 @@ class ExtractModuleService(
     }.filterNotNull()
 
   private suspend fun rootDependsOnPackageAndModule(
-    path: Path?, packageClasses: Set<String>, moduleClasses: Set<String>,
+    paths: List<Path>, packageClasses: Set<String>, moduleClasses: Set<String>, packagePathToExclude: String?,
   ): Pair<Boolean, Boolean> {
     val fileProcessor = ExtractModuleFileProcessor()
 
-    path?.forEachClassfile { path ->
-      withContext(Dispatchers.IO) {
-        fileProcessor.processFile(path)
+    withContext(Dispatchers.IO) {
+      for (outputPath in paths) {
+        fileProcessor.processClassFiles(outputPath) { path ->
+          packagePathToExclude == null || !path.startsWith(packagePathToExclude)
+        }
       }
     }
 
-    val packageDependency = fileProcessor.referencedClasses.any { it in packageClasses }
-    val stillDependsOnModule = fileProcessor.referencedClasses.any { it in moduleClasses }
-
-    return packageDependency to stillDependsOnModule
+    val packageDependency = fileProcessor.referencedClasses.firstOrNull { it in packageClasses }
+    if (packageDependency != null) LOG.debug { "Some class under $paths refer to $packageDependency class from the extracted package" }
+    val stillDependsOnModule = fileProcessor.referencedClasses.firstOrNull { it in moduleClasses }
+    if (stillDependsOnModule != null) LOG.debug { "Some class under $paths refer to $stillDependsOnModule class outside the extracted package" }
+    return (packageDependency != null) to (stillDependsOnModule != null)
   }
 
   @RequiresReadLock
@@ -229,42 +287,17 @@ class ExtractModuleService(
 
   @RequiresWriteLock
   private fun extractModule(
-    directory: PsiDirectory,
+    directory: VirtualFile,
     module: Module,
-    moduleName: @NlsSafe String,
+    targetModuleCreator: TargetModuleCreator,
     usedModules: Set<Module>,
     usedLibraries: Set<Library>,
-    targetSourceRootPath: String?,
     packageDependentModules: List<DependentModule>,
   ) {
-    val packagePrefix = JavaDirectoryService.getInstance().getPackage(directory)?.qualifiedName ?: ""
-    val targetSourceRoot = targetSourceRootPath?.let { VfsUtil.createDirectories(it) }
-    val (contentRoot, imlFileDirectory) = if (targetSourceRoot != null) {
-      val parent = targetSourceRoot.parent
-      if (parent in ModuleRootManager.getInstance(module).contentRoots) targetSourceRoot to module.moduleNioFile.parent
-      else parent to parent.toNioPath()
-    }
-    else {
-      directory.virtualFile to module.moduleNioFile.parent
-    }
-
-    val newModule = ModuleManager.getInstance(module.project).newModule(imlFileDirectory.resolve("$moduleName.iml"),
-                                                                        JAVA_MODULE_ENTITY_TYPE_ID_NAME)
-
+    val extractedModuleData = targetModuleCreator.createExtractedModule(module, directory)
+    val newModule = extractedModuleData.module
+    val directoryToMoveClassesTo = extractedModuleData.directoryToMoveClassesTo
     ModuleRootModificationUtil.updateModel(newModule) { model ->
-      if (ModuleRootManager.getInstance(module).isSdkInherited) {
-        model.inheritSdk()
-      }
-      else {
-        model.sdk = ModuleRootManager.getInstance(module).sdk
-      }
-      val contentEntry = model.addContentEntry(contentRoot)
-      if (targetSourceRoot != null) {
-        contentEntry.addSourceFolder(targetSourceRoot, false)
-      }
-      else {
-        contentEntry.addSourceFolder(directory.virtualFile, false, packagePrefix)
-      }
       val moduleDependencies = JavaProjectDependenciesAnalyzer.removeDuplicatingDependencies(usedModules)
       moduleDependencies.forEach { model.addModuleOrderEntry(it) }
       val exportedLibraries = HashSet<Library>()
@@ -282,30 +315,78 @@ class ExtractModuleService(
         if (dependentModule.extractedPackageDependencyScope == ModuleDependencyScope.TEST) {
           newModuleEntry.scope = DependencyScope.TEST
         }
-        val oldModuleEntry = model.findModuleOrderEntry(module)
-        if (dependentModule.oldModuleDependencyScope == ModuleDependencyScope.NONE) {
-          oldModuleEntry?.let { orderEntry ->
-            model.removeOrderEntry(orderEntry)
-          } ?: LOG.error("Could not find module order entry for $module in ${dependentModule.module}")
-        }
-        else if (dependentModule.oldModuleDependencyScope == ModuleDependencyScope.TEST) {
-          oldModuleEntry?.let {
-            it.scope = DependencyScope.TEST
-          } ?: LOG.error("Could not find module order entry for $module in ${dependentModule.module}")
+        if (module != dependentModule.module) {
+          val oldModuleEntry = model.findModuleOrderEntry(module)
+          if (dependentModule.oldModuleDependencyScope == ModuleDependencyScope.NONE) {
+            oldModuleEntry?.let { orderEntry ->
+              model.removeOrderEntry(orderEntry)
+            } ?: LOG.error("Could not find module order entry for $module in ${dependentModule.module}")
+          }
+          else if (dependentModule.oldModuleDependencyScope == ModuleDependencyScope.TEST) {
+            oldModuleEntry?.let {
+              it.scope = DependencyScope.TEST
+            } ?: LOG.error("Could not find module order entry for $module in ${dependentModule.module}")
+          }
         }
       }
     }
 
-    if (targetSourceRoot != null) {
-      val targetDirectory = VfsUtil.createDirectoryIfMissing(targetSourceRoot, packagePrefix.replace('.', '/'))
-      MoveClassesOrPackagesUtil.moveDirectoryRecursively(directory,
-                                                         PsiManager.getInstance(module.project).findDirectory(targetDirectory.parent))
+    if (directoryToMoveClassesTo != null) {
+      for (child in directory.children) {
+        child.move(this, directoryToMoveClassesTo)
+      }
     }
     SaveAndSyncHandler.getInstance().scheduleProjectSave(module.project)
   }
 
   @TestOnly
-  suspend fun extractModuleFromDirectory(directory: PsiDirectory, module: Module, moduleName: @NlsSafe String, targetSourceRoot: String?) {
-    analyzeDependenciesAndCreateModule(directory, module, moduleName, targetSourceRoot)
+  suspend fun extractModuleFromDirectory(directory: VirtualFile, module: Module, moduleName: @NlsSafe String, targetSourceRoot: String?) {
+    analyzeDependenciesAndCreateModule(directory, module, TargetModuleCreatorImpl(moduleName, targetSourceRoot))
+  }
+}
+
+internal class TargetModuleCreatorImpl(
+  private val moduleName: String,
+  private val targetSourceRootPath: String?,
+) : TargetModuleCreator {
+  override fun createExtractedModule(originalModule: Module, directory: VirtualFile): TargetModuleCreator.ExtractedModuleData {
+    val packagePrefix = PackageIndex.getInstance(originalModule.project).getPackageName(directory) ?: ""
+
+    val targetSourceRoot = targetSourceRootPath?.let { VfsUtil.createDirectories(it) }
+    val (contentRoot, imlFileDirectory) = if (targetSourceRoot != null) {
+      val parent = targetSourceRoot.parent
+      if (parent in ModuleRootManager.getInstance(originalModule).contentRoots) targetSourceRoot to originalModule.moduleNioFile.parent
+      else parent to parent.toNioPath()
+    }
+    else {
+      directory to originalModule.moduleNioFile.parent
+    }
+
+    val newModule = ModuleManager.getInstance(originalModule.project).newModule(imlFileDirectory.resolve("$moduleName.iml"),
+                                                                        JAVA_MODULE_ENTITY_TYPE_ID_NAME)
+
+    ModuleRootModificationUtil.updateModel(newModule) { model ->
+      if (ModuleRootManager.getInstance(originalModule).isSdkInherited) {
+        model.inheritSdk()
+      }
+      else {
+        model.sdk = ModuleRootManager.getInstance(originalModule).sdk
+      }
+      val contentEntry = model.addContentEntry(contentRoot)
+      if (targetSourceRoot != null) {
+        contentEntry.addSourceFolder(targetSourceRoot, false)
+      }
+      else {
+        contentEntry.addSourceFolder(directory, false, packagePrefix)
+      }
+    }
+
+    val directoryToMoveClassesTo =
+      if (targetSourceRoot != null) {
+        VfsUtil.createDirectoryIfMissing(targetSourceRoot, packagePrefix.replace('.', '/'))
+      }
+      else null
+
+    return TargetModuleCreator.ExtractedModuleData(newModule, directoryToMoveClassesTo)
   }
 }

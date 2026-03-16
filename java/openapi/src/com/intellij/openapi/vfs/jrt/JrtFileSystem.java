@@ -2,9 +2,9 @@
 package com.intellij.openapi.vfs.jrt;
 
 import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;

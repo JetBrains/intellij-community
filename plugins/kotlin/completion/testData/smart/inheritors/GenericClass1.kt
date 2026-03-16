@@ -18,3 +18,5 @@ fun bar() {
 // EXIST: { itemText: "C4", tailText: "(t: Int) (<root>)" }
 // EXIST: { itemText: "C5", tailText: "(t1: T1, t2: Int) (<root>)" }
 // NOTHING_ELSE
+
+// IGNORE_K2

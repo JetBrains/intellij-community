@@ -5,9 +5,7 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal interface RepositoryLibrarySettings {
   fun isSha256ChecksumUiSettingsDisplayed(): Boolean
 
@@ -34,7 +32,7 @@ internal interface RepositoryLibrarySettings {
     override fun isJarRepositoryAutoBindEnabled() = false
   }
 
-  private class Service : SimplePersistentStateComponent<Service.State>(State()), RepositoryLibrarySettings {
+  class Service : SimplePersistentStateComponent<Service.State>(State()), RepositoryLibrarySettings {
     class State : BaseState() {
       /**
        * Display SHA256 checksum internal actions and SHA256 checksum checkbox in library editor.

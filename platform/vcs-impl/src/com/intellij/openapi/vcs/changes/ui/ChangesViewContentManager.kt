@@ -6,12 +6,11 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -28,15 +27,11 @@ import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ObjectUtils.tryCast
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBusConnection
-import com.intellij.vcs.commit.CommitMode
 import com.intellij.vcs.commit.CommitModeManager
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
 
-
-internal val Project.isCommitToolWindowShown: Boolean
-  get() = ChangesViewContentManager.isCommitToolWindowShown(this)
 
 internal fun ContentManager.selectFirstContent() {
   val firstContent = getContent(0)
@@ -56,7 +51,7 @@ class ChangesViewContentManager private constructor(private val project: Project
 
   private fun Content.resolveToolWindowId(): String {
     val isInCommitToolWindow = IS_IN_COMMIT_TOOLWINDOW_KEY.get(this) == true
-    if (isInCommitToolWindow && isCommitToolWindowShown) return COMMIT_TOOLWINDOW_ID
+    if (isInCommitToolWindow && CommitModeManager.isCommitToolWindowEnabled(project)) return COMMIT_TOOLWINDOW_ID
     return TOOLWINDOW_ID
   }
 
@@ -66,17 +61,7 @@ class ChangesViewContentManager private constructor(private val project: Project
     return toolWindow?.contentManager
   }
 
-  private var isCommitToolWindowShown: Boolean = shouldUseCommitToolWindow()
-
   init {
-    ApplicationManager.getApplication().messageBus.connect(coroutineScope)
-      .subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
-        override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
-          if (id == CommitMode.NonModalCommitMode.COMMIT_TOOL_WINDOW_SETTINGS_KEY) {
-            updateToolWindowMappings()
-          }
-        }
-      })
     val projectBusConnection = project.messageBus.connect(coroutineScope)
     CommitModeManager.subscribeOnCommitModeChange(projectBusConnection, object : CommitModeManager.CommitModeListener {
       override fun commitModeChanged() {
@@ -86,15 +71,10 @@ class ChangesViewContentManager private constructor(private val project: Project
   }
 
   private fun updateToolWindowMappings() {
-    isCommitToolWindowShown = shouldUseCommitToolWindow()
     remapContents()
 
     project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
     contentManagers.forEach { it.selectFirstContent() }
-  }
-
-  private fun shouldUseCommitToolWindow(): Boolean {
-    return CommitModeManager.getInstance(project).getCurrentCommitMode().useCommitToolWindow()
   }
 
   private fun remapContents() {
@@ -218,6 +198,7 @@ class ChangesViewContentManager private constructor(private val project: Project
     BRANCHES(ChangesViewContentManager.BRANCHES, 50),
     VCS_LOG(ChangesViewContentManager.VCS_LOG, 50), // main tab
     CONSOLE(ChangesViewContentManager.CONSOLE, 60),
+    WORKING_TREES(ChangesViewContentManager.WORKING_TREES, 70),
     OTHER(null, 100),
     LAST(null, Integer.MAX_VALUE)
   }
@@ -267,9 +248,6 @@ class ChangesViewContentManager private constructor(private val project: Project
       getInstance(project) as? ChangesViewContentManager
 
     @JvmStatic
-    fun isCommitToolWindowShown(project: Project): Boolean = getInstanceImpl(project)?.isCommitToolWindowShown == true
-
-    @JvmStatic
     fun getToolWindowIdFor(project: Project, tabName: String): String {
       val manager = getInstanceImpl(project) ?: return TOOLWINDOW_ID
 
@@ -285,7 +263,7 @@ class ChangesViewContentManager private constructor(private val project: Project
     }
 
     internal fun getToolWindowId(project: Project, contentEp: ChangesViewContentEP): String {
-      return if (contentEp.isInCommitToolWindow && isCommitToolWindowShown(project)) COMMIT_TOOLWINDOW_ID else TOOLWINDOW_ID
+      return if (contentEp.isInCommitToolWindow && CommitModeManager.isCommitToolWindowEnabled(project)) COMMIT_TOOLWINDOW_ID else TOOLWINDOW_ID
     }
 
     @JvmStatic
@@ -306,7 +284,7 @@ class ChangesViewContentManager private constructor(private val project: Project
 
     @JvmStatic
     fun shouldHaveSplitterDiffPreview(project: Project, isContentVertical: Boolean): Boolean {
-      return !isContentVertical || !isCommitToolWindowShown(project)
+      return !isContentVertical || !CommitModeManager.isCommitToolWindowEnabled(project)
     }
 
     /**
@@ -324,6 +302,7 @@ class ChangesViewContentManager private constructor(private val project: Project
     const val SHELF: @NonNls String = "Shelf"
     const val BRANCHES: @NonNls String = "Branches"
     const val VCS_LOG: @NonNls String = "Log"
+    const val WORKING_TREES: @NonNls String = "Working Trees"
   }
 }
 
@@ -346,7 +325,7 @@ fun MessageBusConnection.subscribeOnVcsToolWindowLayoutChanges(updateLayout: Run
     override fun toolWindowMappingChanged() = updateLayout.run()
   })
   subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-    override fun stateChanged(toolWindowManager: ToolWindowManager) = updateLayout.run()
+    override fun stateChanged(toolWindowManager: ToolWindowManager) = WriteIntentReadAction.run { updateLayout.run() }
   })
 }
 
@@ -382,7 +361,7 @@ private object CloseWindowedFloatingTwOnCommit {
   }
 }
 
-private class CloseWindowedFloatingTwOnCommitAction : ToggleAction(), DumbAware {
+internal class CloseWindowedFloatingTwOnCommitAction : ToggleAction(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {

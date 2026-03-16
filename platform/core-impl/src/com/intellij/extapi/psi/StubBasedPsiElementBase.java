@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.extapi.psi;
 
@@ -26,7 +26,12 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.ObjectStubBase;
+import com.intellij.psi.stubs.PsiFileStub;
+import com.intellij.psi.stubs.PsiFileStubImpl;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -78,7 +83,6 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     myElementType = nodeType;
   }
 
-  @ApiStatus.Experimental
   public StubBasedPsiElementBase(@NotNull T stub, @NotNull IElementType nodeType) {
     mySubstrateRef = new SubstrateRef.StubRef(stub);
     myElementType = nodeType;
@@ -341,7 +345,6 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
    * Can't be renamed to `getIElementType`. It breaks compilation of this class's inheritors written in Kotlin.
    */
   @SuppressWarnings("unused")
-  @ApiStatus.Experimental
   protected final @NotNull IElementType getElementTypeImpl() {
     return myElementType;
   }
@@ -379,7 +382,6 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
    *
    * @return a child of the specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
    */
-  @ApiStatus.Experimental
   public final @Nullable PsiElement getStubOrPsiChild(@NotNull IElementType elementType) {
     T stub = getGreenStub();
     if (stub != null) {
@@ -400,7 +402,6 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   /**
    * @return a not-null child of the specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
    */
-  @ApiStatus.Experimental
   public final @NotNull PsiElement getRequiredStubOrPsiChild(@NotNull IElementType elementType) {
     PsiElement child = getStubOrPsiChild(elementType);
     if (child == null) {
@@ -412,13 +413,11 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   /**
    * @return a not-null child of the specified type and class, taken from stubs (if this element is currently stub-based) or AST (otherwise).
    */
-  @ApiStatus.Experimental
   public final <Psi extends PsiElement> @Nullable Psi getStubOrPsiChild(@NotNull IElementType elementType, @NotNull Class<Psi> psiClass) {
     PsiElement child = getStubOrPsiChild(elementType);
     return psiClass.cast(child);
   }
 
-  @ApiStatus.Experimental
   public final <Psi extends PsiElement> @NotNull Psi getRequiredStubOrPsiChild(@NotNull IElementType elementType,
                                                                                @NotNull Class<Psi> psiClass) {
     PsiElement child = getRequiredStubOrPsiChild(elementType);

@@ -2,6 +2,6 @@ fun foo() {
     try {
         val x = 1
     } catch (e: Exception) {
-        TODO("Not yet implemented")
+        throw e
     }
 }

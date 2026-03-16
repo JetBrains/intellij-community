@@ -252,6 +252,11 @@ def test():
     doTest();
   }
 
+  // PY-87075
+  public void testUnusedTypeParameterInClass() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

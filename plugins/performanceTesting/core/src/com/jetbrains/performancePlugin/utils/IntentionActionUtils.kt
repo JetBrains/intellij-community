@@ -3,11 +3,10 @@ package com.jetbrains.performancePlugin.utils
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.intention.IntentionManager
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiManager
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 

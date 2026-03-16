@@ -7,7 +7,7 @@ import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.BorderLayout;
 
 
 public class BorderLayoutSourceGenerator extends LayoutSourceGenerator {

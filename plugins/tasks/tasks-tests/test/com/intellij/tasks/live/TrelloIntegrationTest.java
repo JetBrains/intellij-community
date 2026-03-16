@@ -5,7 +5,12 @@ import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.trello.TrelloRepository;
 import com.intellij.tasks.trello.TrelloRepositoryType;
 import com.intellij.tasks.trello.TrelloTask;
-import com.intellij.tasks.trello.model.*;
+import com.intellij.tasks.trello.model.TrelloBoard;
+import com.intellij.tasks.trello.model.TrelloCard;
+import com.intellij.tasks.trello.model.TrelloLabel;
+import com.intellij.tasks.trello.model.TrelloList;
+import com.intellij.tasks.trello.model.TrelloModel;
+import com.intellij.tasks.trello.model.TrelloUser;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -17,7 +22,10 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.tasks.trello.model.TrelloLabel.LabelColor.*;
+import static com.intellij.tasks.trello.model.TrelloLabel.LabelColor.BLACK;
+import static com.intellij.tasks.trello.model.TrelloLabel.LabelColor.LIME;
+import static com.intellij.tasks.trello.model.TrelloLabel.LabelColor.PINK;
+import static com.intellij.tasks.trello.model.TrelloLabel.LabelColor.SKY;
 
 /**
  * @author Mikhail Golubev

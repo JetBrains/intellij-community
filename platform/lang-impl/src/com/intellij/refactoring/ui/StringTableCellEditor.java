@@ -24,9 +24,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.containers.ContainerUtil;
 
-import javax.swing.*;
+import javax.swing.AbstractCellEditor;
+import javax.swing.BorderFactory;
+import javax.swing.JTable;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
+import java.awt.Component;
 import java.util.List;
 
 public class StringTableCellEditor extends AbstractCellEditor implements TableCellEditor {

@@ -1,11 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.uploader
 
-import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.EventLogFile
+import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo
+import com.intellij.internal.statistic.eventLog.EventLogSendConfig
+import com.intellij.internal.statistic.eventLog.FilesToSendProvider
+import com.intellij.internal.statistic.eventLog.MachineId
 import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploader
 import com.intellij.internal.statistic.uploader.EventLogExternalSendConfig
 import com.intellij.internal.statistic.uploader.EventLogUploaderCliParser
-import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.*
+import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.BUCKET_OPTION
+import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.DEVICE_OPTION
+import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.ID_REVISION_OPTION
+import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.LOGS_OPTION
+import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.MACHINE_ID_OPTION
+import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.RECORDERS_OPTION
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -35,7 +44,10 @@ class EventLogExternalCommandTest : BasePlatformTestCase() {
     TestCase.assertEquals("10", options[BUCKET_OPTION + "abc"])
     TestCase.assertEquals("test-machine-id", options[MACHINE_ID_OPTION + "abc"])
     TestCase.assertEquals("15", options[ID_REVISION_OPTION + "abc"])
-    TestCase.assertEquals("/path/to/log/file", options[LOGS_OPTION + "abc"])
+    TestCase.assertEquals(
+      "/path/to/log/file".replace("/", File.separator),
+      options[LOGS_OPTION + "abc"]
+    )
   }
 
   fun test_create_command_multiple_recorders() {
@@ -59,13 +71,19 @@ class EventLogExternalCommandTest : BasePlatformTestCase() {
     TestCase.assertEquals("10", options[BUCKET_OPTION + "abc"])
     TestCase.assertEquals("test-machine-id", options[MACHINE_ID_OPTION + "abc"])
     TestCase.assertEquals("15", options[ID_REVISION_OPTION + "abc"])
-    TestCase.assertEquals("/path/to/log/file", options[LOGS_OPTION + "abc"])
+    TestCase.assertEquals(
+      "/path/to/log/file".replace("/", File.separator),
+      options[LOGS_OPTION + "abc"]
+    )
 
     TestCase.assertEquals("another-device-id", options[DEVICE_OPTION + "def"])
     TestCase.assertEquals("65", options[BUCKET_OPTION + "def"])
     TestCase.assertEquals("another-machine-id", options[MACHINE_ID_OPTION + "def"])
     TestCase.assertEquals("98", options[ID_REVISION_OPTION + "def"])
-    TestCase.assertEquals("/another/path/to/log", options[LOGS_OPTION + "def"])
+    TestCase.assertEquals(
+      "/another/path/to/log".replace("/", File.separator),
+      options[LOGS_OPTION + "def"]
+    )
   }
 
   private fun doTestParse(vararg configs: TestEventLogSendConfig) {

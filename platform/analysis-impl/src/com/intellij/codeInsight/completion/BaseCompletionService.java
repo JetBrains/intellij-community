@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.impl.*;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
+import com.intellij.codeInsight.completion.impl.LiftShorterItemsClassifier;
+import com.intellij.codeInsight.completion.impl.PreferStartMatching;
+import com.intellij.codeInsight.completion.impl.RealPrefixMatchingWeigher;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.ClassifierFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -23,21 +27,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_CONTRIBUTOR;
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS;
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_RESULT_SET_ORDER;
+
 public class BaseCompletionService extends CompletionService {
   private static final Logger LOG = Logger.getInstance(BaseCompletionService.class);
 
   protected @Nullable CompletionProcess apiCompletionProcess;
-
-  @ApiStatus.Internal
-  public static final Key<CompletionContributor> LOOKUP_ELEMENT_CONTRIBUTOR = Key.create("lookup element contributor");
-  /**
-   * Timestamp when a lookup item was added to the {@link CompletionResultSet}
-   */
-  public static final Key<Long> LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS = Key.create("lookup element add time");
-  /**
-   * The order in which the element was added to the {@link CompletionResultSet}
-   */
-  public static final Key<Integer> LOOKUP_ELEMENT_RESULT_SET_ORDER = Key.create("lookup element result set order");
 
   public static final Key<Boolean> FORBID_WORD_COMPLETION = new Key<>("ForbidWordCompletion");
 
@@ -200,7 +197,7 @@ public class BaseCompletionService extends CompletionService {
   }
 
   @Override
-  public @NotNull CompletionSorter defaultSorter(@NotNull CompletionParameters parameters, @NotNull PrefixMatcher matcher) {
+  public @NotNull CompletionSorter defaultSorter(@NotNull BaseCompletionParameters parameters, @NotNull PrefixMatcher matcher) {
 
     CompletionLocation location = new CompletionLocation(parameters);
     CompletionSorterImpl sorter = emptySorter();

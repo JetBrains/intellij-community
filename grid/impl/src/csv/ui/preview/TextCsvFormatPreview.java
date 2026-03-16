@@ -9,7 +9,7 @@ import com.intellij.database.util.Out;
 import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class TextCsvFormatPreview implements CsvFormatPreview {
   private final DataGrid myGrid;

@@ -34,6 +34,7 @@ suspend fun <T> withBackgroundProgress(
   return withBackgroundProgress(project, title, action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "Moved to com.intellij.platform.ide.progress",
   ReplaceWith(
@@ -51,6 +52,7 @@ suspend fun <T> withBackgroundProgress(
   return withBackgroundProgress(project, title, cancellable, action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "Moved to com.intellij.platform.ide.progress",
   ReplaceWith(
@@ -68,6 +70,7 @@ suspend fun <T> withBackgroundProgress(
   return withBackgroundProgress(project, title, cancellation, action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "Moved to com.intellij.platform.ide.progress",
   ReplaceWith(
@@ -86,6 +89,7 @@ fun <T> runWithModalProgressBlocking(
   return runWithModalProgressBlocking(project, title, action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "Moved to com.intellij.platform.ide.progress",
   ReplaceWith(

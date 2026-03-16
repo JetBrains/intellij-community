@@ -1,11 +1,24 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.actions
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.JvmProperties
+import com.intellij.cce.core.PropertyAdapters
+import com.intellij.cce.core.Session
+import com.intellij.cce.core.SymbolLocation
+import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.common.CommonActionsInvoker
-import com.intellij.cce.evaluation.*
-import com.intellij.cce.interpreter.*
+import com.intellij.cce.evaluation.EvaluationChunk
+import com.intellij.cce.evaluation.EvaluationEnvironment
+import com.intellij.cce.evaluation.EvaluationRootInfo
+import com.intellij.cce.evaluation.EvaluationStep
+import com.intellij.cce.interpreter.ActionInvokingInterpreter
+import com.intellij.cce.interpreter.ActionsInvoker
+import com.intellij.cce.interpreter.AsyncFeatureInvoker
+import com.intellij.cce.interpreter.InterpretFilter
+import com.intellij.cce.interpreter.InterpretationHandler
+import com.intellij.cce.interpreter.InterpretationOrder
+import com.intellij.cce.interpreter.InvokersFactory
 import com.intellij.cce.processor.ActionGenerator
 import com.intellij.cce.processor.DefaultEvaluationRootProcessor
 import com.intellij.cce.processor.EvaluationRootByRangeProcessor
@@ -24,7 +37,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import java.util.*
+import java.util.Locale
 import kotlin.random.Random
 
 open class ProjectActionsEnvironment(

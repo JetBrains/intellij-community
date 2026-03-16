@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge
 
 import com.intellij.diff.DiffTestCase
@@ -63,7 +63,7 @@ class MergeAutoTest : MergeTestBase() {
     val side = Side.fromLeft(RNG.nextBoolean())
     val modifier = RNG.nextBoolean()
 
-    command(change) { viewer.replaceChange(change, side, modifier) }
+    command(change) { viewer.model.replaceChange(change.index, side, modifier) }
   }
 
   private fun TestBuilder.doIgnore() {
@@ -73,7 +73,9 @@ class MergeAutoTest : MergeTestBase() {
     val side = Side.fromLeft(RNG.nextBoolean())
     val modifier = RNG.nextBoolean()
 
-    command(change) { viewer.ignoreChange(change, side, modifier) }
+    command(change) {
+      viewer.model.ignoreChange(change.index, side, modifier)
+    }
   }
 
   private fun TestBuilder.doTryResolve() {

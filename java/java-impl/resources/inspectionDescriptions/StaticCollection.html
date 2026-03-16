@@ -10,6 +10,11 @@ therefore prohibited by some coding standards.
 
   }
 </code></pre>
+<p>
+The inspection ignores <code>final</code> fields initialized with immutable, fixed-size collections
+(e.g., <code>Map.of()</code>, <code>List.of()</code>, <code>Collections.emptyList()</code>, <code>Collections.singletonMap()</code>).
+These collections cannot grow and therefore cannot cause memory leaks.
+</p>
 <!-- tooltip end -->
 <p>
   Configure the inspection:

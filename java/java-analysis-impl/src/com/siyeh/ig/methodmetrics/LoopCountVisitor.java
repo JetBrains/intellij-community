@@ -15,7 +15,12 @@
  */
 package com.siyeh.ig.methodmetrics;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiDoWhileStatement;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiWhileStatement;
 import org.jetbrains.annotations.NotNull;
 
 class LoopCountVisitor extends JavaRecursiveElementWalkingVisitor {

@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
-object GitBranchesUsageCollector : CounterUsagesCollector() {
+internal object GitBranchesUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   private const val VERSION = 2

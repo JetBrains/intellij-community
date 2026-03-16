@@ -74,7 +74,7 @@ final class UnknownMissingSdkFix implements UnknownSdkFix {
       .withProject(myProject)
       .withSdkTypeFilter(type -> Objects.equals(type, mySdk.getSdkType()))
       .onSdkSelected(sdk -> {
-        registerNewSdkInJdkTable(mySdk.getSdkName(), sdk);
+        registerNewSdkInJdkTable(myProject, mySdk.getSdkName(), sdk);
       })
       .buildEditorNotificationPanelHandler();
   }
@@ -113,11 +113,11 @@ final class UnknownMissingSdkFix implements UnknownSdkFix {
     return jdkTable.createSdk(actualSdkName, unknownSdk.getSdkType());
   }
 
-  static void registerNewSdkInJdkTable(@Nullable String sdkName, @NotNull Sdk sdk) {
+  static void registerNewSdkInJdkTable(@Nullable Project project, @Nullable String sdkName, @NotNull Sdk sdk) {
     WriteAction.run(() -> {
       ProjectJdkTable table = ProjectJdkTable.getInstance();
       if (sdkName != null) {
-        SdkEntity clash = SdkUtils.findClashingSdk(sdkName, sdk);
+        SdkEntity clash = SdkUtils.findClashingSdk(project, sdkName, sdk);
         if (clash != null) {
           LOG.warn("SDK with name " + sdkName + " already exists: clash=" + clash + ", new=" + sdk);
           return;

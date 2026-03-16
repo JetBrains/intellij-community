@@ -6,10 +6,10 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.ui.icons.RowIcon
 import com.intellij.util.PsiIconUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.test.util.invalidateCaches
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.Icon
 

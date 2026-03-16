@@ -1,8 +1,29 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsConditionalFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.CastMethodArgumentFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.ChangeNewOperatorTypeFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.ChangeStringLiteralToCharInMethodCallFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.ChangeTypeArgumentsFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.ConstructorParametersFixer;
+import com.intellij.codeInsight.daemon.impl.quickfix.MethodReturnFixFactory;
+import com.intellij.codeInsight.daemon.impl.quickfix.MoveParenthesisFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.PermuteArgumentsFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.QualifyMethodCallFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.QualifySuperArgumentFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.QualifyThisArgumentFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveRedundantArgumentsFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveRepeatingCallFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceAssignmentFromVoidWithStatementIntentionAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceGetClassWithClassLiteralFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceInaccessibleFieldWithGetterSetterFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.VariableArrayTypeFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.WrapExpressionFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.WrapObjectWithOptionalOfNullableFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.WrapWithAdapterMethodCallFix;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -23,33 +44,116 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCaseLabelElement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiConstantEvaluationHelper;
+import com.intellij.psi.PsiConstructorCall;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJvmMember;
+import com.intellij.psi.PsiJvmModifiersOwner;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceType;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPattern;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.JavaPsiPatternUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.FieldAccessFixer;
+import com.siyeh.ig.psiutils.InstanceOfUtils;
+import com.siyeh.ig.psiutils.SwitchUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import static com.intellij.java.codeserver.core.JavaPatternExhaustivenessUtil.checkRecordExhaustiveness;
 import static com.intellij.java.codeserver.core.JavaPatternExhaustivenessUtil.findMissedClasses;
-import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
@@ -62,8 +166,8 @@ public final class HighlightFixUtil {
                                                  @Nullable PsiType fromType,
                                                  @Nullable PsiType toType,
                                                  @NotNull PsiExpression expression) {
-    if (toType instanceof PsiArrayType) {
-      PsiType arrayComponentType = ((PsiArrayType)toType).getComponentType();
+    if (toType instanceof PsiArrayType arrayToType) {
+      PsiType arrayComponentType = arrayToType.getComponentType();
       if (!(arrayComponentType instanceof PsiPrimitiveType) &&
           !(PsiUtil.resolveClassInType(arrayComponentType) instanceof PsiTypeParameter)) {
         PsiExpression collection = expression;
@@ -72,12 +176,12 @@ public final class HighlightFixUtil {
           if (collection == null) return;
           fromType = collection.getType();
         }
-        if (fromType instanceof PsiClassType &&
-            (CommonClassNames.JAVA_LANG_OBJECT.equals(arrayComponentType.getCanonicalText()) || !((PsiClassType)fromType).isRaw()) &&
+        if (fromType instanceof PsiClassType arrayFromType &&
+            (CommonClassNames.JAVA_LANG_OBJECT.equals(arrayComponentType.getCanonicalText()) || !arrayFromType.isRaw()) &&
             InheritanceUtil.isInheritor(fromType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
           PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(fromType, expression.getResolveScope());
           if (collectionItemType != null && arrayComponentType.isConvertibleFrom(collectionItemType)) {
-            info.accept(QuickFixFactory.getInstance().createCollectionToArrayFix(collection, expression, (PsiArrayType)toType));
+            info.accept(QuickFixFactory.getInstance().createCollectionToArrayFix(collection, expression, arrayToType));
           }
         }
       }
@@ -86,16 +190,15 @@ public final class HighlightFixUtil {
 
   /**
    * Make an element protected/package-private/public suggestion.
-   * For private method in the interface it should add default modifier as well.
+   * For a private method in an interface it should add default modifier as well.
    */
   static void registerAccessQuickFixAction(@NotNull Consumer<? super CommonIntentionAction> info,
                                            @NotNull PsiJvmMember refElement,
-                                           @NotNull PsiJavaCodeReferenceElement place,
+                                           @NotNull PsiElement place,
                                            @Nullable PsiElement fileResolveScope) {
     PsiClass accessObjectClass = null;
-    PsiElement qualifier = place.getQualifier();
-    if (qualifier instanceof PsiExpression) {
-      accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass((PsiExpression)qualifier).getElement();
+    if (place instanceof PsiJavaCodeReferenceElement ref && ref.getQualifier() instanceof PsiExpression expr) {
+      accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(expr).getElement();
     }
     if (place instanceof PsiReferenceExpression ref) {
       FieldAccessFixer fixer = FieldAccessFixer.create(ref, refElement, place);
@@ -174,9 +277,9 @@ public final class HighlightFixUtil {
     if (place instanceof PsiReferenceExpression && place.getParent() instanceof PsiMethodCallExpression) {
       ReplaceGetClassWithClassLiteralFix.registerFix((PsiMethodCallExpression)place.getParent(), info);
     }
-    if (refElement instanceof PsiJvmModifiersOwner && !(refElement instanceof PsiParameter)) {
+    if (refElement instanceof PsiJvmModifiersOwner owner && !(refElement instanceof PsiParameter)) {
       List<IntentionAction> fixes =
-        JvmElementActionFactories.createModifierActions((PsiJvmModifiersOwner)refElement, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, true));
+        JvmElementActionFactories.createModifierActions(owner, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, true));
       fixes.forEach(info);
     }
     // make context non-static
@@ -184,19 +287,19 @@ public final class HighlightFixUtil {
     if (staticParent != null && isInstanceReference(place)) {
       info.accept(QuickFixFactory.getInstance().createModifierListFix(staticParent, PsiModifier.STATIC, false, false));
     }
-    if (place instanceof PsiReferenceExpression && refElement instanceof PsiField) {
-      info.accept(QuickFixFactory.getInstance().createCreateFieldFromUsageFix((PsiReferenceExpression)place));
+    if (place instanceof PsiReferenceExpression ref && refElement instanceof PsiField) {
+      info.accept(QuickFixFactory.getInstance().createCreateFieldFromUsageFix(ref));
     }
   }
 
   private static boolean isInstanceReference(@NotNull PsiJavaCodeReferenceElement place) {
     PsiElement qualifier = place.getQualifier();
     if (qualifier == null) return true;
-    if (!(qualifier instanceof PsiJavaCodeReferenceElement)) return false;
+    if (!(qualifier instanceof PsiJavaCodeReferenceElement ref)) return false;
     PsiElement q = ((PsiReference)qualifier).resolve();
     if (q instanceof PsiClass) return false;
     if (q != null) return true;
-    String qname = ((PsiJavaCodeReferenceElement)qualifier).getQualifiedName();
+    String qname = ref.getQualifiedName();
     return qname == null || !Character.isLowerCase(qname.charAt(0));
   }
 
@@ -238,8 +341,8 @@ public final class HighlightFixUtil {
       PsiType type = variable.getType();
       if (type instanceof PsiArrayType && type.getArrayDimensions() == itemType.getArrayDimensions()) {
         PsiType componentType = type.getDeepComponentType();
-        if (componentType instanceof PsiPrimitiveType) {
-          PsiClassType boxedType = ((PsiPrimitiveType)componentType).getBoxedType(variable);
+        if (componentType instanceof PsiPrimitiveType primitiveType) {
+          PsiClassType boxedType = primitiveType.getBoxedType(variable);
           if (boxedType != null) {
             return getChangeVariableTypeFixes(variable, PsiTypesUtil.createArrayType(boxedType, type.getArrayDimensions()));
           }
@@ -331,10 +434,9 @@ public final class HighlightFixUtil {
   }
 
   public static void registerFixesForExpressionStatement(@NotNull Consumer<? super CommonIntentionAction> info,
-                                                         @NotNull PsiElement statement) {
-    if (!(statement instanceof PsiExpressionStatement)) return;
+                                                         @NotNull PsiExpressionStatement statement) {
     if (!(statement.getParent() instanceof PsiCodeBlock block)) return;
-    PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
+    PsiExpression expression = statement.getExpression();
     if (expression instanceof PsiAssignmentExpression) return;
     PsiType type = expression.getType();
     if (type == null) return;
@@ -610,17 +712,13 @@ public final class HighlightFixUtil {
                                                                    @NotNull PsiMethod resolved) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
     PsiVariable variable = null;
-    if (parent instanceof PsiVariable) {
-      variable = (PsiVariable)parent;
+    if (parent instanceof PsiVariable var) {
+      variable = var;
     }
-    else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
-      PsiExpression lExpression = assignmentExpression.getLExpression();
-      if (lExpression instanceof PsiReferenceExpression referenceExpression) {
-        PsiElement resolve = referenceExpression.resolve();
-        if (resolve instanceof PsiVariable) {
-          variable = (PsiVariable)resolve;
-        }
-      }
+    else if (parent instanceof PsiAssignmentExpression assignment
+             && assignment.getLExpression() instanceof PsiReferenceExpression ref
+             && ref.resolve() instanceof PsiVariable var) {
+      variable = var;
     }
 
     if (variable != null) {
@@ -949,8 +1047,7 @@ public final class HighlightFixUtil {
     PsiElement memberName = reference.getReferenceNameElement();
     if (!(qualifier instanceof PsiJavaCodeReferenceElement referenceElement) || memberName == null) return false;
 
-    PsiClass clazz = tryCast(referenceElement.resolve(), PsiClass.class);
-    if (clazz == null) return false;
+    if (!(referenceElement.resolve() instanceof PsiClass clazz)) return false;
 
     if (newExpression.getArgumentList() == null) {
       PsiField field = clazz.findFieldByName(memberName.getText(), true);

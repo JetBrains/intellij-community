@@ -8,7 +8,7 @@ class ArraysUtil {
     }
 
     public static <S, T extends S> List<S> asCollection(T... a) {
-        return ArraysUtil.<S, T>asList(a);
+        return ArraysUtil.<warning descr="Explicit type arguments can be inferred"><S, T></warning>asList(a);
     }
 
     public static void main(String[] args) {

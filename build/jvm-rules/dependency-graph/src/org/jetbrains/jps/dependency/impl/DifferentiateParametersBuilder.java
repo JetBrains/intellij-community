@@ -14,8 +14,9 @@ public final class DifferentiateParametersBuilder implements DifferentiateParame
   private boolean calculateAffected = true;
   private boolean processConstantsIncrementally = true;
   private boolean compiledWithErrors = false;
-  private Predicate<? super NodeSource> myAffectionFilter = s -> true;
-  private Predicate<? super NodeSource> myCurrentChunkFilter = s -> true;
+  private Predicate<? super NodeSource> myAffectionFilter = __-> true;
+  private Predicate<? super NodeSource> myScopeFilter = __-> true;
+  private Predicate<? super NodeSource> myCurrentChunkFilter = __-> true;
   private LogConsumer myLogConsumer = LogConsumer.EMPTY;
 
   private DifferentiateParametersBuilder(String sessionName) {
@@ -40,6 +41,11 @@ public final class DifferentiateParametersBuilder implements DifferentiateParame
   @Override
   public boolean isCompiledWithErrors() {
     return compiledWithErrors;
+  }
+
+  @Override
+  public @NotNull Predicate<? super NodeSource> scopeFilter() {
+    return myScopeFilter;
   }
 
   @Override
@@ -74,6 +80,7 @@ public final class DifferentiateParametersBuilder implements DifferentiateParame
       .compiledWithErrors(params.isCompiledWithErrors())
       .processConstantsIncrementally(params.isProcessConstantsIncrementally())
       .calculateAffected(params.isCalculateAffected())
+      .withScopeFilter(params.scopeFilter())
       .withAffectionFilter(params.affectionFilter())
       .withChunkStructureFilter(params.belongsToCurrentCompilationChunk())
       .withLogConsumer(params.logConsumer());
@@ -99,6 +106,11 @@ public final class DifferentiateParametersBuilder implements DifferentiateParame
 
   public DifferentiateParametersBuilder compiledWithErrors(boolean value) {
     compiledWithErrors = value;
+    return this;
+  }
+
+  public DifferentiateParametersBuilder withScopeFilter(Predicate<? super NodeSource> filter) {
+    myScopeFilter = filter;
     return this;
   }
 

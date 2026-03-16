@@ -2,7 +2,12 @@ package com.intellij.mcpserver;
 
 import com.intellij.mcpserver.stdio.ClassPathMarker;
 import io.github.oshai.kotlinlogging.KotlinLogging;
+import io.modelcontextprotocol.kotlin.sdk.client.SseClientTransport;
+import io.modelcontextprotocol.kotlin.sdk.client.StdioClientTransport;
 import io.modelcontextprotocol.kotlin.sdk.server.Server;
+import io.modelcontextprotocol.kotlin.sdk.server.SseServerTransport;
+import io.modelcontextprotocol.kotlin.sdk.server.StdioServerTransport;
+import io.modelcontextprotocol.kotlin.sdk.shared.AbstractTransport;
 import kotlin.KotlinVersion;
 import kotlin.coroutines.jvm.internal.DebugProbesKt;
 import kotlin.internal.jdk7.JDK7PlatformImplementations;
@@ -18,6 +23,11 @@ import java.util.List;
 final class McpStdioRunnerClasspath {
   public static final List<Class<?>> CLASSPATH_CLASSES = List.of(ClassPathMarker.class, // entry point
                                                                  Server.class,
+                                                                 AbstractTransport.class,
+                                                                 SseClientTransport.class,
+                                                                 SseServerTransport.class,
+                                                                 StdioClientTransport.class,
+                                                                 StdioServerTransport.class,
                                                                  KotlinLogging.class,
                                                                  KotlinVersion.class, // kotlin-stdlib
                                                                  JDK8PlatformImplementations.class, // kotlin-stdlib-jdk8

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
-import com.intellij.build.events.BuildEvents;
 import com.intellij.build.progress.BuildProgress;
 import com.intellij.build.progress.BuildProgressDescriptor;
 import com.intellij.build.progress.BuildRootProgressImpl;
@@ -25,9 +24,7 @@ public class SyncViewManager extends AbstractViewManager {
 
   @ApiStatus.Experimental
   public static BuildProgress<BuildProgressDescriptor> createBuildProgress(@NotNull Project project) {
-    return new BuildRootProgressImpl(
-      BuildEvents.getInstance(),
-      project.getService(SyncViewManager.class)
-    );
+    var syncViewManager = project.getService(SyncViewManager.class);
+    return new BuildRootProgressImpl(syncViewManager);
   }
 }

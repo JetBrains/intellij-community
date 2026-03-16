@@ -12,10 +12,12 @@ import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import org.jetbrains.annotations.Contract
 import java.io.InputStream
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.inputStream
+import kotlin.io.path.pathString
 import kotlin.system.exitProcess
 
 /**
@@ -26,6 +28,19 @@ import kotlin.system.exitProcess
  * and then launches [IntellijLoader].
  */
 fun main(args: Array<String>) {
+  val url = IntellijLoader::class.java.getResource("${IntellijLoader::class.java.simpleName}.class")
+            ?: reportError("Unable to get '${IntellijLoader::class.java.simpleName}.class' file from resources")
+  if (url.protocol == "jar" && Path.of(URI.create(url.path)).any { it.pathString == "bazel-out" }) {
+    /* workaround for IJPL-218577: if it terminates immediately, the tool window may be closed when another part of the compound
+       configuration starts and the user won't see the error message, so wait some time before exiting */
+    Thread.sleep(5000)
+
+    reportError("""
+        |IntellijDevLauncher cannot be used to start the process when the project is build by Bazel, because the runtime module repository may be outdated.
+        |If you're starting `IDE Split` run configuration, use `IDE Split (dev build)` run configuration instead. 
+      """.trimMargin())
+  }
+
   val startTimeNano = System.nanoTime()
   val startTimeUnixNano = System.currentTimeMillis() * 1000000
   val startupTimings = ArrayList<Any>(16)

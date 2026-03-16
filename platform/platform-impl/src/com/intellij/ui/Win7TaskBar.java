@@ -7,14 +7,21 @@ import com.intellij.util.ui.EDT;
 import com.sun.jna.Function;
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.*;
+import com.sun.jna.platform.win32.Guid;
+import com.sun.jna.platform.win32.ObjBase;
+import com.sun.jna.platform.win32.Ole32;
+import com.sun.jna.platform.win32.Ole32Util;
+import com.sun.jna.platform.win32.User32;
+import com.sun.jna.platform.win32.WinDef;
+import com.sun.jna.platform.win32.WinError;
+import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.ptr.PointerByReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import java.awt.Window;
 import java.awt.peer.ComponentPeer;
 import java.lang.reflect.Method;
 

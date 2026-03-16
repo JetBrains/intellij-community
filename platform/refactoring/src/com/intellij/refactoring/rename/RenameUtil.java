@@ -14,11 +14,23 @@ import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementDescriptionUtil;
+import com.intellij.psi.PsiCheckedRenameElement;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -45,7 +57,15 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
@@ -176,7 +196,7 @@ public final class RenameUtil {
   }
 
 
-  public static void buildPackagePrefixChangedMessage(final VirtualFile[] virtualFiles, StringBuffer message, final String qualifiedName) {
+  public static void buildPackagePrefixChangedMessage(final VirtualFile @NotNull [] virtualFiles, @NotNull StringBuffer message, @NotNull String qualifiedName) {
     if (virtualFiles.length > 0) {
       message.append(RefactoringBundle.message("package.occurs.in.package.prefixes.of.the.following.source.folders.n", qualifiedName));
       for (final VirtualFile virtualFile : virtualFiles) {
@@ -186,33 +206,31 @@ public final class RenameUtil {
     }
   }
 
-  private static String getStringToReplace(PsiElement element, String newName, boolean nonJava, final RenamePsiElementProcessorBase theProcessor) {
-    if (element instanceof PsiMetaOwner psiMetaOwner) {
+  private static String getStringToReplace(@NotNull PsiElement psiElement, String newName, boolean nonJava, @NotNull RenamePsiElementProcessorBase theProcessor) {
+    if (psiElement instanceof PsiMetaOwner psiMetaOwner) {
       final PsiMetaData metaData = psiMetaOwner.getMetaData();
       if (metaData != null) {
         return metaData.getName();
       }
     }
 
-    if (theProcessor != null) {
-      String result = theProcessor.getQualifiedNameAfterRename(element, newName, nonJava);
-      if (result != null) {
-        return result;
-      }
+    String result = theProcessor.getQualifiedNameAfterRename(psiElement, newName, nonJava);
+    if (result != null) {
+      return result;
     }
 
-    if (element instanceof PsiNamedElement) {
+    if (psiElement instanceof PsiNamedElement) {
       return newName;
     }
     else {
-      LOG.error("Unknown element type : " + element);
+      LOG.error("Unknown element type : " + psiElement);
       return null;
     }
   }
 
-  public static void checkRename(PsiElement element, String newName) throws IncorrectOperationException {
-    if (element instanceof PsiCheckedRenameElement) {
-      ((PsiCheckedRenameElement)element).checkSetName(newName);
+  public static void checkRename(PsiElement psiElement, String newName) throws IncorrectOperationException {
+    if (psiElement instanceof PsiCheckedRenameElement) {
+      ((PsiCheckedRenameElement)psiElement).checkSetName(newName);
     }
   }
 
@@ -260,9 +278,9 @@ public final class RenameUtil {
     });
   }
 
-  public static void doRenameGenericNamedElement(@NotNull PsiElement namedElement, String newName, UsageInfo[] usages,
+  public static void doRenameGenericNamedElement(@NotNull PsiElement namedElement, String newName, UsageInfo @NotNull [] usages,
                                                  @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
-    Set<Class> reportedClasses = new HashSet<>();
+    Set<Class<?>> reportedClasses = new HashSet<>();
     for (UsageInfo usage : usages) {
       PsiReference reference = usage.getReference();
       if (reference != null && reportedClasses.add(reference.getClass())) {
@@ -276,7 +294,7 @@ public final class RenameUtil {
     RenameUtilBase.rename(info, newName);
   }
 
-  public static @Nullable List<UnresolvableCollisionUsageInfo> removeConflictUsages(Set<UsageInfo> usages) {
+  public static @Nullable List<UnresolvableCollisionUsageInfo> removeConflictUsages(@NotNull Set<UsageInfo> usages) {
     final List<UnresolvableCollisionUsageInfo> result = new ArrayList<>();
     for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext();) {
       UsageInfo usageInfo = iterator.next();
@@ -288,7 +306,7 @@ public final class RenameUtil {
     return result.isEmpty() ? null : result;
   }
 
-  public static void addConflictDescriptions(UsageInfo[] usages, MultiMap<PsiElement, @DialogMessage String> conflicts) {
+  public static void addConflictDescriptions(UsageInfo @NotNull [] usages, MultiMap<PsiElement, @DialogMessage String> conflicts) {
     for (UsageInfo usage : usages) {
       if (usage instanceof UnresolvableCollisionUsageInfo) {
         conflicts.putValue(usage.getElement(), ((UnresolvableCollisionUsageInfo)usage).getDescription());

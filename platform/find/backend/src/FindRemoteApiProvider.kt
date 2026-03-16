@@ -5,7 +5,7 @@ import com.intellij.platform.find.FindRemoteApi
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
 
-private class FindRemoteApiProvider : RemoteApiProvider {
+internal class FindRemoteApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<FindRemoteApi>()) {
       FindRemoteApiImpl()

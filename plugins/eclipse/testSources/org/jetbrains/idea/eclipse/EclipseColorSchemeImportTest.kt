@@ -6,7 +6,12 @@ import com.intellij.ide.highlighter.JavaHighlightingColors
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.XmlHighlighterColors
-import com.intellij.openapi.editor.colors.*
+import com.intellij.openapi.editor.colors.CodeInsightColors
+import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl
 import com.intellij.openapi.editor.colors.impl.EmptyColorScheme

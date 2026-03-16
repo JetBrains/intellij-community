@@ -3,18 +3,29 @@
 package org.jetbrains.kotlin.idea.core.script.k2.definitions
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.LibraryOrSdkOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleSourceOrderEntry
+import com.intellij.openapi.roots.OrderEnumerator
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.util.allScope
+import org.jetbrains.kotlin.idea.core.script.shared.definition.ScriptDefinitionMarkerFileType
 import org.jetbrains.kotlin.idea.core.script.shared.definition.loadDefinitionsFromTemplates
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
-import org.jetbrains.kotlin.idea.core.script.shared.definition.ScriptDefinitionMarkerFileType
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
@@ -45,8 +56,11 @@ class ScriptTemplatesFromDependenciesDefinitionSource(
         coroutineScope.launch { loadDefinitions(persistedState) }
     }
 
-    suspend fun scanAndLoadDefinitions(): List<ScriptDefinition> {
-        val newTemplates = readAction {
+    suspend fun searchForDefinitions(
+        definitionFqns: Collection<String> = emptyList(),
+        classpath: Collection<String> = emptyList()
+    ): List<ScriptDefinition> {
+        val templatesFromMarkerFiles = readAction {
             val templatesFolders = FilenameIndex.getVirtualFilesByName(ScriptDefinitionMarkerFileType.lastPathSegment, project.allScope())
             val projectFileIndex = ProjectFileIndex.getInstance(project)
             val files = mutableListOf<VirtualFile>()
@@ -61,16 +75,17 @@ class ScriptTemplatesFromDependenciesDefinitionSource(
             }
 
             getTemplateClassPath(files)
+        } + DiscoveredDefinitionsState().apply {
+            this.templates += definitionFqns.toMutableList()
+            this.classpath += classpath.toMutableList()
         }
 
-        if (newTemplates == oldTemplates) return emptyList()
+        scriptingDebugLog { "Script templates found: $templatesFromMarkerFiles" }
 
-        scriptingDebugLog { "Script templates found: $newTemplates" }
+        oldTemplates = templatesFromMarkerFiles
 
-        oldTemplates = newTemplates
-
-        ScriptTemplatesDefinitionsFromDependenciesStorage.getInstance(project).loadState(newTemplates)
-        return loadDefinitions(newTemplates)
+        ScriptTemplatesDefinitionsFromDependenciesStorage.getInstance(project).loadState(templatesFromMarkerFiles)
+        return loadDefinitions(templatesFromMarkerFiles)
     }
 
     private fun loadDefinitions(
@@ -143,7 +158,10 @@ class ScriptTemplatesFromDependenciesDefinitionSource(
             }
         }
 
-        return DiscoveredDefinitionsState(templates, classpath)
+        return DiscoveredDefinitionsState().apply {
+            this.classpath += classpath.map { it.absolutePathString() }
+            this.templates += templates
+        }
     }
 }
 
@@ -159,12 +177,13 @@ private class ScriptTemplatesDefinitionsFromDependenciesStorage :
     }
 }
 
-internal class DiscoveredDefinitionsState() : BaseState() {
+internal class DiscoveredDefinitionsState : BaseState() {
     var templates by list<String>()
     var classpath by list<String>()
 
-    constructor(templates: Collection<String>, classpath: Collection<Path>) : this() {
-        this.templates = templates.toMutableList()
-        this.classpath = classpath.map { it.absolutePathString() }.toMutableList()
+    operator fun plus(state: DiscoveredDefinitionsState): DiscoveredDefinitionsState {
+        this.templates += state.templates
+        this.classpath += state.classpath
+        return this
     }
 }

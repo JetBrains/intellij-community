@@ -20,7 +20,16 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyNoneLiteralExpression;
+import com.jetbrains.python.psi.PyNumericLiteralExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PyStarExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -45,6 +54,7 @@ public final class PyTupleAssignmentBalanceInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       final PyExpression lhsExpression = PyPsiUtils.flattenParens(node.getLeftHandSideExpression());
@@ -107,7 +117,7 @@ public final class PyTupleAssignmentBalanceInspection extends PyInspection {
 
     private static int countStarExpressions(PyExpression @NotNull [] expressions) {
       if (expressions.length != 0 && !LanguageLevel.forElement(expressions[0]).isPython2()) {
-        return (int) Arrays
+        return (int)Arrays
           .stream(expressions)
           .filter(PyStarExpression.class::isInstance)
           .count();

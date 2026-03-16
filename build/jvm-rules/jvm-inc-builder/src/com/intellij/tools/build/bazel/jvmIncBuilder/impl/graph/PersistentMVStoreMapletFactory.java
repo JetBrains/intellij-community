@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.h2.mvstore.FileStore;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.WriteBuffer;
@@ -24,15 +25,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 // suitable for relatively small amounts of stored data
 public final class PersistentMVStoreMapletFactory implements MapletFactory, Closeable, Flushable {
   private static final int BASE_CACHE_SIZE = 512;
-  private static final int ALLOWED_STORE_COMPACTION_TIME_MS = -1; // -1 for full-compact, 0 to disable compaction
   private final MVSEnumerator myEnumerator;
   private final Function<Object, Object> myDataInterner;
   private final LoadingCache<Object, Object> myInternerCache;
@@ -42,7 +40,6 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
 
   public PersistentMVStoreMapletFactory(String filePath, int maxBuilderThreads) throws IOException {
     Files.createDirectories(Path.of(filePath).getParent());
-    // todo: need transaction store for transactions?
     myStore = new MVStore.Builder()
       .fileName(filePath)
       .autoCommitDisabled() // all read-write operations are expected to be initiated via Graph APIs, otherwise deadlocks are possible because of incorrect lock acquisition sequence
@@ -72,7 +69,7 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
   }
 
   @Override
-  public <K, V> MultiMaplet<K, V> createSetMultiMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
+  public <K, V> MultiMaplet<K, V> createSetMultiMaplet(String storageName, ComparableTypeExternalizer<K> keyExternalizer, ComparableTypeExternalizer<V> valueExternalizer) {
     PersistentMVStoreMultiMaplet<K, V, Set<V>> maplet = new PersistentMVStoreMultiMaplet<K, V, Set<V>>(
       myStore, storageName, new GraphDataType<>(keyExternalizer, myEnumerator, myDataInterner), new GraphDataType<>(valueExternalizer, myEnumerator, myDataInterner), HashSet::new, Set[]::new
     );
@@ -80,7 +77,7 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
   }
 
   @Override
-  public <K, V> Maplet<K, V> createMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
+  public <K, V> Maplet<K, V> createMaplet(String storageName, ComparableTypeExternalizer<K> keyExternalizer, ComparableTypeExternalizer<V> valueExternalizer) {
     PersistentMVStoreMaplet<K, V> maplet = new PersistentMVStoreMaplet<>(
       myStore, storageName, new GraphDataType<>(keyExternalizer, myEnumerator, myDataInterner), new GraphDataType<>(valueExternalizer, myEnumerator, myDataInterner)
     );
@@ -92,11 +89,32 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
     try {
       myStore.commit();// first commit all open maps, that might use enumerator for serialization
       myEnumerator.flush(); // save enumerator state
-      myStore.close(ALLOWED_STORE_COMPACTION_TIME_MS); // completely close the store commiting the rest of unsaved data
+      myStore.close(getCompactionTimeMs()); // completely close the store commiting the rest of unsaved data
     }
     finally {
       myInternerCache.invalidateAll();
     }
+  }
+
+  /*
+  Dynamically calculated max allowed compaction time based on storage fragmentation rate
+  special values: -1 for full-compact, 0 to disable compaction
+  */
+  private int getCompactionTimeMs() {
+    FileStore<?> fileStore = myStore.getFileStore();
+    int fileFillRate = fileStore.getFillRate();        // File space utilization
+    int chunkFillRate = fileStore.getChunksFillRate(); // Chunk packing efficiency
+
+    if (fileFillRate > 80 && chunkFillRate > 80) {
+      // File and chunks well utilized, no compaction
+      return 0;
+    }
+    if (fileFillRate > 60 && chunkFillRate > 60) {
+      // Moderate fragmentation
+      return 100;
+    }
+    // High fragmentation
+    return 300;
   }
 
   @Override
@@ -110,11 +128,11 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
   }
 
   private static class GraphDataType<T> extends BasicDataType<T> {
-    private final Externalizer<T> myExternalizer;
+    private final ComparableTypeExternalizer<T> myExternalizer;
     private final @Nullable Enumerator myEnumerator;
     private final @Nullable Function<Object, Object> myObjectInterner;
 
-    GraphDataType(Externalizer<T> externalizer, @Nullable Enumerator enumerator, @Nullable Function<Object, Object> objectInterner) {
+    GraphDataType(ComparableTypeExternalizer<T> externalizer, @Nullable Enumerator enumerator, @Nullable Function<Object, Object> objectInterner) {
       myExternalizer = externalizer;
       myEnumerator = enumerator;
       myObjectInterner = objectInterner;
@@ -122,7 +140,7 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
 
     @Override
     public int compare(T a, T b) {
-      return a.toString().compareTo(b.toString());
+      return myExternalizer.compare(a, b);
     }
 
     @Override
@@ -165,7 +183,9 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
     private final Object2IntMap<String> myToIntMap = new Object2IntOpenHashMap<>();
     private final Int2ObjectMap<String> myToStringMap = new Int2ObjectOpenHashMap<>();
     private final MVMap<String, Integer> myStoreMap;
-    private Object2IntMap<String> myDelta = new Object2IntOpenHashMap<>();
+
+    record EnumeratorEntry(String str, int num) {}
+    private List<EnumeratorEntry> myDelta = new ArrayList<>();
 
     MVSEnumerator(MVStore store) {
       myStoreMap = store.openMap("string-table");
@@ -178,8 +198,14 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
     }
 
     @Override
-    public synchronized String toString(int num) {
-      return myToStringMap.get(num);
+    public synchronized String toString(int num) throws IOException {
+      String str = myToStringMap.get(num);
+      if (str == null) {
+        throw new IOException(
+          "Mapping for number " + num + " does not exist. Current string table size: " + myToStringMap.size() + " entries."
+        );
+      }
+      return str;
     }
 
     @Override
@@ -189,21 +215,23 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
       if (num == currentSize) { // not in map yet
         myToIntMap.put(str, num);
         myToStringMap.put(num, str);
-        myDelta.put(str, num);
+        myDelta.add(new EnumeratorEntry(str, num));
       }
       return num;
     }
 
     public boolean flush() {
-      Object2IntMap<String> delta;
+      List<EnumeratorEntry> delta;
       synchronized (this) {
         if (myDelta.isEmpty()) {
           return false;
         }
         delta = myDelta;
-        myDelta = new Object2IntOpenHashMap<>();
+        myDelta = new ArrayList<>();
       }
-      myStoreMap.putAll(delta);
+      for (EnumeratorEntry entry : delta) {
+        myStoreMap.put(entry.str, entry.num);
+      }
       return true;
     }
   }

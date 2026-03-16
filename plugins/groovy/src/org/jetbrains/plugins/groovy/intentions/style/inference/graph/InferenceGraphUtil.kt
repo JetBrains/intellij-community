@@ -1,14 +1,25 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 
-import com.intellij.psi.*
+import com.intellij.psi.GenericsUtil
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiIntersectionType.createIntersection
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.util.containers.BidirectionalMap
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.EQUAL
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.INHABIT
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.LOWER
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.UPPER
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.intentions.style.inference.flattenIntersections

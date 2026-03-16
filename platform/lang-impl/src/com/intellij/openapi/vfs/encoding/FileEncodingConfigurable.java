@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vfs.encoding;
 
@@ -27,13 +27,16 @@ import com.intellij.util.ui.tree.PerFileConfigurableBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Dimension;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 final class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
 
@@ -163,7 +166,7 @@ final class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   }
 
   private static @NotNull Charset getDefaultCharset() {
-    if(Registry.is("properties.file.encoding.legacy.support", true)) {
+    if(Registry.is("properties.file.encoding.legacy.support", false)) {
       return StandardCharsets.ISO_8859_1;
     } else {
       return StandardCharsets.UTF_8;

@@ -42,7 +42,7 @@ public class FileMessageEventImpl extends MessageEventImpl implements FileMessag
   }
 
   /**
-   * @deprecated Use {@link com.intellij.build.events.BuildEvents} event builder instead.
+   * @deprecated Use {@link FileMessageEvent#builder} event builder instead.
    */
   @Deprecated
   public FileMessageEventImpl(

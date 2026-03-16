@@ -15,7 +15,13 @@
  */
 package com.siyeh.ig.methodmetrics;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiAssertStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrefixExpression;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 

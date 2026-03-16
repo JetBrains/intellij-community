@@ -19,7 +19,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -34,10 +33,13 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callabl
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.ShortenCommandForIde
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
 import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
+import org.jetbrains.kotlin.idea.util.createRealNameRenderer
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassBody
@@ -72,12 +74,12 @@ abstract class KtGenerateMembersHandler(
 
         // Reference shortening is done in a separate analysis session because the session need to be aware of the newly generated
         // members.
-        fun collectShortenings(): List<ShortenCommand> = analyze(classOrObject) {
+        fun collectShortenings(): List<ShortenCommandForIde> = analyze(classOrObject) {
             insertedBlocks.mapNotNull { block ->
                 val declarations = block.declarations.mapNotNull { it.element }
                 val first = declarations.firstOrNull() ?: return@mapNotNull null
                 val last = declarations.last()
-                collectPossibleReferenceShortenings(first.containingKtFile, TextRange(first.startOffset, last.endOffset))
+                collectPossibleReferenceShorteningsForIde(first.containingKtFile, TextRange(first.startOffset, last.endOffset))
             }
         }
 
@@ -400,6 +402,8 @@ abstract class KtGenerateMembersHandler(
             }
 
             propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
+
+            nameRenderer = createRealNameRenderer(nameRenderer)
         }
     }
 

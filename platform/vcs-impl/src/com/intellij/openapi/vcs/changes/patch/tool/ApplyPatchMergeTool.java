@@ -2,7 +2,11 @@
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.DiffContext;
-import com.intellij.diff.merge.*;
+import com.intellij.diff.merge.MergeContext;
+import com.intellij.diff.merge.MergeRequest;
+import com.intellij.diff.merge.MergeResult;
+import com.intellij.diff.merge.MergeTool;
+import com.intellij.diff.merge.MergeUtil;
 import com.intellij.diff.util.DiffBalloons;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,8 +20,10 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 
 final class ApplyPatchMergeTool implements MergeTool {

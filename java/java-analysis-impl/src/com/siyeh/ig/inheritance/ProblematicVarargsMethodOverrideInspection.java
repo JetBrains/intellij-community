@@ -1,14 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.ConvertToVarargsMethodFix;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
@@ -21,7 +25,7 @@ public final class ProblematicVarargsMethodOverrideInspection extends BaseInspec
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     return new ConvertToVarargsMethodFix();
   }
 
@@ -35,8 +39,7 @@ public final class ProblematicVarargsMethodOverrideInspection extends BaseInspec
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
-      final PsiParameterList parameterList = method.getParameterList();
-      final PsiParameter[] parameters = parameterList.getParameters();
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length == 0) {
         return;
       }
@@ -45,12 +48,11 @@ public final class ProblematicVarargsMethodOverrideInspection extends BaseInspec
       if (!(type instanceof PsiArrayType) || type instanceof PsiEllipsisType) {
         return;
       }
-      final PsiMethod[] superMethods = method.findDeepestSuperMethods();
-      for (final PsiMethod superMethod : superMethods) {
+      for (PsiMethod superMethod : method.findDeepestSuperMethods()) {
         if (superMethod.isVarArgs()) {
           final PsiElement nameIdentifier = method.getNameIdentifier();
           if (nameIdentifier != null) {
-            registerErrorAtOffset(method, nameIdentifier.getStartOffsetInParent(), nameIdentifier.getTextLength());
+            registerMethodError(method);
           }
           return;
         }

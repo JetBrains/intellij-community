@@ -1,6 +1,14 @@
 package com.intellij.database.run.ui.table;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridHelper;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtil;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.ModelIndexSet;
+import com.intellij.database.datagrid.SelectionModelUtil;
+import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.grid.CellAttributes;
 import com.intellij.database.run.ui.grid.CellRenderingUtils;
@@ -23,9 +31,23 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
 

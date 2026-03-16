@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
@@ -19,14 +18,12 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementTypes;
-import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
 import org.jetbrains.yaml.psi.YAMLFile;
+import org.jetbrains.yaml.psi.YAMLSequence;
 import org.jetbrains.yaml.psi.YAMLSequenceItem;
-
-import java.util.Objects;
 
 import static org.jetbrains.yaml.smart.YamlIndentPreservationUtilsKt.preserveIndentStateBeforeProcessing;
 
@@ -46,13 +43,26 @@ public class YAMLEnterAtIndentHandler implements EnterHandlerDelegate {
       return Result.Continue;
     }
 
-    if (caretOffset.get() > 0 && shouldInsertAutomaticHyphen(file)) {
+    if (caretOffset.get() > 0) {
       PsiElement element = file.findElementAt(caretOffset.get() - 1);
       if (PsiUtilCore.getElementType(element) == TokenType.WHITE_SPACE &&
           element.getTextLength() == 1 &&
           PsiUtilCore.getElementType(PsiTreeUtil.prevLeaf(element)) == YAMLTokenTypes.SEQUENCE_MARKER) {
-        int indentSize = Objects.requireNonNull(CodeStyle.getLanguageSettings(file, YAMLLanguage.INSTANCE).getIndentOptions()).INDENT_SIZE;
-        editor.getDocument().replaceString(caretOffset.get() - 2, caretOffset.get(), StringUtil.repeat(" ", indentSize));
+        // Enter was pressed in an empty sequence item, so we delete sequence marker and extra indent (IJPL-64483)
+        int extraIndentSize = 0;
+        YAMLSequence sequence = PsiTreeUtil.getParentOfType(element, YAMLSequence.class);
+        if (sequence != null) {
+          PsiElement sequenceParent = sequence.getParent();
+          if (sequenceParent != null) {
+            int itemIndent = YAMLUtil.getIndentToThisElement(sequence);
+            int parentIndent = YAMLUtil.getIndentToThisElement(sequenceParent);
+            extraIndentSize = itemIndent - parentIndent;
+          }
+        }
+        // Delete space, sequence marker, and extra indent
+        int newCaretPosition = caretOffset.get() - 2 - extraIndentSize;
+        editor.getDocument().deleteString(newCaretPosition, caretOffset.get());
+        caretOffset.set(newCaretPosition);
         return Result.Stop;
       }
     }

@@ -71,5 +71,5 @@ abstract class ProjectLocator {
    * @param file file to be located in projects.
    * @return list of open projects containing this file.
    */
-  abstract fun getProjectsForFile(file: VirtualFile): Collection<Project?>
+  abstract fun getProjectsForFile(file: VirtualFile): Collection<Project>
 }

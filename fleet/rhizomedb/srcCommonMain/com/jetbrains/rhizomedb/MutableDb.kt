@@ -1,10 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.rhizomedb
 
-import com.jetbrains.rhizomedb.impl.*
+import com.jetbrains.rhizomedb.impl.Editor
+import com.jetbrains.rhizomedb.impl.Index
+import fleet.fastutil.ints.IntList
 import fleet.util.openmap.MutableBoundedOpenMap
 import fleet.util.openmap.MutableOpenMap
-import fleet.fastutil.ints.IntList
 
 class MutableDb internal constructor(
   override val dbBefore: DB,

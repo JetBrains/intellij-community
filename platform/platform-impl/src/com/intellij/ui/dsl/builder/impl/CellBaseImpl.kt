@@ -2,8 +2,17 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignBoth
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.CellBase
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.gridLayout.toUnscaled
 import com.intellij.ui.layout.ComponentPredicate
 import org.jetbrains.annotations.ApiStatus
 
@@ -50,14 +59,14 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
 
   @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
-  override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T> {
+  open fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T> {
     this.horizontalAlign = horizontalAlign
     return this
   }
 
   @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
-  override fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T> {
+  open fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T> {
     this.verticalAlign = verticalAlign
     return this
   }
@@ -85,7 +94,7 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
 
   @Deprecated("Use customize(UnscaledGaps) instead")
   @ApiStatus.ScheduledForRemoval
-  override fun customize(customGaps: Gaps): CellBase<T> {
+  open fun customize(customGaps: Gaps): CellBase<T> {
     return customize(customGaps.toUnscaled())
   }
 

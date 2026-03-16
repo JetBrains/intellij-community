@@ -6,7 +6,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.navigation.Place;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class UsageInProjectSettings extends ProjectStructureElementUsage {
   private final StructureConfigurableContext myContext;

@@ -1,17 +1,31 @@
 package com.michaelbaranov.microba.calendar.ui.basic;
 
-import com.michaelbaranov.microba.calendar.*;
+import com.michaelbaranov.microba.calendar.CalendarPane;
+import com.michaelbaranov.microba.calendar.CalendarResources;
+import com.michaelbaranov.microba.calendar.DatePicker;
+import com.michaelbaranov.microba.calendar.HolidayPolicy;
+import com.michaelbaranov.microba.calendar.VetoPolicy;
 import com.michaelbaranov.microba.calendar.resource.Resource;
 import com.michaelbaranov.microba.calendar.ui.DatePickerUI;
 import com.michaelbaranov.microba.common.CommitEvent;
 import com.michaelbaranov.microba.common.CommitListener;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.InputMap;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
 import javax.swing.JFormattedTextField.AbstractFormatter;
+import javax.swing.JPopupMenu;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.text.DateFormatter;
 import javax.swing.text.DefaultFormatterFactory;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;

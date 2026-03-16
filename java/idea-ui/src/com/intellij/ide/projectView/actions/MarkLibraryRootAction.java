@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.vfs.newvfs.NewVirtualFile.asCacheAvoiding;
+
 public class MarkLibraryRootAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -61,6 +63,7 @@ public class MarkLibraryRootAction extends AnAction {
     if (project != null && ModuleManager.getInstance(project).getModules().length > 0) {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       for (VirtualFile root : getRoots(e)) {
+        root = asCacheAvoiding(root);
         if (!root.isInLocalFileSystem() && FileUtilRt.extensionEquals(root.getName(), "jar") && !fileIndex.isInLibraryClasses(root)) {
           visible = true;
           break;

@@ -2,8 +2,15 @@
 package com.intellij.openapi.diagnostic
 
 import com.intellij.openapi.util.coroutines.runSuspend
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Async
 import org.jetbrains.annotations.TestOnly

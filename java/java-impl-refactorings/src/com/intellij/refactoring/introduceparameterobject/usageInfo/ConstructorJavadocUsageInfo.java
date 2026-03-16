@@ -15,7 +15,11 @@
  */
 package com.intellij.refactoring.introduceparameterobject.usageInfo;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;

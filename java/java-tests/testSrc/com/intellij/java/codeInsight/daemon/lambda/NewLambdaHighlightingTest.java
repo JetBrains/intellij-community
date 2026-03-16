@@ -153,6 +153,7 @@ class NewLambdaHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 {
   @Test void testMultiResolveSameFunction() {doTest();}
   @Test void testMultiResolveThreeFunctions() {doTest();}
   @Test void testWrongTargetTypeDoNotReportIncompatibleTypeInside() {doTest();}
+  @Test void testRecursiveInference() {doTest();}
 
   @Override
   protected @NotNull String getRelativePath() {

@@ -4,7 +4,7 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * Normally, an ActionButton (a button in the toolbar) has a tooltip with action text and shortcut (if assigned).

@@ -13,16 +13,20 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
+import git4idea.inMemory.GitCommitMessageFormatter;
 import git4idea.repo.GitProjectConfigurationCache;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -41,18 +45,31 @@ public final class GitConfigUtil {
   public static final @NlsSafe String CORE_SSH_COMMAND = "core.sshCommand";
   public static final @NlsSafe String CORE_COMMENT_CHAR = "core.commentChar";
   public static final @NlsSafe String LOG_OUTPUT_ENCODING = "i18n.logoutputencoding";
+  public static final @NlsSafe String COMMIT_CLEANUP = "commit.cleanup";
   public static final @NlsSafe String COMMIT_ENCODING = "i18n.commitencoding";
   public static final @NlsSafe String COMMIT_TEMPLATE = "commit.template";
   public static final @NlsSafe String GPG_PROGRAM = "gpg.program";
   public static final @NlsSafe String GPG_COMMIT_SIGN = "commit.gpgSign";
   public static final @NlsSafe String GPG_COMMIT_SIGN_KEY = "user.signingkey";
 
+  public static final String DEFAULT_COMMENT_CHAR = "#";
+
   private GitConfigUtil() {
   }
 
-  public static @NotNull Map<@NotNull String, @NotNull String> getValues(@NotNull Project project,
-                                                                         @NotNull VirtualFile root,
-                                                                         @Nullable @NonNls String keyMask) throws VcsException {
+  public static @NotNull Map<@NotNull String, @NotNull List<@NotNull String>> getValues(
+    @Nullable Project project,
+    @NotNull VirtualFile root,
+    @Nullable @NonNls String keyMask
+  ) throws VcsException {
+    return getValues(project, root.toNioPath(), keyMask);
+  }
+
+  public static @NotNull Map<@NotNull String, @NotNull List<@NotNull String>> getValues(
+    @Nullable Project project,
+    @NotNull Path root,
+    @Nullable @NonNls String keyMask
+  ) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     h.setEnableInteractiveCallbacks(false);
     h.setSilent(true);
@@ -66,7 +83,7 @@ public final class GitConfigUtil {
     String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     int start = 0;
     int pos;
-    Map<String, String> result = new HashMap<>();
+    Map<String, List<String>> result = new HashMap<>();
     while ((pos = output.indexOf('\n', start)) != -1) {
       String key = output.substring(start, pos);
       start = pos + 1;
@@ -75,7 +92,12 @@ public final class GitConfigUtil {
       }
       String value = output.substring(start, pos);
       start = pos + 1;
-      result.put(key, value);
+
+      result.putIfAbsent(key, new ArrayList<>());
+      List<String> values = result.get(key);
+      Objects.requireNonNull(values);
+
+      values.add(value);
     }
     return result;
   }
@@ -87,7 +109,7 @@ public final class GitConfigUtil {
     return getValue(h, key);
   }
 
-  public static @Nullable String getValue(@NotNull Project project, @NotNull File root, @NotNull @NonNls String key)
+  public static @Nullable String getValue(@NotNull Project project, @NotNull Path root, @NotNull @NonNls String key)
     throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     return getValue(h, key);
@@ -120,22 +142,6 @@ public final class GitConfigUtil {
   }
 
   /**
-   * @deprecated Use {@link #getCommitEncodingCharset(Project, VirtualFile)}
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull String getCommitEncoding(@NotNull Project project, @NotNull VirtualFile root) {
-    return getCommitEncodingCharset(project, root).name();
-  }
-
-  /**
-   * @deprecated Use {@link #getLogEncodingCharset(Project, VirtualFile)}
-   */
-  @Deprecated(forRemoval = true)
-  public static String getLogEncoding(@NotNull Project project, @NotNull VirtualFile root) {
-    return getLogEncodingCharset(project, root).name();
-  }
-
-  /**
    * Get commit encoding for the specified root, or UTF-8 if the encoding is note explicitly specified
    */
   public static @NotNull Charset getCommitEncodingCharset(@NotNull Project project, @NotNull VirtualFile root) {
@@ -161,6 +167,25 @@ public final class GitConfigUtil {
   public static boolean isRebaseUpdateRefsEnabledCached(@NotNull Project project, @NotNull VirtualFile root) {
     return Boolean.TRUE.equals(getBooleanValue(GitProjectConfigurationCache.getInstance(project)
                                                  .readRepositoryConfig(root, UPDATE_REFS)));
+  }
+
+  @RequiresBackgroundThread
+  public static @NotNull GitCommitMessageFormatter.CleanupMode getCommitMessageCleanupModeCached(@NotNull Project project,
+                                                                                                 @NotNull VirtualFile root) {
+    String mode = GitProjectConfigurationCache.getInstance(project).readRepositoryConfig(root, COMMIT_CLEANUP);
+    return GitCommitMessageFormatter.CleanupMode.parse(mode);
+  }
+
+  @RequiresBackgroundThread
+  public static @NotNull String getCommitMessageCommentCharCached(@NotNull Project project,
+                                                                  @NotNull VirtualFile root) {
+    String commentString = GitProjectConfigurationCache.getInstance(project).readRepositoryConfig(root, CORE_COMMENT_CHAR);
+    if (commentString == null) {
+      return DEFAULT_COMMENT_CHAR;
+    }
+    else {
+      return commentString;
+    }
   }
 
   /**
@@ -210,7 +235,7 @@ public final class GitConfigUtil {
   /**
    * Checks that Credential helper is defined in git config.
    */
-  public static boolean isCredentialHelperUsed(@NotNull Project project, @NotNull File workingDirectory) {
+  public static boolean isCredentialHelperUsed(@NotNull Project project, @NotNull Path workingDirectory) {
     try {
       GitLineHandler handler = new GitLineHandler(project, workingDirectory, GitCommand.CONFIG);
       String value = getValue(handler, CREDENTIAL_HELPER);

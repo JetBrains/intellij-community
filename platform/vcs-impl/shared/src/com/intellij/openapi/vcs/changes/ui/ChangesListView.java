@@ -5,14 +5,26 @@ import com.intellij.ide.FileSelectInContext;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.dnd.DnDAware;
 import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListChange;
+import com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.platform.vcs.VcsSharedDataKeys;
 import com.intellij.platform.vcs.impl.shared.RdLocalChanges;
 import com.intellij.platform.vcs.impl.shared.actions.VcsTransferableDataKeys;
@@ -27,17 +39,20 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
+import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.IGNORED_FILES_TAG;
+import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.LOCALLY_DELETED_NODE_TAG;
+import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG;
+import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserResolvedConflictsNodeKt.RESOLVED_CONFLICTS_NODE_TAG;
 import static com.intellij.platform.vcs.changes.ChangesUtil.getNavigatableArray;
 
@@ -100,23 +115,9 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
 
   @Override
   protected boolean isIncludable(@NotNull ChangesBrowserNode<?> node) {
-    if (isUnderResolvedConflicts(node)) return true;
+    if (VcsTreeModelDataExKt.isUnderTag(node, RESOLVED_CONFLICTS_NODE_TAG)) return true;
 
     return super.isIncludable(node);
-  }
-
-  private static boolean isUnderResolvedConflicts(@NotNull ChangesBrowserNode<?> node) {
-    ChangesBrowserNode<?> curNode = node;
-
-    while (curNode != null && !(node.getUserObject() instanceof LocalChangeList)
-           && curNode.getUserObject() != RESOLVED_CONFLICTS_NODE_TAG) {
-      curNode = curNode.getParent();
-      if (curNode != null && curNode.getUserObject() == RESOLVED_CONFLICTS_NODE_TAG) return true;
-    }
-
-    if (curNode == null) return false;
-
-    return curNode.getUserObject() == RESOLVED_CONFLICTS_NODE_TAG;
   }
 
   private static @Nullable ChangesBrowserNode<?> getSubtreeRoot(@NotNull ChangesBrowserNode<?> node) {
@@ -157,7 +158,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
       .toList().toArray(ChangeList[]::new));
     JBIterable<FilePath> filePaths = VcsTreeModelData.mapToFilePath(VcsTreeModelData.selected(this));
     sink.set(VcsSharedDataKeys.FILE_PATHS, filePaths);
-    if (filePaths.isNotEmpty()) {
+    if (!IdeProductMode.isFrontend() && filePaths.isNotEmpty()) {
       sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new VirtualFileDeleteProvider());
     }
     sink.set(UNVERSIONED_FILE_PATHS_DATA_KEY, getSelectedUnversionedFiles());

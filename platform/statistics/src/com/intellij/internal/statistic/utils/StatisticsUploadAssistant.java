@@ -6,7 +6,11 @@ import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo;
 import com.intellij.internal.statistic.eventLog.EventLogInternalSendConfig;
 import com.intellij.internal.statistic.eventLog.ExternalEventLogSettings;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
-import com.intellij.internal.statistic.eventLog.connection.*;
+import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener;
+import com.intellij.internal.statistic.eventLog.connection.EventLogSettingsClient;
+import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService;
+import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsClient;
+import com.intellij.internal.statistic.eventLog.connection.StatisticsService;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts;
@@ -21,6 +25,7 @@ import static com.intellij.internal.statistic.eventLog.StatisticsEventLogProvide
 
 public final class StatisticsUploadAssistant {
   private static final String IDEA_HEADLESS_ENABLE_STATISTICS = "idea.headless.enable.statistics";
+  private static final String IDEA_TEAMCITY_ENABLE_STATISTICS = "idea.teamcity.enable.statistics";
   private static final String IDEA_SUPPRESS_REPORT_STATISTICS = "idea.suppress.statistics.report";
   private static final String ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT = "idea.local.statistics.without.report";
   private static final String USE_TEST_STATISTICS_SEND_ENDPOINT = "idea.use.test.statistics.send.endpoint";
@@ -40,6 +45,12 @@ public final class StatisticsUploadAssistant {
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       return isHeadlessStatisticsEnabled();
+    }
+
+    // Prohibit sending statistics if the client is running on TC. TC can collect statistics but not send.
+    // Allow sending from TC if the "idea.teamcity.enable.statistics" property exists.
+    if (isTeamcityDetected()) {
+      return isTeamcityStatisticsEnabled();
     }
 
     return isAllowedByUserConsent.getAsBoolean();
@@ -96,6 +107,10 @@ public final class StatisticsUploadAssistant {
 
   private static boolean isHeadlessStatisticsEnabled() {
     return Boolean.getBoolean(IDEA_HEADLESS_ENABLE_STATISTICS);
+  }
+
+  private static boolean isTeamcityStatisticsEnabled() {
+    return Boolean.getBoolean(IDEA_TEAMCITY_ENABLE_STATISTICS);
   }
 
   public static boolean isTestStatisticsEnabled() {

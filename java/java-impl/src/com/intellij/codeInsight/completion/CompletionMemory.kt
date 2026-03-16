@@ -20,8 +20,13 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
-import java.util.*
+import com.intellij.psi.PsiCall
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
+import java.util.LinkedList
 
 public object CompletionMemory {
   private val LAST_CHOSEN_METHODS = Key.create<LinkedList<RangeMarker>>("COMPLETED_METHODS")

@@ -61,6 +61,10 @@ public class PythonRuntimeService {
     return false;
   }
 
+  public boolean isExternallyIndexedFile(@NotNull PsiElement element) {
+    return false;
+  }
+
   public static PythonRuntimeService getInstance() {
     return ApplicationManager.getApplication().getService(PythonRuntimeService.class);
   }

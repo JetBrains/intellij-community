@@ -18,10 +18,39 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInspection.dataFlow.ContractValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiContinueStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterListOwner;
+import com.intellij.psi.PsiPatternVariable;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.PsiUnaryExpression;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiYieldStatement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.JavaPsiPatternUtil;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,39 +58,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.List;
 import java.util.function.Predicate;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class SideEffectChecker {
-  private static final Set<String> ourSideEffectFreeClasses = Set.of(
-    Object.class.getName(),
-    Short.class.getName(),
-    Character.class.getName(),
-    Byte.class.getName(),
-    Integer.class.getName(),
-    Long.class.getName(),
-    Float.class.getName(),
-    Double.class.getName(),
-    String.class.getName(),
-    StringBuffer.class.getName(),
-    Boolean.class.getName(),
-
-    ArrayList.class.getName(),
-    Date.class.getName(),
-    HashMap.class.getName(),
-    HashSet.class.getName(),
-    Hashtable.class.getName(),
-    LinkedHashMap.class.getName(),
-    LinkedHashSet.class.getName(),
-    LinkedList.class.getName(),
-    Stack.class.getName(),
-    TreeMap.class.getName(),
-    TreeSet.class.getName(),
-    Vector.class.getName(),
-    WeakHashMap.class.getName());
-
   private SideEffectChecker() {
   }
 
@@ -329,52 +331,12 @@ public final class SideEffectChecker {
   }
 
   private static @NotNull ThreeState getConstructorSideEffect(@NotNull PsiNewExpression newExpression) {
-    if (newExpression.isArrayCreation()) return ThreeState.NO;
-    PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
-    if (anonymousClass != null && anonymousClass.getInitializers().length == 0) {
-      PsiClass baseClass = anonymousClass.getBaseClassType().resolve();
-      if (baseClass != null && baseClass.isInterface()) {
-        return ThreeState.NO;
-      }
+    MutationSignature signature = MutationSignature.fromCall(newExpression);
+    if (signature.isPure()) {
+      return ThreeState.NO;
     }
-    PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-    PsiClass aClass = classReference == null ? null : tryCast(classReference.resolve(), PsiClass.class);
-    String qualifiedName = aClass == null ? null : aClass.getQualifiedName();
-    if (qualifiedName == null) return ThreeState.UNSURE;
-    if (ourSideEffectFreeClasses.contains(qualifiedName)) return ThreeState.NO;
-    PsiMethod method = newExpression.resolveConstructor();
-    if (method != null && !method.isDefaultConstructor()) {
-      MutationSignature signature = MutationSignature.fromMethod(method);
-      if (signature.isPure()) {
-        return ThreeState.NO;
-      }
-      if (signature.mutatesAnything()) {
-        return ThreeState.YES;
-      }
-    }
-
-    PsiFile file = aClass.getContainingFile();
-    PsiDirectory directory = file.getContainingDirectory();
-    PsiPackage classPackage = directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
-    String packageName = classPackage == null ? null : classPackage.getQualifiedName();
-
-    // all Throwable descendants from java.lang are side effects free
-    if (CommonClassNames.DEFAULT_PACKAGE.equals(packageName) || "java.io".equals(packageName)) {
-      if (PsiClassUtil.isThrowable(aClass)) {
-        return ThreeState.NO;
-      }
-    }
-    if (method == null || method.isDefaultConstructor()) {
-      PsiClass superClass = aClass.getSuperClass();
-      if (superClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
-        for (PsiClassInitializer initializer : aClass.getInitializers()) {
-          if (!initializer.hasModifierProperty(PsiModifier.STATIC)) return ThreeState.UNSURE;
-        }
-        for (PsiField field : aClass.getFields()) {
-          if (!field.hasModifierProperty(PsiModifier.STATIC) && field.hasInitializer()) return ThreeState.UNSURE;
-        }
-        return ThreeState.NO;
-      }
+    if (signature.mutatesAnything()) {
+      return ThreeState.YES;
     }
     return ThreeState.UNSURE;
   }

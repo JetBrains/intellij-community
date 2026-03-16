@@ -2,10 +2,15 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.IntentionWrapper
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.group
+import com.intellij.codeInspection.registerUProblem
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.annotationRequest
 import com.intellij.lang.jvm.actions.createAddAnnotationActions
@@ -16,9 +21,16 @@ import com.intellij.util.containers.map2Array
 import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UObjectLiteralExpression
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UResolvable
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.resolveToUElementOfType
 import org.jetbrains.uast.visitor.AbstractUastVisitor
-import java.util.*
+import java.util.EnumSet
 
 internal class ThreadingConcurrencyInspection(
   @JvmField var requiresReadLockInsideRequiresEdt: Boolean = false,

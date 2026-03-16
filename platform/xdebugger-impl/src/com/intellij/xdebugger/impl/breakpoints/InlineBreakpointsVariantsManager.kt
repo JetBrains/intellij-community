@@ -26,16 +26,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.asDeferred
 
 @ApiStatus.Internal
-data class InlineVariantWithMatchingBreakpointProxy(
-  val variant: XLineBreakpointInlineVariantProxy?,
-  val lightBreakpoint: InlineLightBreakpoint?,
-) {
-  init {
-    require(lightBreakpoint != null || variant != null) { "Both breakpoint and variant are null" }
-  }
-}
-
-@ApiStatus.Internal
 data class InlineVariantWithMatchingBreakpoint(
   val variant: XLineBreakpointType<*>.XLineBreakpointVariant?,
   val breakpoint: XLineBreakpointImpl<*>?,
@@ -61,7 +51,7 @@ class InlineBreakpointsVariantsManager(private val project: Project) {
       .groupBy { it.line }
     return readAction {
       variants.mapValues { (line, variants) ->
-        val lineBreakpoints = lineToBreakpoints[line] ?: return@mapValues emptyList()
+        val lineBreakpoints = lineToBreakpoints[line] ?: emptyList()
         matchVariantsWithBreakpoints(variants, lineBreakpoints)
       }
     }
@@ -160,7 +150,7 @@ class InlineBreakpointsVariantsManager(private val project: Project) {
 
   private fun allBreakpointsIn(document: Document): Collection<XLineBreakpointImpl<*>> {
     val lineBreakpointManager = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).lineBreakpointManager
-    return lineBreakpointManager.getDocumentBreakpoints(document)
+    return XDebuggerUtilImpl.getDocumentBreakpoints(document, lineBreakpointManager)
   }
 
   private suspend fun <T> withSemaphorePermit(action: suspend () -> T): T {
@@ -176,7 +166,7 @@ class InlineBreakpointsVariantsManager(private val project: Project) {
 
   companion object {
     private const val LIMIT_CALCULATE_VARIANTS_JOBS_COUNT_KEY = "debugger.limit.inline.breakpoints.jobs.count"
-    internal const val SHOW_EVEN_TRIVIAL_KEY = "debugger.show.breakpoints.inline.even.trivial"
+    private const val SHOW_EVEN_TRIVIAL_KEY = "debugger.show.breakpoints.inline.even.trivial"
 
     fun getInstance(project: Project): InlineBreakpointsVariantsManager = project.service()
   }

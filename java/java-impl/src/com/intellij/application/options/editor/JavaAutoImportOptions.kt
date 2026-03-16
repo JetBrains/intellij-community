@@ -17,10 +17,18 @@ import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.IdeUICustomization
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import javax.swing.JComponent
 
@@ -50,6 +58,11 @@ public class JavaAutoImportOptions(public val project: Project) : UiDslUnnamedCo
                                                            JavaBundle.message("auto.static.import.comment"),
                                                            JavaBundle.message("auto.static.import.class"),
                                                            JavaBundle.message("auto.static.import.scope")) {
+
+    override fun validate(value: Any?, component: JComponent?): ValidationInfo? {
+      if (value !is String) return null
+      return super.validate(value.substring(if (value.startsWith("-")) 1 else 0), component)
+    }
 
     override fun getIdeRows(): Array<out String> {
       return JavaIdeCodeInsightSettings.getInstance().includedAutoStaticNames.toTypedArray()
@@ -100,8 +113,7 @@ public class JavaAutoImportOptions(public val project: Project) : UiDslUnnamedCo
       row {
         checkBox(ApplicationBundle.message("checkbox.add.unambiguous.imports.on.the.fly"))
           .bindSelected(ciSettings::ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY)
-          .gap(RightGap.SMALL)
-        contextHelp(ApplicationBundle.message("help.add.unambiguous.imports"))
+          .contextHelp(ApplicationBundle.message("help.add.unambiguous.imports"))
       }
       row {
         checkBox(ApplicationBundle.message("checkbox.optimize.imports.on.the.fly"))

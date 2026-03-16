@@ -5,11 +5,52 @@ package org.jetbrains.kotlin.j2k
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.DfaUtil
 import com.intellij.codeInspection.dataFlow.NullabilityUtil
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiAssignmentExpression
+import com.intellij.psi.PsiBinaryExpression
+import com.intellij.psi.PsiCall
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiConditionalExpression
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiExpressionList
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiLambdaExpression
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiParenthesizedExpression
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiReturnStatement
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.PsiVariable
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.j2k.ast.*
+import org.jetbrains.kotlin.j2k.ast.ArrayType
+import org.jetbrains.kotlin.j2k.ast.ClassType
+import org.jetbrains.kotlin.j2k.ast.CommentsAndSpacesInheritance
+import org.jetbrains.kotlin.j2k.ast.ErrorType
+import org.jetbrains.kotlin.j2k.ast.Identifier
+import org.jetbrains.kotlin.j2k.ast.Mutability
+import org.jetbrains.kotlin.j2k.ast.ReferenceElement
+import org.jetbrains.kotlin.j2k.ast.Type
+import org.jetbrains.kotlin.j2k.ast.assignNoPrototype
+import org.jetbrains.kotlin.j2k.ast.assignPrototype
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.types.TypeUtils
@@ -29,6 +70,7 @@ private object JavaDataFlowAnalyzerFacade {
     }
 }
 
+@K1Deprecation
 class TypeConverter(val converter: Converter) {
     private val typesBeingConverted = HashSet<PsiType>()
 
@@ -525,6 +567,7 @@ private class TypeFlavorCalculator(val converter: TypeFlavorConverterFacade) {
     }
 }
 
+@K1Deprecation
 fun PsiExpression.getTypeConversionMethod(expectedType: PsiType): String? {
     val actualType = this.type ?: return null
     if (actualType == expectedType) return null
@@ -541,6 +584,7 @@ fun PsiExpression.getTypeConversionMethod(expectedType: PsiType): String? {
     }
 }
 
+@K1Deprecation
 fun PsiType.needTypeConversion(expected: PsiType): Boolean {
     val expectedStr = expected.canonicalText
     val actualStr = canonicalText

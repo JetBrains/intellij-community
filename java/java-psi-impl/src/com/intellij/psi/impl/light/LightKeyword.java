@@ -15,7 +15,11 @@
  */
 package com.intellij.psi.impl.light;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
 public class LightKeyword extends LightJavaToken implements PsiKeyword {

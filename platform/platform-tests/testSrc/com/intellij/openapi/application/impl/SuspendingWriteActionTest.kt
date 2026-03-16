@@ -3,11 +3,21 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.testExceptions
+import com.intellij.openapi.progress.testNoExceptions
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test

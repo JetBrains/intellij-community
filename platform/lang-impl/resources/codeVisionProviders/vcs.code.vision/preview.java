@@ -1,5 +1,3 @@
-class Thing {
-  void doThing() {
-
-  }
+class Button {
+  void actionPerformed() {}
 }

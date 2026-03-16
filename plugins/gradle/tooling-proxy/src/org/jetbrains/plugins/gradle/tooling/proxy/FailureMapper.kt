@@ -2,9 +2,26 @@
 package org.jetbrains.plugins.gradle.tooling.proxy
 
 import org.gradle.tooling.Failure
-import org.gradle.tooling.events.problems.*
+import org.gradle.tooling.events.problems.AdditionalData
+import org.gradle.tooling.events.problems.ContextualLabel
+import org.gradle.tooling.events.problems.Details
+import org.gradle.tooling.events.problems.Problem
+import org.gradle.tooling.events.problems.ProblemDefinition
+import org.gradle.tooling.events.problems.ProblemGroup
+import org.gradle.tooling.events.problems.ProblemId
+import org.gradle.tooling.events.problems.Severity
+import org.gradle.tooling.events.problems.Solution
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalFailure
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem.*
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem.InternalAdditionalData
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem.InternalContextualLabel
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem.InternalDetails
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem.InternalDocumentationLink
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem.InternalProblem
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem.InternalProblemDefinition
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem.InternalProblemGroup
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem.InternalProblemId
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem.InternalSeverity
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem.InternalSolution
 
 fun toInternalFailure(failure: Failure?): InternalFailure? {
   if (failure == null) {

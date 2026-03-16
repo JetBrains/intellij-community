@@ -6,7 +6,22 @@ import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
-import com.intellij.psi.*
+import com.intellij.psi.PsiArrayInitializerMemberValue
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClassObjectAccessExpression
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiLiteralValue
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceBase
+import com.intellij.psi.PsiReferenceContributor
+import com.intellij.psi.PsiReferenceProvider
+import com.intellij.psi.PsiReferenceRegistrar
+import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.util.KeyedLazyInstance
@@ -15,8 +30,21 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.uast.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 // NB: Similar to [UastResolveApiFixtureTestBase], but focusing on light classes, not `resolve`

@@ -3,7 +3,7 @@ package com.intellij.ui;
 
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @author evgeny.zakrevsky

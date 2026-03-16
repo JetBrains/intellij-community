@@ -7,7 +7,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.text.JTextComponent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;

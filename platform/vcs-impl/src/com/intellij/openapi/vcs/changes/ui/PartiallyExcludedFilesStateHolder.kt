@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
@@ -135,22 +135,27 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
 
   @RequiresEdt
   fun updateExclusionStates() {
+    val newTrackerStates = computeTrackerExclusionStates()
+
     lock.write {
-      rebuildTrackerExclusionStates()
+      trackerExclusionStates.clear()
+      trackerExclusionStates.putAll(newTrackerStates)
     }
 
     fireInclusionChanged()
   }
 
+  /**
+   * Must be called outside [lock] to prevent deadlocks through [LineStatusTrackerManager.LOCK]
+   */
   @RequiresEdt
-  private fun rebuildTrackerExclusionStates() {
-    assert(lock.isWriteLocked)
-    trackerExclusionStates.clear()
-
+  private fun computeTrackerExclusionStates(): Map<T, ExclusionState> {
+    val result = CollectionFactory.createCustomHashingStrategyMap<T, ExclusionState>(hashingStrategy)
     trackers.forEach { (element, tracker) ->
       val state = tracker.getExcludedFromCommitState(element)
-      if (state != ExclusionState.NO_CHANGES) trackerExclusionStates[element] = state
+      if (state != ExclusionState.NO_CHANGES) result[element] = state
     }
+    return result
   }
 
   @RequiresEdt
@@ -160,10 +165,13 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
       tracker.setExcludedFromCommit(element, element !in set)
     }
 
+    val newTrackerStates = computeTrackerExclusionStates()
+
     lock.write {
       includedElements.clear()
       includedElements += elements
-      rebuildTrackerExclusionStates()
+      trackerExclusionStates.clear()
+      trackerExclusionStates.putAll(newTrackerStates)
     }
 
     fireInclusionChanged()
@@ -173,9 +181,12 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
   fun includeElements(elements: Collection<T>) {
     elements.forEach { findTrackerFor(it)?.setExcludedFromCommit(it, false) }
 
+    val newTrackerStates = computeTrackerExclusionStates()
+
     lock.write {
       includedElements += elements
-      rebuildTrackerExclusionStates()
+      trackerExclusionStates.clear()
+      trackerExclusionStates.putAll(newTrackerStates)
     }
 
     fireInclusionChanged()
@@ -187,11 +198,14 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
       findTrackerFor(element)?.setExcludedFromCommit(element, true)
     }
 
+    val newTrackerStates = computeTrackerExclusionStates()
+
     lock.write {
       for (element in elements) {
         includedElements.remove(element)
       }
-      rebuildTrackerExclusionStates()
+      trackerExclusionStates.clear()
+      trackerExclusionStates.putAll(newTrackerStates)
     }
 
     fireInclusionChanged()
@@ -207,9 +221,12 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
       }
     }
 
+    val newTrackerStates = computeTrackerExclusionStates()
+
     lock.write {
       includedElements.retainAll(toRetain)
-      rebuildTrackerExclusionStates()
+      trackerExclusionStates.clear()
+      trackerExclusionStates.putAll(newTrackerStates)
     }
 
     fireInclusionChanged()

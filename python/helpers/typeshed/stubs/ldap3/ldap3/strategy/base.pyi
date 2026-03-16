@@ -1,4 +1,4 @@
-from typing import Any
+from _typeshed import Incomplete
 
 unix_socket_available: bool
 SESSION_TERMINATED_BY_SERVER: str
@@ -6,12 +6,12 @@ TRANSACTION_ERROR: str
 RESPONSE_COMPLETE: str
 
 class BaseStrategy:
-    connection: Any
-    sync: Any
-    no_real_dsa: Any
-    pooled: Any
-    can_stream: Any
-    referral_cache: Any
+    connection: Incomplete
+    sync: Incomplete
+    no_real_dsa: Incomplete
+    pooled: Incomplete
+    can_stream: Incomplete
+    referral_cache: Incomplete
     thread_safe: bool
     def __init__(self, ldap_connection) -> None: ...
     def open(self, reset_usage: bool = True, read_server_info: bool = True) -> None: ...

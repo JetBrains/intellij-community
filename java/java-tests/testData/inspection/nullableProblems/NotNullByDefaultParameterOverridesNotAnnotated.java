@@ -7,8 +7,8 @@ class Test {
 
   @ParametersAreNonnullByDefault
   static class X extends XX {
-    // Do not warn as ParametersAreNonnullByDefault does not work for overridden parameters
-    void get(Object x) {
+    // Warn: parameter is effectively non-null via @ParametersAreNonnullByDefault
+    void get(Object <warning descr="Parameter annotated @ParametersAreNonnullByDefault should not override non-annotated parameter">x</warning>) {
 
     }
   }

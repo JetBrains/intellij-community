@@ -15,7 +15,11 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,9 +71,10 @@ public class PyAnyExpressionEvaluator extends PyEvaluator {
 
   /**
    * Evaluates expression to single element
+   *
    * @param expression exp to eval
-   * @param aClass expected class
-   * @param <T>    expected class
+   * @param aClass     expected class
+   * @param <T>        expected class
    * @return instance of aClass, or null if failed to eval
    */
   public static @Nullable <T> T evaluateOne(final @NotNull PyExpression expression, final @NotNull Class<T> aClass) {
@@ -89,6 +94,7 @@ public class PyAnyExpressionEvaluator extends PyEvaluator {
 
   /**
    * Evaluates expression to string
+   *
    * @param expression exp to eval
    * @return string, or null if failed to eval
    */
@@ -98,12 +104,13 @@ public class PyAnyExpressionEvaluator extends PyEvaluator {
 
   /**
    * Evaluates expression as list of values
+   *
    * @param expression exp to eval
-   * @param aClass expected element class
-   * @param <T> expected element class
+   * @param aClass     expected element class
+   * @param <T>        expected element class
    * @return a list of elements of expected type
    */
-  public static @NotNull <T>List<T> evaluateIterable(final @NotNull PyExpression expression, final @NotNull Class<T> aClass) {
+  public static @NotNull <T> List<T> evaluateIterable(final @NotNull PyExpression expression, final @NotNull Class<T> aClass) {
     final PyAnyExpressionEvaluator evaluator = new PyAnyExpressionEvaluator(true);
     final Object evaluate = evaluator.evaluate(expression);
     final T resultSingle = PyUtil.as(evaluate, aClass);

@@ -4,8 +4,9 @@ package com.intellij.ui.tree.ui;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
+import java.awt.Graphics;
 
 public final class DefaultControl implements Control {
   private final Icon expandedDefault;

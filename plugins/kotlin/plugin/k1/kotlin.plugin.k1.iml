@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="kotlin.plugin.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.searching" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.analysis-api" level="project" />
@@ -59,7 +60,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.noarg.maven" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.k1" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" scope="RUNTIME" />
@@ -133,9 +134,9 @@
     <orderEntry type="module" module-name="kotlin.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.spellchecker" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.testng" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.uast.base" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea-base" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.uast.idea.base" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.featuresTrainer" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" scope="RUNTIME" />

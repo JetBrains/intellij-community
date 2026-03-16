@@ -112,6 +112,12 @@ fun JEditorUiComponent.shouldContainText(expectedText: String, message: String? 
   }
 }
 
+fun JEditorUiComponent.shouldNotContainText(notExpectedText: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): JEditorUiComponent {
+  return should(message ?: "Editor should not contain text: $notExpectedText", timeout) {
+    !text.contains(notExpectedText)
+  }
+}
+
 fun PopupMenuUiComponent.selectedPathShouldBe(path: List<String>, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): PopupMenuUiComponent {
   var lastSelectedPath: List<String>? = null
   return should(message ?: "Selected menu path should be $path", timeout, { "expected: $path, but found: $lastSelectedPath" }) {

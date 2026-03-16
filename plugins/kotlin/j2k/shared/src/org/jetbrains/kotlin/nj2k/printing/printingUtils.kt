@@ -8,7 +8,11 @@ import com.intellij.psi.PsiNewExpression
 import com.intellij.psi.PsiType
 import org.jetbrains.kotlin.nj2k.escaped
 import org.jetbrains.kotlin.nj2k.isPresent
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKArgumentList
+import org.jetbrains.kotlin.nj2k.tree.JKCallExpressionImpl
+import org.jetbrains.kotlin.nj2k.tree.JKLambdaExpression
+import org.jetbrains.kotlin.nj2k.tree.JKMethod
+import org.jetbrains.kotlin.nj2k.tree.JKNewExpression
 import org.jetbrains.kotlin.nj2k.types.isKotlinFunctionalType
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter

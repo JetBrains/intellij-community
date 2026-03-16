@@ -5,19 +5,19 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlin.RequiresOptIn -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlin.RequiresOptIn -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="21" />
-            <stringArg name="apiVersion" arg="2.2" />
-            <stringArg name="languageVersion" arg="2.2" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
               <args>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.2.20-0.1/rpc-compiler-plugin-2.2.20-0.1.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.3.20-RC2-0.1/rpc-compiler-plugin-2.3.20-RC2-0.1.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
@@ -50,8 +50,11 @@
     <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.util.diff" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
@@ -59,6 +62,7 @@
     <orderEntry type="module" module-name="intellij.platform.lvcs" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
@@ -72,7 +76,7 @@
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
     <orderEntry type="module" module-name="intellij.libraries.mockito" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" exported="" scope="TEST" name="cucumber-testing" level="project" />
@@ -92,7 +96,7 @@
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.libraries.commons.lang3" scope="TEST" />
@@ -110,8 +114,6 @@
     <orderEntry type="module" module-name="intellij.performanceTesting" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
-    <orderEntry type="module" module-name="intellij.terminal" />
-    <orderEntry type="module" module-name="intellij.terminal.completion" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" />
@@ -124,5 +126,10 @@
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.ide.recentProjects" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl.wsl" />
+    <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
+    <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel" scope="TEST" />
   </component>
 </module>

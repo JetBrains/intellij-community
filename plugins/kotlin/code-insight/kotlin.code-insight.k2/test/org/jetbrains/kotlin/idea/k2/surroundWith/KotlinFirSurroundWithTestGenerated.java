@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.surroundWith;
 
@@ -733,6 +733,21 @@ public abstract class KotlinFirSurroundWithTestGenerated extends AbstractKotlinF
             runTest("../../idea/tests/testData/codeInsight/surroundWith/tryFinally/singleExpression.kt");
         }
 
+        @TestMetadata("usageOutsideOfSelectionBlock.kt")
+        public void testUsageOutsideOfSelectionBlock() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/tryFinally/usageOutsideOfSelectionBlock.kt");
+        }
+
+        @TestMetadata("usageOutsideOfSelectionBlock2.kt")
+        public void testUsageOutsideOfSelectionBlock2() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/tryFinally/usageOutsideOfSelectionBlock2.kt");
+        }
+
+        @TestMetadata("usageOutsideOfSelectionBlock3.kt")
+        public void testUsageOutsideOfSelectionBlock3() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/tryFinally/usageOutsideOfSelectionBlock3.kt");
+        }
+
         @TestMetadata("usedAsExpression.kt")
         public void testUsedAsExpression() throws Exception {
             runTest("../../idea/tests/testData/codeInsight/surroundWith/tryFinally/usedAsExpression.kt");
@@ -867,6 +882,153 @@ public abstract class KotlinFirSurroundWithTestGenerated extends AbstractKotlinF
         @TestMetadata("variable.kt")
         public void testVariable() throws Exception {
             runTest("../../idea/tests/testData/codeInsight/surroundWith/withIfElseExpression/variable.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/codeInsight/surroundWith/while")
+    public static class While extends AbstractKotlinFirSurroundWithTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithWhileSurrounder, this, testDataFilePath);
+        }
+
+        @TestMetadata("expression.kt")
+        public void testExpression() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/while/expression.kt");
+        }
+
+        @TestMetadata("lambda.kt")
+        public void testLambda() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/while/lambda.kt");
+        }
+
+        @TestMetadata("multipleStatements.kt")
+        public void testMultipleStatements() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/while/multipleStatements.kt");
+        }
+
+        @TestMetadata("nestedInBlockIf.kt")
+        public void testNestedInBlockIf() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/while/nestedInBlockIf.kt");
+        }
+
+        @TestMetadata("nestedWhile.kt")
+        public void testNestedWhile() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/while/nestedWhile.kt");
+        }
+
+        @TestMetadata("simpleStatement.kt")
+        public void testSimpleStatement() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/while/simpleStatement.kt");
+        }
+
+        @TestMetadata("surroundForLoop.kt")
+        public void testSurroundForLoop() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/while/surroundForLoop.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/codeInsight/surroundWith/doWhile")
+    public static class DoWhile extends AbstractKotlinFirSurroundWithTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithDoWhileSurrounder, this, testDataFilePath);
+        }
+
+        @TestMetadata("expression.kt")
+        public void testExpression() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/doWhile/expression.kt");
+        }
+
+        @TestMetadata("lambda.kt")
+        public void testLambda() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/doWhile/lambda.kt");
+        }
+
+        @TestMetadata("multipleStatements.kt")
+        public void testMultipleStatements() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/doWhile/multipleStatements.kt");
+        }
+
+        @TestMetadata("nestedInBlockIf.kt")
+        public void testNestedInBlockIf() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/doWhile/nestedInBlockIf.kt");
+        }
+
+        @TestMetadata("nestedWhile.kt")
+        public void testNestedWhile() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/doWhile/nestedWhile.kt");
+        }
+
+        @TestMetadata("simpleStatement.kt")
+        public void testSimpleStatement() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/doWhile/simpleStatement.kt");
+        }
+
+        @TestMetadata("surroundForLoop.kt")
+        public void testSurroundForLoop() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/doWhile/surroundForLoop.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/codeInsight/surroundWith/for")
+    public static class For extends AbstractKotlinFirSurroundWithTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithForSurrounder, this, testDataFilePath);
+        }
+
+        @TestMetadata("expression.kt")
+        public void testExpression() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/for/expression.kt");
+        }
+
+        @TestMetadata("lambda.kt")
+        public void testLambda() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/for/lambda.kt");
+        }
+
+        @TestMetadata("multipleStatements.kt")
+        public void testMultipleStatements() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/for/multipleStatements.kt");
+        }
+
+        @TestMetadata("nestedInBlockIf.kt")
+        public void testNestedInBlockIf() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/for/nestedInBlockIf.kt");
+        }
+
+        @TestMetadata("nestedWhile.kt")
+        public void testNestedWhile() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/for/nestedWhile.kt");
+        }
+
+        @TestMetadata("simpleStatement.kt")
+        public void testSimpleStatement() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/for/simpleStatement.kt");
+        }
+
+        @TestMetadata("surroundForLoop.kt")
+        public void testSurroundForLoop() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/for/surroundForLoop.kt");
         }
     }
 }

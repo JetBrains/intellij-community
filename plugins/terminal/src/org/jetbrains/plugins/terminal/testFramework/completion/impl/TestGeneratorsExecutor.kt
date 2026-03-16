@@ -7,12 +7,8 @@ import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class TestGeneratorsExecutor(
-  private val mockGeneratorResult: suspend (context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<*>) -> Any = { context, generator -> generator.generate(context)!! },
-) : ShellDataGeneratorsExecutor {
+class TestGeneratorsExecutor : ShellDataGeneratorsExecutor {
   override suspend fun <T : Any> execute(context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<T>): T {
-    val result = mockGeneratorResult(context, generator)
-    @Suppress("UNCHECKED_CAST") // Client should be responsible to match the result type with the generator return type.
-    return result as? T ?: error("Mocked result type is not the same as the generator result type. Generator: $generator, result: $result")
+    return generator.generate(context)
   }
 }

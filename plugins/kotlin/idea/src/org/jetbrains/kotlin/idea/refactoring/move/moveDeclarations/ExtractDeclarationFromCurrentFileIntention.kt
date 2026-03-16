@@ -17,6 +17,7 @@ import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -32,7 +33,11 @@ import org.jetbrains.kotlin.idea.refactoring.showWithTransaction
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -41,6 +46,7 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 
 private const val TIMEOUT_FOR_IMPORT_OPTIMIZING_MS: Long = 700L
 
+@K1Deprecation
 class ExtractDeclarationFromCurrentFileIntention : SelfTargetingRangeIntention<KtClassOrObject>(
     KtClassOrObject::class.java,
     KotlinBundle.messagePointer("intention.extract.declarations.from.file.text")

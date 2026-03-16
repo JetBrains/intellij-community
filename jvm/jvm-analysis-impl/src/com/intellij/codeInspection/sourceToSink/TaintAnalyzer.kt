@@ -7,15 +7,74 @@ import com.intellij.codeInspection.dataFlow.Mutability
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.openapi.roots.FileIndexFacade
-import com.intellij.psi.*
+import com.intellij.psi.PsiCompiledElement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiType
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.util.*
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
 import com.siyeh.ig.psiutils.ClassUtils
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnonymousClass
+import org.jetbrains.uast.UArrayAccessExpression
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UBinaryExpressionWithType
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UBreakExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UClassLiteralExpression
+import org.jetbrains.uast.UContinueExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UExpressionList
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UForEachExpression
+import org.jetbrains.uast.UIfExpression
+import org.jetbrains.uast.ULabeledExpression
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.ULocalVariable
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UPolyadicExpression
+import org.jetbrains.uast.UPostfixExpression
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UResolvable
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.USwitchExpression
+import org.jetbrains.uast.UThisExpression
+import org.jetbrains.uast.UUnaryExpression
+import org.jetbrains.uast.UUnknownExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UYieldExpression
+import org.jetbrains.uast.UastBinaryOperator
 import org.jetbrains.uast.UastBinaryOperator.AssignOperator
+import org.jetbrains.uast.getContainingUClass
+import org.jetbrains.uast.getContainingUFile
+import org.jetbrains.uast.getContainingUMethod
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.getUastParentOfType
 import org.jetbrains.uast.internal.acceptList
+import org.jetbrains.uast.nonStructuralChildren
+import org.jetbrains.uast.resolveToUElement
+import org.jetbrains.uast.resolveToUElementOfType
+import org.jetbrains.uast.skipParenthesizedExprDown
+import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -200,8 +259,12 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         fromExpressionWithoutCollection(uForEachExpression.iteratedValue, analyzeContext)
       }
     }
-    var taintValue: TaintValue = myTaintValueFactory.fromElement(sourceTarget, getClazzFromReceiver(expression)) ?: TaintValue.UNKNOWN
+    val psiType = getTypeFromReceiver(expression)
+    if (psiType != null && skipClass(psiType)) return TaintValue.UNTAINTED
+    var taintValue: TaintValue =
+      myTaintValueFactory.fromElement(sourceTarget, PsiUtil.resolveClassInClassTypeOnly(psiType)) ?: TaintValue.UNKNOWN
     if (taintValue != TaintValue.UNKNOWN) return taintValue
+
     val value = checkAndPrepareVisited(expression)
     if (value != null) return value
     taintValue = fromModifierListOwner(sourceTarget, expression, analyzeContext) ?: TaintValue.UNKNOWN
@@ -209,8 +272,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     return taintValue
   }
 
-  private fun getClazzFromReceiver(expression: UResolvable): PsiClass? {
-    val type = when (expression) {
+  private fun getTypeFromReceiver(expression: UResolvable): PsiType? {
+    return when (expression) {
       is UQualifiedReferenceExpression -> {
         expression.receiver.getExpressionType()
       }
@@ -221,7 +284,6 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         null
       }
     }
-    return PsiUtil.resolveClassInClassTypeOnly(type)
   }
 
   private fun checkAndPrepareVisited(uElement: UElement?, prepare: Boolean = true): TaintValue? {
@@ -998,9 +1060,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         .getCachedValue(parentSourcePsiForCache, CachedValueProvider {
           val uClass = parentSourcePsiForCache.toUElement() as? UClass
           val uMethods = if (uClass != null) {
-            listOf(uClass, *uClass.innerClasses)
-              .map { it.methods.toList() }
-              .flatten()
+            listOf(uClass, *uClass.innerClasses).flatMap { it.methods.toList() }
           }
           else {
             listOf()

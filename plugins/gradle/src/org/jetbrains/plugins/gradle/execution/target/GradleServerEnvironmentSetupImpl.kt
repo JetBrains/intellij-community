@@ -4,17 +4,24 @@ package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.Platform
 import com.intellij.execution.configurations.SimpleJavaParameters
-import com.intellij.execution.target.*
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetedCommandLine
+import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.externalSystem.issue.BuildIssueException
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.util.PathMapper
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.text.nullize
@@ -25,13 +32,18 @@ import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetu
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetupImpl.Helper.extractPathsFromInitScript
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetupImpl.Helper.extractPathsToMapFromInitScripts
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetupImpl.Helper.getToolingProxyDefaultJavaParameters
-import org.jetbrains.plugins.gradle.service.execution.*
+import org.jetbrains.plugins.gradle.service.execution.GRADLE_TOOLING_EXTENSION_PROXY_CLASSES
+import org.jetbrains.plugins.gradle.service.execution.GradleServerConfigurationProvider
+import org.jetbrains.plugins.gradle.service.execution.MAIN_INIT_SCRIPT_NAME
+import org.jetbrains.plugins.gradle.service.execution.getToolingExtensionsJarPaths
+import org.jetbrains.plugins.gradle.service.execution.toGroovyStringLiteral
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.tooling.proxy.Main
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetIntermediateResultHandler
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleConstants.INIT_SCRIPT_CMD_OPTION
+import org.jetbrains.plugins.gradle.util.resolveProjectJdk
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -282,15 +294,39 @@ internal class GradleServerEnvironmentSetupImpl(
     if (request is LocalTargetEnvironmentRequest) {
       javaParameters.vmParametersList.addProperty(Main.LOCAL_BUILD_PROPERTY, "true")
       val javaHomePath = consumerOperationParameters.javaHome.path
-      ProjectJdkTable.getInstance().allJdks.find { FileUtilRt.pathsEqual(it.homePath, javaHomePath) }?.let { javaParameters.jdk = it }
+      ProjectJdkTable.getInstance(project).allJdks.find { FileUtilRt.pathsEqual(it.homePath, javaHomePath) }?.let { javaParameters.jdk = it }
     }
     else {
       if (environmentConfiguration.runtimes.findByType(JavaLanguageRuntimeConfiguration::class.java) == null) {
-        val targetJavaHomePath = FileUtil.toCanonicalPath(consumerOperationParameters.javaHome.path)
-        val javaLanguageRuntimeConfiguration = JavaLanguageRuntimeConfiguration().apply { homePath = targetJavaHomePath }
+        var toolingProxyJdkCandidate = consumerOperationParameters.javaHome?.path
+        if (toolingProxyJdkCandidate == null) {
+          toolingProxyJdkCandidate = suggestJdkForToolingProxyExecution()
+          if (toolingProxyJdkCandidate == null) {
+            throw BuildIssueException(NoJdkForToolingProxyBuildIssue())
+          }
+        }
+        val javaLanguageRuntimeConfiguration = JavaLanguageRuntimeConfiguration()
+        javaLanguageRuntimeConfiguration.homePath = FileUtil.toCanonicalPath(toolingProxyJdkCandidate)
         environmentConfiguration.addLanguageRuntime(javaLanguageRuntimeConfiguration)
       }
     }
+  }
+
+  private fun suggestJdkForToolingProxyExecution(): String? {
+    val projectJdk = project.resolveProjectJdk()?.homePath
+    if (projectJdk != null) {
+      return projectJdk.asLocalPathString()
+    }
+    return ExternalSystemJdkUtil.suggestJdkHomePaths(project)
+      .sortedBy { ExternalSystemJdkUtil.getJavaVersion(it)?.feature }
+      .firstOrNull()
+      ?.asLocalPathString()
+  }
+
+  private fun String.asLocalPathString(): String {
+    return Path.of(this)
+      .asEelPath()
+      .toString()
   }
 
   private fun prepareTargetEnvironmentRequest(request: TargetEnvironmentRequest,

@@ -10,6 +10,10 @@ class PythonGrazieSupportTest : GrazieTestBase() {
   override fun getBasePath() = "python/testData/grazie/"
   override fun isCommunity() = true
 
+  fun `test f-strings`() {
+    runHighlightTestForFile("FStrings.py")
+  }
+
   fun `test grammar check in constructs`() {
     runHighlightTestForFile("Constructs.py")
   }

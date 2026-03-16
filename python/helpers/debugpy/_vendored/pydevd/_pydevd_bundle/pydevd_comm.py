@@ -95,7 +95,8 @@ from _pydevd_bundle._debug_adapter.pydevd_schema import (
 )
 from _pydevd_bundle._debug_adapter import pydevd_base_schema, pydevd_schema
 from _pydevd_bundle.pydevd_net_command import NetCommand
-from _pydevd_bundle.custom.pydevd_tables import exec_table_command
+from _pydevd_bundle.custom.pydevd_tables import exec_table_command, \
+    exec_image_table_command
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
 from _pydevd_bundle.pydevd_constants import ForkSafeLock, NULL
 from _pydevd_bundle.pydevd_daemon_thread import PyDBDaemonThread
@@ -1948,18 +1949,13 @@ class InternalTableCommand(InternalThreadCommand):
 
     def do_it(self, dbg):
         try:
-            pydev_log.info(f"WE ARE IN INTERNAL TABLE COMMAND, thread_id: {self.thread_id}, frame_id: {self.frame_id}" )
             frame = dbg.find_frame(self.thread_id, self.frame_id)
-            pydev_log.info("frame = dbg.find_frame(self.thread_id, self.frame_id)")
-            pydev_log.info(f"frame {frame}")
 
             success, res = self.exec_command(frame)
             if success:
-                pydev_log.info("success")
                 cmd = dbg.cmd_factory.make_get_table_message(self.sequence, res)
                 dbg.writer.add_command(cmd)
             else:
-                pydev_log.info(f"error, no success, res: {res}")
                 cmd = dbg.cmd_factory.make_error_message(self.sequence, str(res))
                 dbg.writer.add_command(cmd)
         except Exception as e:
@@ -1970,3 +1966,65 @@ class InternalTableCommand(InternalThreadCommand):
         return exec_table_command(self.init_command, self.command_type,
                                   self.start_index, self.end_index, self.format,
                                   frame.f_globals, frame.f_locals)
+
+
+#=======================================================================================================================
+# DebugImageViewerAction
+#=======================================================================================================================
+class InternalTableImageCommandBase(InternalThreadCommand):
+    def __init__(self, sequence, thread_id, frame_id, init_command, command_type):
+        InternalThreadCommand.__init__(self, thread_id)
+        self.sequence = sequence
+        self.frame_id = frame_id
+        self.init_command = init_command
+        self.command_type = command_type
+
+    def do_it(self, dbg):
+        try:
+            frame = dbg.find_frame(self.thread_id, self.frame_id)
+            success, res = self.exec_command(frame)
+
+            if success:
+                cmd = dbg.cmd_factory.make_get_table_image_message(self.sequence, res, self.get_command_id())
+                dbg.writer.add_command(cmd)
+            else:
+                cmd = dbg.cmd_factory.make_error_message(self.sequence, str(res))
+                dbg.writer.add_command(cmd)
+        except Exception as e:
+            cmd = dbg.cmd_factory.make_error_message(self.sequence, get_exception_traceback_str())
+            dbg.writer.add_command(cmd)
+
+    def get_command_id(self):
+        raise NotImplementedError()
+
+    def exec_command(self, frame):
+        return exec_image_table_command(self.init_command, self.command_type,
+                                        self.get_offset(), self.get_image_id(),
+                                        frame.f_globals, frame.f_locals)
+
+    def get_offset(self):
+        return None
+
+    def get_image_id(self):
+        return None
+
+
+class InternalTableImageStartCommand(InternalTableImageCommandBase):
+    def get_command_id(self):
+        return CMD_IMAGE_COMMAND_START_LOAD
+
+
+class InternalTableImageChunkCommand(InternalTableImageCommandBase):
+    def __init__(self, sequence, thread_id, frame_id, init_command, command_type, offset, image_id):
+        InternalTableImageCommandBase.__init__(self, sequence, thread_id, frame_id, init_command, command_type)
+        self._offset = offset
+        self._image_id = image_id
+
+    def get_command_id(self):
+        return CMD_IMAGE_COMMAND_CHUNK_LOAD
+
+    def get_offset(self):
+        return self._offset
+
+    def get_image_id(self):
+        return self._image_id

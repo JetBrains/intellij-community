@@ -166,6 +166,7 @@ public interface Filter extends PossiblyDumbAware {
 
     private final TextAttributes myFollowedHyperlinkAttributes;
     private final TextAttributes myHoveredHyperlinkAttributes;
+    private boolean myInvisibleLink = false;
 
     public ResultItem(final int highlightStartOffset, final int highlightEndOffset, final @Nullable HyperlinkInfo hyperlinkInfo) {
       this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, null, null);
@@ -241,6 +242,16 @@ public interface Filter extends PossiblyDumbAware {
      */
     public int getHighlighterLayer() {
       return getHyperlinkInfo() != null ? HighlighterLayer.HYPERLINK : HighlighterLayer.CONSOLE_FILTER;
+    }
+
+    @ApiStatus.Internal
+    public boolean isInvisibleLink() {
+      return myInvisibleLink;
+    }
+
+    @ApiStatus.Internal
+    public void setInvisibleLink(boolean invisibleLink) {
+      myInvisibleLink = invisibleLink;
     }
 
     private static @Nullable TextAttributes getGrayedHyperlinkAttributes(@NotNull TextAttributesKey normalHyperlinkAttrsKey) {

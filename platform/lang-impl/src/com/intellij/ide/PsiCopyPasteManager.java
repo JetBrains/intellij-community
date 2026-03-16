@@ -13,9 +13,16 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -83,6 +90,7 @@ public final class PsiCopyPasteManager {
     return myRecentData.getElements();
   }
 
+  @RequiresReadLock
   public static @NotNull Transferable newTransferable(PsiElement @NotNull ... element) {
     return new MyTransferable(element);
   }
@@ -108,6 +116,7 @@ public final class PsiCopyPasteManager {
     myCopyPasteManager.setContents(new StringSelection(""));
   }
 
+  @RequiresReadLock
   public void setElements(PsiElement @NotNull [] elements, boolean copied) {
     myRecentData = new MyData(elements, copied);
     myCopyPasteManager.setContents(new MyTransferable(myRecentData));
@@ -217,6 +226,7 @@ public final class PsiCopyPasteManager {
       myDataProxy = data;
     }
 
+    @RequiresReadLock
     public MyTransferable(PsiElement @NotNull [] selectedValues) {
       this(new PsiCopyPasteManager.MyData(selectedValues, true));
     }
@@ -277,6 +287,7 @@ public final class PsiCopyPasteManager {
     }
   }
 
+  @RequiresReadLock
   public static @Nullable List<File> asFileList(PsiElement[] elements) {
     List<File> result = new ArrayList<>();
     for (PsiElement element : elements) {
@@ -288,6 +299,7 @@ public final class PsiCopyPasteManager {
     return result.isEmpty() ? null : result;
   }
 
+  @RequiresReadLock
   public static @Nullable VirtualFile asVirtualFile(@Nullable PsiElement element) {
     PsiFileSystemItem psiFile = null;
     if (element instanceof PsiFileSystemItem) {

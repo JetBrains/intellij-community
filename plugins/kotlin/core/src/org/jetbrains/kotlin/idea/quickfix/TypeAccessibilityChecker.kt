@@ -4,12 +4,13 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 interface TypeAccessibilityChecker {
     val project: Project
     val targetModule: Module

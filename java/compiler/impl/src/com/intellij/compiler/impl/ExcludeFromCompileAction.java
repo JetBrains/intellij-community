@@ -2,6 +2,7 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -28,7 +29,7 @@ public abstract class ExcludeFromCompileAction extends AnAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     VirtualFile file = getFile();
     if (file != null && file.isValid()) {
-      ExcludeEntryDescription description = new ExcludeEntryDescription(file, false, true, myProject);
+      ExcludeEntryDescription description = new ExcludeEntryDescription(file, false, true, JavaPluginDisposable.getInstance(myProject));
       CompilerConfiguration.getInstance(myProject).getExcludedEntriesConfiguration().addExcludeEntryDescription(description);
     }
   }

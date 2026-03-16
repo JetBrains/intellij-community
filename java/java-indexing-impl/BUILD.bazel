@@ -29,6 +29,9 @@ jvm_library(
     "//libraries/fastutil",
     "//java/codeserver/core",
     "//java/java-syntax:syntax",
+    "//platform/workspace/jps",
+    "//platform/workspace/storage",
+    "//platform/backend/workspace",
   ],
   exports = [
     "//java/java-psi-api:psi",

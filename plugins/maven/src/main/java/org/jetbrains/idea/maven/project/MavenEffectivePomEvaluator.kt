@@ -16,7 +16,7 @@ class MavenEffectivePomEvaluator {
     @JvmStatic
     suspend fun evaluateEffectivePom(project: Project, mavenProject: MavenProject): String? {
       return withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing.evaluating.effective.pom"), true) {
-        val baseDir = MavenUtil.getBaseDir(mavenProject.directoryFile).toString()
+        val baseDir = MavenUtil.getBaseDir(mavenProject.directoryFile)
         try {
           val profiles = mavenProject.activatedProfilesIds
           val virtualFile = mavenProject.file

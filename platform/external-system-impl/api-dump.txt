@@ -219,6 +219,7 @@ f:com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 - s:isValidJdk(com.intellij.openapi.projectRoots.Sdk):Z
 - s:isValidJdk(java.lang.String):Z
 - s:resolveDependentJdk(com.intellij.openapi.projectRoots.Sdk):com.intellij.openapi.projectRoots.Sdk
+- s:resolveJdkName(com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.projectRoots.Sdk
 - s:resolveJdkName(com.intellij.openapi.projectRoots.Sdk,java.lang.String):com.intellij.openapi.projectRoots.Sdk
 - s:suggestJdkHomePaths():java.util.Collection
 - s:suggestJdkHomePaths(com.intellij.openapi.project.Project):java.util.Collection
@@ -431,7 +432,6 @@ c:com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProj
 com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtension
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - customize(com.intellij.openapi.externalSystem.service.notification.NotificationData,com.intellij.openapi.project.Project,java.lang.String,java.lang.Throwable):V
-- customize(com.intellij.openapi.externalSystem.service.notification.NotificationData,com.intellij.openapi.project.Project,java.lang.Throwable):V
 - a:getTargetExternalSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 f:com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager
 - com.intellij.openapi.Disposable
@@ -848,7 +848,7 @@ c:com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware
 - getTaskIcon():javax.swing.Icon
 f:com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog
 - com.intellij.openapi.ui.DialogWrapper
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ExternalProjectInfo):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ExternalProjectInfo,java.lang.Object):V
 - doCancelAction():V
@@ -1169,7 +1169,6 @@ f:com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil
 f:com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 - sf:HASHING_STRATEGY:com.intellij.util.containers.HashingStrategy
 - s:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):Z
-- s:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,java.util.Collection):Z
 - s:convert(com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent):com.intellij.build.events.BuildEvent
 - s:createExecutionEnvironment(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings,java.lang.String):com.intellij.execution.runners.ExecutionEnvironment
 - s:createExternalSystemRunnerAndConfigurationSettings(com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.execution.RunnerAndConfigurationSettings

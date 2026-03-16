@@ -101,56 +101,13 @@ class ConfigureTypeRenderersAction : XDebuggerTreeBackendOnlyActionBase() {
     }
   }
 
-  companion object {
-    fun showSettingsWithNewRenderer(project: Project, debugValue: PyDebugValue) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(project, PyUserTypeRenderersConfigurable::class.java) {
-        val newRenderer = PyUserNodeRenderer(true, it.getCurrentlyVisibleNames())
-        val qualifiedType = debugValue.qualifiedType
-        newRenderer.name = debugValue.type + " " + PyBundle.message("form.debugger.variables.view.user.type.renderers.renderer")
-
-        if (qualifiedType == null) {
-          it.setNewRendererToAdd(newRenderer)
-          return@showSettingsDialog
-        }
-
-        val pyClass = PyTypeNameResolver(project).resolve(qualifiedType)
-        if (pyClass != null) {
-          newRenderer.toType = qualifiedType
-        }
-        else {
-          val classes = PyClassNameIndex.find(debugValue.type, project, GlobalSearchScope.projectScope(project))
-          var resolveFound = false
-          if (classes.isNotEmpty()) {
-            val canonicalImportPath = QualifiedNameFinder.findCanonicalImportPath(classes.first(), null)
-            canonicalImportPath?.let { path ->
-              newRenderer.toType = path.toString() + "." + debugValue.type
-              resolveFound = true
-            }
-          }
-          if (!resolveFound) {
-            // Show type even if we failed to resolve it
-            newRenderer.toType = debugValue.qualifiedType ?: ""
-            newRenderer.typeCanonicalImportPath = debugValue.qualifiedType ?: ""
-            newRenderer.typeQualifiedName = debugValue.qualifiedType ?: ""
-          }
-        }
-
-        it.setNewRendererToAdd(newRenderer)
-      }
-    }
-
-    fun showSettingsWithSelectedRenderer(project: Project, rendererIndexToSelect: Int) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(project, PyUserTypeRenderersConfigurable::class.java) {
-        it.setRendererIndexToSelect(rendererIndexToSelect)
-      }
-    }
-  }
 }
 
 class ConfigureTypeRenderersHyperLink(
   private val myTypeRendererId: String?,
   private val myProject: Project?,
-  private val debugValue: PyDebugValue? = null) : XDebuggerTreeNodeHyperlink(
+  private val debugValue: PyDebugValue? = null,
+) : XDebuggerTreeNodeHyperlink(
   "  " + PyBundle.message("form.debugger.variables.view.user.type.renderers.configure.renderer")) {
 
   private val TEXT_ATTRIBUTES = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.Foreground.PRESSED)
@@ -159,12 +116,12 @@ class ConfigureTypeRenderersHyperLink(
     val project = myProject ?: ProjectManager.getInstance().defaultProject
     if (myTypeRendererId != null) {
       getRendererIndexWithId(myTypeRendererId)?.let {
-        ConfigureTypeRenderersAction.showSettingsWithSelectedRenderer(project, it)
+        showSettingsWithSelectedRenderer(project, it)
       }
     }
     else {
       if (debugValue != null) {
-        ConfigureTypeRenderersAction.showSettingsWithNewRenderer(project, debugValue)
+        showSettingsWithNewRenderer(project, debugValue)
       }
     }
   }
@@ -172,4 +129,47 @@ class ConfigureTypeRenderersHyperLink(
   override fun alwaysOnScreen() = true
 
   override fun getTextAttributes() = TEXT_ATTRIBUTES
+}
+
+private fun showSettingsWithNewRenderer(project: Project, debugValue: PyDebugValue) {
+  ShowSettingsUtil.getInstance().showSettingsDialog(project, PyUserTypeRenderersConfigurable::class.java) {
+    val newRenderer = PyUserNodeRenderer(true, it.getCurrentlyVisibleNames())
+    val qualifiedType = debugValue.qualifiedType
+    newRenderer.name = debugValue.type + " " + PyBundle.message("form.debugger.variables.view.user.type.renderers.renderer")
+
+    if (qualifiedType == null) {
+      it.setNewRendererToAdd(newRenderer)
+      return@showSettingsDialog
+    }
+
+    val pyClass = PyTypeNameResolver(project).resolve(qualifiedType)
+    if (pyClass != null) {
+      newRenderer.toType = qualifiedType
+    }
+    else {
+      val classes = PyClassNameIndex.find(debugValue.type, project, GlobalSearchScope.projectScope(project))
+      var resolveFound = false
+      if (classes.isNotEmpty()) {
+        val canonicalImportPath = QualifiedNameFinder.findCanonicalImportPath(classes.first(), null)
+        canonicalImportPath?.let { path ->
+          newRenderer.toType = path.toString() + "." + debugValue.type
+          resolveFound = true
+        }
+      }
+      if (!resolveFound) {
+        // Show type even if we failed to resolve it
+        newRenderer.toType = debugValue.qualifiedType ?: ""
+        newRenderer.typeCanonicalImportPath = debugValue.qualifiedType ?: ""
+        newRenderer.typeQualifiedName = debugValue.qualifiedType ?: ""
+      }
+    }
+
+    it.setNewRendererToAdd(newRenderer)
+  }
+}
+
+private fun showSettingsWithSelectedRenderer(project: Project, rendererIndexToSelect: Int) {
+  ShowSettingsUtil.getInstance().showSettingsDialog(project, PyUserTypeRenderersConfigurable::class.java) {
+    it.setRendererIndexToSelect(rendererIndexToSelect)
+  }
 }

@@ -6,7 +6,10 @@ import org.jetbrains.idea.svn.SvnTestCase;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class ServerUnavailableCallbackTest extends SvnTestCase {
   private static final String[][] SVN_ERRORS = {

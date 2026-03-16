@@ -8,8 +8,16 @@ import org.codehaus.groovy.ast.AnnotatedNode;
 import org.codehaus.groovy.ast.ClassNode;
 import org.codehaus.groovy.ast.ModuleNode;
 import org.codehaus.groovy.classgen.GeneratorContext;
-import org.codehaus.groovy.control.*;
-import org.codehaus.groovy.control.messages.*;
+import org.codehaus.groovy.control.CompilationFailedException;
+import org.codehaus.groovy.control.CompilationUnit;
+import org.codehaus.groovy.control.ErrorCollector;
+import org.codehaus.groovy.control.MultipleCompilationErrorsException;
+import org.codehaus.groovy.control.SourceUnit;
+import org.codehaus.groovy.control.messages.ExceptionMessage;
+import org.codehaus.groovy.control.messages.Message;
+import org.codehaus.groovy.control.messages.SimpleMessage;
+import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
+import org.codehaus.groovy.control.messages.WarningMessage;
 import org.codehaus.groovy.syntax.SyntaxException;
 import org.codehaus.groovy.tools.GroovyClass;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +28,12 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 
 public class GroovyCompilerWrapper {

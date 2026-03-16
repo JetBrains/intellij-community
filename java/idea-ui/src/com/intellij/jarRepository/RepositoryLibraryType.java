@@ -17,7 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 
 public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperties> {
   public static final LibraryTypeId LIBRARY_TYPE_ID = new LibraryTypeId("repository");

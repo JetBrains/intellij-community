@@ -1,0 +1,13 @@
+// WITH_STDLIB
+// FIX: Replace with '::class.java' call
+package test
+
+class Generic<T> {
+    inner class InnerSimple {
+        inner class InnerGeneric<T>
+    }
+}
+
+fun usage() {
+    Generic<Any>.InnerSimple.InnerGeneric<String>::javaClass<caret>
+}

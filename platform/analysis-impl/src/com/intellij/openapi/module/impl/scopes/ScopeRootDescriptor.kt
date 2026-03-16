@@ -8,8 +8,16 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
-import com.intellij.openapi.roots.*
-import com.intellij.openapi.roots.impl.*
+import com.intellij.openapi.roots.JdkOrderEntry
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleOrderEntry
+import com.intellij.openapi.roots.ModuleSourceOrderEntry
+import com.intellij.openapi.roots.OrderEntry
+import com.intellij.openapi.roots.impl.DummyRootDescriptor
+import com.intellij.openapi.roots.impl.LibraryRootDescriptor
+import com.intellij.openapi.roots.impl.ModuleRootDescriptor
+import com.intellij.openapi.roots.impl.RootDescriptor
+import com.intellij.openapi.roots.impl.SdkRootDescriptor
 import com.intellij.openapi.vfs.VirtualFile
 
 internal fun ScopeRootDescriptor(

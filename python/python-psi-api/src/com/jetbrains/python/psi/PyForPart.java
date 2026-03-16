@@ -23,5 +23,4 @@ public interface PyForPart extends PyAstForPart, PyStatementPart {
   default @Nullable PyExpression getSource() {
     return (PyExpression)PyAstForPart.super.getSource();
   }
-
 }

@@ -1,7 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.impl;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.cache.ExternalTypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeInfo;
@@ -66,7 +72,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
       for (int i = 0; i < types.length; i++) {
         TypeInfo info = myInfos[i];
         TypeAnnotationContainer annotations = info.getTypeAnnotations();
-        if (annotations == TypeAnnotationContainer.EMPTY && myParent != null) {
+        if (annotations == TypeAnnotationContainer.EMPTY) {
           PsiElement psi = myParent.getPsi();
           if (psi instanceof PsiTypeParameter) {
             annotations = ExternalTypeAnnotationContainer.create((PsiTypeParameter)psi);

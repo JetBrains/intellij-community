@@ -13,7 +13,14 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.onEmpty
+import kotlinx.coroutines.flow.onStart
 import org.jetbrains.annotations.ApiStatus
 
 private val EP_NAME = ExtensionPointName<DynamicInspectionsProvider>("com.intellij.dynamicInspectionsProvider")
@@ -21,30 +28,53 @@ private val EP_NAME = ExtensionPointName<DynamicInspectionsProvider>("com.intell
 @ApiStatus.Internal
 interface DynamicInspectionsProvider {
   fun inspections(project: Project): Flow<Set<DynamicInspectionDescriptor>>
+  fun name(): String
 }
 
 @ApiStatus.Internal
-sealed class DynamicInspectionDescriptor {
+sealed class DynamicInspectionDescriptor(val providerName: String) {
   companion object {
-    fun fromTool(tool: InspectionProfileEntry): DynamicInspectionDescriptor {
+    fun fromTool(tool: InspectionProfileEntry, providerName: String): DynamicInspectionDescriptor {
       return when(tool) {
-        is LocalInspectionTool -> Local(tool)
-        is GlobalInspectionTool -> Global(tool)
+        is LocalInspectionTool -> Local(tool, providerName)
+        is GlobalInspectionTool -> Global(tool, providerName)
         else -> error("Got ${tool}, expected ${LocalInspectionTool::class.java} or ${GlobalInspectionTool::class.java}")
       }
     }
-  }
 
-  val toolWrapper: InspectionToolWrapper<*, *> by lazy {
-    when(this) {
-      is Local -> DynamicLocalInspectionToolWrapper(tool)
-      is Global -> DynamicGlobalInspectionToolWrapper(tool)
+    fun fromLocalToolWithWrapper(
+      tool: LocalInspectionTool,
+      providerName: String,
+      wrapperFactory: (LocalInspectionTool) -> InspectionToolWrapper<*,*>
+    ): DynamicInspectionDescriptor {
+      return LocalWithCustomWrapper(tool, providerName, wrapperFactory)
     }
   }
 
-  class Local(val tool: LocalInspectionTool) : DynamicInspectionDescriptor()
 
-  class Global(val tool: GlobalInspectionTool) : DynamicInspectionDescriptor()
+  abstract val toolWrapper: InspectionToolWrapper<*, *>
+
+  class Local(val tool: LocalInspectionTool, providerName: String) : DynamicInspectionDescriptor(providerName) {
+    override val toolWrapper: InspectionToolWrapper<*, *> by lazy {
+      DynamicLocalInspectionToolWrapper(tool)
+    }
+  }
+
+  class Global(val tool: GlobalInspectionTool, providerName: String) : DynamicInspectionDescriptor(providerName) {
+    override val toolWrapper: InspectionToolWrapper<*, *> by lazy {
+      DynamicGlobalInspectionToolWrapper(tool)
+    }
+  }
+
+  class LocalWithCustomWrapper(
+    val tool: LocalInspectionTool,
+    providerName: String,
+    private val wrapperFactory: (LocalInspectionTool) -> InspectionToolWrapper<*,*>
+  ) : DynamicInspectionDescriptor(providerName) {
+    override val toolWrapper: InspectionToolWrapper<*, *> by lazy {
+      wrapperFactory(tool)
+    }
+  }
 
   private class DynamicLocalInspectionToolWrapper(tool: LocalInspectionTool) : LocalInspectionToolWrapper(tool) {
     override fun createCopy(): LocalInspectionToolWrapper = DynamicLocalInspectionToolWrapper(tool)

@@ -3,7 +3,8 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.vcs.log.VcsUser
-import java.util.*
+import java.util.Date
+import java.util.EventListener
 
 interface CommitAuthorTracker {
   var commitAuthor: VcsUser?

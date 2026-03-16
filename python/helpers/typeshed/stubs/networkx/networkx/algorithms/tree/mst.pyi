@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Final, Literal
 from typing_extensions import Self
 
+from networkx.classes.digraph import DiGraph
 from networkx.classes.graph import Graph, _Node
 from networkx.utils.backends import _dispatchable
 from numpy.random import RandomState
@@ -79,11 +80,11 @@ class SpanningTreeIterator:
     ignore_nan: Incomplete
     partition_key: str
 
-    def __init__(self, G, weight: str = "weight", minimum: bool = True, ignore_nan: bool = False) -> None: ...
+    def __init__(self, G: DiGraph[_Node], weight: str = "weight", minimum: bool = True, ignore_nan: bool = False) -> None: ...
     partition_queue: Incomplete
 
     def __iter__(self) -> Self: ...
     def __next__(self): ...
 
 @_dispatchable
-def number_of_spanning_trees(G, *, root=None, weight=None) -> float | Literal[0]: ...
+def number_of_spanning_trees(G: Graph[_Node], *, root=None, weight=None) -> float | Literal[0]: ...

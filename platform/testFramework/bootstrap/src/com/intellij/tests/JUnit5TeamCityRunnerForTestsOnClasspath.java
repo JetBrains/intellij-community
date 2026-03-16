@@ -1,14 +1,25 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
-import jetbrains.buildServer.messages.serviceMessages.*;
-import org.junit.platform.engine.*;
+import jetbrains.buildServer.messages.serviceMessages.TestFailed;
+import jetbrains.buildServer.messages.serviceMessages.TestFinished;
+import jetbrains.buildServer.messages.serviceMessages.TestStarted;
+import org.junit.platform.engine.DiscoverySelector;
+import org.junit.platform.engine.FilterResult;
+import org.junit.platform.engine.TestDescriptor;
+import org.junit.platform.engine.TestEngine;
+import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.discovery.ClassNameFilter;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.engine.support.descriptor.MethodSource;
-import org.junit.platform.launcher.*;
+import org.junit.platform.launcher.EngineFilter;
+import org.junit.platform.launcher.Launcher;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.PostDiscoveryFilter;
+import org.junit.platform.launcher.TestIdentifier;
+import org.junit.platform.launcher.TestPlan;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.vintage.engine.descriptor.VintageTestDescriptor;
@@ -19,15 +30,20 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 // Used to run JUnit 5 tests via JUnit 5 runtime
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public final class JUnit5TeamCityRunnerForTestsOnClasspath {
-  private static final String ourCollectTestsFile = System.getProperty("intellij.build.test.list.classes");
+  static final String LIST_CLASSES = System.getProperty("intellij.build.test.list.classes");
 
-  public static void assertNoUnhandledExceptions(String kind, Throwable e) {
+  static void assertNoUnhandledExceptions(String kind, Throwable e) {
     String runConfigurationName = System.getProperty("intellij.build.run.configuration.name");
     final String testName =
       kind + ".assertNoUnhandledExceptions" + (runConfigurationName == null ? "" : ("(" + runConfigurationName + ")"));
@@ -44,6 +60,10 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
   }
 
   public static void main(String[] args) {
+    JUnit5TeamCityRunner.TCExecutionListener listener = null;
+    Throwable caughtException = null;
+    boolean noTestsFound = false;
+
     try {
       Launcher launcher = LauncherFactory.create();
 
@@ -57,10 +77,12 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
       // PostDiscoveryFilter runs on already discovered classes and methods (TestDescriptors), so we could run more complex checks,
       // like determining whether it belongs to the current bucket.
       PostDiscoveryFilter postDiscoveryFilter;
+      PostDiscoveryFilter performancePostDiscoveryFilter;
       Set<Path> classPathRoots;
       try {
         nameFilter = createClassNameFilter(classLoader);
         postDiscoveryFilter = createPostDiscoveryFilter(classLoader);
+        performancePostDiscoveryFilter = new JUnit5TeamCityRunner.PerformancePostDiscoveryFilter();
         classPathRoots = getClassPathRoots(classLoader);
       }
       catch (Throwable e) {
@@ -80,31 +102,47 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
       LauncherDiscoveryRequest discoveryRequest = LauncherDiscoveryRequestBuilder.request()
         .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
         .selectors(selectors)
-        .filters(nameFilter, postDiscoveryFilter, EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID)).build();
+        .filters(nameFilter, postDiscoveryFilter, performancePostDiscoveryFilter, EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID)).build();
       TestPlan testPlan = launcher.discover(discoveryRequest);
       if (testPlan.containsTests()) {
-        if (ourCollectTestsFile != null) {
+        if (LIST_CLASSES != null) {
           saveListOfTestClasses(testPlan);
           return;
         }
-        launcher.execute(testPlan, new JUnit5TeamCityRunnerForTestAllSuite.TCExecutionListener());
+        listener = new JUnit5TeamCityRunner.TCExecutionListener();
+        launcher.execute(testPlan, listener);
       }
       else {
-        //see org.jetbrains.intellij.build.impl.TestingTasksImpl.NO_TESTS_ERROR
-        System.exit(42);
+        noTestsFound = true;
       }
     }
     catch (Throwable e) {
-      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestsOnClasspath", e);
-      System.exit(1);
+      caughtException = e;
     }
     finally {
-      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestsOnClasspath", null);
-      System.exit(0);
+      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestsOnClasspath", caughtException);
     }
+
+    // Determine exit code OUTSIDE of try/catch/finally to avoid finally overriding the exit code
+    int exitCode;
+    if (caughtException != null) {
+      exitCode = 1;
+    }
+    else if (noTestsFound || !listener.smthExecuted()) {
+      // see org.jetbrains.intellij.build.impl.TestingTasksImpl.NO_TESTS_ERROR
+      exitCode = 42;
+    }
+    else if (listener.hasFailures()) {
+      exitCode = 1;
+    }
+    else {
+      exitCode = 0;
+    }
+
+    System.exit(exitCode);
   }
 
-  private static Set<Path> getClassPathRoots(ClassLoader classLoader) throws Throwable {
+  static Set<Path> getClassPathRoots(ClassLoader classLoader) throws Throwable {
     //noinspection unchecked
     List<Path> paths = (List<Path>)MethodHandles.publicLookup()
       .findStatic(Class.forName("com.intellij.TestAll", false, classLoader),
@@ -113,14 +151,23 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
     if (paths == null) return null;
     // Skip unrelated jars and any other archives, otherwise we will end up with test classes from dependencies.
     String relevantJarsRoot = System.getProperty("intellij.test.jars.location");
+    if (relevantJarsRoot == null) {
+      String bazelOutPattern = Paths.get("bazel-out", "jvm-fastbuild").toString();
+      String jar = paths.stream().map(Path::toString).filter(s -> s.contains(bazelOutPattern)).findFirst().orElse(null);
+      int index = jar != null ? jar.indexOf(bazelOutPattern) : -1;
+      if (index != -1) {
+        relevantJarsRoot = jar.substring(0, index + bazelOutPattern.length());
+      }
+    }
+    String finalRelevantJarsRoot = relevantJarsRoot;
     return paths.stream()
       .filter(path ->
                 Files.isDirectory(path) ||
-                (relevantJarsRoot != null && path.getFileName().toString().endsWith(".jar") && path.startsWith(relevantJarsRoot)))
+                (finalRelevantJarsRoot != null && path.getFileName().toString().endsWith(".jar") && path.startsWith(finalRelevantJarsRoot)))
       .collect(Collectors.toSet());
   }
 
-  private static ClassNameFilter createClassNameFilter(ClassLoader classLoader)
+  static ClassNameFilter createClassNameFilter(ClassLoader classLoader)
     throws NoSuchMethodException, ClassNotFoundException, IllegalAccessException {
     MethodHandle included = MethodHandles.publicLookup()
       .findStatic(Class.forName("com.intellij.TestCaseLoader", true, classLoader),
@@ -142,27 +189,27 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
     };
   }
 
-  private static PostDiscoveryFilter createPostDiscoveryFilter(ClassLoader classLoader)
+  static PostDiscoveryFilter createPostDiscoveryFilter(ClassLoader classLoader)
     throws NoSuchMethodException, ClassNotFoundException, IllegalAccessException {
     MethodHandle included = MethodHandles.publicLookup()
       .findStatic(Class.forName("com.intellij.TestCaseLoader", true, classLoader),
-                  "isClassIncluded", MethodType.methodType(boolean.class, String.class));
+                  "isClassIncluded", MethodType.methodType(boolean.class, Class.class));
     return new PostDiscoveryFilter() {
       record LastCheckResult(String className, FilterResult result) {
       }
 
       private LastCheckResult myLastResult = null;
 
-      private FilterResult isIncluded(String className) {
-        if (myLastResult == null || !myLastResult.className.equals(className)) {
-          myLastResult = new LastCheckResult(className, isIncludedImpl(className));
+      private FilterResult isIncluded(Class<?> aClass) {
+        if (myLastResult == null || !myLastResult.className.equals(aClass.getName())) {
+          myLastResult = new LastCheckResult(aClass.getName(), isIncludedImpl(aClass));
         }
         return myLastResult.result;
       }
 
-      private FilterResult isIncludedImpl(String className) {
+      private FilterResult isIncludedImpl(Class<?> aClass) {
         try {
-          if ((boolean)included.invokeExact(className)) {
+          if ((boolean)included.invokeExact(aClass)) {
             return FilterResult.included(null);
           }
           return FilterResult.excluded(null);
@@ -182,17 +229,17 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
           return FilterResult.included("No source for descriptor");
         }
         if (source instanceof MethodSource methodSource) {
-          return isIncluded(methodSource.getClassName());
+          return isIncluded(methodSource.getJavaClass());
         }
         if (source instanceof ClassSource classSource) {
-          return isIncluded(classSource.getClassName());
+          return isIncluded(classSource.getJavaClass());
         }
         return FilterResult.included("Unknown source type " + source.getClass());
       }
     };
   }
 
-  private static void saveListOfTestClasses(TestPlan testPlan) {
+  static void saveListOfTestClasses(TestPlan testPlan) {
     ArrayList<String> testClasses = new ArrayList<>(0);
     for (TestIdentifier root : testPlan.getRoots()) {
       Set<TestIdentifier> firstLevel = testPlan.getChildren(root);
@@ -203,7 +250,7 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
           .ifPresent(name -> testClasses.add(name));
       }
     }
-    Path path = Path.of(ourCollectTestsFile);
+    Path path = Path.of(LIST_CLASSES);
     try {
       Files.createDirectories(path.getParent());
       Files.write(path, testClasses);

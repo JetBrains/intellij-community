@@ -6,14 +6,14 @@ package com.intellij.util.containers
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ArrayUtilRt
-import com.intellij.util.containers.Java11Shim
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.*
+import java.util.Collections
+import java.util.EnumMap
+import java.util.Optional
 import java.util.stream.Stream
-import kotlin.collections.ArrayDeque
 import kotlin.collections.isNullOrEmpty
 
 @Internal
@@ -416,4 +416,17 @@ fun <K, V> Iterable<Pair<K, V>>.toMultiMap(multiMap: MultiMap<K, V>): MultiMap<K
     multiMap.putValue(it.first, it.second)
   }
   return multiMap
+}
+
+inline fun <K, V, R> MultiMap<out K, V>.mapValues(transform: (Pair<K, V>) -> R): MultiMap<K, R> {
+  return mapValuesTo(MultiMap.createLinked<K,R>(), transform)
+}
+
+inline fun <K, V, R, M : MultiMap<in K, in R>> MultiMap<out K, V>.mapValuesTo(destination: M, transform: (Pair<K, V>) -> R): M {
+  for (entry in entrySet()) {
+    for (value in entry.value) {
+      destination.putValue(entry.key, transform(entry.key to value))
+    }
+  }
+  return destination
 }

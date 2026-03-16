@@ -2,7 +2,12 @@
 package com.intellij.platform
 
 import com.intellij.configurationStore.ProjectStorePathManager
-import com.intellij.ide.impl.*
+import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.OpenProjectTaskBuilder
+import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.ide.impl.TrustedPaths
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.ApplicationManager
@@ -40,7 +45,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.EnumSet
 import java.util.concurrent.CancellationException
 
 private val LOG = logger<PlatformProjectOpenProcessor>()
@@ -133,7 +138,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         projectRootDir = file,
         createModule = false,
         projectName = dummyProjectName,
-        runConfigurators = true,
+        runConfigurators = false,
+        runConversionBeforeOpen = false,
         beforeOpen = { project ->
           project.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
           options.beforeOpen?.invoke(project) ?: true
@@ -163,10 +169,16 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
     @Internal
     fun doOpenProject(file: Path, originalOptions: OpenProjectTask): Project? {
-      if (Files.isDirectory(file)) {
+      LOG.info("Opening (sync) $file")
+
+      if (originalOptions.createModule && Files.isDirectory(file)) {
         val options = runUnderModalProgressIfIsEdt {
           createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null).copy(
             projectName = originalOptions.projectName,
+            beforeOpen = {
+              it.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
+              true
+            }
           )
         }
         return ProjectManagerEx.getInstanceEx().openProject(file, options)
@@ -182,7 +194,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       }
 
       val storePathManager = ProjectStorePathManager.getInstance()
-      var baseDirCandidate = file.parent
+      var baseDirCandidate = if (Files.isRegularFile(file)) file.parent else null
       while (baseDirCandidate != null && !storePathManager.testStoreDirectoryExistsForProjectRoot(baseDirCandidate)) {
         baseDirCandidate = baseDirCandidate.parent
       }
@@ -223,14 +235,19 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     }
 
     suspend fun openProjectAsync(file: Path, originalOptions: OpenProjectTask = OpenProjectTask()): Project? {
-      LOG.info("Opening $file")
+      LOG.info("Opening (async) $file")
 
-      if (Files.isDirectory(file)) {
+      val isDirectory = Files.isDirectory(file)
+      if (originalOptions.createModule && isDirectory) {
         // todo: originalOptions should not be dropped
         return ProjectManagerEx.getInstanceEx().openProjectAsync(
           projectIdentityFile = file,
           options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null).copy(
             projectName = originalOptions.projectName,
+            beforeOpen = {
+              it.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
+              true
+            }
           ),
         )
       }
@@ -244,7 +261,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
       }
 
-      var baseDirCandidate = file.parent
+      var baseDirCandidate = if (Files.isRegularFile(file)) file.parent else null
       val storePathManager = serviceAsync<ProjectStorePathManager>()
       while (baseDirCandidate != null && !storePathManager.testStoreDirectoryExistsForProjectRoot(baseDirCandidate)) {
         baseDirCandidate = baseDirCandidate.parent
@@ -356,6 +373,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         isNewProject = !ProjectUtil.isValidProjectPath(projectDir)
         this.projectToClose = projectToClose
         useDefaultProjectAsTemplate = true
+        projectRootDir = projectDir
       }
     }
 
@@ -368,9 +386,13 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     }
   }
 
-  override fun canOpenProject(file: VirtualFile): Boolean = file.isDirectory
+  override fun canOpenProject(file: VirtualFile): Boolean {
+    return file.isDirectory
+  }
 
-  override fun isProjectFile(file: VirtualFile): Boolean = false
+  override fun isProjectFile(file: VirtualFile): Boolean {
+    return false
+  }
 
   override fun lookForProjectsInDirectory(): Boolean = false
 

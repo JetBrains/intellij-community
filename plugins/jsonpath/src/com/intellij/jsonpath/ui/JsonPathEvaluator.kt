@@ -5,7 +5,14 @@ import com.intellij.json.psi.JsonFile
 import com.intellij.jsonpath.JsonPathBundle
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.serialization.ClassUtil
-import com.jayway.jsonpath.*
+import com.jayway.jsonpath.Configuration
+import com.jayway.jsonpath.DocumentContext
+import com.jayway.jsonpath.InvalidJsonException
+import com.jayway.jsonpath.InvalidPathException
+import com.jayway.jsonpath.JsonPath
+import com.jayway.jsonpath.JsonPathException
+import com.jayway.jsonpath.Option
+import com.jayway.jsonpath.PathNotFoundException
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider
 

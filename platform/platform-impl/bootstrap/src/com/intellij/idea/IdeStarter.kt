@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package com.intellij.idea
 
 import com.intellij.accessibility.enableScreenReaderSupportIfNeeded
@@ -8,20 +6,22 @@ import com.intellij.diagnostic.EdtLockLoadMonitorService
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
-import com.intellij.ide.*
+import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.CommandLineProcessor
+import com.intellij.ide.ProtocolHandler
+import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.ide.ui.IconDbMaintainer
 import com.intellij.internal.inspector.UiInspectorUtil
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.application.*
-import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ModernApplicationStarter
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -30,12 +30,9 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.migrateRegistryToAdvSettings
-import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ex.findNoProjectStateHandler
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -44,7 +41,14 @@ import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjec
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
-import kotlinx.coroutines.*
+import com.intellij.util.system.OS
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import javax.swing.JOptionPane
@@ -93,7 +97,7 @@ open class IdeStarter : ModernApplicationStarter() {
         openProjectBlock()
       }
       else {
-        if ((app as ApplicationEx).isLightEditMode) {
+        if (AppMode.isLightEdit()) {
           FUSProjectHotStartUpMeasurer.lightEditProjectFound()
         }
         withContext(starter, openProjectBlock)
@@ -106,8 +110,6 @@ open class IdeStarter : ModernApplicationStarter() {
       if (Registry.`is`("ide.enable.edt.lock.load.monitor")) {
         app.serviceAsync<EdtLockLoadMonitorService>().initialize()
       }
-
-      launch { reportPluginErrors() }
 
       LoadingState.setCurrentStateIfAtLeast(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
       runCatching {
@@ -290,13 +292,12 @@ private fun postOpenUiTasks(scope: CoroutineScope) {
     updateAppWindowIcon(JOptionPane.getRootFrame())
   }
 
-  if (SystemInfoRt.isMac) {
-    @Suppress("GrazieInspection")
+  if (OS.CURRENT == OS.macOS) {
     scope.launch(CoroutineName("mac touchbar on app init")) {
       TouchbarSupport.onApplicationLoaded()
     }
   }
-  else if (SystemInfoRt.isUnix && SystemInfo.isJetBrainsJvm) {
+  else if (OS.CURRENT != OS.Windows && SystemInfo.isJetBrainsJvm) {
     scope.launch(CoroutineName("input method disabling on Linux")) {
       disableInputMethodsIfPossible()
     }
@@ -321,55 +322,4 @@ private fun postOpenUiTasks(scope: CoroutineScope) {
   scope.launch {
     enableScreenReaderSupportIfNeeded()
   }
-}
-
-private suspend fun reportPluginErrors() {
-  val pluginErrors = PluginManagerCore.getAndClearPluginLoadingErrors()
-  if (pluginErrors.isEmpty()) {
-    return
-  }
-
-  withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-    val title = IdeBundle.message("title.plugin.error")
-    val pluginErrorMessages = pluginErrors.map { it.htmlMessage }.toMutableList()
-    val actions = linksToActions(pluginErrorMessages)
-    val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrorMessages).toString()
-    @Suppress("DEPRECATION")
-    serviceAsync<NotificationGroupManager>().getNotificationGroup("Plugin Error")
-      .createNotification(title, content, NotificationType.ERROR)
-      .setListener { notification, event ->
-        notification.expire()
-        PluginManagerMain.onEvent(event.description)
-      }
-      .addActions(actions)
-      .notify(null)
-  }
-}
-
-private fun linksToActions(errors: MutableList<HtmlChunk>): Collection<AnAction> {
-  val link = "<a href=\""
-  val actions = ArrayList<AnAction>()
-
-  while (!errors.isEmpty()) {
-    val builder = StringBuilder()
-    errors.get(errors.lastIndex).appendTo(builder)
-    val error = builder.toString()
-
-    if (error.startsWith(link)) {
-      val descriptionEnd = error.indexOf('"', link.length)
-      val description = error.substring(link.length, descriptionEnd)
-      @Suppress("HardCodedStringLiteral")
-      val text = error.substring(descriptionEnd + 2, error.lastIndexOf("</a>"))
-      errors.removeAt(errors.lastIndex)
-
-      actions.add(NotificationAction.createSimpleExpiring(text) {
-        PluginManagerMain.onEvent(description)
-      })
-    }
-    else {
-      break
-    }
-  }
-
-  return actions
 }

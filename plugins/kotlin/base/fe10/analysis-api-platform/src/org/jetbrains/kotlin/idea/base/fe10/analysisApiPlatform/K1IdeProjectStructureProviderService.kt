@@ -7,8 +7,8 @@ import com.intellij.openapi.util.ModificationTracker
 import org.jetbrains.kotlin.base.fe10.analysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinModificationTrackerProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderService
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.useLibraryToSourceAnalysis
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 
 internal class K1IdeProjectStructureProviderService(private val project: Project) : ProjectStructureProviderService {

@@ -2,12 +2,10 @@
 package com.intellij.platform.vcs.impl.shared.changes
 
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
-import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
 import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.JBIterable
@@ -31,10 +29,12 @@ data class ChangesViewSelection(
   @ApiStatus.Internal
   @Serializable
   data class PathSelection(
-    val filePath: FilePathDto,
-    val changeId: ChangeId?,
+    val selectionPath: ChangesTreePath,
     val exactlySelected: Boolean,
-  )
+  ) {
+    val filePath: FilePath
+      get() = selectionPath.filePath.filePath
+  }
 
   companion object {
     @JvmStatic
@@ -49,14 +49,14 @@ data class ChangesViewSelection(
           selectedChangeListsIds.add(userObject.id)
         }
         else if (node.isMeaningfulNode) {
-          val filePath = VcsTreeModelData.mapUserObjectToFilePath(userObject)
-          if (filePath != null) {
-            val exactlySelected = tree.isPathSelected(TreePath(node.path))
-            selectedPaths.add(PathSelection(
-              filePath = convertToDto(filePath),
-              changeId = (userObject as? Change)?.let { ChangeId.getId(it) },
-              exactlySelected = exactlySelected,
-            ))
+          val selectionPath = ChangesTreePath.create(userObject)
+          if (selectionPath != null) {
+            selectedPaths.add(
+              PathSelection(
+                selectionPath = selectionPath,
+                exactlySelected = tree.isPathSelected(TreePath(node.path)),
+              )
+            )
           }
         }
       }
@@ -64,7 +64,7 @@ data class ChangesViewSelection(
       return ChangesViewSelection(
         selectedChangeListsIds = selectedChangeListsIds,
         selectedPaths = selectedPaths,
-        leadSelection = getLeadSelectionFilePath(tree)?.let { convertToDto(it) },
+        leadSelection = getLeadSelectionFilePath(tree)?.let { FilePathDto.toDto(it) },
       )
     }
 
@@ -72,11 +72,6 @@ data class ChangesViewSelection(
       (tree.leadSelectionPath?.lastPathComponent as? ChangesBrowserNode<*>)?.userObject.let {
         VcsTreeModelData.mapUserObjectToFilePath(it)
       }
-
-    /**
-     * [ChangesViewSelection] is used to transfer data context from the frontend to the backend, so there is no need to
-     * set [FilePathDto.virtualFileId], as it will be restored anyway.
-     */
-    private fun convertToDto(path: FilePath): FilePathDto = FilePathDto(null, path.path, path.isDirectory)
   }
 }
+

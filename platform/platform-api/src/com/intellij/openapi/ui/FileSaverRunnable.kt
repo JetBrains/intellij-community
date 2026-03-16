@@ -38,7 +38,7 @@ open class FileSaverRunnable<T : JComponent>(
   }
 
   protected fun getInitialFile(): Pair<VirtualFile?, String?> {
-    val directoryName = accessor.getText(textComponent).trim()
+    val directoryName = accessor.getText(textComponent)?.trim() ?: ""
     if (directoryName.isBlank()) return Pair(null, null)
 
     val projectPath = project?.basePath?.toNioPathOrNull()
@@ -65,7 +65,7 @@ open class FileSaverRunnable<T : JComponent>(
   }
 
   protected val componentText: String
-    get() = accessor.getText(textComponent).trim { it <= ' ' }
+    get() = accessor.getText(textComponent)?.trim { it <= ' ' } ?: ""
 
   open fun onFileChosen(chosenFile: File) {
     accessor.setText(textComponent, chosenFile.path.replace('/', File.separatorChar))

@@ -5,8 +5,8 @@ import com.intellij.util.containers.SoftFactoryMap;
 import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;

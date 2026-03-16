@@ -1,13 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ignore
 
 import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.IgnoredBeanFactory
@@ -21,16 +23,21 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.TimeoutUtil
 import com.intellij.util.io.createParentDirectories
 import git4idea.GitUtil
+import git4idea.GitUtil.DOT_GIT
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertFalse
 import java.io.File
+import java.nio.file.DirectoryNotEmptyException
 import kotlin.io.path.createFile
+import kotlin.io.path.exists
 
 const val OUT = "out"
 const val EXCLUDED = "excluded"
@@ -67,6 +74,13 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
       myModule.addExclude(excludedDir)
       myModule.addExclude(excludedChildDir)
     }
+  }
+
+  override fun tearDown() {
+    runAll(
+      { deleteGitDirectoryWithRetry() },
+      { super.tearDown() }
+    )
   }
 
   fun `test gitignore content in config dir`() {
@@ -570,6 +584,31 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
   }
 
   private fun VirtualFile.findOrCreateDir(dirName: String) = this.findChild(dirName) ?: createChildDirectory(this, dirName)
+
+  private fun deleteGitDirectoryWithRetry() {
+    val gitDir = projectNioRoot.resolve(DOT_GIT)
+    if (!gitDir.exists()) return
+
+    var dirNotEmptyExceptions: MutableList<DirectoryNotEmptyException>? = null
+
+    while (dirNotEmptyExceptions == null || dirNotEmptyExceptions.isNotEmpty()) {
+      if (dirNotEmptyExceptions == null) {
+        dirNotEmptyExceptions = mutableListOf()
+      }
+
+      try {
+        NioFiles.deleteRecursively(gitDir)
+      }
+      catch (e: DirectoryNotEmptyException) {
+        fileLogger().warn(e)
+        dirNotEmptyExceptions.add(e)
+        TimeoutUtil.sleep(1000)
+        continue
+      }
+
+      dirNotEmptyExceptions.clear()
+    }
+  }
 }
 
 internal fun assertGitignoreValid(ignoreFile: File, gitIgnoreExpectedContent: String) {

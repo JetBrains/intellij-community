@@ -8,7 +8,11 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -16,7 +20,11 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.CachedValueProvider.Result;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ArrayFactory;
@@ -25,7 +33,12 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyCustomType;
+import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyLanguageFacadeKt;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.ast.PyAstFunction.Modifier;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.PyDataclassParameters;
@@ -35,7 +48,40 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.Property;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyKnownDecorator;
+import com.jetbrains.python.psi.PyKnownDecoratorUtil;
+import com.jetbrains.python.psi.PyNoneLiteralExpression;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyPossibleClassMember;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PySubscriptionExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTypeDeclarationStatement;
+import com.jetbrains.python.psi.PyTypeParameterList;
+import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.PyWithItem;
+import com.jetbrains.python.psi.PyWithStatement;
+import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
 import com.jetbrains.python.psi.impl.stubs.PyVersionSpecificStubBaseKt;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -45,7 +91,12 @@ import com.jetbrains.python.psi.stubs.PropertyStubStorage;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyClassTypeImpl;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
 import one.util.streamex.StreamEx;
@@ -53,8 +104,21 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
@@ -169,7 +233,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   public static boolean isSixWithMetaclassCall(@NotNull PyExpression expression) {
-    if (expression instanceof PyCallExpression){
+    if (expression instanceof PyCallExpression) {
       final PyExpression callee = ((PyCallExpression)expression).getCallee();
 
       if (callee instanceof PyReferenceExpression) {
@@ -306,7 +370,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     PyDataclassParameters dcParams = parseDataclassParameters(this, context);
     if (dcParams != null && dcParams.getSlots()) {
       List<String> result = new ArrayList<>();
-      var initVars = PyDataclassTypeProvider.Companion.getInitVars(this, dcParams, context);
+      var initVars = PyDataclassTypeProvider.Helper.getInitVars(this, dcParams, context);
       var initVarTargets = initVars == null ? emptySet() : ContainerUtil.map2Set(initVars, iv -> iv.getTargetExpression());
       var attributes = getClassAttributes();
 
@@ -444,7 +508,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private static @NotNull List<PyClassLikeType> mroLinearize(@NotNull PyClassLikeType type,
                                                              boolean addThisType,
                                                              @NotNull TypeEvalContext context,
-                                                             @NotNull Map<PyClassLikeType, Ref<List<PyClassLikeType>>> cache) throws MROException {
+                                                             @NotNull Map<PyClassLikeType, Ref<List<PyClassLikeType>>> cache)
+    throws MROException {
     final Ref<List<PyClassLikeType>> computed = cache.get(type);
     if (computed != null) {
       if (computed.isNull()) {
@@ -708,8 +773,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public @NotNull List<PyFunction> multiFindInitOrNew(boolean inherited, @Nullable TypeEvalContext context) {
     final MultiNameFinder<PyFunction> processor = isNewStyleClass(context)
-      ? new MultiNameFinder<>(PyNames.INIT, PyNames.NEW)
-      : new MultiNameFinder<>(PyNames.INIT);
+                                                  ? new MultiNameFinder<>(PyNames.INIT, PyNames.NEW)
+                                                  : new MultiNameFinder<>(PyNames.INIT);
 
     visitMethods(processor, inherited, context);
     return processor.myResult;
@@ -1065,7 +1130,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Override
-  public boolean visitClassAttributes(Processor<? super PyTargetExpression> processor, boolean inherited, final @Nullable TypeEvalContext context) {
+  public boolean visitClassAttributes(Processor<? super PyTargetExpression> processor,
+                                      boolean inherited,
+                                      final @Nullable TypeEvalContext context) {
     List<PyTargetExpression> methods = getClassAttributes();
     if (!ContainerUtil.process(methods, processor)) return false;
     if (inherited) {
@@ -1276,7 +1343,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public boolean isNewStyleClass(@Nullable TypeEvalContext context) {
     return NotNullLazyValue.<ParameterizedCachedValue<Boolean, TypeEvalContext>>lazy(() -> {
       return CachedValuesManager.getManager(getProject())
-        .createParameterizedCachedValue(param -> new Result<>(calculateNewStyleClass(param), PsiModificationTracker.MODIFICATION_COUNT), false);
+        .createParameterizedCachedValue(param -> new Result<>(calculateNewStyleClass(param), PsiModificationTracker.MODIFICATION_COUNT),
+                                        false);
     }).getValue().getValue(context);
   }
 
@@ -1809,7 +1877,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   private static @Nullable PyClassLikeType classTypeFromQName(@NotNull QualifiedName qualifiedName, @NotNull PyFile containingFile,
                                                               @NotNull TypeEvalContext context) {
-    final PsiElement element = ContainerUtil.getFirstItem(PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, containingFile, context));
+    final PsiElement element =
+      ContainerUtil.getFirstItem(PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, containingFile, context));
     if (element instanceof PyTypedElement) {
       final PyType type = context.getType((PyTypedElement)element);
       if (type instanceof PyClassLikeType) {

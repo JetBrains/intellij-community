@@ -24,7 +24,7 @@ class LineRangeUtilTest {
   fun `changes at the end of the file with empty lines`() {
     val leftRange = listOf(LineRange(15, 18))
     val rightRange = listOf(LineRange(15, 19))
-    val leftChangedRanges = listOf(LineRange(19, 18))
+    val leftChangedRanges = listOf(LineRange(19, 19))
     val rightChangedRanges = listOf(LineRange(18, 19))
 
     val result = LineRangeUtil.extract(leftRange, rightRange, leftChangedRanges, rightChangedRanges)
@@ -36,8 +36,8 @@ class LineRangeUtilTest {
   fun `1 line deletion and 2 lines insertion`() {
     val leftRange = listOf(LineRange(2, 16))
     val rightRange = listOf(LineRange(2, 16))
-    val leftChangedRanges = listOf(LineRange(7, 5), LineRange(12, 13))
-    val rightChangedRanges = listOf(LineRange(5, 7), LineRange(13, 12))
+    val leftChangedRanges = listOf(LineRange(7, 7), LineRange(12, 13))
+    val rightChangedRanges = listOf(LineRange(5, 7), LineRange(13, 13))
 
     val result = LineRangeUtil.extract(leftRange, rightRange, leftChangedRanges, rightChangedRanges)
 
@@ -73,8 +73,8 @@ class LineRangeUtilTest {
   fun `multiple changes with space between them`() {
     val leftRange = listOf(LineRange(0, 6), LineRange(8, 21))
     val rightRange = listOf(LineRange(0, 6), LineRange(8, 25))
-    val leftChangedRanges = listOf(LineRange(2, 3), LineRange(11, 16), LineRange(25, 21))
-    val rightChangedRanges = listOf(LineRange(3, 22), LineRange(16, 19), LineRange(21, 25))
+    val leftChangedRanges = listOf(LineRange(2, 3), LineRange(11, 16), LineRange(25, 25))
+    val rightChangedRanges = listOf(LineRange(3, 3), LineRange(16, 19), LineRange(21, 25))
 
     val result = LineRangeUtil.extract(leftRange, rightRange, leftChangedRanges, rightChangedRanges)
 

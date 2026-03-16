@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.completion.test.AbstractJSBasicCompletionTestBa
 import org.jetbrains.kotlin.idea.fir.completion.SerializabilityChecker
 import org.jetbrains.kotlin.idea.test.KotlinStdJSLegacyCombinedJarProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.test.util.invalidateCaches
 
 abstract class AbstractK2JsBasicCompletionLegacyStdlibTest : AbstractJSBasicCompletionTestBase() {
     override val captureExceptions: Boolean = false

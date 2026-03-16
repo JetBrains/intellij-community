@@ -1,8 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm.util;
 
-import com.intellij.lang.jvm.*;
-import com.intellij.lang.jvm.types.*;
+import com.intellij.lang.jvm.JvmClass;
+import com.intellij.lang.jvm.JvmClassKind;
+import com.intellij.lang.jvm.JvmMethod;
+import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.JvmParameter;
+import com.intellij.lang.jvm.types.JvmArrayType;
+import com.intellij.lang.jvm.types.JvmPrimitiveType;
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
+import com.intellij.lang.jvm.types.JvmReferenceType;
+import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;

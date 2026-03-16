@@ -10,7 +10,12 @@ import com.intellij.ui.tree.TreeVisitor
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.util.ui.tree.TreeUtil
 import org.assertj.swing.fixture.JTreeFixture
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
+import training.dsl.TaskContext
+import training.dsl.TaskTestContext
+import training.dsl.dropMnemonic
+import training.dsl.parseLessonSample
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.util.isToStringContains

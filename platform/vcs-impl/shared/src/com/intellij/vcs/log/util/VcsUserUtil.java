@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcs.log.VcsUser;
+import com.intellij.vcs.log.impl.VcsUserImpl;
 import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,6 +86,10 @@ public final class VcsUserUtil {
 
   public static @NotNull String emailToLowerCase(@NotNull String email) {
     return StringUtil.toLowerCase(email);
+  }
+
+  public static @NotNull VcsUser createUser(@NotNull String name, @NotNull String email) {
+    return new VcsUserImpl(name, emailToLowerCase(email));
   }
 
   public static class VcsUserHashingStrategy implements Hash.Strategy<VcsUser> {

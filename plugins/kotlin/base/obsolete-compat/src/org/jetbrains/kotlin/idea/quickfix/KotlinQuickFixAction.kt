@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtFile
 
 
+@K1Deprecation
 @Deprecated(
     "Internal Kotlin plugin API",
     ReplaceWith("IntentionAction", "com.intellij.codeInsight.intention.IntentionAction")

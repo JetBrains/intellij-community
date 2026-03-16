@@ -4,7 +4,11 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -27,7 +31,9 @@ import java.awt.datatransfer.StringSelection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.ide.actions.CopyReferenceUtil.*;
+import static com.intellij.ide.actions.CopyReferenceUtil.getElementsToCopy;
+import static com.intellij.ide.actions.CopyReferenceUtil.highlight;
+import static com.intellij.ide.actions.CopyReferenceUtil.setStatusBarText;
 
 /**
  * @author Alexey

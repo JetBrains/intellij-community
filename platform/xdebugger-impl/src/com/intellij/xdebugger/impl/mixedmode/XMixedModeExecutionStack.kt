@@ -4,22 +4,27 @@ package com.intellij.xdebugger.impl.mixedmode
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.frame.XDescriptor
 import com.intellij.xdebugger.frame.XExecutionStack
-import com.intellij.xdebugger.mixedMode.XExecutionStackWithNativeThreadId
 import com.intellij.xdebugger.frame.XStackFrame
-import com.intellij.xdebugger.mixedMode.nativeThreadId
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
 import com.intellij.xdebugger.impl.util.notifyOnFrameChanged
 import com.intellij.xdebugger.mixedMode.MixedModeStackBuilder
+import com.intellij.xdebugger.mixedMode.XExecutionStackWithNativeThreadId
+import com.intellij.xdebugger.mixedMode.nativeThreadId
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.future.future
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CancellationException
+import java.util.concurrent.CompletableFuture
 import kotlin.time.measureTimedValue
 
 private val logger = logger<XMixedModeExecutionStack>()
@@ -42,6 +47,17 @@ class XMixedModeExecutionStack(
   val computedFramesMap: CompletableDeferred<Map</*low-level frame*/XStackFrame, /*high-level frame*/XStackFrame?>> = CompletableDeferred()
   private var currentFrame: XStackFrame? = topFrame
 
+  private val myStackDescriptor: CompletableFuture<XDescriptor?> = coroutineScope.future {
+    val highStackDescriptor = highLevelExecutionStack?.xExecutionStackDescriptorAsync?.await()
+    val lowStackDescriptor = lowLevelExecutionStack.xExecutionStackDescriptorAsync?.await()
+
+    // getTopFrame method is not adequate for us since in the split debugger the first call of getTopFrame will be cached forever,
+    // but RiderJumpToStatementHandler needs a real position
+    val descriptor = XMixedModeExecutionStackDescriptor(highStackDescriptor, lowStackDescriptor)
+    //FrontendDescriptorStateManager.getInstance(session.project).registerDescriptor(descriptor, coroutineScope)
+    descriptor
+  }
+
   init {
     // we need to track when the current frame is changed to show the correct thread after rebuildAllViews
     (session as XDebugSessionImpl).notifyOnFrameChanged { stack, frame ->
@@ -55,13 +71,21 @@ class XMixedModeExecutionStack(
   }
 
   override fun getTopFrame(): XStackFrame? {
-    return if (!computedFramesMap.isCompleted)
-      lowLevelExecutionStack.topFrame
-    else {
-      val entries = computedFramesMap.getCompleted().entries
-      val topFrame = entries.firstOrNull()
-      return topFrame?.value ?: topFrame?.key ?: lowLevelExecutionStack.topFrame
-    }
+    return if (!computedFramesMap.isCompleted) lowLevelExecutionStack.topFrame else getCalculatedTopFrame()
+  }
+
+  override fun getTopFrameAsync(): CompletableFuture<XStackFrame?> = coroutineScope.future {
+    computedFramesMap.await()
+    getCalculatedTopFrame()
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun getCalculatedTopFrame(): XStackFrame? {
+    assert(computedFramesMap.isCompleted)
+
+    val entries = computedFramesMap.getCompleted().entries
+    val topFrame = entries.firstOrNull()
+    return topFrame?.value ?: topFrame?.key ?: lowLevelExecutionStack.topFrame
   }
 
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {
@@ -97,6 +121,10 @@ class XMixedModeExecutionStack(
       lowLevelExecutionStack.executionLineIconRenderer
     else
       highLevelExecutionStack?.executionLineIconRenderer
+  }
+
+  override fun getXExecutionStackDescriptorAsync(): CompletableFuture<XDescriptor?> {
+    return myStackDescriptor
   }
 
   private suspend fun computeStackFramesInternal(firstFrameIndex: Int, container: XStackFrameContainer) {

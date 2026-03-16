@@ -3,18 +3,25 @@
 package org.jetbrains.kotlin.idea.core.script.k1.dependencies
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
-import com.intellij.codeInsight.multiverse.defaultContext
+import com.intellij.codeInsight.multiverse.anyContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.ResolveScopeProvider
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.core.script.v1.*
+import org.jetbrains.kotlin.idea.core.script.v1.KotlinScriptSearchScope
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptModuleInfo
+import org.jetbrains.kotlin.idea.core.script.v1.compilerAllowsAnyScriptsInSourceRoots
+import org.jetbrains.kotlin.idea.core.script.v1.hasNoExceptionsToBeUnderSourceRoot
+import org.jetbrains.kotlin.idea.core.script.v1.isEnabled
+import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
@@ -23,10 +30,11 @@ import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.isStandalone
 
+@K1Deprecation
 class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
 
     override fun getResolveScope(file: VirtualFile, project: Project): GlobalSearchScope? =
-        getResolveScope(file, defaultContext(), project)
+        getResolveScope(file, anyContext(), project)
 
     override fun getResolveScope(file: VirtualFile, context: CodeInsightContext, project: Project): GlobalSearchScope? {
         if (!file.isKotlinFileType()) return null

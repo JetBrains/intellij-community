@@ -13,7 +13,7 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class ConfirmationDialog extends OptionsMessageDialog {
   private final VcsShowConfirmationOption myOption;

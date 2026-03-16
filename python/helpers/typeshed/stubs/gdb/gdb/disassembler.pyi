@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from typing import Final, final
+from typing_extensions import disjoint_base
 
 import gdb
 from gdb import Architecture, Progspace
@@ -8,6 +9,7 @@ class Disassembler:
     def __init__(self, name: str) -> None: ...
     def __call__(self, info): ...
 
+@disjoint_base
 class DisassembleInfo:
     address: int
     architecture: Architecture

@@ -1,13 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xml.dom.readXmlAsModel
-import io.opentelemetry.api.trace.Span
+import org.jetbrains.intellij.build.impl.BUILT_IN_HELP_MODULE_NAME
+import org.jetbrains.intellij.build.impl.DescriptorCacheWriter
 import org.jetbrains.intellij.build.impl.JarPackager
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.findFileInModuleSources
+import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
+import org.jetbrains.intellij.build.impl.contentModuleNameToDescriptorFileName
+import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 
 private const val VERIFIER_MODULE = "intellij.platform.commercial.verifier"
 
@@ -33,7 +37,7 @@ internal suspend fun inferModuleSources(
     }
 
     val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = getDefaultJarName(layout, name, frontendModuleFilter), reason = "<- ${layout.mainModule}")
-    if (isIncludedIntoAnotherPlugin(platformLayout = platformLayout, moduleItem = moduleItem, context = context, layout = layout, moduleName = name)) {
+    if (isIncludedIntoAnotherPlugin(platformLayout = platformLayout, moduleItem = moduleItem, layout = layout, moduleName = name, context = context)) {
       continue
     }
 
@@ -61,43 +65,131 @@ internal suspend fun inferModuleSources(
 internal suspend fun computeModuleSourcesByContent(
   helper: JarPackagerDependencyHelper,
   context: BuildContext,
-  layout: PluginLayout,
+  pluginLayout: PluginLayout,
   addedModules: MutableSet<String>,
   jarPackager: JarPackager,
   searchableOptionSet: SearchableOptionSetDescriptor?,
-  modulesWithCustomPath: HashSet<String>
+  modulesWithCustomPath: HashSet<String>,
+  pluginCachedDescriptorContainer: ScopedCachedDescriptorContainer,
 ) {
-  val frontendModuleFilter = context.getFrontendModuleFilter()
-  val contentModuleFilter = context.getContentModuleFilter()
-  for ((moduleName, loadingRule) in helper.readPluginContentFromDescriptor(context.findRequiredModule(layout.mainModule), jarPackager.moduleOutputPatcher)) {
-    if (helper.isOptionalLoadingRule(loadingRule) && !contentModuleFilter.isOptionalModuleIncluded(moduleName, pluginMainModuleName = layout.mainModule)) {
-      Span.current().addEvent("Module '$moduleName' is excluded from plugin '${layout.mainModule}' by $contentModuleFilter")
-      continue
-    }
+  // plugin patcher must be executed before
+  val cachedFileData = pluginCachedDescriptorContainer.getCachedFileData(PLUGIN_XML_RELATIVE_PATH)
+  // quick fix of clion installer - not clear yet why a proper fix didn't help
+  if (cachedFileData == null && pluginLayout.mainModule == BUILT_IN_HELP_MODULE_NAME) {
+    return
+  }
 
+  val element = requireNotNull(cachedFileData) {
+    "Plugin descriptor '$PLUGIN_XML_RELATIVE_PATH' is not found in cached descriptor container, " +
+    "plugin patcher must be executed before (pluginMainModule=${pluginLayout.mainModule}, pluginCachedDescriptorContainer=$pluginCachedDescriptorContainer)"
+  }.let { JDOMUtil.load(it) }
+
+  val pluginContent = sequence {
+    for (content in element.getChildren("content")) {
+      for (module in content.getChildren("module")) {
+        val moduleName = module.getAttributeValue("name")?.takeIf { !it.contains('/') } ?: continue
+        val loadingRuleString = module.getAttributeValue("loading")
+        yield(moduleName to loadingRuleString)
+      }
+    }
+  }
+
+  val frontendModuleFilter = context.getFrontendModuleFilter()
+  val descriptorCacheWriter = pluginCachedDescriptorContainer.write()
+  for ((moduleName, loadingRule) in pluginContent) {
     if (!addedModules.add(moduleName)) {
       continue
     }
 
-    val module = context.findRequiredModule(moduleName)
-    val descriptor = readXmlAsModel(findFileInModuleSources(module, "$moduleName.xml") ?: error("$moduleName.xml not found in module $moduleName sources"))
-    val useSeparateJar = (descriptor.getAttributeValue("package") == null || 
-                          helper.isPluginModulePackedIntoSeparateJar(module, layout, frontendModuleFilter)) && loadingRule != "embedded"
-    if (!useSeparateJar && modulesWithCustomPath.contains(moduleName)) {
+    val relativeOutputFile = computeOutputJarPath(
+      moduleName = moduleName,
+      loadingRule = loadingRule,
+      modulesWithCustomPath = modulesWithCustomPath,
+      pluginLayout = pluginLayout,
+      frontendModuleFilter = frontendModuleFilter,
+      helper = helper,
+      context = context,
+      pluginCachedDescriptorContainer = pluginCachedDescriptorContainer,
+      descriptorCacheWriter = descriptorCacheWriter,
+    )
+    if (relativeOutputFile == null) {
       addedModules.remove(moduleName)
       continue
     }
+
     jarPackager.computeSourcesForModule(
       item = ModuleItem(
         moduleName = moduleName,
-        // relative path with `/` is always packed by dev-mode, so we don't need to fix resolving for now and can improve it later
-        relativeOutputFile = if (useSeparateJar) "modules/$moduleName.jar" else getDefaultJarName(layout, moduleName, frontendModuleFilter),
-        reason = "<- ${layout.mainModule} (plugin content)",
+        relativeOutputFile = relativeOutputFile,
+        reason = "<- ${pluginLayout.mainModule} (plugin content)",
       ),
-      layout = layout,
+      layout = pluginLayout,
       searchableOptionSet = searchableOptionSet,
     )
   }
+  descriptorCacheWriter.apply()
+}
+
+private suspend fun computeOutputJarPath(
+  moduleName: String,
+  loadingRule: String?,
+  modulesWithCustomPath: Set<String>,
+  pluginLayout: PluginLayout,
+  frontendModuleFilter: FrontendModuleFilter,
+  helper: JarPackagerDependencyHelper,
+  context: BuildContext,
+  pluginCachedDescriptorContainer: ScopedCachedDescriptorContainer,
+  descriptorCacheWriter: DescriptorCacheWriter,
+): String? {
+  if (loadingRule == "embedded") {
+    // Case 1: Embedded lib modules → separate jar in root directory
+    if (moduleName.startsWith(LIB_MODULE_PREFIX)) {
+      return "$moduleName.jar"
+    }
+
+    // Case 2: Embedded regular modules → merge into main plugin jar
+    return if (modulesWithCustomPath.contains(moduleName)) null else getDefaultJarName(pluginLayout, moduleName, frontendModuleFilter)
+  }
+
+  // Case 3: Non-embedded modules → check descriptor for separate jar need
+  val needsSeparateJar = checkNeedsSeparateJar(
+    moduleName = moduleName,
+    pluginLayout = pluginLayout,
+    frontendModuleFilter = frontendModuleFilter,
+    helper = helper,
+    context = context,
+    pluginCachedDescriptorContainer = pluginCachedDescriptorContainer,
+    descriptorCacheWriter = descriptorCacheWriter,
+  )
+
+  return when {
+    needsSeparateJar -> "modules/$moduleName.jar"
+    modulesWithCustomPath.contains(moduleName) -> null
+    else -> getDefaultJarName(pluginLayout, moduleName, frontendModuleFilter)
+  }
+}
+
+private suspend fun checkNeedsSeparateJar(
+  moduleName: String,
+  pluginLayout: PluginLayout,
+  frontendModuleFilter: FrontendModuleFilter,
+  helper: JarPackagerDependencyHelper,
+  context: BuildContext,
+  pluginCachedDescriptorContainer: ScopedCachedDescriptorContainer,
+  descriptorCacheWriter: DescriptorCacheWriter,
+): Boolean {
+  val module = context.outputProvider.findRequiredModule(moduleName)
+  val descriptorFileName = contentModuleNameToDescriptorFileName(moduleName)
+  var descriptorData = pluginCachedDescriptorContainer.getCachedFileData(descriptorFileName)
+  if (descriptorData == null) {
+    descriptorData = requireNotNull(findUnprocessedDescriptorContent(module = module, path = descriptorFileName, outputProvider = context.outputProvider)) {
+      "$descriptorFileName not found in module $moduleName"
+    }
+    descriptorCacheWriter.put(descriptorFileName, descriptorData)
+  }
+  val descriptor = readXmlAsModel(descriptorData)
+  return descriptor.getAttributeValue("package") == null ||
+         helper.isPluginModulePackedIntoSeparateJar(module, pluginLayout, frontendModuleFilter)
 }
 
 private fun getDefaultJarName(layout: PluginLayout, moduleName: String, frontendModuleFilter: FrontendModuleFilter): String {
@@ -109,13 +201,13 @@ private fun getDefaultJarName(layout: PluginLayout, moduleName: String, frontend
   }
 }
 
-private fun isIncludedIntoAnotherPlugin(platformLayout: PlatformLayout, moduleItem: ModuleItem, context: BuildContext, layout: PluginLayout, moduleName: String): Boolean {
-  if (moduleName == VERIFIER_MODULE) {
-    return false
+private fun isIncludedIntoAnotherPlugin(platformLayout: PlatformLayout, moduleItem: ModuleItem, layout: PluginLayout, moduleName: String, context: BuildContext): Boolean {
+  return when {
+    moduleName == VERIFIER_MODULE -> false
+    platformLayout.includedModules.contains(moduleItem) -> true
+    platformLayout.includedModules.any { it.moduleName == moduleName } -> true
+    else -> context.productProperties.productLayout.pluginLayouts.any { otherPluginLayout ->
+      otherPluginLayout !== layout && otherPluginLayout.includedModules.any { it.moduleName == moduleName }
+    }
   }
-
-  return platformLayout.includedModules.contains(moduleItem) ||
-         context.productProperties.productLayout.pluginLayouts.any { otherPluginLayout ->
-           otherPluginLayout !== layout && otherPluginLayout.includedModules.any { it.moduleName == moduleName }
-         }
 }

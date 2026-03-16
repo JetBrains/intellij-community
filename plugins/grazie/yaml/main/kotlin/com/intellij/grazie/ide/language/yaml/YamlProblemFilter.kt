@@ -5,7 +5,7 @@ import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextProblem
 import org.jetbrains.yaml.YAMLTokenTypes.SCALAR_KEY
 
-private class YamlProblemFilter : ProblemFilter() {
+internal class YamlProblemFilter : ProblemFilter() {
   override fun shouldIgnore(problem: TextProblem): Boolean {
     if (problem.text.domain == TextContent.TextDomain.LITERALS) {
       val root = problem.text.commonParent

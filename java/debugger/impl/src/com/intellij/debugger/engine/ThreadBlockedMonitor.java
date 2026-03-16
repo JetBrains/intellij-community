@@ -15,8 +15,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.BitUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
-import com.sun.jdi.*;
+import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.InternalException;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ThreadReference;
 import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
@@ -114,7 +120,7 @@ public class ThreadBlockedMonitor {
           process.getManagerThread().schedule(new DebuggerCommandImpl() {
             @Override
             protected void action() {
-              ThreadReferenceProxyImpl threadProxy = process.getVirtualMachineProxy().getThreadReferenceProxy(blockingThread);
+              ThreadReferenceProxyImpl threadProxy = VirtualMachineProxyImpl.getCurrent().getThreadReferenceProxy(blockingThread);
               SuspendContextImpl suspendingContext = SuspendManagerUtil.getSuspendingContext(process.getSuspendManager(), threadProxy);
               getCommandManagerThread()
                 .invokeNow(process.createResumeThreadCommand(suspendingContext, threadProxy));
@@ -135,10 +141,16 @@ public class ThreadBlockedMonitor {
       @Override
       protected void action() {
         if (myWatchedThreads.isEmpty()) return;
-        VirtualMachineProxyImpl vmProxy = myProcess.getVirtualMachineProxy();
+        VirtualMachineProxyImpl vmProxy = VirtualMachineProxyImpl.getCurrent();
         //TODO: can we do fast check without suspending all
         vmProxy.suspend();
         try {
+          List<ThreadReferenceProxy> zombieThreads =
+            ContainerUtil.filter(myWatchedThreads, thread -> thread.getThreadReference().status() == ThreadReference.THREAD_STATUS_ZOMBIE);
+          for (ThreadReferenceProxy thread : zombieThreads) {
+            stopWatching(thread);
+          }
+
           for (ThreadReferenceProxy thread : myWatchedThreads) {
             try {
               ObjectReference waitedMonitor =

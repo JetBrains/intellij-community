@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.codeInsight
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
@@ -84,6 +84,10 @@ class PluginXmlRegistrationCheckInspectionTest : JavaCodeInsightFixtureTestCase(
                                                                   "../anotherModuleDir/DependencyModuleAction.java")
     val dependencyModuleClassWithEp = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleClassWithEpName.java",
                                                                   "../anotherModuleDir/DependencyModuleClassWithEpName.java")
+    val dependencyModuleServiceInterface = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyServiceInterface.java",
+                                                                       "../anotherModuleDir/MyServiceInterface.java")
+    val dependencyModuleServiceImpl = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyServiceImplementation.java",
+                                                                  "../anotherModuleDir/MyServiceImplementation.java")
     val dependencyModulePlugin = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModulePlugin.xml",
                                                              "../anotherModuleDir/META-INF/DependencyModulePlugin.xml")
     val additionalModuleClass = myFixture.copyFileToProject("registrationCheck/additionalModule/AdditionalModuleClass.java",
@@ -92,6 +96,8 @@ class PluginXmlRegistrationCheckInspectionTest : JavaCodeInsightFixtureTestCase(
                                                       "MainModuleClass.java")
     val mainModuleBeanClass = myFixture.copyFileToProject("registrationCheck/module/MainModuleBeanClass.java",
                                                           "MainModuleBeanClass.java")
+    val mainModuleServiceImpl2 = myFixture.copyFileToProject("registrationCheck/module/MyServiceImplementation2.java",
+                                                             "MyServiceImplementation2.java")
     val mainModulePlugin = myFixture.copyFileToProject("registrationCheck/module/MainModulePlugin.xml",
                                                        "META-INF/MainModulePlugin.xml")
 
@@ -102,10 +108,13 @@ class PluginXmlRegistrationCheckInspectionTest : JavaCodeInsightFixtureTestCase(
     myFixture.configureFromExistingVirtualFile(dependencyModuleFileTypeExtensionPointClass)
     myFixture.configureFromExistingVirtualFile(dependencyModuleActionClass)
     myFixture.configureFromExistingVirtualFile(dependencyModuleClassWithEp)
+    myFixture.configureFromExistingVirtualFile(dependencyModuleServiceInterface)
+    myFixture.configureFromExistingVirtualFile(dependencyModuleServiceImpl)
     myFixture.configureFromExistingVirtualFile(dependencyModulePlugin)
     myFixture.configureFromExistingVirtualFile(additionalModuleClass)
     myFixture.configureFromExistingVirtualFile(mainModuleClass)
     myFixture.configureFromExistingVirtualFile(mainModuleBeanClass)
+    myFixture.configureFromExistingVirtualFile(mainModuleServiceImpl2)
     myFixture.configureFromExistingVirtualFile(mainModulePlugin)
 
     myFixture.allowTreeAccessForAllFiles()
@@ -113,7 +122,7 @@ class PluginXmlRegistrationCheckInspectionTest : JavaCodeInsightFixtureTestCase(
     myFixture.testHighlighting(true, false, false, dependencyModulePlugin)
     myFixture.testHighlighting(true, false, false, mainModulePlugin)
     val highlightInfos = myFixture.doHighlighting(HighlightSeverity.WARNING)
-    assertSize(5, highlightInfos)
+    assertSize(6, highlightInfos)
 
     for (info in highlightInfos) {
       val ranges = actions(info)
@@ -132,7 +141,7 @@ class PluginXmlRegistrationCheckInspectionTest : JavaCodeInsightFixtureTestCase(
 
   private fun actions(info: HighlightInfo): List<IntentionAction> {
     val result = ArrayList<IntentionAction>()
-    info.findRegisteredQuickFix<Any?> { descriptor: IntentionActionDescriptor, range: TextRange? ->
+    info.findRegisteredQuickFix<Any?> { descriptor: IntentionActionDescriptor, _: TextRange? ->
       result.add(descriptor.action)
       null
     }

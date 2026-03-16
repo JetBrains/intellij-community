@@ -1,19 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EventObject;
 
 public final class LookupEvent extends EventObject {
 
-  private final Lookup myLookup;
-  private final LookupElement myItem;
+  private final @NotNull Lookup myLookup;
+  private final @Nullable LookupElement myItem;
   private final char myCompletionChar;
   private final boolean myCanceledExplicitly;
 
-  public LookupEvent(Lookup lookup, boolean canceledExplicitly){
+  public LookupEvent(@NotNull Lookup lookup, boolean canceledExplicitly) {
     super(lookup);
     myLookup = lookup;
     myItem = null;
@@ -21,7 +22,7 @@ public final class LookupEvent extends EventObject {
     myCanceledExplicitly = canceledExplicitly;
   }
 
-  public LookupEvent(Lookup lookup, LookupElement item, char completionChar) {
+  public LookupEvent(@NotNull Lookup lookup, @Nullable LookupElement item, char completionChar) {
     super(lookup);
     myLookup = lookup;
     myItem = item;
@@ -29,15 +30,16 @@ public final class LookupEvent extends EventObject {
     myCanceledExplicitly = false;
   }
 
-  public Lookup getLookup(){
+  public @NotNull Lookup getLookup() {
     return myLookup;
   }
 
-  public @Nullable("in case ENTER was pressed when no suggestions were available") LookupElement getItem(){
+  public @Nullable("in case ENTER was pressed when no suggestions were available")
+  LookupElement getItem() {
     return myItem;
   }
 
-  public char getCompletionChar(){
+  public char getCompletionChar() {
     return myCompletionChar;
   }
 

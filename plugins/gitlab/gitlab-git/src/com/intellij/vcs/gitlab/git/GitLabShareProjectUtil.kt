@@ -6,13 +6,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.workspace.SubprojectInfoProvider
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.gitlab.git.ui.GitLabShareProjectDialogComponentFactory
 import git4idea.GitUtil
 import git4idea.remote.hosting.GitShareProjectService
 import git4idea.remote.hosting.knownRepositories
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.GitLabSettings
 import org.jetbrains.plugins.gitlab.api.request.createProject
-import com.intellij.vcs.gitlab.git.ui.GitLabShareProjectDialogComponentFactory
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 object GitLabShareProjectUtil {

@@ -1,0 +1,7 @@
+JsonFile: n_object_emoji.json
+  JsonObject
+    PsiElement({)('{')
+    PsiErrorElement:<property> expected, got '🇨'
+      PsiElement(BAD_CHARACTER)('🇨')
+    PsiElement(BAD_CHARACTER)('🇭')
+    PsiElement(})('}')

@@ -17,9 +17,9 @@ public interface EditorFileSwapper {
   static @Nullable TextEditorImpl findSinglePsiAwareEditor(@NotNull List<? extends FileEditor> fileEditors) {
     TextEditorImpl result = null;
     for (FileEditor fileEditor : fileEditors) {
-      if (fileEditor instanceof TextEditorImpl) {
+      if (fileEditor instanceof TextEditorImpl te) {
         if (result == null) {
-          result = (TextEditorImpl)fileEditor;
+          result = te;
         }
         else {
           return null;

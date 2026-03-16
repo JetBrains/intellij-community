@@ -11,9 +11,18 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -57,7 +66,7 @@ public class ColorPanel extends JComponent {
           setSelectedColor(color);
           if (!myListeners.isEmpty() && (myEvent == null)) {
             try {
-              myEvent = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "colorPanelChanged");
+              myEvent = new ActionEvent(ColorPanel.this, ActionEvent.ACTION_PERFORMED, "colorPanelChanged");
               for (ActionListener listener : myListeners) {
                 listener.actionPerformed(myEvent);
               }
@@ -97,6 +106,16 @@ public class ColorPanel extends JComponent {
     myListeners.remove(actionlistener);
   }
 
+  /**
+   * Adds a listener that reacts to color selection changes.
+   * <p>
+   *   The given listener will be invoked when the popup for selecting a new color closes.
+   *   The event source will be {@code this} instance,
+   *   the event ID will be {@link ActionEvent#ACTION_PERFORMED}
+   *   and the command will be {@code "colorPanelChanged"}.
+   * </p>
+   * @param actionlistener the listener to register
+   */
   public void addActionListener(ActionListener actionlistener) {
     myListeners.add(actionlistener);
   }

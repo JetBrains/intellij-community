@@ -6,7 +6,7 @@ import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class ModuleWizardStep extends StepAdapter {
 

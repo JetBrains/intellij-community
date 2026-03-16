@@ -6,10 +6,11 @@ import com.intellij.history.ActivityPresentationProvider
 import com.intellij.icons.AllIcons
 import com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons
 import icons.DvcsImplIcons
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
-private class GitActivityPresentationProvider : ActivityPresentationProvider {
+internal class GitActivityPresentationProvider : ActivityPresentationProvider {
   override val id: String get() = ID
 
   override fun getIcon(kind: String): Icon? {
@@ -28,6 +29,7 @@ private class GitActivityPresentationProvider : ActivityPresentationProvider {
   }
 }
 
+@ApiStatus.Internal
 object GitActivity {
   @JvmField
   val Checkout = createId("Checkout")

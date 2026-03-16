@@ -9,7 +9,15 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextArea
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.COLUMNS_TINY
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.SegmentedButton
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon

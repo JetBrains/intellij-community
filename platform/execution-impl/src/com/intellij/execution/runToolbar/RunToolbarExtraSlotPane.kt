@@ -7,7 +7,10 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project

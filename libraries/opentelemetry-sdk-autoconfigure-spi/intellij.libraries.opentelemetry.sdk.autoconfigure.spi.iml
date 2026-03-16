@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="opentelemetry-sdk-autoconfigure-spi" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi:1.48.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.48.0/opentelemetry-sdk-extension-autoconfigure-spi-1.48.0.jar">
+              <sha256sum>c2f95d66182b71e852a97b9bcb6e545ecf6c3e155a0e3d5faf2dbf96deb1a9df</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.48.0/opentelemetry-sdk-extension-autoconfigure-spi-1.48.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.48.0/opentelemetry-sdk-extension-autoconfigure-spi-1.48.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

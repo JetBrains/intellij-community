@@ -6,28 +6,51 @@ import com.intellij.codeInsight.template.LiveTemplateContextService;
 import com.intellij.codeInsight.template.LiveTemplateContextsSnapshot;
 import com.intellij.codeInsight.template.TemplateFilter;
 import com.intellij.codeInsight.template.TemplateGroupHintProvider;
+import com.intellij.codeInsight.template.TemplateGroupOrderProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.dnd.*;
+import com.intellij.ide.dnd.DnDDragStartBean;
+import com.intellij.ide.dnd.DnDDropHandler;
+import com.intellij.ide.dnd.DnDEvent;
+import com.intellij.ide.dnd.DnDImage;
+import com.intellij.ide.dnd.DnDSupport;
+import com.intellij.ide.dnd.DnDTargetChecker;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.CompoundScheme;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
@@ -38,17 +61,44 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTree;
+import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
-import java.awt.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.template.impl.TemplateContext.getDifference;
@@ -107,7 +157,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     createTemplateEditor(MOCK_TEMPLATE, "Tab", MOCK_TEMPLATE.createOptions(), MOCK_TEMPLATE.createContext());
 
-    add(myExpandByDefaultPanel, BorderLayout.NORTH);
+    add(myExpandByDefaultPanel.getPanel(), BorderLayout.NORTH);
 
     Splitter splitter = new Splitter(true, 0.9f);
     splitter.setFirstComponent(createTable());
@@ -138,7 +188,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private static @NotNull List<TemplateGroup> getSortedGroups(TemplateSettings templateSettings) {
     List<TemplateGroup> groups = new ArrayList<>(templateSettings.getTemplateGroups());
 
-    groups.sort((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
+    TemplateGroupOrderProvider orderProvider = ApplicationManager.getApplication().getService(TemplateGroupOrderProvider.class);
+    groups.sort(orderProvider::compare);
     return groups;
   }
 
@@ -957,7 +1008,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     node.setChecked(!template.isDeactivated());
     DefaultMutableTreeNode child = findGroup(myTreeRoot, newGroup.getPath());
     if (child != null) {
-      int index = getIndexToInsert(child, template.getKey(), false);
+      int index = getIndexToInsert(child, template);
       child.insert(node, index);
       ((DefaultTreeModel)myTree.getModel()).nodesWereInserted(child, new int[]{index});
       setSelectedNode(node);
@@ -1026,7 +1077,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         nextGroup.setModified(false);
       }
       myTemplateGroupsFullName.put(nextGroup.getName(), newGroup);
-      int index = getIndexToInsert(currentParent, nextGroup.getName(), true);
+      int index = getIndexToInsert(currentParent, nextGroup);
       CheckedTreeNode groupNode = new CheckedTreeNode(nextGroup);
       currentParent.insert(groupNode, index);
       ((DefaultTreeModel)myTree.getModel()).nodesWereInserted(currentParent, new int[]{index});
@@ -1035,19 +1086,36 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return currentParent;
   }
 
-  private static int getIndexToInsert(DefaultMutableTreeNode parent, String key, boolean group) {
+  private static int getIndexToInsert(DefaultMutableTreeNode parent, TemplateGroup t) {
+    TemplateGroupOrderProvider order = ApplicationManager.getApplication().getService(TemplateGroupOrderProvider.class);
+    return getIndexToInsert(parent, o1 -> {
+      if (o1 instanceof TemplateGroup t1) {
+        return order.compare(t1, t) > 0;
+      }
+      else {
+        return true;
+      }
+    });
+  }
+  private static int getIndexToInsert(DefaultMutableTreeNode parent, TemplateImpl o) {
+    String key = o.getKey();
+    return getIndexToInsert(parent, o1 -> {
+      String key1 = o1 instanceof TemplateImpl ? ((TemplateImpl)o1).getKey() : ((TemplateGroup)o1).getName();
+      return key1.compareToIgnoreCase(key) > 0;
+    });
+  }
+
+  private static int getIndexToInsert(DefaultMutableTreeNode parent, Predicate<Object> predicate) {
     if (parent.getChildCount() == 0) return 0;
 
     int res = 0;
     for (DefaultMutableTreeNode child = (DefaultMutableTreeNode)parent.getFirstChild();
          child != null;
          child = (DefaultMutableTreeNode)parent.getChildAfter(child)) {
-      Object o = child.getUserObject();
-      if (group && !(o instanceof TemplateGroup)) {
+      Object o1 = child.getUserObject();
+      if (predicate.test(o1)) {
         return res;
       }
-      String key1 = o instanceof TemplateImpl ? ((TemplateImpl)o).getKey() : ((TemplateGroup)o).getName();
-      if (key1.compareToIgnoreCase(key) > 0) return res;
       res++;
     }
     return res;

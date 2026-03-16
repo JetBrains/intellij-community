@@ -9,21 +9,28 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface VcsFileListenerIgnoredFilesProvider {
-  @RequiresEdt
-  fun isDeletionIgnored(project: Project, filePath: FilePath): Boolean
+  fun isDeletionIgnored(project: Project, filePath: FilePath): Boolean = false
 
-  @RequiresEdt
-  fun isAdditionIgnored(project: Project, filePath: FilePath): Boolean
+  fun isDeletionIgnored(project: Project, filePath: FilePath, requestor: Any?): Boolean {
+    return isDeletionIgnored(project, filePath)
+  }
+
+  fun isAdditionIgnored(project: Project, filePath: FilePath): Boolean = false
+
+  fun isAdditionIgnored(project: Project, filePath: FilePath, requestor: Any?): Boolean {
+    return isAdditionIgnored(project, filePath)
+  }
 
   companion object {
+    @ApiStatus.Internal
     val EP_NAME: ExtensionPointName<VcsFileListenerIgnoredFilesProvider> =
       ExtensionPointName("com.intellij.vcs.fileListenerIgnoredFilesProvider")
 
     @JvmStatic
-    @RequiresEdt
-    fun isAdditionAllowed(project: Project, filePath: FilePath): Boolean {
+    @ApiStatus.Internal
+    fun isAdditionAllowed(project: Project, filePath: FilePath, requestor: Any?): Boolean {
       val additionIgnoredBy = EP_NAME.findFirstSafe {
-        it.isAdditionIgnored(project, filePath)
+        it.isAdditionIgnored(project, filePath, requestor)
       }
       if (additionIgnoredBy != null && LOG.isDebugEnabled) {
         LOG.debug("Addition of $filePath is ignored by ${additionIgnoredBy.javaClass}")
@@ -32,10 +39,10 @@ interface VcsFileListenerIgnoredFilesProvider {
     }
 
     @JvmStatic
-    @RequiresEdt
-    fun isDeletionAllowed(project: Project, filePath: FilePath): Boolean {
+    @ApiStatus.Internal
+    fun isDeletionAllowed(project: Project, filePath: FilePath, requestor: Any?): Boolean {
       val deletionIgnoredBy = EP_NAME.findFirstSafe {
-        it.isDeletionIgnored(project, filePath)
+        it.isDeletionIgnored(project, filePath, requestor)
       }
       if (deletionIgnoredBy != null && LOG.isDebugEnabled) {
         LOG.debug("Deletion of $filePath is ignored by ${deletionIgnoredBy.javaClass}")

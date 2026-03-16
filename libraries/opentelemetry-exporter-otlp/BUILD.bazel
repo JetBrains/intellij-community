@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.libraries.opentelemetry.exporter.otlp` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "opentelemetry-exporter-otlp_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "opentelemetry-exporter-otlp",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":opentelemetry-exporter-otlp_resources"],
+  exports = ["@lib//:libraries-opentelemetry-exporter-otlp-opentelemetry-exporter-otlp-library"],
+  runtime_deps = [
+    "//platform/backend",
+    "@lib//:libraries-opentelemetry-exporter-otlp-opentelemetry-exporter-otlp-library",
+  ]
+)
+### auto-generated section `build intellij.libraries.opentelemetry.exporter.otlp` end

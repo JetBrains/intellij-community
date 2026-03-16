@@ -16,8 +16,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultListModel;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 

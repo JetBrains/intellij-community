@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.repo.Repository;
@@ -24,7 +24,12 @@ import git4idea.ui.toolbar.GitMergeRebaseWidgetKt;
 import icons.DvcsImplIcons;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Git merge tool for resolving conflicts. Use IDEA built-in 3-way merge tool.
@@ -62,7 +67,7 @@ public class GitResolveConflictsAction extends DumbAwareAction {
     AbstractVcsHelper.getInstance(project).showMergeDialog(new ArrayList<>(conflictedFiles), vcs.getMergeProvider());
   }
 
-  private static boolean isEnabled(@NotNull Project project) {
+  static boolean isEnabled(@NotNull Project project) {
     GitVcs gitVcs = GitVcs.getInstance(project);
 
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);

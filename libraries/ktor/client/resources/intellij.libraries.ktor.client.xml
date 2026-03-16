@@ -1,8 +1,11 @@
 <!-- cannot use dependent-on-core="false" - kotlin stdlib is required -->
-<idea-plugin visibility="internal">
+<!-- see the comment where we do include it about why we have dependency on it (yes, ktor-core wants this lib) -->
+<idea-plugin visibility="public">
   <dependencies>
-    <module name="intellij.libraries.ktor.utils" />
-    <!-- see the comment where we do include it about why we have dependency on it (yes, ktor-core wants this lib) -->
-    <module name="intellij.libraries.kotlinx.coroutines.slf4j" />
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.kotlinx.coroutines.slf4j"/>
+    <module name="intellij.libraries.ktor.io"/>
+    <module name="intellij.libraries.ktor.utils"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

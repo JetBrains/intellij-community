@@ -1,22 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
-import com.intellij.ide.util.RunOnceUtil
 import com.intellij.idea.AppMode
-import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.TerminalUiSettingsManager.CursorShape
-import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
-import org.jetbrains.plugins.terminal.block.ui.updateFrontendSettingsAndSync
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -26,7 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList
        exportable = true,
        presentableName = TerminalOptionsProvider.PresentableNameGetter::class,
        storages = [Storage(value = "terminal.xml")])
-class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : PersistentStateComponent<TerminalOptionsProvider.State> {
+class TerminalOptionsProvider(internal val coroutineScope: CoroutineScope) : PersistentStateComponent<TerminalOptionsProvider.State> {
   private var state = State()
 
   override fun getState(): State = state
@@ -34,7 +32,7 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
   override fun loadState(newState: State) {
     state = newState
 
-    performSettingsInitializationOnce()
+    ExperimentalTerminalMigration.migrateTerminalEngineOnce(options = this)
 
     // In the case of RemDev settings are synced from backend to frontend using `loadState` method.
     // So, notify the listeners on every `loadState` to not miss the change.
@@ -48,9 +46,6 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
   class State {
     @ApiStatus.Internal
     var terminalEngine: TerminalEngine = TerminalEngine.REWORKED
-
-    @ApiStatus.Internal
-    var terminalEngineInRemDev: TerminalEngine = TerminalEngine.REWORKED
 
     @ApiStatus.Internal
     var showCompletionPopupAutomatically: Boolean = true
@@ -96,23 +91,11 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
 
   // Nice property delegation (var shellPath: String? by state::myShellPath) cannot be used on `var` properties (KTIJ-19450)
 
-  /**
-   * We use different default values for the terminal engine in monolith and RemDev mode.
-   * So, the getter returns the state depending on that.
-   * But the setter applies the provided value to both monolith and RemDev modes.
-   * So, when a user changes the default in any mode, it will be applied everywhere.
-   */
   var terminalEngine: TerminalEngine
-    get() {
-      return if (AppMode.isRemoteDevHost() || PlatformUtils.isJetBrainsClient()) {
-        state.terminalEngineInRemDev
-      }
-      else state.terminalEngine
-    }
+    get() = state.terminalEngine
     set(value) {
-      if (state.terminalEngine != value || state.terminalEngineInRemDev != value) {
+      if (state.terminalEngine != value) {
         state.terminalEngine = value
-        state.terminalEngineInRemDev = value
         fireSettingsChanged()
       }
     }
@@ -286,70 +269,14 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
       }
     }
 
-  private fun performSettingsInitializationOnce() {
-    RunOnceUtil.runOnceForApp("TerminalOptionsProvider.migration.2025.1.1") {
-      updateFrontendSettingsAndSync(coroutineScope) {
-        migrateCursorShape()
-        // Disable the terminal engine migration.
-        // Now it is Reworked by default, not depending on the previously set settings.
-        //initializeTerminalEngine()
-      }
-    }
-  }
-
-  private fun migrateCursorShape() {
-    val previousCursorShape = TerminalUiSettingsManager.getInstance().cursorShape
-    state.cursorShape = previousCursorShape
-
-    LOG.info("Initialized TerminalOptionsProvider.cursorShape value to ${state.cursorShape}")
-  }
-
-  // Left to prevent possible merge conflicts if we need to change something there and backport to the stable release.
-  @Suppress("unused")
-  private fun initializeTerminalEngine() {
-    if (TerminalNewUserTracker.isNewUser()) {
-      state.terminalEngine = TerminalEngine.REWORKED
-      TerminalNewUserTracker.clearNewUserValue()
-
-      LOG.info("Initialized TerminalOptionsProvider.terminalEngine to ${state.terminalEngine} (new user).")
-    }
-    else {
-      migrateTerminalEngineFromRegistry()
-    }
-  }
-
-  private fun migrateTerminalEngineFromRegistry() {
-    // The initial state of the terminal engine value should be composed out of registry values
-    // used previously to determine what terminal to use.
-    val isReworkedValue = Registry.`is`(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY)
-    val isNewTerminalValue = Registry.`is`(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY)
-
-    // Order of conditions is important!
-    // New Terminal registry prevails, even if reworked registry is enabled.
-    state.terminalEngine = when {
-      isNewTerminalValue -> TerminalEngine.NEW_TERMINAL
-      isReworkedValue -> TerminalEngine.REWORKED
-      else -> TerminalEngine.CLASSIC
-    }
-
-    LOG.info("Initialized TerminalOptionsProvider.terminalEngine value from registry to ${state.terminalEngine}")
-  }
-
   companion object {
     val instance: TerminalOptionsProvider
       @JvmStatic
       get() = service()
 
-    private val LOG = logger<TerminalOptionsProvider>()
-
     internal const val COMPONENT_NAME: String = "TerminalOptionsProvider"
 
-    private fun defaultTabName(): @Nls String {
-      return if (AppModeAssertions.isMonolith()) {
-        TerminalBundle.message("local.terminal.default.name")
-      }
-      else TerminalBundle.message("remote.terminal.default.name")
-    }
+    private fun defaultTabName(): @Nls String = TerminalBundle.message(if (AppMode.isMonolith()) "local.terminal.default.name" else "remote.terminal.default.name")
   }
 
   class PresentableNameGetter: com.intellij.openapi.components.State.NameGetter() {

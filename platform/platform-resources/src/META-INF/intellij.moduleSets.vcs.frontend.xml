@@ -1,5 +1,0 @@
-<idea-plugin>
-  <content namespace="jetbrains">
-    <module name="intellij.platform.vcs.impl.frontend"/>
-  </content>
-</idea-plugin>

@@ -3,7 +3,7 @@
   "definitions": {
     "color": {
       "type": "string",
-      "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$",
+      "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?)|([\\w.-]+)$",
       "title": "Color",
       "description": "Color in #RRGGBB or #RRGGBBAA format",
       "examples": [

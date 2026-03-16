@@ -75,3 +75,27 @@ class F {
     this.field = field;
   }
 }
+class X {
+  @NotNull String s;
+
+  X(boolean b, String s) {
+    if (b) {
+      this.s = s;
+    } else {
+      this.s = "";
+    }
+  }
+}
+class TwoAssignments {
+  @NotNull String s;
+
+  TwoAssignments(boolean b, String <warning descr="Constructor parameter for @NotNull field might be annotated @NotNull itself">s</warning>) {
+    if (b) {
+      System.out.println("true");
+      this.s = s;
+    } else {
+      System.out.println("false");
+      this.s = s;
+    }
+  }
+}

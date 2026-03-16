@@ -10,7 +10,13 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleScheme;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.PackageEntry;
+import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.impl.source.codeStyle.json.CodeStyleSchemeJsonExporter;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -83,6 +89,15 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
   }
 
   public void testNotFirstImportModule() throws IOException {
+    importFromXmlToJson();
+  }
+
+  public void testNotFirstImportModuleAfterMigration() throws IOException {
+    importFromXmlToJson();
+  }
+
+
+  private void importFromXmlToJson() throws IOException {
     CodeStyleScheme testScheme = new CodeStyleScheme() {
 
       @NotNull

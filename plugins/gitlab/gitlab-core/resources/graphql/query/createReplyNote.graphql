@@ -1,8 +1,0 @@
-mutation($noteableId: NoteableID!, $body: String!, $discussionId: DiscussionID!) {
-  createNote(input: {noteableId: $noteableId, body: $body, discussionId: $discussionId}){
-    note {
-      ...note
-    }
-    errors
-  }
-}

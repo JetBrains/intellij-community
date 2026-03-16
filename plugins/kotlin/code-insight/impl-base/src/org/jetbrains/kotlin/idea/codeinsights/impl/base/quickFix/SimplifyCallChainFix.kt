@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix
 
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -12,9 +11,17 @@ import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
+import org.jetbrains.kotlin.idea.imports.addImportFor
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtPostfixExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
+import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -22,7 +29,7 @@ class SimplifyCallChainFix(
     private val conversion: CallChainConversion,
     private val modifyArguments: KtPsiFactory.(KtCallExpression) -> Unit = {}
 ) : KotlinModCommandQuickFix<KtQualifiedExpression>() {
-    private val shortenedText = conversion.replacement.substringAfterLast(".")
+    private val shortenedText = conversion.replacementName
 
     override fun getFamilyName(): String = KotlinBundle.message("simplify.call.chain.fix.text", shortenedText)
 
@@ -63,7 +70,7 @@ class SimplifyCallChainFix(
             lambdaExpression?.text
         ).joinToString(separator = ",")
 
-        val newCallText = conversion.replacement
+        val newCallText = conversion.replacementName
         val newQualifiedOrCallExpression = psiFactory.createExpression(
             "$receiverExpressionOrEmptyString$operationSign$newCallText($argumentsText)"
         )
@@ -93,8 +100,12 @@ class SimplifyCallChainFix(
         }
 
         result.containingKtFile.commitAndUnblockDocument()
-        @OptIn(KaIdeApi::class)
-        if (result.isValid) shortenReferences(result.reformatted() as KtElement)
+
+        if (result.isValid) {
+            result.containingKtFile.addImportFor(conversion.replacementFqName)
+
+            shortenReferences(result.reformatted() as KtElement)
+        }
     }
 
     override fun applyFix(project: Project, element: KtQualifiedExpression, updater: ModPsiUpdater) {

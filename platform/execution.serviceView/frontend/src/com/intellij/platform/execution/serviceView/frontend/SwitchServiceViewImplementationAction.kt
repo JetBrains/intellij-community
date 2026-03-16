@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
@@ -38,7 +37,7 @@ internal class SwitchServiceViewImplementationAction : DumbAwareToggleAction(), 
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    currentThreadCoroutineScope().launch {
+    e.coroutineScope.launch {
       val app = ApplicationManagerEx.getApplicationEx()
       val restartAllowed = withContext(Dispatchers.EDT) {
         if (app == null) {

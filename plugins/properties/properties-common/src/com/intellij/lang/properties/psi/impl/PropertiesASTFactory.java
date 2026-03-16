@@ -3,7 +3,11 @@ package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.impl.source.tree.PsiCommentImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import org.jetbrains.annotations.NotNull;

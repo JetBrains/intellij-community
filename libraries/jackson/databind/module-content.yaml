@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.jackson.databind.jar
   modules:
   - name: intellij.libraries.jackson.databind
   library: jackson-databind

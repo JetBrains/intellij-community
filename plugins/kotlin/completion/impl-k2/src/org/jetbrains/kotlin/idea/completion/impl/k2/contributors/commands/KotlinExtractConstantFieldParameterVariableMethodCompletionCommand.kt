@@ -13,7 +13,15 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtContainerNodeForControlStructureBody
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtLoopExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal class KotlinExtractParameterCompletionCommandProvider : AbstractExtractParameterCompletionCommandProvider() {
     override fun findOffsetToCall(offset: Int, psiFile: PsiFile): Int? {

@@ -1,6 +1,14 @@
 package com.intellij.database.run.ui.grid;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridColumnLayout;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtil;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.ModelIndexSet;
+import com.intellij.database.datagrid.ResultViewColumn;
+import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.run.ui.table.TableResultView;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ObjectUtils;
@@ -8,11 +16,17 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.CellRendererPane;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
 
 public class DefaultGridColumnLayout implements GridColumnLayout<GridRow, GridColumn> {

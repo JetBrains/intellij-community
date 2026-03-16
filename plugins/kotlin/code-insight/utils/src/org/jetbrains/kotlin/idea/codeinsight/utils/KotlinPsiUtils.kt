@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.lang.jvm.JvmModifier
@@ -29,9 +29,56 @@ import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtBackingField
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtDoWhileExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtIsExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
+import org.jetbrains.kotlin.psi.KtPrefixExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeArgumentList
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtWhileExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getLastParentOfTypeInRow
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
+import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isAbstract
+import org.jetbrains.kotlin.psi.psiUtil.isAncestor
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
 
 fun KtContainerNode.getControlFlowElementDescription(): String? {
     when (node.elementType) {
@@ -282,7 +329,7 @@ private fun KtExpression.isIntegerConstantOfValue(value: Int): Boolean {
     val deparenthesized = KtPsiUtil.deparenthesize(this) as? KtConstantExpression
         ?: return false
 
-    return deparenthesized.elementType == KtStubElementTypes.INTEGER_CONSTANT
+    return deparenthesized.iElementType == KtNodeTypes.INTEGER_CONSTANT
             && deparenthesized.text.toIntOrNull() == value
 }
 
@@ -390,11 +437,15 @@ operator fun FqName.plus(name: Name): FqName = child(name)
 @ApiStatus.Internal
 operator fun FqName.plus(name: String): FqName = this + Name.identifier(name)
 
-private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES = arrayOf(
-    StandardKotlinNames.Enum.enumEntries,
-    StandardKotlinNames.Enum.enumValues,
-    StandardKotlinNames.Enum.enumValueOf
-)
+private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES: Array<FqName>
+    /* An initialization cycle between KotlinPsiUtils.kt and StandardKotlinNames.kt causes this property to be initialized with
+    an array of nulls. To prevent this, use a getter to guarantee that a non-null value is returned upon calling it.
+    */
+    get() = arrayOf(
+        StandardKotlinNames.Enum.enumEntries,
+        StandardKotlinNames.Enum.enumValues,
+        StandardKotlinNames.Enum.enumValueOf
+    )
 
 @OptIn(KaContextParameterApi::class)
 context(_: KaSession)
@@ -466,3 +517,5 @@ fun KtParenthesizedExpression.removeUnnecessaryParentheses() {
 
     commentSaver.restore(replaced)
 }
+
+fun KtProperty.hasExplicitBackingField(): Boolean = this.allChildren.find { it is KtBackingField } != null

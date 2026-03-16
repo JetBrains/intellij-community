@@ -23,6 +23,9 @@ import org.jetbrains.annotations.Nullable
 import java.lang.ref.SoftReference
 
 
+/**
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/structure-aware-navbar.html">Structure Aware Navigation Bar (IntelliJ Platform Docs)</a>
+ */
 abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension() {
   protected abstract val language: Language
   private var currentFile: SoftReference<PsiFile>? = null

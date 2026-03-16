@@ -1,4 +1,3 @@
-// IGNORE_K2
 package a
 
 import java.util.ArrayList

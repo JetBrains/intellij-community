@@ -7,7 +7,13 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.ide.DataManager;
-import com.intellij.lang.*;
+import com.intellij.lang.CodeDocumentationAwareCommenter;
+import com.intellij.lang.Commenter;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageCommenters;
+import com.intellij.lang.LanguageDocumentation;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -17,7 +23,13 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataContextWrapper;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -27,7 +39,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -304,13 +320,25 @@ public class EnterHandler extends BaseEnterHandler {
    *         {@code -1} if commit-free indent adjustment is unavailable in position.
    */
   public static int adjustLineIndentNoCommit(Language language, @NotNull Document document, @NotNull Editor editor, int offset) {
-    final CharSequence docChars = document.getCharsSequence();
-    int indentStart = CharArrayUtil.shiftBackwardUntil(docChars, offset - 1, "\n") + 1;
-    int indentEnd = CharArrayUtil.shiftForward(docChars, indentStart, " \t");
     String newIndent = CodeStyle.getLineIndent(editor, language, offset, false);
     if (newIndent == null) {
       return -1;
     }
+    return adjustLineIndentNoCommit(document, offset, newIndent);
+  }
+
+  /**
+   * Adjusts indentation of the line with {@code offset} in {@code document}.
+   *
+   * @param document for indent adjustment
+   * @param offset   in {@code document} for indent adjustment
+   * @param newIndent new indentation string (containing spaces or linebreaks)
+   * @return new offset in the {@code document} after commit-free indent adjustment.
+   */
+  public static int adjustLineIndentNoCommit(@NotNull Document document, int offset, String newIndent) {
+    final CharSequence docChars = document.getCharsSequence();
+    int indentStart = CharArrayUtil.shiftBackwardUntil(docChars, offset - 1, "\n") + 1;
+    int indentEnd = CharArrayUtil.shiftForward(docChars, indentStart, " \t");
     if (Strings.areSameInstance(newIndent, LineIndentProvider.DO_NOT_ADJUST)) {
       return offset;
     }

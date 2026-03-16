@@ -5,7 +5,15 @@ import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.DefaultLogger;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.DefaultPluginDescriptor;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.ExtensionPointUtil;
+import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -20,11 +28,17 @@ import org.junit.After;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 
 public class ExtensionPointImplTest {
   private Disposable disposable = Disposer.newDisposable();

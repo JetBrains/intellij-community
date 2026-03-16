@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal">
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.platform.compose" />
     <module name="intellij.platform.jewel.markdown.core" />

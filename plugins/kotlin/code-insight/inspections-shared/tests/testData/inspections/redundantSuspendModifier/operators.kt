@@ -72,3 +72,29 @@ open class E {
 suspend fun foo(): Int {
     return someFunctionThatDoesntResolve()
 }
+
+class ContainsOperator {
+    suspend operator fun ContainsOperator.contains(o: String): Boolean = false
+
+    // Not redundant
+    suspend fun barNot() {
+        var f: ContainsOperator = this
+        val not = "" !in f
+        val inn = "" in f
+    }
+
+    // Not redundant
+    suspend fun bar() {
+        var f: ContainsOperator = this
+        val inn = "" in f
+    }
+}
+
+class DataClass(val id: Int, val name: String)
+suspend operator fun DataClass.component2(): String = name
+suspend operator fun DataClass.component1(): Int = id
+
+// Not Redundant
+suspend fun bar(dataClass: DataClass) {
+    val (i1, n1) =  dataClass
+}

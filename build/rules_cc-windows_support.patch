@@ -1,0 +1,19 @@
+Subject: [PATCH] Apply default compile flags passed as attrs in Windows MSVC toolchain config
+---
+Index: cc/private/toolchain/windows_cc_toolchain_config.bzl
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/cc/private/toolchain/windows_cc_toolchain_config.bzl b/cc/private/toolchain/windows_cc_toolchain_config.bzl
+--- a/cc/private/toolchain/windows_cc_toolchain_config.bzl	(revision 285fdce428cf3c5cf8e35c9f0ac4247e8e27ec58)
++++ b/cc/private/toolchain/windows_cc_toolchain_config.bzl	(revision 4725b6bc7cab46b59e1b2915c7f1f9c8d585e9e9)
+@@ -778,7 +778,7 @@
+                                 "/wd4291",
+                                 "/wd4250",
+                                 "/wd4996",
+-                            ],
++                            ] + ctx.attr.default_compile_flags,
+                         ),
+                     ],
+                 ),

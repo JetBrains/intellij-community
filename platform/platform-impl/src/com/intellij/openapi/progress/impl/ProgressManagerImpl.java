@@ -6,8 +6,16 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.Cancellation;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressManagerListener;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -27,14 +35,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
 import java.util.List;
 
 public final class ProgressManagerImpl extends CoreProgressManager implements Disposable {
   private static final Key<Boolean> SAFE_PROGRESS_INDICATOR = Key.create("SAFE_PROGRESS_INDICATOR");
   private final List<CheckCanceledHook> myHooks = ContainerUtil.createEmptyCOWList();
   private volatile boolean myRunSleepHook; // optimization: to avoid adding/removing mySleepHook to myHooks constantly this flag is used
+
+  private static final Logger LOG = Logger.getInstance(ProgressManagerImpl.class);
+  private static final ThrottledLogger THROTTLED_LOGGER = new ThrottledLogger(LOG, 100);
 
   public ProgressManagerImpl() {
     ExtensionPointImpl.Companion.setCheckCanceledAction(ProgressManager::checkCanceled);
@@ -99,63 +111,32 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
 
   @Override
   protected void fireNonCancellableEvent() {
-    if (!shouldFireCheckCanceledEvent()) {
-      return;
-    }
-    CheckCanceledEvent event = new CheckCanceledEvent(true, false, false, false, false, false);
-    if (event.isEnabled() && event.shouldCommit()) {
-      event.commit();
-    }
+    commitCheckCanceledJfrEvent(true, false, HasContextJob.NO, false, false, false);
   }
 
   @Override
   protected void fireCanceledByJobEvent() {
-    if (!shouldFireCheckCanceledEvent()) {
-      return;
-    }
-    CheckCanceledEvent event = new CheckCanceledEvent(false, false, true, false, false, true);
-    if (event.isEnabled() && event.shouldCommit()) {
-      event.commit();
-    }
+    commitCheckCanceledJfrEvent(false, false, HasContextJob.YES, false, false, true);
   }
 
   @Override
   protected void fireCanceledByIndicatorEvent(@Nullable ProgressIndicator indicator) {
-    if (!shouldFireCheckCanceledEvent()) {
-      return;
-    }
-    @SuppressWarnings("TestOnlyProblems")
-    CheckCanceledEvent event = new CheckCanceledEvent(false,
-                                                      indicator != null,
-                                                      Cancellation.currentJob() != null,
-                                                      false,
-                                                      false,
-                                                      indicator != null && indicator.isCanceled());
-    if (event.isEnabled() && event.shouldCommit()) {
-      event.commit();
-    }
+    commitCheckCanceledJfrEvent(false,
+                                indicator != null,
+                                HasContextJob.INFER,
+                                false,
+                                false,
+                                indicator != null && indicator.isCanceled());
   }
 
   @Override
   protected void fireCheckCanceledNone() {
-    if (!shouldFireCheckCanceledEvent()) {
-      return;
-    }
-    CheckCanceledEvent event = new CheckCanceledEvent(false, false, Cancellation.currentJob() != null, true, false, false);
-    if (event.isEnabled() && event.shouldCommit()) {
-      event.commit();
-    }
+    commitCheckCanceledJfrEvent(false, false, HasContextJob.INFER, true, false, false);
   }
 
   @Override
   protected void fireCheckCanceledOnlyHooks() {
-    if (!shouldFireCheckCanceledEvent()) {
-      return;
-    }
-    CheckCanceledEvent event = new CheckCanceledEvent(false, false, Cancellation.currentJob() != null, false, true, false);
-    if (event.isEnabled() && event.shouldCommit()) {
-      event.commit();
-    }
+    commitCheckCanceledJfrEvent(false, false, HasContextJob.INFER, false, true, false);
   }
 
   private static void systemNotify(@NotNull Task.NotificationInfo info) {
@@ -165,6 +146,42 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
   private static boolean shouldFireCheckCanceledEvent() {
     ApplicationEx applicationManagerEx = ApplicationManagerEx.getApplicationEx();
     return applicationManagerEx != null && applicationManagerEx.isWriteActionPending() && applicationManagerEx.isReadAccessAllowed();
+  }
+
+  private static void commitCheckCanceledJfrEvent(boolean nonCancellable,
+                                                  boolean hasProgressIndicator,
+                                                  @NotNull HasContextJob hasContextJob,
+                                                  boolean hasNoneBehavior,
+                                                  boolean hasOnlyHooksBehavior,
+                                                  boolean cancelled) {
+    if (!shouldFireCheckCanceledEvent()) {
+      return;
+    }
+
+    boolean hasContextJobValue = hasContextJob.value();
+    THROTTLED_LOGGER.info(() -> {
+      return "checkCancelled is invoked while write-action is pending." +
+             " nonCancellable: " + nonCancellable +
+             ", hasProgressIndicator: " + hasProgressIndicator +
+             ", hasContextJob: " + hasContextJobValue +
+             ", hasNoneBehavior: " + hasNoneBehavior +
+             ", hasOnlyHooksBehavior: " + hasOnlyHooksBehavior +
+             ", cancelled: " + cancelled;
+    });
+    CheckCanceledEvent.commit(nonCancellable, hasProgressIndicator, hasContextJobValue, hasNoneBehavior, hasOnlyHooksBehavior, cancelled);
+  }
+
+  private enum HasContextJob {
+    YES, NO, INFER;
+
+    boolean value() {
+      return switch (this) {
+        case YES -> true;
+        case NO -> false;
+        case INFER -> //noinspection TestOnlyProblems
+          Cancellation.currentJob() != null;
+      };
+    }
   }
 
   @Override
@@ -340,24 +357,12 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
 
     @Override
     public void nonCanceledSectionInvoked() {
-      if (!shouldFireCheckCanceledEvent()) {
-        return;
-      }
-      CheckCanceledEvent event = new CheckCanceledEvent(true, false, Cancellation.currentJob() != null, false, false, false);
-      if (event.isEnabled() && event.shouldCommit()) {
-        event.commit();
-      }
+      commitCheckCanceledJfrEvent(true, false, HasContextJob.INFER, false, false, false);
     }
 
     @Override
     public void cancellableSectionInvoked(boolean wasCanceled) {
-      if (!shouldFireCheckCanceledEvent()) {
-        return;
-      }
-      CheckCanceledEvent event = new CheckCanceledEvent(false, false, Cancellation.currentJob() != null, false, false, wasCanceled);
-      if (event.isEnabled() && event.shouldCommit()) {
-        event.commit();
-      }
+      commitCheckCanceledJfrEvent(false, false, HasContextJob.INFER, false, false, wasCanceled);
     }
   }
 }

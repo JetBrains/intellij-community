@@ -49,7 +49,7 @@ public abstract class IntroduceValidator {
 
   public static boolean isDefinedInScope(String name, PsiElement psiElement) {
     if (psiElement.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE) != null) {
-      final Pair<PsiElement,TextRange> data = psiElement.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
+      final Pair<PsiElement, TextRange> data = psiElement.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
       psiElement = data.first;
     }
     PsiElement context = PsiTreeUtil.getParentOfType(psiElement, PyFunction.class);

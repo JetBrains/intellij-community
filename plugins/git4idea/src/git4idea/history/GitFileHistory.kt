@@ -27,7 +27,7 @@ import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.Date
 import java.util.function.Consumer
 
 /**

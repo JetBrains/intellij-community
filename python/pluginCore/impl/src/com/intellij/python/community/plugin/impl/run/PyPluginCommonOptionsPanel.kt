@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.impl.run
 
 import com.intellij.application.options.ModulesComboBox
@@ -9,7 +9,14 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.RawCommandLineEditor
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.layout.selected
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm
@@ -17,7 +24,7 @@ import com.jetbrains.python.sdk.PySdkListCellRenderer
 import javax.swing.JCheckBox
 import javax.swing.JRadioButton
 
-class PyPluginCommonOptionsPanel {
+internal class PyPluginCommonOptionsPanel {
 
   lateinit var envsComponent: EnvironmentVariablesComponent
   lateinit var useModuleSdkRadioButton: JRadioButton

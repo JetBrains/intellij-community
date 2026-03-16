@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.GlobalOptions;
@@ -16,8 +17,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Filter;
+import java.util.logging.Level;
 import java.util.logging.LogManager;
 
 import static com.intellij.openapi.diagnostic.InMemoryHandler.FAILED_BUILD_LOG_FILE_NAME_PREFIX;
@@ -49,15 +55,17 @@ public final class LogSetup {
 
         List<String> classesToFilter = acceptConfig(configFile);
         if (!classesToFilter.isEmpty()) {
-          filter = JulLogger.createFilter(classesToFilter);
+          filter = record -> record.getLevel().intValue() > Level.FINE.intValue() ||
+                             !ContainerUtil.exists(classesToFilter, record.getLoggerName()::startsWith);
         }
-      } else {
+      }
+      else {
         JulLogger.clearHandlers();
         try (InputStream in = new BufferedInputStream(Files.newInputStream(configFile))) {
           LogManager.getLogManager().readConfiguration(in);
         }
       }
-      JulLogger.configureLogFileAndConsole(logFilePath, true, true, true, null, filter, failedBuildLogPath);
+      JulLogger.configureLogFileAndConsole(logFilePath, true, true, true, false, null, filter, failedBuildLogPath);
     }
     catch (IOException e) {
       //noinspection UseOfSystemOutOrSystemErr

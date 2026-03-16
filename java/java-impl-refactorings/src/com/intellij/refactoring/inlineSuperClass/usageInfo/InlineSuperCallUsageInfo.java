@@ -3,7 +3,17 @@
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.inline.InlineMethodProcessor;
 import com.intellij.refactoring.inline.ReferencedElementsCollector;

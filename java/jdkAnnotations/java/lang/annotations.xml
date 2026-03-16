@@ -5,6 +5,11 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.lang.Boolean Boolean(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.lang.Boolean boolean getBoolean(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
@@ -44,7 +49,17 @@
   <item name='java.lang.Boolean java.lang.Boolean valueOf(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.lang.Byte Byte(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.lang.Byte byte parseByte(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Byte byte parseByte(java.lang.String, int)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -651,6 +666,11 @@
   <item name="java.lang.Comparable int compareTo(T) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.lang.Double Double(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.lang.Double double parseDouble(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
@@ -680,6 +700,11 @@
   <item name='java.lang.Enum java.lang.String name()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.lang.Float Float(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.lang.Float float parseFloat(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
@@ -687,6 +712,16 @@
   </item>
   <item name='java.lang.Float java.lang.Float valueOf(float)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Integer Integer(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Integer Integer(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.lang.Integer int bitCount(int)'>
     <annotation name='org.jetbrains.annotations.Range'>
@@ -706,12 +741,22 @@
       <val name="to" val="32"/>
     </annotation>
   </item>
-    <item name='java.lang.Integer int parseInt(java.lang.String)'>
+  <item name='java.lang.Integer int parseInt(java.lang.CharSequence, int, int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Integer int parseInt(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.lang.Integer java.lang.Integer decode(java.lang.String)'>
+  <item name='java.lang.Integer int parseInt(java.lang.String, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Integer java.lang.Integer decode(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
@@ -758,6 +803,11 @@
   </item>
   <item name='java.lang.Iterable java.util.Iterator&lt;T&gt; iterator()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Long Long(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.lang.Long int bitCount(long)'>
     <annotation name='org.jetbrains.annotations.Range'>
@@ -807,7 +857,17 @@
   <item name='java.lang.Long java.lang.Long valueOf(long)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.lang.Long long parseLong(java.lang.CharSequence, int, int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.lang.Long long parseLong(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Long long parseLong(java.lang.String, int)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -1058,6 +1118,11 @@
   <item name="java.lang.RuntimeException RuntimeException(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name='java.lang.Short Short(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.lang.Short int intValue()'>
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="java.lang.Short.MIN_VALUE"/>
@@ -1095,6 +1160,11 @@
     </annotation>
   </item>
   <item name='java.lang.Short short parseShort(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Short short parseShort(java.lang.String, int)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -1654,6 +1724,26 @@
   </item>
   <item name="java.lang.String void getChars(int, int, char[], int) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name='java.lang.StringBuffer StringBuffer(java.lang.CharSequence)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.StringBuffer StringBuffer(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.StringBuilder StringBuilder(java.lang.CharSequence)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.StringBuilder StringBuilder(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.lang.SuppressWarnings java.lang.String[] value()'>
     <annotation name='org.jetbrains.annotations.NonNls'/>

@@ -3,7 +3,11 @@ package org.jetbrains.uast.analysis
 
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiType
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UReferenceExpression
 
 sealed class Dependent : UserDataHolderBase() {
   abstract val element: UElement

@@ -54,9 +54,11 @@ data class LanguageDto(
   @Transient val language: Language? = null,
 )
 
-private fun Language.toRpc(): LanguageDto = LanguageDto(id, this)
+@ApiStatus.Internal
+fun Language.toRpc(): LanguageDto = LanguageDto(id, this)
 
-private fun LanguageDto.language(): Language? = language ?: Language.findLanguageByID(id)
+@ApiStatus.Internal
+fun LanguageDto.language(): Language? = language ?: Language.findLanguageByID(id)
 
 @ApiStatus.Internal
 @Serializable

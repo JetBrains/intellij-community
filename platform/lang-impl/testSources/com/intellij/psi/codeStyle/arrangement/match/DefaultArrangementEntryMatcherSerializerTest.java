@@ -16,9 +16,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
-import static org.junit.Assert.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.CLASS;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.FINAL;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PRIVATE;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.STATIC;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.SYNCHRONIZED;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class DefaultArrangementEntryMatcherSerializerTest {
 

@@ -4,8 +4,18 @@ package com.intellij.internal.jcef.test.cases
 import com.intellij.internal.jcef.test.JBCefTestAppFrame
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.ui.components.JBScrollPane
-import java.awt.*
-import javax.swing.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.FlowLayout
+import java.awt.Font
+import java.awt.Graphics
+import javax.swing.BorderFactory
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.UIManager
 
 
 internal class PerformanceTest : JBCefTestAppFrame.TestCase() {
@@ -13,10 +23,10 @@ internal class PerformanceTest : JBCefTestAppFrame.TestCase() {
 
   override fun getComponent(): Component {
     val panel = JPanel(VerticalFlowLayout(FlowLayout.LEFT))
-    panel.add(createTestCaseItem("Resize test", "Measures the time to redraw the component after resize", "Start Test", ::runSimpleResizeTest))
-    panel.add(createTestCaseItem("Manual scrolling test", "Manual scrolling with the scrolling requested/performed diagram", "Start Test", ::runScrollingTest))
-    panel.add(createTestCaseItem("FPS test", "A simple FPS test", "Start Test", ::runFpsTest))
-    panel.add(createTestCaseItem("CPU usage", "JCEF CPU usage statistic", "Show", ::showCpuUsage))
+    panel.add(TestCasePanel("Resize test", "Measures the time to redraw the component after resize", "Start Test", ::runSimpleResizeTest))
+    panel.add(TestCasePanel("Manual scrolling test", "Manual scrolling with the scrolling requested/performed diagram", "Start Test", ::runScrollingTest))
+    panel.add(TestCasePanel("FPS test", "A simple FPS test", "Start Test", ::runFpsTest))
+    panel.add(TestCasePanel("CPU usage", "JCEF CPU usage statistic", "Show", ::showCpuUsage))
 
     val scrollPane = JBScrollPane(panel)
     scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
@@ -28,9 +38,27 @@ internal class PerformanceTest : JBCefTestAppFrame.TestCase() {
   override fun initializeImpl() {
   }
 
-  private fun createTestCaseItem(title: String, description: String, buttonText: String, runTest: () -> Unit): JPanel {
-    val section = JPanel(BorderLayout(10, 5))
-    section.border = BorderFactory.createCompoundBorder(
+class RepaintListener(component: Component, var onRepaint: () -> Unit) : JPanel() {
+  constructor(component: Component) : this(component, {})
+    init {
+      layout = BorderLayout()
+      add(component)
+    }
+
+    override fun paint(g: Graphics?) {
+      super.paint(g)
+      onRepaint()
+    }
+  }
+}
+
+internal class TestCasePanel : JPanel {
+  constructor() : super(BorderLayout(10, 5))
+  constructor(title: String, description: String, runComponent: JComponent) : this() {
+    initializeImpl(title, description, runComponent)
+  }
+  private fun initializeImpl(title: String, description: String, runComponent: JComponent) {
+    this.border = BorderFactory.createCompoundBorder(
       BorderFactory.createLineBorder(UIManager.getColor("Component.borderColor")),
       BorderFactory.createEmptyBorder(10, 10, 10, 10)
     )
@@ -45,25 +73,13 @@ internal class PerformanceTest : JBCefTestAppFrame.TestCase() {
     textPanel.add(titleLabel, BorderLayout.NORTH)
     textPanel.add(descLabel, BorderLayout.CENTER)
 
-    val startButton = JButton(buttonText)
-    startButton.addActionListener { runTest() }
-
-    section.add(textPanel, BorderLayout.CENTER)
-    section.add(startButton, BorderLayout.EAST)
-
-    return section
+    this.add(textPanel, BorderLayout.CENTER)
+    this.add(runComponent, BorderLayout.EAST)
   }
 
-class RepaintListener(component: Component, var onRepaint: () -> Unit) : JPanel() {
-  constructor(component: Component) : this(component, {})
-    init {
-      layout = BorderLayout()
-      add(component)
-    }
-
-    override fun paint(g: Graphics?) {
-      super.paint(g)
-      onRepaint()
-    }
+  constructor(title: String, description: String, buttonText: String, runTest: () -> Unit) : this() {
+    val startButton = JButton(buttonText)
+    startButton.addActionListener { runTest() }
+    initializeImpl(title, description, startButton)
   }
 }

@@ -17,7 +17,9 @@ package com.intellij.ui.components;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JPanel;
 
 /**
  * Custom class overriding the default {@link Box} behavior for accessibility

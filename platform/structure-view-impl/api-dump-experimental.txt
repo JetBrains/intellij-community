@@ -12,6 +12,7 @@
 - f:getTreeElement(java.lang.Object):com.intellij.ide.structureView.StructureViewTreeElement
 *:com.intellij.ide.structureView.logical.model.ExtendedLogicalObject
 - canRepresentPsiElement(com.intellij.psi.PsiElement):Z
+- isTargetToExternalElement():Z
 - isTheSameParent(java.lang.Object):Z
 *:com.intellij.ide.structureView.logical.model.LogicalContainer
 - a:getElements():java.util.List

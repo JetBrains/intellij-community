@@ -8,11 +8,22 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.testFramework.JavaResolveTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.IntStreamEx;
@@ -22,6 +33,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+@PerformanceUnitTest
 public class ResolvePerformanceTest extends JavaResolveTestCase {
   public void testPerformance1() throws Exception{
     final String fullPath = PathManagerEx.getTestDataPath() + "/psi/resolve/Thinlet.java";

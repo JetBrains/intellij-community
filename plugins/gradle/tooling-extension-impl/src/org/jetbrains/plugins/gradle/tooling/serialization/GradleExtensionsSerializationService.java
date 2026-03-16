@@ -6,7 +6,16 @@ import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.DefaultGradleConfiguration;
+import org.jetbrains.plugins.gradle.model.DefaultGradleConvention;
+import org.jetbrains.plugins.gradle.model.DefaultGradleExtension;
+import org.jetbrains.plugins.gradle.model.DefaultGradleExtensions;
+import org.jetbrains.plugins.gradle.model.DefaultGradleProperty;
+import org.jetbrains.plugins.gradle.model.GradleConfiguration;
+import org.jetbrains.plugins.gradle.model.GradleConvention;
+import org.jetbrains.plugins.gradle.model.GradleExtension;
+import org.jetbrains.plugins.gradle.model.GradleExtensions;
+import org.jetbrains.plugins.gradle.model.GradleProperty;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap.SimpleObjectFactory;
 import org.jetbrains.plugins.gradle.tooling.util.ObjectCollector;
@@ -16,7 +25,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.*;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.OBJECT_ID_FIELD;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.assertNotNull;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.createIonWriter;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readBoolean;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readInt;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readString;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readStringList;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeBoolean;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeString;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeStrings;
 
 /**
  * @author Vladislav.Soroka

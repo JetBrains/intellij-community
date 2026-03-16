@@ -4,7 +4,13 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.objectTree.ReferenceDelegatingDisposableInternal;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.function.Predicate;
 
@@ -159,7 +165,7 @@ public final class Disposer {
    *                                     if {@code parent} is being disposed or already disposed, see {@link #isDisposed(Disposable)}.
    */
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) throws IncorrectOperationException {
-    ourTree.register(dereferenceIfNeeded(parent), child);
+    ourTree.register(dereferenceIfNeeded(parent), dereferenceIfNeeded(child));
   }
 
   /**
@@ -167,7 +173,7 @@ public final class Disposer {
    * @return whether the registration succeeded
    */
   public static boolean tryRegister(@NotNull Disposable parent, @NotNull Disposable child) {
-    return ourTree.tryRegister(dereferenceIfNeeded(parent), child);
+    return ourTree.tryRegister(dereferenceIfNeeded(parent), dereferenceIfNeeded(child));
   }
 
   /**
@@ -196,7 +202,7 @@ public final class Disposer {
   }
 
   public static void dispose(@NotNull Disposable disposable) {
-    dispose(dereferenceIfNeeded(disposable), true);
+    dispose(disposable, true);
   }
 
   /**

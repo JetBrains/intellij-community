@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.netty.buffer` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "buffer_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "buffer",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":buffer_resources"],
+  exports = ["@lib//:netty-buffer"],
+  runtime_deps = ["@lib//:netty-buffer"]
+)
+### auto-generated section `build intellij.libraries.netty.buffer` end

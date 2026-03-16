@@ -10,12 +10,13 @@ import com.intellij.execution.process.ProcessOutputType
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class OutputBuildEventBuilderImpl : OutputBuildEventBuilder {
+class OutputBuildEventBuilderImpl(
+  private val message: @Message String
+) : OutputBuildEventBuilder {
 
   private var id: Any? = null
   private var parentId: Any? = null
   private var time: Long? = null
-  private var message: @Message String? = null
   private var hint: @Hint String? = null
   private var description: @Description String? = null
 
@@ -30,9 +31,6 @@ class OutputBuildEventBuilderImpl : OutputBuildEventBuilder {
   override fun withTime(time: Long?): OutputBuildEventBuilderImpl =
     apply { this.time = time }
 
-  override fun withMessage(message: @Message String): OutputBuildEventBuilderImpl =
-    apply { this.message = message }
-
   override fun withHint(hint: @Hint String?): OutputBuildEventBuilderImpl =
     apply { this.hint = hint }
 
@@ -43,13 +41,5 @@ class OutputBuildEventBuilderImpl : OutputBuildEventBuilder {
     apply { this.outputType = outputType }
 
   override fun build(): OutputBuildEventImpl =
-    OutputBuildEventImpl(
-      id,
-      parentId,
-      time,
-      message ?: throw IllegalStateException("The OutputBuildEvent's 'message' property should be defined"),
-      hint,
-      description,
-      outputType
-    )
+    OutputBuildEventImpl(id, parentId, time, message, hint, description, outputType)
 }

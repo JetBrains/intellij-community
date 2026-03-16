@@ -5,7 +5,12 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 final class GetCompositeCollectionInvocation implements Invocation {
   private final Set<? extends CollectionChildDescriptionImpl> myQnames;

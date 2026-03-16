@@ -6,7 +6,10 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.util.*
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.ReadActionCachedValue
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.splitLineRanges

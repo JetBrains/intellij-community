@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl.livePreview;
 
 
@@ -37,11 +37,16 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.PatternSyntaxException;
 
@@ -236,7 +241,7 @@ public class SearchResults implements DocumentListener, CaretListener {
       long documentTimeStamp = editor.getDocument().getModificationStamp();
 
       UIUtil.invokeLaterIfNeeded(() ->
-        WriteIntentReadAction.run((Runnable)() -> {
+        WriteIntentReadAction.run(() -> {
         if (editor.getDocument().getModificationStamp() == documentTimeStamp) {
           searchCompleted(results, editor, findModel, toChangeSelection, next, stamp);
           result.setDone();

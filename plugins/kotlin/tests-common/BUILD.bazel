@@ -1,22 +1,41 @@
-### auto-generated section `build kotlin.tests-common` start
+### auto-generated section `build intellij.kotlin.common.tests` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "tests-common",
+  name = "common-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-cli",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//libraries/guava",
+    "//platform/ide-core-impl",
+    "@lib//:kotlin-test",
+    "@lib//:junit4",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/plugin",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//platform/boot",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//java/java-psi-api:psi",
+    "//java/testFramework",
+  ]
 )
 
 jvm_library(
-  name = "tests-common_test_lib",
-  module_name = "kotlin.tests-common",
+  name = "common-tests_test_lib",
+  module_name = "intellij.kotlin.common.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-compiler-cli",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//libraries/guava",
@@ -45,15 +64,16 @@ jvm_library(
     "//java/testFramework",
     "@lib//:kotlinc-analysis-api-impl-base",
     "//jps/model-api:model",
-  ]
+  ],
+  runtime_deps = [":common-tests"]
 )
-### auto-generated section `build kotlin.tests-common` end
+### auto-generated section `build intellij.kotlin.common.tests` end
 
-### auto-generated section `test kotlin.tests-common` start
+### auto-generated section `test intellij.kotlin.common.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "tests-common_test",
-  runtime_deps = [":tests-common_test_lib"]
+  name = "common-tests_test",
+  runtime_deps = [":common-tests_test_lib"]
 )
-### auto-generated section `test kotlin.tests-common` end
+### auto-generated section `test intellij.kotlin.common.tests` end

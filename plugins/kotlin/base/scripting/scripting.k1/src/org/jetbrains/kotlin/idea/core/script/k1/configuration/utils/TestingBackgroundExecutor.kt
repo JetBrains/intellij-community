@@ -7,8 +7,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.HashSetQueue
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 
+@K1Deprecation
 @TestOnly
 class TestingBackgroundExecutor internal constructor(
     private val manager: ScriptConfigurationManager

@@ -30,7 +30,13 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyComprehensionElement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -56,6 +62,7 @@ public final class PyShadowingNamesInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyClass(@NotNull PyClass node) {
       processElement(node);
@@ -109,7 +116,7 @@ public final class PyShadowingNamesInspection extends PyInspection {
                   return;
                 }
                 if (Arrays.stream(PyInspectionExtension.EP_NAME.getExtensions())
-                          .anyMatch(o -> o.ignoreShadowed(resolved))) {
+                  .anyMatch(o -> o.ignoreShadowed(resolved))) {
                   return;
                 }
                 registerProblem(problemElement, PyPsiBundle.message("INSP.shadows.name.from.outer.scope", name),

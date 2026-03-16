@@ -13,7 +13,11 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
@@ -24,8 +28,75 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
-import com.jetbrains.python.inspections.quickfix.*;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.inspections.quickfix.CompatibilityPrintCallQuickFix;
+import com.jetbrains.python.inspections.quickfix.PyRemoveArgumentQuickFix;
+import com.jetbrains.python.inspections.quickfix.PyRemoveUnderscoresInNumericLiteralsQuickFix;
+import com.jetbrains.python.inspections.quickfix.PyReplaceStarByUnpackQuickFix;
+import com.jetbrains.python.inspections.quickfix.RemovePrefixQuickFix;
+import com.jetbrains.python.inspections.quickfix.RemoveTrailingSuffixQuickFix;
+import com.jetbrains.python.inspections.quickfix.ReplaceBackquoteExpressionQuickFix;
+import com.jetbrains.python.inspections.quickfix.ReplaceBuiltinsQuickFix;
+import com.jetbrains.python.inspections.quickfix.ReplaceExceptPartQuickFix;
+import com.jetbrains.python.inspections.quickfix.ReplaceListComprehensionsQuickFix;
+import com.jetbrains.python.inspections.quickfix.ReplaceNotEqOperatorQuickFix;
+import com.jetbrains.python.inspections.quickfix.ReplaceOctalNumericLiteralQuickFix;
+import com.jetbrains.python.inspections.quickfix.ReplaceRaiseStatementQuickFix;
+import com.jetbrains.python.psi.FutureFeature;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAnnotation;
+import com.jetbrains.python.psi.PyAssignmentExpression;
+import com.jetbrains.python.psi.PyAugAssignmentStatement;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyBreakStatement;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyComprehensionForComponent;
+import com.jetbrains.python.psi.PyContinueStatement;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyDoubleStarExpression;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyEllipsisLiteralExpression;
+import com.jetbrains.python.psi.PyExceptPart;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFStringFragment;
+import com.jetbrains.python.psi.PyFStringFragmentFormatPart;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFinallyPart;
+import com.jetbrains.python.psi.PyForStatement;
+import com.jetbrains.python.psi.PyFormattedStringElement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyIfStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyListCompExpression;
+import com.jetbrains.python.psi.PyLoopStatement;
+import com.jetbrains.python.psi.PyMatchStatement;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyNonlocalStatement;
+import com.jetbrains.python.psi.PyNumericLiteralExpression;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyPrefixExpression;
+import com.jetbrains.python.psi.PyPrintStatement;
+import com.jetbrains.python.psi.PyRaiseStatement;
+import com.jetbrains.python.psi.PyReprExpression;
+import com.jetbrains.python.psi.PyReturnStatement;
+import com.jetbrains.python.psi.PySlashParameter;
+import com.jetbrains.python.psi.PySliceItem;
+import com.jetbrains.python.psi.PyStarArgument;
+import com.jetbrains.python.psi.PyStarExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStringElement;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PySubscriptionExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.PyTypeAliasStatement;
+import com.jetbrains.python.psi.PyTypeParameterList;
+import com.jetbrains.python.psi.PyWithItem;
+import com.jetbrains.python.psi.PyWithStatement;
+import com.jetbrains.python.psi.PyYieldExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyUnionType;
@@ -35,7 +106,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -49,7 +125,8 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
 
   private static final @NotNull Set<String> PYTHON36_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF");
 
-  private static final @NotNull Set<String> PYTHON314_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF", "T", "TR", "RT");
+  private static final @NotNull Set<String> PYTHON314_PREFIXES =
+    Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF", "T", "TR", "RT");
 
   protected final @NotNull List<LanguageLevel> myVersionsToProcess;
 
@@ -79,10 +156,11 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
       }
 
       if (element != null && ",".equals(element.getText())) {
-        registerForAllMatchingVersions(level -> level.isPy3K() && level.isOlderThan(LanguageLevel.PYTHON314) && registerForLanguageLevel(level),
-                                       PyPsiBundle.message("INSP.compatibility.feature.support.this.syntax"),
-                                       node,
-                                       new ReplaceExceptPartQuickFix());
+        registerForAllMatchingVersions(
+          level -> level.isPy3K() && level.isOlderThan(LanguageLevel.PYTHON314) && registerForLanguageLevel(level),
+          PyPsiBundle.message("INSP.compatibility.feature.support.this.syntax"),
+          node,
+          new ReplaceExceptPartQuickFix());
       }
     }
     PsiElement star = PyPsiUtils.getFirstChildOfType(node, PyTokenTypes.MULT);
@@ -141,7 +219,8 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
           registerForAllMatchingVersions(level -> level.isAtLeast(LanguageLevel.PYTHON35) &&
                                                   level.isOlderThan(LanguageLevel.PYTHON38) &&
                                                   registerForLanguageLevel(level),
-                                         PyPsiBundle.message("INSP.compatibility.feature.support.unpacking.without.parentheses.in.return.statements"),
+                                         PyPsiBundle.message(
+                                           "INSP.compatibility.feature.support.unpacking.without.parentheses.in.return.statements"),
                                          node);
         }
 
@@ -149,7 +228,8 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
           registerForAllMatchingVersions(level -> level.isAtLeast(LanguageLevel.PYTHON35) &&
                                                   level.isOlderThan(LanguageLevel.PYTHON38) &&
                                                   registerForLanguageLevel(level),
-                                         PyPsiBundle.message("INSP.compatibility.feature.support.unpacking.without.parentheses.in.yield.statements"),
+                                         PyPsiBundle.message(
+                                           "INSP.compatibility.feature.support.unpacking.without.parentheses.in.yield.statements"),
                                          node);
         }
 
@@ -545,7 +625,7 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
                                                 LocalQuickFix @NotNull ... fixes) {
     final List<LanguageLevel> levels = ContainerUtil.filter(myVersionsToProcess, levelPredicate::test);
     if (!levels.isEmpty()) {
-      @NlsSafe String versions = StringUtil.join(levels,", ");
+      @NlsSafe String versions = StringUtil.join(levels, ", ");
       @InspectionMessage String message = PyPsiBundle.message("INSP.compatibility.inspection.unsupported.feature.prefix",
                                                               levels.size(), versions, suffix);
       registerProblem(node, range, message, asError, fixes);
@@ -555,7 +635,7 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
   protected void registerForAllMatchingVersions(@NotNull Predicate<LanguageLevel> levelPredicate,
                                                 @NotNull @Nls String suffix,
                                                 @NotNull PsiElement node,
-                                                LocalQuickFix @NotNull... fixes) {
+                                                LocalQuickFix @NotNull ... fixes) {
     registerForAllMatchingVersions(levelPredicate, suffix, node, node.getTextRange(), true, fixes);
   }
 
@@ -612,7 +692,8 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
       }
       else {
         if (seenKeywordArgument) {
-          registerProblem(argument, PyPsiBundle.message("INSP.compatibility.positional.argument.after.keyword.argument"), new PyRemoveArgumentQuickFix());
+          registerProblem(argument, PyPsiBundle.message("INSP.compatibility.positional.argument.after.keyword.argument"),
+                          new PyRemoveArgumentQuickFix());
         }
         else if (seenPositionalContainer) {
           registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON35) && registerForLanguageLevel(level),
@@ -621,7 +702,8 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
                                          new PyRemoveArgumentQuickFix());
         }
         else if (seenKeywordContainer) {
-          registerProblem(argument, PyPsiBundle.message("INSP.compatibility.positional.argument.after.kwargs"), new PyRemoveArgumentQuickFix());
+          registerProblem(argument, PyPsiBundle.message("INSP.compatibility.positional.argument.after.kwargs"),
+                          new PyRemoveArgumentQuickFix());
         }
       }
     }
@@ -784,7 +866,8 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
     super.visitPyDecorator(decorator);
     if (PsiTreeUtil.getChildOfType(decorator, PsiErrorElement.class) == null && decorator.getQualifiedName() == null) {
       registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON39) && registerForLanguageLevel(level),
-                                     PyPsiBundle.message("INSP.compatibility.feature.support.arbitrary.expressions.as.decorator"), decorator);
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.arbitrary.expressions.as.decorator"),
+                                     decorator);
     }
   }
 

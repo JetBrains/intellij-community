@@ -80,7 +80,7 @@ internal class JBTabsPanel : UISandboxPanel {
     return label
   }
 
-  private class MyAction(text: String, icon: Icon? = null) : DumbAwareAction(text, null, icon) {
+  internal class MyAction(text: String, icon: Icon? = null) : DumbAwareAction(text, null, icon) {
     override fun actionPerformed(e: AnActionEvent) {
       // do nothing
     }

@@ -9,7 +9,11 @@ import com.intellij.spellchecker.dictionary.UserDictionary;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Alien;
 import static com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present;

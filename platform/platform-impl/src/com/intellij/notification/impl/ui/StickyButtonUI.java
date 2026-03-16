@@ -8,9 +8,18 @@ import com.intellij.util.ui.JBValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.ButtonModel;
+import javax.swing.JComponent;
+import javax.swing.UIManager;
 import javax.swing.plaf.basic.BasicToggleButtonUI;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 

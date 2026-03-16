@@ -10,5 +10,5 @@ import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
  */
 
 class PoetryPackageManagerProvider : PythonPackageManagerProvider {
-  override suspend fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? = if (sdk.isPoetry) PoetryPackageManager(project, sdk) else null
+  override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? = if (sdk.isPoetry) PoetryPackageManager(project, sdk) else null
 }

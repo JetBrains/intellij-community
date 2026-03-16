@@ -39,6 +39,7 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "//platform/platform-impl/internal",
     "//platform/diagnostic/telemetry-impl",
+    "//platform/core-impl",
     "//platform/lang-api:lang",
     "//platform/vcs-api:vcs",
     "//platform/vcs-impl",
@@ -51,7 +52,8 @@ jvm_library(
 jvm_library(
   name = "completionMlRanking-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/core-ui"]
 )
 
 jvm_library(
@@ -74,7 +76,8 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-impl/internal",
     "//platform/ml-api:ml",
-  ]
+  ],
+  runtime_deps = [":completionMlRanking-tests"]
 )
 ### auto-generated section `build intellij.completionMlRanking.tests` end
 

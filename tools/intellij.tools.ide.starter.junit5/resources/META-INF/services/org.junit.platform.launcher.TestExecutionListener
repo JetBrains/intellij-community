@@ -1,0 +1,4 @@
+com.intellij.ide.starter.junit5.TestCleanupListener
+com.intellij.ide.starter.junit5.FreeSpacePrinter
+com.intellij.ide.starter.junit5.StarterBusTestPlanListener
+com.intellij.ide.starter.junit5.CurrentTestMethodProvider

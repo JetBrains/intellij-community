@@ -56,6 +56,7 @@ private fun JavaCodeInsightTestFixture.createComposableAnnotationInFile(fileRela
                   package androidx.compose.runtime
   
                   annotation class Composable
+                  annotation class DisallowComposableCalls
               """.trimIndent()
   this.addFileToProject(fileRelativePath, composableAnnotationDefinitionFileText)
 }

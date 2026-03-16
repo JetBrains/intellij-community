@@ -6,7 +6,11 @@ import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usages.*;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UnknownUsagesInUnloadedModules;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
@@ -80,10 +84,7 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
     }
     else {
       myCodeGroup = new CodeUsageGroup(() -> buildText(presentation.getCodeUsagesString(), presentation.getScopeText()));
-      myDynamicCodeGroup = new DynamicUsageGroup(() -> {
-        String dynamicCodeUsagesString = presentation.getDynamicCodeUsagesString();
-        return dynamicCodeUsagesString != null ? dynamicCodeUsagesString : ourDynamicGroup.getPresentableGroupText();
-      });
+      myDynamicCodeGroup = new DynamicUsageGroup(() -> buildText(presentation.getDynamicCodeUsagesString(), presentation.getScopeText()));
       myNonCodeGroup = new NonCodeUsageGroup(() -> buildText(presentation.getNonCodeUsagesString(), presentation.getScopeText()));
     }
   }

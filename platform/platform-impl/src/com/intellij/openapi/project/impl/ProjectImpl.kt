@@ -41,7 +41,11 @@ import com.intellij.platform.project.registerNewProjectId
 import com.intellij.platform.project.unregisterProjectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.project.ProjectStoreOwner
-import com.intellij.serviceContainer.*
+import com.intellij.serviceContainer.AlreadyDisposedException
+import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.coroutineScopeMethodType
+import com.intellij.serviceContainer.emptyConstructorMethodType
+import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.TimedReference
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -377,7 +381,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
       }
     }
     val disposedStr = if (isDisposed) " (disposed)" else ""
-    val creationTrace = if (ApplicationManager.getApplication().isUnitTestMode) creationTrace?.let {"\n"+it} ?:"" else ""
+    val creationTrace = if (ApplicationManager.getApplication()?.isUnitTestMode != false) creationTrace?.let {"\n"+it} ?:"" else ""
     return "Project(name=$cachedName, containerState=$containerState, componentStore=$componentStore)$disposedStr$creationTrace"
   }
 

@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.SerializablePersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.vcsUtil.VcsFileUtil
@@ -10,7 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import java.time.Duration
 
 @Service(Service.Level.PROJECT)
@@ -36,7 +40,8 @@ internal class GitLabPersistentMergeRequestChangesViewedState
 
   @Serializable
   data class MRId(
-    val project: GitLabProjectCoordinates,
+    val serverPath: GitLabServerPath,
+    val projectId: String,
     val iid: String
   )
 
@@ -51,22 +56,31 @@ internal class GitLabPersistentMergeRequestChangesViewedState
     val viewedFiles: Map<String, String> = mapOf()
   )
 
-  fun isViewed(glProject: GitLabProjectCoordinates, iid: String,
-               gitRepository: GitRepository,
-               filePath: FilePath, sha: String): Boolean {
+  fun isViewed(
+    serverPath: GitLabServerPath,
+    projectId: String,
+    iid: String,
+    gitRepository: GitRepository,
+    filePath: FilePath,
+    sha: String,
+  ): Boolean {
     val relPath = VcsFileUtil.relativePath(gitRepository.root, filePath)
 
-    return state.statesMap[MRId(glProject, iid)]?.let {
+    return state.statesMap[MRId(serverPath, projectId, iid)]?.let {
       it.viewedFiles[relPath] == sha
     } ?: false
   }
 
-  fun markViewed(glProject: GitLabProjectCoordinates, iid: String,
-                 gitRepository: GitRepository,
-                 filePathsAndShas: Iterable<Pair<FilePath, String>>,
-                 viewed: Boolean) {
+  fun markViewed(
+    serverPath: GitLabServerPath,
+    projectId: String,
+    iid: String,
+    gitRepository: GitRepository,
+    filePathsAndShas: Iterable<Pair<FilePath, String>>,
+    viewed: Boolean,
+  ) {
     val relPathsAndShas = filePathsAndShas.map { VcsFileUtil.relativePath(gitRepository.root, it.first) to it.second }
-    updateStateOrCreateAndCleanup(MRId(glProject, iid)) { st ->
+    updateStateOrCreateAndCleanup(MRId(serverPath, projectId, iid)) { st ->
       if (viewed) {
         MRViewedState(id = st.id, viewedFiles = st.viewedFiles + relPathsAndShas)
       }

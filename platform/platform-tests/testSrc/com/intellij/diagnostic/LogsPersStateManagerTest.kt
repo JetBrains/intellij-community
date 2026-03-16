@@ -5,11 +5,11 @@ import com.intellij.diagnostic.logs.DebugLogLevel
 import com.intellij.diagnostic.logs.LogCategory
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.awaitLogQueueProcessed
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.junit5.TestDisposable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
@@ -107,7 +107,7 @@ class LogsPersStateManagerTest {
   @Test
   fun `dedicated log file`() {
     fun readSomeLastLines(logName: String): String {
-      val path = PathManager.getSystemDir().resolve("testlog").resolve(logName)
+      val path = TestLoggerFactory.getTestLogDir().resolve(logName)
       return try {
         val size = Files.size(path)
         Files.newInputStream(path).use { inputStream ->
@@ -126,7 +126,7 @@ class LogsPersStateManagerTest {
     }
 
     try {
-      Files.delete(PathManager.getSystemDir().resolve("testlog").resolve("idea_c.i.d.LogsPersStateManagerTest.log"))
+      Files.delete(TestLoggerFactory.getTestLogDir().resolve("idea_c.i.d.LogsPersStateManagerTest.log"))
     }
     catch (_: java.nio.file.NoSuchFileException) {
       // Nothing.

@@ -24,13 +24,8 @@ internal fun KotlinMppGradleProjectResolver.Context.populateModuleCompileOutputS
     val ideaOutDir = File(moduleDataNode.data.linkedExternalProjectPath, "out")
     val moduleOutputsMap = projectDataNode.getUserData(GradleProjectResolver.MODULES_OUTPUTS)!!
     val outputDirs = HashSet<String>()
-    KotlinMppGradleProjectResolver.getCompilations(
-        gradleModule = gradleModule,
-        mppModel = mppModel,
-        ideModule = moduleDataNode,
-        resolverCtx = resolverCtx,
-        filterTargets = { !it.isManagedByComAndroidLibraryPlugin }
-    )
+    KotlinMppGradleProjectResolver.getCompilations(gradleModule, mppModel, moduleDataNode, resolverCtx)
+        .filterNot { (_, compilation) -> shouldDelegateToOtherPlugin(compilation) }
         .forEach { (dataNode, compilation) ->
             var gradleOutputMap = dataNode.getUserData(GradleProjectResolver.GRADLE_OUTPUTS)
             if (gradleOutputMap == null) {

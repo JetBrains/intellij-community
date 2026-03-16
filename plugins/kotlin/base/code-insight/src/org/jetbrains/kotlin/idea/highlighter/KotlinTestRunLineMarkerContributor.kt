@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.highlighter
 import com.intellij.execution.TestStateStorage
 import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.psi.PsiElement
 import com.intellij.testIntegration.TestFramework
 import com.intellij.util.Function
@@ -21,7 +20,10 @@ import org.jetbrains.kotlin.idea.util.RunConfigurationUtils
 import org.jetbrains.kotlin.konan.target.Architecture
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
-import org.jetbrains.kotlin.platform.*
+import org.jetbrains.kotlin.platform.SimplePlatform
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.idePlatformKind
+import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatformWithTarget
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -29,7 +31,6 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.Icon
 

@@ -1,6 +1,14 @@
 package de.plushnikov.intellij.plugin.intention.valvar.to;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import org.jetbrains.annotations.NotNull;
 

@@ -8,7 +8,8 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JFormattedTextField;
+import javax.swing.JLabel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.Document;

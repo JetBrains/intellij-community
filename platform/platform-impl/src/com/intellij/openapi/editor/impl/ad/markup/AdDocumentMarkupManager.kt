@@ -1,7 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.markup
 
-import com.intellij.openapi.application.isRhizomeAdEnabled
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
@@ -10,6 +9,7 @@ import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.impl.DocumentMarkupListener
 import com.intellij.openapi.editor.impl.ad.AdTheManager
 import com.intellij.openapi.editor.impl.ad.document.AdEntityProvider
+import com.intellij.openapi.editor.impl.ad.isRhizomeAdRebornEnabled
 import com.intellij.openapi.editor.impl.ad.util.AsyncEntityHandle
 import com.intellij.openapi.editor.impl.ad.util.AsyncEntityService
 import com.intellij.openapi.editor.impl.ad.util.EntityCleanService
@@ -27,7 +27,6 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 
-@Experimental
 interface AdDocumentMarkupManager {
 
   companion object {
@@ -136,10 +135,10 @@ private class AdDocumentMarkupManagerImpl(private val coroutineScope: CoroutineS
   }
 
   private fun isEnabled(): Boolean {
-    return isRhizomeAdEnabled
+    return isRhizomeAdRebornEnabled
   }
 
-  private class AdDocumentMarkupListener : DocumentMarkupListener {
+  class AdDocumentMarkupListener : DocumentMarkupListener {
     override fun markupModelCreated(project: Project?, markupModel: MarkupModelEx) {
       getInstance().createDocMarkupEntity(project, markupModel)
     }

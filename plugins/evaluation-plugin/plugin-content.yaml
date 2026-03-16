@@ -13,9 +13,6 @@
   - name: intellij.evaluationPlugin.core
     reason: <- intellij.evaluationPlugin
   contentModules:
-  - name: intellij.evaluationPlugin.languages.java
-  - name: intellij.evaluationPlugin.languages.python
-  - name: intellij.evaluationPlugin.languages.kotlin
   - name: intellij.evaluationPlugin.languages.cpp
   - name: intellij.evaluationPlugin.languages.cppRd
   - name: intellij.evaluationPlugin.languages.csharp
@@ -33,10 +30,27 @@
   - name: intellij.evaluationPlugin.languages.xml
   - name: intellij.evaluationPlugin.languages.terminal
   - name: intellij.evaluationPlugin.languages.yaml
-  - name: intellij.evaluationPlugin.inlineCompletion
-  - name: intellij.evaluationPlugin.fullLine
+- name: lib/modules/intellij.evaluationPlugin.agent.jar
+  contentModules:
   - name: intellij.evaluationPlugin.agent
+- name: lib/modules/intellij.evaluationPlugin.fullLine.jar
+  contentModules:
+  - name: intellij.evaluationPlugin.fullLine
+- name: lib/modules/intellij.evaluationPlugin.ijnext.jar
+  contentModules:
   - name: intellij.evaluationPlugin.ijnext
+- name: lib/modules/intellij.evaluationPlugin.inlineCompletion.jar
+  contentModules:
+  - name: intellij.evaluationPlugin.inlineCompletion
+- name: lib/modules/intellij.evaluationPlugin.languages.java.jar
+  contentModules:
+  - name: intellij.evaluationPlugin.languages.java
+- name: lib/modules/intellij.evaluationPlugin.languages.kotlin.jar
+  contentModules:
+  - name: intellij.evaluationPlugin.languages.kotlin
+- name: lib/modules/intellij.evaluationPlugin.languages.python.jar
+  contentModules:
+  - name: intellij.evaluationPlugin.languages.python
 - name: lib/modules/intellij.evaluationPlugin.llm.jar
   projectLibraries:
   - name: jerolba.carpet.record
@@ -66,9 +80,3 @@
     libraries:
       langfuse.java:
       - name: $MAVEN_REPOSITORY$/com/langfuse/langfuse-java/0/langfuse-java-0.jar
-- name: lib/opencsv.jar
-  library: opencsv
-  files:
-  - name: $MAVEN_REPOSITORY$/com/opencsv/opencsv/5/opencsv-5.jar
-  - name: $MAVEN_REPOSITORY$/commons-beanutils/commons-beanutils/1/commons-beanutils-1.jar
-  reason: <- intellij.evaluationPlugin.ijnext

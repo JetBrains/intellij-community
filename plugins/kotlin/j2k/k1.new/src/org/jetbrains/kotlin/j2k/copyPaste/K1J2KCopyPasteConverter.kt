@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.concurrency.ThreadingAssertions
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor
 import org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceData
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
+@K1Deprecation
 class K1J2KCopyPasteConverter(
     private val project: Project,
     private val editor: Editor,

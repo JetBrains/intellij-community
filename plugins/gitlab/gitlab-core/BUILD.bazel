@@ -33,6 +33,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/diff-api:diff",
+    "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
@@ -44,7 +45,7 @@ jvm_library(
     "//platform/vcs-api:vcs",
     "//platform/collaboration-tools",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
@@ -69,6 +70,8 @@ jvm_library(
     "//platform/dvcs-impl/shared",
     "//platform/ide-core-impl",
     "//platform/vcs-impl/shared",
+    "//platform/code-style-api:codeStyle",
+    "//platform/observable",
   ]
 )
 
@@ -83,6 +86,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/diff-api:diff",
+    "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
@@ -95,7 +99,7 @@ jvm_library(
     "//platform/collaboration-tools",
     "//platform/collaboration-tools:collaboration-tools_test_lib",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
@@ -105,7 +109,7 @@ jvm_library(
     "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
     "//libraries/jackson/databind",
     "@lib//:junit4",
-    "@lib//:kotlinx-coroutines-test",
+    "//libraries/kotlinx/coroutines/test",
     "@lib//:assert_j",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -136,6 +140,9 @@ jvm_library(
     "//platform/dvcs-impl/shared",
     "//platform/ide-core-impl",
     "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
+    "//platform/code-style-api:codeStyle",
+    "//platform/observable",
   ]
 )
 ### auto-generated section `build intellij.vcs.gitlab` end

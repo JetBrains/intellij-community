@@ -1,6 +1,10 @@
 package com.intellij.dupLocator.treeHash;
 
-import com.intellij.dupLocator.*;
+import com.intellij.dupLocator.DupInfo;
+import com.intellij.dupLocator.DupLocatorBundle;
+import com.intellij.dupLocator.DuplicatesProfile;
+import com.intellij.dupLocator.DuplocatorState;
+import com.intellij.dupLocator.NodeSpecificHasher;
 import com.intellij.dupLocator.util.DuplocatorUtil;
 import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.openapi.components.PathMacroManager;
@@ -30,7 +34,12 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 // used by TeamCity plugin
 @ApiStatus.NonExtendable

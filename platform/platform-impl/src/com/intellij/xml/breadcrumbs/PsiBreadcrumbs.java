@@ -21,7 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.Map;

@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.jetbrains.fus.reporting.api.ValidationResultType
 import com.intellij.util.PlatformUtils
 import java.util.regex.Pattern
 

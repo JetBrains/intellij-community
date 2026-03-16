@@ -4,7 +4,9 @@ package fleet.rpc.client
 import fleet.util.UID
 import fleet.util.serialization.DataSerializer
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Serializable(with = ClientIdSerializer::class)
 data class ClientId(val uid: UID)
 

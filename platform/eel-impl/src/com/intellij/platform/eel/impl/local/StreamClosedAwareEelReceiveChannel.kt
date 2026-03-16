@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.impl.local
 
 import com.intellij.platform.eel.ReadResult
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -20,6 +21,8 @@ import java.nio.ByteBuffer
 internal class StreamClosedAwareEelReceiveChannel(
   private val delegate: EelReceiveChannel,
 ) : EelReceiveChannel {
+  override val prefersDirectBuffers: Boolean = delegate.prefersDirectBuffers
+
   override suspend fun receive(dst: ByteBuffer): ReadResult {
     try {
       return delegate.receive(dst)
@@ -34,6 +37,9 @@ internal class StreamClosedAwareEelReceiveChannel(
       throw e
     }
   }
+
+  @OptIn(EelDelicateApi::class)
+  override fun available(): Int = delegate.available()
 
   override suspend fun closeForReceive() {
     delegate.closeForReceive()

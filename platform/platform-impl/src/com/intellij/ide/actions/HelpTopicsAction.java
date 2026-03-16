@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.ApiStatus;
@@ -20,9 +19,7 @@ public final class HelpTopicsAction extends AnAction implements DumbAware, Light
   }
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(ApplicationInfo.helpAvailable());
-  }
+  public void update(@NotNull AnActionEvent e) { }
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

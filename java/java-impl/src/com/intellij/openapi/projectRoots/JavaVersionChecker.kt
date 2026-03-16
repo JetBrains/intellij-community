@@ -17,7 +17,7 @@ import com.intellij.openapi.startup.ProjectActivity
 /**
  * Project activity that reports unsupported JDKs used in the project.
  */
-private class JavaVersionChecker: ProjectActivity {
+internal class JavaVersionChecker: ProjectActivity {
 
   override suspend fun execute(project: Project) {
     val projectSdk = ProjectRootManager.getInstance(project).projectSdk

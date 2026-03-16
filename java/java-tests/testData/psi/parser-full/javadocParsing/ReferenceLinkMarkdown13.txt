@@ -11,11 +11,22 @@ PsiJavaFile:ReferenceLinkMarkdown13.java
           PsiDocToken:DOC_COMMENT_DATA('link to module')
         PsiDocToken:DOC_RBRACKET(']')
         PsiDocToken:DOC_LBRACKET('[')
+        PsiElement(DOC_TAG_VALUE_ELEMENT)
+          PsiJavaModuleReference
+            PsiDocToken:DOC_COMMENT_DATA('java.base')
+          PsiDocToken:DOC_TAG_VALUE_SLASH('/')
         PsiElement(DOC_METHOD_OR_FIELD_REF)
+          PsiElement(DOC_REFERENCE_HOLDER)
+            PsiJavaCodeReferenceElement:String
+              PsiIdentifier:String('String')
+              PsiReferenceParameterList
+                <empty list>
+          PsiDocToken:DOC_TAG_VALUE_SHARP_TOKEN('#')
+          PsiDocToken:DOC_TAG_VALUE_TOKEN('toString')
+          PsiDocToken:DOC_LPAREN('(')
           PsiElement(DOC_TAG_VALUE_ELEMENT)
-            PsiJavaModuleReference
-              PsiDocToken:DOC_COMMENT_DATA('java.base')
-            PsiDocToken:DOC_TAG_VALUE_SLASH('/')
+            <empty list>
+          PsiDocToken:DOC_RPAREN(')')
         PsiDocToken:DOC_RBRACKET(']')
     PsiWhiteSpace('\n')
     PsiModifierList:

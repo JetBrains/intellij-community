@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
-import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionOptions
 
 internal data class ApplicableExtension(
     private val _signature: KaCallableSignature<*>,

@@ -12,15 +12,10 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogHandler
 import org.jetbrains.plugins.gradle.service.resolve.getVersionCatalogFiles as getVersionCatalogFilesCommon
 
-private class GradleDslVersionCatalogHandler : GradleVersionCatalogHandler {
+internal class GradleDslVersionCatalogHandler : GradleVersionCatalogHandler {
   @Deprecated("Doesn't work for included builds of a composite build", replaceWith = ReplaceWith("getVersionCatalogFiles(module)"))
   override fun getVersionCatalogFiles(project: Project): Map<String, VirtualFile> {
     return ProjectBuildModel.get(project).context.versionCatalogFiles.associate { it.catalogName to it.file }
-  }
-
-  override fun getVersionCatalogFiles(module: Module): Map<String, VirtualFile> {
-    val buildModel = getBuildModel(module) ?: return emptyMap()
-    return buildModel.context.versionCatalogFiles.associate { it.catalogName to it.file }
   }
 
   override fun getAccessorClass(context: PsiElement, catalogName: String): PsiClass? {

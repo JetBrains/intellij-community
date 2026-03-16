@@ -7,7 +7,11 @@ import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.jdi.StackFrameProxyEx
 import com.intellij.lang.LanguageExtension
 import com.intellij.psi.PsiElement
-import com.sun.jdi.*
+import com.sun.jdi.Location
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.Type
+import com.sun.jdi.Value
+import com.sun.jdi.VirtualMachine
 import org.jetbrains.annotations.ApiStatus
 
 /**

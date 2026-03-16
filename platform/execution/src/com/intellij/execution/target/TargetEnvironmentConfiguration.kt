@@ -7,7 +7,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning
 import com.intellij.execution.target.ContributedConfigurationBase.Companion.getTypeImpl
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.project.Project
-import java.util.*
+import java.util.UUID
 
 /**
  * Base class for configuration instances contributed by the ["com.intellij.executionTargetType"][TargetEnvironmentType.EXTENSION_NAME] extension point.

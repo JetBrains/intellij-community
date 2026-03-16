@@ -10,7 +10,7 @@ import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
-private class FrameworkDetectionManagerProjectActivity : ProjectActivity {
+internal class FrameworkDetectionManagerProjectActivity : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()

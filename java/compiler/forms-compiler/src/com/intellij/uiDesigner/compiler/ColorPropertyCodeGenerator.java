@@ -6,7 +6,8 @@ import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.SystemColor;
 
 public final class ColorPropertyCodeGenerator extends PropertyCodeGenerator {
   private static final Type ourColorType = Type.getType(Color.class);

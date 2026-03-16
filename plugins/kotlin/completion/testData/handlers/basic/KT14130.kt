@@ -13,5 +13,4 @@ fun test2() {
     test(<caret>, "")
 }
 
-// IGNORE_K2
 // ELEMENT: EMPTY

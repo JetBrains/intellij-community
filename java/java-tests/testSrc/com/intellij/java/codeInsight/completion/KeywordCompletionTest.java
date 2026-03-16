@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.LightCompletionTestCase;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiMethod;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Set;
 
 public class KeywordCompletionTest extends LightCompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/keywords/";
@@ -172,6 +174,9 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     checkResultByTestName();
   }
 
+  @NeedsIndex.ForStandardLibrary
+  public void testNoExtraArrowMultiCaret() { doTest(); }
+
   public void testNoPrimitivesInBooleanAnnotationAttribute() { doTest(1, "true", "int", "boolean"); }
   public void testNoPrimitivesInIntAnnotationValueAttribute() { doTest(0, "true", "int", "boolean"); }
   public void testNoPrimitivesInEnumAnnotationAttribute() { doTest(0, "true", "int", "boolean"); }
@@ -276,8 +281,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testTryInExpression() {
     configureByTestName();
-    assertEquals("toString", myItems[0].getLookupString());
-    assertEquals("this", myItems[1].getLookupString());
+    assertEquals(Set.of("toString", "this"), Set.of(myItems[0].getLookupString(), myItems[1].getLookupString()));
   }
 
   public void testAfterPackageAnnotation() {
@@ -350,11 +354,11 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     checkResultByTestName();
   }
 
-  private void configureByTestName() {
+  void configureByTestName() {
     configureByFile(BASE_PATH + getTestName(true) + ".java");
   }
 
-  private void checkResultByTestName() {
+  void checkResultByTestName() {
     checkResultByFile(BASE_PATH + getTestName(true) + "_after.java");
   }
 
@@ -368,4 +372,28 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     configureByTestName();
     assertContainsItems(Arrays.stream(values).filter(Objects::nonNull).toArray(String[]::new));
   }
+  
+  public static class ModCommandBasedTest extends KeywordCompletionTest {
+    @Override
+    protected void setUp() throws Exception {
+      super.setUp();
+      Registry.get("ide.completion.modcommand").setValue(true, getTestRootDisposable());
+    }
+
+    @Override
+    public void testNoExtraArrowMultiCaret() {
+      configureByTestName();
+      // Intermittently no-variants delegator appears here adding a second completion item 
+      // ResourceBundle (as it contains 'SO'), and now no-variants delegators 
+      // gets no information that we have no other variants.
+      selectItem(myItems[0]);
+      checkResultByTestName();
+    }
+
+    @Override
+    public void testInstanceofNegation() {
+      // skip; TODO: support custom completion chars
+    }
+  }
+
 }

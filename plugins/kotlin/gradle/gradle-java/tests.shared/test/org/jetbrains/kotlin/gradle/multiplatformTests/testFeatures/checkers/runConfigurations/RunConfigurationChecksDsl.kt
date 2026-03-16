@@ -5,7 +5,13 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.writeAccess
 
 interface RunConfigurationChecksDsl {
-    fun TestConfigurationDslScope.executeRunConfiguration(functionFqName: String) {
-        writeAccess.getConfiguration(ExecuteRunConfigurationsChecker).functionFqNames += functionFqName
+    fun TestConfigurationDslScope.executeRunConfiguration(
+        functionFqName: String,
+        containingFile: String? = null,
+        moduleName: String? = null,
+    ) {
+        writeAccess.getConfiguration(ExecuteRunConfigurationsChecker).functionDetails.add(
+            FunctionDetails(functionFqName, containingFile, moduleName)
+        )
     }
 }

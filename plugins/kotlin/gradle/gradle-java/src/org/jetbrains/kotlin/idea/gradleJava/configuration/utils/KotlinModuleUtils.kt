@@ -10,14 +10,16 @@ import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.gradleTooling.compilationFullName
 import org.jetbrains.kotlin.idea.gradleTooling.resolveAllDependsOnSourceSets
-import org.jetbrains.kotlin.idea.projectModel.*
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
+import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
+import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
-import java.util.*
+import java.util.Arrays
 import java.util.stream.Collectors
-import kotlin.collections.HashMap
-import kotlin.collections.LinkedHashSet
 
 object KotlinModuleUtils {
 

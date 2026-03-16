@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.toolWindow.ToolWindowSplitContentProviderBean
 import com.intellij.ui.content.Content
 import javax.swing.SwingConstants
@@ -23,7 +22,7 @@ internal abstract class ToolWindowSplitActionBase(
   }
 
   override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
-    e.presentation.isEnabledAndVisible = ToolWindowContentUi.isTabsReorderingAllowed(toolWindow) &&
+    e.presentation.isEnabledAndVisible = toolWindow.canSplitTabs() &&
                                          ToolWindowSplitContentProviderBean.getForToolWindow(toolWindow.id) != null
   }
 }

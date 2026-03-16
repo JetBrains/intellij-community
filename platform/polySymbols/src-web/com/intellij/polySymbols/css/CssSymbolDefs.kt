@@ -3,28 +3,28 @@
 
 package com.intellij.polySymbols.css
 
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolProperty
-import com.intellij.polySymbols.PolySymbolQualifiedKind
 
 const val NAMESPACE_CSS: String = "css"
 
 @JvmField
-val CSS_PROPERTIES: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CSS, "properties"]
+val CSS_PROPERTIES: PolySymbolKind = PolySymbolKind[NAMESPACE_CSS, "properties"]
 
 @JvmField
-val CSS_PSEUDO_ELEMENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CSS, "pseudo-elements"]
+val CSS_PSEUDO_ELEMENTS: PolySymbolKind = PolySymbolKind[NAMESPACE_CSS, "pseudo-elements"]
 
 @JvmField
-val CSS_PSEUDO_CLASSES: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CSS, "pseudo-classes"]
+val CSS_PSEUDO_CLASSES: PolySymbolKind = PolySymbolKind[NAMESPACE_CSS, "pseudo-classes"]
 
 @JvmField
-val CSS_FUNCTIONS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CSS, "functions"]
+val CSS_FUNCTIONS: PolySymbolKind = PolySymbolKind[NAMESPACE_CSS, "functions"]
 
 @JvmField
-val CSS_CLASSES: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CSS, "classes"]
+val CSS_CLASSES: PolySymbolKind = PolySymbolKind[NAMESPACE_CSS, "classes"]
 
 @JvmField
-val CSS_PARTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CSS, "parts"]
+val CSS_PARTS: PolySymbolKind = PolySymbolKind[NAMESPACE_CSS, "parts"]
 
 /**
  * Name of boolean property used by `css/pseudo-elements` and `css/pseudo-classes` symbols

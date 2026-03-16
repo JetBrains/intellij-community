@@ -1,17 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor.folding
 
+import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.CodeFoldingOptionsProvider
+import com.intellij.application.options.editor.checkBox
+import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.json.JsonBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.options.BeanConfigurable
+import com.intellij.openapi.options.ConfigurableWithOptionDescriptors
+import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.util.xmlb.XmlSerializerUtil
+import java.util.function.Function
 
 @State(name = "JsonFoldingSettings", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
 class JsonFoldingSettings : PersistentStateComponent<JsonFoldingSettings?> {
@@ -22,7 +26,7 @@ class JsonFoldingSettings : PersistentStateComponent<JsonFoldingSettings?> {
   @JvmField
   var showFirstKey: Boolean = false
 
-  override fun getState(): JsonFoldingSettings? {
+  override fun getState(): JsonFoldingSettings {
     return this
   }
 
@@ -38,22 +42,26 @@ class JsonFoldingSettings : PersistentStateComponent<JsonFoldingSettings?> {
   }
 }
 
+private val showKeyCount: CheckboxDescriptor
+  get() = CheckboxDescriptor(JsonBundle.message("JsonFoldingSettings.show.key.count"), JsonFoldingSettings.getInstance()::showKeyCount)
+private val showFirstKey: CheckboxDescriptor
+  get() = CheckboxDescriptor(JsonBundle.message("JsonFoldingSettings.show.first.key"), JsonFoldingSettings.getInstance()::showFirstKey,
+                             comment = JsonBundle.message("JsonFoldingSettings.show.first.key.description"))
 
-class JsonFoldingOptionsProvider : BeanConfigurable<JsonFoldingSettings>(
-  JsonFoldingSettings.getInstance(),
-  JsonBundle.message("JsonFoldingSettings.title")), CodeFoldingOptionsProvider {
+class JsonFoldingOptionsProvider : UiDslUnnamedConfigurable.Simple(), CodeFoldingOptionsProvider, ConfigurableWithOptionDescriptors {
 
   override fun Panel.createContent() {
     group(JsonBundle.message("JsonFoldingSettings.title")) {
       row {
-        checkBox(JsonBundle.message("JsonFoldingSettings.show.key.count"))
-          .bindSelected(instance::showKeyCount)
+        checkBox(showKeyCount)
       }
       row {
-        checkBox(JsonBundle.message("JsonFoldingSettings.show.first.key"))
-          .bindSelected(instance::showFirstKey)
-          .comment(JsonBundle.message("JsonFoldingSettings.show.first.key.description"))
+        checkBox(showFirstKey)
       }
     }
+  }
+
+  override fun getOptionDescriptors(configurableId: String, nameConverter: Function<in String?, String?>): List<OptionDescription> {
+    return listOf(showKeyCount, showFirstKey).map { it.asOptionDescriptor() }
   }
 }

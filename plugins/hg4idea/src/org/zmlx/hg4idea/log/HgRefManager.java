@@ -5,7 +5,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.RefGroup;
+import com.intellij.vcs.log.VcsLogRefManager;
+import com.intellij.vcs.log.VcsLogStandardColors;
+import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.impl.SimpleRefGroup;
 import com.intellij.vcs.log.impl.SimpleRefType;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
@@ -19,12 +23,16 @@ import org.zmlx.hg4idea.branch.HgBranchType;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 import static com.intellij.ui.JBColor.namedColor;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
@@ -127,8 +135,8 @@ public class HgRefManager implements VcsLogRefManager {
       }
     }
 
-    if (!branches.isEmpty()) result.add(new SimpleRefGroup(HgBundle.message("hg.ref.group.name.branches"), branches, false));
-    if (!bookmarks.isEmpty()) result.add(new SimpleRefGroup(HgBundle.message("hg.ref.group.name.bookmarks"), bookmarks, false));
+    if (!branches.isEmpty()) result.add(new SimpleRefGroup(HgBundle.message("hg.ref.group.name.branches"), branches));
+    if (!bookmarks.isEmpty()) result.add(new SimpleRefGroup(HgBundle.message("hg.ref.group.name.bookmarks"), bookmarks));
 
     return result;
   }

@@ -9,7 +9,7 @@ import com.intellij.build.events.PresentableBuildEvent
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-internal class PresentableBuildEventImpl(
+class PresentableBuildEventImpl(
   id: Any?,
   parentId: Any?,
   time: Long?,

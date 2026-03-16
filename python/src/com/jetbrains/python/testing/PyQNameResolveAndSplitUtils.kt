@@ -20,11 +20,11 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.extensions.QNameResolveContext
 import com.jetbrains.python.extensions.getQName
 import com.jetbrains.python.extensions.getRelativeNameTo
 import com.jetbrains.python.extensions.resolveToElement
-import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 

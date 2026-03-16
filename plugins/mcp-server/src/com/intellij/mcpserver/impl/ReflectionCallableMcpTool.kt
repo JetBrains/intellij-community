@@ -14,9 +14,15 @@ class ReflectionCallableMcpTool(override val descriptor: McpToolDescriptor, priv
     return when {
       result.result == null -> McpToolCallResult.text("[null]")
       result.result is Unit -> McpToolCallResult.text("[success]")
-      result.result is Char -> McpToolCallResult.text("'${result.result}'") // special case for String to avoid extra quotes added by Any?.toString()
+      result.result is Char -> McpToolCallResult.text("'${result.result}'") // special case for Char to show quotes
       result.result is String -> McpToolCallResult.text(result.result) // special case for String to avoid extra quotes added by Any?.toString()
-      result.result.javaClass.isPrimitive -> McpToolCallResult.text(result.result.toString())
+      result.result is Boolean ||
+      result.result is Byte ||
+      result.result is Short ||
+      result.result is Int ||
+      result.result is Long ||
+      result.result is Float ||
+      result.result is Double -> McpToolCallResult.text(result.result.toString())
       result.result is McpToolCallResult -> result.result
       result.result is McpToolCallResultContent -> McpToolCallResult(arrayOf(result.result), isError = false)
       else -> McpToolCallResult.text(result.encodeToString(), structuredContent = result.encodeToJson())

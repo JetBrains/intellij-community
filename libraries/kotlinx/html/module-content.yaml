@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.kotlinx.html.jar
   modules:
   - name: intellij.libraries.kotlinx.html
     libraries:

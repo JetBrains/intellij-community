@@ -10,7 +10,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.util.PsiFormatUtil.formatVariable;
-import static com.intellij.psi.util.PsiFormatUtilBase.*;
+import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_INITIALIZER;
+import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_NAME;
+import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_TYPE;
+import static com.intellij.psi.util.PsiFormatUtilBase.TYPE_AFTER;
 
 @ApiStatus.Internal
 public abstract class JavaVariableBaseTreeElement<T extends PsiVariable> extends JavaClassTreeElementBase<T> implements SortableTreeElement {

@@ -2,7 +2,11 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.modcommand.*
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommandAction
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -21,9 +25,18 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
-import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
@@ -34,7 +47,27 @@ import org.jetbrains.kotlin.idea.quickfix.ChangeTypeFixUtils
 import org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtOperationExpression
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isNull
@@ -228,6 +261,37 @@ internal object ChangeTypeQuickFixFactories {
             )
         }
 
+    val returnTypeRequired =
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReturnInFunctionWithExpressionBody ->
+            createRequireReturnTypeFix(diagnostic.psi)
+        }
+
+    val returnTypeRequiredWarning =
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReturnInFunctionWithExpressionBodyWarning ->
+            createRequireReturnTypeFix(diagnostic.psi)
+        }
+
+    val returnTypeRequiredWithImplicitType =
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReturnInFunctionWithExpressionBodyAndImplicitType ->
+            createRequireReturnTypeFix(diagnostic.psi)
+        }
+
+    @OptIn(KaExperimentalApi::class)
+    private fun KaSession.createRequireReturnTypeFix(returnExpr: KtReturnExpression): List<ModCommandAction> {
+        val psi = returnExpr.resolveSymbol()?.psi
+        val declaration = psi as? KtCallableDeclaration ?: (psi as? KtPropertyAccessor)?.property
+            ?: return emptyList()
+
+        val expressionType = returnExpr.returnedExpression?.expressionType ?: builtinTypes.unit
+        return listOf(
+            UpdateTypeQuickFix(
+                declaration,
+                TargetType.ENCLOSING_DECLARATION,
+                createTypeInfo(declaration.returnType(expressionType))
+            )
+        )
+    }
+
     val initializerTypeMismatch =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
             val declaration = diagnostic.psi as? KtProperty
@@ -244,9 +308,8 @@ internal object ChangeTypeQuickFixFactories {
 
     val assignmentTypeMismatch =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
-            val expression = diagnostic.psi
-            val assignment = expression.parent as? KtBinaryExpression
-                ?: return@ModCommandBased emptyList()
+            val expression = diagnostic.expression
+            val assignment = diagnostic.assignmentExpression ?: return@ModCommandBased emptyList()
 
             val declaration = (assignment.left as? KtNameReferenceExpression)?.mainReference?.resolve() as? KtProperty
                 ?: return@ModCommandBased emptyList()
@@ -391,7 +454,11 @@ internal object ChangeTypeQuickFixFactories {
     private fun <PSI : KtCallableDeclaration> KaSession.createChangeCurrentDeclarationQuickFix(
         superCallable: KaCallableSymbol,
         declaration: PSI
-    ): UpdateTypeQuickFix<PSI> = UpdateTypeQuickFix(declaration, TargetType.CURRENT_DECLARATION, createTypeInfo(superCallable.returnType))
+    ): UpdateTypeQuickFix<PSI> = UpdateTypeQuickFix(
+        declaration,
+        TargetType.CURRENT_DECLARATION,
+        createTypeInfo(superCallable.returnType)
+    )
 
     private fun KaSession.createChangeOverriddenFunctionQuickFix(
         callable: KaCallableSymbol,

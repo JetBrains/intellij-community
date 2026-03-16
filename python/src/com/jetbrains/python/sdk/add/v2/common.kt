@@ -6,7 +6,6 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.module.Module
@@ -14,7 +13,6 @@ import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
@@ -26,36 +24,48 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
+import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons
+import com.intellij.python.community.impl.pipenv.PIPENV_ICON
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
 import com.intellij.python.community.impl.uv.common.UV_TOOL_ID
 import com.intellij.python.community.impl.uv.common.icons.PythonCommunityImplUVCommonIcons
 import com.intellij.python.hatch.icons.PythonHatchIcons
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
+import com.intellij.python.venv.icons.PythonVenvIcons
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.parser.icons.PythonParserIcons
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.LOGGER
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
 import com.jetbrains.python.sdk.configuration.PIPENV_TOOL_ID
 import com.jetbrains.python.sdk.configuration.VENV_TOOL_ID
+import com.jetbrains.python.sdk.createSdk
+import com.jetbrains.python.sdk.excludeInnerVirtualEnv
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
-import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
+import com.jetbrains.python.sdk.installSdkIfNeeded
+import com.jetbrains.python.sdk.moduleIfExists
+import com.jetbrains.python.sdk.persist
+import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
+import com.jetbrains.python.sdk.setAssociationToModule
+import com.jetbrains.python.sdk.suggestAssociatedSdkName
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.PythonInterpreterInstallationIdsHolder.Companion.PYTHON_INSTALLATION_INTERRUPTED
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
@@ -88,12 +98,16 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
    */
   protected abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk>
 
-  protected suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+  protected suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk>  {
     savePathToExecutableToProperties(null)
     val sdk = getOrCreateSdk(moduleOrProject).getOr { return it }
 
+    moduleOrProject.project.pySdkService.persistSdk(sdk)
     moduleOrProject.project.excludeInnerVirtualEnv(sdk)
-    moduleOrProject.moduleIfExists?.let { sdk.setAssociationToModule(it) }
+    moduleOrProject.moduleIfExists?.let {
+      it.pythonSdk = sdk
+      sdk.setAssociationToModule(it)
+    }
 
     return Result.success(sdk)
   }
@@ -166,11 +180,11 @@ enum class PythonSupportedEnvironmentManagers(
   val icon: Icon,
   val isFSSupported: (FileSystem<*>) -> Boolean = { (it as? FileSystem.Eel)?.eelApi == localEel },
 ) {
-  VIRTUALENV(VENV_TOOL_ID, "sdk.create.custom.virtualenv", PythonIcons.Python.Virtualenv, { true }),
-  CONDA(CONDA_TOOL_ID, "sdk.create.custom.conda", PythonIcons.Python.Anaconda, { true }),
+  VIRTUALENV(VENV_TOOL_ID, "sdk.create.custom.virtualenv", PythonVenvIcons.VirtualEnv, { true }),
+  CONDA(CONDA_TOOL_ID, "sdk.create.custom.conda", PythonCommunityImplCondaIcons.Anaconda, { true }),
   POETRY(POETRY_TOOL_ID, "sdk.create.custom.poetry", PythonCommunityImplPoetryCommonIcons.Poetry),
   PIPENV(PIPENV_TOOL_ID, "sdk.create.custom.pipenv", PIPENV_ICON),
-  UV(UV_TOOL_ID, "sdk.create.custom.uv", PythonCommunityImplUVCommonIcons.UV),
+  UV(UV_TOOL_ID, "sdk.create.custom.uv", PythonCommunityImplUVCommonIcons.UV, { true }),
   HATCH(HATCH_TOOL_ID, "sdk.create.custom.hatch", PythonHatchIcons.Logo, { it is FileSystem.Eel }),
   PYTHON(VENV_TOOL_ID, "sdk.create.custom.python", PythonParserIcons.PythonFile, { true })
 }
@@ -224,13 +238,11 @@ internal fun installBaseSdk(sdk: Sdk, existingSdks: List<Sdk>): Sdk? {
 
 internal suspend fun <P : PathHolder> setupSdk(
   project: Project?,
-  allSdks: List<Sdk>,
   fileSystem: FileSystem<P>,
   pythonBinaryPath: P,
   languageLevel: LanguageLevel,
   targetPanelExtension: TargetPanelExtension?,
 ): PyResult<Sdk> {
-  val sdkType = PythonSdkType.getInstance()
 
   val (additionalData, customSdkSuggestedName) = when (fileSystem) {
     is FileSystem.Eel -> null to suggestAssociatedSdkName(pythonBinaryPath.toString(), project?.basePath)
@@ -248,28 +260,15 @@ internal suspend fun <P : PathHolder> setupSdk(
     }
   }
 
-  val sdk = SdkConfigurationUtil.createSdk(
-    allSdks,
-    pythonBinaryPath.toString(),
-    sdkType,
-    additionalData,
-    customSdkSuggestedName
+  return createSdk(
+    pythonBinaryPath,
+    customSdkSuggestedName,
+    additionalData
   )
-
-  sdk.sdkModificator.let { modifiableSdk ->
-    modifiableSdk.versionString = languageLevel.toPythonVersion()
-    writeAction {
-      modifiableSdk.commitChanges()
-    }
-  }
-
-  sdkType.setupSdkPaths(sdk)
-  return PyResult.success(sdk)
 }
 
 internal suspend fun <P : PathHolder> PythonSelectableInterpreter<P>.setupSdk(
   moduleOrProject: ModuleOrProject,
-  allSdks: List<Sdk>,
   fileSystem: FileSystem<P>,
   targetPanelExtension: TargetPanelExtension?,
   isAssociateWithModule: Boolean,
@@ -280,7 +279,6 @@ internal suspend fun <P : PathHolder> PythonSelectableInterpreter<P>.setupSdk(
 
   val newSdk = setupSdk(
     project = moduleOrProject.project,
-    allSdks = allSdks,
     fileSystem = fileSystem,
     pythonBinaryPath = homePath!!,
     languageLevel = pythonInfo.languageLevel,

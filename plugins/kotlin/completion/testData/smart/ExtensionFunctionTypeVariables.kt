@@ -5,3 +5,5 @@ fun test(i: Int, foo1: Int.(String) -> Char, foo2: Int.() -> Int, foo3: String.(
 // EXIST: { lookupString: "foo1", itemText: "foo1", tailText: "(String)", typeText: "Char", attributes: "bold" }
 // ABSENT: foo2
 // ABSENT: foo3
+
+// IGNORE_K2

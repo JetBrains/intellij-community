@@ -36,20 +36,24 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
     layout.withProjectLibrary(libraryName)
   }
 
+  @Deprecated("Project Library should be provided as a content module")
   fun withProjectLibraries(libraryNames: Sequence<String>) {
     layout.withProjectLibraries(libraryNames)
   }
 
+  @Deprecated("Project Library should be provided as a content module")
   fun withProjectLibrary(libraryName: String, outPath: String) {
-    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, outPath = outPath, reason = "withProjectLibrary"))
+    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, outPath = outPath, reason = "withProjectLibrary", owner = null))
   }
 
+  @Deprecated("Project should be provided as a content module")
   fun withProjectLibrary(libraryName: String, packMode: LibraryPackMode) {
-    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode, reason = "withProjectLibrary"))
+    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode, reason = "withProjectLibrary", owner = null))
   }
 
+  @Deprecated("Project should be provided as a content module")
   fun withProjectLibrary(libraryName: String, outPath: String, packMode: LibraryPackMode) {
-    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode, outPath = outPath, reason = "withProjectLibrary"))
+    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode, outPath = outPath, reason = "withProjectLibrary", owner = null))
   }
 
   /**
@@ -82,10 +86,6 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
    */
   fun withProjectLibraryUnpackedIntoJar(libraryName: String, jarName: String) {
     layout.withProjectLibrary(libraryName, jarName)
-  }
-
-  fun withPatch(patcher: LayoutPatcher) {
-    layout.withPatch(patcher)
   }
 
   fun withPatch(patcher: suspend (ModuleOutputPatcher, BuildContext) -> Unit) {

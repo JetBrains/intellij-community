@@ -16,12 +16,12 @@ import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereRun
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereRunConfigurationFeaturesProvider.Fields.IS_TEMPORARY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereRunConfigurationFeaturesProvider.Fields.RUN_CONFIGURATION_TYPE
 
-private class SearchEverywhereRunConfigurationFeaturesProvider
+internal class SearchEverywhereRunConfigurationFeaturesProvider
   : SearchEverywhereElementFeaturesProvider(RunConfigurationsSEContributor::class.java) {
   object Fields {
-    val IS_SHARED = EventFields.Boolean("isShared")
-    val IS_TEMPORARY = EventFields.Boolean("isTemporary")
-    val RUN_CONFIGURATION_TYPE = EventFields.StringValidatedByCustomRule("runConfigType", SearchEverywhereRunConfigurationTypeValidator::class.java)
+    val IS_SHARED = EventFields.Boolean("is_shared")
+    val IS_TEMPORARY = EventFields.Boolean("is_temporary")
+    val RUN_CONFIGURATION_TYPE = EventFields.StringValidatedByCustomRule("run_config_type", SearchEverywhereRunConfigurationTypeValidator::class.java)
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
@@ -47,7 +47,7 @@ private class SearchEverywhereRunConfigurationFeaturesProvider
   }
 }
 
-private class SearchEverywhereRunConfigurationTypeValidator : CustomValidationRule() {
+internal class SearchEverywhereRunConfigurationTypeValidator : CustomValidationRule() {
   override fun getRuleId(): String {
     return "run_config_type"
   }

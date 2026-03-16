@@ -70,8 +70,8 @@ class LineTokenizer(private val myText: CharSequence) {
     @JvmStatic
     @JvmOverloads
     fun tokenizeIntoList(chars: CharSequence?, includeSeparators: Boolean, skipLastEmptyLine: Boolean = true): List<String> {
-      if (chars == null || chars.isEmpty()) {
-        return mutableListOf()
+      if (chars.isNullOrEmpty()) {
+        return listOf()
       }
 
       val tokenizer = LineTokenizer(chars)

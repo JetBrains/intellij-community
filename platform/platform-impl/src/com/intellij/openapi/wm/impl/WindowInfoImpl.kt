@@ -4,8 +4,15 @@ package com.intellij.openapi.wm.impl
 import com.intellij.facet.ui.FacetDependentToolWindow
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowContentUiType
+import com.intellij.openapi.wm.ToolWindowEP
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowType
+import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.ext.LibraryDependentToolWindow
+import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.util.xmlb.Converter
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property

@@ -42,6 +42,8 @@ jvm_library(
     "//libraries/commons/io",
     "//libraries/guava",
     "//platform/util/trove",
+    "@lib//:org-codehaus-groovy-groovy-provided",
+    "@lib//:org-codehaus-groovy-groovy-ant-provided",
   ],
   exports = [
     "@lib//:slf4j-api",
@@ -73,12 +75,14 @@ jvm_library(
   deps = [
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     "//plugins/gradle:gradle-common",
+    "//plugins/gradle/plugin",
     "//java/testFramework",
     "@lib//:assert_j",
     "@lib//:gradle-tooling_extension-tests-io-github-classgraph-classgraph-4-8-87",
     "@lib//:gradle-tooling_extension-tests-org-jeasy-easy-random-core-4-2-0",
     "//libraries/ion",
     "//platform/core-api:core",
+    "//platform/execution",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
@@ -90,7 +94,8 @@ jvm_library(
     "//libraries/guava",
     "//platform/util/trove",
     "//libraries/commons/lang3",
-  ]
+  ],
+  runtime_deps = [":toolingExtension-tests"]
 )
 ### auto-generated section `build intellij.gradle.toolingExtension.tests` end
 

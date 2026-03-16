@@ -8,7 +8,11 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogCommitDataCache
+import com.intellij.vcs.log.VcsLogCommitSelection
+import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.history.FileHistoryModel

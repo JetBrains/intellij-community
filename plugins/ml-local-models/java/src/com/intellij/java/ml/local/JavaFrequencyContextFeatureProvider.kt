@@ -8,10 +8,15 @@ import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.ml.local.models.LocalModelsManager
 import com.intellij.ml.local.models.frequency.classes.ClassesFrequencyLocalModel
-import com.intellij.ml.local.models.frequency.methods.MethodsFrequencyLocalModel
 import com.intellij.ml.local.models.frequency.methods.MethodsFrequencies
+import com.intellij.ml.local.models.frequency.methods.MethodsFrequencyLocalModel
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiVariable
 
 class JavaFrequencyContextFeatureProvider : ContextFeatureProvider {
   companion object {

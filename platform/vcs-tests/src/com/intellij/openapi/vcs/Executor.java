@@ -46,7 +46,7 @@ public final class Executor {
   }
 
   public static void cd(@NotNull String relativeOrAbsolutePath) {
-    if (relativeOrAbsolutePath.startsWith("/") || relativeOrAbsolutePath.charAt(1) == ':') {
+    if (relativeOrAbsolutePath.startsWith("/") || relativeOrAbsolutePath.charAt(1) == ':' || relativeOrAbsolutePath.startsWith("\\\\")) {
       cdAbs(relativeOrAbsolutePath);
     }
     else {
@@ -209,8 +209,8 @@ public final class Executor {
     return VcsUtil.getFilePath(child);
   }
 
-  public static @NotNull File ourCurrentDir() {
+  public static @NotNull Path ourCurrentDir() {
     assert ourCurrentDir != null : "Current dir hasn't been initialized yet. Call cd at least once before any other command.";
-    return new File(ourCurrentDir);
+    return Path.of(ourCurrentDir);
   }
 }

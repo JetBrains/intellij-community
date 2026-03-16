@@ -73,6 +73,6 @@ public class PyFileStubImpl extends PsiFileStubImpl<PyFile> implements PyFileStu
 
   @Override
   public @NotNull IStubFileElementType<?> getType() {
-    return (IStubFileElementType<?>) LanguageParserDefinitions.INSTANCE.forLanguage(PythonLanguage.getInstance()).getFileNodeType();
+    return (IStubFileElementType<?>)LanguageParserDefinitions.INSTANCE.forLanguage(PythonLanguage.getInstance()).getFileNodeType();
   }
 }

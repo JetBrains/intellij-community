@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion.powershell
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
@@ -48,14 +52,14 @@ class PowerShellCompletionContributor : CompletionContributor(), DumbAware {
 
     val command = promptModel.commandText
     val caretPosition = parameters.editor.caretModel.offset - promptModel.commandStartOffset  // relative to command start
-    // PowerShell's completion generator receives typed prefix directly, so we can create dummy context
-    val runtimeContext = completionServices.runtimeContextProvider.getContext("")
+    // PowerShell's completion generator receives typed prefix directly, so we can create a dummy context
+    val runtimeContext = completionServices.runtimeContextProvider.getContext(listOf(""))
 
-    val completionResult: CompletionResult = runBlockingCancellable {
+    val completionResult: PowerShellCompletionResult? = runBlockingCancellable {
       completionServices.dataGeneratorsExecutor.execute(runtimeContext, powerShellCompletionGenerator(command, caretPosition))
     }
 
-    if (completionResult.matches.isEmpty()) {
+    if (completionResult == null || completionResult.matches.isEmpty()) {
       return
     }
 
@@ -100,7 +104,7 @@ class PowerShellCompletionContributor : CompletionContributor(), DumbAware {
   private fun CompletionItemInfo.toLookupElement(): LookupElement {
     var text = presentableText ?: lookupString
     // Add file separator to directories to make it consistent with command spec completion and other shells
-    if (type == CompletionResultType.PROVIDER_CONTAINER && !text.endsWith(File.separatorChar)) {
+    if (type == PowerShellCompletionResultType.PROVIDER_CONTAINER && !text.endsWith(File.separatorChar)) {
       text += File.separatorChar
     }
     return LookupElementBuilder.create(lookupString)
@@ -113,10 +117,10 @@ class PowerShellCompletionContributor : CompletionContributor(), DumbAware {
 
   private fun getIconForItem(item: CompletionItemInfo): Icon {
     return when (item.type) {
-      CompletionResultType.COMMAND, CompletionResultType.METHOD -> TerminalIcons.Command
-      CompletionResultType.PARAMETER_NAME -> TerminalIcons.Option
-      CompletionResultType.PROVIDER_CONTAINER -> AllIcons.Nodes.Folder
-      CompletionResultType.PROVIDER_ITEM -> TerminalCompletionUtil.getFileIcon(item.lookupString)
+      PowerShellCompletionResultType.COMMAND, PowerShellCompletionResultType.METHOD -> TerminalIcons.Command
+      PowerShellCompletionResultType.PARAMETER_NAME -> TerminalIcons.Option
+      PowerShellCompletionResultType.PROVIDER_CONTAINER -> AllIcons.Nodes.Folder
+      PowerShellCompletionResultType.PROVIDER_ITEM -> TerminalCompletionUtil.getFileIcon(item.lookupString)
       else -> TerminalIcons.Other
     }
   }
@@ -178,7 +182,7 @@ class PowerShellCompletionContributor : CompletionContributor(), DumbAware {
    * Inserts the file separator after the completed item if it is a directory.
    */
   private fun LookupElementBuilder.insertFileSeparatorIfNeeded(itemInfo: CompletionItemInfo): LookupElementBuilder {
-    if (itemInfo.type == CompletionResultType.PROVIDER_CONTAINER) {
+    if (itemInfo.type == PowerShellCompletionResultType.PROVIDER_CONTAINER) {
       return withInsertHandler { context, item ->
         insertHandler?.handleInsert(context, item) // call existing insert handler first
         DocumentUtil.writeInRunUndoTransparentAction {
@@ -195,7 +199,7 @@ class PowerShellCompletionContributor : CompletionContributor(), DumbAware {
     /** String to pass to the Lookup. It will be inserted initially by the platform completion logic. */
     val lookupString: String,
     val presentableText: String?,
-    val type: CompletionResultType,
+    val type: PowerShellCompletionResultType,
     val replacementIndex: Int,
     /** The initial completion string proposed by PowerShell */
     val replacementString: String

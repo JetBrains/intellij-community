@@ -1,21 +1,34 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
+import com.intellij.ide.todo.rpc.getFilesWithTodos
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ReadConstraint
+import com.intellij.openapi.application.constrainedReadAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.tree.TreeUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
 import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
 
 private val ASYNC_BATCH_SIZE by lazy { RegistryManager.getInstance().get("ide.tree.ui.async.batch.size") }
 
@@ -28,6 +41,20 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
 
   override fun dispose() {
     scope.cancel()
+  }
+
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  fun collectFilesFromFlow(filter: TodoFilter?, consumer: Consumer<in PsiFile>) {
+    runBlockingCancellable {
+      val psiManager = PsiManager.getInstance(treeBuilder.project)
+      getFilesWithTodos(treeBuilder.project, filter).collect { virtualFile ->
+        val psiFile = psiManager.findFile(virtualFile)
+        if (psiFile != null) {
+          consumer.accept(psiFile)
+        }
+      }
+    }
   }
 
   fun scheduleCacheAndTreeUpdate(vararg constraints: ReadConstraint): CompletableFuture<*> {
@@ -68,11 +95,13 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
 
   fun scheduleMarkFilesAsDirtyAndUpdateTree(files: List<VirtualFile>) {
     scope.launch(Dispatchers.Default + ClientId.current.asContextElement()) {
-      files.asSequence()
-        .filter { it.isValid }
-        .forEach { treeBuilder.markFileAsDirty(it) }
+
 
       readActionBlocking {
+        files.asSequence()
+          .filter { it.isValid }
+          .forEach { treeBuilder.markFileAsDirty(it) }
+
         treeBuilder.updateVisibleTree()
       }
     }

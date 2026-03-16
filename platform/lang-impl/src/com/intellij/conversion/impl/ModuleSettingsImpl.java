@@ -22,7 +22,12 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class ModuleSettingsImpl extends SettingsXmlFile implements ModuleSettings {

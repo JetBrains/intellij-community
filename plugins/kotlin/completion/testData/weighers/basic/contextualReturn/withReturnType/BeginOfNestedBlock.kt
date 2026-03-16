@@ -12,4 +12,4 @@ fun usage(): Int {
 }
 
 // ORDER: returnFun
-// ORDER: return
+// return should appear after, but does not have to be the very next element

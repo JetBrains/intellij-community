@@ -15,7 +15,8 @@
  */
 package com.siyeh.ipp.increment;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiUnaryExpression;
 import com.siyeh.ig.assignment.IncrementDecrementUsedAsExpressionInspection;
 import com.siyeh.ipp.base.PsiElementPredicate;
 

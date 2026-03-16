@@ -7,6 +7,7 @@ on:
     # for each release
     tags:
       - 'idea/20*'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -14,6 +15,3 @@ jobs:
     with:
       artifacts_dir: out/idea-ce/artifacts
       product: intellij_idea
-      # IntelliJ IDEA distributions cannot be built due to insufficient default runner disk space, see IDEA-382998
-      system_properties:  '-Dintellij.build.skip.build.steps=os_specific_distributions'
-      upload_artifacts: false

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.variables
 
@@ -6,9 +6,14 @@ import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.evaluation.AdditionalContextProvider
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.impl.instanceOf
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
-import com.sun.jdi.*
+import com.sun.jdi.ClassType
+import com.sun.jdi.Field
+import com.sun.jdi.Method
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.Value
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.AsmUtil.getCapturedFieldName
 import org.jetbrains.kotlin.codegen.AsmUtil.getLabeledThisName
@@ -16,10 +21,19 @@ import org.jetbrains.kotlin.codegen.coroutines.CONTINUATION_VARIABLE_NAME
 import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
 import org.jetbrains.kotlin.codegen.inline.getInlineScopeInfo
-import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.base.util.CONTINUATION_TYPE
+import org.jetbrains.kotlin.idea.debugger.base.util.INLINED_THIS_REGEX
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INLINE_TRANSFORMATION_SUFFIX
+import org.jetbrains.kotlin.idea.debugger.base.util.SUSPEND_LAMBDA_CLASSES
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.getInlineDepth
+import org.jetbrains.kotlin.idea.debugger.base.util.safeCalcValue
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.base.util.safeType
+import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariableByName
+import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariables
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter
@@ -34,7 +48,7 @@ import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 private const val OLD_CONTEXT_RECEIVER_PREFIX = "_context_receiver"
 
-class VariableFinder(val context: ExecutionContext) {
+internal class VariableFinder(val context: ExecutionContext) {
     private val frameProxy = context.frameProxy
 
     companion object {
@@ -475,7 +489,7 @@ class VariableFinder(val context: ExecutionContext) {
         val continuation = frameProxy.continuation ?: return null
         val continuationType = continuation.referenceType()
 
-        if (SUSPEND_LAMBDA_CLASSES.none { continuationType.isSubtype(it) }) {
+        if (SUSPEND_LAMBDA_CLASSES.none { continuationType.instanceOf(it) }) {
             return null
         }
 

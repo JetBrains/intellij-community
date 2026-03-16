@@ -1,6 +1,6 @@
 from _typeshed import SupportsWrite
 from array import array
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Generator, Sequence
 from typing import Any, Final, Literal, overload
 
 from .biffh import *
@@ -43,10 +43,10 @@ ctype_text: Final[dict[int, str]]
 
 class Cell(BaseObject):
     __slots__ = ["ctype", "value", "xf_index"]
-    ctype: int
-    value: str
+    ctype: Literal[0, 1, 2, 3, 4, 5, 6]
+    value: str | float
     xf_index: int | None
-    def __init__(self, ctype: int, value: str, xf_index: int | None = None) -> None: ...
+    def __init__(self, ctype: Literal[0, 1, 2, 3, 4, 5, 6], value: str, xf_index: int | None = None) -> None: ...
 
 empty_cell: Final[Cell]
 
@@ -147,7 +147,7 @@ class Sheet(BaseObject):
     def __getitem__(self, item: int) -> list[Cell]: ...
     @overload
     def __getitem__(self, item: tuple[int, int]) -> Cell: ...
-    def get_rows(self) -> tuple[list[Cell], ...]: ...
+    def get_rows(self) -> Generator[list[Cell]]: ...
     __iter__ = get_rows
     def row_types(self, rowx: int, start_colx: int = 0, end_colx: int | None = None) -> Sequence[int]: ...
     def row_values(self, rowx: int, start_colx: int = 0, end_colx: int | None = None) -> Sequence[str]: ...

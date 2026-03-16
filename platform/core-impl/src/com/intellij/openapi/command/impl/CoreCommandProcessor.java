@@ -2,9 +2,13 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.*;
+import com.intellij.openapi.application.ThreadingRuntimeFlagsKt;
+import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandListener;
+import com.intellij.openapi.command.CommandProcessorEx;
+import com.intellij.openapi.command.CommandToken;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -99,8 +103,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     boolean shouldRecordCommandForActiveDocument,
     @Nullable Document document
   ) {
-    Application application = ApplicationManager.getApplication();
-    application.assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.format(
@@ -114,15 +117,12 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     }
 
     if (project != null && project.isDisposed()) {
-      LOG.error("Project " + project + " already disposed");
+      LOG.error("Failed to start a command because " + project + " is already disposed");
       return;
     }
 
     if (currentCommand != null) {
-      application.runWriteIntentReadAction(() -> {
-        command.run();
-        return null;
-      });
+      runCommandTask(command);
       return;
     }
 
@@ -136,7 +136,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       document
     );
     currentCommand = descriptor;
-    application.runWriteIntentReadAction(() -> {
+    Runnable commandTask = () -> {
       Throwable throwable = null;
       try {
         fireCommandStarted();
@@ -154,8 +154,8 @@ public class CoreCommandProcessor extends CommandProcessorEx {
           throw (ProcessCanceledException)finalThrowable;
         }
       }
-      return null;
-    });
+    };
+    runCommandTask(commandTask);
   }
 
   @Override
@@ -165,7 +165,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     @Nullable Object groupId,
     @NotNull UndoConfirmationPolicy undoConfirmationPolicy
   ) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    ThreadingAssertions.assertEventDispatchThread();
     if (project != null && project.isDisposed()) {
       return null;
     }
@@ -175,6 +175,10 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     }
 
     if (currentCommand != null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("startCommand failed: name = " + name + ", groupId = " + groupId + ". " +
+                  "Another command is already running: name = " + currentCommand.getName() + ", groupId = " + currentCommand.getGroupId());
+      }
       return null;
     }
 
@@ -194,7 +198,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void finishCommand(@NotNull CommandToken command, @Nullable Throwable throwable) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(currentCommand != null, "no current command in progress");
     fireCommandFinished();
   }
@@ -211,7 +215,9 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   @Override
   public void leaveModal() {
     ThreadingAssertions.assertEventDispatchThread();
-    LOG.assertTrue(currentCommand == null, "Command must not run: " + currentCommand);
+    if (currentCommand != null) {
+      LOG.error("Command must not run: " + currentCommand);
+    }
     currentCommand = interruptedCommands.pop();
     if (currentCommand != null) {
       fireCommandStarted();
@@ -220,14 +226,14 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void setCurrentCommandName(String name) {
-    ThreadingAssertions.assertWriteIntentReadAccess();
+    ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(currentCommand != null);
     currentCommand = currentCommand.withName(name);
   }
 
   @Override
   public void setCurrentCommandGroupId(Object groupId) {
-    ThreadingAssertions.assertWriteIntentReadAccess();
+    ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(currentCommand != null);
     currentCommand = currentCommand.withGroupId(groupId);
   }
@@ -315,7 +321,6 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   public AccessToken allowMergeGlobalCommands() {
     ThreadingAssertions.assertWriteIntentReadAccess();
     allowMergeGlobalCommandsCount++;
-
     return new AccessToken() {
       @Override
       public void finish() {
@@ -370,7 +375,9 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       currentCommand = null;
       eventPublisher.commandFinished(event);
     }
-    LOG.debug("finishCommand: name = " + event.getCommandName() + ", groupId = " + event.getCommandGroupId());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("finishCommand: name = " + event.getCommandName() + ", groupId = " + event.getCommandGroupId());
+    }
   }
 
   private @NotNull CommandEvent createCurrentCommandEvent() {
@@ -392,5 +399,14 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       }
     }
     return null;
+  }
+
+  private static void runCommandTask(Runnable commandTask) {
+    if (ThreadingRuntimeFlagsKt.getWrapCommandsInWriteIntent()) {
+      WriteIntentReadAction.run(commandTask);
+    }
+    else {
+      commandTask.run();
+    }
   }
 }

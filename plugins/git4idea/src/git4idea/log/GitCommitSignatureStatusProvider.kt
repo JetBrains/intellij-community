@@ -11,11 +11,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.git.icons.GitIcons
 import com.intellij.vcs.log.data.util.VcsCommitsDataLoader
 import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusPresentation
 import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusProvider
 import com.intellij.vcs.log.ui.table.column.util.VcsLogExternalStatusColumnService
-import git4idea.GitIcons
 import git4idea.commit.signature.GitCommitSignature
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager

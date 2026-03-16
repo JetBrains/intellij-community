@@ -23,7 +23,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.PluginsTabFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 final class ShowPluginManagerAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Override

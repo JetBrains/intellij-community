@@ -14,15 +14,9 @@ jvm_library(
     "//platform/util",
     "//libraries/fastutil",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:opentelemetry",
     "//platform/diagnostic/telemetry",
-  ],
-  exports = [
-    "@lib//:jetbrains-annotations",
-    "//platform/util-rt",
-    "//platform/util/base",
-    "//platform/util",
   ]
 )
 ### auto-generated section `build intellij.platform.util.io.storages` end

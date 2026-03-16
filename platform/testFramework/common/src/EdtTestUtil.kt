@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.concurrency.resetThreadContext
@@ -57,7 +57,7 @@ fun runInEdtAndWait(writeIntent: Boolean, runnable: () -> Unit) {
 fun dispatchAllEventsInIdeEventQueue() {
   ThreadingAssertions.assertEventDispatchThread()
 
-  releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack<Unit?> {
+  releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
     while (true) {
       if (dispatchNextEventIfAny() == null) {
         break

@@ -5,8 +5,8 @@ import com.intellij.ui.components.JBLoadingPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
 
 public interface GridPanel extends EditorColorsListener {
   @NotNull

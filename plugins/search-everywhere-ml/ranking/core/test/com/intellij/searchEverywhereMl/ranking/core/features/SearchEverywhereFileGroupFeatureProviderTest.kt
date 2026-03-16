@@ -1,8 +1,10 @@
 package com.intellij.searchEverywhereMl.ranking.core.features
 
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileGroupFeatureProvider.Fields.FILE_GROUP
-import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileGroupFeatureProvider.FileGroup.*
+import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileGroupFeatureProvider.FileGroup.BUILD
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileGroupFeatureProvider.FileGroup.Companion.findGroup
+import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileGroupFeatureProvider.FileGroup.MAIN
+import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileGroupFeatureProvider.FileGroup.README
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith

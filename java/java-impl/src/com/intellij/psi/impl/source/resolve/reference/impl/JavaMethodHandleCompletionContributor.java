@@ -1,14 +1,26 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiMethodPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtilRt;
@@ -16,15 +28,37 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.completion.JavaCompletionContributor.isInJavaContext;
-import static com.intellij.patterns.PsiJavaPatterns.*;
-import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
+import static com.intellij.patterns.PsiJavaPatterns.or;
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static com.intellij.patterns.PsiJavaPatterns.psiExpression;
+import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_CONSTRUCTOR;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_GETTER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_SETTER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_SPECIAL;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_STATIC;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_STATIC_GETTER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_STATIC_SETTER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_STATIC_VAR_HANDLE;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_VAR_HANDLE;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_VIRTUAL;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.JAVA_LANG_INVOKE_METHOD_TYPE;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.METHOD_TYPE;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveClass;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveSignature;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.computeConstantExpression;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getMethodTypeExpressionText;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getReflectiveClass;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getTypeText;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.replaceText;
 
 public final class JavaMethodHandleCompletionContributor extends CompletionContributor implements DumbAware {
 

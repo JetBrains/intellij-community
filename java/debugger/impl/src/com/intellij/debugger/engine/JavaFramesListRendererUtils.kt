@@ -21,15 +21,14 @@ internal fun computeUiPresentation(
   })
   val container = XStackFrameUiPresentationContainer()
 
-  descriptor?.let { descriptor ->
-    val context = (descriptor.debugProcess as DebugProcessImpl).debuggerContext.suspendContext ?: return@let
+  if (descriptor != null) {
+    val context = (descriptor.debugProcess as DebugProcessImpl).debuggerContext.suspendContext ?: return@channelFlow
     try {
       withDebugContext(context, PrioritizedTask.Priority.HIGH) {
         descriptor.updateRepresentationNoNotify(null) {}
       }
     }
     catch (e: Exception) {
-      close(e)
       throw e
     }
     JavaFramesListRenderer.customizePresentation(descriptor, container, selectedDescriptor, false)
@@ -37,12 +36,10 @@ internal fun computeUiPresentation(
   }
 
   if (descriptor == null || selectedDescriptor == null) {
-    close()
     return@channelFlow
   }
   val method = descriptor.method
   if (method != selectedDescriptor.method) {
-    close()
     return@channelFlow
   }
 
@@ -53,5 +50,4 @@ internal fun computeUiPresentation(
       })
     }
   }
-  close()
 }.buffer(Channel.CONFLATED)

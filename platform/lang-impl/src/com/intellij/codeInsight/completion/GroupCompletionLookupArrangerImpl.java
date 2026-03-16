@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.group.CompletionGroup;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupGroupArranger;
-import com.intellij.codeInsight.lookup.impl.AlwaysSeparatorMatcher;
 import com.intellij.codeInsight.lookup.impl.SeparatorLookupElement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.JBIterable;
@@ -14,7 +13,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.codeInsight.completion.group.CompletionGroup.COMPLETION_GROUP_KEY;
 
@@ -98,7 +102,7 @@ public final class GroupCompletionLookupArrangerImpl extends CompletionLookupArr
     for (int i = 0; i < groups.size(); i++) {
       Pair<Integer, CompletionGroup> group = groups.get(i);
       SeparatorLookupElement separatorLookupElement = new SeparatorLookupElement(group.second.displayName());
-      registerMatcher(separatorLookupElement, new AlwaysSeparatorMatcher());
+      registerMatcher(separatorLookupElement, PlainPrefixMatcher.ALWAYS_TRUE);
       associateSorter(separatorLookupElement, new CompletionSorterImpl(new ArrayList<>()));
       model.add(group.first + i, separatorLookupElement);
     }
@@ -130,6 +134,10 @@ public final class GroupCompletionLookupArrangerImpl extends CompletionLookupArr
     if (mySupportGroups) {
       CompletionGroup group = item.getUserData(COMPLETION_GROUP_KEY);
       if (group != null) {
+        if (isPrefixItem(item, true)) {
+          item.putUserData(COMPLETION_GROUP_KEY, null);
+          return false;
+        }
         myGroupCache.putValue(group, item);
         return true;
       }

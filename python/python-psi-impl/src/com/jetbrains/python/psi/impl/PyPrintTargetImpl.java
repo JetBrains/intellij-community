@@ -20,7 +20,7 @@ import com.jetbrains.python.psi.PyPrintTarget;
 
 
 public class PyPrintTargetImpl extends PyElementImpl implements PyPrintTarget {
-    public PyPrintTargetImpl(ASTNode astNode) {
-        super(astNode);
-    }
+  public PyPrintTargetImpl(ASTNode astNode) {
+    super(astNode);
+  }
 }

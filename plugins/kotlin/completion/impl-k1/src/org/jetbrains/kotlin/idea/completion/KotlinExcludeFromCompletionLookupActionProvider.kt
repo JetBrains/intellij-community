@@ -8,8 +8,10 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.Consumer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 
+@K1Deprecation
 class KotlinExcludeFromCompletionLookupActionProvider : LookupActionProvider {
     override fun fillActions(element: LookupElement, lookup: Lookup, consumer: Consumer<in LookupElementAction>) {
         val lookupObject = element.`object` as? DescriptorBasedDeclarationLookupObject ?: return

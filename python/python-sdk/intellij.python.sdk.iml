@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
@@ -41,5 +42,7 @@
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.helpersLocator" />
     <orderEntry type="module" module-name="intellij.python.common" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
   </component>
 </module>

@@ -23,13 +23,13 @@ import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 public interface ClasspathPanel {
   void runClasspathPanelAction(Runnable action);
 
-  void addItems(List<? extends ClasspathTableItem<?>> toAdd);
+  void addItems(List<? extends ClasspathTableItem<?>> toAdd, int atIndex);
 
   ModifiableRootModel getRootModel();
 
@@ -38,6 +38,10 @@ public interface ClasspathPanel {
   JComponent getComponent();
 
   ModuleConfigurationState getModuleConfigurationState();
+
+  int getRowCount();
+
+  int getSelectedRow();
 
   void navigate(boolean openLibraryEditor);
 

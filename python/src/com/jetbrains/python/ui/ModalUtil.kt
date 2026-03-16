@@ -6,9 +6,9 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.EDT
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import kotlinx.coroutines.runBlocking
-import javax.swing.SwingUtilities
 
 /**
  * Runs [code] in background under the modal dialog
@@ -25,7 +25,7 @@ fun <T> pyModalBlocking(modalTaskOwner: ModalTaskOwner = ModalTaskOwner.guess(),
  * It is *not* recommended to use this function. Prefer suspend functions.
  */
 internal fun <T> pyMayBeModalBlocking(modalTaskOwner: ModalTaskOwner = ModalTaskOwner.guess(), code: suspend () -> T): T =
-  if (SwingUtilities.isEventDispatchThread()) {
+  if (EDT.isCurrentThreadEdt()) {
     pyModalBlocking(modalTaskOwner, code)
   }
   else {

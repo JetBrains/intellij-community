@@ -12,7 +12,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.util.system.OS
 import java.nio.file.Path
 import java.time.OffsetDateTime
-import java.util.*
+import java.util.Locale
 import kotlin.io.path.name
 
 internal class OsDataCollector : ApplicationUsagesCollector() {

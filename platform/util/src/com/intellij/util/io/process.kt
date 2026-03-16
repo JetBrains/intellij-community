@@ -2,7 +2,14 @@
 package com.intellij.util.io
 
 import com.intellij.openapi.util.IntellijInternalApi
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.BufferedReader
 import java.util.concurrent.CancellationException

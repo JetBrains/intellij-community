@@ -9,7 +9,7 @@ import com.intellij.uiDesigner.propertyInspector.properties.IndentProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 

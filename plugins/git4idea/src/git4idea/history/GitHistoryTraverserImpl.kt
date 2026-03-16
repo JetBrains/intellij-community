@@ -10,7 +10,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.util.EventDispatcher
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.TimedVcsCommit
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogObjectsFactory
+import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.data.index.IndexedDetails.Companion.createMetadata
@@ -28,7 +33,7 @@ import git4idea.GitCommit
 import git4idea.GitUtil
 import git4idea.history.GitHistoryTraverser.Traverse
 import git4idea.history.GitHistoryTraverser.TraverseCommitInfo
-import java.util.*
+import java.util.EventListener
 
 internal class GitHistoryTraverserImpl(
   private val project: Project,
@@ -54,7 +59,7 @@ internal class GitHistoryTraverserImpl(
     walker: (startId: VcsLogCommitStorageIndex, graph: LiteLinearGraph, visited: BitSetFlags, handler: (id: VcsLogCommitStorageIndex) -> Boolean) -> Unit,
     commitHandler: Traverse.(id: TraverseCommitInfo) -> Boolean
   ) {
-    val dataPack = logData.dataPack
+    val dataPack = logData.graphData
     val hashIndex = logData.getCommitIndex(start, root)
 
     val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<VcsLogCommitStorageIndex>
@@ -83,7 +88,7 @@ internal class GitHistoryTraverserImpl(
     commitHandler: Traverse.(id: TraverseCommitInfo) -> Boolean
   ) {
     fun findBranchHash(branchName: String) =
-      VcsLogUtil.findBranch(logData.dataPack.refsModel, root, branchName)?.commitHash
+      VcsLogUtil.findBranch(logData.graphData.refsModel, root, branchName)?.commitHash
       ?: throw IllegalArgumentException("Branch '$branchName' doesn't exist in the repository: $root")
 
     val hash = when (start) {

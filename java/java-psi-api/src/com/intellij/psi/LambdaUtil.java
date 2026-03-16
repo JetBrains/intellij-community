@@ -11,7 +11,16 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiSuperMethodUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -21,7 +30,15 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -536,18 +553,23 @@ public final class LambdaUtil {
     if (contextCall instanceof PsiNewExpression) {
       PsiDiamondType diamondType = PsiDiamondType.getDiamondType((PsiNewExpression)contextCall);
       if (diamondType != null) {
-        JavaResolveResult[] results = diamondType.getStaticFactories();
-        if (results.length > 0) {
-          List<JavaResolveResult> substituted = ContainerUtil.filter(results, result -> {
-            return !ContainerUtil.exists(result.getSubstitutor().getSubstitutionMap().entrySet(),
-                                        e -> PsiUtil.resolveClassInClassTypeOnly(e.getValue()) == e.getKey());
-          });
-          if (!substituted.isEmpty()) {
-            // Prefer only candidates where inference was successful
-            return substituted.toArray(JavaResolveResult.EMPTY_ARRAY);
+        // getSubstitutor can cause recursion, so we need to prevent it
+        // see com.intellij.psi.LambdaUtil.getSubstitutedType, where similar approach is used
+        JavaResolveResult[] resolveResults = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(contextCall, false, () -> {
+          JavaResolveResult[] results = diamondType.getStaticFactories();
+          if (results.length > 0) {
+            List<JavaResolveResult> substituted = ContainerUtil.filter(results, result -> {
+              return !ContainerUtil.exists(result.getSubstitutor().getSubstitutionMap().entrySet(),
+                                           e -> PsiUtil.resolveClassInClassTypeOnly(e.getValue()) == e.getKey());
+            });
+            if (!substituted.isEmpty()) {
+              // Prefer only candidates where inference was successful
+              return substituted.toArray(JavaResolveResult.EMPTY_ARRAY);
+            }
           }
-        }
-        return results;
+          return results;
+        });
+        return resolveResults != null ? resolveResults : JavaResolveResult.EMPTY_ARRAY;
       }
     }
     return contextCall.multiResolve(true);

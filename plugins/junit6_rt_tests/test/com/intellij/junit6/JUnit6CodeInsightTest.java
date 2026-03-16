@@ -2,7 +2,12 @@
 package com.intellij.junit6;
 
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.junit5.RunInEdt;
 import org.junit.jupiter.api.AfterEach;

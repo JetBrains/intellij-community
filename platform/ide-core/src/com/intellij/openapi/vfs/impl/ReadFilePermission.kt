@@ -2,8 +2,8 @@
 package com.intellij.openapi.vfs.impl
 
 import com.intellij.openapi.components.service
-import com.intellij.platform.ide.core.permissions.Permission
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.core.permissions.Permission
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

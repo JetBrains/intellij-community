@@ -34,7 +34,7 @@ object ImageEditorUIUtil {
   fun createImageEditorUI(imageData: ByteArray): JComponent? = EP_NAME.extensionList.firstOrNull()?.createImageEditorUI(imageData)
 }
 
-private class ShowImagePopupRemoteTopicListener : ProjectRemoteTopicListener<ShowImagePopupUtil.Request> {
+internal class ShowImagePopupRemoteTopicListener : ProjectRemoteTopicListener<ShowImagePopupUtil.Request> {
   override val topic: ProjectRemoteTopic<ShowImagePopupUtil.Request> = ShowImagePopupUtil.REMOTE_TOPIC
 
   override fun handleEvent(project: Project, event: ShowImagePopupUtil.Request) {

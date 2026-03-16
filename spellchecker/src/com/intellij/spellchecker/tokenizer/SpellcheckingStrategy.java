@@ -12,7 +12,13 @@ import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPlainText;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spellchecker.DictionaryLayer;
@@ -26,7 +32,10 @@ import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -128,12 +137,18 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
     return parserDefinition.getCommentTokens().contains(psiElement.getNode().getElementType());
   }
 
-
   /**
-   * Controls whether to use text-level spellchecking provided by {@link com.intellij.grazie.spellcheck.GrazieSpellcheckingExtension}.
+   * Controls whether to use text-level spellchecking provided by {@link com.intellij.grazie.spellcheck.GrazieTextLevelSpellCheckingExtension}.
    */
   public boolean useTextLevelSpellchecking() {
     return false;
+  }
+
+  /**
+   * Controls whether to use text-level spellchecking provided by {@link com.intellij.grazie.spellcheck.GrazieTextLevelSpellCheckingExtension}.
+   */
+  public boolean useTextLevelSpellchecking(PsiElement element) {
+    return useTextLevelSpellchecking();
   }
 
   protected static boolean isInjectedLanguageFragment(@Nullable PsiElement element) {
@@ -173,24 +188,22 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
                                                        @NotNull PsiElement element,
                                                        @NotNull TextRange range,
                                                        @Nullable Set<String> suggestions) {
-    ArrayList<LocalQuickFix> result = new ArrayList<>();
+    List<LocalQuickFix> result = new ArrayList<>();
     SpellcheckerRateTracker tracker = new SpellcheckerRateTracker(element);
 
     if (useRename && PsiTreeUtil.getNonStrictParentOfType(element, PsiNamedElement.class) != null) {
       result.add(SpellCheckerQuickFixFactory.rename(typo, range, element, tracker));
     } else {
-      List<LocalQuickFix> fixes = SpellCheckerQuickFixFactory.changeToVariants(element, range, typo, tracker, suggestions);
-      result.addAll(fixes);
+      result.addAll(SpellCheckerQuickFixFactory.changeToVariants(element, range, typo, tracker, suggestions));
+      result.addAll(SpellCheckerQuickFixFactory.additionalFixes());
     }
 
-    final SpellCheckerSettings settings = SpellCheckerSettings.getInstance(element.getProject());
+    SpellCheckerSettings settings = SpellCheckerSettings.getInstance(element.getProject());
+    DictionaryLayer layer = null;
     if (settings.isUseSingleDictionaryToSave()) {
-      DictionaryLayer layer = DictionaryLayersProvider.getLayer(element.getProject(), settings.getDictionaryToSave());
-      result.add(SpellCheckerQuickFixFactory.saveTo(element, range, typo, layer, tracker));
-      return result.toArray(LocalQuickFix.EMPTY_ARRAY);
+      layer = DictionaryLayersProvider.getLayer(element.getProject(), settings.getDictionaryToSave());
     }
-
-    result.add(SpellCheckerQuickFixFactory.saveTo(element, range, typo, tracker));
+    result.add(SpellCheckerQuickFixFactory.saveTo(element, range, typo, layer, tracker));
     return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 

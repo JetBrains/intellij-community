@@ -332,11 +332,11 @@ class MagicProxy(Base):
     def create_mock(self) -> Any: ...
     def __get__(self, obj: Any, _type=None) -> Any: ...
 
-class _ANY:
+class _ANY(Any):
     def __eq__(self, other: object) -> Literal[True]: ...
     def __ne__(self, other: object) -> Literal[False]: ...
 
-ANY: Any
+ANY: _ANY
 
 def create_autospec(
     spec: Any, spec_set: Any = False, instance: Any = False, _parent=None, _name=None, *, unsafe: bool = False, **kwargs: Any

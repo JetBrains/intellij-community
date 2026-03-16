@@ -25,12 +25,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-
+/**
+ * {@link #getFileStatus(VirtualFile)} is the only public method: provides a description of file indexing status.
+ * @see UnindexedFileStatus
+ */
 final class UnindexedFilesFinder {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesFinder.class);
 
@@ -169,19 +177,15 @@ final class UnindexedFilesFinder {
   @Nullable("null if the file is not subject for indexing (a directory, invalid, etc.)")
   public UnindexedFileStatus getFileStatus(@NotNull VirtualFile file) {
     long statusTime = System.nanoTime();
-    UnindexedFileStatusBuilder status = null;
-    try {
-      status = evaluateFileStatus(file);
+    UnindexedFileStatusBuilder status = evaluateFileStatus(file);
+    if (status != null) {
+      status.timeTotalEvaluation = System.nanoTime() - statusTime;
+      return status.build();
     }
-    finally {
-      if (status != null) {
-        status.timeTotalEvaluation = System.nanoTime() - statusTime;
-      }
-    }
-    return status == null ? null : status.build();
+    return null;
   }
 
-  private UnindexedFileStatusBuilder evaluateFileStatus(@NotNull VirtualFile file) {
+  private @Nullable UnindexedFileStatusBuilder evaluateFileStatus(@NotNull VirtualFile file) {
     ProgressManager.checkCanceled(); // give a chance to suspend indexing
     if (!file.isValid() || !(file instanceof VirtualFileWithId)) {
       return null;

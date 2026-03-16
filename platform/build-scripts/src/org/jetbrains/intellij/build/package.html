@@ -25,8 +25,10 @@ If you want to add a new plugin to an existing product, specify the main plugin 
   the corresponding *_REPOSITORY_PLUGINS list ({@link org.jetbrains.intellij.build.CommunityRepositoryModules#COMMUNITY_REPOSITORY_PLUGINS COMMUNITY_REPOSITORY_PLUGINS} for plugins located in idea/community sources).
 </p>
 <p>
-  If you want to add a new library to the platform part of some product(s) you just need to add it to the dependency list of one of the modules included in {@link org.jetbrains.intellij.build.ProductModulesLayout the product layout}
-  with scope 'Compile' or 'Runtime'. If you don't want to add the library to dependencies, you may manually register it in {@link org.jetbrains.intellij.build.impl.PlatformModules PlatformModules} class.
+    If you want to add a new library to the platform part of some product(s) you just need to add it to the dependency list of one of the
+    modules included in {@link org.jetbrains.intellij.build.productLayout.ProductModulesLayout the product layout}
+    with scope 'Compile' or 'Runtime'. If you don't want to add the library to dependencies, you may manually register it in {@link
+    org.jetbrains.intellij.build.impl.PlatformModules PlatformModules} class.
 </p>
 <p>
   If you want to add a new library to distribution of some plugin, you can either add it as a module library, and it'll be bundled automatically

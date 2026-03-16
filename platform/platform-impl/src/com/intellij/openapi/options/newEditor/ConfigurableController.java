@@ -8,7 +8,7 @@ import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.Map;
 
 /**

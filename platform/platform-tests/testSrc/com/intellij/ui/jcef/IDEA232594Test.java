@@ -6,11 +6,15 @@ import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.DisposableRule;
 import com.intellij.ui.scale.TestScaleHelper;
 import kotlin.jvm.JvmField;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import java.awt.BorderLayout;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;

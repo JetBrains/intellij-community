@@ -2,7 +2,12 @@
 package com.intellij.openapi.vfs.newvfs.persistent.recovery;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.newvfs.persistent.*;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSLoader;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory;
 import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
@@ -13,7 +18,12 @@ import java.io.IOException;
 import java.util.List;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.FREE_RECORD_FLAG;
-import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.ATTRIBUTES_STORAGE_CORRUPTED;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.CONTENT_STORAGES_INCOMPLETE;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.HAS_ERRORS_IN_PREVIOUS_SESSION;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.NAME_STORAGE_INCOMPLETE;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.NOT_CLOSED_PROPERLY;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.UNRECOGNIZED;
 import static com.intellij.util.SystemProperties.getIntProperty;
 
 /**

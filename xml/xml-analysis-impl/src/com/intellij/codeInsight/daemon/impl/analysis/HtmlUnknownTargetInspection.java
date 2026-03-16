@@ -8,7 +8,7 @@ import com.intellij.xml.util.AnchorReference;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class HtmlUnknownTargetInspection extends XmlPathReferenceInspection {
+public final class HtmlUnknownTargetInspection extends XmlPathReferenceInspection {
   @Override
   public @NotNull String getShortName() {
     return "HtmlUnknownTarget";

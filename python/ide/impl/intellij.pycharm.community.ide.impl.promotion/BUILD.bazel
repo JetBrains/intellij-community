@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":pycharm-community-ide-impl-promotion_resources"],
   deps = [
+    "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",

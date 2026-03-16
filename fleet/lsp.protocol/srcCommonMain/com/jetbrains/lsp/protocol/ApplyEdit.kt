@@ -3,9 +3,21 @@ package com.jetbrains.lsp.protocol
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
 
+/**
+ * The workspace/applyEdit request is sent from the server to the client to modify resource on the client side.
+ */
 @Serializable
 data class ApplyWorkspaceEditParams(
+    /**
+     * An optional label of the workspace edit. This label is
+     * presented in the user interface for example on an undo
+     * stack to undo the workspace edit.
+     */
     val label: String?,
+
+    /**
+     * The edits to apply.
+     */
     val edit: WorkspaceEdit,
 )
 

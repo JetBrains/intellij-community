@@ -29,7 +29,6 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//python/python-psi-api:psi",
     "//python:python-community-impl",
-    "//platform/remote-driver/test-sdk:driver-sdk",
     "//platform/platform-api:ide",
     "//platform/markdown-utils",
     "//platform/statistics",

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.listCellRenderer
 
+import com.intellij.internal.inspector.PropertyBean
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -75,11 +76,20 @@ interface LcrRow<T> {
   var rowHeight: Int?
 
   /**
-   * Width of the row (excluding separator) or null for auto height calculation.
+   * Width of the row (excluding separator) or null for auto width calculation.
    */
   @get:ApiStatus.Internal
   @set:ApiStatus.Internal
   var rowWidth: Int?
+
+  /**
+   * If specified, passes additional information about the item to the UI Inspector.
+   *
+   * @see [com.intellij.internal.inspector.UiInspectorContextProvider]
+   */
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  var uiInspectorContext: List<PropertyBean>?
 
   /**
    * The gap between the previous cell and the next one. Not used for the first cell

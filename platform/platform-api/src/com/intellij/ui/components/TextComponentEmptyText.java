@@ -7,9 +7,12 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.function.Predicate;

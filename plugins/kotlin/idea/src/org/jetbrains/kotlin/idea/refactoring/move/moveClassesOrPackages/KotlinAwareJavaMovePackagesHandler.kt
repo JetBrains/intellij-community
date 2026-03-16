@@ -10,7 +10,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassesOrPackagesHandler
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class KotlinAwareJavaMovePackagesHandler : JavaMoveClassesOrPackagesHandler() {
     override fun createMoveClassesOrPackagesToNewDirectoryDialog(
         directory: PsiDirectory,

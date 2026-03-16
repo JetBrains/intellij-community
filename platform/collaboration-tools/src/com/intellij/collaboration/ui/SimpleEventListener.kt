@@ -4,7 +4,7 @@ package com.intellij.collaboration.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
-import java.util.*
+import java.util.EventListener
 
 fun interface SimpleEventListener : EventListener {
   fun eventOccurred()

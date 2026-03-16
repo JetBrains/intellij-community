@@ -14,14 +14,18 @@ import org.junit.jupiter.api.extension.RegisterExtension
 /**
  * A wrapper around [LightJavaCodeInsightFixtureTestCase] that is JUnit 5-compatible.
  * 
+ * For JUnit 5 support, see the `intellij.platform.testFramework.junit5` module in `community/platform/testFramework/junit5`.
+ * 
+ * There is also a showcase of JUnit 5 in `community/platform/testFramework/junit5/test/showcase`.
+ * 
  * @see LightJavaCodeInsightFixtureTestCase
  * @see LightJavaCodeInsightFixtureTestCase4
  */
-@TestDataPath("\$CONTENT_ROOT/testData")
-abstract class LightJavaCodeInsightFixtureTestCase5 (projectDescriptor: LightProjectDescriptor? = null) {
+@TestDataPath($$"$CONTENT_ROOT/testData")
+abstract class LightJavaCodeInsightFixtureTestCase5(projectDescriptor: LightProjectDescriptor? = null) {
 
-  protected open fun getRelativePath() : String = JavaTestUtil.getRelativeJavaTestDataPath()
-  protected open fun getTestDataPath() : String? = null
+  protected open fun getRelativePath(): String = JavaTestUtil.getRelativeJavaTestDataPath()
+  protected open fun getTestDataPath(): String? = null
 
   @RegisterExtension
   protected val testNameRule: TestNameExtension = TestNameExtension()
@@ -29,7 +33,7 @@ abstract class LightJavaCodeInsightFixtureTestCase5 (projectDescriptor: LightPro
   protected fun getTestName(lowercaseFirstLetter: Boolean): String {
     return PlatformTestUtil.getTestName(testNameRule.methodName, lowercaseFirstLetter)
   }
-  
+
   @RegisterExtension
   private val testCase = object : LightJavaCodeInsightFixtureTestCase(), BeforeEachCallback, AfterEachCallback {
 
@@ -37,15 +41,11 @@ abstract class LightJavaCodeInsightFixtureTestCase5 (projectDescriptor: LightPro
 
     override fun getTestDataPath(): String = this@LightJavaCodeInsightFixtureTestCase5.getTestDataPath() ?: super.getTestDataPath()
 
-    override fun getBasePath(): String = this@LightJavaCodeInsightFixtureTestCase5.getRelativePath() 
+    override fun getBasePath(): String = this@LightJavaCodeInsightFixtureTestCase5.getRelativePath()
 
-    override fun beforeEach(context: ExtensionContext?) {
-      setUp()
-    }
+    override fun beforeEach(context: ExtensionContext): Unit = setUp()
 
-    override fun afterEach(context: ExtensionContext?) {
-      tearDown()
-    }
+    override fun afterEach(context: ExtensionContext): Unit = tearDown()
 
     val fixture: JavaCodeInsightTestFixture get() = myFixture
   }

@@ -4,17 +4,20 @@ package org.jetbrains.kotlin.idea.core.completion
 
 import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import javax.swing.Icon
 
+@K1Deprecation
 interface DescriptorBasedDeclarationLookupObject : DeclarationLookupObject {
     override val descriptor: DeclarationDescriptor?
     val importableFqName: FqName?
     val isDeprecated: Boolean
 }
 
+@K1Deprecation
 data class PackageLookupObject(val fqName: FqName) : DescriptorBasedDeclarationLookupObject {
     override val psiElement: PsiElement? get() = null
     override val descriptor: DeclarationDescriptor? get() = null

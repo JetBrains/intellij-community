@@ -5,7 +5,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author anna

@@ -7,13 +7,20 @@ import com.intellij.util.Urls
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.*
+import io.netty.handler.codec.http.DefaultFullHttpResponse
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpHeaderNames
+import io.netty.handler.codec.http.HttpRequest
+import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.HttpVersion
+import io.netty.handler.codec.http.QueryStringDecoder
+import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer.Companion.guessContentType
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.FileResponses.checkCache
 import org.jetbrains.io.FileResponses.getContentType
 import org.jetbrains.io.send
-import java.util.*
+import java.util.Date
 
 /**
  * Will serve resources provided by registered resource providers.

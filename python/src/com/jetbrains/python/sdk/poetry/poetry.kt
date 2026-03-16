@@ -1,28 +1,23 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtil
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.PythonModuleTypeBase
+import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
-import com.jetbrains.python.sdk.impl.resolvePythonBinary
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.impl.resolvePythonBinary
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import java.util.regex.Pattern
-import javax.swing.Icon
 import kotlin.io.path.pathString
 
 
@@ -33,24 +28,26 @@ fun suggestedSdkName(basePath: Path): @NlsSafe String = "Poetry (${PathUtil.getF
 @Internal
 suspend fun createNewPoetrySdk(
   moduleBasePath: Path,
-  existingSdks: List<Sdk>,
-  basePythonBinaryPath: PythonBinary?,
+  basePythonBinaryPath: PythonBinary,
   installPackages: Boolean,
+  errorSink: ErrorSink,
+  inProjectEnv: Boolean = false,
 ): PyResult<Sdk> {
-  val pythonBinaryPath = setUpPoetry(moduleBasePath, basePythonBinaryPath, installPackages).getOr { return it }
+  val pythonBinaryPath = setUpPoetry(moduleBasePath, basePythonBinaryPath, installPackages, errorSink, inProjectEnv).getOr { return it }
 
-  return createPoetrySdk(moduleBasePath, existingSdks, PathHolder.Eel(pythonBinaryPath))
+  return createPoetrySdk(
+    basePath = moduleBasePath,
+    pythonBinaryPath = PathHolder.Eel(pythonBinaryPath)
+  )
 }
 
 @Internal
 suspend fun createPoetrySdk(
   basePath: Path,
-  existingSdks: List<Sdk>,
   pythonBinaryPath: PathHolder.Eel,
 ): PyResult<Sdk> = createSdk(
   pythonBinaryPath = pythonBinaryPath,
-  existingSdks = existingSdks,
-  associatedProjectPath = basePath.toString(),
+  associatedModulePath = basePath.toString(),
   suggestedSdkName = suggestedSdkName(basePath),
   sdkAdditionalData = PyPoetrySdkAdditionalData(basePath)
 )
@@ -64,9 +61,9 @@ internal val Sdk.isPoetry: Boolean
     return getOrCreateAdditionalData() is PyPoetrySdkAdditionalData
   }
 
-private suspend fun setUpPoetry(moduleBasePath: Path, basePythonBinaryPath: PythonBinary?, installPackages: Boolean): PyResult<PythonBinary> {
+private suspend fun setUpPoetry(moduleBasePath: Path, basePythonBinaryPath: PythonBinary, installPackages: Boolean, errorSink: ErrorSink, inProjectEnv: Boolean = false): PyResult<PythonBinary> {
   val init = PyProjectToml.findInRoot(moduleBasePath) == null
-  val pythonHomePath = setupPoetry(moduleBasePath, basePythonBinaryPath, installPackages, init).getOr { return it }
+  val pythonHomePath = setupPoetry(moduleBasePath, basePythonBinaryPath, installPackages, init, errorSink, inProjectEnv).getOr { return it }
   val pythonBinaryPath = pythonHomePath.resolvePythonBinary()
                          ?: return PyResult.localizedError(PyBundle.message("python.sdk.cannot.setup.sdk", pythonHomePath))
   return PyResult.success(pythonBinaryPath)

@@ -3,9 +3,20 @@ package com.intellij.ide.browsers.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.browsers.*
+import com.intellij.ide.browsers.BrowserLauncher
+import com.intellij.ide.browsers.OpenInBrowserRequest
+import com.intellij.ide.browsers.WebBrowser
+import com.intellij.ide.browsers.WebBrowserManager
+import com.intellij.ide.browsers.WebBrowserService
+import com.intellij.ide.browsers.WebBrowserUrlProvider
+import com.intellij.ide.browsers.WebBrowserXmlService
+import com.intellij.ide.browsers.createOpenInBrowserRequest
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.keymap.KeymapUtil

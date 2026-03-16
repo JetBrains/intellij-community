@@ -16,7 +16,7 @@ public class TestIgnoredEvent extends TreeNodeEvent {
   }
 
   public TestIgnoredEvent(@NotNull TestIgnored testIgnored, @Nullable String stacktrace) {
-    this(testIgnored.getTestName(), TreeNodeEvent.getNodeId(testIgnored), testIgnored.getIgnoreComment(), stacktrace);
+    this(testIgnored.getTestName(), getNodeId(testIgnored), testIgnored.getIgnoreComment(), stacktrace);
   }
 
   public TestIgnoredEvent(@Nullable String name, @Nullable String id, @Nullable String ignoreComment, @Nullable String stacktrace) {

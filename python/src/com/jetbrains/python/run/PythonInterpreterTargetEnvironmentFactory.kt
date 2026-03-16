@@ -13,8 +13,6 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.ui.dsl.builder.Panel
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.isPackageManagementSupported
 import com.jetbrains.python.run.target.HelpersAwareLocalTargetEnvironmentRequest
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
@@ -79,7 +77,7 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
   fun getTargetModuleResidesOnImpl(module: Module): TargetConfigurationWithLocalFsAccess? = null
 
   override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
-    if (!service<Available>().isAvailable(this, pluginDescriptor)) {
+    if (!service<Available>().isAvailable(this)) {
       throw ExtensionNotApplicableException.create()
     }
   }
@@ -89,24 +87,22 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
    * every [PythonInterpreterTargetEnvironmentFactory].
    */
   interface Available {
-    fun isAvailable(factory: PythonInterpreterTargetEnvironmentFactory, pluginDescriptor: PluginDescriptor): Boolean
+    fun isAvailable(factory: PythonInterpreterTargetEnvironmentFactory): Boolean
 
     /** It is supposed that PyCharm Pro supports all available Run Target interpreters. */
     class Default : Available {
-      override fun isAvailable(factory: PythonInterpreterTargetEnvironmentFactory, pluginDescriptor: PluginDescriptor): Boolean = true
+      override fun isAvailable(factory: PythonInterpreterTargetEnvironmentFactory): Boolean = true
     }
   }
 
   companion object {
-    const val UNKNOWN_INTERPRETER_VERSION = "unknown interpreter"
-
     @JvmStatic
     val EP_NAME = ExtensionPointName<PythonInterpreterTargetEnvironmentFactory>("Pythonid.interpreterTargetEnvironmentFactory")
 
     @JvmStatic
     fun findPythonTargetInterpreter(sdk: Sdk, project: Project): HelpersAwareTargetEnvironmentRequest =
       when (sdk.sdkAdditionalData) {
-        is TargetBasedSdkAdditionalData, is PyRemoteSdkAdditionalDataBase ->
+        is TargetBasedSdkAdditionalData ->
           EP_NAME.extensionList.firstNotNullOfOrNull { it.getPythonTargetInterpreter(sdk, project) }
         else -> null
       } ?: HelpersAwareLocalTargetEnvironmentRequest()
@@ -128,23 +124,8 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
     fun by(configuration: TargetEnvironmentConfiguration): PythonInterpreterTargetEnvironmentFactory? =
       EP_NAME.extensionList.find { it.isFor(configuration) }
 
-    /**
-     * Looks for [TargetPanelExtension] with additional rows that corresponds to the provided [configuration],
-     * applies its UI to [this] [Panel] via [TargetPanelExtension.extendDialogPanelWithOptionalFields] and returns [TargetPanelExtension].
-     *
-     * Does nothing if [project] is `null` or it is the default project.
-     */
-    @JvmStatic
-    fun Panel.extendWithTargetSpecificFields(project: Project?, configuration: TargetEnvironmentConfiguration?): TargetPanelExtension? =
-      if (configuration != null && project != null && !project.isDefault) {
-        findPanelExtension(project, configuration)?.also { panelExtension ->
-          panelExtension.extendDialogPanelWithOptionalFields(this)
-        }
-      }
-      else null
-
-    private fun getFallbackSdkName(data: PyTargetAwareAdditionalData, version: String?): String =
-      "Remote ${version ?: UNKNOWN_INTERPRETER_VERSION} (${data.interpreterPath})"
+    private fun getFallbackSdkName(data: PyTargetAwareAdditionalData, @Suppress("UNUSED_PARAMETER") version: String?): String =
+      "Remote (${data.interpreterPath})"
 
     /**
      * Note: let the target be immutable by default though this case seems to be invalid.

@@ -6,18 +6,19 @@ package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.idea.artifacts.KotlinNativeVersion.resolvedKotlinNativeVersion
 import org.jetbrains.kotlin.konan.file.unzipTo
 import java.io.File
 import java.io.FileInputStream
 import java.nio.file.Paths
-import java.util.*
+import java.util.Properties
 import kotlin.io.path.exists
 
 object KotlinNativeVersion {
     /** This field is automatically setup from project-module-updater.
      *  See [org.jetbrains.tools.model.updater.updateKGPVersionForKotlinNativeTests]
      */
-    private const val kotlinGradlePluginVersion: String = "2.2.0-dev-15683"
+    private const val kotlinGradlePluginVersion: String = "2.4.0-dev-539"
 
     /** Return bootstrap version or version from properties file of specified Kotlin Gradle Plugin.
      *  Make sure localMaven has kotlin-gradle-plugin with required version for cooperative development environment.

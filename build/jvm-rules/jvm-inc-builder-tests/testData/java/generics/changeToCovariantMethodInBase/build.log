@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  maketest/BaseImplementation.class
+End of files
+Compiling files:
+  java/generics/changeToCovariantMethodInBase/a/maketest/BaseImplementation.java
+End of files
+Cleaning output files:
+  maketest/IImpl.class
+End of files
+Compiling files:
+  java/generics/changeToCovariantMethodInBase/a/maketest/IImpl.java
+End of files
+------------------------------------------
+Exit code: OK

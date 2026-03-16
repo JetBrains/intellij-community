@@ -20,7 +20,9 @@ import java.util.Objects;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static org.jetbrains.idea.svn.SvnBundle.message;
-import static org.jetbrains.idea.svn.SvnUtil.*;
+import static org.jetbrains.idea.svn.SvnUtil.append;
+import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
+import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 import static org.jetbrains.idea.svn.commandLine.CommandUtil.format;
 
 public class FirstInBranch {

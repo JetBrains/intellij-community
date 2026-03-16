@@ -24,7 +24,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//libraries/asm",
-    "//plugins/kotlin/uast/uast-kotlin-base",
+    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-k2",
     "@lib//:kotlinc-analysis-api-impl-base",

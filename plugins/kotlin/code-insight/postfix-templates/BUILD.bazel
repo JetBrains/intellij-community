@@ -29,6 +29,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "//platform/analysis-api:analysis",
+    "//platform/core-impl",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/refactoring",
@@ -39,6 +40,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
     "//plugins/kotlin/code-insight/live-templates-k2:kotlin-codeInsight-liveTemplates",
+    "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
@@ -61,6 +63,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "@lib//:junit4",
     "//platform/analysis-api:analysis",
+    "//platform/core-impl",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/refactoring",
@@ -78,7 +81,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared_test_lib",
     "//plugins/kotlin/code-insight/live-templates-k2:kotlin-codeInsight-liveTemplates",
     "//plugins/kotlin/code-insight/live-templates-k2:kotlin-codeInsight-liveTemplates_test_lib",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
+    "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -88,6 +91,7 @@ jvm_library(
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//plugins/kotlin/code-insight/utils",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.postfixTemplates` end

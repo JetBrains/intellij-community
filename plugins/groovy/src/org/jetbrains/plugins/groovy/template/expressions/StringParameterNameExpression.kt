@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.template.expressions
 
 import com.intellij.codeInsight.template.ExpressionContext
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.SuggestedNameInfo
 import com.intellij.psi.codeStyle.VariableKind
@@ -13,8 +12,7 @@ class StringParameterNameExpression(private val myDefaultName: String?) : Parame
 
   override fun getNameInfo(context: ExpressionContext): SuggestedNameInfo? {
     val project = context.project
-    val editor = context.editor ?: return null
-    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return null
+    val file = context.psiFile ?: return null
     val elementAt = file.findElementAt(context.startOffset)
     val parameter = PsiTreeUtil.getParentOfType(elementAt, GrParameter::class.java) ?: return null
     val manager = JavaCodeStyleManager.getInstance(project)

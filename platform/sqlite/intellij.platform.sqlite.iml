@@ -16,6 +16,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
   </component>
 </module>

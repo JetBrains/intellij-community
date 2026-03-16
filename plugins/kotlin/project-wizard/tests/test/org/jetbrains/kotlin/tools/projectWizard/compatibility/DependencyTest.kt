@@ -1,10 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.compatibility
 
 import com.intellij.platform.testFramework.io.ExternalResourcesChecker
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import junit.framework.TestCase
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.tools.projectWizard.Dependencies
 import org.jetbrains.kotlin.tools.projectWizard.library.MavenLibraryDescriptor
 import org.junit.Assert
@@ -69,7 +73,7 @@ class DependencyTest : BasePlatformTestCase() {
     fun testMavenDependenciesInDefaultData() {
         Dependencies.allRegisteredArtifacts().filterIsInstance<MavenLibraryDescriptor>().forEach {
             val key = "${it.artifact.groupId}:${it.artifact.artifactId}"
-            TestCase.assertNotNull("Could not find version for $key", DependencyVersionStore.getVersion(key))
+            assertNotNull("Could not find version for $key", DependencyVersionStore.getVersion(key))
         }
     }
 }

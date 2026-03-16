@@ -26,8 +26,17 @@ import org.jetbrains.kotlin.idea.util.ElementKind.TYPE_CONSTRUCTOR
 import org.jetbrains.kotlin.idea.util.ElementKind.TYPE_ELEMENT
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtTypeElement
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getOutermostParentContainedIn
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isDoubleColonReceiver
+import org.jetbrains.kotlin.psi.psiUtil.isTypeConstructorReference
 
 open class KotlinIntroduceTypeAliasHandler : RefactoringActionHandler {
     companion object {
@@ -76,18 +85,18 @@ open class KotlinIntroduceTypeAliasHandler : RefactoringActionHandler {
     ) {
         val elementToExtract = elements.singleOrNull()
 
-        val errorMessage = when (elementToExtract) {
-            is KtSimpleNameExpression -> {
-                if (!(isTypeConstructorReference(elementToExtract) || isDoubleColonReceiver(elementToExtract))) KotlinBundle.message("error.text.type.reference.is.expected"
-                ) else null
-            }
-            !is KtTypeElement -> KotlinBundle.message("error.text.no.type.to.refactor")
-            else -> null
+        val errorMessage = when {
+          elementToExtract is KtSimpleNameExpression -> {
+              if (!(isTypeConstructorReference(elementToExtract) || isDoubleColonReceiver(elementToExtract))) KotlinBundle.message("error.text.type.reference.is.expected"
+              ) else null
+          }
+          elementToExtract !is KtTypeElement && elementToExtract !is KtTypeReference -> KotlinBundle.message("error.text.no.type.to.refactor")
+          else -> null
         }
         if (errorMessage != null) return showErrorHint(project, editor, errorMessage, REFACTORING_NAME)
 
-        val introduceData = when (elementToExtract) {
-            is KtTypeElement -> IntroduceTypeAliasData(elementToExtract, targetSibling)
+        val introduceData = when  {
+            elementToExtract is KtTypeElement || elementToExtract is KtTypeReference -> IntroduceTypeAliasData(elementToExtract, targetSibling)
             else -> IntroduceTypeAliasData(
                 elementToExtract!!.getStrictParentOfType<KtTypeElement>() ?: elementToExtract as KtElement,
                 targetSibling,

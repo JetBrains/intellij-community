@@ -1,0 +1,6 @@
+// NEW_NAME: KotlinInterfaceNew
+// RENAME: member
+
+class RenameFromJava {
+    void f(KotlinInterfaceNew ki) {}
+}

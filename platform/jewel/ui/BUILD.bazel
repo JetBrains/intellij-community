@@ -35,13 +35,14 @@ jvm_library(
   kotlinc_opts = ":custom_ui",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "//libraries/skiko",
     "//platform/jewel/foundation",
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
     "//libraries/compose-foundation-desktop",
+    "//libraries/compose-runtime-desktop",
   ],
   exports = [
     "//platform/jewel/foundation",
@@ -61,7 +62,7 @@ jvm_library(
   associates = [":ui"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "//libraries/skiko",
     "//platform/jewel/foundation",
@@ -69,6 +70,8 @@ jvm_library(
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
     "//libraries/compose-foundation-desktop",
+    "//libraries/compose-runtime-desktop",
+    "//libraries/junit4",
     "//libraries/compose-foundation-desktop-junit",
   ],
   exports = [

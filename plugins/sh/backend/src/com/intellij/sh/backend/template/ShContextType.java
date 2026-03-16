@@ -10,8 +10,8 @@ import com.intellij.sh.lexer.ShTokenTypes;
 import com.intellij.sh.psi.ShFile;
 import org.jetbrains.annotations.NotNull;
 
-public class ShContextType extends TemplateContextType {
-  public ShContextType() {
+final class ShContextType extends TemplateContextType {
+  ShContextType() {
     super(ShBundle.message("sh.shell.script"));
   }
 

@@ -1,0 +1,14 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.jvm.analysis.refactoring"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.uast"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.java.analysis"/>
+
+    <module name="intellij.platform.backend"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+  </dependencies>
+</idea-plugin>

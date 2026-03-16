@@ -14,7 +14,7 @@ import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayOutputStream
 import java.io.IOException
-import java.util.*
+import java.util.Base64
 
 @ApiStatus.Internal
 class PlantUMLCodeGeneratingProvider: CodeFenceGeneratingProvider, MarkdownExtensionWithDownloadableFiles, MarkdownBrowserPreviewExtension.Provider {

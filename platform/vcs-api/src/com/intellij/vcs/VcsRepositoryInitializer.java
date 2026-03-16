@@ -18,7 +18,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.nio.file.Path;
 
 /**
  * Initializes a VCS repository in the specified place.
@@ -29,7 +29,7 @@ public interface VcsRepositoryInitializer {
   /**
    * Initializes a new repository in the specified root directory.
    */
-  void initRepository(@NotNull File rootDir) throws VcsException;
+  void initRepository(@NotNull Path rootDir) throws VcsException;
 
   /**
    * Returns the VCS which this initializer works for.

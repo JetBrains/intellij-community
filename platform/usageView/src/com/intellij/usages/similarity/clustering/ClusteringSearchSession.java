@@ -12,10 +12,15 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.intellij.usages.similarity.clustering.Distance.*;
+import static com.intellij.usages.similarity.clustering.Distance.isCompleteMatch;
+import static com.intellij.usages.similarity.clustering.Distance.lessThen;
 
 
 /**

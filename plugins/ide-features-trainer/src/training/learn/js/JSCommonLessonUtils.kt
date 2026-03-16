@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.ui.components.fields.ExtendableTextField
 import training.dsl.TaskRuntimeContext
 import training.util.isToStringContains
-import java.util.*
+import java.util.Locale
 
 fun TaskRuntimeContext.textBeforeCaret(text: String): Boolean {
   val offset = editor.caretModel.offset

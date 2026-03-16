@@ -17,7 +17,7 @@ package com.intellij.ide.dnd;
 
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.Cursor;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 

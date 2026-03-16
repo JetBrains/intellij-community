@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
+import com.intellij.idea.IJIgnore
 import junit.framework.TestCase
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -99,6 +100,9 @@ class UsefulJUnit5Test : UsefulTestCase() {
 
   @org.junit.jupiter.api.Test
   fun redirectErr(): Unit = doRedirectErr()
+
+  @IJIgnore(issue = "AT-3959")
+  fun testDummy() = Unit  // junit.framework.AssertionFailedError: No tests found in com.intellij.testFramework.UsefulJUnit5Test
 }
 
 // !!!
@@ -117,6 +121,9 @@ class HeavyJUnit5Test : HeavyPlatformTestCase() {
 
   @org.junit.jupiter.api.Test
   fun redirectErr(): Unit = doRedirectErr()
+
+  @IJIgnore(issue = "AT-3959")
+  fun testDummy() = Unit  // junit.framework.AssertionFailedError: No tests found in com.intellij.testFramework.HeavyJUnit5Test
 }
 
 private fun doCloseOut() {

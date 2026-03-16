@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl.inspections
 
 import org.gradle.util.GradleVersion
@@ -17,7 +17,7 @@ class GradleDeprecatedConfigurationInspectionTest : GradleCodeInsightTestCase() 
   }
 
   @ParameterizedTest
-  @GradleTestSource("7.4")
+  @GradleTestSource("7.4.2")
   fun testDetectDeprecatedElement(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting("dependencies { <warning>apiElements</warning>('abc') }")
@@ -25,7 +25,7 @@ class GradleDeprecatedConfigurationInspectionTest : GradleCodeInsightTestCase() 
   }
 
   @ParameterizedTest
-  @GradleTestSource("7.4")
+  @GradleTestSource("7.4.2")
   fun testCreateToRegister(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testIntention("dependencies { ap<caret>iElements('abc') }", "dependencies { compileOnly('abc') }",

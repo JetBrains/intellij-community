@@ -21,6 +21,6 @@ public class PySingleStarPatternImpl extends PyElementImpl implements PySingleSt
 
   @Override
   public @Nullable PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
-    return null;
+    return PyCaptureContext.getCaptureType(this, context);
   }
 }

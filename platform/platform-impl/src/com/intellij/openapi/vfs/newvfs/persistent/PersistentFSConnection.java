@@ -28,7 +28,11 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.VFSContentStorage;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -49,7 +53,9 @@ import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.Fla
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexes;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 @ApiStatus.Internal
 public final class PersistentFSConnection {
@@ -264,20 +270,24 @@ public final class PersistentFSConnection {
       records.setErrorsAccumulated(corruptions);
       if (corruptions == 1) {
         //Persist ErrorsAccumulated.
-        // No need to force() on each error -- we don't bother not persist exact count of errors,
-        // but we do want to persist (errors > 0) transition:
+        // No need to force() on _each_ error -- we don't bother not persisting _exact_ number of errors,
+        // but we _do_ want to persist (errors == 0) -> (errors > 0) transition:
         force();
       }
-      corruptionNotificationThrottler.runThrottled(System.nanoTime(), () -> {
-        Application app = ApplicationManager.getApplication();
-        if (app != null && !app.isHeadlessEnvironment()) {
+      Application app = ApplicationManager.getApplication();
+      if (app != null && !app.isHeadlessEnvironment()) {
+        corruptionNotificationThrottler.runThrottled(System.nanoTime(), () -> {
           boolean insistRestart = (corruptions >= INSIST_TO_RESTART_AFTER_ERRORS_COUNT);
           showCorruptionNotification(insistRestart);
-        }
-      });
+        });
+      }
+      else {
+        LOG.warn("No Application to show Notification about VFS corruption", cause);
+      }
     }
-    catch (IOException ioException) {
-      LOG.error(ioException);
+    catch (Throwable t) {
+      LOG.error(t);
+      cause.addSuppressed(t);
     }
   }
 

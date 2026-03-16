@@ -1,4 +1,16 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlRegistrationCheck -->
     <projectService serviceInterface="com.intellij.ide.util.scopeChooser.ScopeModelService"

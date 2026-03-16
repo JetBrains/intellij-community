@@ -40,12 +40,15 @@ class PyPackageRequirementsInspection() : PyInspection() {
       .findFirst { it.isKindOf(PythonLanguage.getInstance()) }
       .isPresent
 
-  companion object {
+  object Helper {
     fun getInstance(element: PsiElement): PyPackageRequirementsInspection? {
       val inspectionProfile = InspectionProjectProfileManager.getInstance(element.project).currentProfile
       val toolName = PyPackageRequirementsInspection::class.java.simpleName
       return inspectionProfile.getUnwrappedTool(toolName, element) as PyPackageRequirementsInspection?
     }
+  }
+
+  companion object {
     private const val IGNORED_PACKAGES = "INSP.requirements.ignore.packages.label"
   }
 }

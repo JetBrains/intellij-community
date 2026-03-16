@@ -5,7 +5,7 @@ import com.intellij.platform.vcs.impl.frontend.shelf.tree.ShelfTree
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.ShelvedChangeListNode
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.EventObject
 import javax.swing.event.CellEditorListener
 import javax.swing.event.ChangeEvent
 import javax.swing.tree.DefaultTreeCellEditor

@@ -3,7 +3,21 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -62,7 +76,11 @@ public final class ModifierChooser {
     new ArrayOfModifiers(new String[]{JavaKeywords.SEALED, JavaKeywords.NON_SEALED}, JavaFeature.SEALED_CLASSES)
   };
 
-  static String[] getKeywords(@NotNull PsiElement position) {
+  /**
+   * @param position position to complete modifiers
+   * @return array of possible modifiers at a given position
+   */
+  public static @NotNull String @NotNull [] getKeywords(@NotNull PsiElement position) {
     final PsiModifierList list = findModifierList(position);
     if (list == null && !shouldSuggestModifiers(position)) {
       return ArrayUtilRt.EMPTY_STRING_ARRAY;

@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util
 
-import fleet.multiplatform.shims.ConcurrentHashSet
+import fleet.multiplatform.shims.MultiplatformConcurrentHashSet
 import kotlin.jvm.JvmInline
 
 sealed class DoOnce {
@@ -10,7 +10,7 @@ sealed class DoOnce {
   @JvmInline
   value class Id(val id: String)
 
-  private val done = ConcurrentHashSet<String>()
+  private val done = MultiplatformConcurrentHashSet<String>()
 
   fun <T> doOnce(id: String, body: () -> T): T? {
     return if (done.add(id)) body() else null

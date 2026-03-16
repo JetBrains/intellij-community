@@ -27,7 +27,7 @@ import kotlinx.coroutines.CoroutineScope
 @Service(Service.Level.PROJECT)
 private class ProjectFileBasedIndexStartupActivityScope(@JvmField val coroutineScope: CoroutineScope)
 
-private class ProjectFileBasedIndexStartupActivity : RequiredForSmartMode {
+internal class ProjectFileBasedIndexStartupActivity : RequiredForSmartMode {
   private val openProjects = ContainerUtil.createConcurrentList<Project?>()
 
   init {

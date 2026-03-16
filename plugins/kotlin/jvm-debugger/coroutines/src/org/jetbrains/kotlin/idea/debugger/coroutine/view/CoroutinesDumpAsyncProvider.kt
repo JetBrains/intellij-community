@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.view
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.actions.ThreadDumpAction
 import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.ThreadDumpItemsProvider
 import com.intellij.debugger.impl.ThreadDumpItemsProviderFactory
@@ -11,13 +12,16 @@ import com.intellij.debugger.statistics.DebuggerStatistics
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.unscramble.*
+import com.intellij.unscramble.DumpItem
+import com.intellij.unscramble.IconsCache
+import com.intellij.unscramble.MergeableDumpItem
+import com.intellij.unscramble.MergeableToken
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.State
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
-import java.util.*
+import java.util.Objects
 import javax.swing.Icon
 
 /**
@@ -32,7 +36,7 @@ class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
         private val enabled: Boolean =
             Registry.`is`("debugger.kotlin.show.coroutines.in.threadDumpPanel") &&
                     // check that coroutines are in the project's classpath
-                    context.debugProcess!!.virtualMachineProxy.classesByName("kotlinx.coroutines.debug.internal.DebugProbesImpl").isNotEmpty()
+                    VirtualMachineProxy.getCurrent().classesByName("kotlinx.coroutines.debug.internal.DebugProbesImpl").isNotEmpty()
 
         override val requiresEvaluation get() = enabled
 
@@ -40,8 +44,11 @@ class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
             return (
               if (!enabled) emptyList()
               else {
-                val coroutinesCache = CoroutineDebugProbesProxy(suspendContext!!).dumpCoroutines()
-                if (coroutinesCache.isOk()) coroutinesCache.cache.map { CoroutineDumpItem(it) } else emptyList()
+                val coroutinesCache = CoroutineDebugProbesProxy(suspendContext!!).dumpCoroutinesWithHierarchy()
+                if (coroutinesCache.isOk()) coroutinesCache.cache.map { info ->
+                    if (info.parentJobId == null) info.parentJobId = CoroutineRootDumpItem.id
+                    CoroutineDumpItem(info)
+                } + CoroutineRootDumpItem else emptyList()
               })
               .also {
                 DebuggerStatistics.logCoroutineDump(context.project, it.size)
@@ -50,9 +57,13 @@ class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
     }
 }
 
-private class CoroutineDumpItem(info: CoroutineInfoData) : MergeableDumpItem {
+private class CoroutineDumpItem(private val info: CoroutineInfoData) : MergeableDumpItem {
 
     override val name: String = info.name + ":" + info.id
+
+    override val id: Long get() = info.jobId ?: info.hashCode().toLong()
+
+    override val parentId: Long? get() = info.parentJobId
 
     override val stateDesc: String = " (${info.state.name.lowercase()})"
 
@@ -101,6 +112,11 @@ private class CoroutineDumpItem(info: CoroutineInfoData) : MergeableDumpItem {
         State.CREATED, State.UNKNOWN -> DumpItem.UNINTERESTING_ATTRIBUTES
     }
 
+    override val isContainer: Boolean
+        get() = false
+
+    override val canBeHidden: Boolean get() = true
+
     override val mergeableToken: MergeableToken get() = CoroutinesMergeableToken()
 
     private inner class CoroutinesMergeableToken : MergeableToken {
@@ -125,5 +141,44 @@ private class CoroutineDumpItem(info: CoroutineInfoData) : MergeableDumpItem {
                 comparableStackTrace
             )
         }
+    }
+}
+
+private object CoroutineRootDumpItem : MergeableDumpItem {
+
+    override val name: String = "Dumped Coroutines"
+
+    override val id: Long = Long.MIN_VALUE // todo: this item does not actually exist in the dump, and it's index is artificial
+
+    override val parentId: Long? = null
+
+    override val stateDesc: String = ""
+
+    override val iconToolTip: String
+        get() = KotlinDebuggerCoroutinesBundle.message("dump.item.dumped.coroutines.tooltip")
+
+    override val stackTrace: String = ""
+
+    override val interestLevel: Int = 100 // for now kept on top
+
+    override val isDeadLocked: Boolean
+        get() = false
+
+    override val awaitingDumpItems: Set<DumpItem>
+        get() = emptySet()
+
+    override val icon: Icon =
+        IconsCache.getIconWithVirtualOverlay(AllIcons.Debugger.ThreadGroup)
+
+    override val attributes: SimpleTextAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES
+
+    override val isContainer: Boolean get() = true
+
+    override val canBeHidden: Boolean get() = true
+
+    override val mergeableToken: MergeableToken get() = object : MergeableToken {
+        override val item get() = this@CoroutineRootDumpItem
+        override fun equals(other: Any?) = other is MergeableToken && item == other.item
+        override fun hashCode() = item.hashCode()
     }
 }

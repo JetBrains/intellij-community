@@ -2,14 +2,13 @@
 package org.jetbrains.plugins.github.pullrequest.ui.diff
 
 import com.intellij.collaboration.async.stateInNow
-import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.util.RefComparisonChange
-import com.intellij.diff.util.Side
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 
 interface GHPRReviewThreadDiffViewModel : GHPRCompactReviewThreadViewModel {
   val mapping: StateFlow<MappingData>
@@ -17,10 +16,8 @@ interface GHPRReviewThreadDiffViewModel : GHPRCompactReviewThreadViewModel {
   data class MappingData(
     val isVisible: Boolean,
     val change: RefComparisonChange?,
-    val commentRange: Pair<Side, IntRange>?,
-  ) {
-    val location: DiffLineLocation? = commentRange?.let { (side, range) -> side to range.last }
-  }
+    val location: GHPRReviewCommentLocation?,
+  )
 }
 
 internal class MappedGHPRReviewThreadDiffViewModel(

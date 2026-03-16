@@ -5,9 +5,14 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.FileTreeAccessFilter;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -20,8 +25,12 @@ import org.junit.Assert;
 
 @SuppressWarnings("TestOnlyProblems")
 public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl implements JavaCodeInsightTestFixture {
+  private final FileTreeAccessFilter myVirtualFileFilter;
+
   public JavaCodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirFixture) {
     super(projectFixture, tempDirFixture);
+    myVirtualFileFilter = new FileTreeAccessFilter();
+    super.setVirtualFileFilter(myVirtualFileFilter);
   }
 
   @Override
@@ -80,4 +89,8 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
     return aPackage;
   }
 
+  @Override
+  public void allowTreeAccessForFile(@NotNull VirtualFile file) {
+    myVirtualFileFilter.allowTreeAccessForFile(file);
+  }
 }

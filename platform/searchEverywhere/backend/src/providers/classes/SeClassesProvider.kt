@@ -3,10 +3,19 @@ package com.intellij.platform.searchEverywhere.backend.providers.classes
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.util.gotoByName.LanguageRef
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeExtendedInfoProvider
+import com.intellij.platform.searchEverywhere.SeItem
+import com.intellij.platform.searchEverywhere.SeItemsPreviewProvider
+import com.intellij.platform.searchEverywhere.SeItemsProvider
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SePreviewInfo
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
+import com.intellij.platform.searchEverywhere.SeSearchScopesProvider
+import com.intellij.platform.searchEverywhere.SeTypeVisibilityStateProvider
 import com.intellij.platform.searchEverywhere.backend.providers.target.SeTargetsProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider
@@ -29,6 +38,14 @@ class SeClassesProvider(private val contributorWrapper: SeAsyncContributorWrappe
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     targetsProviderDelegate.collectItems<LanguageRef>(params, collector)
+  }
+
+  override suspend fun collectItemsWithOperationLifetime(
+    params: SeParams,
+    operationDisposable: Disposable,
+    collector: SeItemsProvider.Collector
+  ) {
+    targetsProviderDelegate.collectItems<LanguageRef>(params, collector, operationDisposable)
   }
 
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {

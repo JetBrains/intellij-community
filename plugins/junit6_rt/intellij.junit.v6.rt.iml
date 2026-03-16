@@ -7,9 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.junit.rt" />
-    <orderEntry type="module" module-name="intellij.java.rt" />
-    <orderEntry type="library" scope="PROVIDED" name="JUnit6Launcher" level="project" />
+    <orderEntry type="module" module-name="intellij.junit.v5.rt" />
     <orderEntry type="library" scope="PROVIDED" name="JUnit6" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="JUnit6Launcher" level="project" />
   </component>
 </module>

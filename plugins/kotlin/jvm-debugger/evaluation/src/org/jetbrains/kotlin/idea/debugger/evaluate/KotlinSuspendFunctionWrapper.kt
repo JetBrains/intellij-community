@@ -24,7 +24,13 @@ import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompilationStats
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockCodeFragment
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPsiFactory
 
 private val COROUTINE_CONTEXT_FQ_NAME =
     StandardNames.COROUTINES_PACKAGE_FQ_NAME.child(Name.identifier("coroutineContext"))

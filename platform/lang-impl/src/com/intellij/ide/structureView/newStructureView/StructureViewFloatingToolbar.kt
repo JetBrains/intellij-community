@@ -2,7 +2,9 @@
 package com.intellij.ide.structureView.newStructureView
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 import com.intellij.util.ui.UIUtil

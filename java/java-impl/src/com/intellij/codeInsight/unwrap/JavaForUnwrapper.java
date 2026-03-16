@@ -16,7 +16,11 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiStatement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 

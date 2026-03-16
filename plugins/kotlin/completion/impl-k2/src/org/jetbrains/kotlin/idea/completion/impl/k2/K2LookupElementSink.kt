@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.consumeEach
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2AccumulatingLookupElementSink.AccumulatingSinkMessage.ElementBatch
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2AccumulatingLookupElementSink.AccumulatingSinkMessage.RegisterChainContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2AccumulatingLookupElementSink.AccumulatingSinkMessage.RegisterLaterSectionSink
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2AccumulatingLookupElementSink.AccumulatingSinkMessage.RestartCompletionOnAnyPrefixChange
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2AccumulatingLookupElementSink.AccumulatingSinkMessage.RestartCompletionOnPrefixChange
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2AccumulatingLookupElementSink.AccumulatingSinkMessage.SingleElement
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2ChainCompletionContributor
@@ -37,6 +38,12 @@ internal interface K2LookupElementSink {
      * See [CompletionResultSet.restartCompletionOnPrefixChange].
      */
     fun restartCompletionOnPrefixChange(prefixCondition: ElementPattern<String>)
+
+    /**
+     * Instructs completion to restart completion if the prefix changes in any way.
+     * See [CompletionResultSet.restartCompletionOnAnyPrefixChange].
+     */
+    fun restartCompletionOnAnyPrefixChange()
 
     /**
      * Registers a [K2ChainCompletionContributor] for later processing.
@@ -74,6 +81,10 @@ internal class K2DelegatingLookupElementSink(
         resultSet.restartCompletionOnPrefixChange(prefixCondition)
     }
 
+    override fun restartCompletionOnAnyPrefixChange() {
+        resultSet.restartCompletionOnAnyPrefixChange()
+    }
+
     override fun registerChainContributor(chainContributor: K2ChainCompletionContributor) {
         registeredChainContributors.add(chainContributor)
     }
@@ -88,8 +99,13 @@ internal class K2AccumulatingLookupElementSink() : K2LookupElementSink {
         class SingleElement(val element: LookupElement) : AccumulatingSinkMessage
         class ElementBatch(val elements: List<LookupElement>) : AccumulatingSinkMessage
         class RestartCompletionOnPrefixChange(val prefixCondition: ElementPattern<String>) : AccumulatingSinkMessage
+        object RestartCompletionOnAnyPrefixChange : AccumulatingSinkMessage
         class RegisterChainContributor(val chainContributor: K2ChainCompletionContributor) : AccumulatingSinkMessage
-        class RegisterLaterSectionSink(val priority: K2ContributorSectionPriority, val sink: K2AccumulatingLookupElementSink) : AccumulatingSinkMessage
+        class RegisterLaterSectionSink(
+            val priority: K2ContributorSectionPriority,
+            val section: K2CompletionSection<*>,
+            val sink: K2AccumulatingLookupElementSink
+        ) : AccumulatingSinkMessage
     }
 
     // We use batches of LookupElements so they may be added in batches for nicer UX
@@ -126,7 +142,7 @@ internal class K2AccumulatingLookupElementSink() : K2LookupElementSink {
         elementChannel.cancel()
     }
 
-    suspend fun consumeElements(f : (AccumulatingSinkMessage) -> Unit) {
+    suspend fun consumeElements(f: (AccumulatingSinkMessage) -> Unit) {
         elementChannel.consumeEach(f)
     }
 
@@ -134,11 +150,19 @@ internal class K2AccumulatingLookupElementSink() : K2LookupElementSink {
         elementChannel.trySend(RestartCompletionOnPrefixChange(prefixCondition))
     }
 
+    override fun restartCompletionOnAnyPrefixChange() {
+        elementChannel.trySend(RestartCompletionOnAnyPrefixChange)
+    }
+
     override fun registerChainContributor(chainContributor: K2ChainCompletionContributor) {
         elementChannel.trySend(RegisterChainContributor(chainContributor))
     }
 
-    fun registerLaterSection(priority: K2ContributorSectionPriority, sink: K2AccumulatingLookupElementSink) {
-        elementChannel.trySend(RegisterLaterSectionSink(priority, sink))
+    fun registerLaterSection(
+        section: K2CompletionSection<*>,
+        priority: K2ContributorSectionPriority,
+        sink: K2AccumulatingLookupElementSink
+    ) {
+        elementChannel.trySend(RegisterLaterSectionSink(priority, section, sink))
     }
 }

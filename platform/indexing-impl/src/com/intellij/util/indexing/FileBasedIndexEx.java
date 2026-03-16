@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -14,7 +14,12 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,10 +37,20 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.IndexDebugProperties;
+import com.intellij.util.indexing.impl.IndexStorageLockingBase;
+import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
+import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
+import com.intellij.util.indexing.impl.UpdateData;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntCollection;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
 import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -43,13 +58,22 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.function.BiPredicate;
 import java.util.function.IntPredicate;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
-import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.*;
+import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.TRACE_OF_ENTRIES_LOOKUP;
+import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.lookupAllKeysStarted;
+import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.lookupEntriesStarted;
 import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIfPossible;
 
 @ApiStatus.Internal
@@ -87,6 +111,10 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return TRACE_SHARED_INDEX_UPDATES;
   }
 
+  /** @return a filter(fileId) that accepts only fileIds that could be safely/reliably accessed.
+   *          E.g. during incremental indexing (=dumb-mode) files that are changed and not yet re-indexed -- can't be relied
+   *          upon, so they'll be rejected by this filter
+   */
   @ApiStatus.Internal
   public abstract @NotNull IntPredicate getAccessibleFileIdFilter(@Nullable Project project);
 
@@ -102,13 +130,14 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public abstract void waitUntilIndicesAreInitialized();
 
   /**
+   * @param project should be non-null, left nullable for backward-compatibility, but null project will lead to errors
    * @return true if index can be processed after it or
    * false if no need to process it because, for example, scope is empty or index is going to rebuild.
    */
   @ApiStatus.Internal
   public abstract <K> boolean ensureUpToDate(@NotNull ID<K, ?> indexId,
                                              @Nullable Project project,
-                                             @Nullable GlobalSearchScope filter,
+                                             @Nullable GlobalSearchScope scope,
                                              @Nullable VirtualFile restrictedFile);
 
   @Override
@@ -749,7 +778,13 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                    @Nullable("if content size should be retrieved from a file") Long contentSize,
                                    @NotNull Set<FileType> noLimitFileTypes) {
     if (SingleRootFileViewProvider.isTooLargeForIntelligence(file, contentSize)) {
-      return !noLimitFileTypes.contains(file.getFileType()) || SingleRootFileViewProvider.isTooLargeForContentLoading(file, contentSize);
+      //!isEmpty(): try to avoid getFileType() calls if possible -- they could be expensive
+      if (!noLimitFileTypes.isEmpty() && noLimitFileTypes.contains(file.getFileType())) {
+        //if noLimitFileTypes match the file's type, we still need to enforce _some_ limit,
+        //  just the larger one, contentLoadingLimit:
+        return SingleRootFileViewProvider.isTooLargeForContentLoading(file, contentSize);
+      }
+      return true;
     }
     return false;
   }

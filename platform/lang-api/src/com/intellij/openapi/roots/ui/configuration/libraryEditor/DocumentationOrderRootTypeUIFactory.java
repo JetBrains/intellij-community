@@ -8,7 +8,7 @@ import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class DocumentationOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 

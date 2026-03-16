@@ -9,13 +9,20 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.KeyStroke;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Element;
 import javax.swing.text.StyledDocument;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Component;
+import java.awt.FontMetrics;
+import java.awt.Point;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseEvent;
 import java.util.Map;
 
 import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getDocPopupPreferredMinWidth;
@@ -118,5 +125,19 @@ public final class DocumentationHintEditorPane extends DocumentationEditorPane {
     FontMetrics fontMetrics = this.getFontMetrics(getFont());
     int lineHeight = fontMetrics.getHeight();
     return JBUIScale.scale((lines - 1) * lineHeight);
+  }
+
+  @Nullable
+  private Integer forcedMinWidth;
+
+  @Internal
+  @Override
+  protected int getForcedMinWidth() {
+    return forcedMinWidth == null ? 0 : forcedMinWidth;
+  }
+
+  @Internal
+  public void setForcedMinWidth(int width) {
+    forcedMinWidth = width;
   }
 }

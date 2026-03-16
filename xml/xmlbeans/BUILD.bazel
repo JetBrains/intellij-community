@@ -16,6 +16,7 @@ jvm_library(
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "//xml/impl",
     "@lib//:xml-xmlbeans-_xml_beans",
     "@lib//:xml-xmlbeans-apache-logging-log4j-to-slf4j",
@@ -29,6 +30,7 @@ jvm_library(
     "//platform/util:util-ui",
     "//xml/xml-psi-api:psi",
     "//platform/lang-impl",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 
@@ -40,6 +42,7 @@ jvm_library(
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "//xml/impl",
     "@lib//:xml-xmlbeans-_xml_beans",
     "@lib//:xml-xmlbeans-apache-logging-log4j-to-slf4j",
@@ -57,6 +60,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//xml/xml-psi-api:psi",
     "//platform/lang-impl",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.xml.xmlbeans` end

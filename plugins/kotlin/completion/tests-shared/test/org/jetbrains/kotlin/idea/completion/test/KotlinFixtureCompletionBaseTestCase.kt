@@ -5,9 +5,16 @@ package org.jetbrains.kotlin.idea.completion.test
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.CONFIGURE_LIBRARY_PREFIX
+import org.jetbrains.kotlin.idea.test.CompilerTestDirectives
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.configureRegistryAndRun
+import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.platform.TargetPlatform
 import java.io.File
 
@@ -37,7 +44,7 @@ abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtu
     protected open fun defaultInvocationCount(): Int = 0
 
     protected open fun handleTestPath(path: String): File = File(path)
-    
+
     open fun doTest(testPath: String) {
         val actualTestFile = handleTestPath(dataFilePath(fileName()))
         configureFixture(actualTestFile.path)
@@ -52,6 +59,9 @@ abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtu
                 executeTest {
                     if (ExpectedCompletionUtils.shouldRunHighlightingBeforeCompletion(fileText)) {
                         myFixture.doHighlighting()
+                    }
+                    if (ExpectedCompletionUtils.isWithLiveTemplates(fileText)) {
+                        LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.testRootDisposable)
                     }
                     testCompletion(
                         fileText,

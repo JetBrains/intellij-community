@@ -1,0 +1,5 @@
+package packageA;
+
+public class A2 {
+  public static int P;
+}

@@ -6,6 +6,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated Use {@link FormattingNotificationService}
+ */
+@Deprecated(forRemoval = true)
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 class HeadlessNotificationService implements FormattingNotificationService {
   static final HeadlessNotificationService INSTANCE = new HeadlessNotificationService();

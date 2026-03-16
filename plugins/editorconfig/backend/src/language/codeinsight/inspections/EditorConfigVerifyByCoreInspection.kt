@@ -10,7 +10,12 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.ec4j.core.PropertyTypeRegistry
 import org.ec4j.core.Resource
-import org.ec4j.core.parser.*
+import org.ec4j.core.parser.EditorConfigParser
+import org.ec4j.core.parser.ErrorEvent
+import org.ec4j.core.parser.ErrorHandler
+import org.ec4j.core.parser.ParseContext
+import org.ec4j.core.parser.ParseException
+import org.ec4j.core.parser.ValidatingHandler
 
 class EditorConfigVerifyByCoreInspection : LocalInspectionTool() {
   override fun runForWholeFile(): Boolean = true

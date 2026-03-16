@@ -22,7 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 import java.nio.file.Paths;
 import java.util.Arrays;
 

@@ -18,7 +18,7 @@ package org.intellij.images.ui;
 import com.intellij.openapi.actionSystem.DataKey;
 import org.intellij.images.editor.ImageZoomModel;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * Image Component manager. It can toggle backround transparency, grid, etc.

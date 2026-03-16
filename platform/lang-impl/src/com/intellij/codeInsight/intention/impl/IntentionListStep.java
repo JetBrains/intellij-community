@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -9,13 +9,21 @@ import com.intellij.codeInsight.intention.AbstractEmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.IntentionSource;
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComputable;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.ListSeparator;
+import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.SpeedSearchFilter;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiDocumentManager;
@@ -23,19 +31,21 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Dimension;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>, SpeedSearchFilter<IntentionActionWithTextCaching> {
+public class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>,
+                                          SpeedSearchFilter<IntentionActionWithTextCaching> {
   private static final Logger LOG = Logger.getInstance(IntentionListStep.class);
 
   private final @NotNull IntentionContainer myCachedIntentions;
@@ -175,16 +185,32 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     }
     intentions.setTitle(title);
 
-    return new IntentionListStep(myPopup, myEditor, myPsiFile, myProject,
-                                 CachedIntentions.create(myProject, myPsiFile, myEditor, intentions), myIntentionSource) {
-      @Override
-      protected void chooseActionAndInvoke(@NotNull IntentionActionWithTextCaching cachedAction,
-                                           @NotNull PsiFile psiFile,
-                                           @NotNull Project project,
-                                           @Nullable Editor editor) {
-        IntentionListStep.this.chooseActionAndInvoke(cachedAction, psiFile, project, editor);
-      }
-    };
+    return WriteIntentReadAction.compute(() -> {
+      return new IntentionListStep(myPopup, myEditor, myPsiFile, myProject,
+                            CachedIntentions.create(myProject, myPsiFile, myEditor, intentions), myIntentionSource) {
+        @Override
+        protected void chooseActionAndInvoke(@NotNull IntentionActionWithTextCaching cachedAction,
+                                             @NotNull PsiFile psiFile,
+                                             @NotNull Project project,
+                                             @Nullable Editor editor) {
+          IntentionListStep.this.chooseActionAndInvoke(cachedAction, psiFile, project, editor);
+        }
+      };
+    });
+  }
+
+  @ApiStatus.Internal
+  public @NotNull IntentionPreviewInfo calculateIntentionPreview(@NotNull IntentionAction action, int fixOffset) {
+    Editor editor = myEditor;
+    if (!DumbService.getInstance(myProject).isUsableInCurrentContext(action)) return IntentionPreviewInfo.EMPTY;
+    if (editor == null) return IntentionPreviewInfo.EMPTY;
+    return new IntentionPreviewComputable(myProject, action, myPsiFile, editor, fixOffset)
+      .call();
+  }
+
+  @ApiStatus.Internal
+  public PsiFile getPsiFile() {
+    return myPsiFile;
   }
 
   private static Icon getIcon(IntentionAction optionIntention) {
@@ -207,10 +233,12 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       }
 
       List<IntentionActionWithTextCaching> subActions = getSubStep(cached, cached.getToolName()).getValues();
-      List<IntentionAction> options = subActions.stream()
-        .map(IntentionActionWithTextCaching::getAction)
-        .filter(option -> ShowIntentionActionsHandler.chooseFileForAction(myPsiFile, myEditor, option) != null)
-        .collect(Collectors.toList());
+      List<IntentionAction> options = WriteIntentReadAction.compute(() -> {
+        return subActions.stream()
+          .map(IntentionActionWithTextCaching::getAction)
+          .filter(option -> ShowIntentionActionsHandler.chooseFileForAction(myPsiFile, myEditor, option) != null)
+          .collect(Collectors.toList());
+      });
       result.put(action, options);
     }
     return result;
@@ -225,7 +253,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   @Override
   public @NotNull List<IntentionActionWithTextCaching> getValues() {
-    return myCachedIntentions.getAllActions();
+    return ReadAction.compute(() -> myCachedIntentions.getAllActions());
   }
 
   @Override

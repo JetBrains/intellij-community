@@ -10,3 +10,5 @@ fun bar() {
 }
 
 // ELEMENT: extFun
+
+// IGNORE_K2

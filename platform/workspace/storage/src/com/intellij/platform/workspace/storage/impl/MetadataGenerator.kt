@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
-import com.intellij.platform.workspace.storage.metadata.model.*
+import com.intellij.platform.workspace.storage.metadata.model.ExtPropertyMetadata
+import com.intellij.platform.workspace.storage.metadata.model.ExtendableClassMetadata
+import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
+import com.intellij.platform.workspace.storage.metadata.model.OwnPropertyMetadata
+import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier

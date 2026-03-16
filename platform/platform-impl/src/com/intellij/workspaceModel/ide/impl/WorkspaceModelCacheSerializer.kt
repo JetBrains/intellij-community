@@ -10,7 +10,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntityStorageSerializer
+import com.intellij.platform.workspace.storage.EntityTypesResolver
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.SerializationResult
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager

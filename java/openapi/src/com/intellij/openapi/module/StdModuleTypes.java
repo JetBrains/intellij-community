@@ -18,8 +18,7 @@ public final class StdModuleTypes {
 
   static {
     try {
-      //noinspection unchecked
-      JAVA = (ModuleType<JavaModuleBuilder>)Class.forName("com.intellij.openapi.module.JavaModuleType").newInstance();
+      JAVA = new JavaModuleType();
     }
     catch (Exception e) {
       throw new IllegalArgumentException(e);

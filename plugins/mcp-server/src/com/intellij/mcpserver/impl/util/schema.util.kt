@@ -14,13 +14,22 @@ import io.github.smiley4.schemakenerator.jsonschema.JsonSchemaSteps.generateJson
 import io.github.smiley4.schemakenerator.jsonschema.JsonSchemaSteps.handleCoreAnnotations
 import io.github.smiley4.schemakenerator.jsonschema.data.IntermediateJsonSchemaData
 import io.github.smiley4.schemakenerator.jsonschema.data.JsonSchemaData
-import io.github.smiley4.schemakenerator.jsonschema.jsonDsl.*
 import io.github.smiley4.schemakenerator.jsonschema.jsonDsl.JsonArray
+import io.github.smiley4.schemakenerator.jsonschema.jsonDsl.JsonBooleanValue
+import io.github.smiley4.schemakenerator.jsonschema.jsonDsl.JsonNode
+import io.github.smiley4.schemakenerator.jsonschema.jsonDsl.JsonNullValue
+import io.github.smiley4.schemakenerator.jsonschema.jsonDsl.JsonNumericValue
 import io.github.smiley4.schemakenerator.jsonschema.jsonDsl.JsonObject
+import io.github.smiley4.schemakenerator.jsonschema.jsonDsl.JsonTextValue
 import io.github.smiley4.schemakenerator.serialization.SerializationSteps.analyzeTypeUsingKotlinxSerialization
 import io.github.smiley4.schemakenerator.serialization.analyzer.AnnotationAnalyzer
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.serializerOrNull
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KCallable
@@ -29,14 +38,14 @@ import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.typeOf
 
 
-fun KCallable<*>.parametersSchema(): McpToolSchema {
+fun KCallable<*>.parametersSchema(vararg additionalImplicitParameters: KParameter): McpToolSchema {
   val parameterSchemas = mutableMapOf<String, JsonElement>()
   val definitions = mutableMapOf<String, JsonElement>()
   val requiredParameters = mutableSetOf<String>()
 
   // probably passthrough something like `additionalImplicitParameters` from outsise
   // but it isn't neccessary right now
-  for (parameter in this.parameters + projectPathParameter) {
+  for (parameter in this.parameters + additionalImplicitParameters) {
     if (parameter.kind != KParameter.Kind.VALUE) continue
 
     val parameterName = parameter.name ?: error("Parameter has no name: ${parameter.name} in $this")
@@ -67,7 +76,7 @@ private fun projectPathParameterStub(
     | In the case you know only the current working directory you can use it as the project path.
     | If you're not aware about the project path you can ask user about it.""")
   projectPath: String? = null) {}
-private val projectPathParameter: KParameter get() = ::projectPathParameterStub.parameters.single()
+internal val projectPathParameter: KParameter get() = ::projectPathParameterStub.parameters.single()
 val projectPathParameterName: String get() = projectPathParameter.name ?: error("Parameter has no name: ${projectPathParameter.name}")
 
 fun KCallable<*>.returnTypeSchema(): McpToolSchema? {

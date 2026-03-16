@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
@@ -19,16 +20,17 @@ import com.intellij.util.TestTimeOut;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
-import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
+import java.awt.AWTEvent;
+import java.awt.EventQueue;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.InvocationEvent;
 import java.awt.event.KeyEvent;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -39,6 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.intellij.platform.locking.impl.IntelliJLockingUtil.getGlobalThreadingSupport;
 
 public class IdeEventQueueTest extends LightPlatformTestCase {
+  @PerformanceUnitTest
   public void testManyEventsStressPerformance() {
     int N = 100000;
     Benchmark.newBenchmark("Event queue dispatch", () -> {
@@ -240,7 +243,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       IdeEventQueue.NonLockedEventDispatcher dispatcher = e -> {
         dispatcherCalled.set(true);
         // This should not have write intent access
-        hasWriteIntentAccess.set(threadingSupport.isWriteIntentLocked());
+        hasWriteIntentAccess.set(threadingSupport.isWriteIntentReadAccessAllowed());
         return false;
       };
 
@@ -253,7 +256,6 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
 
       assertTrue("NonLockedEventDispatcher should have been called", dispatcherCalled.get());
       assertFalse("NonLockedEventDispatcher should not have write intent access", hasWriteIntentAccess.get());
-      return Unit.INSTANCE;
     });
   }
 
@@ -271,7 +273,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       IdeEventQueue.EventDispatcher dispatcher = e -> {
         dispatcherCalled.set(true);
         // Regular dispatchers should have write intent access
-        hasWriteIntentAccess.set(threadingSupport.isWriteIntentLocked());
+        hasWriteIntentAccess.set(threadingSupport.isWriteIntentReadAccessAllowed());
         return false;
       };
 
@@ -284,7 +286,6 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
 
       assertTrue("Regular EventDispatcher should have been called", dispatcherCalled.get());
       assertTrue("Regular EventDispatcher should have write intent access", hasWriteIntentAccess.get());
-      return Unit.INSTANCE;
     });
   }
 }

@@ -16,7 +16,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.Consumer
 import com.intellij.util.net.NetUtils
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.concurrency.*
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.AsyncValueLoader
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.errorIfNotMessage
+import org.jetbrains.concurrency.isRejected
 import javax.swing.Icon
 
 abstract class NetService @JvmOverloads protected constructor(protected val project: Project, private val consoleManager: ConsoleManager = ConsoleManager()) : Disposable {

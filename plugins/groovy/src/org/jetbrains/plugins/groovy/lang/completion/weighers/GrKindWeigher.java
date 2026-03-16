@@ -7,7 +7,20 @@ import com.intellij.codeInsight.completion.CompletionWeigher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.java.syntax.parser.JavaKeywords;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -46,7 +59,7 @@ public final class GrKindWeigher extends CompletionWeigher {
 
   @Override
   public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
-    final PsiElement position = location.getCompletionParameters().getPosition();
+    final PsiElement position = location.getBaseCompletionParameters().getPosition();
     if (!(position.getContainingFile() instanceof GroovyFileBase)) return null;
 
     Object o = element.getObject();

@@ -19,6 +19,7 @@ class BinarizeImageAction : BaseImageAction() {
     transformationData.setIsNormalized(false)
     val transformedImage = transformationData.applyTransformations(originalImage)
     applyBinarization(transformedImage, binarizationThreshold).also {
+      imageFile.putUserData(CURRENT_OPERATION_MODE_KEY, ImageOperationMode.BINARIZE_IMAGE)
       ScientificImageActionsCollector.logBinarizeImageInvoked(binarizationThreshold)
       return it
     }

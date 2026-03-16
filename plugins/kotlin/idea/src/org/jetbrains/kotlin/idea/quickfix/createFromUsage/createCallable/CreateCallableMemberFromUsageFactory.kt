@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.UnresolvedReferenceQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.IntentionActionPriority
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.Callab
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterFromUsageFix
 import org.jetbrains.kotlin.psi.KtElement
 
+@K1Deprecation
 abstract class CreateCallableMemberFromUsageFactory<E : KtElement>(
     private val extensionsSupported: Boolean = true
 ) : KotlinIntentionActionFactoryWithDelegate<E, List<CallableInfo>>(), UnresolvedReferenceQuickFixFactory {

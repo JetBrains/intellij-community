@@ -3,7 +3,7 @@ package com.intellij.ui.components;
 
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.ListModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 

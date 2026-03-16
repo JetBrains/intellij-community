@@ -75,7 +75,7 @@ public class IntroduceVariableHandler extends IntroduceVariableBase implements J
   }
 
   @Override
-  protected void showErrorMessage(final Project project, Editor editor, @NlsContexts.DialogMessage String message) {
+  protected void showErrorMessage(final @NotNull Project project, Editor editor, @NlsContexts.DialogMessage @NotNull String message) {
     CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INTRODUCE_VARIABLE);
   }
 

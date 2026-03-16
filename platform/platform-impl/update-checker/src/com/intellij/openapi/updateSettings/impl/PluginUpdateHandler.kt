@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient

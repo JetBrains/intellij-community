@@ -3,9 +3,9 @@ package org.jetbrains.kotlin.idea.k2.moveUpDown
 
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveLeftRightTest
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.test.util.invalidateCaches
 
 abstract class AbstractFirMoveLeftRightTest: AbstractMoveLeftRightTest() {
 

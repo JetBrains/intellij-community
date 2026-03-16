@@ -1,16 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionResult;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
@@ -21,7 +25,10 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
+import java.awt.Window;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
@@ -103,15 +110,14 @@ public final class ModifierKeyDoubleClickHandler {
       if (dispatchers.isEmpty()) {
         return false;
       }
-      return WriteIntentReadAction.<Boolean, RuntimeException>compute(() -> {
-        boolean innerResult = false;
-        for (MyDispatcher dispatcher : doubleClickHandler.myDispatchers.values()) {
-          if (dispatcher.dispatch(keyEvent)) {
-            innerResult = true;
-          }
+
+      boolean innerResult = false;
+      for (MyDispatcher dispatcher : doubleClickHandler.myDispatchers.values()) {
+        if (dispatcher.dispatch(keyEvent)) {
+          innerResult = true;
         }
-        return innerResult;
-      });
+      }
+      return innerResult;
     }
   }
 

@@ -14,7 +14,13 @@ import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.Builder;
+import org.jetbrains.jps.incremental.BuilderCategory;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FSOperations;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.ModuleLevelBuilder;
+import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.java.ClassPostProcessor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
@@ -34,6 +40,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public final class GroovyBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(GroovyBuilder.class);
@@ -167,7 +174,7 @@ public final class GroovyBuilder extends ModuleLevelBuilder {
     public void process(CompileContext context, OutputFileObject out) {
       final Map<String, String> stubToSrc = STUB_TO_SRC.get(context);
       if (stubToSrc != null) {
-        for (String groovy : Iterators.filter(Iterators.map(out.getSourceFiles(), file -> stubToSrc.get(FileUtil.toSystemIndependentName(file.getPath()))), Iterators.notNullFilter())) {
+        for (String groovy : Iterators.filter(Iterators.map(out.getSourceFiles(), file -> stubToSrc.get(FileUtil.toSystemIndependentName(file.getPath()))), Objects::nonNull)) {
           try {
             Path groovyFile = Path.of(groovy);
             if (!FSOperations.isMarkedDirty(context, CompilationRound.CURRENT, groovyFile)) {

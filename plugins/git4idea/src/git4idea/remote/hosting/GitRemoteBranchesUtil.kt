@@ -13,7 +13,11 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import git4idea.*
+import git4idea.GitLocalBranch
+import git4idea.GitReference
+import git4idea.GitRemoteBranch
+import git4idea.GitStandardRemoteBranch
+import git4idea.GitUtil
 import git4idea.branch.GitBrancher
 import git4idea.branch.GitNewBranchDialog
 import git4idea.branch.GitNewBranchOptions

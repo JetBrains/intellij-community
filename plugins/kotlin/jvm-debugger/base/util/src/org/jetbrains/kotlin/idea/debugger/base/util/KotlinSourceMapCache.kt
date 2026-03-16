@@ -28,7 +28,7 @@ import org.jetbrains.org.objectweb.asm.ClassVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
 import java.io.IOException
 import java.nio.file.Path
-import java.util.*
+import java.util.Optional
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readBytes
 

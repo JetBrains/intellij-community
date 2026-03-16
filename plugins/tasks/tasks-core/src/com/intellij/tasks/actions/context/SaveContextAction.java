@@ -3,16 +3,16 @@
 package com.intellij.tasks.actions.context;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.actions.BaseTaskAction;
 import com.intellij.tasks.context.WorkingContextManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**

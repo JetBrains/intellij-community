@@ -5,11 +5,13 @@ package org.jetbrains.kotlin.idea.j2k.post.processing
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.util.AbstractKotlinBundle
 
 @NonNls
 private const val BUNDLE = "messages.KotlinNJ2KServicesBundle"
 
+@K1Deprecation
 object KotlinNJ2KServicesBundle : AbstractKotlinBundle(BUNDLE) {
     @Nls
     @JvmStatic

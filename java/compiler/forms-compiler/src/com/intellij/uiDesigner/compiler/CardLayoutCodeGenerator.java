@@ -7,7 +7,7 @@ import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
-import java.awt.*;
+import java.awt.CardLayout;
 
 /**
  * @author Alexander Lobas

@@ -1,14 +1,14 @@
-from typing import Any
+from _typeshed import Incomplete
 
 class Attribute:
-    key: Any
-    definition: Any
-    values: Any
-    raw_values: Any
-    response: Any
-    entry: Any
-    cursor: Any
-    other_names: Any
+    key: Incomplete
+    definition: Incomplete
+    values: Incomplete
+    raw_values: Incomplete
+    response: Incomplete
+    entry: Incomplete
+    cursor: Incomplete
+    other_names: Incomplete
     def __init__(self, attr_def, entry, cursor) -> None: ...
     def __len__(self) -> int: ...
     def __iter__(self): ...

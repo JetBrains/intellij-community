@@ -3,14 +3,14 @@ package com.intellij.internal.statistic.eventLog.validator.rules.impl
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
+import com.jetbrains.fus.reporting.api.FUSRule
 
 class ComposerValidationRule(val rules: List<FUSRule>) {
 
   fun doValidate(data: String, context: EventContext): ValidationResultType {
     for (rule in rules) {
       val validationResultType = rule.validate(data, context)
-      if (validationResultType == ValidationResultType.ACCEPTED)
+      if (ValidationResultType.fromFusApiResultType(validationResultType) == ValidationResultType.ACCEPTED)
         return ValidationResultType.ACCEPTED
     }
     return ValidationResultType.REJECTED

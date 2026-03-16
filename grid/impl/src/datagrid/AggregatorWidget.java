@@ -6,7 +6,14 @@ import com.intellij.database.actions.ShowAggregateViewAction;
 import com.intellij.database.editor.TableEditorBase;
 import com.intellij.database.run.actions.ChooseAggregatorsAction.SelectSingleAggregatorAction;
 import com.intellij.database.run.ui.TableAggregatorWidgetHelper;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
@@ -20,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.PopupMenuEvent;
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.MouseEvent;
 
 import static com.intellij.database.run.actions.ChooseAggregatorsAction.getChildrenImpl;

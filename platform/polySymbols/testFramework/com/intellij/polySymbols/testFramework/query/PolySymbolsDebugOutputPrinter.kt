@@ -11,16 +11,19 @@ import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.html.htmlAttributeValue
 import com.intellij.polySymbols.js.PROP_JS_SYMBOL_KIND
+import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolWithPattern
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.testFramework.DebugOutputPrinter
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport.Companion.PROP_TYPE_SUPPORT
 import com.intellij.polySymbols.utils.completeMatch
 import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.polySymbols.utils.qualifiedName
+import com.intellij.polySymbols.utils.unwrapMatchedSymbols
 import com.intellij.polySymbols.webTypes.WebTypesSymbol
 import com.intellij.util.applyIf
 import com.intellij.util.asSafely
-import java.util.*
+import java.util.Stack
 
 open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
 
@@ -73,21 +76,28 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
     }
     printObject(topLevel) { level ->
       if (source is PolySymbolWithPattern) {
-        printProperty(level, "matchedName", source.qualifiedKind.toString() + "/<pattern>")
+        printProperty(level, "matchedName", source.kind.toString() + "/<pattern>")
         printProperty(level, "name", source.name)
       }
       else {
         printProperty(level, "matchedName", source.qualifiedName.toString())
       }
-      printProperty(level, "origin", "${source.origin.library}@${source.origin.version} (${source.origin.framework ?: "<none>"})")
-      printProperty(level, "source", (source as? PsiSourcedPolySymbol)?.source)
-      printProperty(level, "type", source.origin.typeSupport?.typeProperty?.let { source[it] })
-      printProperty(level, "attrValue", source.htmlAttributeValue)
-      printProperty(level, "complete", source.completeMatch)
+
       val documentation = source.getDocumentationTarget(null)
         .asSafely<PolySymbolDocumentationTarget>()
         ?.documentation
-      if (documentation != null) {
+
+      val framework = (source as? WebTypesSymbol)?.origin?.framework
+                      ?: (source as? PolySymbolMatch)?.unwrapMatchedSymbols()?.firstNotNullOfOrNull { (it as? WebTypesSymbol)?.origin?.framework }
+                      ?: "<none>"
+      printProperty(level,
+                    "origin",
+                    "${documentation?.library} ($framework)")
+      printProperty(level, "source", (source as? PsiSourcedPolySymbol)?.source)
+      printProperty(level, "type", source[PROP_TYPE_SUPPORT]?.typeProperty?.let { source[it] })
+      printProperty(level, "attrValue", source.htmlAttributeValue)
+      printProperty(level, "complete", source.completeMatch)
+      if (documentation != null && source !is PolySymbolMatch) {
         printProperty(level, "description", documentation.description?.ellipsis(45))
         printProperty(level, "docUrl", documentation.docUrl)
         printProperty(level, "descriptionSections", documentation.descriptionSections.takeIf { it.isNotEmpty() })
@@ -101,7 +111,7 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
         level, "properties",
         propertiesToPrint
           .sortedBy { it.name }
-          .mapNotNull { prop -> source[prop]?.let { Pair(prop, it) } }
+          .mapNotNull { prop -> source[prop]?.let { Pair(prop.name, it) } }
           .toMap()
           .takeIf { it.isNotEmpty() }
       )

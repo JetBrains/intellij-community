@@ -16,8 +16,12 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import java.awt.BorderLayout;
 import java.util.Arrays;
 import java.util.List;
 

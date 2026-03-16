@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.fs
 
-import com.intellij.platform.eel.fs.EelFileSystemApi.*
+import com.intellij.platform.eel.fs.EelFileSystemApi.ChangeAttributesOptions
+import com.intellij.platform.eel.fs.EelFileSystemApi.CopyOptions
+import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
+import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode
+import com.intellij.platform.eel.fs.EelFileSystemApi.TimeSinceEpoch
+import com.intellij.platform.eel.fs.EelFileSystemApi.WriteOptions
 import com.intellij.platform.eel.path.EelPath
 
 internal data class WriteOptionsImpl2(

@@ -12,8 +12,12 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import java.awt.Component;
 import java.awt.event.MouseEvent;
 
 public class SimpleFieldChooser extends DialogWrapper {

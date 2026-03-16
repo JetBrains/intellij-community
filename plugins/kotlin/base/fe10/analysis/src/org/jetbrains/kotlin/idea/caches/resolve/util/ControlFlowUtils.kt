@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.caches.resolve.util
 
 import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.cfg.ControlFlowInformationProviderImpl
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.psi.KtElement
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.resolve.DelegatingBindingTrace
 import org.jetbrains.kotlin.resolve.lazy.ResolveSession
 
+@K1Deprecation
 fun analyzeControlFlow(resolveSession: ResolveSession, resolveElement: KtElement, trace: BindingTrace) {
     val controlFlowTrace = DelegatingBindingTrace(
         trace.bindingContext, "Element control flow resolve", resolveElement, allowSliceRewrite = true
@@ -59,6 +61,7 @@ fun analyzeControlFlow(resolveSession: ResolveSession, resolveElement: KtElement
  *
  * N.B. This flag is K1-frontend specific; it does not have any effect on K2.
  */
+@K1Deprecation
 var KtFile.reportControlFlowDiagnosticsInK1: Boolean by NotNullablePsiCopyableUserDataProperty(Key.create("REPORT_CONTROL_FLOW_DIAGNOSTICS_IN_K1"), false)
     @ApiStatus.Internal get
     @ApiStatus.Internal set

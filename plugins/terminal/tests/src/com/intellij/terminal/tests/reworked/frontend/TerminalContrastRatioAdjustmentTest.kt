@@ -69,4 +69,61 @@ internal class TerminalContrastRatioAdjustmentTest {
       .overridingErrorMessage { "Expected #${ColorUtil.toHex(expectedFgColor)}, but was #${ColorUtil.toHex(actualFgColor)}" }
       .isEqualTo(expectedFgColor)
   }
+
+  @Test
+  fun `generic smoke test - red`() {
+    for (ratio in ratiosToTest()) {
+      val pairs = redSequence(0..255).flatMap { fg ->
+        redSequence(0..255).map { bg -> fg to bg }
+      }
+      doGenericTest(pairs, contrastRatio = ratio)
+    }
+  }
+
+  @Test
+  fun `generic smoke test - green`() {
+    for (ratio in ratiosToTest()) {
+      val pairs = greenSequence(0..255).flatMap { fg ->
+        greenSequence(0..255).map { bg -> fg to bg }
+      }
+      doGenericTest(pairs, contrastRatio = ratio)
+    }
+  }
+
+  @Test
+  fun `generic smoke test - blue`() {
+    for (ratio in ratiosToTest()) {
+      val pairs = blueSequence(0..255).flatMap { fg ->
+        blueSequence(0..255).map { bg -> fg to bg }
+      }
+      doGenericTest(pairs, contrastRatio = ratio)
+    }
+  }
+
+  private fun doGenericTest(colorPairs: Sequence<Pair<Color, Color>>, contrastRatio: Float) {
+    for ((bg, fg) in colorPairs) {
+      val newFg = TerminalUiUtils.ensureContrastRatio(bg, fg, contrastRatio)
+      assertContrastOrBlackOrWhiteReached(bg, newFg, contrastRatio)
+    }
+  }
+
+  private fun assertContrastOrBlackOrWhiteReached(bg: Color, fg: Color, contrastRatio: Float) {
+    val actualContrast = ColorUtil.getContrast(bg, fg)
+    assertThat(
+      actualContrast >= contrastRatio ||
+      fg == Color.WHITE ||
+      fg == Color.BLACK
+    )
+      .overridingErrorMessage {
+        "Expected #${ColorUtil.toHex(bg)}/#${ColorUtil.toHex(fg)} to have contrast $contrastRatio or to be fully white/black," +
+        " got contrast ratio $actualContrast"
+      }
+      .isTrue()
+  }
 }
+
+private fun redSequence(ints: IntRange): Sequence<Color> = ints.asSequence().map { Color(it, 0, 0) }
+private fun greenSequence(ints: IntRange): Sequence<Color> = ints.asSequence().map { Color(0, it, 0) }
+private fun blueSequence(ints: IntRange): Sequence<Color> = ints.asSequence().map { Color(0, 0, it) }
+
+private fun ratiosToTest(): List<Float> = listOf(1f, 4.5f, 21f)

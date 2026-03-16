@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.idea.core.script.shared.getScriptReports
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.k1.applySuggestedScriptConfiguration
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.loader.FileContentsDependentConfigurationLoader
@@ -18,6 +17,7 @@ import org.jetbrains.kotlin.idea.core.script.k1.configuration.loader.ScriptConfi
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.testingBackgroundExecutor
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.utils.testScriptConfigurationNotification
 import org.jetbrains.kotlin.idea.core.script.k1.hasSuggestedScriptConfiguration
+import org.jetbrains.kotlin.idea.core.script.shared.getScriptReports
 import org.jetbrains.kotlin.idea.core.script.v1.isScriptChangesNotifierDisabled
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.runAll

@@ -16,6 +16,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.vcs.log.VcsLogAggregatedStoredRefsKt;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -103,7 +104,7 @@ public final class BranchFilterPopupComponent extends MultipleValueFilterPopupCo
     VcsLogDataPack logData = myFilterModel.getDataPack();
 
     List<List<String>> branchFilters = processRecentBranchFilters(
-      ContainerUtil.map2Set(logData.getRefs().getBranches(), VcsRef::getName),
+      ContainerUtil.map2Set(VcsLogAggregatedStoredRefsKt.getBranches(logData.getRefs()), VcsRef::getName),
       getRecentValuesFromSettings());
 
     actionGroup.add(new MyBranchPopupBuilder(logData, myBranchFilterModel.getVisibleRoots(), branchFilters).build());
@@ -113,7 +114,7 @@ public final class BranchFilterPopupComponent extends MultipleValueFilterPopupCo
 
   @Override
   protected @NotNull @Unmodifiable List<String> getAllValues() {
-    Collection<VcsRef> branches = myFilterModel.getDataPack().getRefs().getBranches();
+    Collection<VcsRef> branches = VcsLogAggregatedStoredRefsKt.getBranches(myFilterModel.getDataPack().getRefs());
     if (myBranchFilterModel.getVisibleRoots() != null) {
       branches = ContainerUtil.filter(branches, branch -> myBranchFilterModel.getVisibleRoots().contains(branch.getRoot()));
     }
@@ -145,11 +146,6 @@ public final class BranchFilterPopupComponent extends MultipleValueFilterPopupCo
     @Override
     protected void createRecentAction(@NotNull List<AnAction> actionGroup, @NotNull List<String> recentItems) {
       actionGroup.add(new PredefinedValueAction(recentItems));
-    }
-
-    @Override
-    protected @NotNull AnAction createCollapsedAction(@NotNull String actionName, @NotNull Collection<? extends VcsRef> refs) {
-      return new BranchFilterAction(() -> actionName, refs);
     }
 
     @Override

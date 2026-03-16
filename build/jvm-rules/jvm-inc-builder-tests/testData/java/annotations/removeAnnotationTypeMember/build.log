@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+End of files
+Compiling files:
+  java/annotations/removeAnnotationTypeMember/a/A.java
+End of files
+Cleaning output files:
+  C.class
+  C1.class
+  C2.class
+End of files
+Compiling files:
+  java/annotations/removeAnnotationTypeMember/a/C.java
+  java/annotations/removeAnnotationTypeMember/a/C1.java
+  java/annotations/removeAnnotationTypeMember/a/C2.java
+End of files
+------------------------------------------
+Exit code: ERROR

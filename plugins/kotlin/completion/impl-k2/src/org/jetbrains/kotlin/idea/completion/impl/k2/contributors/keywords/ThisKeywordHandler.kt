@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.completion.contributors.keywords
+package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.keywords
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.PrefixMatcher
@@ -15,11 +15,14 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.completion.labelNameToTail
-import org.jetbrains.kotlin.idea.completion.lookups.renderVerbose
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.renderVerbose
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher.MatchesExpectedType
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher.matchesExpectedType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -30,6 +33,7 @@ import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
 
 internal class ThisKeywordHandler(
     private val prefixMatcher: PrefixMatcher,
+    private val expectedType: KaType?,
 ) : CompletionKeywordHandler<KaSession>(KtTokens.THIS_KEYWORD) {
 
     context(_: KaSession)
@@ -60,7 +64,13 @@ internal class ThisKeywordHandler(
                 getThisLabelBySymbol(receiver.ownerSymbol)
             } else null
 
-            result += createThisLookupElement(receiver, labelName)
+            val lookupElement = createThisLookupElement(receiver, labelName)
+            if (expectedType != null) {
+                // We do this here rather than in the [ExpectedTypeWeigher] to avoid duplicate work and having
+                // to reconstruct the receiver targets there.
+                lookupElement.matchesExpectedType = MatchesExpectedType.matches(receiver.type, expectedType)
+            }
+            result += lookupElement
         }
 
         return result

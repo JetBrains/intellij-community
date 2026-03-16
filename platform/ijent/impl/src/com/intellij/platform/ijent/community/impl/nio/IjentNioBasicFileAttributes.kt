@@ -4,15 +4,31 @@ package com.intellij.platform.ijent.community.impl.nio
 import com.intellij.openapi.util.io.CaseSensitivityAttribute
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.platform.eel.fs.EelFileInfo
-import com.intellij.platform.eel.fs.EelFileInfo.Type.*
+import com.intellij.platform.eel.fs.EelFileInfo.Type.Directory
+import com.intellij.platform.eel.fs.EelFileInfo.Type.Other
+import com.intellij.platform.eel.fs.EelFileInfo.Type.Regular
 import com.intellij.platform.eel.fs.EelPosixFileInfo
 import com.intellij.platform.eel.fs.EelPosixFileInfo.Type.Symlink
 import com.intellij.platform.eel.fs.EelWindowsFileInfo
 import com.intellij.platform.eel.provider.utils.EelPathUtils
-import java.nio.file.attribute.*
-import java.nio.file.attribute.PosixFilePermission.*
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileTime
+import java.nio.file.attribute.GroupPrincipal
+import java.nio.file.attribute.PosixFileAttributes
+import java.nio.file.attribute.PosixFilePermission
+import java.nio.file.attribute.PosixFilePermission.GROUP_EXECUTE
+import java.nio.file.attribute.PosixFilePermission.GROUP_READ
+import java.nio.file.attribute.PosixFilePermission.GROUP_WRITE
+import java.nio.file.attribute.PosixFilePermission.OTHERS_EXECUTE
+import java.nio.file.attribute.PosixFilePermission.OTHERS_READ
+import java.nio.file.attribute.PosixFilePermission.OTHERS_WRITE
+import java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE
+import java.nio.file.attribute.PosixFilePermission.OWNER_READ
+import java.nio.file.attribute.PosixFilePermission.OWNER_WRITE
+import java.nio.file.attribute.PosixFilePermission.entries
+import java.nio.file.attribute.UserPrincipal
 import java.time.Instant
-import java.util.*
+import java.util.EnumSet
 
 internal class IjentNioBasicFileAttributes(private val fileInfo: EelFileInfo) : BasicFileAttributes {
   override fun lastModifiedTime(): FileTime =

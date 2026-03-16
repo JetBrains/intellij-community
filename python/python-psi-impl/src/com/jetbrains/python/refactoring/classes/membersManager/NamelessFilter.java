@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NotNull;
  * that are null or has null name.
  * You need it sometimes when code has errors (i.e. bad formatted code with annotation may treat annotation as method with null name.
  *
-* @author Ilya.Kazakevich
-*/
+ * @author Ilya.Kazakevich
+ */
 class NamelessFilter<T extends PyElement & PsiNamedElement> extends NotNullPredicate<T> {
 
   @Override

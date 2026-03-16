@@ -8,13 +8,8 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtil
 internal fun KotlinMppGradleProjectResolver.Companion.populateModuleDependenciesByCompilations(
     context: KotlinMppPopulateModuleDependenciesContext
 ): Unit = with(context) {
-    getCompilations(
-        gradleModule = gradleIdeaModule,
-        mppModel = mppModel,
-        ideModule = ideModule,
-        resolverCtx = resolverCtx,
-        filterTargets = { !it.isManagedByComAndroidLibraryPlugin }
-    )
+    getCompilations(gradleIdeaModule, mppModel, ideModule, resolverCtx)
+        .filterNot { (_, compilation) -> shouldDelegateToOtherPlugin(compilation) }
         .filter { (_, compilation) -> processedModuleIds.add(getKotlinModuleId(gradleIdeaModule, compilation, resolverCtx)) }
         .forEach { (dataNode, compilation) ->
             buildDependencies(

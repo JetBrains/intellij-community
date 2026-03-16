@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.rest.api20alpha1.model;
 
-import com.intellij.tasks.jira.rest.model.*;
+import com.intellij.tasks.jira.rest.model.JiraComment;
+import com.intellij.tasks.jira.rest.model.JiraIssue;
+import com.intellij.tasks.jira.rest.model.JiraIssueType;
+import com.intellij.tasks.jira.rest.model.JiraStatus;
+import com.intellij.tasks.jira.rest.model.JiraUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

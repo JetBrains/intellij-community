@@ -2,7 +2,11 @@
 package com.intellij.java.codeserver.core;
 
 import com.intellij.openapi.util.Couple;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -20,6 +24,8 @@ import static java.util.Objects.requireNonNull;
  * Utilities related to Java methods
  */
 public final class JavaPsiMethodUtil {
+  private JavaPsiMethodUtil() { }
+
   /**
    * @param aClass class to analyze
    * @param overrideEquivalentSuperMethods collection of override-equivalent super methods
@@ -46,7 +52,7 @@ public final class JavaPsiMethodUtil {
       }
     }
     if (defaults == null) return null;
-    PsiMethod defaultMethod = defaults.get(0);
+    PsiMethod defaultMethod = defaults.getFirst();
     PsiClass defaultMethodContainingClass = defaultMethod.getContainingClass();
     if (defaultMethodContainingClass == null) return null;
     if (abstractMethod == null) {
@@ -60,7 +66,7 @@ public final class JavaPsiMethodUtil {
         return unrelatedCouple;
       }
       if (hasNotOverriddenAbstract(defaults, abstractMethodContainingClass)) {
-        return Couple.of(defaults.get(0), abstractMethod);
+        return Couple.of(defaults.getFirst(), abstractMethod);
       }
     }
     return null;

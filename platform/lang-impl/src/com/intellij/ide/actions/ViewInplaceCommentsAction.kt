@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus
@@ -46,7 +47,7 @@ class ViewInplaceCommentsAction : DumbAwareToggleAction() {
 
   private fun updateProjectViews() {
     ProjectManager.getInstance()?.openProjects?.forEach { project ->
-      ProjectView.getInstance(project)?.currentProjectViewPane?.updateFromRoot(true)
+      ProjectView.getInstance(project)?.currentProjectViewPane?.updateFromRoot(true, ProjectViewUpdateCause.SETTINGS)
     }
   }
 

@@ -1,6 +1,12 @@
 package com.intellij.database.run.actions
 
-import com.intellij.database.datagrid.*
+import com.intellij.database.datagrid.DataGrid
+import com.intellij.database.datagrid.GridColumn
+import com.intellij.database.datagrid.GridHelper
+import com.intellij.database.datagrid.GridRow
+import com.intellij.database.datagrid.GridUtil
+import com.intellij.database.datagrid.ModelIndex
+import com.intellij.database.datagrid.ModelIndexSet
 import com.intellij.database.run.ui.DataAccessType
 import com.intellij.database.run.ui.table.LocalFilterState
 import com.intellij.database.run.ui.table.TableResultView

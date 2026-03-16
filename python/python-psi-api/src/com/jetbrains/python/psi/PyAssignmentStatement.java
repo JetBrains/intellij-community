@@ -3,6 +3,7 @@ package com.jetbrains.python.psi;
 
 import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.ast.PyAstAssignmentStatement;
+import kotlin.annotations.jvm.ReadOnly;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,10 +65,11 @@ public interface PyAssignmentStatement extends PyAstAssignmentStatement, PyState
    * <br/>
    * If RHS and LHS are mis-balanced, certain target or value expressions may be null.
    * If source is severely incorrect, the returned mapping is empty.
+   *
    * @return a list of [target, value] pairs; either part of a pair may be null, but not both.
    */
   @Override
-  default @NotNull List<Pair<PyExpression, PyExpression>> getTargetsToValuesMapping() {
+  default @NotNull @ReadOnly List<Pair<PyExpression, PyExpression>> getTargetsToValuesMapping() {
     //noinspection unchecked
     return (List<Pair<PyExpression, PyExpression>>)PyAstAssignmentStatement.super.getTargetsToValuesMapping();
   }
@@ -76,5 +78,4 @@ public interface PyAssignmentStatement extends PyAstAssignmentStatement, PyState
   default @Nullable PyExpression getLeftHandSideExpression() {
     return (PyExpression)PyAstAssignmentStatement.super.getLeftHandSideExpression();
   }
-
 }

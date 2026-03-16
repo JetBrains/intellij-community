@@ -5,12 +5,14 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import java.io.File
+import java.net.URI
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -44,7 +46,19 @@ fun Project.resolveInProject(pathInProject: String, throwWhenOutside: Boolean = 
   return filePath
 }
 
-fun findMostRelevantProject(path: Path): Project? {
+fun findMostRelevantProjectForRoots(roots: Collection<String>): Project? {
+  return roots.firstNotNullOfOrNull(::findMostRelevantProject)
+}
+
+fun findMostRelevantProject(path: String): Project? {
+  var siPath = FileUtilRt.toSystemIndependentName(path)
+  if (!siPath.startsWith("file://")) {
+    siPath = "file://$siPath"
+  }
+  return findMostRelevantProject(Paths.get(URI(siPath)).normalize())
+}
+
+private fun findMostRelevantProject(path: Path): Project? {
   if (!path.isAbsolute) {
     logger.trace { "Path is not absolute: $path" }
     return null
@@ -59,13 +73,16 @@ fun findMostRelevantProject(path: Path): Project? {
   // - frontend/common/src  <-- this path passed as `path`
   // here we will have 2 project matches: `frontend/common` and `frontend` and better to prefer `frontend/common`
   val pairs = openProjects.mapNotNull { project ->
-    val openProjectPath = project.basePath?.let { Path(it) }?.normalize() ?: return@mapNotNull null
+    val openProjectPath = project.basePath?.let { Paths.get(URI("file://$it")) }?.normalize() ?: return@mapNotNull null
     if (targetNormalizedPath.startsWith(openProjectPath)) project to path else null
   }.sortedByDescending { it.second.nameCount }
   logger.trace { "Found projects for path $path: ${pairs.joinToString { it.first.basePath ?: "null"}}" }
   return pairs.firstOrNull()?.first
 }
 
+/**
+ * Tries to relativize [virtualFile]'s path relatively to [Path].
+ */
 fun Path.relativizeIfPossible(virtualFile: VirtualFile): String {
   val nioPath = virtualFile.toNioPathOrNull()
                 ?: try {

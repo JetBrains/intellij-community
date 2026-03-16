@@ -17,7 +17,7 @@ interface GatewayNativeWslProjectOpener {
   }
 }
 
-private class GatewayNativeWslProjectOpenerImpl : GatewayNativeWslProjectOpener {
+internal class GatewayNativeWslProjectOpenerImpl : GatewayNativeWslProjectOpener {
   override suspend fun openProject(wslDistribution: WSLDistribution, projectPath: String) {
     val pathToOpen = wslDistribution.getUNCRootPath().resolve(projectPath)
     ProjectUtil.openOrImportAsync(pathToOpen, OpenProjectTask {

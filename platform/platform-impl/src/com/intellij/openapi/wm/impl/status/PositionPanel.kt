@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status
 
 import com.intellij.ide.ui.UISettings
@@ -8,7 +8,11 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.editor.event.BulkAwareDocumentListener
+import com.intellij.openapi.editor.event.CaretEvent
+import com.intellij.openapi.editor.event.CaretListener
+import com.intellij.openapi.editor.event.SelectionEvent
+import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.keymap.KeymapUtil
@@ -22,7 +26,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
@@ -33,9 +41,11 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Internal
 @OptIn(FlowPreview::class)
-open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
-                         scope: CoroutineScope,
-                         protected val helper: EditorBasedWidgetHelper = EditorBasedWidgetHelper(dataContext.project)) : TextWidgetPresentation {
+open class PositionPanel(
+  private val dataContext: WidgetPresentationDataContext,
+  scope: CoroutineScope,
+  protected val helper: EditorBasedWidgetHelper = EditorBasedWidgetHelper(dataContext.project),
+) : TextWidgetPresentation {
   private val updateTextRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     .also { it.tryEmit(Unit) }
   private val charCountRequests = MutableSharedFlow<CodePointCountTask>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -141,7 +151,6 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
     }
   }
 
-  @Suppress("HardCodedStringLiteral")
   private fun getPositionText(editor: Editor): @NlsContexts.Label String {
     if (editor.isDisposed) {
       return ""
@@ -174,9 +183,11 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
     }
     else {
       message.append(CHAR_COUNT_UNKNOWN).append(' ').append(UIBundle.message("position.panel.selected.chars.count", 2))
-      check(charCountRequests.tryEmit(CodePointCountTask(text = editor.document.immutableCharSequence,
-                                                         startOffset = selectionStart,
-                                                         endOffset = selectionEnd)))
+      check(charCountRequests.tryEmit(CodePointCountTask(
+        text = editor.document.immutableCharSequence,
+        startOffset = selectionStart,
+        endOffset = selectionEnd,
+      )))
     }
 
     val selectionStartLine = editor.document.getLineNumber(selectionStart)

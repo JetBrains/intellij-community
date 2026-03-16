@@ -25,11 +25,13 @@ class SimplePopupItemRenderer<T> private constructor(private val presenter: (T) 
   override fun customizeCellRenderer(list: JList<out T>, value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
     val presentation = presenter(value)
     icon = presentation.icon
-    append(presentation.shortText)
     val fullText = presentation.fullText
     if (fullText != null) {
+      append(fullText)
       append(" ")
-      append(fullText, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      append(presentation.shortText, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+    } else {
+      append(presentation.shortText)
     }
 
     // ColoredListCellRenderer sets null for a background in case of !selected, so it can't work with SelectablePanel

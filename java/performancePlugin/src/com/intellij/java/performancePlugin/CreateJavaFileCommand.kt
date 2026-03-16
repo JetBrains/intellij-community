@@ -6,12 +6,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vfs.findDirectory
+import com.intellij.performanceTesting.vcs.VcsTestUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.impl.file.PsiJavaDirectoryFactory
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
-import com.intellij.performanceTesting.vcs.VcsTestUtil
 import io.opentelemetry.context.Context
 import org.jetbrains.annotations.Nls
 

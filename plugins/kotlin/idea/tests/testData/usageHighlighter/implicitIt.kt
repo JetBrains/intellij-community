@@ -11,3 +11,5 @@ fun test() {
         val xxx = <info descr="null">it</info> + 3
     }
 }
+
+// IGNORE_K2

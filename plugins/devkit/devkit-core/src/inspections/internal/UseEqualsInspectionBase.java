@@ -24,7 +24,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UBinaryExpression;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UIdentifier;
+import org.jetbrains.uast.ULiteralExpression;
+import org.jetbrains.uast.UThisExpression;
+import org.jetbrains.uast.UastBinaryOperator;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 @ApiStatus.Internal

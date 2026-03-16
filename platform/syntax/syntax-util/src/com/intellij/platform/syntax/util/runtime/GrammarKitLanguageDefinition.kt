@@ -7,8 +7,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface GrammarKitLanguageDefinition : LanguageSyntaxDefinition {
-  
+
   fun parse(elementType: SyntaxElementType, runtime: SyntaxGeneratedParserRuntime)
-  
-  fun getPairedBraces(): Collection<SyntaxGeneratedParserRuntime.BracePair> = emptyList()
+
+  fun getPairedBraces(): Collection<BracePair> = emptyList()
 }

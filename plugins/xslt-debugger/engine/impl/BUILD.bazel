@@ -10,8 +10,8 @@ jvm_library(
   deps = [
     "//plugins/xpath/xslt-rt:rt",
     "//plugins/xslt-debugger/engine:xslt-debugger-rt",
-    "//plugins/xslt-debugger/engine/impl/lib:saxon9he",
-    "//plugins/xslt-debugger/engine/impl/lib:saxon",
+    "//plugins/xslt-debugger/engine/impl/lib:xslt-debugger-impl-rt-_saxon-9_h_e",
+    "//plugins/xslt-debugger/engine/impl/lib:xslt-debugger-impl-rt-_saxon-6-5-5",
     "@lib//:xslt-debugger-impl-rt-_xalan-2-7-3",
     "@lib//:xslt-debugger-impl-rt-_serializer-2-7-3",
   ]
@@ -26,8 +26,8 @@ jvm_library(
   deps = [
     "//plugins/xpath/xslt-rt:rt",
     "//plugins/xslt-debugger/engine:xslt-debugger-rt",
-    "//plugins/xslt-debugger/engine/impl/lib:saxon9he",
-    "//plugins/xslt-debugger/engine/impl/lib:saxon",
+    "//plugins/xslt-debugger/engine/impl/lib:xslt-debugger-impl-rt-_saxon-9_h_e",
+    "//plugins/xslt-debugger/engine/impl/lib:xslt-debugger-impl-rt-_saxon-6-5-5",
     "@lib//:xslt-debugger-impl-rt-_xalan-2-7-3",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

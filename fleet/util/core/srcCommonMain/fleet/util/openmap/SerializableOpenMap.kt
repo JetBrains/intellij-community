@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util.openmap
 
-import fleet.util.serialization.PersistentMapSerializer
 import fleet.util.serialization.DataSerializer
+import fleet.util.serialization.PersistentMapSerializer
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.serialization.KSerializer

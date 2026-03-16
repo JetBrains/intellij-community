@@ -5,7 +5,6 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.editorconfig.common.EditorConfigBundle;
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;

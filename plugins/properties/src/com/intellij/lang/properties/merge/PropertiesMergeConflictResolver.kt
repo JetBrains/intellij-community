@@ -16,7 +16,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.util.IncorrectOperationException
-import java.util.*
+import java.util.TreeMap
 
 private val LOG = logger<PropertiesMergeConflictResolver>()
 

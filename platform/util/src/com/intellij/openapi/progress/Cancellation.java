@@ -59,7 +59,9 @@ public final class Cancellation {
     ThreadContext.warnAccidentalCancellation();
 
     Job currentJob = currentJob();
-    if (currentJob != null) {
+    // sometimes it is possible to violate structured concurrency and obtain the successfully completed Job in the context, like in the completion handler of `Job`s.
+    // We shall not check cancellation in this case
+    if (currentJob != null && !(isJobCompletedSuccessfully(currentJob))) {
       try {
         JobKt.ensureActive(currentJob);
       }
@@ -70,6 +72,10 @@ public final class Cancellation {
         throw new CeProcessCanceledException(e);
       }
     }
+  }
+
+  private static boolean isJobCompletedSuccessfully(@NotNull Job job) {
+    return job.isCompleted() && !job.isCancelled();
   }
 
   /**

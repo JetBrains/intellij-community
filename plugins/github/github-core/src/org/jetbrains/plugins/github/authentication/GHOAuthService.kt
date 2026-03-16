@@ -12,7 +12,7 @@ import com.intellij.util.Url
 import com.intellij.util.Urls.newFromEncoded
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.ide.RestService
-import java.util.*
+import java.util.Base64
 import java.util.concurrent.CompletableFuture
 
 @Service

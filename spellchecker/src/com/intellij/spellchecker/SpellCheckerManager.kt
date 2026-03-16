@@ -27,10 +27,25 @@ import com.intellij.openapi.util.io.FileUtilRt.extensionEquals
 import com.intellij.openapi.util.io.FileUtilRt.getExtension
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileEvent
+import com.intellij.openapi.vfs.VirtualFileListener
+import com.intellij.openapi.vfs.VirtualFileMoveEvent
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent
+import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.project.stateStore
 import com.intellij.spellchecker.SpellCheckerManager.Companion.restartInspections
-import com.intellij.spellchecker.dictionary.*
+import com.intellij.spellchecker.dictionary.CustomDictionaryProvider
+import com.intellij.spellchecker.dictionary.Dictionary
+import com.intellij.spellchecker.dictionary.DictionaryChecker
+import com.intellij.spellchecker.dictionary.EditableDictionary
+import com.intellij.spellchecker.dictionary.Loader
+import com.intellij.spellchecker.dictionary.ProjectDictionary
+import com.intellij.spellchecker.dictionary.RuntimeDictionaryProvider
+import com.intellij.spellchecker.dictionary.UserDictionary
+import com.intellij.spellchecker.engine.DictionaryModificationTracker
 import com.intellij.spellchecker.engine.SpellCheckerEngine
 import com.intellij.spellchecker.engine.SuggestionProvider
 import com.intellij.spellchecker.grazie.GrazieSuggestionProvider
@@ -64,7 +79,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
 
   @get:Internal
   val appDictionaryPath: String by lazy {
-    PathManager.getOptionsPath() + File.separator + CACHED_DICTIONARY_FILE
+    PathManager.getOptionsPath() + '/' + CACHED_DICTIONARY_FILE
   }
 
   private val userDictionaryListenerEventDispatcher = EventDispatcher.create(DictionaryStateListener::class.java)
@@ -83,6 +98,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
     BUNDLED_EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker) }
     RuntimeDictionaryProvider.EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker) }
     CustomDictionaryProvider.EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker) }
+    addUserDictionaryChangedListener({ DictionaryModificationTracker.getInstance(project).incModificationCount() }, this)
   }
 
   companion object {
@@ -325,8 +341,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
   }
 
   fun openDictionaryInEditor(dictPath: String) {
-    val file = if (dictPath.isEmpty()) null
-    else LocalFileSystem.getInstance().refreshAndFindFileByPath(dictPath)
+    val file = if (dictPath.isEmpty()) null else LocalFileSystem.getInstance().refreshAndFindFileByPath(dictPath)
     if (file == null) {
       val title = SpellCheckerBundle.message("dictionary.not.found.title")
       val message = SpellCheckerBundle.message("dictionary.not.found", dictPath)
@@ -484,7 +499,7 @@ private class StreamLoader(private val name: String, private val loaderClass: Cl
 }
 
 private fun getProjectDictionaryPath(): String {
-  return "dictionaries${File.separator}${getProjectDictionaryName().replace('.', '_')}.xml"
+  return "dictionaries/${getProjectDictionaryName().replace('.', '_')}.xml"
 }
 
 internal fun getProjectDictionaryName(): String {

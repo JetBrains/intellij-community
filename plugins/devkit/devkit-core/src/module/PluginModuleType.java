@@ -3,8 +3,12 @@ package org.jetbrains.idea.devkit.module;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
@@ -23,7 +27,7 @@ import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.build.PluginBuildUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

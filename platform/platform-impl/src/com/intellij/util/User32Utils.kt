@@ -1,15 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.ui.User32Ex
-import com.jetbrains.rd.util.error
-import com.jetbrains.rd.util.getLogger
-import com.jetbrains.rd.util.trace
 import com.sun.jna.platform.win32.WinDef
 import com.sun.jna.ptr.IntByReference
+import fleet.util.logging.logger
 import org.jetbrains.annotations.ApiStatus
 
-private val logger = getLogger<User32Ex>()
+private val logger = logger<User32Ex>()
 
 @ApiStatus.Internal
 fun User32Ex.findWindowsWithText(pid: UInt, windowName: String): List<WinDef.HWND> {

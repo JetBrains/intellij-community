@@ -1,0 +1,36 @@
+### auto-generated section `build fleet.build.codecache` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_codecache",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi",
+  ],
+  x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
+  x_jvm_default = "all-compatibility",
+  x_lambdas = "class"
+)
+
+jvm_library(
+  name = "codecache",
+  module_name = "fleet.build.codecache",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_codecache",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//fleet/bundles",
+    "//fleet/codecache",
+    "//fleet/build/platform",
+    "//fleet/build/fs",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:slf4j-api",
+    "@lib//:fleet-jetbrains-intellij-platform-util-zip-squashed",
+    "@lib//:fleet-jetbrains-intellij-idea-community-build-zip",
+    "@lib//:jetbrains-annotations",
+  ]
+)
+### auto-generated section `build fleet.build.codecache` end

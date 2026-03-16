@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.ex;
 
+import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
@@ -23,7 +24,13 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCustomElementRenderer;
+import com.intellij.openapi.editor.EditorLinePainter;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.LineExtensionInfo;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseListener;
@@ -34,15 +41,26 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.IntFunction;
 
 public interface EditorEx extends Editor {
@@ -373,5 +391,45 @@ public interface EditorEx extends Editor {
   @ApiStatus.Experimental
   default int getStickyLinesPanelHeight() {
     return 0;
+  }
+
+  @Override
+  default @NotNull ModNavigator asModNavigator() {
+    return new ModNavigator() {
+      @Override
+      public @NotNull Document getDocument() {
+        return EditorEx.this.getDocument();
+      }
+
+      @Override
+      public @NotNull Project getProject() {
+        return Objects.requireNonNull(EditorEx.this.getProject());
+      }
+
+      @Override
+      public @NotNull PsiFile getPsiFile() {
+        return Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getPsiFile(getDocument()));
+      }
+
+      @Override
+      public void select(@NotNull TextRange range) {
+        getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+      }
+
+      @Override
+      public void moveCaretTo(int offset) {
+        getCaretModel().moveToOffset(offset);
+      }
+
+      @Override
+      public int getCaretOffset() {
+        return getCaretModel().getOffset();
+      }
+
+      @Override
+      public void registerTabOut(@NotNull TextRange range, int tabOutOffset) {
+        TabOutScopesTracker.getInstance().registerScopeRange(EditorEx.this, range.getStartOffset(), range.getEndOffset(), tabOutOffset);
+      }
+    };
   }
 }

@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.ktor.client.jar
   projectLibraries:
   - name: kotlinx-serialization-json-io
     files:

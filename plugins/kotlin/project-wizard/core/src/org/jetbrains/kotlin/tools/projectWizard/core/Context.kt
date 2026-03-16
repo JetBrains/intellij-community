@@ -2,12 +2,23 @@
 package org.jetbrains.kotlin.tools.projectWizard.core
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.tools.projectWizard.core.entity.*
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.PipelineTask
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.Task1
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.ValidationResult
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.PluginProperty
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.PluginPropertyReference
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.PropertyContext
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.PropertyEntityReference
-import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.*
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.AnySetting
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSetting
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSettingReference
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.Setting
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingContext
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingDefaultValue
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingReference
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingSerializer
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingType
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference
 import org.jetbrains.kotlin.tools.projectWizard.core.service.ServicesManager
 import org.jetbrains.kotlin.tools.projectWizard.core.service.SettingSavingWizardService
 import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardService

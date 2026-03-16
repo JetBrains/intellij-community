@@ -442,7 +442,6 @@ def start_client(host, port):
         s.settimeout(10)  # 10 seconds timeout
         s.connect((host, port))
         s.settimeout(None)  # no timeout after connected
-        pydev_log.info("Connected to: {socket}.".format(socket=s))
         return s
     except:
         sys.stderr.write("Could not connect to %s: %s\n" % (host, port))

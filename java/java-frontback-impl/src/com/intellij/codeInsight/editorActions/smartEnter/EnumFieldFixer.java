@@ -15,21 +15,19 @@
  */
 package com.intellij.codeInsight.editorActions.smartEnter;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_ENUM_CONSTANT;
-
 public class EnumFieldFixer implements Fixer {
   @Override
-  public void apply(Editor editor, AbstractBasicJavaSmartEnterProcessor processor, @NotNull ASTNode astNode) throws IncorrectOperationException {
-    if (BasicJavaAstTreeUtil.is(astNode, BASIC_ENUM_CONSTANT)) {
-      int insertionOffset = astNode.getTextRange().getEndOffset();
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, @NotNull PsiElement psiElement) throws IncorrectOperationException {
+    if (psiElement instanceof PsiEnumConstant) {
+      int insertionOffset = psiElement.getTextRange().getEndOffset();
       Document doc = editor.getDocument();
       final CharSequence text = doc.getCharsSequence();
       final int probableCommaOffset = CharArrayUtil.shiftForward(text, insertionOffset, " \t");

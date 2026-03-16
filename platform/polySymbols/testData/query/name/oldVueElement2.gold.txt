@@ -1,7 +1,7 @@
 [
  {
   matchedName: "html/attributes/moveClass",
-  origin: "vue@3.0.0 (vue)",
+  origin: "vue@2.5.0a (vue)",
   attrValue: {
    type: OF_MATCH,
   },

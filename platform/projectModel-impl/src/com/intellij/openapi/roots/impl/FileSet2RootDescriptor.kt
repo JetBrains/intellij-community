@@ -11,8 +11,8 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.DummyWorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleSourceRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.StoredFileSet
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.findSdk
+import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
 
 internal fun findFileSetDescriptor(
   set: WorkspaceFileSetWithCustomData<*>,

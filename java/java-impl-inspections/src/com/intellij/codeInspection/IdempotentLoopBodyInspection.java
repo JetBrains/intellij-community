@@ -2,8 +2,22 @@
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
-import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhileStatement;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
+import com.intellij.psi.controlFlow.ControlFlowSubRange;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;

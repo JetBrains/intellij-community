@@ -12,7 +12,7 @@ import com.intellij.util.ui.MutableErrorTreeView;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 @ApiStatus.Internal
 public final class HotfixGroupElement extends GroupingElement {

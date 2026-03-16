@@ -5,6 +5,7 @@ import com.intellij.testFramework.common.BazelTestUtil
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.test.TestMetadataUtil.getAnnotationValue
 import org.jetbrains.kotlin.test.TestMetadata
 import java.io.File
 import kotlin.io.path.Path

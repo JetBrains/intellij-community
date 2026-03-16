@@ -14,8 +14,14 @@ import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.ui.AdjustComponentWhenShown;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
 import java.util.Map;
 
 import static com.intellij.openapi.util.io.FileUtil.join;

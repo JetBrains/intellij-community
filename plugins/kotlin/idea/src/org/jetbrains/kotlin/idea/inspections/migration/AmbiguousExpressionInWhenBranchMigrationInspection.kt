@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections.migration
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryWithPsiElement
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.idea.migration.isLanguageVersionUpdate
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 
 
+@K1Deprecation
 class AmbiguousExpressionInWhenBranchMigrationInspection :
     AbstractDiagnosticBasedMigrationInspection<PsiElement>(PsiElement::class.java),
     MigrationFix,

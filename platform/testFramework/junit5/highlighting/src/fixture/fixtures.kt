@@ -15,7 +15,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration.Companion.milliseconds
@@ -42,11 +46,11 @@ private suspend fun configureEditorTracker(editor: Editor): suspend () -> Unit {
   val editorTracker = project.serviceAsync<EditorTracker>()
   val previousEditors = editorTracker.activeEditors
   withContext(Dispatchers.EDT) {
-    project.serviceAsync<EditorTracker>().activeEditors = previousEditors + editor
+    project.serviceAsync<EditorTracker>().setActiveEditorsInTests(previousEditors + editor)
   }
   return {
     withContext(Dispatchers.EDT) {
-      editorTracker.activeEditors = previousEditors
+      editorTracker.setActiveEditorsInTests(previousEditors)
     }
   }
 }

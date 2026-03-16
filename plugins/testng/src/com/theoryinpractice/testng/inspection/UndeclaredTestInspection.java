@@ -2,7 +2,11 @@
 
 package com.theoryinpractice.testng.inspection;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -11,7 +15,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(UndeclaredTestInspection.class);
@@ -64,7 +74,7 @@ public final class UndeclaredTestInspection extends AbstractBaseJavaLocalInspect
 
       for (final String name : names) {
         final boolean isFullName = qName.equals(name);
-        final boolean[] found = new boolean[]{false};
+        final AtomicBoolean found = new AtomicBoolean();
         PsiSearchHelper.getInstance(project)
           .processUsagesInNonJavaFiles(name, (file, startOffset, endOffset) -> {
             if (file.findReferenceAt(startOffset) != null) {
@@ -79,12 +89,12 @@ public final class UndeclaredTestInspection extends AbstractBaseJavaLocalInspect
                 if (value == null) return true;
                 if (!value.endsWith(".*") && !value.equals(packageQName)) return true;
               }
-              found[0] = true;
+              found.set(true);
               return false;
             }
             return true;
           }, new TestNGSearchScope(project));
-        if (found[0]) return null;
+        if (found.get()) return null;
       }
       final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
       LOG.assertTrue(nameIdentifier != null);

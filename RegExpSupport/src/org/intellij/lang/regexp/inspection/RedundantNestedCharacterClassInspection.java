@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -9,6 +9,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiErrorElement;
 import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.psi.RegExpClass;
 import org.intellij.lang.regexp.psi.RegExpClassElement;
@@ -37,6 +38,7 @@ public class RedundantNestedCharacterClassInspection extends LocalInspectionTool
     @Override
     public void visitRegExpClass(RegExpClass regExpClass) {
       super.visitRegExpClass(regExpClass);
+      if (regExpClass.getLastChild() instanceof PsiErrorElement) return;
       final PsiElement parent = regExpClass.getParent();
       // In JDK 9 the behaviour of negated character classes was changed, so we can never warn about them
       // JDK 8: [^a&&b] is the intersection of [^a] with [b], which equals [b]
@@ -44,6 +46,7 @@ public class RedundantNestedCharacterClassInspection extends LocalInspectionTool
       // see https://bugs.openjdk.org/browse/JDK-8189343
       // and http://mail.openjdk.org/pipermail/core-libs-dev/2011-June/006957.html
       if (parent instanceof RegExpClass parentClass) {
+        if (parentClass.getLastChild() instanceof PsiErrorElement) return;
         if (!parentClass.isNegated() && !regExpClass.isNegated()) {
           myHolder.registerProblem(regExpClass.getFirstChild(), RegExpBundle.message("inspection.warning.redundant.nested.character.class"),
                                    new RedundantNestedCharacterClassFix());

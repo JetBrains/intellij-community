@@ -7,6 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurrounder
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
@@ -18,7 +19,7 @@ abstract class KotlinControlFlowExpressionSurrounderBase : KotlinExpressionSurro
     override fun surroundExpression(context: ActionContext, expression: KtExpression, updater: ModPsiUpdater) {
         val psiFactory = KtPsiFactory(context.project)
 
-        val newElement = psiFactory.createExpressionByPattern(getPattern(), expression.text)
+        val newElement = psiFactory.createExpressionByPattern(getPattern().replace("$0", expression.text))
         val replaced = expression.replaced(newElement)
 
         getRange(context, replaced, updater)?.let {
@@ -26,6 +27,6 @@ abstract class KotlinControlFlowExpressionSurrounderBase : KotlinExpressionSurro
         }
     }
 
-    protected abstract fun getPattern(): String
+    protected abstract fun getPattern(exceptionClasses: List<ClassId> = emptyList()): String
     protected abstract fun getRange(context: ActionContext, replaced: KtExpression, updater: ModPsiUpdater): TextRange?
 }

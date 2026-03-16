@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.python.community"/>
     <module name="intellij.python.psi.impl"/>
@@ -9,22 +9,20 @@
 
   <resource-bundle>messages.PyProjectTomlBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey defaultValue="false" description="Load project structure from pyproject.toml" key="intellij.python.pyproject.model" restartRequired="true"/>
-    <externalSystemUnlinkedProjectAware
-      implementation="com.intellij.python.pyproject.model.internal.PyExternalSystemUnlinkedProjectAware"/>
-
-    <projectOpenProcessor implementation="com.intellij.python.pyproject.model.internal.PyProjectOpenProcessor"/>
-
-    <postStartupActivity implementation="com.intellij.python.pyproject.model.internal.PyProjectSyncActivity"/>
+    <!-- "ask" means "ask user"-->
+    <registryKey defaultValue="[off*|on|ask]" description="Load project structure from pyproject.toml" key="intellij.python.pyproject.model"
+                 restartRequired="true"/>
+    <notificationGroup id="PyProject.toml" displayType="STICKY_BALLOON" isLogByDefault="true"
+                       bundle="messages.PyProjectTomlBundle" key="pyproject.notification.title"/>
+    <backgroundPostStartupActivity implementation="com.intellij.python.pyproject.model.internal.platformBridge.PyProjectSyncActivity"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.python.pyproject.statistics.PythonTomlStatsUsagesCollector"/>
   </extensions>
-  <actions>
-    <action class="com.intellij.python.pyproject.model.internal.PyProjectTomlSyncAction" id="PyProjectTomlSyncAction"/>
-  </actions>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.python.pyproject.model.tool" interface="com.intellij.python.pyproject.model.spi.Tool"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.python.pyproject.model.moduleDataTransfer"
+                    interface="com.intellij.python.pyproject.model.spi.PyModuleDataTransfer" dynamic="true"/>
   </extensionPoints>
 
 </idea-plugin>

@@ -3,27 +3,18 @@ package com.intellij.build.eventBuilders
 
 import com.intellij.build.events.BuildEventsNls.Description
 import com.intellij.build.events.BuildEventsNls.Hint
-import com.intellij.build.events.BuildEventsNls.Message
 import com.intellij.build.events.ProgressBuildEvent
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.CheckReturnValue
 
-@Experimental
 @NonExtendable
 interface ProgressBuildEventBuilder {
-
-  @CheckReturnValue // mandatory field
-  fun withStartId(startId: Any): ProgressBuildEventBuilder
 
   @CheckReturnValue
   fun withParentId(parentId: Any?): ProgressBuildEventBuilder
 
   @CheckReturnValue
   fun withTime(time: Long?): ProgressBuildEventBuilder
-
-  @CheckReturnValue // mandatory field
-  fun withMessage(message: @Message String): ProgressBuildEventBuilder
 
   @CheckReturnValue
   fun withHint(hint: @Hint String?): ProgressBuildEventBuilder

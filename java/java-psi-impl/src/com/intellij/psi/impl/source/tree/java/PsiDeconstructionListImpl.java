@@ -2,7 +2,13 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiDeconstructionList;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiPattern;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaSourceUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -12,7 +18,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.impl.source.tree.JavaElementType.*;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DECONSTRUCTION_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DECONSTRUCTION_PATTERN;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE_TEST_PATTERN;
+import static com.intellij.psi.impl.source.tree.JavaElementType.UNNAMED_PATTERN;
 
 public class PsiDeconstructionListImpl extends CompositePsiElement implements PsiDeconstructionList {
   private final TokenSet PRIMARY_PATTERN_SET = TokenSet.create(TYPE_TEST_PATTERN, DECONSTRUCTION_PATTERN, UNNAMED_PATTERN);

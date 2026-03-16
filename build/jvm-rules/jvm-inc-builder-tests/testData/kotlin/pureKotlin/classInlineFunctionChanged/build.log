@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_classInlineFunctionChanged-a.kotlin_module
+  inline/Klass.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/classInlineFunctionChanged/a/inline.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_classInlineFunctionChanged-a.kotlin_module
+  usage/UsageKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/classInlineFunctionChanged/a/usage.kt
+End of files
+------------------------------------------
+Exit code: OK

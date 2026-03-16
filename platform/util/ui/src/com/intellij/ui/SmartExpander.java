@@ -3,7 +3,7 @@ package com.intellij.ui;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeWillExpandListener;

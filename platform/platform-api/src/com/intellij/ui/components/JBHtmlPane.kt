@@ -10,8 +10,13 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.asSafely
 import com.intellij.util.containers.addAllIfNotNull
-import com.intellij.util.ui.*
+import com.intellij.util.ui.CSSFontResolver
+import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions.icons
+import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.HTMLEditorKitBuilder
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,7 +32,7 @@ import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import java.beans.PropertyChangeEvent
 import java.net.URL
-import java.util.*
+import java.util.Dictionary
 import javax.swing.JEditorPane
 import javax.swing.KeyStroke
 import javax.swing.text.Document

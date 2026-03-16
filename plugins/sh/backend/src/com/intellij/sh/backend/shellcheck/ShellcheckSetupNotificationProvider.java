@@ -17,7 +17,7 @@ import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.function.Function;
 
 import static com.intellij.sh.ShBundle.message;

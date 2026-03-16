@@ -8,8 +8,11 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+import com.intellij.util.indexing.roots.origin.GenericContentEntityOriginImpl
+import com.intellij.util.indexing.roots.origin.IndexingRootHolder
 import com.intellij.util.indexing.roots.origin.SdkOriginImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -22,6 +25,7 @@ class GenericDependencyIterator(
   private val indexingProgressText: @NlsContexts.ProgressText String,
   private val rootsScanningProgressText: @NlsContexts.ProgressText String,
   private val debugName: String,
+  private val recursive: Boolean = true,
 ) : IndexableFilesIterator {
   override fun getDebugName(): @NonNls String {
     return debugName
@@ -40,7 +44,11 @@ class GenericDependencyIterator(
   }
 
   override fun iterateFiles(project: Project, fileIterator: ContentIterator, fileFilter: VirtualFileFilter): Boolean {
-    return IndexableFilesIterationMethods.iterateRoots(project, listOf(root), fileIterator, fileFilter)
+    return if (recursive) {
+      IndexableFilesIterationMethods.iterateRoots(project, listOf(root), fileIterator, fileFilter)
+    } else {
+      IndexableFilesIterationMethods.iterateRootsNonRecursively(project, listOf(root), fileIterator, fileFilter)
+    }
   }
 
   override fun getRootUrls(project: Project): @Unmodifiable Set<String> {
@@ -48,6 +56,18 @@ class GenericDependencyIterator(
   }
 
   companion object {
+    fun forContentRoot(entityPointer: EntityPointer<*>, recursive: Boolean, root: VirtualFile,): IndexableFilesIterator {
+      return GenericDependencyIterator(
+        // TOOD remove IndexingRootHolder
+        origin = GenericContentEntityOriginImpl(entityPointer, IndexingRootHolder.fromFile(root)),
+        root = root,
+        indexingProgressText = IndexingBundle.message("indexable.files.provider.indexing.content"),
+        rootsScanningProgressText = IndexingBundle.message("indexable.files.provider.scanning.content"),
+        debugName = "Module unaware content roots from entity (" + root.name + ")",
+        recursive = recursive
+      )
+    }
+
     fun forLibraryEntity(origin: IndexableSetOrigin, libraryName: String, root: VirtualFile, sourceRoot: Boolean): IndexableFilesIterator {
       val debugMessage = if (sourceRoot) {
         "(source root ${root.name})"

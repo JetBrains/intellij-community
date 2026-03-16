@@ -2,7 +2,13 @@
 package com.intellij.platform.util.io.storages;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataEnumerator;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
+import com.intellij.util.io.UnsyncByteArrayOutputStream;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import org.jetbrains.annotations.NotNull;
 

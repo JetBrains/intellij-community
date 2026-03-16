@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Comparing;
@@ -15,16 +16,26 @@ import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.designSurface.GridCaptionPanel;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
-import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.uiDesigner.radComponents.ButtonGroupPropertiesPanel;
+import com.intellij.uiDesigner.radComponents.CustomPropertiesPanel;
+import com.intellij.uiDesigner.radComponents.RadButtonGroup;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.CardLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -65,7 +76,9 @@ public final class PropertyInspector extends JPanel{
       new ActionListener() {
         @Override
         public void actionPerformed(final ActionEvent e) {
-          myInspectorTable.setShowExpertProperties(chkShowExpertProperties.isSelected());
+          WriteIntentReadAction.run(() -> {
+            myInspectorTable.setShowExpertProperties(chkShowExpertProperties.isSelected());
+          });
         }
       }
     );
@@ -204,7 +217,9 @@ public final class PropertyInspector extends JPanel{
   private final class MyComponentSelectionListener implements ComponentSelectionListener{
     @Override
     public void selectedComponentChanged(final @NotNull GuiEditor source){
-      synchWithTree(false);
+      WriteIntentReadAction.run(() -> {
+        synchWithTree(false);
+      });
     }
   }
 }

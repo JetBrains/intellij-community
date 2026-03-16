@@ -16,6 +16,7 @@ public interface TomlElementTypes {
   IElementType TABLE_HEADER = new TomlCompositeType("TABLE_HEADER");
 
   IElementType BARE_KEY = new TomlTokenType("BARE_KEY");
+  IElementType BARE_KEY_OR_BOOLEAN = new TomlTokenType("BARE_KEY_OR_BOOLEAN");
   IElementType BARE_KEY_OR_DATE = new TomlTokenType("BARE_KEY_OR_DATE");
   IElementType BARE_KEY_OR_NUMBER = new TomlTokenType("BARE_KEY_OR_NUMBER");
   IElementType BASIC_STRING = new TomlTokenType("BASIC_STRING");

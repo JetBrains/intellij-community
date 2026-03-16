@@ -27,7 +27,10 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.io.File;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.Executor.*;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.mkdir;
+import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
 
 public class HgGetDiffForDirTest extends HgPlatformTest {

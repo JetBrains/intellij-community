@@ -4,11 +4,13 @@ package com.intellij.java.navigation;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.intellij.lang.annotations.Language;
 
+@PerformanceUnitTest
 public class JavaGotoImplementationHandlerPerformanceTest extends JavaCodeInsightFixtureTestCase {
   public void testToStringOnUnqualifiedPerformance() {
     @Language("JAVA") @SuppressWarnings("ALL")

@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 
 internal class ConfigureFilesNestingAction : DumbAwareAction() {
   override fun update(event: AnActionEvent) {
@@ -28,7 +29,7 @@ internal class ConfigureFilesNestingAction : DumbAwareAction() {
     if (dialog.showAndGet()) {
       val view = ProjectView.getInstance(project)
       dialog.apply { view.setUseFileNestingRules(it) }
-      view.currentProjectViewPane?.updateFromRoot(true)
+      view.currentProjectViewPane?.updateFromRoot(true, ProjectViewUpdateCause.SETTINGS)
     }
   }
 }

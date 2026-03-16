@@ -3,20 +3,33 @@ package fleet.rpc.client
 
 import fleet.rpc.RemoteApi
 import fleet.rpc.RemoteApiDescriptor
-import fleet.rpc.client.proxy.*
-import fleet.rpc.core.*
+import fleet.rpc.client.proxy.InvocationHandlerFactory
+import fleet.rpc.client.proxy.ProxyClosure
+import fleet.rpc.client.proxy.ServiceProxy
+import fleet.rpc.client.proxy.caching
+import fleet.rpc.client.proxy.poisoned
+import fleet.rpc.client.proxy.serviceProxy
+import fleet.rpc.client.proxy.tracing
+import fleet.rpc.core.ConnectionStatus
+import fleet.rpc.core.Exponential
+import fleet.rpc.core.FleetTransportFactory
+import fleet.rpc.core.InstanceId
+import fleet.rpc.core.TransportStats
+import fleet.rpc.core.connectionLoop
 import fleet.util.UID
 import fleet.util.async.DelayStrategy
 import fleet.util.async.Resource
 import fleet.util.async.onContext
 import fleet.util.async.resource
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import org.jetbrains.annotations.ApiStatus.Internal
-import kotlin.coroutines.CoroutineContext
+import org.jetbrains.annotations.ApiStatus
 import kotlin.concurrent.Volatile
+import kotlin.coroutines.CoroutineContext
 
+@ApiStatus.Internal
 class FleetClient internal constructor(
   val connectionStatus: StateFlow<ConnectionStatus<IRpcClient>>,
   val stats: MutableStateFlow<TransportStats>,
@@ -29,7 +42,7 @@ class FleetClient internal constructor(
   @Volatile
   private var poison: CancellationException? = null
 
-  @Internal
+  @ApiStatus.Internal
   val invocationHandlerFactory: InvocationHandlerFactory<ProxyClosure> =
     reconnectingRpcClient(connectionStatus)
       .asHandlerFactory()
@@ -46,15 +59,18 @@ class FleetClient internal constructor(
   }
 }
 
+@ApiStatus.Internal
 fun <A : RemoteApi<*>> FleetClient.proxy(remoteApiDescriptor: RemoteApiDescriptor<A>, route: UID, instanceId: InstanceId): A =
   asServiceProxy().proxy(remoteApiDescriptor, route, instanceId)
 
+@ApiStatus.Internal
 fun fleetClient(
   clientId: ClientId,
   transportFactory: FleetTransportFactory,
   abortOnError: Boolean,
   delayStrategy: DelayStrategy = Exponential,
   requestInterceptor: RpcInterceptor = RpcInterceptor,
+  debugName: String? = null,
 ): Resource<FleetClient> =
   resource { cc ->
     val stats = MutableStateFlow(TransportStats())
@@ -62,6 +78,7 @@ fun fleetClient(
       transportFactory = transportFactory,
       transportStats = stats,
       delayStrategy = delayStrategy,
+      debugName = debugName
     ) { transport ->
       rpcClient(transport, clientId.uid, requestInterceptor, abortOnError)
     }.use { connectionStatus ->
@@ -74,19 +91,3 @@ fun fleetClient(
       }
     }
   }.onContext(CoroutineName("fleetClient"))
-
-@Deprecated("the only difference with fleetClient() is that this one puts in on coroutineContext. you can do it yourself. but better don't")
-suspend fun withFleetClient(
-  clientId: ClientId,
-  transportFactory: FleetTransportFactory,
-  abortOnError: Boolean,
-  delayStrategy: DelayStrategy = Exponential,
-  requestInterceptor: RpcInterceptor = RpcInterceptor,
-  body: suspend CoroutineScope.(FleetClient) -> Unit,
-) {
-  fleetClient(clientId, transportFactory, abortOnError, delayStrategy, requestInterceptor).use { fleetClient ->
-    withContext(fleetClient) {
-      body(fleetClient)
-    }
-  }
-}

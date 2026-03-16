@@ -15,7 +15,11 @@
  */
 package com.siyeh.ipp.initialization;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,14 +38,7 @@ class SplitDeclarationAndInitializationPredicate
       return false;
     }
     final PsiExpression initializer = field.getInitializer();
-    if (initializer == null) {
-      return false;
-    }
-    final PsiClass containingClass = field.getContainingClass();
-    if (containingClass == null || containingClass.isInterface() || containingClass instanceof PsiImplicitClass) {
-      return false;
-    }
-    if (containingClass.isRecord() && !field.hasModifierProperty(PsiModifier.STATIC)) {
+    if (initializer == null || !CodeBlockSurrounder.canSurround(initializer)) {
       return false;
     }
     return !ErrorUtil.containsError(field);

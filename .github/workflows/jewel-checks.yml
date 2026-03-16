@@ -120,7 +120,7 @@ jobs:
         run: ./scripts/annotate-api-dump-changes.main.kts
 
   check_ij_api_dumps:
-    name: Check that IJP API dumps are up-to-date
+    name: Check that the IJP API dumps are up-to-date
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -142,7 +142,7 @@ jobs:
       - name: Grant execute permission to the validation script
         run: chmod +x platform/jewel/scripts/check-api-dumps.main.kts
 
-      - name: Check that IJP API dumps are up-to-date
+      - name: Check that the IJP API dumps are up-to-date
         run: ./scripts/check-api-dumps.main.kts
         working-directory: platform/jewel
 

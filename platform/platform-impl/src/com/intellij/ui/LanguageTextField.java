@@ -15,15 +15,17 @@
  */
 package com.intellij.ui;
 
-import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
@@ -115,10 +117,8 @@ public class LanguageTextField extends EditorTextField {
   protected @NotNull EditorEx createEditor() {
     EditorEx editor = super.createEditor();
     if (myLanguage != null && (myProject == null || !myProject.isDisposed())) {
-      FileType fileType = myLanguage.getAssociatedFileType();
-      if (fileType != null) {
-        editor.setHighlighter(HighlighterFactory.createHighlighter(myProject, fileType));
-      }
+      SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(myLanguage, myProject, null);
+      editor.setHighlighter(new LexerEditorHighlighter(syntaxHighlighter, editor.getColorsScheme()));
     }
     editor.setEmbeddedIntoDialogWrapper(true);
     return editor;

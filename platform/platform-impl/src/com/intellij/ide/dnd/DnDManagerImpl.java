@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -22,11 +23,41 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLayeredPane;
+import javax.swing.JList;
+import javax.swing.JTree;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import javax.swing.ToolTipManager;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Cursor;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.Transparency;
+import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.dnd.*;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragGestureEvent;
+import java.awt.dnd.DragGestureListener;
+import java.awt.dnd.DragSource;
+import java.awt.dnd.DragSourceContext;
+import java.awt.dnd.DragSourceDragEvent;
+import java.awt.dnd.DragSourceDropEvent;
+import java.awt.dnd.DragSourceEvent;
+import java.awt.dnd.DragSourceListener;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
+import java.awt.dnd.InvalidDnDOperationException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -594,7 +625,7 @@ public final class DnDManagerImpl extends DnDManager {
 
         LOG.debug("Starting dragging for " + action);
         hideCurrentHighlighter();
-        DnDDragStartBean bean = source.startDragging(action, event.getDragOrigin());
+        DnDDragStartBean bean = WriteIntentReadAction.compute(() -> source.startDragging(action, event.getDragOrigin()));
         myCurrentEvent = new DnDEventImpl(DnDManagerImpl.this, action, bean.getAttachedObject(), bean.getPoint());
         myCurrentEvent.setOrgPoint(event.getDragOrigin());
 
@@ -690,7 +721,7 @@ public final class DnDManagerImpl extends DnDManager {
           dtde.acceptDrop(dtde.getDropAction());
 
           // do not wrap this into WriteAction!
-          boolean success = doDrop(component, event);
+          boolean success = WriteIntentReadAction.compute(() -> doDrop(component, event));
 
           if (event.shouldRemoveHighlighting()) {
             hideCurrentHighlighter();
@@ -739,17 +770,19 @@ public final class DnDManagerImpl extends DnDManager {
 
     @Override
     public void dragOver(DropTargetDragEvent dtde) {
-      SmoothAutoScroller.getSharedListener().dragOver(dtde);
-      final DnDEventImpl event = updateCurrentEvent(dtde.getDropTargetContext().getComponent(), dtde.getLocation(), dtde.getDropAction(),
-                                                    dtde.getCurrentDataFlavors(), dtde.getTransferable());
-      if (myCurrentEvent == null) {
-        if (event != null && event.isDropPossible()) {
-          dtde.acceptDrag(event.getAction().getActionId());
+      WriteIntentReadAction.run(() -> {
+        SmoothAutoScroller.getSharedListener().dragOver(dtde);
+        final DnDEventImpl event = updateCurrentEvent(dtde.getDropTargetContext().getComponent(), dtde.getLocation(), dtde.getDropAction(),
+                                                      dtde.getCurrentDataFlavors(), dtde.getTransferable());
+        if (myCurrentEvent == null) {
+          if (event != null && event.isDropPossible()) {
+            dtde.acceptDrag(event.getAction().getActionId());
+          }
+          else {
+            dtde.rejectDrag();
+          }
         }
-        else {
-          dtde.rejectDrag();
-        }
-      }
+      });
     }
 
     @Override

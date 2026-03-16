@@ -2,9 +2,6 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -14,8 +11,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
@@ -31,7 +26,11 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -204,27 +203,6 @@ public final class EncodingUtil {
     }
   }
 
-  /**
-   * @param virtualFile file to check
-   * @return true if the charset is hard-coded, false if file type does not restrict encoding
-   */
-  private static boolean checkHardcodedCharsetFileType(@NotNull VirtualFile virtualFile) {
-    FileType fileType = virtualFile.getFileType();
-    // in lesser IDEs all special file types are plain text so check for that first
-    if (fileType == FileTypes.PLAIN_TEXT) return false;
-    if (fileType == StdFileTypes.GUI_DESIGNER_FORM ||
-        fileType == ModuleFileType.INSTANCE ||
-        fileType == ProjectFileType.INSTANCE ||
-        fileType == WorkspaceFileType.INSTANCE ||
-        fileType == StdFileTypes.PROPERTIES ||
-        fileType == StdFileTypes.XML ||
-        fileType == StdFileTypes.JSPX) {
-      return true;
-    }
-
-    return false;
-  }
-
   public static boolean canReload(@NotNull VirtualFile virtualFile) {
     return checkCanReload(virtualFile, null) == null;
   }
@@ -258,9 +236,10 @@ public final class EncodingUtil {
   }
 
   private static @Nullable FailReason fileTypeDescriptionError(@NotNull VirtualFile virtualFile) {
-    if (virtualFile.getFileType().isBinary()) return FailReason.IS_BINARY;
+    FileType fileType = virtualFile.getFileType();
+    if (fileType.isBinary()) return FailReason.IS_BINARY;
 
-    boolean hardcoded = checkHardcodedCharsetFileType(virtualFile);
+    boolean hardcoded = fileType.isCharsetHardcoded();
     return hardcoded ? FailReason.BY_FILETYPE : null;
   }
 

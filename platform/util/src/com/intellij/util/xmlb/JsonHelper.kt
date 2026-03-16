@@ -9,7 +9,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
-import java.util.*
+import java.util.Date
 
 internal fun toJson(bean: Any, accessor: Accessor, converter: Converter<Any>?): JsonElement {
   val value = accessor.read(bean) ?: return JsonNull

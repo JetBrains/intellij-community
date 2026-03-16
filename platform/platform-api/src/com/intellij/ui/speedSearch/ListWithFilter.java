@@ -9,7 +9,13 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.LightColors;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SearchTextField;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.Function;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBUI;
@@ -17,14 +23,23 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.TransferHandler;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.InputMethodEvent;
 import java.awt.im.InputMethodRequests;
+
+import static com.intellij.ui.components.BulkListModelKt.refilterListModelInBulk;
 
 public final class ListWithFilter<T> extends JPanel implements UiCompatibleDataProvider {
   private final JList<T> myList;
@@ -245,7 +260,8 @@ public final class ListWithFilter<T> extends JPanel implements UiCompatibleDataP
 
   private void onSpeedSearchPatternChanged() {
     T prevSelection = myList.getSelectedValue(); // save to restore the selection on filter drop
-    myModel.refilter();
+    refilterListModelInBulk(myList);
+
     if (myModel.getSize() > 0) {
       int fullMatchIndex = mySpeedSearch.isHoldingFilter() ? myModel.getClosestMatchIndex() : myModel.getElementIndex(prevSelection);
       if (fullMatchIndex != -1) {

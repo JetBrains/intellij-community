@@ -2,7 +2,11 @@
 package com.intellij.lang.properties.providers.slf4j
 
 import com.intellij.codeInsight.TailTypes
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.TailTypeDecorator
 import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings

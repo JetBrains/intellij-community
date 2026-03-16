@@ -5,7 +5,11 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.feedback.dialog.components.RatingComponent
 import com.intellij.platform.feedback.dialog.createBoldJBLabel
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Row
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.put
 

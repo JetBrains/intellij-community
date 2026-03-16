@@ -3,7 +3,11 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 
 public class UnknownTestTarget extends TestObject {

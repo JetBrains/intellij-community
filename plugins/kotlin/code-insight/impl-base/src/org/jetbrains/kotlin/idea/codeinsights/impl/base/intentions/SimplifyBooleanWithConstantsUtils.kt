@@ -11,8 +11,18 @@ import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
-import org.jetbrains.kotlin.lexer.KtTokens.*
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.lexer.KtTokens.ANDAND
+import org.jetbrains.kotlin.lexer.KtTokens.EQEQ
+import org.jetbrains.kotlin.lexer.KtTokens.EQEQEQ
+import org.jetbrains.kotlin.lexer.KtTokens.EXCLEQ
+import org.jetbrains.kotlin.lexer.KtTokens.OROR
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 

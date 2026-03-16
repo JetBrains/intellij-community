@@ -3,12 +3,10 @@ package com.intellij.devkit.modules.toolwindow
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.util.createDocumentBuilder
 import org.w3c.dom.Document
 import org.w3c.dom.Element
-import org.w3c.dom.Node
-import org.w3c.dom.NodeList
 import java.io.File
-import javax.xml.parsers.DocumentBuilderFactory
 
 /**
  * Service for parsing XML files like module and plugin.xml and extracting information.
@@ -135,9 +133,7 @@ class XmlParserServiceImpl(private val project: Project) : XmlParserService {
 
     private fun parseXmlFile(file: File): Document? {
         try {
-            val factory = DocumentBuilderFactory.newInstance()
-            val builder = factory.newDocumentBuilder()
-            return builder.parse(file)
+            return createDocumentBuilder().parse(file)
         } catch (e: Exception) {
             LOG.warn("Error parsing XML file: ${file.absolutePath}", e)
             return null

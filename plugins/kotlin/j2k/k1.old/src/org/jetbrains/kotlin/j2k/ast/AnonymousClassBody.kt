@@ -2,8 +2,10 @@
 
 package org.jetbrains.kotlin.j2k.ast
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 
+@K1Deprecation
 class AnonymousClassBody(body: ClassBody, val extendsInterface: Boolean)
 : Class(Identifier.Empty, Annotations.Empty, Modifiers.Empty, TypeParameterList.Empty, listOf(), null, listOf(), body) {
     override fun generateCode(builder: CodeBuilder) {

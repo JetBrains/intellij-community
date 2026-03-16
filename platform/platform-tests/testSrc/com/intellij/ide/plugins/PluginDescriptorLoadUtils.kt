@@ -3,9 +3,9 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
-import com.intellij.platform.plugins.parser.impl.consume
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorFromXmlStreamConsumer
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorReaderContext
+import com.intellij.platform.pluginSystem.parser.impl.consume
 import com.intellij.util.xml.dom.NoOpXmlInterner
 import java.nio.file.Path
 
@@ -20,7 +20,7 @@ fun readDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input: ByteAr
   val rawBuilder = PluginDescriptorFromXmlStreamConsumer(object : PluginDescriptorReaderContext {
     override val interner = NoOpXmlInterner
     override val isMissingIncludeIgnored = false
-  }, pathResolver.toXIncludeLoader(dataLoader)).let {
+  }, createXIncludeLoader(pathResolver, dataLoader)).let {
     it.consume(input, path.toString())
     it.getBuilder()
   }
@@ -49,7 +49,7 @@ fun readDescriptorFromBytesForTest(
   pathResolver: PathResolver,
   dataLoader: DataLoader,
 ): PluginMainDescriptor {
-  val raw = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, pathResolver.toXIncludeLoader(dataLoader)).let {
+  val raw = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, createXIncludeLoader(pathResolver, dataLoader)).let {
     it.consume(data, path.toString())
     loadingContext.patchPlugin(it.getBuilder())
     it.build()

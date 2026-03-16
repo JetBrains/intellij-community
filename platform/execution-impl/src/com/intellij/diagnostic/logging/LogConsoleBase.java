@@ -14,7 +14,19 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
@@ -49,10 +61,21 @@ import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -350,17 +373,23 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   public abstract boolean isActive();
 
   public void activate() {
+    activate(false);
+  }
+
+  @ApiStatus.Internal
+  public void activate(boolean force) {
+    boolean isActive = force || isActive();
     final ReaderThread readerThread = myReaderThread;
     if (readerThread == null) {
       return;
     }
-    if (isActive() && !readerThread.myRunning) {
+    if (isActive && !readerThread.myRunning) {
       resetLogFilter();
       myFilter.setSelectedItem(myModel.getCustomFilter());
       readerThread.startRunning();
       ApplicationManager.getApplication().executeOnPooledThread(readerThread);
     }
-    else if (!isActive() && readerThread.myRunning) {
+    else if (!isActive && readerThread.myRunning) {
       readerThread.stopRunning();
     }
   }
@@ -372,7 +401,9 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   @Override
   public void dispose() {
-    myModel.removeFilterListener(this);
+    if (!myProject.isDisposed()) {
+      myModel.removeFilterListener(this);
+    }
     stopRunning(false);
     if (myDisposed) return;
     myDisposed = true;
@@ -462,7 +493,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
         public void processTerminated(final @NotNull ProcessEvent event) {
           process.removeProcessListener(this);
           if (EDT.isCurrentThreadEdt()) {
-            WriteIntentReadAction.run((Runnable)() -> stopRunning(true));
+            WriteIntentReadAction.run(() -> stopRunning(true));
           }
           else {
             ApplicationManager.getApplication().invokeAndWait(() -> {

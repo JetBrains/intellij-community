@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JVM_IR_WITH_OLD_EVALUATOR
 LineBreakpoint created at localFunctionWithArgAndCapturedLocalVar.kt:8
 Run Java
 Connected to the target VM

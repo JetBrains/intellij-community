@@ -5,7 +5,8 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 
 public class BooleanRenderer extends JCheckBox implements PropertyRenderer<Boolean> {
   @Override

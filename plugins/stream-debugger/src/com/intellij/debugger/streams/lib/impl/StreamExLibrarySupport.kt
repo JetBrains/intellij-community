@@ -2,7 +2,15 @@
 package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.streams.core.lib.IntermediateOperation
-import com.intellij.debugger.streams.core.lib.impl.*
+import com.intellij.debugger.streams.core.lib.impl.CollapseOperation
+import com.intellij.debugger.streams.core.lib.impl.ConcatOperation
+import com.intellij.debugger.streams.core.lib.impl.DistinctOperation
+import com.intellij.debugger.streams.core.lib.impl.FilterOperation
+import com.intellij.debugger.streams.core.lib.impl.FlatMappingOperation
+import com.intellij.debugger.streams.core.lib.impl.LibrarySupportBase
+import com.intellij.debugger.streams.core.lib.impl.MappingOperation
+import com.intellij.debugger.streams.core.lib.impl.OrderBasedOperation
+import com.intellij.debugger.streams.core.lib.impl.SortedOperation
 import com.intellij.debugger.streams.core.resolve.AppendResolver
 import com.intellij.debugger.streams.core.resolve.IntervalMapResolver
 import com.intellij.debugger.streams.core.resolve.PairMapResolver

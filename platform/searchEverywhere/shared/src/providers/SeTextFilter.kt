@@ -3,7 +3,6 @@ package com.intellij.platform.searchEverywhere.providers
 
 import com.intellij.platform.searchEverywhere.SeFilter
 import com.intellij.platform.searchEverywhere.SeFilterState
-import com.intellij.platform.searchEverywhere.SeFilterValue
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -21,13 +20,13 @@ class SeTextFilter(
   fun cloneWithRegex(selectedRegex: Boolean): SeTextFilter = SeTextFilter(selectedScopeId, selectedType, isCaseSensitive, isWholeWordsOnly, selectedRegex)
 
   override fun toState(): SeFilterState {
-    val map = mutableMapOf<String, SeFilterValue>()
-    map[TEXT_FILTER] = SeFilterValue.One("true")
-    selectedScopeId?.let { map[SELECTED_SCOPE_ID] = SeFilterValue.One(it) }
-    selectedType?.let { map[SELECTED_TYPE] = SeFilterValue.One(it) }
-    map[MATCH_CASE] = SeFilterValue.One(isCaseSensitive.toString())
-    map[WORDS] = SeFilterValue.One(isWholeWordsOnly.toString())
-    map[REGEX] = SeFilterValue.One(isRegex.toString())
+    val map = mutableMapOf<String, List<String>>()
+    map[TEXT_FILTER] = listOf("true")
+    selectedScopeId?.let { map[SELECTED_SCOPE_ID] = listOf(it) }
+    selectedType?.let { map[SELECTED_TYPE] = listOf(it) }
+    map[MATCH_CASE] = listOf(isCaseSensitive.toString())
+    map[WORDS] = listOf(isWholeWordsOnly.toString())
+    map[REGEX] = listOf(isRegex.toString())
     return SeFilterState.Data(map)
   }
 
@@ -43,14 +42,8 @@ class SeTextFilter(
     if (!isTextFilter(state)) return null
       when (state) {
         is SeFilterState.Data -> {
-          val map = state.map
-
-          val selectedScopeId = map[SELECTED_SCOPE_ID]?.let {
-            it as? SeFilterValue.One
-          }?.value
-          val selectedType = map[SELECTED_TYPE]?.let {
-            it as? SeFilterValue.One
-          }?.value
+          val selectedScopeId = state.getOne(SELECTED_SCOPE_ID)
+          val selectedType = state.getOne(SELECTED_TYPE)
           val selectedCase = isCaseSensitive(state) ?: false
           val selectedWords = isWholeWordsOnly(state) ?: false
           val selectedRegex = isRegularExpressions(state) ?: false
@@ -61,16 +54,9 @@ class SeTextFilter(
       }
     }
 
-    fun isCaseSensitive(state: SeFilterState): Boolean? =
-      (state as? SeFilterState.Data)?.map?.get(MATCH_CASE)?.let { it as? SeFilterValue.One }?.value?.toBoolean()
-
-    fun isWholeWordsOnly(state: SeFilterState): Boolean? =
-      (state as? SeFilterState.Data)?.map?.get(WORDS)?.let { it as? SeFilterValue.One }?.value?.toBoolean()
-
-    fun isRegularExpressions(state: SeFilterState): Boolean? =
-      (state as? SeFilterState.Data)?.map?.get(REGEX)?.let { it as? SeFilterValue.One }?.value?.toBoolean()
-
-    private fun isTextFilter(state: SeFilterState): Boolean =
-      (state as? SeFilterState.Data)?.map?.get(TEXT_FILTER)?.let { it as? SeFilterValue.One }?.value?.toBoolean() == true
+    fun isCaseSensitive(state: SeFilterState): Boolean? = state.getBoolean(MATCH_CASE)
+    fun isWholeWordsOnly(state: SeFilterState): Boolean? = state.getBoolean(WORDS)
+    fun isRegularExpressions(state: SeFilterState): Boolean? = state.getBoolean(REGEX)
+    private fun isTextFilter(state: SeFilterState): Boolean = state.getBoolean(TEXT_FILTER) == true
   }
 }

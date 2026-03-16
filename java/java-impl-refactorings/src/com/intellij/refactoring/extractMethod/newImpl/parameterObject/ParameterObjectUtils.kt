@@ -2,7 +2,16 @@
 package com.intellij.refactoring.extractMethod.newImpl.parameterObject
 
 import com.intellij.pom.java.JavaFeature
-import com.intellij.psi.*
+import com.intellij.psi.PsiAssignmentExpression
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDeclarationStatement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiLambdaExpression
+import com.intellij.psi.PsiLoopStatement
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiVariable
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil

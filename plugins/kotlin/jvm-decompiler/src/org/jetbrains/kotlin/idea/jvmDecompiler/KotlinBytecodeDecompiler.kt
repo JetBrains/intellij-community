@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.jvmDecompiler
 
+import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.isClassFile
+import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -62,7 +63,7 @@ object KotlinBytecodeDecompiler {
         val files =
             mapOf(file.path to file) +
                     file.parent.children.filter {
-                        it.nameWithoutExtension.startsWith(mask) && it.fileType === StdFileTypes.CLASS
+                        it.nameWithoutExtension.startsWith(mask) && it.fileType === JavaClassFileType.INSTANCE
                     }.map { it.path to it }
 
         return files.entries.associate {
@@ -72,7 +73,7 @@ object KotlinBytecodeDecompiler {
 
     @OptIn(KaExperimentalApi::class)
     private fun bytecodeMapForSourceFile(file: KtFile): Map<File, () -> ByteArray> {
-        val configuration = CompilerConfiguration().apply {
+        val configuration = CompilerConfiguration.create().apply {
             languageVersionSettings = file.languageVersionSettings
         }
 

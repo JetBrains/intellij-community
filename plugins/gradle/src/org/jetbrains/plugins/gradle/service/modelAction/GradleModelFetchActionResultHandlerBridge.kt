@@ -12,7 +12,11 @@ import org.gradle.tooling.IntermediateResultHandler
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.StreamedValueListener
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionResultHandlerBridge.ModelFetchActionEvent.*
+import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionResultHandlerBridge.ModelFetchActionEvent.BuildFinished
+import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionResultHandlerBridge.ModelFetchActionEvent.ExecutionCompleted
+import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionResultHandlerBridge.ModelFetchActionEvent.ExecutionFailed
+import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionResultHandlerBridge.ModelFetchActionEvent.ProjectLoaded
+import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionResultHandlerBridge.ModelFetchActionEvent.StreamedValueReceived
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 import java.util.concurrent.atomic.AtomicBoolean
 

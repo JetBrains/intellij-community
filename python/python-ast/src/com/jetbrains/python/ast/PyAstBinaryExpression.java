@@ -8,6 +8,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
@@ -17,7 +18,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 
@@ -42,6 +42,11 @@ public interface PyAstBinaryExpression extends PyAstQualifiedExpression, PyAstCa
     final ASTNode child = node.findChildByType(PyTokenTypes.BINARY_OPS);
     if (child != null) return child.getPsi();
     return null;
+  }
+
+  default boolean isShortCircuit() {
+    var operator = getOperator();
+    return operator == PyTokenTypes.AND_KEYWORD || operator == PyTokenTypes.OR_KEYWORD;
   }
 
   default boolean isOperator(String chars) {
@@ -109,8 +114,9 @@ public interface PyAstBinaryExpression extends PyAstQualifiedExpression, PyAstCa
   }
 
   @Override
-  default @NotNull List<? extends PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
-    return Collections.singletonList(isRightOperator(resolvedCallee) ? getChainedComparisonAwareLeftExpression() : getRightExpression());
+  default @NotNull List<@NotNull PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
+    PyAstExpression operand = isRightOperator(resolvedCallee) ? getChainedComparisonAwareLeftExpression() : getRightExpression();
+    return ContainerUtil.createMaybeSingletonList(operand);
   }
 
   private @Nullable PyAstExpression getChainedComparisonAwareLeftExpression() {

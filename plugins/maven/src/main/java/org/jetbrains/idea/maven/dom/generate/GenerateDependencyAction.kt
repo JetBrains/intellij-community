@@ -21,7 +21,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomDependency
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog
 import org.jetbrains.idea.maven.model.MavenCoordinate
-import java.util.*
+import java.util.Optional
 import java.util.function.Function
 
 internal class GenerateDependencyAction : GenerateDomElementAction(GenerateDependencyProvider(), AllIcons.Nodes.PpLib) {

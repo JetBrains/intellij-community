@@ -6,16 +6,15 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.util.text.SemVer
-import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.polySymbols.webTypes.json.WebTypes
 import com.intellij.polySymbols.webTypes.readWebTypes
+import com.intellij.util.text.SemVer
+import com.intellij.util.xmlb.annotations.Attribute
 import java.io.IOException
 
 open class WebTypesDefinitionsEP : CustomLoadingExtensionPointBean<WebTypes>() {
   companion object {
-    val EP_NAME: ExtensionPointName<WebTypesDefinitionsEP> = ExtensionPointName<WebTypesDefinitionsEP>("com.intellij.polySymbols.webTypes")
-    internal val EP_NAME_DEPRECATED = ExtensionPointName<WebTypesDefinitionsEP>("com.intellij.javascript.webTypes")
+    val EP_NAME: ExtensionPointName<WebTypesDefinitionsEP> = ExtensionPointName("com.intellij.polySymbols.webTypes")
   }
 
   @Attribute("source")

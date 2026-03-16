@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references
 
+import com.intellij.internal.statistic.eventLog.FUS_RECORDER
 import com.intellij.lang.properties.psi.PropertiesFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -24,8 +25,6 @@ internal const val EVENT_LOG_PROPERTIES_DIR = "build/events"
 internal const val REGISTER_EVENT_NAME = "registerEvent"
 internal const val REGISTER_VARARG_EVENT_NAME = "registerVarargEvent"
 internal const val REGISTER_ACTIVITY_NAME = "registerIdeActivity"
-
-private const val FUS_RECORDER = "FUS"
 
 internal fun eventLogGroupCall(): ElementPattern<UCallExpression> = callExpression().andOr(
   callExpression().constructor(EVENT_LOG_GROUP_FQN),

@@ -1,13 +1,12 @@
 import abc
 from _typeshed import Incomplete
-from typing import Any
 from typing_extensions import Self
 
-ConnectionError: Any
+ConnectionError: Incomplete
 
 class GlobalCache(metaclass=abc.ABCMeta):
-    __metaclass__: Any
-    transient_errors: Any
+    __metaclass__: Incomplete
+    transient_errors: Incomplete
     strict_read: bool
     strict_write: bool
     @abc.abstractmethod
@@ -26,7 +25,7 @@ class GlobalCache(metaclass=abc.ABCMeta):
     def clear(self): ...
 
 class _InProcessGlobalCache(GlobalCache):
-    cache: Any
+    cache: Incomplete
     def __init__(self) -> None: ...
     def get(self, keys): ...
     def set(self, items, expires: Incomplete | None = ...) -> None: ...
@@ -37,12 +36,12 @@ class _InProcessGlobalCache(GlobalCache):
     def clear(self) -> None: ...
 
 class RedisCache(GlobalCache):
-    transient_errors: Any
+    transient_errors: Incomplete
     @classmethod
     def from_environment(cls, strict_read: bool = ..., strict_write: bool = ...) -> Self: ...
-    redis: Any
-    strict_read: Any
-    strict_write: Any
+    redis: Incomplete
+    strict_read: Incomplete
+    strict_write: Incomplete
     def __init__(self, redis, strict_read: bool = ..., strict_write: bool = ...) -> None: ...
     @property
     def pipes(self): ...
@@ -56,16 +55,16 @@ class RedisCache(GlobalCache):
 
 class MemcacheCache(GlobalCache):
     class KeyNotSet(Exception):
-        key: Any
+        key: Incomplete
         def __init__(self, key) -> None: ...
         def __eq__(self, other): ...
 
-    transient_errors: Any
+    transient_errors: Incomplete
     @classmethod
     def from_environment(cls, max_pool_size: int = ..., strict_read: bool = ..., strict_write: bool = ...) -> Self: ...
-    client: Any
-    strict_read: Any
-    strict_write: Any
+    client: Incomplete
+    strict_read: Incomplete
+    strict_write: Incomplete
     def __init__(self, client, strict_read: bool = ..., strict_write: bool = ...) -> None: ...
     @property
     def caskeys(self): ...

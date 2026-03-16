@@ -1,9 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.dashboard.backend
 
-import com.intellij.execution.*
+import com.intellij.execution.ExecutionManager
+import com.intellij.execution.Executor
+import com.intellij.execution.ExecutorRegistry
+import com.intellij.execution.RunContentDescriptorIdImpl
+import com.intellij.execution.RunManager
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.dashboard.RunDashboardService
+import com.intellij.execution.dashboard.RunDashboardServiceId
 import com.intellij.execution.dashboard.actions.ExecutorAction
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.RunManagerImpl
@@ -17,7 +22,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl
-import com.intellij.execution.dashboard.RunDashboardServiceId
 import com.intellij.platform.execution.dashboard.backend.BackendRunDashboardServiceUtils.getServiceNavigationTarget
 import com.intellij.platform.execution.dashboard.splitApi.RunDashboardManagerRpc
 import com.intellij.platform.project.ProjectId

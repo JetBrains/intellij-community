@@ -34,8 +34,12 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;

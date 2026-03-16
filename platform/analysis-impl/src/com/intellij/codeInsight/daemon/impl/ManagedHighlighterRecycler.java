@@ -122,11 +122,4 @@ public final class ManagedHighlighterRecycler {
     }
     incinerator.clear();
   }
-  synchronized @NotNull ManagedHighlighterRecycler copy() {
-    ManagedHighlighterRecycler cop = new ManagedHighlighterRecycler(myHighlightingSession);
-    for (Long2ObjectMap.Entry<List<InvalidPsi>> entry : incinerator.long2ObjectEntrySet()) {
-      cop.incinerator.put(entry.getLongKey(), new ArrayList<>(entry.getValue()));
-    }
-    return cop;
-  }
 }

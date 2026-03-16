@@ -37,7 +37,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-private class FileNotInSourceRootChecker : ProjectActivity {
+internal class FileNotInSourceRootChecker : ProjectActivity {
   override suspend fun execute(project: Project) {
     project.serviceAsync<FileNotInSourceRootService>().init()
   }

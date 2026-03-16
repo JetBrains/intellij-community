@@ -5,7 +5,12 @@ package org.jetbrains.kotlin.idea.gradleTooling
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.kotlin.tooling.core.buildNumber
 import org.junit.Test
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
+import kotlin.test.assertNotSame
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class KotlinGradlePluginTest {
 

@@ -1,6 +1,7 @@
 class MultipleFieldsSingleDeclaration {
 
-  String s = "", array[];
+    String s = "";
+    String[] array;
 
     {
         array = new String[]{s};

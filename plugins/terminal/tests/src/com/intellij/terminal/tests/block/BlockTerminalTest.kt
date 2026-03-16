@@ -20,7 +20,13 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.jediterm.core.util.TermSize
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellName
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
@@ -30,11 +36,15 @@ import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeCon
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.ShellCommandSentListener
 import org.jetbrains.plugins.terminal.util.ShellType
-import org.junit.*
+import org.junit.Assert
+import org.junit.Assume
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.nio.file.Path
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -116,13 +126,14 @@ internal class BlockTerminalTest(private val shellPath: Path) {
           }
         }
         val context = ShellRuntimeContextImpl(
-          "",
-          "",
-          session.shellIntegration.shellType.toShellName(),
-          ShellCachingGeneratorCommandsRunner(commandExecutor)
+          currentDirectory = "",
+          envVariables = emptyMap(),
+          commandTokens = listOf(""),
+          definedShellName = session.shellIntegration.shellType.toShellName(),
+          generatorCommandsRunner = ShellCachingGeneratorCommandsRunner(commandExecutor)
         )
         val commandsListDeferred: Deferred<List<ShellCommandSpec>> = async(Dispatchers.Default) {
-          generatorsExecutor.execute(context, availableCommandsGenerator())
+          generatorsExecutor.execute(context, availableCommandsGenerator()) ?: emptyList()
         }
         withTimeout(20.seconds) { generatorCommandSent.await() }
         delay((1..50).random().milliseconds) // wait a little to start the generator

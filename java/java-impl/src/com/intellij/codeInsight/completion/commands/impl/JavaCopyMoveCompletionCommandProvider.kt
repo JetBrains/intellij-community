@@ -4,8 +4,12 @@ package com.intellij.codeInsight.completion.commands.impl
 import com.intellij.codeInsight.completion.command.commands.AbstractCopyClassCompletionCommandProvider
 import com.intellij.codeInsight.completion.command.commands.AbstractMoveCompletionCommandProvider
 import com.intellij.codeInsight.completion.command.getCommandContext
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier.STATIC
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
 

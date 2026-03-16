@@ -2,16 +2,20 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Arrays;
+import javax.swing.Icon;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 public class ExpressionLookupItem extends LookupElement implements TypedLookupItem {
@@ -30,7 +34,7 @@ public class ExpressionLookupItem extends LookupElement implements TypedLookupIt
     myPresentableText = presentableText;
     myIcon = icon;
     myLookupString = lookupStrings[0];
-    myAllLookupStrings = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(lookupStrings)));
+    myAllLookupStrings = Collections.unmodifiableSet(ContainerUtil.newHashSet(lookupStrings));
   }
 
   private static @Nullable Icon getExpressionIcon(@NotNull PsiExpression expression) {
@@ -41,7 +45,7 @@ public class ExpressionLookupItem extends LookupElement implements TypedLookupIt
       }
     }
     if (expression instanceof PsiMethodCallExpression) {
-      return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method);
+      return IconManager.getInstance().getPlatformIcon(PlatformIcons.Method);
     }
     return null;
   }

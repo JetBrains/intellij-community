@@ -9,7 +9,13 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,7 +26,16 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.quickfix.PyAddPropertyForFieldQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyMakePublicQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAnnotation;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -42,7 +57,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * User: ktisha
- *
+ * <p>
  * Inspection to detect situations, where
  * protected member (i.e. class member with a name beginning with an underscore)
  * is access outside the class or a descendant of the class where it's defined.
@@ -63,6 +78,7 @@ public final class PyProtectedMemberInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyImportElement(@NotNull PyImportElement node) {
       final PyStatement statement = node.getContainingImportStatement();
@@ -159,8 +175,8 @@ public final class PyProtectedMemberInspection extends PyInspection {
         }
         final PyType type = myTypeEvalContext.getType(qualifier);
         final @InspectionMessage String message = type instanceof PyModuleType
-                                 ? PyPsiBundle.message("INSP.protected.member.access.to.protected.member.of.module", name)
-                                 : PyPsiBundle.message("INSP.protected.member.access.to.protected.member.of.class", name);
+                                                  ? PyPsiBundle.message("INSP.protected.member.access.to.protected.member.of.module", name)
+                                                  : PyPsiBundle.message("INSP.protected.member.access.to.protected.member.of.class", name);
         registerProblem(node, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
     }

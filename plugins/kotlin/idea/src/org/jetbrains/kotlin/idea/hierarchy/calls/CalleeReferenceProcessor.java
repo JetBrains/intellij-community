@@ -3,7 +3,12 @@
 package org.jetbrains.kotlin.idea.hierarchy.calls;
 
 import com.intellij.openapi.application.ReadActionProcessor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.impl.light.LightMemberReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;

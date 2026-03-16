@@ -26,7 +26,7 @@ import javax.swing.JButton
 import javax.swing.JComponent
 
 object CodeReviewDetailsActionsComponentFactory {
-  private const val BUTTONS_GAP = 10
+  const val BUTTONS_GAP: Int = 10
 
   fun <Reviewer> createRequestReviewButton(
     scope: CoroutineScope,
@@ -56,6 +56,7 @@ object CodeReviewDetailsActionsComponentFactory {
     }
   }
 
+  @Deprecated("Create manually, because review systems are different")
   fun createActionsForGuest(
     reviewActions: CodeReviewActions,
     moreActionsGroup: DefaultActionGroup,
@@ -130,6 +131,7 @@ object CodeReviewDetailsActionsComponentFactory {
     }
   }
 
+  @Deprecated("Make a custom container if you need it, because review systems are different")
   data class CodeReviewActions(
     val requestReviewAction: Action,
     val reRequestReviewAction: Action,

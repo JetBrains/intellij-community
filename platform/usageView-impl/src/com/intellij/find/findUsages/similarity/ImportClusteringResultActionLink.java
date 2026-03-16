@@ -29,7 +29,9 @@ import java.util.Objects;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import static com.intellij.find.findUsages.similarity.ExportClusteringResultActionLink.*;
+import static com.intellij.find.findUsages.similarity.ExportClusteringResultActionLink.CLUSTER_NUMBER;
+import static com.intellij.find.findUsages.similarity.ExportClusteringResultActionLink.FILENAME;
+import static com.intellij.find.findUsages.similarity.ExportClusteringResultActionLink.getUsageId;
 
 
 class ImportClusteringResultActionLink extends ActionLink {

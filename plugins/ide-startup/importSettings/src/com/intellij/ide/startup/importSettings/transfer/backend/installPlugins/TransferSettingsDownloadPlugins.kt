@@ -2,7 +2,10 @@
 package com.intellij.ide.startup.importSettings.installPlugins
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.PluginEnabler
+import com.intellij.ide.plugins.PluginInstallOperation
+import com.intellij.ide.plugins.PluginInstaller
+import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.ProgressIndicator

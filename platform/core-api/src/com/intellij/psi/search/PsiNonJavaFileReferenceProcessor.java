@@ -16,8 +16,9 @@
 package com.intellij.psi.search;
 
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 @FunctionalInterface
 public interface PsiNonJavaFileReferenceProcessor {
-  boolean process(PsiFile file, int startOffset, int endOffset);
+  boolean process(@NotNull PsiFile psiFile, int startOffset, int endOffset);
 }

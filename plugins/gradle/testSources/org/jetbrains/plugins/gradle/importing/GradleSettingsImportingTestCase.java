@@ -20,9 +20,11 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
-import org.junit.runners.Parameterized;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.intellij.openapi.externalSystem.service.project.settings.ConfigurationDataService.EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED;
 
@@ -91,14 +93,7 @@ public abstract class GradleSettingsImportingTestCase extends GradleImportingTes
     assertNotNull("Source folder " + sourcePath + " not found in module " + moduleName, sourceFolder);
     assertEquals(packagePrefix, sourceFolder.getPackagePrefix());
   }
-
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  @Parameterized.Parameters(name = "with Gradle-{0}")
-  public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
-  }
 }
-
 
 class TestRunConfigurationImporter implements RunConfigurationImporter {
 

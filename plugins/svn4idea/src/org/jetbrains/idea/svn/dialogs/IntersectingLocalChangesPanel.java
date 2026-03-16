@@ -10,7 +10,11 @@ import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vcs.changes.ui.NoneChangesGroupingFactory;
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -25,9 +29,11 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JLabel;
+import javax.swing.JTree;
+import javax.swing.SwingConstants;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Dimension;
 import java.util.List;
 import java.util.Objects;
 

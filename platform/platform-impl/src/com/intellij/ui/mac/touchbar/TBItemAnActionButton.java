@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 

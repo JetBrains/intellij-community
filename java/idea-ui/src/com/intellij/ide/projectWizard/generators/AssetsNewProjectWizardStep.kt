@@ -127,8 +127,6 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
         project.trackActivityBlocking(NewProjectWizardActivityKey) {
           project.coroutineScope.launchTracked {
             reformatCode(project, filesToReformat)
-          }
-          project.coroutineScope.launchTracked {
             openFilesInEditor(project, filesToOpen)
           }
         }

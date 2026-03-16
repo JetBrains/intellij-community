@@ -5,4 +5,5 @@ fun main(variables: Array<String>) {
     va<caret>
 }
 
-// ORDER: values, val, variables, var
+// ORDER: values, variables, val, var
+// IGNORE_K1

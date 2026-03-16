@@ -1,0 +1,18 @@
+================ Step #1 =================
+Cleaning output files:
+  A$B.class
+  A.class
+End of files
+Compiling files:
+  java/classModifiers/addStatic/a/A.java
+End of files
+Cleaning output files:
+  B.class
+  C.class
+End of files
+Compiling files:
+  java/classModifiers/addStatic/a/B.java
+  java/classModifiers/addStatic/a/C.java
+End of files
+------------------------------------------
+Exit code: ERROR

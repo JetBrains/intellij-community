@@ -20,7 +20,8 @@ final class Redo extends UndoRedo {
     @NotNull UndoRedoStacksHolder undoStacksHolder,
     @NotNull UndoRedoStacksHolder redoStacksHolder,
     @NotNull SharedUndoRedoStacksHolder sharedUndoStacksHolder,
-    @NotNull SharedUndoRedoStacksHolder sharedRedoStacksHolder
+    @NotNull SharedUndoRedoStacksHolder sharedRedoStacksHolder,
+    @NotNull UndoCapabilities undoCapabilities
   ) {
     super(
       project,
@@ -29,6 +30,7 @@ final class Redo extends UndoRedo {
       undoStacksHolder,
       sharedRedoStacksHolder,
       sharedUndoStacksHolder,
+      undoCapabilities,
       true
     );
   }

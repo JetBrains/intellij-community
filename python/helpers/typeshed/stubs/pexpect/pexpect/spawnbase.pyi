@@ -57,7 +57,7 @@ class SpawnBase(Generic[AnyStr]):
     delaybeforesend: float | None
     delayafterclose: float
     delayafterterminate: float
-    delayafterread: float
+    delayafterread: float | None
     softspace: bool
     name: str
     closed: bool

@@ -1,7 +1,7 @@
 [
  {
   matchedName: "css/properties/--my-element-background-color",
-  origin: "basic@null (<none>)",
+  origin: "basic (<none>)",
   complete: true,
   description: "<p>The background color of the element.",
   priority: NORMAL,

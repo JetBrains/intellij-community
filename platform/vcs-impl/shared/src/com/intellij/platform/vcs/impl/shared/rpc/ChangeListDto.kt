@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.FileStatusFactory
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListChange
+import com.intellij.openapi.vcs.changes.ContentRevision
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.LocalChangeListImpl
 import kotlinx.serialization.Serializable
@@ -55,6 +56,22 @@ data class ChangeDto(
 
     val fileStatus = PLATFORM_FILE_STATUSES[fileStatusId]
     Change(beforeRevision?.contentRevision, afterRevision?.contentRevision, fileStatus)
+  }
+
+  companion object {
+    fun toDto(change: Change): ChangeDto = ChangeDto(
+      beforeRevision = change.beforeRevision?.toDto(),
+      afterRevision = change.afterRevision?.toDto(),
+      fileStatusId = change.fileStatus.id,
+      localValue = change,
+    )
+
+    private fun ContentRevision.toDto() = ContentRevisionDto(
+      revisionString = revisionNumber.asString(),
+      filePath = FilePathDto.toDto(file),
+      localValue = this,
+    )
+
   }
 }
 

@@ -17,14 +17,16 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Manages collection of {@link ProblemDescriptor} with convenience factory methods.
- */
+/// A container for [ProblemDescriptor]s, with convenience factory methods (`registerProblem(...)`) to create them.
 public class ProblemsHolder {
   private static final Logger LOG = Logger.getInstance(ProblemsHolder.class);
 
@@ -38,6 +40,43 @@ public class ProblemsHolder {
     myPsiFile = psiFile;
     myOnTheFly = onTheFly;
   }
+
+  //region Getters
+  public @NotNull @Unmodifiable List<@NotNull ProblemDescriptor> getResults() {
+    return myProblems;
+  }
+
+  public @NotNull ProblemDescriptor @NotNull [] getResultsArray() {
+    List<ProblemDescriptor> problems = getResults();
+    return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
+  }
+
+  public final @NotNull InspectionManager getManager() {
+    return myManager;
+  }
+
+  public boolean hasResults() {
+    return !myProblems.isEmpty();
+  }
+
+  public int getResultCount() {
+    return myProblems.size();
+  }
+
+  public boolean isOnTheFly() {
+    return myOnTheFly;
+  }
+
+  public @NotNull PsiFile getFile() {
+    return myPsiFile;
+  }
+
+  public final @NotNull Project getProject() {
+    return myManager.getProject();
+  }
+  //endregion
+
+  //region registerProblem methods
 
   public void registerProblem(@NotNull PsiElement psiElement,
                               @NotNull @InspectionMessage String descriptionTemplate,
@@ -71,32 +110,6 @@ public class ProblemsHolder {
     }
 
     saveProblem(problemDescriptor);
-  }
-
-  protected void saveProblem(@NotNull ProblemDescriptor problemDescriptor) {
-    myProblems.add(problemDescriptor);
-  }
-
-  @ApiStatus.Internal
-  protected boolean isInPsiFile(@NotNull PsiElement element) {
-    PsiFile file = element.getContainingFile();
-    return file != null && myPsiFile.getViewProvider() == file.getViewProvider();
-  }
-
-  @ApiStatus.Internal
-  protected void redirectProblem(@NotNull ProblemDescriptor problem, @NotNull PsiElement target) {
-    PsiElement original = problem.getPsiElement();
-    VirtualFile vFile = original.getContainingFile().getVirtualFile();
-    assert vFile != null;
-    String path = FileUtil.toSystemIndependentName(vFile.getPath());
-
-    String description = XmlStringUtil.stripHtml(problem.getDescriptionTemplate());
-
-    String template = AnalysisBundle.message("inspection.redirect.template",
-                                             description, path, original.getTextRange().getStartOffset(), vFile.getName());
-    ProblemDescriptor newProblem =
-      getManager().createProblemDescriptor(target, template, (LocalQuickFix)null, problem.getHighlightType(), isOnTheFly());
-    registerProblem(newProblem);
   }
 
   public void registerProblem(@NotNull PsiReference reference,
@@ -137,6 +150,59 @@ public class ProblemsHolder {
     registerProblem(identifier, "possible problem", ProblemHighlightType.POSSIBLE_PROBLEM);
   }
 
+  public void registerProblem(@NotNull PsiElement psiElement,
+                              @Nullable TextRange rangeInElement,
+                              @NotNull @InspectionMessage String descriptionTemplate,
+                              @NotNull LocalQuickFix @Nullable ... fixes) {
+    registerProblem(psiElement, descriptionTemplate, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, rangeInElement, fixes);
+  }
+
+  /**
+   * Creates highlighter for the specified place in the file.
+   *
+   * @param psiElement          The highlighter will be created at the text range of this element. The element must be in the current file.
+   * @param descriptionTemplate Message for this highlighter, also used for tooltip. See {@link CommonProblemDescriptor#getDescriptionTemplate()}.
+   * @param highlightType       The level of highlighter.
+   * @param rangeInElement      The (sub)range (must be inside (0..psiElement.getTextRange().getLength()) to create highlighter in,
+   *                            {@code null} for highlighting full text range.
+   * @param fixes               (Optional) fixes to appear for this highlighter.
+   */
+  public void registerProblem(@NotNull PsiElement psiElement,
+                              @NotNull @InspectionMessage String descriptionTemplate,
+                              @NotNull ProblemHighlightType highlightType,
+                              @Nullable TextRange rangeInElement,
+                              @NotNull LocalQuickFix @Nullable ... fixes) {
+    registerProblem(myManager.createProblemDescriptor(psiElement, rangeInElement, descriptionTemplate, highlightType, myOnTheFly, fixes));
+  }
+
+  //endregion
+
+  protected void saveProblem(@NotNull ProblemDescriptor problemDescriptor) {
+    myProblems.add(problemDescriptor);
+  }
+
+  @ApiStatus.Internal
+  protected boolean isInPsiFile(@NotNull PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    return file != null && myPsiFile.getViewProvider() == file.getViewProvider();
+  }
+
+  @ApiStatus.Internal
+  protected void redirectProblem(@NotNull ProblemDescriptor problem, @NotNull PsiElement target) {
+    PsiElement original = problem.getPsiElement();
+    VirtualFile vFile = original.getContainingFile().getVirtualFile();
+    assert vFile != null;
+    String path = FileUtil.toSystemIndependentName(vFile.getPath());
+
+    String description = XmlStringUtil.stripHtml(problem.getDescriptionTemplate());
+
+    String template = AnalysisBundle.message("inspection.redirect.template",
+                                             description, path, original.getTextRange().getStartOffset(), vFile.getName());
+    ProblemDescriptor newProblem =
+      getManager().createProblemDescriptor(target, template, (LocalQuickFix)null, problem.getHighlightType(), isOnTheFly());
+    registerProblem(newProblem);
+  }
+
   @ApiStatus.Internal
   public void clearResults() {
     myProblems.clear();
@@ -165,64 +231,6 @@ public class ProblemsHolder {
     return message;
   }
 
-  public void registerProblem(@NotNull PsiElement psiElement,
-                              @Nullable TextRange rangeInElement,
-                              @NotNull @InspectionMessage String descriptionTemplate,
-                              @NotNull LocalQuickFix @Nullable ... fixes) {
-    registerProblem(psiElement, descriptionTemplate, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, rangeInElement, fixes);
-  }
-
-  /**
-   * Creates highlighter for the specified place in the file.
-   *
-   * @param psiElement          The highlighter will be created at the text range of this element. The element must be in the current file.
-   * @param descriptionTemplate Message for this highlighter, also used for tooltip. See {@link CommonProblemDescriptor#getDescriptionTemplate()}.
-   * @param highlightType       The level of highlighter.
-   * @param rangeInElement      The (sub)range (must be inside (0..psiElement.getTextRange().getLength()) to create highlighter in,
-   *                            {@code null} for highlighting full text range.
-   * @param fixes               (Optional) fixes to appear for this highlighter.
-   */
-  public void registerProblem(@NotNull PsiElement psiElement,
-                              @NotNull @InspectionMessage String descriptionTemplate,
-                              @NotNull ProblemHighlightType highlightType,
-                              @Nullable TextRange rangeInElement,
-                              @NotNull LocalQuickFix @Nullable ... fixes) {
-    registerProblem(myManager.createProblemDescriptor(psiElement, rangeInElement, descriptionTemplate, highlightType, myOnTheFly, fixes));
-  }
-
-  public @NotNull @Unmodifiable List<ProblemDescriptor> getResults() {
-    return myProblems;
-  }
-
-  public ProblemDescriptor @NotNull [] getResultsArray() {
-    List<ProblemDescriptor> problems = getResults();
-    return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
-  }
-
-  public final @NotNull InspectionManager getManager() {
-    return myManager;
-  }
-
-  public boolean hasResults() {
-    return !myProblems.isEmpty();
-  }
-
-  public int getResultCount() {
-    return myProblems.size();
-  }
-
-  public boolean isOnTheFly() {
-    return myOnTheFly;
-  }
-
-  public @NotNull PsiFile getFile() {
-    return myPsiFile;
-  }
-
-  public final @NotNull Project getProject() {
-    return myManager.getProject();
-  }
-
   /**
    * Creates a builder to report a problem. Make sure to call {@link ProblemBuilder#register()} afterwards 
    * @param psiElement element to anchor the problem
@@ -237,17 +245,18 @@ public class ProblemsHolder {
   /**
    * The builder to create a problem report
    */
-  @SuppressWarnings("UnstableApiUsage")
   public final class ProblemBuilder {
     private final @InspectionMessage @NotNull String myDescriptionTemplate;
     private final @NotNull PsiElement myPsiElement;
     private @NotNull ProblemHighlightType myHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
     private @Nullable TextRange myRange;
     private final @NotNull List<LocalQuickFix> myFixes = new ArrayList<>();
+    private @NotNull String myTooltip;
 
     private ProblemBuilder(@NotNull PsiElement element, @InspectionMessage @NotNull String template) {
       myPsiElement = element;
       myDescriptionTemplate = template;
+      myTooltip = myDescriptionTemplate;
     }
 
     /**
@@ -314,8 +323,24 @@ public class ProblemsHolder {
       return this;
     }
 
+    /**
+     * @param tooltip a message that is visible in the editor. It might contain HTML markup.
+     * @return this builder
+     */
+    @Contract(value = "_ -> this", mutates = "this")
+    public ProblemBuilder tooltip(@NotNull String tooltip) {
+      myTooltip = tooltip;
+      return this;
+    }
+
     public void register() {
-      registerProblem(myPsiElement, myDescriptionTemplate, myHighlightType, myRange, myFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+      ProblemDescriptor descriptor = getManager()
+        .createProblemDescriptor(myPsiElement,
+                                 myRange,
+                                 myDescriptionTemplate,
+                                 myHighlightType, myTooltip, myOnTheFly,
+                                 myFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+      registerProblem(descriptor);
     }
   }
 }

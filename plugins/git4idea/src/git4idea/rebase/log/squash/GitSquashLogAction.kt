@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log.squash
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -6,11 +6,18 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.ui.table.size
-import git4idea.GitDisposable
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.rebase.log.InMemoryRebaseOperations
+import git4idea.inMemory.rebase.log.RebaseEntriesSource
 import git4idea.rebase.GitSquashedCommitsMessage
-import git4idea.rebase.log.*
+import git4idea.rebase.log.GitCommitEditingOperationResult
+import git4idea.rebase.log.GitMultipleCommitEditingAction
+import git4idea.rebase.log.GitNewCommitMessageActionDialog
+import git4idea.rebase.log.executeInMemoryWithFallback
+import git4idea.rebase.log.focusCommitWhenReady
+import git4idea.rebase.log.getOrLoadDetails
+import git4idea.rebase.log.notifySuccess
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
@@ -20,7 +27,7 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
     }
   }
 
-  override fun actionPerformedAfterChecks(commitEditingData: MultipleCommitEditingData) {
+  override fun actionPerformedAfterChecks(scope: CoroutineScope, commitEditingData: MultipleCommitEditingData) {
     val selectedCommitDetails = getOrLoadDetails(commitEditingData.project, commitEditingData.logData, commitEditingData.selection)
     val dialog = GitNewCommitMessageActionDialog(
       commitEditingData,
@@ -30,16 +37,17 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
     )
 
     dialog.show { newMessage ->
-      squashInBackground(commitEditingData, selectedCommitDetails, newMessage)
+      squashInBackground(scope, commitEditingData, selectedCommitDetails, newMessage)
     }
   }
 
   private fun squashInBackground(
+    scope: CoroutineScope,
     commitEditingData: MultipleCommitEditingData,
     selectedCommitsDetails: List<VcsCommitMetadata>,
     newMessage: String,
   ) {
-    GitDisposable.getInstance(commitEditingData.project).coroutineScope.launch {
+    scope.launch {
       val operationResult = executeSquashOperation(commitEditingData, selectedCommitsDetails, newMessage)
 
       if (operationResult is GitCommitEditingOperationResult.Complete) {
@@ -63,7 +71,7 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
     return withBackgroundProgress(commitEditingData.project, GitBundle.message("rebase.log.squash.progress.indicator.title")) {
       executeInMemoryWithFallback(
         inMemoryOperation = {
-          InMemoryRebaseOperations.squash(commitEditingData.repository, commitEditingData.logData, commitsToSquash, newMessage)
+          InMemoryRebaseOperations.squash(commitEditingData.repository, commitsToSquash, newMessage, RebaseEntriesSource.LogData(commitEditingData.logData))
         },
         fallbackOperation = {
           coroutineToIndicator {

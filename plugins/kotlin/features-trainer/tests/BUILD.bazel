@@ -4,7 +4,20 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//java/java-features-trainer:featuresTrainer",
+    "//java/java-psi-api:psi",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-api:analysis",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/formatter",
+  ]
 )
 
 jvm_library(
@@ -29,7 +42,8 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/features-trainer",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.featuresTrainer.tests` end
 

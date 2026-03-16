@@ -1,6 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.coverage">
   <dependencies>
     <plugin id="Coverage"/>
+    <module name="intellij.kotlin.runConfigurations.jvm"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

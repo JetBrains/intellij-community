@@ -1,13 +1,30 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.codeInsight.MakeInferredAnnotationExplicit
-import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.NullableNotNullManager
+import com.intellij.codeInsight.hints.declarative.AboveLineIndentedPosition
+import com.intellij.codeInsight.hints.declarative.CollapseState
+import com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings
+import com.intellij.codeInsight.hints.declarative.HintColorKind
+import com.intellij.codeInsight.hints.declarative.HintFontSize
+import com.intellij.codeInsight.hints.declarative.HintFormat
+import com.intellij.codeInsight.hints.declarative.HintMarginPadding
+import com.intellij.codeInsight.hints.declarative.InlayActionData
+import com.intellij.codeInsight.hints.declarative.InlayActionPayload
 import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
+import com.intellij.codeInsight.hints.declarative.InlayPayload
+import com.intellij.codeInsight.hints.declarative.InlayPosition
+import com.intellij.codeInsight.hints.declarative.InlayTreeSink
+import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
+import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHandler
+import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
+import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
 import com.intellij.codeInspection.dataFlow.Mutability
@@ -21,7 +38,23 @@ import com.intellij.openapi.editor.BlockInlayPriority
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.pom.java.JavaFeature
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiCompiledElement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiReferenceParameterList
+import com.intellij.psi.PsiTypeElement
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypeParameterListOwner
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
@@ -38,13 +71,13 @@ private val EXTERNAL_AND_INFERRED_TOGGLES_PAYLOAD =
 private val TYPE_ANNOTATION_PAYLOADS = listOf(InlayPayload(TOGGLES_TO_SHOW, StringInlayActionPayload(SHOW_EXTERNAL_TOGGLE_TAG)))
 
 private val ARRAY_TYPE_START = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.ELLIPSIS)
+private val ARRAY_TYPE_END = TokenSet.create(JavaTokenType.RBRACKET, JavaTokenType.ELLIPSIS)
 
 private val HINT_FORMAT = HintFormat(
   HintColorKind.Default,
   HintFontSize.ABitSmallerThanInEditor,
   HintMarginPadding.OnlyPadding,
 )
-
 public class AnnotationInlayProvider : InlayHintsProvider {
   public companion object {
     public const val PROVIDER_ID: String = "java.annotation.hints"
@@ -56,6 +89,9 @@ public class AnnotationInlayProvider : InlayHintsProvider {
     val project = file.project
     if (project.isDefault) return null
     return object : SharedBypassCollector {
+      val notNulls = HashSet(NullableNotNullManager.getInstance(project).notNulls)
+      val nullables = HashSet(NullableNotNullManager.getInstance(project).nullables)
+
       override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
         if (element is PsiTypeParameterListOwner) {
           sink.whenOptionEnabled(SHOW_EXTERNAL) {
@@ -76,7 +112,7 @@ public class AnnotationInlayProvider : InlayHintsProvider {
                   classType.annotations
                     .filter(manager::isExternalAnnotation)
                     .forEach {
-                      sink.addAnnotationPresentation(it, project, InlineInlayPosition(referenceElement.textRange.startOffset, false), HINT_FORMAT, TYPE_ANNOTATION_PAYLOADS)
+                      showAnnotationInlay(sink, it, project, referenceElement)
                     }
                 }
               if (originalParameter.superTypes.size == 1 && parameter.extendsList.referenceElements.isEmpty()) {
@@ -86,7 +122,7 @@ public class AnnotationInlayProvider : InlayHintsProvider {
                       // it is not really correct, because
                       // annotations should be applied to object, like: `T extends @NotNull Object`
                       // but it is too long, so let's apply it to type parameters
-                      sink.addAnnotationPresentation(it, project, InlineInlayPosition(parameter.textRange.startOffset, false), HINT_FORMAT, TYPE_ANNOTATION_PAYLOADS)
+                      showAnnotationInlay(sink, it, project, parameter)
                     }
                 }
               }
@@ -118,7 +154,18 @@ public class AnnotationInlayProvider : InlayHintsProvider {
                 element.modifierList != null &&
                 (shownAnnotations.add(nameReferenceElement.qualifiedName) || JavaDocInfoGenerator.isRepeatableAnnotationType(annotation))) {
               val hintPos = (if (isTypeAnno(annotation)) typeHintPos else modifierListHintPos) ?: return
-              addAnnotationPresentation(annotation, project, hintPos, HINT_FORMAT, inlayPayloads)
+              val suffixText = calculateTypeSuffixText(annotation)
+              if (suffixText != null && AnnotationInlaySettings.getInstance().shortenNotNull) {
+                if (!shownAnnotations.add(suffixText)) return // to prevent duplicates when external and inferred annotations use different @NotNull classes
+                val suffixOffset = calculateSuffixOffset(element)
+                sink.addPresentation(InlineInlayPosition(suffixOffset, false), inlayPayloads, 
+                                     hintFormat = HintFormat.default, tooltip = "@${nameReferenceElement.referenceName}") {
+                  text(suffixText, annotation.nameReferenceElement?.resolve()?.createSmartPointer(project)?.toNavigateInlayAction())
+                }
+              }
+              else {
+                addAnnotationPresentation(annotation, project, hintPos, HINT_FORMAT, inlayPayloads)
+              }
             }
           }
 
@@ -141,12 +188,11 @@ public class AnnotationInlayProvider : InlayHintsProvider {
         sink: InlayTreeSink,
       ) {
         val type = originalElement.type
-        val offset = element.textRange.startOffset
         val manager = ExternalAnnotationsManager.getInstance(project)
         type.annotations
           .filter(manager::isExternalAnnotation)
           .forEach {
-            sink.addAnnotationPresentation(it, project, InlineInlayPosition(offset, false), HINT_FORMAT, TYPE_ANNOTATION_PAYLOADS)
+            showAnnotationInlay(sink, it, project, element)
           }
       }
 
@@ -190,6 +236,47 @@ public class AnnotationInlayProvider : InlayHintsProvider {
               }
           }
       }
+
+      private fun showAnnotationInlay(
+        sink: InlayTreeSink,
+        annotation: PsiAnnotation,
+        project: Project,
+        anchor: PsiElement,
+      ) {
+        val suffixText = calculateTypeSuffixText(annotation)
+        if (suffixText != null && AnnotationInlaySettings.getInstance().shortenNotNull) {
+          val offset = calculateSuffixOffset(anchor)
+          sink.addPresentation(InlineInlayPosition(offset, false), TYPE_ANNOTATION_PAYLOADS,
+                               hintFormat = HintFormat.default, tooltip = "@${annotation.nameReferenceElement?.referenceName}") {
+            text(suffixText, annotation.nameReferenceElement?.resolve()?.createSmartPointer(project)?.toNavigateInlayAction())
+          }
+        }
+        else {
+          val offset = anchor.textRange.startOffset
+          sink.addAnnotationPresentation(annotation, project, InlineInlayPosition(offset, false), HINT_FORMAT, TYPE_ANNOTATION_PAYLOADS)
+        }
+      }
+
+      private fun calculateTypeSuffixText(annotation: PsiAnnotation) : String? {
+        val name = annotation.nameReferenceElement?.qualifiedName;
+        if (notNulls.contains(name)) return "!"
+        if (nullables.contains(name)) return "?"
+        return null;
+      }
+    }
+  }
+
+  private fun calculateSuffixOffset(element: PsiElement?): Int {
+    return when (element) {
+      is PsiTypeElement -> {
+        element.children.firstOrNull { PsiUtil.isJavaToken(it, ARRAY_TYPE_END) }?.textRange?.endOffset 
+        ?: calculateSuffixOffset(element.firstChild)
+      }
+      is PsiJavaCodeReferenceElement -> element.parameterList?.textRange?.startOffset ?: element.textRange.endOffset
+      is PsiMethod -> calculateSuffixOffset(element.returnTypeElement)
+      is PsiVariable -> calculateSuffixOffset(element.typeElement)
+      is PsiTypeParameter -> element.textRange.endOffset
+      else -> 0
     }
   }
 }
@@ -278,7 +365,7 @@ private fun <T> Array<T>.joinPresentations(separator: () -> Unit, transform: (T)
   }
 }
 
-public class InsertAnnotationAction() : AnAction() {
+public class InsertAnnotationAction : AnAction() {
   override fun update(e: AnActionEvent) {
     if (e.hasAnnotationProviderId()) {
       e.presentation.isEnabledAndVisible = e.psiFile?.virtualFile?.isInLocalFileSystem == true

@@ -13,7 +13,11 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.util.containers.Java11Shim
-import com.intellij.util.lang.*
+import com.intellij.util.lang.ClassPath
+import com.intellij.util.lang.ClasspathCache
+import com.intellij.util.lang.MultiParentClassLoaderHelper
+import com.intellij.util.lang.MultiParentClassLoaderSupport
+import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -30,7 +34,8 @@ import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.Deque
+import java.util.Enumeration
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 

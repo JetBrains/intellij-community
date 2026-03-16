@@ -1323,6 +1323,11 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/breakpointOnLambdaWithLocalFun.kt");
         }
 
+        @TestMetadata("breakpointOnLineWithLambdaStart.kt")
+        public void testBreakpointOnLineWithLambdaStart() throws Exception {
+            runTest("../testData/stepping/custom/breakpointOnLineWithLambdaStart.kt");
+        }
+
         @TestMetadata("breakpointOnWhen.kt")
         public void testBreakpointOnWhen() throws Exception {
             runTest("../testData/stepping/custom/breakpointOnWhen.kt");
@@ -1758,9 +1763,19 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/smartStepIntoFunWithDefaultArgs.kt");
         }
 
+        @TestMetadata("smartStepIntoFunWithDestructuring.kt")
+        public void testSmartStepIntoFunWithDestructuring() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoFunWithDestructuring.kt");
+        }
+
         @TestMetadata("smartStepIntoFunWithInlineParameter.kt")
         public void testSmartStepIntoFunWithInlineParameter() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoFunWithInlineParameter.kt");
+        }
+
+        @TestMetadata("smartStepIntoGenericWithValueClassAsParameter.kt")
+        public void testSmartStepIntoGenericWithValueClassAsParameter() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoGenericWithValueClassAsParameter.kt");
         }
 
         @TestMetadata("smartStepIntoInlineFun.kt")
@@ -1866,6 +1881,11 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
         @TestMetadata("smartStepIntoLocalFun.kt")
         public void testSmartStepIntoLocalFun() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoLocalFun.kt");
+        }
+
+        @TestMetadata("smartStepIntoMethodHandle.kt")
+        public void testSmartStepIntoMethodHandle() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoMethodHandle.kt");
         }
 
         @TestMetadata("smartStepIntoMethodReference.kt")

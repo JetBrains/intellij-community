@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
@@ -24,8 +26,45 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDeconstructionPattern;
+import com.intellij.psi.PsiDefaultCaseLabelElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPattern;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
+import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
+import com.intellij.psi.controlFlow.ControlFlowSubRange;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -38,6 +77,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
@@ -47,6 +87,8 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.siyeh.ig.psiutils.SwitchUtils.SwitchExhaustivenessState;
 import static com.siyeh.ig.psiutils.SwitchUtils.evaluateSwitchCompleteness;
 
+// TODO(bartekpacia): Move to the "intelij.java.impl.inspections" module
+//  once the situation with QuickFixFactoryImpl in "intellij.java.impl" depending on this class is resolved.
 public final class UnnecessaryDefaultInspection extends BaseInspection {
 
   public boolean onlyReportSwitchExpressions = true;
@@ -250,12 +292,71 @@ public final class UnnecessaryDefaultInspection extends BaseInspection {
     if (!(type instanceof PsiClassType)) {
       return null;
     }
-    final PsiElement result = JavaPsiSwitchUtil.findDefaultElement(switchBlock);
-    if (result == null) {
+    final PsiElement defaultElement = JavaPsiSwitchUtil.findDefaultElement(switchBlock);
+    if (defaultElement == null) {
       return null;
     }
-    final SwitchExhaustivenessState completenessResult = evaluateSwitchCompleteness(switchBlock, false);
-    return completenessResult == SwitchExhaustivenessState.EXHAUSTIVE_CAN_ADD_DEFAULT
-           ? result : null;
+    final SwitchExhaustivenessState completenessResult = evaluateSwitchCompleteness(switchBlock);
+
+    if (completenessResult != SwitchExhaustivenessState.EXHAUSTIVE_CAN_ADD_DEFAULT) {
+      return null;
+    }
+
+    if (findPatternCanProduceMatchException(switchBlock, Set.of(defaultElement)) != null) {
+      return null;
+    }
+    return defaultElement;
+  }
+
+  private static @Nullable PsiPattern findPatternCanProduceMatchException(@NotNull PsiSwitchBlock switchBlock,
+                                                                          @NotNull Set<@NotNull PsiElement> skipDominatingElements) {
+    List<PsiElement> branches = JavaPsiSwitchUtil.getSwitchBranches(switchBlock);
+    for (PsiElement branch : branches) {
+      if (!(branch instanceof PsiDeconstructionPattern psiDeconstructionPattern)) continue;
+      PsiPattern deconstructionComponent = findDeconstructionComponentCanProduceMatchException(switchBlock,
+                                                                                               psiDeconstructionPattern,
+                                                                                               skipDominatingElements);
+      if (deconstructionComponent != null) return deconstructionComponent;
+    }
+    return null;
+  }
+
+  private static @Nullable PsiPattern findDeconstructionComponentCanProduceMatchException(
+    @NotNull PsiSwitchBlock switchBlock,
+    @NotNull PsiDeconstructionPattern psiDeconstructionPattern,
+    @NotNull Set<@NotNull PsiElement> skipDominatingElements) {
+    PsiTypeElement typeElement = psiDeconstructionPattern.getTypeElement();
+    PsiType recordType = typeElement.getType();
+    PsiClass recordClass = PsiUtil.resolveClassInClassTypeOnly(recordType);
+    if (recordClass == null || !recordClass.isRecord()) {
+      return null;
+    }
+    PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
+    @NotNull PsiPattern @NotNull [] deconstructionComponents =
+      psiDeconstructionPattern.getDeconstructionList().getDeconstructionComponents();
+    if (deconstructionComponents.length != recordComponents.length) {
+      return null;
+    }
+
+    for (int i = 0; i < recordComponents.length; i++) {
+      PsiPattern deconstructionComponent = deconstructionComponents[i];
+      if (deconstructionComponent instanceof PsiDeconstructionPattern nestedDeconstructionPattern) {
+        PsiPattern canProduceMatchException =
+          findDeconstructionComponentCanProduceMatchException(switchBlock,
+                                                              nestedDeconstructionPattern,
+                                                              skipDominatingElements);
+        if (canProduceMatchException != null) return canProduceMatchException;
+      }
+      PsiRecordComponent component = recordComponents[i];
+      PsiType componentType = component.getType();
+      TypeNullability nullability = componentType.getNullability();
+      PsiExpression expression = switchBlock.getExpression();
+      if (expression == null) return null;
+      if (nullability.nullability() == Nullability.NOT_NULL) continue;
+      if (JavaPsiSwitchUtil.mayCauseMatchExceptionDuringDeconstruction(psiDeconstructionPattern, component, deconstructionComponent, skipDominatingElements)) {
+        return deconstructionComponent;
+      }
+    }
+    return null;
   }
 }

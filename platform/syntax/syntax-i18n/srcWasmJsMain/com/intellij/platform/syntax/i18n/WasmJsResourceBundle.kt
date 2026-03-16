@@ -6,7 +6,7 @@ import fleet.util.multiplatform.Actual
 /**
  * see expect function [com.intellij.platform.syntax.i18n.ResourceBundle]
  */
-@Actual("ResourceBundle")
+@Actual
 internal fun ResourceBundleWasmJs(
   bundleClass: String,
   pathToBundle: String,

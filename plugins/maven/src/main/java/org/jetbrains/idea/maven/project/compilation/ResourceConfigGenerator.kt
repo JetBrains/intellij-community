@@ -26,11 +26,17 @@ import org.jetbrains.idea.maven.utils.ManifestBuilder
 import org.jetbrains.idea.maven.utils.ManifestBuilder.ManifestBuilderException
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.jps.maven.model.impl.*
+import org.jetbrains.jps.maven.model.impl.MavenEjbClientConfiguration
+import org.jetbrains.jps.maven.model.impl.MavenIdBean
+import org.jetbrains.jps.maven.model.impl.MavenModuleResourceConfiguration
+import org.jetbrains.jps.maven.model.impl.MavenProjectConfiguration
+import org.jetbrains.jps.maven.model.impl.MavenWebArtifactConfiguration
+import org.jetbrains.jps.maven.model.impl.ResourceRootConfiguration
 import java.io.FileInputStream
 import java.io.IOException
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.Base64
+import java.util.Properties
 
 internal class ResourceConfigGenerator(
   private val fileIndex: ProjectFileIndex,

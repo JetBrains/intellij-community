@@ -2,9 +2,14 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
-import com.sun.jdi.*
+import com.intellij.debugger.impl.instanceOf
+import com.sun.jdi.ArrayReference
+import com.sun.jdi.BooleanValue
+import com.sun.jdi.LongValue
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.StringReference
+import com.sun.jdi.ThreadReference
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.isSubTypeOrSame
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 
 class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
@@ -110,10 +115,10 @@ class DebugProbesImplCoroutineOwner(private val coroutineInfo: CoroutineInfo?, c
     }
 
     companion object {
-        const val COROUTINE_OWNER_CLASS_NAME = "kotlinx.coroutines.debug.internal.DebugProbesImpl\$CoroutineOwner"
+        private const val COROUTINE_OWNER_CLASS_NAME = "kotlinx.coroutines.debug.internal.DebugProbesImpl\$CoroutineOwner"
 
-        fun instanceOf(value: ObjectReference?) =
-                value?.referenceType()?.isSubTypeOrSame(COROUTINE_OWNER_CLASS_NAME) ?: false
+        internal fun instanceOf(value: ObjectReference?): Boolean =
+                value?.referenceType()?.instanceOf(COROUTINE_OWNER_CLASS_NAME) ?: false
     }
 }
 

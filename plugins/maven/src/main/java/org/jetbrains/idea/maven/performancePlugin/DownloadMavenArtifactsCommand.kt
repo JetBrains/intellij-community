@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
 import org.jetbrains.idea.maven.project.MavenImportListener
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import java.util.concurrent.CompletableFuture
@@ -32,7 +33,14 @@ class DownloadMavenArtifactsCommand(text: String, line: Int) : PerformanceComman
     val manager = MavenProjectsManager.getInstance(project)
     val cs = project.service<CoroutineService>().coroutineScope
     cs.launch {
-      manager.downloadArtifacts(manager.projects, null, sources, docs)
+      manager.downloadArtifacts(
+        MavenDownloadSourcesRequest.builder()
+          .forProjects(manager.projects)
+          .forAllArtifacts()
+          .downloadDocs(docs)
+          .downloadSources(sources)
+          .build()
+      )
     }
     val promise = CompletableFuture<Any>()
     project.messageBus.connect()

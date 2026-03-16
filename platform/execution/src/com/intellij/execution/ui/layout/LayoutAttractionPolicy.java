@@ -16,8 +16,8 @@
 
 package com.intellij.execution.ui.layout;
 
-import com.intellij.ui.content.Content;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.ui.content.Content;
 
 public abstract class LayoutAttractionPolicy {
 

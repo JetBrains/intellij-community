@@ -1,0 +1,14 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
+<!-- Source: see moduleSet("grid.core") function in CommunityModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
+<idea-plugin>
+  <content namespace="jetbrains">
+    <module name="intellij.grid"/>
+    <module name="intellij.grid.types"/>
+    <module name="intellij.grid.csv.core.impl"/>
+    <module name="intellij.grid.core.impl"/>
+    <module name="intellij.grid.impl"/>
+    <module name="intellij.grid.impl.ide"/>
+  </content>
+</idea-plugin>

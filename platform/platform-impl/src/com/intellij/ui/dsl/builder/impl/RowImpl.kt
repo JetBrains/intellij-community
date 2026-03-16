@@ -11,15 +11,36 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
-import com.intellij.ui.components.*
+import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.BrowserLink
+import com.intellij.ui.components.DropDownLink
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBPasswordField
+import com.intellij.ui.components.JBRadioButton
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.UiDslException
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.COLUMNS_SHORT
+import com.intellij.ui.dsl.builder.COLUMNS_TINY
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.HyperlinkEventAction
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.SegmentedButton
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -30,14 +51,26 @@ import com.intellij.util.IconUtil
 import com.intellij.util.MathUtil
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.util.*
-import javax.swing.*
+import java.util.Vector
+import javax.swing.ComboBoxModel
+import javax.swing.DefaultComboBoxModel
+import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JEditorPane
+import javax.swing.JLabel
+import javax.swing.JRadioButton
+import javax.swing.JSlider
+import javax.swing.JSpinner
+import javax.swing.ListCellRenderer
+import javax.swing.SpinnerNumberModel
 
 @Suppress("OVERRIDE_DEPRECATION")
 @ApiStatus.Internal
@@ -98,7 +131,9 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun <T : JComponent> scrollCell(component: T): CellImpl<T> {
-    return cellImpl(component, JBScrollPane(component))
+    val scrollPane = JBScrollPane(component)
+    scrollPane.minimumSize = JBUI.size(100, 60)
+    return cellImpl(component, scrollPane)
   }
 
   override fun placeholder(): PlaceholderImpl {
@@ -276,9 +311,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun contextHelp(description: String, title: String?): CellImpl<JLabel> {
-    val result = if (title == null) ContextHelpLabel.create(description)
-    else ContextHelpLabel.create(title, description)
-    return cell(result)
+    return cell(createContextHelp(description, title))
   }
 
   override fun textField(): CellImpl<JBTextField> {

@@ -2,10 +2,10 @@ import argparse
 import ast
 import sys
 from _typeshed import Incomplete
-from collections.abc import Callable, Generator, Iterable, Sequence
+from collections.abc import Generator, Iterable, Sequence
 from functools import partial
 from logging import Logger
-from typing import Any, ClassVar, Final, Literal, NamedTuple, overload
+from typing import Any, ClassVar, Final, Literal, NamedTuple, Protocol, overload
 
 __version__: Final[str]
 LOG: Logger
@@ -28,7 +28,7 @@ class BugBearChecker:
     max_line_length: int
     visitor: ast.NodeVisitor
     options: argparse.Namespace | None
-    def run(self) -> Generator[error]: ...
+    def run(self) -> Iterable[tuple[int, int, str, type[BugBearChecker]]]: ...
     def gen_line_based_checks(self) -> Generator[error]: ...
     @classmethod
     def adapt_error(cls, e: error) -> tuple[int, int, str, type[BugBearChecker]]: ...
@@ -67,7 +67,19 @@ class B041VariableKeyType:
     name: str
     def __init__(self, name: str) -> None: ...
 
+class AstPositionNode(Protocol):
+    lineno: int
+    col_offset: int
+
 class BugBearVisitor(ast.NodeVisitor):
+    filename: str
+    lines: Sequence[str] | None
+    b008_b039_extend_immutable_calls: set[str]
+    b902_classmethod_decorators: set[str]
+    node_window: list[ast.AST]
+    errors: list[error]
+    contexts: list[Context]
+    b040_caught_exception: B040CaughtException | None
     NODE_WINDOW_SIZE: ClassVar[int] = 4
     in_trystar: str
     def __init__(
@@ -82,6 +94,7 @@ class BugBearVisitor(ast.NodeVisitor):
         b040_caught_exception: B040CaughtException | None = None,
         in_trystar: str = "",
     ) -> None: ...
+    def add_error(self, code: str, node: AstPositionNode, *vars: object) -> None: ...
     @property
     def node_stack(self) -> list[Context]: ...
     def in_class_init(self) -> bool: ...
@@ -137,7 +150,9 @@ class BugBearVisitor(ast.NodeVisitor):
     def check_for_b017(self, node: ast.With | ast.AsyncWith) -> None: ...
     def check_for_b019(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None: ...
     def check_for_b020(self, node: ast.For | ast.AsyncFor | ast.comprehension) -> None: ...
-    def check_for_b023(self, loop_node: ast.For | ast.AsyncFor | ast.comprehension) -> None: ...
+    def check_for_b023(
+        self, loop_node: ast.For | ast.AsyncFor | ast.While | ast.GeneratorExp | ast.SetComp | ast.ListComp | ast.DictComp
+    ) -> None: ...
     def check_for_b024_and_b027(self, node: ast.ClassDef) -> None: ...
     def check_for_b026(self, call: ast.Call) -> None: ...
     def check_for_b031(self, loop_node: ast.For | ast.AsyncFor) -> None: ...
@@ -163,12 +178,14 @@ class BugBearVisitor(ast.NodeVisitor):
     def check_for_b908(self, node: ast.With) -> None: ...
     def check_for_b025(self, node: ast.Try) -> None: ...
     def check_for_b905(self, node: ast.Call) -> None: ...
+    def check_for_b912(self, node: ast.Call) -> None: ...
     def check_for_b906(self, node: ast.FunctionDef) -> None: ...
     def check_for_b907(self, node: ast.JoinedStr) -> None: ...
     def check_for_b028(self, node: ast.Call) -> None: ...
     def check_for_b032(self, node: ast.AnnAssign) -> None: ...
     def check_for_b033(self, node: ast.Set | ast.List | ast.Tuple) -> None: ...
     def check_for_b034(self, node: ast.Call) -> None: ...
+    def check_for_b042(self, node: ast.ClassDef) -> None: ...
     def check_for_b909(self, node: ast.For) -> None: ...
     def check_for_b910(self, node: ast.Call) -> None: ...
     def check_for_b911(self, node: ast.Call) -> None: ...
@@ -180,7 +197,7 @@ class B909Checker(ast.NodeVisitor):
     MUTATING_FUNCTIONS: ClassVar[tuple[str, ...]]
     name: str
     key: str
-    mutations: dict[int, list[ast.AST]]
+    mutations: dict[int, list[ast.Assign | ast.AugAssign | ast.Delete | ast.Call]]
     def __init__(self, name: str, key: str) -> None: ...
     def visit_Assign(self, node: ast.Assign) -> None: ...
     def visit_AugAssign(self, node: ast.AugAssign) -> None: ...
@@ -222,75 +239,30 @@ class B020NameFinder(NameFinder):
     def visit_comprehension(self, node: ast.comprehension) -> None: ...
     def visit_Lambda(self, node: ast.Lambda) -> None: ...
 
+B005_METHODS: Final[set[str]]
+B006_MUTABLE_LITERALS: Final[tuple[Literal["Dict"], Literal["List"], Literal["Set"]]]
+B006_MUTABLE_COMPREHENSIONS: Final[tuple[Literal["ListComp"], Literal["DictComp"], Literal["SetComp"]]]
+B006_MUTABLE_CALLS: Final[set[str]]
+B008_IMMUTABLE_CALLS: Final[set[str]]
+B014_REDUNDANT_EXCEPTIONS: Final[dict[Literal["OSError", "ValueError"], set[str]]]
+B019_CACHES: Final[set[str]]
+B902_IMPLICIT_CLASSMETHODS: Final[set[str]]
+B902_SELF: Final[list[str]]
+B902_CLS: Final[list[str]]
+B902_METACLS: Final[list[str]]
+
 class error(NamedTuple):
     lineno: int
     col: int
     message: str
     type: type[BugBearChecker]
-    vars: tuple[Incomplete]
+    # Arguments for formatting the message, i.e. message.format(*vars).
+    vars: tuple[object, ...]
 
-Error: Callable[..., partial[error]]
-B001: partial[error]
-B002: partial[error]
-B003: partial[error]
-B004: partial[error]
-B005: partial[error]
-B005_METHODS: Final[set[str]]
-B006: partial[error]
-B006_MUTABLE_LITERALS: Final[tuple[Literal["Dict"], Literal["List"], Literal["Set"]]]
-B006_MUTABLE_COMPREHENSIONS: Final[tuple[Literal["ListComp"], Literal["DictComp"], Literal["SetComp"]]]
-B006_MUTABLE_CALLS: Final[set[str]]
-B007: partial[error]
-B008: partial[error]
-B008_IMMUTABLE_CALLS: Final[set[str]]
-B009: partial[error]
-B010: partial[error]
-B011: partial[error]
-B012: partial[error]
-B013: partial[error]
-B014: partial[error]
-B014_REDUNDANT_EXCEPTIONS: Final[dict[Literal["OSError", "ValueError"], set[str]]]
-B015: partial[error]
-B016: partial[error]
-B017: partial[error]
-B018: partial[error]
-B019: partial[error]
-B019_CACHES: Final[set[str]]
-B020: partial[error]
-B021: partial[error]
-B022: partial[error]
-B023: partial[error]
-B024: partial[error]
-B025: partial[error]
-B026: partial[error]
-B027: partial[error]
-B028: partial[error]
-B029: partial[error]
-B030: partial[error]
-B031: partial[error]
-B032: partial[error]
-B033: partial[error]
-B034: partial[error]
-B035: partial[error]
-B036: partial[error]
-B037: partial[error]
-B039: partial[error]
-B040: partial[error]
-B041: partial[error]
-B901: partial[error]
-B902: partial[error]
-B902_IMPLICIT_CLASSMETHODS: Final[set[str]]
-B902_SELF: Final[list[str]]
-B902_CLS: Final[list[str]]
-B902_METACLS: Final[list[str]]
-B903: partial[error]
-B904: partial[error]
-B905: partial[error]
-B906: partial[error]
-B907: partial[error]
-B908: partial[error]
-B909: partial[error]
-B910: partial[error]
-B911: partial[error]
-B950: partial[error]
+class Error:
+    message: str
+    def __init__(self, message: str) -> None: ...
+    def __call__(self, lineno: int, col: int, vars: tuple[object, ...] = ()) -> error: ...
+
+error_codes: Final[dict[str, Error]]
 disabled_by_default: Final[list[str]]

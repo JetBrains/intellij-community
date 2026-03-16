@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.gradle.tooling.builder
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
-import com.intellij.gradle.toolingExtension.impl.util.GradleConventionUtil
-import com.intellij.gradle.toolingExtension.impl.util.GradleConventionUtil.getConventionPlugins
+import com.intellij.gradle.toolingExtension.util.GradleConventionUtil
+import com.intellij.gradle.toolingExtension.util.GradleConventionUtil.getConventionPlugins
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import groovy.lang.Closure
 import org.gradle.api.Project
@@ -11,7 +11,12 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.api.reflect.HasPublicType
-import org.jetbrains.plugins.gradle.model.*
+import org.jetbrains.plugins.gradle.model.DefaultGradleConfiguration
+import org.jetbrains.plugins.gradle.model.DefaultGradleConvention
+import org.jetbrains.plugins.gradle.model.DefaultGradleExtension
+import org.jetbrains.plugins.gradle.model.DefaultGradleExtensions
+import org.jetbrains.plugins.gradle.model.DefaultGradleProperty
+import org.jetbrains.plugins.gradle.model.GradleExtensions
 import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
@@ -110,7 +115,7 @@ class ProjectExtensionsDataBuilderImpl : ModelBuilderService {
         return emptyList()
       }
       val result = mutableListOf<DefaultGradleConvention>()
-      if (GradleConventionUtil.isGradleConventionsSupported()) {
+      if (  GradleConventionUtil.isGradleConventionsSupported()) {
         getConventionPlugins(project).forEach { (key, value) ->
           result.add(DefaultGradleConvention(key, getType(value)))
         }

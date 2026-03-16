@@ -24,7 +24,8 @@ class PyForwardReferenceResolveProvider : PyReferenceResolveProvider {
     return if (originalOwner != null) {
       PyResolveUtil.resolveLocally(originalOwner, referencedName)
         .map { RatedResolveResult(RatedResolveResult.RATE_NORMAL, it) }
-    } else emptyList()
+    }
+    else emptyList()
   }
 
   override fun allowsForwardOutgoingReferencesInClass(element: PyQualifiedExpression): Boolean {

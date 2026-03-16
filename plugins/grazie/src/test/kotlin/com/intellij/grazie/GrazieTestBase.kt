@@ -12,7 +12,10 @@ import com.intellij.grazie.spellcheck.GrazieCheckers
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.utils.TextStyleDomain
-import com.intellij.grazie.utils.TextStyleDomain.*
+import com.intellij.grazie.utils.TextStyleDomain.AIPrompt
+import com.intellij.grazie.utils.TextStyleDomain.CodeComment
+import com.intellij.grazie.utils.TextStyleDomain.CodeDocumentation
+import com.intellij.grazie.utils.TextStyleDomain.Commit
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
@@ -52,6 +55,12 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
         if (oldSaxParserFactory != null) System.setProperty(saxParserKey, oldSaxParserFactory)
         else System.clearProperty(saxParserKey)
       }
+    }
+
+    @JvmStatic
+    fun installTestChecker(disposable: Disposable) {
+      val newExtensions = TextChecker.allCheckers().map { if (it is LanguageToolChecker) LanguageToolChecker.TestChecker() else it }
+      ExtensionTestUtil.maskExtensions(ExtensionPointName("com.intellij.grazie.textChecker"), newExtensions, disposable)
     }
 
     fun loadLangs(langs: Collection<Lang>, project: Project) {
@@ -94,20 +103,15 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
 
   protected open val additionalEnabledContextLanguages: Set<Language> = emptySet()
 
-  protected open val enableGrazieChecker: Boolean = false
-
   override fun getBasePath() = "community/plugins/grazie/src/test/testData"
 
   override fun setUp() {
     super.setUp()
-    maskSaxParserFactory(testRootDisposable)
-    if (enableGrazieChecker) Registry.get("spellchecker.grazie.enabled").setValue(true, testRootDisposable)
     myFixture.enableInspections(*inspectionTools)
 
+    maskSaxParserFactory(testRootDisposable)
+    installTestChecker(testRootDisposable)
     enableProofreadingFor(enabledLanguages)
-
-    val newExtensions = TextChecker.allCheckers().map { if (it is LanguageToolChecker) LanguageToolChecker.TestChecker() else it }
-    ExtensionTestUtil.maskExtensions(ExtensionPointName("com.intellij.grazie.textChecker"), newExtensions, testRootDisposable)
   }
 
   override fun tearDown() {

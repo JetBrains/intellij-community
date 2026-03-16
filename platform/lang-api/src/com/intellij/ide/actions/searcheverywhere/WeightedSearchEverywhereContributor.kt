@@ -1,10 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.Processor
+import org.jetbrains.annotations.ApiStatus
 
 interface WeightedSearchEverywhereContributor<I : Any> : SearchEverywhereContributor<I> {
+
+  @ApiStatus.Internal
+  fun fetchWeightedElementsWithOperationDisposable(
+    pattern: String,
+    progressIndicator: ProgressIndicator,
+    operationDisposable: Disposable,
+    consumer: Processor<in FoundItemDescriptor<I>>
+  ) {
+    fetchWeightedElements(pattern, progressIndicator, consumer)
+  }
+
   fun fetchWeightedElements(
     pattern: String,
     progressIndicator: ProgressIndicator,

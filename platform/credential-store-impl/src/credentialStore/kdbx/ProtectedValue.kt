@@ -7,7 +7,7 @@ import org.bouncycastle.crypto.SkippingStreamCipher
 import org.jdom.Element
 import org.jdom.Text
 import java.io.Writer
-import java.util.*
+import java.util.Base64
 
 internal interface SecureString {
   fun get(clearable: Boolean = true): OneTimeString

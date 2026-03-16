@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector
 
 import com.intellij.ide.IdeEventQueue
@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
@@ -41,7 +42,11 @@ abstract class UiMouseAction(val uiActionId: String) : DumbAwareAction() {
       }
     })
 
-    IdeEventQueue.getInstance().addDispatcher(::handleEvent, ApplicationManager.getApplication())
+    IdeEventQueue.getInstance().addDispatcher(object : IdeEventQueue.NonLockedEventDispatcher {
+      override fun dispatch(e: AWTEvent): Boolean {
+        return handleEvent(e)
+      }
+    }, ApplicationManager.getApplication())
   }
 
   private fun handleEvent(event: AWTEvent): Boolean {
@@ -53,7 +58,9 @@ abstract class UiMouseAction(val uiActionId: String) : DumbAwareAction() {
         if (event.id == MouseEvent.MOUSE_PRESSED) {
           val component = UIUtil.getDeepestComponentAt(event.component, event.x, event.y)
                           ?: event.component
-          handleClick(component, event)
+          WriteIntentReadAction.run {
+            handleClick(component, event)
+          }
         }
         return true
       }

@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
@@ -12,71 +13,70 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public interface FileManagerEx extends FileManager {
-
-  @ApiStatus.Internal
   void forEachCachedDocument(@NotNull Consumer<? super @NotNull Document> consumer);
 
   @TestOnly
-  @ApiStatus.Internal
   void assertNoInjectedFragmentsStoredInMaps();
 
-  @ApiStatus.Internal
+  /**
+   * Updates the context of `viewProvider` to `context` if the current context of viewProvider is anyContext.
+   * If the current context of viewProvider is not anyContext, does nothing.
+   *
+   * @return the effective context of viewProvider, or `null` if viewProvider is missing in the cache.
+   */
   @Nullable CodeInsightContext trySetContext(@NotNull FileViewProvider viewProvider, @NotNull CodeInsightContext context);
 
-  @ApiStatus.Internal
   void removeFilesAndDirsRecursively(@NotNull VirtualFile vFile);
 
   @Nullable
-  @ApiStatus.Internal
   PsiFile getCachedPsiFileInner(@NotNull VirtualFile file, @NotNull CodeInsightContext context);
 
+  @NotNull @Unmodifiable
+  List<PsiFile> getCachedPsiFilesInner(@NotNull VirtualFile file);
+
+  /**
+   * Removes invalid files and directories from the cache.
+   *
+   * @param useFind pass {@code true} if it's expected that file view providers might have changed.
+   *                In this case, all files will be checked more thoroughly.
+   */
   @RequiresWriteLock
-  @ApiStatus.Internal
   void removeInvalidFilesAndDirs(boolean useFind);
 
-  @ApiStatus.Internal
   void reloadPsiAfterTextChange(@NotNull FileViewProvider viewProvider, @NotNull VirtualFile vFile);
 
   @RequiresReadLock(generateAssertion = false)
   boolean evaluateValidity(@NotNull PsiFile file);
 
-  @ApiStatus.Internal
   @Nullable PsiFile getRawCachedFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context);
 
-  @ApiStatus.Internal
   void forceReload(@NotNull VirtualFile vFile);
 
-  @ApiStatus.Internal
   void firePropertyChangedForUnloadedPsi();
 
-  @ApiStatus.Internal
   void dispose();
 
-  @ApiStatus.Internal
   void processQueue();
 
   @RequiresReadLock
   PsiFile getFastCachedPsiFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context);
 
-  @ApiStatus.Internal
   void processFileTypesChanged(boolean clearViewProviders);
 
   @RequiresWriteLock
-  @ApiStatus.Internal
   void possiblyInvalidatePhysicalPsi();
 
-  @ApiStatus.Internal
   void dispatchPendingEvents();
 
   @TestOnly
-  @ApiStatus.Internal
   void checkConsistency();
 
-  @ApiStatus.Internal
   PsiDirectory getCachedDirectory(@NotNull VirtualFile vFile);
 }

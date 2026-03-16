@@ -1,28 +1,37 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces.VCS_LOG_BRANCHES_PLACE
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.SideBorder
-import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.ScrollableContentBorder
+import com.intellij.ui.Side
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.SearchFieldWithExtension
+import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.StatusText
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.ui.ProgressStripe
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
@@ -37,7 +46,13 @@ import java.awt.Component
 import java.awt.Container
 import java.awt.datatransfer.DataFlavor
 import java.awt.event.ActionEvent
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JTree
+import javax.swing.LayoutFocusTraversalPolicy
+import javax.swing.TransferHandler
 
 @ApiStatus.Internal
 object BranchesDashboardTreeComponent {
@@ -61,20 +76,13 @@ object BranchesDashboardTreeComponent {
       // fixme: this needs to be dynamic
       accessibleContext.accessibleDescription = message("git.log.branches.search.field.accessible.description",
                                                         KeymapUtil.getFirstKeyboardShortcutText("Vcs.Log.FocusTextFilter"))
+      textEditor.emptyText.text = message("git.log.branches.search.placeholder")
+      TextComponentEmptyText.setupPlaceholderVisibility(textEditor)
     }
 
     val searchComponent = when (searchLook) {
       is SearchLook.Inline -> {
-        with(branchesSearchField) {
-          textEditor.border = JBUI.Borders.emptyLeft(5)
-          apply(UIUtil::setNotOpaqueRecursively)
-        }.let {
-          Wrapper(it).apply {
-            background = UIUtil.getListBackground()
-            border = createBorder(SideBorder.BOTTOM)
-            setVerticalSizeReferent(searchLook.heightReferent)
-          }
-        }
+        SearchFieldWithExtension(JBLabel(), branchesSearchField)
       }
       is SearchLook.Standalone -> {
         JPanel(null).apply {
@@ -131,8 +139,11 @@ object BranchesDashboardTreeComponent {
     model: BranchesDashboardTreeModel,
     disposable: Disposable,
   ): ProgressStripe {
-    val progressStripe = ProgressStripe(ScrollPaneFactory.createScrollPane(tree, true), disposable)
-    fun updateLoadingState() {
+    val scrollpane = ScrollPaneFactory.createScrollPane(tree, true)
+    ScrollableContentBorder.setup(scrollpane, Side.TOP)
+    val progressStripe = ProgressStripe(scrollpane, disposable)
+
+    fun doUpdateLoadingState() {
       if (model.isLoading) {
         progressStripe.startLoading()
         tree.emptyText.text = message("action.Git.Loading.Branches.progress")
@@ -141,6 +152,10 @@ object BranchesDashboardTreeComponent {
         progressStripe.stopLoading()
         tree.emptyText.text = StatusText.getDefaultEmptyText()
       }
+    }
+
+    fun updateLoadingState() {
+      runInEdt { doUpdateLoadingState() }
     }
     model.addListener(object : BranchesTreeModel.Listener {
       override fun onLoadingStateChange() {
@@ -174,6 +189,7 @@ object BranchesDashboardTreeComponent {
     group.add(fetchAction)
     group.add(toggleFavoriteAction)
     group.add(actionManager.getAction("Git.Log.Branches.Navigate.Log.To.Selected.Branch"))
+    group.add(actionManager.getAction("Git.Log.Branches.Toolbar.Actions"))
     group.add(Separator())
     group.add(settings)
     group.add(actionManager.getAction("Git.Log.Branches.Grouping.Settings"))

@@ -18,14 +18,10 @@
     },
     {
       "id": "UnusedProperty",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "DuplicatePropertyInspection",
-      "codeQualityCategory": "Reliability"
-    },
-    {
-      "id": "IncompleteProperty",
       "codeQualityCategory": "Reliability"
     }
   ]

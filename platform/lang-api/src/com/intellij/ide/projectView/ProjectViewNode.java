@@ -22,11 +22,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A node in the project view tree.
@@ -39,6 +42,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value>
 
   protected static final Logger LOG = Logger.getInstance(ProjectViewNode.class);
   @ApiStatus.Internal public static final String CACHED_FILE_PATH_KEY = "filePath";
+  @ApiStatus.Internal public static final String GENERIC_PROJECT_VIEW_NODE_TYPE = "GenericProjectViewNode";
 
   private final ViewSettings mySettings;
   private boolean myValidating;
@@ -364,5 +368,11 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value>
       return elementBackgroundColor;
     }
     return FilePresentationService.getFileBackgroundColor(getProject(), getVirtualFile());
+  }
+
+  @ApiStatus.Internal
+  public static boolean shouldUseSimplifiedProjectTreeState() {
+    // IJPL-219397 Drop registry key projectView.use.simplified.state
+    return Registry.is("projectView.use.simplified.state", false);
   }
 }

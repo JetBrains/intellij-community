@@ -71,6 +71,7 @@ public class DefaultGradleBuildScriptClasspathModel implements GradleBuildScript
       return false;
     }
     if (!Objects.equals(myGradleVersion, other.myGradleVersion)) return false;
+    if (!myClasspathEntries.equals(other.myClasspathEntries)) return false;
 
     return true;
   }

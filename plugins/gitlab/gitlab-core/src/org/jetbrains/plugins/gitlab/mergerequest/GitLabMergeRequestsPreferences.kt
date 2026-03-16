@@ -4,9 +4,12 @@ package org.jetbrains.plugins.gitlab.mergerequest
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.util.CollectableSerializablePersistentStateComponent
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 
 @Service(Service.Level.PROJECT)

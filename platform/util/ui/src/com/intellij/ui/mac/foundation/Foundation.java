@@ -5,19 +5,32 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ImageLoader;
-import com.sun.jna.*;
+import com.sun.jna.Callback;
+import com.sun.jna.Function;
+import com.sun.jna.Library;
+import com.sun.jna.Memory;
+import com.sun.jna.Native;
+import com.sun.jna.NativeLibrary;
+import com.sun.jna.Pointer;
+import com.sun.jna.PointerType;
+import com.sun.jna.Structure;
 import com.sun.jna.ptr.PointerByReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Image;
 import java.io.File;
 import java.lang.reflect.Proxy;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * see <a href="http://developer.apple.com/documentation/Cocoa/Reference/ObjCRuntimeRef/Reference/reference.html">Documentation</a>

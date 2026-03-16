@@ -40,7 +40,7 @@ class WindowDressing : ProjectCloseListener, LightEditServiceListener {
   }
 }
 
-private class WindowDressingStartupActivity : ProjectActivity {
+internal class WindowDressingStartupActivity : ProjectActivity {
   init {
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode || app.isHeadlessEnvironment) {
@@ -53,7 +53,7 @@ private class WindowDressingStartupActivity : ProjectActivity {
   }
 }
 
-private class PreviousProjectWindow : IdeDependentAction(), DumbAware, LightEditCompatible {
+internal class PreviousProjectWindow : IdeDependentAction(), DumbAware, LightEditCompatible {
   override fun actionPerformed(e: AnActionEvent) {
     getWindowActionGroup().activatePreviousWindow(e)
   }
@@ -66,7 +66,7 @@ private class PreviousProjectWindow : IdeDependentAction(), DumbAware, LightEdit
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
-private class NextProjectWindow : IdeDependentAction(), DumbAware, LightEditCompatible {
+internal class NextProjectWindow : IdeDependentAction(), DumbAware, LightEditCompatible {
   override fun actionPerformed(e: AnActionEvent) {
     getWindowActionGroup().activateNextWindow(e)
   }
@@ -79,7 +79,7 @@ private class NextProjectWindow : IdeDependentAction(), DumbAware, LightEditComp
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
-private class PreviousWindow : AbstractTraverseWindowAction(), DumbAware {
+internal class PreviousWindow : AbstractTraverseWindowAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     doPerform { ActiveWindowsWatcher.nextWindowBefore(it) }
   }
@@ -89,7 +89,7 @@ private class PreviousWindow : AbstractTraverseWindowAction(), DumbAware {
   }
 }
 
-private class NextWindow : AbstractTraverseWindowAction(), DumbAware {
+internal class NextWindow : AbstractTraverseWindowAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     doPerform { ActiveWindowsWatcher.nextWindowAfter(it) }
   }

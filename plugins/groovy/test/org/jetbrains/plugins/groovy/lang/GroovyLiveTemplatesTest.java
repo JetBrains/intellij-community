@@ -48,7 +48,7 @@ public class GroovyLiveTemplatesTest extends LightJavaCodeInsightFixtureTestCase
     myFixture.checkResult("""
                             
                             void usage(int num, boolean someBoolean, List<String> args){
-                                println "num = $num, someBoolean = $someBoolean, args = $args"
+                                println "num = " + num + ", someBoolean = " + someBoolean + ", args = " + args
                             }
                             """);
   }

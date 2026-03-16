@@ -6,6 +6,7 @@ import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.find.FindUtil;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressManager;
@@ -28,7 +29,10 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.ListCellRenderer;
+import javax.swing.TransferHandler;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
@@ -245,7 +249,7 @@ public final class PsiElementListNavigator {
             for (int i = 0; i < selectedValues.length; i++) {
               copy[i] = (PsiElement)selectedValues[i];
             }
-            return PsiCopyPasteManager.newTransferable(copy);
+            return ReadAction.compute(() -> PsiCopyPasteManager.newTransferable(copy));
           }
 
           @Override

@@ -79,3 +79,5 @@ com.intellij.openapi.roots.ProjectFileIndex
 - a:getLibrary():com.intellij.openapi.roots.libraries.Library
 Fa:com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 - *a:getGlobalLibraryTable(com.intellij.openapi.project.Project):com.intellij.openapi.roots.libraries.LibraryTable
+f:com.intellij.workspaceModel.ide.SdkEntities
+- *sf:getPresentableName(com.intellij.platform.workspace.jps.entities.SdkEntity):java.lang.String

@@ -19,13 +19,21 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Target;
-import org.jetbrains.idea.svn.commandLine.*;
+import org.jetbrains.idea.svn.commandLine.Command;
+import org.jetbrains.idea.svn.commandLine.CommandUtil;
+import org.jetbrains.idea.svn.commandLine.LineCommandAdapter;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.StatusType;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

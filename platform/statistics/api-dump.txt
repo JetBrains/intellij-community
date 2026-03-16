@@ -1,6 +1,9 @@
 c:com.intellij.internal.statistic.eventLog.EventLogGroup
+- b:<init>(java.lang.String,I,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getGroupData():java.util.List
 - f:registerEvent(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField,java.lang.String,I,java.lang.Object):com.intellij.internal.statistic.eventLog.events.EventId1
+f:com.intellij.internal.statistic.eventLog.EventLogGroupKt
+- sf:FUS_RECORDER:java.lang.String
 com.intellij.internal.statistic.eventLog.StatisticsEventLogListener
 - a:onLogEvent(com.jetbrains.fus.reporting.model.lion3.LogEvent,java.lang.String,java.util.Map):V
 com.intellij.internal.statistic.eventLog.StatisticsEventLogger

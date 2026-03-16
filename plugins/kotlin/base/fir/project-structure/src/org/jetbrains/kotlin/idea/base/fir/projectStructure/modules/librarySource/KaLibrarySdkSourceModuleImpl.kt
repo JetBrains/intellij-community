@@ -9,7 +9,7 @@ internal class KaLibrarySdkSourceModuleImpl(
     override val binaryLibrary: KaLibrarySdkModuleImpl
 ) : KaLibrarySourceModuleBase() {
     override val sourceRoots: Array<VirtualFile> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        binaryLibrary.sdk.rootProvider.getFiles(OrderRootType.SOURCES)
+        binaryLibrary.computeRoots(OrderRootType.SOURCES).toTypedArray()
     }
 
     override fun equals(other: Any?): Boolean {

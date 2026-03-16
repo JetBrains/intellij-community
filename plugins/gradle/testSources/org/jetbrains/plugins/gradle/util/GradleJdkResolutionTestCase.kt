@@ -8,7 +8,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProviderImpl
 import com.intellij.openapi.util.io.FileUtil
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.properties.*
+import org.jetbrains.plugins.gradle.properties.GRADLE_JAVA_HOME_PROPERTY
+import org.jetbrains.plugins.gradle.properties.GRADLE_LOCAL_JAVA_HOME_PROPERTY
+import org.jetbrains.plugins.gradle.properties.GradleLocalPropertiesFile
+import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -18,7 +21,8 @@ import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_PROPERTIES_FILE_
 import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_USER_HOME_ENV_KEY
 import org.jetbrains.plugins.gradle.util.GradleConstants.USER_HOME_PROPERTY_KEY
 import java.io.File
-import java.util.*
+import java.util.Properties
+import java.util.UUID
 
 abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
 

@@ -6,9 +6,9 @@ import java.io.FilenameFilter
 import java.nio.file.Path
 import kotlin.io.path.Path
 
-private const val DE_CHECKSUM = "7fae9b8e2b3fe002a95b7bfba174c1d2"
-private const val RU_CHECKSUM = "c15d1bcd3b03d6716248b55a77a7ab6d"
-private const val UK_CHECKSUM = "261b62cc655ff56c7b03538b75379826"
+private const val DE_CHECKSUM = "4b081d97f9c7613236cf5ad25c50acb6"
+private const val RU_CHECKSUM = "b422388707c5aee27a5ec3682d5f2c22"
+private const val UK_CHECKSUM = "24a0ed883d4bf786f9f89d2308d3230f"
 
 enum class HunspellDescriptor(
   override val iso: LanguageISO,

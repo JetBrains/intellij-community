@@ -6,6 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.PackageOracle
 import org.jetbrains.kotlin.analyzer.PackageOracleFactory
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.name.isSubpackageOf
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
 
+@K1Deprecation
 @Service(Service.Level.PROJECT)
 class IdePackageOracleFactory(val project: Project) : PackageOracleFactory {
     override fun createOracle(moduleInfo: ModuleInfo): PackageOracle {

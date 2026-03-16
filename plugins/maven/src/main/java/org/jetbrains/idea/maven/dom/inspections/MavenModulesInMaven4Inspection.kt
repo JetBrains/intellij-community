@@ -1,18 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.inspections
 
-import com.intellij.codeInspection.*
-
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.XmlSuppressableInspectionTool
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.XmlElementFactory
 import com.intellij.psi.xml.XmlFile
-import com.intellij.psi.xml.XmlTag
-import com.intellij.util.containers.addAllIfNotNull
-import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.maven.dom.MavenDomBundle
 import org.jetbrains.idea.maven.dom.MavenDomUtil

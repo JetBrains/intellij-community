@@ -2,9 +2,19 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.projectActions
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.*
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.ProjectWindowCustomizerService
+import com.intellij.ide.RecentProjectIconHelper
 import com.intellij.ide.RecentProjectIconHelper.Companion.createIcon
-import com.intellij.openapi.actionSystem.*
+import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.DumbAwareAction
@@ -33,9 +43,8 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
-import com.intellij.openapi.diagnostic.logger
 
-private class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
+internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
   init {
     isEnabledInModalContext = true  // To allow the action to be run in the Manage Recent Projects modal dialog, see IDEA-302750
   }
@@ -131,7 +140,7 @@ private fun changeProjectIcon(
   IconDeferrer.getInstance().clearCache()
 }
 
-private class ChangeProjectIcon(private val ui: ProjectIconUI) : AnAction() {
+internal class ChangeProjectIcon(private val ui: ProjectIconUI) : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val files = FileChooserFactory.getInstance()
       .createFileChooser(FileChooserDescriptorFactory.createSingleFileDescriptor("svg"), null, null)
@@ -149,7 +158,7 @@ private class ChangeProjectIcon(private val ui: ProjectIconUI) : AnAction() {
   }
 }
 
-private class ProjectIconUI(private val projectPath: Path) {
+internal class ProjectIconUI(private val projectPath: Path) {
   val setIconActionLink = AnActionLink(IdeBundle.message("link.change.project.icon"), ChangeProjectIcon(this))
   val iconLabel = JBLabel((RecentProjectsManager.getInstance() as RecentProjectsManagerBase).getProjectIcon(projectPath, true))
   var pathToIcon: VirtualFile? = null

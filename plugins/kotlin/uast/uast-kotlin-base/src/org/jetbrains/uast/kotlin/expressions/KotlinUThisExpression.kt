@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.uast.UElement
@@ -20,6 +21,6 @@ class KotlinUThisExpression(
     override val labelIdentifier: UIdentifier?
         get() = sourcePsi.getTargetLabel()?.let { KotlinUIdentifier(it, this) }
 
-    override fun resolve() =
+    override fun resolve(): PsiElement? =
         baseResolveProviderService.resolveToDeclaration(sourcePsi)
 }

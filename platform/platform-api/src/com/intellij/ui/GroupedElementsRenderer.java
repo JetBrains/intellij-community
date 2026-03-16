@@ -17,11 +17,16 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.tree.TreeCellRenderer;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.util.ArrayList;
 
 public abstract class GroupedElementsRenderer implements Accessible {

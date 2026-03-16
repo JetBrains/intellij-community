@@ -12,7 +12,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 /**
  * Trivial implementation used in tests and in the headless mode.
  */
-private open class NoOpSaveAndSyncHandler : SaveAndSyncHandler() {
+internal open class NoOpSaveAndSyncHandler : SaveAndSyncHandler() {
   override fun scheduleSave(task: SaveTask, forceExecuteImmediately: Boolean) {}
 
   override fun scheduleRefresh() {}

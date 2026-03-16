@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.kotlinx.serialization.core.jar
   modules:
   - name: intellij.libraries.kotlinx.serialization.core
   library: kotlinx-serialization-core

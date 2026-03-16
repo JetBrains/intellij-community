@@ -19,10 +19,16 @@ import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isTooLarge
-import com.intellij.ui.jcef.*
+import com.intellij.ui.jcef.JBCefApp
+import com.intellij.ui.jcef.JBCefBrowser
+import com.intellij.ui.jcef.JBCefBrowserBase
+import com.intellij.ui.jcef.JBCefBrowserBuilder
+import com.intellij.ui.jcef.JBCefJSQuery
+import com.intellij.ui.jcef.JBCefScrollbarsHelper
 import com.intellij.ui.jcef.utils.JBCefLocalRequestHandler
 import com.intellij.ui.jcef.utils.JBCefStreamResourceHandler
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.ui.EDT
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.cef.browser.CefBrowser
@@ -113,7 +119,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
   override fun getState(level: FileEditorStateLevel): FileEditorState =
     ImageFileEditorState(myState.chessboardEnabled, myState.gridEnabled, myState.zoom, !myState.realSize)
   override fun setState(state: FileEditorState) {
-    if (!SwingUtilities.isEventDispatchThread()) {
+    if (!EDT.isCurrentThreadEdt()) {
       SwingUtilities.invokeLater { setState(state) }
       return
     }

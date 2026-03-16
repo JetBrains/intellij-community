@@ -30,18 +30,18 @@ env:
 jobs:
   stubtest-stdlib:
     name: "stubtest: stdlib"
-    if: ${{ github.repository == 'python/typeshed' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.repository == 'python/typeshed' || github.event_name != 'schedule' }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14-dev"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -55,7 +55,7 @@ jobs:
 
   stubtest-third-party:
     name: "stubtest: third party"
-    if: ${{ github.repository == 'python/typeshed' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.repository == 'python/typeshed' || github.event_name != 'schedule' }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -63,8 +63,8 @@ jobs:
         shard-index: [0, 1, 2, 3]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
           cache: pip
@@ -73,7 +73,7 @@ jobs:
             stubs/**/METADATA.toml
       - name: Install dependencies
         run: pip install -r requirements-tests.txt
-      - name: Run stubtest
+      - name: Install required system packages
         shell: bash
         run: |
           PACKAGES=$(python tests/get_stubtest_system_requirements.py)
@@ -83,8 +83,6 @@ jobs:
               printf "Installing APT packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
               sudo apt-get update -q && sudo apt-get install -qy $PACKAGES
             fi
-
-            PYTHON_EXECUTABLE="xvfb-run python"
           else
             if [ "${{ runner.os }}" = "macOS" ] && [ -n "$PACKAGES" ]; then
               printf "Installing Homebrew packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
@@ -95,7 +93,13 @@ jobs:
               printf "Installing Chocolatey packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
               choco install -y $PACKAGES
             fi
-
+          fi
+      - name: Run stubtest
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            PYTHON_EXECUTABLE="xvfb-run python"
+          else
             PYTHON_EXECUTABLE="python"
           fi
 
@@ -103,23 +107,23 @@ jobs:
 
   stub-uploader:
     name: stub_uploader tests
-    if: ${{ github.repository == 'python/typeshed' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.repository == 'python/typeshed' || github.event_name != 'schedule' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout typeshed
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: typeshed
       - name: Checkout stub_uploader
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: typeshed-internal/stub_uploader
           path: stub_uploader
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           # Keep in sync with stub_uploader's check_scripts.yml workflow.
           python-version: "3.13"
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           version-file: "typeshed/requirements-tests.txt"
       - name: Run tests
@@ -137,7 +141,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

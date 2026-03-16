@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
@@ -13,15 +14,25 @@ import com.intellij.util.io.URLUtil
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCiJobDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabPipelineDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCiJobStatus
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestDiscussionUtil.createAllDiscussionsResolvedFlow
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestDiscussionUtil.createAnyDiscussionsUnresolvedFlow
 
 interface GitLabMergeRequestStatusViewModel : CodeReviewStatusViewModel {
+  val hasUnresolvedDiscussionsBlockingMerge: StateFlow<Boolean>
+  val shouldBeRebasedBeforeMerging: StateFlow<Boolean>
   val resolveConflictsVm: GitLabResolveConflictsLocallyViewModel
 }
 
@@ -39,17 +50,22 @@ class GitLabMergeRequestStatusViewModelImpl(
   override val hasConflicts: SharedFlow<Boolean?>
     get() = resolveConflictsVm.hasConflicts
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  override val requiredConversationsResolved: SharedFlow<Boolean> = mergeRequest.details.map {
-    it.onlyAllowMergeIfAllDiscussionsAreResolved
-  }.distinctUntilChanged().flatMapLatest { resolveRequired ->
-    if (resolveRequired) {
-      createAllDiscussionsResolvedFlow(mergeRequest)
-    }
-    else {
-      flowOf(false)
-    }
-  }.modelFlow(cs, thisLogger())
+  override val hasUnresolvedDiscussionsBlockingMerge: StateFlow<Boolean> =
+    @OptIn(ExperimentalCoroutinesApi::class)
+    mergeRequest.details.map {
+      it.onlyAllowMergeIfAllDiscussionsAreResolved
+    }.distinctUntilChanged().flatMapLatest { resolveRequired ->
+      if (resolveRequired) {
+        createAnyDiscussionsUnresolvedFlow(mergeRequest)
+      }
+      else {
+        flowOf(false)
+      }
+    }.stateInNow(cs, false)
+
+  override val shouldBeRebasedBeforeMerging: StateFlow<Boolean> = mergeRequest.details.map {
+    it.state == GitLabMergeRequestState.OPENED && it.userPermissions.canMerge && it.ffOnlyMerge && it.shouldBeRebased
+  }.stateInNow(cs, false)
 
   override val ciJobs: SharedFlow<List<CodeReviewCIJob>> = pipeline.map {
     it?.jobs?.mapNotNull { job -> job.convert() } ?: emptyList()

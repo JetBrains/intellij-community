@@ -22,12 +22,13 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import java.io.IOException
 
-class PyDataclassFieldStubImpl private constructor(private val calleeName: QualifiedName,
-                                                   private val hasDefault: Boolean,
-                                                   private val hasDefaultFactory: Boolean,
-                                                   private val initValue: Boolean,
-                                                   private val kwOnly: Boolean?,
-                                                   private val alias: String?,
+class PyDataclassFieldStubImpl private constructor(
+  private val calleeName: QualifiedName,
+  private val hasDefault: Boolean,
+  private val hasDefaultFactory: Boolean,
+  private val initValue: Boolean,
+  private val kwOnly: Boolean?,
+  private val alias: String?,
 ) : PyDataclassFieldStub {
   companion object {
     fun create(expression: PyTargetExpression): PyDataclassFieldStub? {
@@ -94,7 +95,7 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
       }
       else if (type == PyDataclassParameters.PredefinedType.ATTRS) {
         val hasFactory = factory.let { it != null && it.text != PyNames.NONE }
-        
+
         if (default != null && !resolvesToOmittedDefault(default, type)) {
           val callee = (default as? PyCallExpression)?.callee as? PyReferenceExpression
           val hasFactoryInDefault =
@@ -126,7 +127,7 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
           // dataclasses.MISSING is not mentioned in the spec, but because dataclasses.KW_ONLY is supported, 
           // this one is special-cases as well
           hasDefault = default != null && !resolvesToOmittedDefault(default, type),
-          hasDefaultFactory = defaultFactory != null && !resolvesToOmittedDefault(defaultFactory, type) || 
+          hasDefaultFactory = defaultFactory != null && !resolvesToOmittedDefault(defaultFactory, type) ||
                               factory != null && !resolvesToOmittedDefault(factory, type),
           initValue = initValue,  // TODO How should we handle custom field specifiers where init=False by default
           kwOnly = kwOnly,

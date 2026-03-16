@@ -5,7 +5,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.ActionPlan;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,7 +27,7 @@ final class EditorActionPlan implements ActionPlan {
   }
 
   @Override
-  public @NotNull ImmutableCharSequence getText() {
+  public @NotNull CharSequence getText() {
     return myText;
   }
 
@@ -48,7 +50,8 @@ final class EditorActionPlan implements ActionPlan {
     myCaretOffset = offset;
   }
 
-  public List<Replacement> getReplacements() {
+  @Contract(pure = true)
+  public @NotNull @UnmodifiableView List<Replacement> getReplacements() {
     return Collections.unmodifiableList(myReplacements);
   }
 

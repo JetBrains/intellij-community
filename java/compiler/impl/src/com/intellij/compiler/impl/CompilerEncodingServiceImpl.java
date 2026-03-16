@@ -22,7 +22,11 @@ import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 public final class CompilerEncodingServiceImpl extends CompilerEncodingService {
   private final @NotNull Project myProject;

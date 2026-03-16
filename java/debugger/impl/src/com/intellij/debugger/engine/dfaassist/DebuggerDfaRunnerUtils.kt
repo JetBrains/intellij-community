@@ -26,7 +26,12 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.impl.dfaassist.DfaResult
-import com.sun.jdi.*
+import com.sun.jdi.InconsistentDebugInfoException
+import com.sun.jdi.InternalException
+import com.sun.jdi.InvalidStackFrameException
+import com.sun.jdi.VMDisconnectedException
+import com.sun.jdi.VMOutOfMemoryException
+import com.sun.jdi.Value
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext

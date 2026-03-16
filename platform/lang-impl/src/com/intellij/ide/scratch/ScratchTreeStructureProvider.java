@@ -2,7 +2,13 @@
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.projectView.*;
+import com.intellij.ide.projectView.NodeSortOrder;
+import com.intellij.ide.projectView.NodeSortSettings;
+import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.TreeStructureProvider;
+import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
@@ -12,7 +18,11 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DataSnapshot;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiDataRule;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -37,6 +47,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -45,7 +57,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -65,7 +82,7 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
         if (updateTarget == null) {
           updateTarget = ProjectView.getInstance(project).getProjectViewPaneById(ProjectViewPane.ID);
         }
-        if (updateTarget != null) updateTarget.updateFromRoot(true);
+        if (updateTarget != null) updateTarget.updateFromRoot(true, ProjectViewUpdateCause.SCRATCHES);
       }
     });
     ApplicationManager.getApplication().getMessageBus()
@@ -73,7 +90,7 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
         @Override
         public void advancedSettingChanged(@NotNull String id, @NotNull Object oldValue, @NotNull Object newValue) {
           if (SCRATCHES_NODE_SETTING.equals(id)) {
-            ProjectView.getInstance(project).refresh();
+            ProjectView.getInstance(project).refresh(ProjectViewUpdateCause.SETTINGS);
           }
         }
       });
@@ -129,10 +146,10 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
     Disposable rootDisposable = disposables.get(rootType);
     Disposer.register(parentDisposable, rootDisposable);
 
-    ReadAction.run(() -> {
-      if (project.isDisposed()) return;
-
-      rootType.registerTreeUpdater(project, parentDisposable, onUpdate);
+    NonUrgentExecutor.getInstance().execute(() -> {
+      ReadAction.run(() -> {
+        rootType.registerTreeUpdater(project, parentDisposable, onUpdate);
+      });
     });
   }
 

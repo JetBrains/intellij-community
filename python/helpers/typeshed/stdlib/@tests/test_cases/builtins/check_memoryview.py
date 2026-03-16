@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import array
+import sys
 from typing_extensions import assert_type
 
 # Casting to bytes.
@@ -57,5 +58,9 @@ assert_type(float_mv[0:2], memoryview[float])
 mv = memoryview(b"abc")
 mv.cast("abc")  # type: ignore
 
-mv.index(42)  # type: ignore
-mv.count(42)  # type: ignore
+if sys.version_info >= (3, 14):
+    mv.index(42)
+    mv.count(42)
+else:
+    mv.index(42)  # type: ignore
+    mv.count(42)  # type: ignore

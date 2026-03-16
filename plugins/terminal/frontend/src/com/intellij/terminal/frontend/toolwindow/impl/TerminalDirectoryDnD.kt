@@ -13,6 +13,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
+import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 
 /**
  * Creates the new terminal tab on dropping the directory node inside the terminal tool window.
@@ -20,6 +22,7 @@ import com.intellij.util.ui.UIUtil
  */
 internal fun installDirectoryDnD(window: ToolWindowEx, parentDisposable: Disposable) {
   val handler = DnDDropHandler { event ->
+    val fusInfo = TerminalStartupFusInfo(TerminalOpeningWay.DND_FILE_TO_TOOLWINDOW)
     val tw = event.getAttachedObject() as? TransferableWrapper ?: return@DnDDropHandler
     val dir = getDirectory(tw.getPsiElements()?.singleOrNull()) ?: return@DnDDropHandler
     // Find the right split to create the new tab in
@@ -28,6 +31,7 @@ internal fun installDirectoryDnD(window: ToolWindowEx, parentDisposable: Disposa
       window.project,
       workingDirectory = dir.getVirtualFile().getPath(),
       contentManager = nearestManager,
+      startupFusInfo = fusInfo
     )
   }
   DnDSupport.createBuilder(window.decorator)

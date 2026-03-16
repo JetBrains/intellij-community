@@ -4,7 +4,24 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/uast/uast-kotlin-idea",
+    "//platform/util-ex",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//uast/uast-common:uast",
+    "//plugins/kotlin/uast/uast-kotlin",
+    "//plugins/kotlin/uast/uast-kotlin/tests",
+    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base",
+    "//plugins/kotlin/uast/uast-kotlin-base/tests",
+    "//uast/uast-common-ide:ide",
+    "//plugins/kotlin/uast/uast-kotlin-idea-base:kotlin-uast-idea-base",
+  ]
 )
 
 jvm_library(
@@ -20,7 +37,7 @@ jvm_library(
     "//plugins/kotlin/core",
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/uast/uast-kotlin-idea",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//platform/util-ex",
     "//platform/core-impl",
     "//platform/testFramework",
@@ -34,16 +51,16 @@ jvm_library(
     "//plugins/kotlin/uast/uast-kotlin/tests",
     "//plugins/kotlin/uast/uast-kotlin/tests:tests_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/uast/uast-kotlin-base",
-    "//plugins/kotlin/uast/uast-kotlin-fir:kotlin-uast",
+    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base",
     "//plugins/kotlin/uast/uast-kotlin-base/tests",
     "//plugins/kotlin/uast/uast-kotlin-base/tests:tests_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/uast/uast-kotlin-idea-base/tests:tests_test_lib",
     "//uast/uast-common-ide:ide",
-    "//plugins/kotlin/uast/uast-kotlin-idea-base",
-  ]
+    "//plugins/kotlin/uast/uast-kotlin-idea-base:kotlin-uast-idea-base",
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build kotlin.uast.uast-kotlin-idea.tests` end
 

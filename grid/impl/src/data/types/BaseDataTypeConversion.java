@@ -1,6 +1,10 @@
 package com.intellij.database.data.types;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.CoreGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.datagrid.mutating.CellMutation;
 import com.intellij.database.remote.jdbc.LobInfo;
 import org.jetbrains.annotations.NotNull;

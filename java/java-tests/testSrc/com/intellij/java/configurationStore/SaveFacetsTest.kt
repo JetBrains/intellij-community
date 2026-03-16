@@ -13,7 +13,12 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
+import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
+import com.intellij.platform.workspace.jps.entities.customImlData
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule

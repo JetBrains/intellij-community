@@ -10,7 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
 import com.intellij.openapi.util.Key
-import java.util.*
+import java.util.Collections
 
 private const val SPELLCHECKER_KEY_NAME = "spellchecker"
 private val SPELLCHECKER = EventFields.Boolean(SPELLCHECKER_KEY_NAME)

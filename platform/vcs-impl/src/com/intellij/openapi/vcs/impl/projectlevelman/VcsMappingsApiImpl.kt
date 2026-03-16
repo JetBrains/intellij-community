@@ -4,11 +4,11 @@ package com.intellij.openapi.vcs.impl.projectlevelman
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.platform.project.ProjectId
+import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
 import com.intellij.platform.vcs.impl.shared.rpc.VcsMappingDto
 import com.intellij.platform.vcs.impl.shared.rpc.VcsMappingsApi
 import com.intellij.platform.vcs.impl.shared.rpc.VcsMappingsDto
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow
-import com.intellij.vcs.toDto
 import com.intellij.vcsUtil.VcsUtil
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -28,7 +28,7 @@ internal class VcsMappingsApiImpl : VcsMappingsApi {
   private fun getMappingsDto(vcsManager: ProjectLevelVcsManager): VcsMappingsDto {
     val mappings = vcsManager.getAllVcsRoots().map {
       VcsMappingDto(
-        root = VcsUtil.getFilePath(it.path).toDto(),
+        root = FilePathDto.toDto(VcsUtil.getFilePath(it.path)),
         vcs = it.vcs?.keyInstanceMethod,
       )
     }

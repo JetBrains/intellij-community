@@ -2,6 +2,12 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
+  name = "benchmark",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
   name = "benchmark_test_lib",
   module_name = "intellij.platform.util.immutableKeyValueStore.benchmark",
   visibility = ["//visibility:public"],
@@ -14,7 +20,8 @@ jvm_library(
     "//platform/util/rt-java8",
     "@community//build:zip",
     "//libraries/hash4j",
-  ]
+  ],
+  runtime_deps = [":benchmark"]
 )
 ### auto-generated section `build intellij.platform.util.immutableKeyValueStore.benchmark` end
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage
 
 import com.intellij.openapi.diagnostic.logger
@@ -20,7 +20,7 @@ import java.io.IOException
  */
 @Internal
 object IndexStorageLayoutLocator {
-  private val log = logger<IndexStorageLayoutLocator>()
+  private val LOG = logger<IndexStorageLayoutLocator>()
 
   /**
    * Finds a [VfsAwareIndexStorageLayout] for the given indexExtension.
@@ -50,10 +50,10 @@ object IndexStorageLayoutLocator {
       )
     }
 
-    log.info("Layout '${primaryProviderBeanForExtension.id}' will be used to for '${indexExtension.name}' index " +
-             "(applicable providers: [${applicableLayoutProviders.joinToString { it.id }}])" +
-             ((indexExtension as? ShardableIndexExtension)?.let {", shards = ${it.shardsCount()}"} ?: ""))
-    
+    LOG.debug("Layout '${primaryProviderBeanForExtension.id}' will be used to for '${indexExtension.name}' index " +
+              "(applicable providers: [${applicableLayoutProviders.joinToString { it.id }}])" +
+              ((indexExtension as? ShardableIndexExtension)?.let { ", shards = ${it.shardsCount()}" } ?: ""))
+
     val otherApplicableProviders = applicableLayoutProviders
       .filterNot { it === primaryProviderBeanForExtension }
       .map { it.layoutProvider }

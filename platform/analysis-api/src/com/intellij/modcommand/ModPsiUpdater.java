@@ -1,13 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +33,7 @@ import java.util.function.Consumer;
  * @see ModCommand#psiUpdate(PsiElement, BiConsumer)
  * @see ModCommand#psiUpdate(ActionContext, Consumer) 
  */
-public interface ModPsiUpdater extends ModPsiNavigator {
+public interface ModPsiUpdater extends ModNavigator {
   /**
    * Returns a copy of this element inside a writable non-physical file, whose changes are tracked and will be added to the final command.
    * If {@code element} is a {@link PsiDirectory}, a non-physical copy is returned, which allows you to create new files inside that directory.
@@ -85,6 +92,20 @@ public interface ModPsiUpdater extends ModPsiNavigator {
    * @param suggestedNames names to suggest (user is free to type any other name as well)
    */
   void rename(@NotNull PsiNameIdentifierOwner element, @NotNull List<@NotNull String> suggestedNames);
+
+  /**
+   * Add a command to launch an interactive editor action in the context of an opened editor/file.
+   *
+   * @param actionId action identifier; taken from the IntelliJ IDEA action system (see {@code com.intellij.openapi.actionSystem.IdeActions}).
+   *                 For example, "CodeCompletion" will invoke the code completion at the caret position.
+   *                 The tested action IDs are declared as constants inside {@link ModLaunchEditorAction}.
+   *                 Other actions may work as well, but use with care!
+   * @param optional if true, the action is optional and can be skipped if the ModCommand is executed non-interactively,
+   *                 or if the action is not supported by the target editor. 
+   *                 If false and it's unable to execute this action, an error should be displayed. 
+   */
+  @ApiStatus.Experimental
+  void editorAction(@NotNull @NonNls String actionId, boolean optional);
 
   /**
    * Displays the UI to rename a given element. Does nothing when executed non-interactively. 
@@ -152,7 +173,6 @@ public interface ModPsiUpdater extends ModPsiNavigator {
    *
    * @param element element to select
    */
-  @Override
   void select(@NotNull PsiElement element);
 
   /**
@@ -177,7 +197,6 @@ public interface ModPsiUpdater extends ModPsiNavigator {
    *
    * @param element element to navigate to
    */
-  @Override
   void moveCaretTo(@NotNull PsiElement element);
 
   /**
@@ -187,4 +206,10 @@ public interface ModPsiUpdater extends ModPsiNavigator {
    */
   @Override
   int getCaretOffset();
+
+  /**
+   * @return the writable copy of the context document 
+   */
+  @Override
+  @NotNull Document getDocument();
 }

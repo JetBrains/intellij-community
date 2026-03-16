@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.types.AbbreviatedType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isNullableAny
 import org.jetbrains.kotlin.utils.addIfNotNull
-import kotlin.collections.forEach
 
 internal object ByDescriptorIndexer {
     fun getDeclarationForDescriptor(descriptor: DeclarationDescriptor, file: KtDecompiledFile): KtDeclaration? {

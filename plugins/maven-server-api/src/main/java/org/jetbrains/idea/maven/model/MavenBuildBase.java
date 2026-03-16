@@ -32,9 +32,34 @@ public class MavenBuildBase implements Serializable {
   private String myDefaultGoal;
   private String myDirectory;
 
-  private transient @NotNull ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
-  private final @NotNull List<@NotNull String> myFilters = new ArrayList<>();
-  private final @NotNull List<@NotNull MavenSource> myMavenSources = new ArrayList<>();
+  private transient @NotNull ReentrantReadWriteLock myLock;
+  private final @NotNull List<@NotNull String> myFilters;
+  private final @NotNull List<@NotNull MavenSource> myMavenSources;
+
+  public MavenBuildBase() {
+    myLock = new ReentrantReadWriteLock();
+    myFilters = new ArrayList<>();
+    myMavenSources = new ArrayList<>();
+  }
+
+  protected MavenBuildBase(@NotNull MavenBuildBase other) {
+    myLock = new ReentrantReadWriteLock();
+    myFilters = new ArrayList<>();
+    myMavenSources = new ArrayList<>();
+
+    other.myLock.readLock().lock();
+    try {
+      this.myFinalName = other.myFinalName;
+      this.myDefaultGoal = other.myDefaultGoal;
+      this.myDirectory = other.myDirectory;
+
+      this.myFilters.addAll(other.myFilters);
+      this.myMavenSources.addAll(other.myMavenSources);
+    }
+    finally {
+      other.myLock.readLock().unlock();
+    }
+  }
 
   public String getFinalName() {
     return myFinalName;
@@ -177,5 +202,9 @@ public class MavenBuildBase implements Serializable {
   private void readObject(@NotNull ObjectInputStream in) throws IOException, ClassNotFoundException {
     in.defaultReadObject();
     myLock = new ReentrantReadWriteLock();
+  }
+
+  MavenBuildBase copy() {
+    return new MavenBuildBase(this);
   }
 }

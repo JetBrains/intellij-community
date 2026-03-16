@@ -2,7 +2,7 @@ import weakref
 from collections.abc import Callable, Iterable, Sequence
 from types import FrameType, TracebackType
 from typing import Any, ClassVar, Generic, TypeVar, overload
-from typing_extensions import ParamSpec, Self
+from typing_extensions import ParamSpec, Self, disjoint_base
 
 import greenlet
 from gevent._types import _Loop
@@ -12,6 +12,7 @@ _T = TypeVar("_T")
 _G = TypeVar("_G", bound=greenlet.greenlet)
 _P = ParamSpec("_P")
 
+@disjoint_base
 class Greenlet(greenlet.greenlet, Generic[_P, _T]):
     # we can't use _P.args/_P.kwargs here because pyright will complain
     # mypy doesn't seem to mind though

@@ -16,7 +16,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Collections
 
 /**
  * Manages the build classpath for external projects within a specific project context.

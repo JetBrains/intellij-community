@@ -7,9 +7,9 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
+import java.awt.Font;
 
 public class LibraryTreeRenderer extends ColoredTreeCellRenderer {
     @Override

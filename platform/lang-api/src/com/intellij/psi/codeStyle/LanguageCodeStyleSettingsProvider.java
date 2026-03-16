@@ -16,11 +16,20 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 
@@ -29,7 +38,7 @@ import java.util.function.BiConsumer;
  */
 public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSettingsProvider implements LanguageCodeStyleProvider {
   public static final ExtensionPointName<LanguageCodeStyleSettingsProvider> EP_NAME =
-    ExtensionPointName.create("com.intellij.langCodeStyleSettingsProvider");
+    new ExtensionPointName<>("com.intellij.langCodeStyleSettingsProvider");
 
   public enum SettingsType {
     BLANK_LINES_SETTINGS, SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS, INDENT_SETTINGS, COMMENTER_SETTINGS, LANGUAGE_SPECIFIC

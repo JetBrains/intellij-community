@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.core.ui.impl;
 
-import com.intellij.debugger.streams.core.trace.*;
+import com.intellij.debugger.streams.core.trace.CollectionTreeBuilder;
+import com.intellij.debugger.streams.core.trace.DebuggerCommandLauncher;
+import com.intellij.debugger.streams.core.trace.GenericEvaluationContext;
+import com.intellij.debugger.streams.core.trace.TraceElement;
+import com.intellij.debugger.streams.core.trace.Value;
 import com.intellij.debugger.streams.core.ui.PaintingListener;
 import com.intellij.debugger.streams.core.ui.TraceContainer;
 import com.intellij.debugger.streams.core.ui.ValuesSelectionListener;
@@ -18,7 +22,13 @@ import javax.swing.tree.TreePath;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.ui.tree.TreeUtil.collectSelectedPaths;

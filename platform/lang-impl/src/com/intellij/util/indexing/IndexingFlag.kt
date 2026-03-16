@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.components.service
@@ -14,17 +14,16 @@ import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesServic
 import com.intellij.util.indexing.impl.perFileVersion.LongFileAttribute
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import kotlin.concurrent.Volatile
 
 /**
  * An object dedicated to manage persistent `isIndexed` file flag.
  *
  * For each file it saves the file mod count and [AppIndexingDependenciesService.current] at the moment when the file was indexed.
  * The IndexingFlag is used to quickly check if all indexes for a file are up to date (see IJPL-229).
- * But if IndexingFlag is not up to date, it doesn't necessarily mean that all indexes for a file are outdated.
+ * But if IndexingFlag is not up to date, it doesn't necessarily mean that indexes for a file are outdated.
  *
- * IndexingFlag can also be used to check the dirty files from the previous IDE sessions for which [IndexingStamp] may not have been updated or
- * the change was not persisted to disk.
+ * IndexingFlag can also be used to check the dirty files from the previous IDE sessions for which [IndexingStamp] may not have been updated
+ * or the change was not persisted to disk.
  *
  * The alternative is [IndexingStamp] which contains information per-index but can become outdated (see the doc) and is slower.
  * So in practice the combination of the two should be used (see [FileBasedIndexImpl.getIndexingState]).
@@ -33,8 +32,8 @@ import kotlin.concurrent.Volatile
 object IndexingFlag {
   private val attribute = FileAttribute("indexing.flag", 1, true)
 
-  @Volatile
-  private var persistence = LongFileAttribute.overFastAttribute(attribute)
+  /** fileId -> ([FileIndexingStamp] as int64) */
+  private val persistence = LongFileAttribute.overFastAttribute(attribute)
   private val hashes = StripedIndexingStampLock()
 
   @JvmStatic
@@ -56,6 +55,9 @@ object IndexingFlag {
     if (fileWithId !is VirtualFileSystemEntry) return
     if (!fileWithId.isDirectory()) return
     for (child in fileWithId.cachedChildren) {
+      //TODO RC: shouldn't we use .iterInDbChildren()? Because it could be the child was loaded at some point, left it's
+      //         mark in IndexingFlag, but then the parent GCed from the VFS cache, and reloaded later, with fewer
+      //         children in-memory
       cleanProcessedFlagRecursively(child)
     }
   }
@@ -68,6 +70,9 @@ object IndexingFlag {
   @JvmStatic
   fun cleanProcessingFlag(fileId: Int) {
     // the file might have already been deleted, so there might be no VirtualFile for given fileId
+    //TODO RC: sometimes incorrect fileIds (>maxAllocatedFileId) are coming here. Probably, it is not that incorrect to
+    //         clean incorrect fileId? Maybe we should just ignore incorrect fileId (because they are effectively already
+    //         'cleaned' in some sense) instead of throwing an exception?
     setFileIndexed(fileId, ProjectIndexingDependenciesService.NULL_STAMP)
   }
 
@@ -139,7 +144,13 @@ object IndexingFlag {
   }
 
   fun reloadAttributes() {
-    persistence = LongFileAttribute.overFastAttribute(attribute)
+    persistence.close()//will be reopened on next access
+  }
+
+  @JvmStatic
+  fun close(){
+    unlockAllFiles()
+    persistence.close()
   }
 
   @JvmStatic

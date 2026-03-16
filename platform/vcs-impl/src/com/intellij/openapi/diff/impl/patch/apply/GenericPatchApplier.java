@@ -21,9 +21,19 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
-import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.*;
+import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.ALREADY_APPLIED;
+import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.FAILURE;
+import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.PARTIAL;
+import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.SUCCESS;
 
 public class GenericPatchApplier {
   private static final Logger LOG = Logger.getInstance(GenericPatchApplier.class);

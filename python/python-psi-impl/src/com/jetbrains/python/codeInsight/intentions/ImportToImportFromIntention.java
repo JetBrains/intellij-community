@@ -2,7 +2,11 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModChooseAction;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -15,13 +19,26 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.psi.PyImportStatementBase;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Converts {@code import foo} to {@code from foo import names} or {@code from ... import module} to {@code from ...module import names}.
@@ -115,7 +132,7 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
         Collection<PyReferenceExpression> referencesToUpdate = unqualifyAll ? myReferences : getSameNameReferences();
         for (PyReferenceExpression ref : referencesToUpdate) {
           final PsiElement parentElt = ref.getParent();
-          assert parentElt instanceof PyReferenceExpression: parentElt.getClass();
+          assert parentElt instanceof PyReferenceExpression : parentElt.getClass();
           final String nameUsed = Objects.requireNonNull(((PyReferenceExpression)parentElt).getReferencedName());
           usedNames.add(nameUsed);
           final PyElement newReference = generator.createExpressionFromText(languageLevel, nameUsed);

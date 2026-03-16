@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -16,6 +16,8 @@ import java.io.IOException;
 @ApiStatus.Internal
 public class StoredContent extends Content {
   private static final int UNAVAILABLE = 0;
+
+  public static final StoredContent UNAVAILABLE_CONTENT = new StoredContent(UNAVAILABLE);
 
   private int myContentId;
 
@@ -41,7 +43,7 @@ public class StoredContent extends Content {
     };
   }
 
-  @TestOnly
+  @VisibleForTesting
   public StoredContent(int contentId) {
     myContentId = contentId;
   }
@@ -70,8 +72,7 @@ public class StoredContent extends Content {
 
   @Override
   public boolean isAvailable() {
-    //return myContentId != UNAVAILABLE;
-    return true;
+    return myContentId != UNAVAILABLE;
   }
 
   private static PersistentFS getFS() {

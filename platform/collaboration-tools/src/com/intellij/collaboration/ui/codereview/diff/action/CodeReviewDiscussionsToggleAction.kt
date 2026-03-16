@@ -4,7 +4,12 @@ package com.intellij.collaboration.ui.codereview.diff.action
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiscussionsViewModel
 import com.intellij.collaboration.ui.codereview.diff.toActionName
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
 
 abstract class CodeReviewDiscussionsToggleAction : ActionGroup(), DumbAware {
@@ -24,8 +29,8 @@ abstract class CodeReviewDiscussionsToggleAction : ActionGroup(), DumbAware {
 
   protected abstract fun findViewModel(ctx: DataContext): CodeReviewDiscussionsViewModel?
 
-  private class ToggleOptionAction(private val vm: CodeReviewDiscussionsViewModel,
-                                   private val viewOption: DiscussionsViewOption) : ToggleAction(viewOption.toActionName()) {
+  internal class ToggleOptionAction(private val vm: CodeReviewDiscussionsViewModel,
+                                    private val viewOption: DiscussionsViewOption) : ToggleAction(viewOption.toActionName()) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun isSelected(e: AnActionEvent): Boolean {

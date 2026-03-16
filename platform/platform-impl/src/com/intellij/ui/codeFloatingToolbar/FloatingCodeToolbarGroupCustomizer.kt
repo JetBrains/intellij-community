@@ -4,7 +4,7 @@ package com.intellij.ui.codeFloatingToolbar
 import com.intellij.ide.ui.customization.CustomizableActionGroupProvider
 import com.intellij.idea.ActionsBundle
 
-private class FloatingCodeToolbarGroupCustomizer: CustomizableActionGroupProvider() {
+internal class FloatingCodeToolbarGroupCustomizer: CustomizableActionGroupProvider() {
   override fun registerGroups(registrar: CustomizableActionGroupRegistrar) {
     registrar.addCustomizableActionGroup(
       "Floating.CodeToolbar",

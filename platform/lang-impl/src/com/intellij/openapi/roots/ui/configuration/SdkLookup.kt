@@ -8,6 +8,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.platform.eel.EelDescriptor
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 
@@ -19,6 +21,7 @@ import org.jetbrains.annotations.Nls
  * The code can be executed from any thread.
  * There is no guaranty callbacks happen from EDT thread too.
  */
+@ApiStatus.Internal
 interface SdkLookup {
   fun createBuilder(): SdkLookupBuilder
 
@@ -59,8 +62,19 @@ interface SdkLookupBuilder {
   @Contract(pure = true)
   fun withProgressIndicator(indicator: ProgressIndicator): SdkLookupBuilder
 
+  /**
+   * If [withEel] is set, project *must* be on the same eel.
+   */
+  @ApiStatus.Internal
   @Contract(pure = true)
   fun withProject(project: Project?): SdkLookupBuilder
+
+  /**
+   * If [withProject] is set, eel *must* be on the same eel as project.
+   */
+  @ApiStatus.Internal
+  @Contract(pure = true)
+  fun withEel(eelDescriptor: EelDescriptor?): SdkLookupBuilder
 
   @Contract(pure = true)
   fun withProgressMessageTitle(@ProgressTitle message: String): SdkLookupBuilder
@@ -157,8 +171,11 @@ interface SdkLookupBuilder {
   fun onSdkFixResolved(handler: (UnknownSdkFixAction) -> SdkLookupDecision) : SdkLookupBuilder
 }
 
+@ApiStatus.Internal
 interface SdkLookupParameters {
   val project: Project?
+
+  val eelDescriptor: EelDescriptor?
 
   val progressMessageTitle: String?
   val progressIndicator: ProgressIndicator?

@@ -18,7 +18,16 @@ import git4idea.remote.hosting.findHostedRemoteBranchTrackedByCurrent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -28,6 +37,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
+import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
@@ -48,6 +58,7 @@ interface GitLabConnectedProjectViewModel {
   val accountVm: GitLabAccountViewModel
   val listVm: GitLabMergeRequestsListViewModel
   val currentMergeRequestReviewVm: Flow<GitLabMergeRequestEditorReviewViewModel?>
+  val imageLoader: GitLabImageLoader
   fun findMergeRequestDetails(mrIid: String): GitLabMergeRequestDetails?
   fun reloadMergeRequestDetails(mergeRequestId: String)
   fun getDiffViewModel(mrIid: String): Flow<Result<GitLabMergeRequestDiffViewModel>>
@@ -77,6 +88,8 @@ abstract class GitLabConnectedProjectViewModelBase(
 
   override val avatarIconProvider: IconsProvider<GitLabUserDTO> = CachingIconsProvider(AsyncImageIconsProvider(cs, connection.imageLoader))
 
+  override val imageLoader: GitLabImageLoader = connection.imageLoader
+
   private val projectName: @Nls String = connection.repo.repository.projectPath.name
 
   override val listVm: GitLabMergeRequestsListViewModel = run {
@@ -103,7 +116,8 @@ abstract class GitLabConnectedProjectViewModelBase(
     connection.projectData.mergeRequests.getShared(iid)
       .transformConsecutiveSuccesses {
         mapScoped {
-          GitLabMergeRequestViewModels(project, this, connection.projectData, avatarIconProvider, it, connection.currentUser,
+          GitLabMergeRequestViewModels(project, this, connection.projectData, avatarIconProvider,
+                                       connection.imageLoader, it, connection.currentUser,
                                        ::openMergeRequestDetails, ::openMergeRequestTimeline, ::openMergeRequestDiff)
         }
       }

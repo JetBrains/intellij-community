@@ -2,7 +2,11 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
 import com.intellij.dupLocator.util.NodeFilter;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
 
 public final class CommentFilter implements NodeFilter {
 

@@ -7,8 +7,13 @@ import com.intellij.ide.IdeTooltip;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ClientEditorManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -19,7 +24,12 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.*;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.Gray;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.LightweightHint;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -29,10 +39,18 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JLayeredPane;
+import javax.swing.JRootPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class HintManagerImpl extends HintManager {
@@ -685,7 +703,9 @@ public class HintManagerImpl extends HintManager {
           if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && "action".equals(e.getDescription()) && hint.isVisible()) {
             boolean execute;
             try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-              execute = action.execute();
+              execute = WriteIntentReadAction.compute(() -> {
+                return action.execute();
+              });
             }
             if (execute) {
               hint.hide();

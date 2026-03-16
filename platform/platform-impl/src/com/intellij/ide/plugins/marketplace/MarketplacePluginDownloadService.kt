@@ -18,7 +18,13 @@ import java.io.InputStream
 import java.net.URLConnection
 import java.nio.file.Path
 import java.util.zip.ZipInputStream
-import kotlin.io.path.*
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createTempFile
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
+import kotlin.io.path.inputStream
+import kotlin.io.path.moveTo
+import kotlin.io.path.outputStream
 
 @ApiStatus.Internal
 open class MarketplacePluginDownloadService {

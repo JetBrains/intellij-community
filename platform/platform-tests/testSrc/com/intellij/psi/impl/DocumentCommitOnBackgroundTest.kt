@@ -29,6 +29,8 @@ import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.util.application
 import com.intellij.util.concurrency.TransferredWriteActionService
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
@@ -188,11 +190,13 @@ class DocumentCommitOnBackgroundTest {
     application.messageBus.connect(disposable).subscribe(FileDocumentManagerListener.TOPIC, plainListener)
     application.messageBus.connect(disposable).subscribe(FileDocumentManagerListenerBackgroundable.TOPIC, backgroundableListener)
 
-    backgroundWriteAction {
-      application.service<TransferredWriteActionService>().runOnEdtWithTransferredWriteActionAndWait {
-        CommandProcessor.getInstance().executeCommand(project.get(), {
-          document.insertString(0, " ")
-        }, "test command", Any())
+    withContext(Dispatchers.Default) {
+      backgroundWriteAction {
+        application.service<TransferredWriteActionService>().runOnEdtWithTransferredWriteActionAndWait {
+          CommandProcessor.getInstance().executeCommand(project.get(), {
+            document.insertString(0, " ")
+          }, "test command", Any())
+        }
       }
       saveAction(document)
     }

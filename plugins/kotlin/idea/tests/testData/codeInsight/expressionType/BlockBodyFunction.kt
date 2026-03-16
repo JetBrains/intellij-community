@@ -4,4 +4,4 @@ fun foo() {
 
 // K1_TYPE: val x = 1 -> <html>Int</html>
 
-// K2_TYPE: val x = 1 -> Int
+// K2_TYPE: val x = 1 -> <b>Int</b>

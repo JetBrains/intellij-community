@@ -6,7 +6,12 @@ import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.InteractiveCoursePane
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnButton
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy.JBAcademyWelcomeScreenBundle
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JPanel

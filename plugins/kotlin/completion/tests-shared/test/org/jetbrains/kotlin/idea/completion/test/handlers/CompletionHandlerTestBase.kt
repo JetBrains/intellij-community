@@ -3,7 +3,10 @@
 package org.jetbrains.kotlin.idea.completion.test.handlers
 
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.lookup.LookupElementRenderer
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -17,47 +20,50 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
     protected val fixture: JavaCodeInsightTestFixture
         get() = myFixture
 
-    companion object {
-        fun doTestWithTextLoaded(
-            fileText: String,
-            fixture: JavaCodeInsightTestFixture,
-            completionType: CompletionType,
-            time: Int,
-            lookupString: String?,
-            itemText: String?,
-            tailText: String?,
-            completionChars: String,
-            afterFilePath: String,
-            actions: List<String>? = emptyList(),
-            useExpensiveRenderer: Boolean = false,
-            afterTypingBlock: () -> Unit = {}
-        ) {
-            testWithAutoCompleteSetting(fileText) {
-                for (idx in 0 until completionChars.length - 1) {
-                    fixture.type(completionChars[idx])
-                    afterTypingBlock()
-                }
-
-                if (!actions.isNullOrEmpty()) {
-                    for (action in actions) {
-                        fixture.performEditorAction(action)
-                    }
-                }
-
-                fixture.complete(completionType, time)
-
-                if (lookupString != null || itemText != null || tailText != null) {
-                    val item = getExistentLookupElement(fixture.project, lookupString, itemText, tailText, useExpensiveRenderer)
-                    if (item != null) {
-                        selectItem(fixture, item, completionChars.last())
-                    }
-                }
+    fun doTestWithTextLoaded(
+        fileText: String,
+        completionType: CompletionType,
+        time: Int,
+        lookupString: String?,
+        itemText: String?,
+        tailText: String?,
+        completionChars: String,
+        afterFilePath: String,
+        actions: List<String>? = emptyList(),
+        typeAfterCompletion: String? = null,
+        afterTypingBlock: () -> Unit = {}
+    ) {
+        testWithAutoCompleteSetting(fileText) {
+            for (idx in 0 until completionChars.length - 1) {
+                type(completionChars[idx].toString())
                 afterTypingBlock()
-
-                fixture.checkResultByFile(afterFilePath)
             }
-        }
 
+            if (!actions.isNullOrEmpty()) {
+                for (action in actions) {
+                    fixture.performEditorAction(action)
+                }
+            }
+
+            fixture.complete(completionType, time)
+
+            if (typeAfterCompletion != null) {
+                type(typeAfterCompletion)
+            }
+
+            if (lookupString != null || itemText != null || tailText != null) {
+                val item = getExistentLookupElement(fixture.project, lookupString, itemText, tailText)
+                if (item != null) {
+                    selectItem(item, completionChars.last())
+                }
+            }
+            afterTypingBlock()
+
+            fixture.checkResultByFile(afterFilePath)
+        }
+    }
+
+    companion object {
         fun completionChars(text: String): String {
             val char: String? = InTextDirectivesUtils.findStringWithPrefixes(text, AbstractCompletionHandlerTest.COMPLETION_CHAR_PREFIX)
             val chars: String? = InTextDirectivesUtils.findStringWithPrefixes(text, AbstractCompletionHandlerTest.COMPLETION_CHARS_PREFIX)
@@ -78,7 +84,6 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
             lookupString: String?,
             itemText: String?,
             tailText: String?,
-            useExpensiveRenderer: Boolean
         ): LookupElement? {
             val lookup = LookupManager.getInstance(project)?.activeLookup as LookupImpl? ?: return null
             val items = lookup.items
@@ -97,12 +102,10 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
                 if (lookupOk) {
                     lookupElement.renderElement(presentation)
 
-                    if (useExpensiveRenderer) {
-                        timeoutRunBlocking {
-                            @Suppress("UNCHECKED_CAST")
-                            (lookupElement.expensiveRenderer as? LookupElementRenderer<LookupElement>)
-                                ?.renderElement(lookupElement, presentation)
-                        }
+                    timeoutRunBlocking {
+                        @Suppress("UNCHECKED_CAST")
+                        (lookupElement.expensiveRenderer as? LookupElementRenderer<LookupElement>)
+                            ?.renderElement(lookupElement, presentation)
                     }
 
                     val textOk = if (itemText != null) {
@@ -144,19 +147,6 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
                 error("No element satisfy completion restrictions in:\n$dump")
             }
             return foundElement
-        }
-
-        fun selectItem(fixture: JavaCodeInsightTestFixture, item: LookupElement?, completionChar: Char) {
-            val lookup = (fixture.lookup as LookupImpl)
-            if (lookup.currentItem != item) { // do not touch selection if not changed - important for char filter tests
-                lookup.currentItem = item
-            }
-            lookup.lookupFocusDegree = LookupFocusDegree.FOCUSED
-            if (LookupEvent.isSpecialCompletionChar(completionChar)) {
-                lookup.finishLookup(completionChar)
-            } else {
-                fixture.type(completionChar)
-            }
         }
     }
 }

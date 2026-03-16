@@ -4,6 +4,7 @@ package org.intellij.images.scientific.action
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.project.DumbAwareAction
@@ -16,7 +17,6 @@ import org.intellij.images.scientific.utils.ScientificUtils
 import org.intellij.images.scientific.utils.launchBackground
 import java.io.IOException
 import java.nio.file.Files
-import com.intellij.openapi.diagnostic.thisLogger
 
 internal class SaveImageAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

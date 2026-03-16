@@ -2,7 +2,12 @@
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
-import com.intellij.ide.todo.*
+import com.intellij.ide.todo.CommitChecksTodosTreeBuilder
+import com.intellij.ide.todo.PostCommitChecksTodosTreeBuilder
+import com.intellij.ide.todo.SetTodoFilterAction
+import com.intellij.ide.todo.TodoConfiguration
+import com.intellij.ide.todo.TodoPanelSettings
+import com.intellij.ide.todo.TodoView
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
@@ -36,7 +41,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 
-private class TodoCheckinHandlerFactory : CheckinHandlerFactory() {
+internal class TodoCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     return TodoCheckinHandler(panel.project)
   }

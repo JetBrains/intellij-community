@@ -6,12 +6,14 @@ import com.intellij.structuralsearch.PredefinedConfigurationUtil.createConfigura
 import com.intellij.structuralsearch.plugin.ui.Configuration
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.structuralsearch.filters.AlsoMatchCompanionObjectModifier
 import org.jetbrains.kotlin.idea.structuralsearch.filters.AlsoMatchValModifier
 import org.jetbrains.kotlin.idea.structuralsearch.filters.OneStateFilter
 
+@K1Deprecation
 object KotlinPredefinedConfigurations {
     private val CLASS_TYPE get() = KotlinBundle.message("category.class")
     private val EXPRESSION_TYPE get() = KotlinBundle.message("category.expressions")

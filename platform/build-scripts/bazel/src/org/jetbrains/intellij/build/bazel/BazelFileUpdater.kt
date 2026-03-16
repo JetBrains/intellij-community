@@ -47,7 +47,7 @@ internal class BazelFileUpdater(private val file: Path) {
       }
     }
     else {
-      this.fileContent = fileContent.substring(0, startIndex + startToken.length) + newSection + fileContent.substring(endIndex)
+      this.fileContent = fileContent.substring(0, startIndex + startToken.length) + "\n" + newSection.trim() + "\n" + fileContent.substring(endIndex)
     }
   }
 

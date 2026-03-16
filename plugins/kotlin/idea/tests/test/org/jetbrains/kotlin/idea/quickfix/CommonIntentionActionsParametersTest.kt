@@ -3,7 +3,13 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.lang.jvm.actions.*
+import com.intellij.lang.jvm.actions.ChangeParametersRequest
+import com.intellij.lang.jvm.actions.ExpectedParameter
+import com.intellij.lang.jvm.actions.annotationRequest
+import com.intellij.lang.jvm.actions.createChangeParametersActions
+import com.intellij.lang.jvm.actions.expectedParameter
+import com.intellij.lang.jvm.actions.intAttribute
+import com.intellij.lang.jvm.actions.setMethodParametersRequest
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypes

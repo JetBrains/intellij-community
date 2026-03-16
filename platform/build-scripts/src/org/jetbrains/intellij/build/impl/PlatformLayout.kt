@@ -4,24 +4,24 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_BACKEND_JAR
+import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 
 /**
  * Describes layout of the platform (*.jar files in IDE_HOME/lib directory).
  *
- * By default, it includes all modules specified in [org.jetbrains.intellij.build.ProductModulesLayout],
+ * By default, it includes all modules specified in [org.jetbrains.intellij.build.productLayout.ProductModulesLayout],
  * all libraries these modules depend on with scope 'Compile' or 'Runtime', and all project libraries from dependencies (with scope 'Compile'
- * or 'Runtime') of plugin modules for plugins which are [org.jetbrains.intellij.build.ProductModulesLayout.bundledPluginModules] bundled
- * (or prepared to be [org.jetbrains.intellij.build.ProductModulesLayout.pluginModulesToPublish] published) with the product (except
+ * or 'Runtime') of plugin modules for plugins which are [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.bundledPluginModules] bundled
+ * (or prepared to be [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.pluginModulesToPublish] published) with the product (except
  * project libraries which are explicitly included in layouts of all plugins depending on them by [BaseLayoutSpec.withProjectLibrary]).
  */
-class PlatformLayout : BaseLayout() {
+class PlatformLayout(@JvmField val descriptorCacheContainer: DescriptorCacheContainer = DescriptorCacheContainer()) : BaseLayout() {
   internal var libAsProductModule: Set<String> = emptySet()
 
   private val projectLibraryToPolicy: MutableMap<String, ProjectLibraryPackagingPolicy> = HashMap()
@@ -55,11 +55,10 @@ class PlatformLayout : BaseLayout() {
     projectLibraryToPolicy.put(libraryName, ProjectLibraryPackagingPolicy.EXCLUDE)
   }
 
-  fun collectProjectLibrariesFromIncludedModules(context: BuildContext, consumer: (JpsLibrary, JpsModule) -> Unit) {
+  fun collectProjectLibrariesFromIncludedModules(context: ModuleOutputProvider, consumer: (String, JpsModule) -> Unit) {
     val libsToUnpack = includedProjectLibraries.mapTo(LinkedHashSet(includedProjectLibraries.size)) { it.libraryName }
     val uniqueGuard = HashSet<String>()
     for (item in includedModules) {
-      // libraries are packed into product module
       if (item.isProductModule()) {
         continue
       }
@@ -71,14 +70,11 @@ class PlatformLayout : BaseLayout() {
 
       val module = context.findRequiredModule(moduleName)
       for (library in JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
-        if (!isSkippedLibrary(library, libsToUnpack)) {
-          consumer(library, module)
+        val libraryName = library.name
+        if (!libsToUnpack.contains(libraryName) && library.createReference().parentReference !is JpsModuleReference && !isProjectLibraryExcluded(libraryName)) {
+          consumer(libraryName, module)
         }
       }
     }
-  }
-
-  private fun isSkippedLibrary(library: JpsLibrary, libsToUnpack: Collection<String>): Boolean {
-    return library.createReference().parentReference is JpsModuleReference || libsToUnpack.contains(library.name) || isProjectLibraryExcluded(library.name)
   }
 }

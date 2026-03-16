@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.jcef.jar
   modules:
   - name: intellij.libraries.jcef
     libraries:

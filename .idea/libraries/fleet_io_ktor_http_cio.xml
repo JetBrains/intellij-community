@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="fleet:io.ktor.http.cio" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-http-cio-jvm:3.1.3">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-http-cio-jvm:3.3.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/3.1.3/ktor-http-cio-jvm-3.1.3.jar">
-          <sha256sum>b04aede18e9c008168096dc53a3fc016177b61a5ec3024afbf8caca0cd5dbf42</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/3.3.2/ktor-http-cio-jvm-3.3.2.jar">
+          <sha256sum>ce31685cd6a2bf91486abc37d0e594ae707b47b5df8bd3f9a5c5f045ea1d11a7</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/3.1.3/ktor-http-cio-jvm-3.1.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/3.3.2/ktor-http-cio-jvm-3.3.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/3.1.3/ktor-http-cio-jvm-3.1.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/3.3.2/ktor-http-cio-jvm-3.3.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

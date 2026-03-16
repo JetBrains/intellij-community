@@ -6,7 +6,15 @@ import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.TransferableIdeId
 import com.intellij.ide.startup.importSettings.controllers.TransferSettingsController
 import com.intellij.ide.startup.importSettings.controllers.TransferSettingsListener
-import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.ide.startup.importSettings.data.BaseSetting
+import com.intellij.ide.startup.importSettings.data.DataToApply
+import com.intellij.ide.startup.importSettings.data.DialogImportData
+import com.intellij.ide.startup.importSettings.data.ExternalProductService
+import com.intellij.ide.startup.importSettings.data.IconProductSize
+import com.intellij.ide.startup.importSettings.data.ImportProgress
+import com.intellij.ide.startup.importSettings.data.NotificationData
+import com.intellij.ide.startup.importSettings.data.Product
+import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.ide.startup.importSettings.models.PluginFeature
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.models.SettingsPreferencesKind
@@ -23,7 +31,11 @@ import com.intellij.util.text.nullize
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.reactive.OptProperty
 import com.jetbrains.rd.util.reactive.Property
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import javax.swing.Icon
 import kotlin.time.Duration.Companion.seconds
 

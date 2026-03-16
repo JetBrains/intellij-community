@@ -12,7 +12,7 @@ import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.containers.toArray
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Objects
 
 @ApiStatus.Internal
 object ChangesUtil {
@@ -82,4 +82,7 @@ object ChangesUtil {
            status === FileStatus.MERGED_WITH_BOTH_CONFLICTS ||
            status === FileStatus.MERGED_WITH_PROPERTY_CONFLICTS
   }
+
+  @JvmStatic
+  fun matches(change: Change, path: FilePath): Boolean = path == getAfterPath(change) || path == getBeforePath(change)
 }

@@ -3,7 +3,7 @@ package com.intellij.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Rectangle;
 
 public interface DropAreaAware {
   @NotNull Rectangle getDropArea();

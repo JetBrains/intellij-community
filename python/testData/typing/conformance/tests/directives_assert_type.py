@@ -25,12 +25,20 @@ def func1(
     assert_type(e, Literal[4])  # OK
 
     assert_type(a, int)  # E: Type mismatch
+    assert_type(a, Any)  # E: Type mismatch
     assert_type(c, int)  # E: Type mismatch
     assert_type(e, int)  # E: Type mismatch
 
     assert_type()  # E: not enough arguments
     assert_type("", int)  # E: wrong argument type
     assert_type(a, int | str, a)  # E: too many arguments
+
+
+# > If the two types are :term:`equivalent` but syntactically different,
+# > the type checker may reject the ``assert_type()`` call::
+
+def func2(name: str):
+    assert_type(name, str | Literal["spam"])  # E?: Equivalent but not identical
 
 
 class ForwardReference:

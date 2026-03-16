@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.event.MouseEvent;
 import java.util.regex.Matcher;

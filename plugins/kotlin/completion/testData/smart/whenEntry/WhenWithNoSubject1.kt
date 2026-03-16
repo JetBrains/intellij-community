@@ -9,3 +9,5 @@ fun foo(b1: Boolean, b2: Boolean) {
 // ABSENT: true
 // ABSENT: false
 // ABSENT: else
+
+// IGNORE_K2

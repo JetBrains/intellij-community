@@ -15,7 +15,9 @@ import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
 import java.util.Collection;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.getGetterNameBoolean;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.getGetterNameNonBoolean;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.getSetterName;
 
 public final class DefaultTransformationSupport implements AstTransformationSupport {
 

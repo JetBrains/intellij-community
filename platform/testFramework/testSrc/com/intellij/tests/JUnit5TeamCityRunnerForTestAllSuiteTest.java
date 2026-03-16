@@ -14,7 +14,7 @@ class JUnit5TeamCityRunnerForTestAllSuiteTest {
     final IOException inner = new IOException("Cause inner");
     final IOException outer = new IOException("Cause outer", inner);
     final Exception head = new Exception("HEAD", outer);
-    final String stacktrace = JUnit5TeamCityRunnerForTestAllSuite.TCExecutionListener.getTrace(head, limit);
+    final String stacktrace = JUnit5TeamCityRunner.TCExecutionListener.getTrace(head, limit);
 
     assertThat(stacktrace)
       .contains("java.lang.Exception: HEAD")
@@ -37,7 +37,7 @@ class JUnit5TeamCityRunnerForTestAllSuiteTest {
     final Exception head = new Exception("HEAD: " + sb, outer); // exception with a very-very long message
     assertThat(head.getMessage()).hasSizeGreaterThan(limit);
 
-    final String stacktrace = JUnit5TeamCityRunnerForTestAllSuite.TCExecutionListener.getTrace(head, limit);
+    final String stacktrace = JUnit5TeamCityRunner.TCExecutionListener.getTrace(head, limit);
 
     assertThat(stacktrace)
       .contains("java.lang.Exception: HEAD")

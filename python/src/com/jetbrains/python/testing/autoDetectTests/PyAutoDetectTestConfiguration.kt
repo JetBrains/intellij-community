@@ -14,6 +14,7 @@ import com.jetbrains.python.testing.PyAbstractTestConfiguration
 import com.jetbrains.python.testing.PyAbstractTestConfigurationFragmentedEditor
 import com.jetbrains.python.testing.PyAbstractTestSettingsEditor
 import com.jetbrains.python.testing.PyTestSharedForm
+import org.jetbrains.annotations.ApiStatus
 
 class PyAutoDetectTestConfiguration(project: Project, factory: PyAutoDetectionConfigurationFactory)
   : PyAbstractTestConfiguration(project, factory) {
@@ -21,9 +22,11 @@ class PyAutoDetectTestConfiguration(project: Project, factory: PyAutoDetectionCo
   // "Autodetect" name is useless
   override val useFrameworkNameInConfiguration: Boolean = false
 
-  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
-    val runProfile = environment.runProfile
-    val module = (runProfile as? PyAbstractTestConfiguration)?.module
+  /**
+   * Creates a detected configuration and copies all data from this autodetect configuration.
+   */
+  @ApiStatus.Internal
+  fun prepareDetectedConfiguration(module: Module?): PyAbstractTestConfiguration? {
     val conf = detectedConfiguration(module) ?: return null
 
     copyTo(getProperties(conf))
@@ -34,6 +37,14 @@ class PyAutoDetectTestConfiguration(project: Project, factory: PyAutoDetectionCo
     conf.setAddSourceRoots(shouldAddSourceRoots())
     conf.mappingSettings = mappingSettings
     conf.beforeRunTasks = beforeRunTasks
+
+    return conf
+  }
+
+  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
+    val runProfile = environment.runProfile
+    val module = (runProfile as? PyAbstractTestConfiguration)?.module
+    val conf = prepareDetectedConfiguration(module) ?: return null
     return conf.getState(executor, environment)
   }
 

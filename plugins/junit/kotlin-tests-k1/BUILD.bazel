@@ -4,7 +4,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "kotlin-tests-k1",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//plugins/kotlin/plugin/k1"]
 )
 
 jvm_library(
@@ -26,7 +27,7 @@ jvm_library(
     "//platform/core-api:core",
     "//plugins/kotlin/code-insight/api",
   ],
-  runtime_deps = ["//plugins/kotlin/plugin/k1"]
+  runtime_deps = [":kotlin-tests-k1"]
 )
 ### auto-generated section `build intellij.junit.kotlin.tests.k1` end
 

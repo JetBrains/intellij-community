@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k1
 
-import KotlinGradleScriptingBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.ImportModuleAction
 import com.intellij.ide.util.PropertiesComponent
@@ -16,9 +15,17 @@ import com.intellij.ui.EditorNotificationPanel.Status
 import com.intellij.ui.EditorNotificationProvider
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleStandaloneScriptActionsManager
+import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
 import org.jetbrains.kotlin.gradle.scripting.shared.isGradleKotlinScript
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.*
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.dontCare
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.legacy
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.legacyOutside
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.notEvaluatedInLastImport
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.outsideAnything
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.standalone
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.standaloneLegacy
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.wasNotImportedAfterCreation
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.ScriptUnderRoot
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
 import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport

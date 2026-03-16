@@ -19,7 +19,11 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.stream.IntStream;
 
 import static com.intellij.util.ObjectUtils.notNull;

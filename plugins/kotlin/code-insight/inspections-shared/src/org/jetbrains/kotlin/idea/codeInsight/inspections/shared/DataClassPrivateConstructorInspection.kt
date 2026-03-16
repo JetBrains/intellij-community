@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.config.doesDataClassCopyRespectConstructorVisibility
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -20,7 +19,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 internal class DataClassPrivateConstructorInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         if (holder.file.languageVersionSettings.supportsFeature(LanguageFeature.ErrorAboutDataClassCopyVisibilityChange) ||
-            holder.file.languageVersionSettings.doesDataClassCopyRespectConstructorVisibility()
+            holder.file.languageVersionSettings.supportsFeature(LanguageFeature.DataClassCopyRespectsConstructorVisibility)
         ) {
             // DataClassPrivateConstructorInspection inspection is redundant. We have a compiler diagnostic instead.
             // Ideally, we should also disable the inspection when the warning is reported,

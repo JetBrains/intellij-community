@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.rd.framework
+    libraries:
+      rd-framework:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2026/rd-framework-2026.jar

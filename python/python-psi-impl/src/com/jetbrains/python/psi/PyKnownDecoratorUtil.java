@@ -17,10 +17,15 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
-import static com.jetbrains.python.psi.PyKnownDecorator.*;
+import static com.jetbrains.python.psi.PyKnownDecorator.FUNCTOOLS_LRU_CACHE;
+import static com.jetbrains.python.psi.PyKnownDecorator.FUNCTOOLS_SINGLEDISPATCH;
+import static com.jetbrains.python.psi.PyKnownDecorator.TYPING_OVERLOAD;
+import static com.jetbrains.python.psi.PyKnownDecorator.UNITTEST_MOCK_PATCH;
 
 /**
  * Contains list of well-behaved decorators from Pythons standard library, that don't change
@@ -141,21 +146,6 @@ public final class PyKnownDecoratorUtil {
   public static boolean hasUnknownOrChangingSignatureDecorator(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
     final List<PyKnownDecorator> decorators = getKnownDecorators(decoratable, context);
     return !allDecoratorsAreKnown(decoratable, decorators) || decorators.contains(UNITTEST_MOCK_PATCH);
-  }
-
-  public static boolean hasUnknownOrChangingReturnTypeDecorator(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
-    final List<PyKnownDecorator> decorators = getKnownDecorators(decoratable, context);
-
-    if (!allDecoratorsAreKnown(decoratable, decorators)) {
-      return true;
-    }
-
-    return ContainerUtil.exists(decorators, d -> d == UNITTEST_MOCK_PATCH);
-  }
-
-  public static boolean hasChangingReturnTypeDecorator(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
-    final List<PyKnownDecorator> decorators = getKnownDecorators(decoratable, context);
-    return ContainerUtil.exists(decorators, d -> d == UNITTEST_MOCK_PATCH);
   }
 
   public static boolean hasUnknownOrUpdatingAttributesDecorator(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {

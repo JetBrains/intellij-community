@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType.HighlightInfoTypeImpl
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.TextAttributesKey
 
 /**
@@ -65,15 +66,20 @@ object KotlinHighlightInfoTypeSemanticNames {
   val VARIABLE_AS_FUNCTION_CALL: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.VARIABLE_AS_FUNCTION_CALL)
   val VARIABLE_AS_FUNCTION_LIKE_CALL: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.VARIABLE_AS_FUNCTION_LIKE_CALL)
 
-  // other
-  val SMART_CAST_VALUE: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.SMART_CAST_VALUE)
-  val SMART_CONSTANT: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.SMART_CONSTANT)
-  val SMART_CAST_RECEIVER: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.SMART_CAST_RECEIVER)
-  val LABEL: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.LABEL)
-  val NAMED_ARGUMENT: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.NAMED_ARGUMENT)
-  val ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES)
+    // other
+    val SMART_CAST_VALUE: HighlightInfoType = createInformationInfo(KotlinHighlightingColors.SMART_CAST_VALUE)
+    val SMART_CONSTANT: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.SMART_CONSTANT)
+    val SMART_CAST_RECEIVER: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.SMART_CAST_RECEIVER)
+    val LABEL: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.LABEL)
+    val NAMED_ARGUMENT: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.NAMED_ARGUMENT)
+    val ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES: HighlightInfoType =
+        createSymbolTypeInfo(KotlinHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES)
 
-  private fun createSymbolTypeInfo(attributesKey: TextAttributesKey): HighlightInfoType {
-    return HighlightInfoTypeImpl(HighlightInfoType.SYMBOL_TYPE_SEVERITY, attributesKey)
-  }
+    private fun createSymbolTypeInfo(attributesKey: TextAttributesKey): HighlightInfoType {
+        return HighlightInfoTypeImpl(HighlightInfoType.SYMBOL_TYPE_SEVERITY, attributesKey)
+    }
+
+    private fun createInformationInfo(attributesKey: TextAttributesKey): HighlightInfoType {
+        return HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, attributesKey)
+    }
 }

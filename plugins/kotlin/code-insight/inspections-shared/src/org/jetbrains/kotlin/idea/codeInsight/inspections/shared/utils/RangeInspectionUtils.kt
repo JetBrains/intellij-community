@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.isOptInSatisfied
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtElement
 
 context(_: KaSession)
@@ -63,3 +64,24 @@ val KaType.isFloatingPointType: Boolean
 
 private val OPEN_END_RANGE_CLASS_ID = ClassId.fromString("kotlin/ranges/OpenEndRange")
 private val EXPERIMENTAL_STDLIB_API_CLASS_ID = ClassId.fromString("kotlin/ExperimentalStdlibApi")
+
+/**
+ * ClassIds of primitive types that support rangeTo/rangeUntil operations.
+ * These are the types that have member functions like Int.rangeTo(Int).
+ */
+private val PRIMITIVE_RANGE_TYPE_CLASS_IDS: Set<ClassId> = setOf(
+    StandardClassIds.Int,
+    StandardClassIds.Long,
+    StandardClassIds.Short,
+    StandardClassIds.Byte,
+    StandardClassIds.Char,
+    StandardClassIds.UInt,
+    StandardClassIds.ULong,
+    StandardClassIds.UShort,
+    StandardClassIds.UByte,
+)
+
+/**
+ * Checks if this ClassId represents a primitive type that supports range operations (rangeTo/rangeUntil).
+ */
+fun ClassId.isPrimitiveRangeType(): Boolean = this in PRIMITIVE_RANGE_TYPE_CLASS_IDS

@@ -8,7 +8,11 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.TypesDistinctProver;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
@@ -16,7 +20,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class GenericsUtil {
 
@@ -475,8 +487,11 @@ public final class GenericsUtil {
       }
     }
     else if (type instanceof PsiArrayType) {
-      PsiType component = eliminateWildcards(((PsiArrayType)type).getComponentType(), false);
-      PsiType newArray = type instanceof PsiEllipsisType ? new PsiEllipsisType(component) : new PsiArrayType(component);
+      PsiArrayType psiArrayType = (PsiArrayType)type;
+      PsiType component = eliminateWildcards(psiArrayType.getComponentType(), false);
+      PsiType newArray = type instanceof PsiEllipsisType ?
+                         new PsiEllipsisType(component).withContainerNullability(psiArrayType) :
+                         new PsiArrayType(component).withContainerNullability(psiArrayType);
       return newArray.annotate(type.getAnnotationProvider()).withNullability(type.getNullability());
     }
     else if (type instanceof PsiWildcardType) {

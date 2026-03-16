@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.commandInterface.commandLine;
 
-import com.intellij.commandInterface.command.*;
+import com.intellij.commandInterface.command.Argument;
+import com.intellij.commandInterface.command.ArgumentsInfo;
+import com.intellij.commandInterface.command.Command;
+import com.intellij.commandInterface.command.Help;
+import com.intellij.commandInterface.command.KnownArgumentsInfo;
+import com.intellij.commandInterface.command.Option;
 import com.intellij.commandInterface.commandLine.psi.CommandLineFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Pair;

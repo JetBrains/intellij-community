@@ -3,7 +3,9 @@ package com.intellij.platform.runtime.repository.impl;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 

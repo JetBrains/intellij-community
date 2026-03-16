@@ -1,12 +1,25 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.compound
 
-import com.intellij.execution.*
-import com.intellij.execution.configurations.*
+import com.intellij.execution.DefaultExecutionTarget
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.ExecutionTarget
+import com.intellij.execution.ExecutionTargetManager
+import com.intellij.execution.ExecutionTargetManagerImpl
+import com.intellij.execution.Executor
+import com.intellij.execution.RunnerIconProvider
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.configurations.RunConfigurationMinimalBase
+import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.configurations.RuntimeConfigurationException
+import com.intellij.execution.configurations.WithoutOwnBeforeRunSteps
+import com.intellij.execution.configurations.runConfigurationType
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.compareTypesForUi
+import com.intellij.execution.promptUserToUseRunDashboard
 import com.intellij.execution.runToolbar.RunToolbarProcessData
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil

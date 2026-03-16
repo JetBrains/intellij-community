@@ -16,6 +16,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.MultiMap
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressableWarningP
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
+@K1Deprecation
 class AnnotationPresentationInfo(
     val ranges: List<TextRange>,
     @Nls val nonDefaultMessage: String? = null,
@@ -172,7 +174,7 @@ class AnnotationPresentationInfo(
     private fun convertSeverity(highlightType: ProblemHighlightType?, severity: Severity): HighlightInfoType =
         when (severity) {
             Severity.ERROR -> HighlightInfoType.ERROR
-            Severity.WARNING, Severity.FIXED_WARNING -> {
+            Severity.WARNING, Severity.FIXED_WARNING, Severity.STRONG_WARNING -> {
                 if (highlightType == ProblemHighlightType.WEAK_WARNING) {
                     HighlightInfoType.WEAK_WARNING
                 } else HighlightInfoType.WARNING
@@ -185,7 +187,7 @@ class AnnotationPresentationInfo(
             null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING ->
                 when (severity) {
                     Severity.ERROR -> CodeInsightColors.ERRORS_ATTRIBUTES
-                    Severity.WARNING, Severity.FIXED_WARNING -> CodeInsightColors.WARNINGS_ATTRIBUTES
+                    Severity.WARNING, Severity.FIXED_WARNING, Severity.STRONG_WARNING -> CodeInsightColors.WARNINGS_ATTRIBUTES
                     Severity.INFO -> CodeInsightColors.WARNINGS_ATTRIBUTES
                 }
             ProblemHighlightType.GENERIC_ERROR -> CodeInsightColors.ERRORS_ATTRIBUTES

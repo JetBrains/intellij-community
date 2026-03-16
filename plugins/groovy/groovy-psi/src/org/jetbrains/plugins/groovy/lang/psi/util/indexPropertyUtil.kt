@@ -3,7 +3,12 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util
 
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression

@@ -10,6 +10,7 @@ import com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolInfo
 import com.intellij.polySymbols.html.attributes.HtmlAttributeValueSymbolTypeSupport
 import com.intellij.polySymbols.html.htmlAttributeValue
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport.Companion.PROP_TYPE_SUPPORT
 import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
 import javax.swing.Icon
@@ -93,7 +94,7 @@ internal data class HtmlAttributeSymbolInfoImpl(
       symbol: PolySymbol,
       context: PsiElement,
     ): HtmlAttributeSymbolInfo {
-      val typeSupport = symbol.origin.typeSupport as? HtmlAttributeValueSymbolTypeSupport
+      val typeSupport = symbol[PROP_TYPE_SUPPORT] as? HtmlAttributeValueSymbolTypeSupport
       val attrValue = symbol.htmlAttributeValue
       val kind = attrValue?.kind ?: PolySymbolHtmlAttributeValue.Kind.PLAIN
       val type = attrValue?.type ?: PolySymbolHtmlAttributeValue.Type.STRING
@@ -130,7 +131,8 @@ internal data class HtmlAttributeSymbolInfoImpl(
           } ?: ThreeState.YES
       else
         ThreeState.NO
-      val valueRequired = attrValue?.required != false && isHtmlBoolean == ThreeState.NO && kind != PolySymbolHtmlAttributeValue.Kind.NO_VALUE
+      val valueRequired =
+        attrValue?.required != false && isHtmlBoolean == ThreeState.NO && kind != PolySymbolHtmlAttributeValue.Kind.NO_VALUE
       val acceptsNoValue = !valueRequired
       val acceptsValue = kind != PolySymbolHtmlAttributeValue.Kind.NO_VALUE
 

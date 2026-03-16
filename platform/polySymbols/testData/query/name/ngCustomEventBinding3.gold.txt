@@ -1,7 +1,7 @@
 [
  {
   matchedName: "html/attributes/(click.prevent.stop.prevent)",
-  origin: "css@1.0 (<none>)",
+  origin: "custom@1.0 (<none>)",
   attrValue: {
    kind: EXPRESSION,
    type: COMPLEX,

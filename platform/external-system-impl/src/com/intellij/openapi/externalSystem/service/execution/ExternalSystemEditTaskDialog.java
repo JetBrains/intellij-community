@@ -11,8 +11,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.GridBagLayout;
 
 @ApiStatus.Internal
 public class ExternalSystemEditTaskDialog extends DialogWrapper {

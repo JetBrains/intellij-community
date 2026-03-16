@@ -6,7 +6,7 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.remoteServer.RemoteServerConfigurable;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 class DelegatingRemoteServerConfigurable extends RemoteServerConfigurable {
   private final UnnamedConfigurable myDelegate;

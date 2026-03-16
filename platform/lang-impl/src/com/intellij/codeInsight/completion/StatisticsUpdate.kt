@@ -11,6 +11,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.WeakReferenceDisposableWrapper
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -110,13 +112,29 @@ class StatisticsUpdate private constructor(
     }
   }
 
-  companion object {
-    private val ourStatsAlarm = Alarm(ApplicationManager.getApplication())
-    private var ourPendingUpdate: StatisticsUpdate? = null
+  @Service(Service.Level.APP)
+  private class StatisticsUpdateState : Disposable {
+    val ourStatsAlarm: Alarm = Alarm(ApplicationManager.getApplication())
+    var ourPendingUpdate: StatisticsUpdate? = null
 
-    init {
-      Disposer.register(ApplicationManager.getApplication(), Disposable { cancelLastCompletionStatisticsUpdate() })
+    override fun dispose() {
+      cancelLastCompletionStatisticsUpdate()
     }
+
+    companion object {
+      fun getInstance(): StatisticsUpdateState = service<StatisticsUpdateState>()
+    }
+  }
+
+  companion object {
+    private val ourStatsAlarm: Alarm
+      get() = StatisticsUpdateState.getInstance().ourStatsAlarm
+
+    private var ourPendingUpdate: StatisticsUpdate?
+      get() = StatisticsUpdateState.getInstance().ourPendingUpdate
+      set(value) {
+        StatisticsUpdateState.getInstance().ourPendingUpdate = value
+      }
 
     @VisibleForTesting
     @JvmStatic

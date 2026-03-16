@@ -20,6 +20,7 @@ import com.intellij.usages.UsageView
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.usages.impl.UsageContextPanelBase
 import com.intellij.usages.impl.UsageViewImpl
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtDeclaration
 import java.awt.BorderLayout
@@ -27,6 +28,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
+@K1Deprecation
 sealed class KotlinUsageContextDataFlowPanelBase(presentation: UsageViewPresentation, private val isInflow: Boolean)
     : UsageContextPanelBase(presentation) {
     private var panel: JPanel? = null
@@ -95,6 +97,7 @@ sealed class KotlinUsageContextDataFlowPanelBase(presentation: UsageViewPresenta
     }
 }
 
+@K1Deprecation
 class KotlinUsageContextDataInflowPanel(presentation: UsageViewPresentation)
     : KotlinUsageContextDataFlowPanelBase(presentation, true) {
     class Provider : ProviderBase() {
@@ -106,6 +109,7 @@ class KotlinUsageContextDataInflowPanel(presentation: UsageViewPresentation)
     }
 }
 
+@K1Deprecation
 class KotlinUsageContextDataOutflowPanel(presentation: UsageViewPresentation)
     : KotlinUsageContextDataFlowPanelBase(presentation, false) {
     class Provider : ProviderBase() {

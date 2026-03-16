@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import cast
 from typing_extensions import assert_type
 
 import grpc.aio
@@ -9,7 +9,7 @@ import grpc.aio
 client_interceptors: list[grpc.aio.ClientInterceptor] = []
 grpc.aio.insecure_channel("target", interceptors=client_interceptors)
 
-server_interceptors: list[grpc.aio.ServerInterceptor[Any, Any]] = []
+server_interceptors: list[grpc.aio.ServerInterceptor] = []
 grpc.aio.server(interceptors=server_interceptors)
 
 

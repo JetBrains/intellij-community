@@ -16,10 +16,18 @@
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.patterns.PatternCondition;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -55,6 +63,14 @@ public final class PyStdReferenceContributor extends PsiReferenceContributor {
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
                                                              @NotNull ProcessingContext context) {
         return new PsiReference[]{new PyDunderSlotsReference((PyStringLiteralExpression)element)};
+      }
+    });
+
+    registerClassAttributeReference(registrar, PyNames.MATCH_ARGS, new PsiReferenceProvider() {
+      @Override
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
+                                                             @NotNull ProcessingContext context) {
+        return new PsiReference[]{new PyDunderMatchArgsReference((PyStringLiteralExpression)element)};
       }
     });
   }

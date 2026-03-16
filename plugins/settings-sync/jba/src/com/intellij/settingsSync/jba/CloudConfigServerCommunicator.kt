@@ -4,7 +4,12 @@ import com.intellij.ide.RegionUrlMapper
 import com.intellij.ide.plugins.PluginManagerCore.isRunningFromSources
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.settingsSync.core.*
+import com.intellij.settingsSync.core.AbstractServerCommunicator
+import com.intellij.settingsSync.core.InvalidVersionIdException
+import com.intellij.settingsSync.core.SettingsSyncBundle
+import com.intellij.settingsSync.core.SettingsSyncEventListener
+import com.intellij.settingsSync.core.SettingsSyncEvents
+import com.intellij.settingsSync.core.SettingsSyncStatusTracker
 import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.jba.auth.JBAAuthService
 import com.intellij.util.net.PlatformHttpClient
@@ -19,10 +24,11 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.net.URI
+import java.net.UnknownHostException
 import java.net.http.HttpResponse
 import java.util.concurrent.atomic.AtomicReference
 
-internal open class CloudConfigServerCommunicator(private val serverUrl: String?, private val jbaAuthService: JBAAuthService)
+open class CloudConfigServerCommunicator(private val serverUrl: String?, private val jbaAuthService: JBAAuthService)
   : AbstractServerCommunicator()
 {
   private val clientVersionContext = CloudConfigVersionContext()
@@ -124,7 +130,13 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
 
   override fun writeFileInternal(filePath: String, versionId: String?, content: InputStream) : String? {
     return clientVersionContext.doWithVersion(filePath, versionId) { filePath ->
-      client.write(filePath, content)
+      try {
+        client.write(filePath, content)
+      }
+      catch (e: com.jetbrains.cloudconfig.exception.InvalidVersionIdException) {
+        throw InvalidVersionIdException(e.message ?: "Invalid version id exception from server", e)
+      }
+
 
       val actualVersion: String? = clientVersionContext.get(filePath)
       if (actualVersion == null) {
@@ -208,10 +220,12 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
       try {
         val regionalUrl = RegionUrlMapper.tryMapUrlBlocking(URL_PROVIDER)
         val request = PlatformHttpClient.request(URI(regionalUrl))
-        val response = PlatformHttpClient.checkResponse(PlatformHttpClient.client().send(request, HttpResponse.BodyHandlers.ofByteArray()))
-        val configUrl = JDOMUtil.load(response.body()).getAttributeValue("baseUrl")
-        LOG.info("Using SettingSync server URL: ${configUrl}")
-        configUrl
+        PlatformHttpClient.client().use { client ->
+          val response = PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.ofByteArray()))
+          val configUrl = JDOMUtil.load(response.body()).getAttributeValue("baseUrl")
+          LOG.info("Using SettingSync server URL: ${configUrl}")
+          configUrl
+        }
       }
       catch (e: Exception) {
         LOG.warn("Failed to obtain a SettingSync server URL", e)

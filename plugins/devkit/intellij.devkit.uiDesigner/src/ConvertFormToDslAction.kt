@@ -10,7 +10,13 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiType
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.search.ProjectScope
@@ -20,11 +26,16 @@ import com.intellij.uiDesigner.PsiPropertiesProvider
 import com.intellij.uiDesigner.binding.FormClassIndex
 import com.intellij.uiDesigner.compiler.Utils.getRootContainer
 import com.intellij.uiDesigner.core.GridLayoutManager
-import com.intellij.uiDesigner.lw.*
+import com.intellij.uiDesigner.lw.IComponent
+import com.intellij.uiDesigner.lw.LwContainer
+import com.intellij.uiDesigner.lw.LwHSpacer
+import com.intellij.uiDesigner.lw.LwRootContainer
+import com.intellij.uiDesigner.lw.LwVSpacer
+import com.intellij.uiDesigner.lw.StringDescriptor
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UastVisibility
 import org.jetbrains.uast.toUElement
-import java.util.*
+import java.util.Collections
 
 
 internal class ConvertFormToDslAction /* todo IDEA-282478 : AnAction() */ {

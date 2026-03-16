@@ -19,5 +19,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="kotlin.base.frontend-agnostic" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.frontback.psi.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
   </component>
 </module>

@@ -3,8 +3,18 @@
 package org.jetbrains.kotlin.idea.quickfix.replaceWith
 
 import com.intellij.openapi.diagnostic.ControlFlowException
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptorWithTypeParameters
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
+import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
@@ -25,15 +35,26 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
-import org.jetbrains.kotlin.resolve.*
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.BindingTraceContext
+import org.jetbrains.kotlin.resolve.FunctionDescriptorUtil
+import org.jetbrains.kotlin.resolve.TypeResolutionContext
+import org.jetbrains.kotlin.resolve.TypeResolver
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.descriptors.ClassResolutionScopesSupport
-import org.jetbrains.kotlin.resolve.scopes.*
+import org.jetbrains.kotlin.resolve.scopes.ExplicitImportsScope
+import org.jetbrains.kotlin.resolve.scopes.ImportingScope
+import org.jetbrains.kotlin.resolve.scopes.LexicalScope
+import org.jetbrains.kotlin.resolve.scopes.LexicalScopeImpl
+import org.jetbrains.kotlin.resolve.scopes.LexicalScopeKind
+import org.jetbrains.kotlin.resolve.scopes.LocalRedeclarationChecker
+import org.jetbrains.kotlin.resolve.scopes.ScopeUtils
 import org.jetbrains.kotlin.resolve.scopes.utils.chainImportingScopes
 import org.jetbrains.kotlin.resolve.scopes.utils.memberScopeAsImportingScope
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingServices
 
+@K1Deprecation
 @OptIn(FrontendInternals::class)
 object ReplaceWithAnnotationAnalyzer {
     fun analyzeCallableReplacement(

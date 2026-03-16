@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
+import _LastInSuiteTest
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.lookup.LookupManager
@@ -15,9 +16,13 @@ import com.intellij.ide.structureView.StructureViewFactory
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.TestOnlyThreading
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
@@ -36,7 +41,16 @@ import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
-import com.intellij.testFramework.common.*
+import com.intellij.testFramework.common.assertDisposerEmpty
+import com.intellij.testFramework.common.assertNonDefaultProjectsAreNotLeaked
+import com.intellij.testFramework.common.cleanApplicationStateCatching
+import com.intellij.testFramework.common.disposeTestApplication
+import com.intellij.testFramework.common.initTestApplication
+import com.intellij.testFramework.common.initializeTestEnvironment
+import com.intellij.testFramework.common.isApplicationInitialized
+import com.intellij.testFramework.common.reduceAndThrow
+import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.common.runAllCatching
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.ref.GCUtil
@@ -96,7 +110,7 @@ class TestApplicationManager private constructor() {
             }
           },
           { CodeStyle.dropTemporarySettings(project) },
-          { WriteIntentReadAction.run<Nothing?> { UsefulTestCase.doPostponedFormatting(project) } },
+          { WriteIntentReadAction.runThrowable<Nothing?> { UsefulTestCase.doPostponedFormatting(project) } },
           { LookupManager.hideActiveLookup(project) },
           {
             if (isLightProject) {
@@ -112,10 +126,7 @@ class TestApplicationManager private constructor() {
             app.runWriteIntentReadAction<Unit, Nothing?> {
               WriteCommandAction.runWriteCommandAction(project) {
                 val fileDocumentManager = app.serviceIfCreated<FileDocumentManager, FileDocumentManagerImpl>()
-                if (fileDocumentManager != null) {
-                  fileDocumentManager.dropAllUnsavedDocuments()
-                  fileDocumentManager.clearDocumentCache()
-                }
+                fileDocumentManager?.prepareForNextTest()
               }
             }
           },

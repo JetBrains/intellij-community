@@ -6,14 +6,14 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUIUtil;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Point;
 
 @ApiStatus.Internal
 public class XDebuggerEditBreakpointActionHandler extends EditBreakpointActionHandler {
@@ -27,7 +27,7 @@ public class XDebuggerEditBreakpointActionHandler extends EditBreakpointActionHa
     DataContext dataContext = event.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return false;
-    var pair = XBreakpointUtil.findSelectedBreakpointProxy(project, editor);
+    var pair = XBreakpointUIUtil.findSelectedBreakpointProxy(project, editor);
     return pair.first != null;
   }
 }

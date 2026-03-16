@@ -12,12 +12,24 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
-import com.intellij.psi.*
+import com.intellij.psi.ElementManipulators
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaToken
+import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.PsiLanguageInjectionHost.Shred
+import com.intellij.psi.PsiPolyadicExpression
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.psi.impl.PsiDocumentManagerEx
 import com.intellij.psi.impl.source.resolve.FileContextUtil
-import com.intellij.psi.impl.source.tree.injected.changesHandler.*
+import com.intellij.psi.impl.source.tree.injected.changesHandler.CommonInjectedFileChangesHandler
+import com.intellij.psi.impl.source.tree.injected.changesHandler.MarkersMapping
+import com.intellij.psi.impl.source.tree.injected.changesHandler.contentRange
+import com.intellij.psi.impl.source.tree.injected.changesHandler.getInjectionHostAtRange
+import com.intellij.psi.impl.source.tree.injected.changesHandler.union
 import com.intellij.psi.util.createSmartPointer
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
@@ -31,7 +43,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     myHostDocument.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         if (UndoManager.getInstance(myProject).isUndoInProgress) {
-          (PsiDocumentManager.getInstance(myProject) as PsiDocumentManagerBase).addRunOnCommit(myHostDocument) { thisDoc ->
+          (PsiDocumentManager.getInstance(myProject) as PsiDocumentManagerEx).addRunOnCommit(myHostDocument) { thisDoc ->
             rebuildMarkers(markersWholeRange(markers) ?: failAndReport("can't get marker range in undo", event))
           }
         }

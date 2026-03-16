@@ -1,12 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.stubs.StubBuildCachedValuesManager;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
@@ -28,6 +32,8 @@ import java.util.function.Function;
  * @see #getCachedValue(UserDataHolder, CachedValueProvider)
  */
 public abstract class CachedValuesManager {
+  private static final ThrottledLogger LOG = new ThrottledLogger(Logger.getInstance(CachedValuesManager.class), 5000);
+
   public static CachedValuesManager getManager(@NotNull Project project) {
     return project.getService(CachedValuesManager.class);
   }
@@ -73,6 +79,11 @@ public abstract class CachedValuesManager {
                                               boolean trackValue,
                                               P parameter) {
     ParameterizedCachedValue<T, P> value;
+    if (StubBuildCachedValuesManager.isBuildingStubs()
+        && !StubBuildCachedValuesManager.isComputingCachedValue()
+        && (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal())) {
+      LOG.warn("StubBuildCachedValuesManager should be used during stub building to improve performance");
+    }
 
     if (dataHolder instanceof UserDataHolderEx) {
       UserDataHolderEx dh = (UserDataHolderEx)dataHolder;

@@ -53,6 +53,15 @@ public class RegExpSimplifiableInspectionTest extends RegExpInspectionTestCase {
   public void testNoWarnSingleElementClass() {
     highlightTest("[.]");
   }
+  
+  public void testNoWarnBrokenCode() {
+    //noinspection RegExpDuplicateCharacterInClass
+    highlightTest("[[]<EOLError descr=\"Unclosed character class\"></EOLError>");
+  }
+  
+  public void testClosingBracket() {
+    doTest("[]]", "]");
+  }
 
   public void testSimpleDigitRange() {
     highlightTest("[0-9]"); // no warn; replacing with \d is not equivalent in Unicode context
@@ -100,6 +109,7 @@ public class RegExpSimplifiableInspectionTest extends RegExpInspectionTestCase {
   }
 
   public void testSinglePosixBracketExpressionInClass() {
+    //noinspection RegExpDuplicateCharacterInClass,RegExpRedundantNestedCharacterClass
     highlightTest("[[:upper:]]", RegExpFileType.forLanguage(EcmaScriptRegexpLanguage.INSTANCE));
   }
 

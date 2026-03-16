@@ -2,13 +2,23 @@
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.lang.documentation.DocumentationMarkup;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiConstantEvaluationHelper;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 
 public final class JavaDocColorUtil {
   private JavaDocColorUtil() {

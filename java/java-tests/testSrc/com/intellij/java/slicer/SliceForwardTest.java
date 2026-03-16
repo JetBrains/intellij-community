@@ -21,7 +21,11 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.slicer.*;
+import com.intellij.slicer.LanguageSlicing;
+import com.intellij.slicer.SliceAnalysisParams;
+import com.intellij.slicer.SliceHandler;
+import com.intellij.slicer.SliceTestUtil;
+import com.intellij.slicer.SliceUsage;
 
 import java.util.Collection;
 import java.util.Map;

@@ -1,11 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.NewRdCompletionSupport;
+import com.intellij.codeInsight.completion.command.configuration.CommandCompletionSettingsService;
 import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.lang.ASTNode;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -16,22 +19,53 @@ import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.psi.AbstractBasicJavaFile;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiPatternVariable;
+import com.intellij.psi.PsiRecordHeader;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchLabelStatement;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiWhileStatement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Set;
-
-import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
 
 public class JavaTypedHandlerBase extends TypedHandlerDelegate {
@@ -41,7 +75,7 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
   }
 
   private static boolean isJavaFile(@NotNull PsiFile file) {
-    return file instanceof PsiJavaFile;
+    return file instanceof AbstractBasicJavaFile;
   }
 
   private static boolean isJspFile(@NotNull PsiFile file) {
@@ -50,7 +84,9 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
   }
 
   protected void autoPopupMemberLookup(@NotNull Project project, @NotNull Editor editor) {
-
+    if (NewRdCompletionSupport.isFrontendRdCompletionOn()) {
+      AutoPopupController.getInstance(project).scheduleAutoPopup(editor, new FrontendAutoPopupMemberLookupCondition(editor));
+    }
   }
 
   protected void autoPopupJavadocLookup(final @NotNull Project project, final @NotNull Editor editor) {
@@ -182,17 +218,13 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
       }
       PsiDocumentManager.getInstance(project).commitDocument(doc);
       final PsiElement leaf = file.findElementAt(offset);
-      if (BasicJavaAstTreeUtil.getParentOfType(leaf, BASIC_ARRAY_INITIALIZER_EXPRESSION, false,
-                                               ParentAwareTokenSet.orSet(ParentAwareTokenSet.create(BASIC_CODE_BLOCK), MEMBER_SET)) !=
-          null) {
+      if (PsiTreeUtil.getParentOfType(leaf, PsiArrayInitializerExpression.class, false, PsiCodeBlock.class, PsiMember.class) != null) {
         return Result.CONTINUE;
       }
       PsiElement st = leaf != null ? leaf.getParent() : null;
       PsiElement prev = offset > 1 ? file.findElementAt(offset - 1) : null;
       if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET && isRparenth(leaf) &&
-          st != null &&
-          (BasicJavaAstTreeUtil.is(st.getNode(), BASIC_WHILE_STATEMENT) ||
-           BasicJavaAstTreeUtil.is(st.getNode(), BASIC_IF_STATEMENT)) &&
+          (st instanceof PsiWhileStatement || st instanceof PsiIfStatement) &&
           shouldInsertStatementBody(st, doc, prev)) {
         return processWhileAndIfStatementBody(project, editor, file);
       }
@@ -203,7 +235,7 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
         if (stop != null) return stop;
       }
 
-      if (BasicJavaAstTreeUtil.getParentOfType(leaf, BASIC_CODE_BLOCK, false, MEMBER_SET) != null &&
+      if (PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class, false, PsiMember.class) != null &&
           !shouldInsertPairedBrace(leaf)) {
         EditorModificationUtilEx.insertStringAtCaret(editor, "{");
         TypedHandler.indentOpenedBrace(project, editor);
@@ -218,15 +250,15 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
                                                                     @NotNull Editor editor,
                                                                     @NotNull PsiFile file,
                                                                     @NotNull PsiElement leaf) {
-    ASTNode rule = BasicJavaAstTreeUtil.getParentOfType(leaf.getNode(), BASIC_SWITCH_LABELED_RULE);
+    PsiElement rule = PsiTreeUtil.getParentOfType(leaf, PsiSwitchLabeledRuleStatement.class);
     if(rule != null) {
       while (true) {
-        ASTNode next = rule.getTreeNext();
-        if (next.getElementType() == TokenType.WHITE_SPACE) {
-          next = next.getTreeNext();
+        PsiElement next = rule.getNextSibling();
+        if (next instanceof PsiWhiteSpace) {
+          next = next.getNextSibling();
         }
-        if(BasicJavaAstTreeUtil.is(next, BASIC_THROW_STATEMENT) ||
-           BasicJavaAstTreeUtil.is(next, BASIC_EXPRESSION_STATEMENT)) {
+        if(next instanceof PsiThrowStatement ||
+           next instanceof PsiExpressionStatement) {
           rule = next;
           continue;
         }
@@ -272,11 +304,13 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
     if (prevLeaf.getNode().getElementType() != JavaTokenType.ARROW) return false;
     PsiElement parent = prevLeaf.getParent();
     if (parent == null) return false;
-    if (!BasicJavaAstTreeUtil.is(parent.getNode().getElementType(), BASIC_SWITCH_LABELED_RULE)) return false;
+    if (!(parent instanceof PsiSwitchLabeledRuleStatement)) return false;
     if (StringUtil.isEmptyOrSpaces(leaf.getText())) {
       leaf = PsiTreeUtil.nextVisibleLeaf(leaf);
     }
-    PsiElement body = BasicJavaAstTreeUtil.getParentOfType(leaf, Set.of(BASIC_EXPRESSION_STATEMENT, BASIC_THROW_STATEMENT), false);
+    PsiElement body =
+      leaf instanceof PsiExpressionStatement || leaf instanceof PsiThrowStatement ? leaf :
+      PsiTreeUtil.getParentOfType(leaf, PsiExpressionStatement.class, PsiThrowStatement.class);
     if (body == null) return false;
     return PsiTreeUtil.isAncestor(parent, body, false);
   }
@@ -286,39 +320,20 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
     // lambda
     if (prevLeaf != null && prevLeaf.getNode().getElementType() == JavaTokenType.ARROW) return true;
     // anonymous class
-    ParentAwareTokenSet stopAt = ParentAwareTokenSet.orSet(MEMBER_SET, ParentAwareTokenSet.create(BASIC_CODE_BLOCK));
-    if (BasicJavaAstTreeUtil.getParentOfType(prevLeaf, BASIC_NEW_EXPRESSION, true, stopAt) != null) return true;
+    if (PsiTreeUtil.getParentOfType(prevLeaf, PsiNewExpression.class, true, PsiCodeBlock.class, PsiMember.class) != null) return true;
     // local class
-    if (prevLeaf != null && prevLeaf.getParent() != null && BasicJavaAstTreeUtil.is(prevLeaf.getNode(), JavaTokenType.IDENTIFIER) &&
-        BasicJavaAstTreeUtil.is(prevLeaf.getParent().getNode(), CLASS_SET)) {
-      return true;
-    }
+    if (prevLeaf instanceof PsiIdentifier && prevLeaf.getParent() instanceof PsiClass) return true;
     // local record
-    if (prevLeaf != null && prevLeaf.getParent() != null && prevLeaf.getNode().getElementType() == JavaTokenType.RPARENTH &&
-        BasicJavaAstTreeUtil.is(prevLeaf.getParent().getNode(), BASIC_RECORD_HEADER)) {
-      return true;
-    }
+    if (PsiUtil.isJavaToken(prevLeaf, JavaTokenType.RPARENTH) && prevLeaf.getParent() instanceof PsiRecordHeader) return true;
     return false;
   }
 
   private static boolean shouldInsertStatementBody(@NotNull PsiElement statement, @NotNull Document doc, @Nullable PsiElement prev) {
-
-    ASTNode block;
-    ASTNode astNodeStatement = statement.getNode();
-    if (BasicJavaAstTreeUtil.is(astNodeStatement, BASIC_WHILE_STATEMENT)) {
-      block = BasicJavaAstTreeUtil.getBlock(astNodeStatement);
-    }
-    else {
-      block = BasicJavaAstTreeUtil.getThenBranch(astNodeStatement);
-    }
-    ASTNode condition = BasicJavaAstTreeUtil.findChildByType(astNodeStatement, EXPRESSION_SET);
-    ASTNode latestExpression = BasicJavaAstTreeUtil.getParentOfType(BasicJavaAstTreeUtil.toNode(prev), EXPRESSION_SET);
-    if (BasicJavaAstTreeUtil.is(latestExpression, BASIC_NEW_EXPRESSION) &&
-        BasicJavaAstTreeUtil.getAnonymousClass(latestExpression) == null) {
-      return false;
-    }
-    return !(BasicJavaAstTreeUtil.is(block, BASIC_BLOCK_STATEMENT)) &&
-           (block == null || startLine(doc, block) != startLine(doc, astNodeStatement) || condition == null);
+    PsiStatement block = statement instanceof PsiWhileStatement ? ((PsiWhileStatement)statement).getBody() : ((PsiIfStatement)statement).getThenBranch();
+    PsiExpression condition = PsiTreeUtil.getChildOfType(statement, PsiExpression.class);
+    PsiExpression latestExpression = PsiTreeUtil.getParentOfType(prev, PsiExpression.class);
+    if (latestExpression instanceof PsiNewExpression && ((PsiNewExpression)latestExpression).getAnonymousClass() == null) return false;
+    return !(block instanceof PsiBlockStatement) && (block == null || startLine(doc, block) != startLine(doc, statement) || condition == null);
   }
 
   private static boolean isRparenth(@Nullable PsiElement leaf) {
@@ -329,8 +344,8 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
     return next.getNode().getElementType() == JavaTokenType.RPARENTH;
   }
 
-  private static int startLine(@NotNull Document doc, @NotNull ASTNode astNode) {
-    return doc.getLineNumber(astNode.getTextRange().getStartOffset());
+  private static int startLine(@NotNull Document doc, @NotNull PsiElement psiElement) {
+    return doc.getLineNumber(psiElement.getTextRange().getStartOffset());
   }
 
   @Override
@@ -426,19 +441,18 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
     if (!it.atEnd() && afterLastParenOffset >= 0 && afterLastParenOffset >= caretOffset) {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       PsiElement curElement = file.findElementAt(caretOffset);
-      ASTNode curStmt = BasicJavaAstTreeUtil.getParentOfType(BasicJavaAstTreeUtil.toNode(curElement), STATEMENT_SET);
+      PsiStatement curStmt = PsiTreeUtil.getParentOfType(curElement, PsiStatement.class);
       if (curStmt != null) {
-        if (BasicJavaAstTreeUtil.is(curStmt, BASIC_TRY_STATEMENT)) {
+        if (curStmt instanceof PsiTryStatement) {
           // try-with-resources can contain semicolons inside
           return false;
         }
-        if (BasicJavaAstTreeUtil.is(curStmt, BASIC_FOR_STATEMENT)) {
+        if (curStmt instanceof PsiForStatement) {
           // for loop can have semicolons inside
           return false;
         }
         // It may worth to check if the error element is about expecting semicolon
-        PsiElement curPsiElement = BasicJavaAstTreeUtil.toPsi(curStmt);
-        if (curPsiElement != null && PsiTreeUtil.getDeepestLast(curPsiElement) instanceof PsiErrorElement) {
+        if (PsiTreeUtil.getDeepestLast(curStmt) instanceof PsiErrorElement) {
           int stmtEndOffset = curStmt.getTextRange().getEndOffset();
           if (stmtEndOffset == afterLastParenOffset || stmtEndOffset == it.getStart()) {
             editor.getDocument().insertString(stmtEndOffset, ";");
@@ -466,11 +480,95 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
     PsiElement currElement = file.findElementAt(offset - 1);
     if (currElement != null) {
       PsiElement parent = currElement.getParent();
-      if (BasicJavaAstTreeUtil.is(BasicJavaAstTreeUtil.toNode(parent), BASIC_SWITCH_LABEL_STATEMENT)) {
+      if (parent instanceof PsiSwitchLabelStatement) {
         CodeStyleManager.getInstance(project).adjustLineIndent(file, parent.getTextOffset());
         return true;
       }
     }
     return false;
+  }
+
+  @Override
+  public @NotNull Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    if (NewRdCompletionSupport.isFrontendRdCompletionOn()) {
+      return doCheckAutoPopup(charTyped, project, editor, file);
+    }
+    else {
+      return Result.CONTINUE;
+    }
+  }
+
+  protected static @NotNull Result doCheckAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    if (!(file instanceof PsiJavaFile)) return Result.CONTINUE;
+
+    int offset = editor.getCaretModel().getOffset();
+    if (charTyped == ' ' &&
+        StringUtil.endsWith(editor.getDocument().getImmutableCharSequence(), 0, offset, JavaKeywords.NEW)) {
+      AutoPopupController.getInstance(project).scheduleAutoPopup(editor, f -> {
+        PsiElement leaf = f.findElementAt(offset - JavaKeywords.NEW.length());
+        return leaf instanceof PsiKeyword &&
+               leaf.textMatches(JavaKeywords.NEW) &&
+               !PsiJavaPatterns.psiElement().insideStarting(PsiJavaPatterns.psiExpressionStatement()).accepts(leaf);
+      });
+      return Result.STOP;
+    }
+
+    return Result.CONTINUE;
+  }
+
+  protected static class FrontendAutoPopupMemberLookupCondition implements Condition<PsiFile> {
+    @NotNull private final Editor myEditor;
+
+    public FrontendAutoPopupMemberLookupCondition(@NotNull Editor editor) {
+      myEditor = editor;
+    }
+
+    @Override
+    public final boolean value(PsiFile file) {
+      return ensurePositionInCommittedDocumentForMemberLookup(myEditor, file);
+    }
+
+    private boolean ensurePositionInCommittedDocumentForMemberLookup(@NotNull Editor editor, @NotNull PsiFile file) {
+      int offset = editor.getCaretModel().getOffset();
+
+      PsiElement lastElement = file.findElementAt(offset - 1);
+      if (lastElement == null) {
+        return false;
+      }
+
+      //do not show lookup when typing varargs ellipsis
+      final PsiElement prevSibling = PsiTreeUtil.prevVisibleLeaf(lastElement);
+      if (prevSibling == null || ".".equals(prevSibling.getText())) return false;
+      PsiElement parent = prevSibling;
+      do {
+        parent = parent.getParent();
+      }
+      while (parent instanceof PsiJavaCodeReferenceElement || parent instanceof PsiTypeElement);
+      if (parent instanceof PsiParameterList list && PsiTreeUtil.isAncestor(list, lastElement, false) ||
+          (parent instanceof PsiParameter && !(parent instanceof PsiPatternVariable))) {
+        if (CommandCompletionSettingsService.getInstance().commandCompletionEnabled() &&
+            parent instanceof PsiParameter parameter &&
+            lastElement instanceof PsiJavaToken javaToken &&
+            javaToken.textMatches(".") &&
+            prevSibling instanceof PsiIdentifier identifier &&
+            parameter.getIdentifyingElement() == identifier) {
+          return true;
+        }
+        return false;
+      }
+
+      if (".".equals(lastElement.getText()) || "#".equals(lastElement.getText()) || "##".equals(lastElement.getText())) {
+        final PsiElement element = file.findElementAt(offset);
+        return element == null ||
+               !"#".equals(lastElement.getText()) ||
+               PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null;
+      }
+
+      return additionalChecks(file, offset);
+    }
+
+    protected boolean additionalChecks(@NotNull PsiFile file, int offset) {
+      return false;
+    }
   }
 }

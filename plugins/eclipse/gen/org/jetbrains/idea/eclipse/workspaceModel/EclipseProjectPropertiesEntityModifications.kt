@@ -7,9 +7,9 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
@@ -74,6 +74,12 @@ fun EclipseProjectPropertiesEntity(
   srcPlace: Map<String, Int>,
   entitySource: EntitySource,
   init: (EclipseProjectPropertiesEntityBuilder.() -> Unit)? = null,
-): EclipseProjectPropertiesEntityBuilder =
-  EclipseProjectPropertiesEntityType(variablePaths, eclipseUrls, unknownCons, knownCons, forceConfigureJdk, expectedModuleSourcePlace,
-                                     srcPlace, entitySource, init)
+): EclipseProjectPropertiesEntityBuilder = EclipseProjectPropertiesEntityType(variablePaths,
+                                                                              eclipseUrls,
+                                                                              unknownCons,
+                                                                              knownCons,
+                                                                              forceConfigureJdk,
+                                                                              expectedModuleSourcePlace,
+                                                                              srcPlace,
+                                                                              entitySource,
+                                                                              init)

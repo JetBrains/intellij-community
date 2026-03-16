@@ -1,8 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.ui
 
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.*
-import com.intellij.openapi.roots.ui.configuration.SdkListItem.*
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.JAVA_HOME
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.USE_JAVA_HOME
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.USE_PROJECT_JDK
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.InvalidSdkItem
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.NoneSdkItem
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.ProjectSdkItem
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkReferenceItem
 
 class ExternalSystemJdkComboBoxUtilTest : ExternalSystemJdkComboBoxUtilTestCase() {
   fun `test reference usage`() {

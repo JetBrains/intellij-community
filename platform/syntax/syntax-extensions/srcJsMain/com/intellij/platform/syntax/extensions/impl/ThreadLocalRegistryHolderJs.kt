@@ -13,8 +13,8 @@ internal object ThreadLocalRegistryHolderJs : com.intellij.platform.syntax.exten
 }
 
 /**
- * @see getThreadLocalRegistry
+ * @see instantiateThreadLocalRegistry
  */
-@fleet.util.multiplatform.Actual("instantiateThreadLocalRegistry")
+@fleet.util.multiplatform.Actual
 internal fun instantiateThreadLocalRegistryJs(): com.intellij.platform.syntax.extensions.impl.RegistryHolder =
   ThreadLocalRegistryHolderJs

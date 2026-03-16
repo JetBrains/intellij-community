@@ -6,6 +6,7 @@ import com.intellij.ide.SearchTopHitProvider
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.psi.codeStyle.PlatformKeyboardLayoutConverter
 import com.intellij.psi.codeStyle.WordPrefixMatcher
 import java.util.function.Consumer
 
@@ -21,7 +22,7 @@ internal class StatusBarWidgetsOptionProvider : SearchTopHitProvider {
       return
     }
 
-    val matcher = WordPrefixMatcher(pattern)
+    val matcher = WordPrefixMatcher(pattern, PlatformKeyboardLayoutConverter)
     for (factory in manager.getWidgetFactories()) {
       if (!manager.canBeEnabledOnStatusBar(factory, statusBar)) {
         continue

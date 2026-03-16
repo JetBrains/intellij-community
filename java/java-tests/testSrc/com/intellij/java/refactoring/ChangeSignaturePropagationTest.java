@@ -3,7 +3,14 @@ package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -15,6 +22,7 @@ import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +30,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
+public class ChangeSignaturePropagationTest extends LightJavaCodeInsightTestCase {
   public void testParamSimple() {
     parameterPropagationTest();
   }

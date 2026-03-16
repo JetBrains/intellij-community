@@ -12,11 +12,11 @@ suspend fun createDistributionBuilderState(pluginsToPublish: Set<PluginLayout>, 
 
 suspend fun createDistributionBuilderState(context: BuildContext): DistributionBuilderState {
   val platform = createPlatformLayout(context)
-  return DistributionBuilderState(platform, pluginsToPublish = emptySet(), context)
+  return DistributionBuilderState(platformLayout = platform, pluginsToPublish = emptySet(), context = context)
 }
 
 class DistributionBuilderState internal constructor(
-  @JvmField val platform: PlatformLayout,
+  @JvmField val platformLayout: PlatformLayout,
   @JvmField val pluginsToPublish: Set<PluginLayout>,
   context: BuildContext,
 ) {
@@ -26,9 +26,6 @@ class DistributionBuilderState internal constructor(
       "Unresolved release-date: $releaseDate"
     }
   }
-
-  val platformModules: Sequence<String>
-    get() = platform.includedModules.asSequence().map { it.moduleName }.distinct() + getToolModules().asSequence()
 }
 
 internal fun filterPluginsToPublish(plugins: MutableSet<PluginLayout>, context: BuildContext) {

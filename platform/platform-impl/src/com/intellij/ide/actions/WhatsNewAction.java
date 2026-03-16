@@ -87,7 +87,7 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
       String notificationText =
         IdeBundle.message(ScreenReader.isActive() ? "whats.new.notification.text.regular.language" : "whats.new.notification.text", name,
                           version);
-      ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).getNotificationGroupForIdeUpdateResults()
+      UpdateCheckerFacade.getInstance().getNotificationGroupForIdeUpdateResults()
         .createNotification(notificationText, NotificationType.INFORMATION)
         .setIcon(AllIcons.Nodes.PpWeb)
         .setDisplayId("ide.whats.new")
@@ -144,6 +144,7 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
     parameters.put("lang", Locale.getDefault().toLanguageTag().toLowerCase(Locale.ENGLISH));
 
     if (includePlatformData) {
+      @SuppressWarnings("SpellCheckingInspection")
       var os = OS.CURRENT == OS.Windows ? "windows" : OS.CURRENT == OS.macOS ? "mac" : OS.CURRENT == OS.Linux ? "linux" : null;
       var arch = CpuArch.CURRENT == CpuArch.X86_64 ? "" : CpuArch.CURRENT == CpuArch.ARM64 ? "ARM64" : null;
       if (os != null && arch != null) {

@@ -10,7 +10,7 @@ private var current: JavaVersion? = null
 /**
  * actual for [com.intellij.util.currentJavaVersionPlatformSpecific]
  */
-@Actual("currentJavaVersionPlatformSpecific")
+@Actual
 @ApiStatus.Internal
 fun currentJavaVersionPlatformSpecificJvm(): JavaVersion {
   current?.let { return it }

@@ -32,6 +32,7 @@ data class TerminalHyperlinkInfo(
   val style: TextAttributes?,
   val followedStyle: TextAttributes?,
   val hoveredStyle: TextAttributes?,
+  val isInvisibleLink: Boolean,
   val layer: Int,
 ) : TerminalFilterResultInfo()
 

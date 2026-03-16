@@ -3,8 +3,8 @@ package fleet.multiplatform.shims
 
 import fleet.util.multiplatform.Actual
 
-@Actual("currentThreadId")
+@Actual
 fun currentThreadIdJvm(): Long = Thread.currentThread().id
 
-@Actual("currentThreadName")
+@Actual
 fun currentThreadNameJvm(): String = Thread.currentThread().name

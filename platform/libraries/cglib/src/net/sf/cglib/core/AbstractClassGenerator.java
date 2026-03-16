@@ -19,7 +19,11 @@ import net.sf.cglib.asm.$ClassReader;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 /**
  * Abstract class for all code-generating CGLIB utilities.

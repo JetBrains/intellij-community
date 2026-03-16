@@ -3,7 +3,12 @@ package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.editor.Document;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiVariable;
 
 
 public class JavaPsiElementResult extends PsiElementResult {

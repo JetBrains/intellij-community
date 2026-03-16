@@ -1,11 +1,15 @@
 package com.intellij.database.run.ui.grid.renderers;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Objects;
 
 public abstract class GridCellRenderer implements Disposable {

@@ -4,3 +4,5 @@
 open class My {
     protected fun foo<caret>() = java.lang.String.valueOf(3)
 }
+
+// IGNORE_K2

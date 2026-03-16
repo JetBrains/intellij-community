@@ -13,6 +13,10 @@ import org.jetbrains.plugins.gradle.execution.test.runner.getSourceFile
 
 open class KotlinAllInPackageGradleConfigurationProducer: AllInPackageGradleConfigurationProducer() {
 
+    override fun isPreferredConfiguration(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean {
+        return other.isProducedBy(AllInPackageGradleConfigurationProducer::class.java) || super.isPreferredConfiguration(self, other)
+    }
+
     override fun shouldReplace(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean {
         return other.isProducedBy(AllInPackageGradleConfigurationProducer::class.java) || super.shouldReplace(self, other)
     }

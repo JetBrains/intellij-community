@@ -11,9 +11,13 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import sun.swing.DefaultLookup;
 
-import javax.swing.*;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
 import javax.swing.plaf.basic.BasicHTML;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 
 /**
  * JBLabel-based (text and icon) list cell renderer.

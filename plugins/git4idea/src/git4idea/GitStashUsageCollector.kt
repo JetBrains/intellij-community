@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 
-object GitStashUsageCollector : CounterUsagesCollector() {
+internal object GitStashUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   private val GROUP: EventLogGroup = EventLogGroup("stash.interactions", 4)

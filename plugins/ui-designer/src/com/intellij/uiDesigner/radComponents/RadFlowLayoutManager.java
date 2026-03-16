@@ -16,7 +16,9 @@ import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
 import com.intellij.uiDesigner.propertyInspector.renderers.IntEnumRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.FlowLayout;
+import java.awt.LayoutManager;
+import java.awt.Point;
 
 
 public class RadFlowLayoutManager extends RadAbstractIndexedLayoutManager {

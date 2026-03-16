@@ -5,11 +5,8 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.impl.light.LightMethodBuilder
-import com.intellij.psi.impl.light.LightParameter
-import com.intellij.psi.impl.light.LightTypeParameterBuilder
+import com.intellij.psi.impl.light.LightVariableBuilder
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
-import org.jetbrains.kotlin.asJava.elements.LightVariableBuilder
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.uast.UFile
@@ -57,10 +54,7 @@ interface UastResolveEverythingTestBase : UastFileComparisonTestBase,
                     this is PsiClass ||
                     this is PsiMethod ||
                     this is PsiField ||
-                    this is LightMethodBuilder ||
-                    this is LightVariableBuilder ||
-                    this is LightParameter ||
-                    this is LightTypeParameterBuilder
+                    this is LightVariableBuilder<*>
 
         private const val TAG_CLASS = "Kotlin_Light_Class"
         private const val TAG_CLASS_DECOMPILED = "Decompiled_Class"
@@ -98,6 +92,7 @@ interface UastResolveEverythingTestBase : UastFileComparisonTestBase,
             Regex("^KtLightField:.+$") to TAG_VARIABLE,
             Regex("^SymbolLightField.*$") to TAG_VARIABLE,
             Regex("^LightVariableBuilder:.+$") to TAG_VARIABLE,
+            //LightVariableBuilder:bar
 
             Regex("^KtLightFieldForDecompiledDeclaration of .+:.+$") to TAG_VARIABLE_DECOMPILED,
             Regex("^KtLightEnumEntryForDecompiledDeclaration.+:.+$") to TAG_VARIABLE_DECOMPILED,

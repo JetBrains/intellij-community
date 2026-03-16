@@ -3,7 +3,6 @@ package com.intellij.platform.searchEverywhere.frontend.providers.actions
 
 import com.intellij.platform.searchEverywhere.SeFilter
 import com.intellij.platform.searchEverywhere.SeFilterState
-import com.intellij.platform.searchEverywhere.SeFilterValue
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -11,8 +10,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
 class SeActionsFilter(val includeDisabled: Boolean, val isAutoTogglePossible: Boolean) : SeFilter {
   override fun toState(): SeFilterState =
     SeFilterState.Data(mapOf(
-      KEY_INCLUDE_DISABLED to SeFilterValue.One(includeDisabled.toString()),
-      IS_AUTO_TOGGLE_POSSIBLE to SeFilterValue.One(isAutoTogglePossible.toString())
+      KEY_INCLUDE_DISABLED to listOf(includeDisabled.toString()),
+      IS_AUTO_TOGGLE_POSSIBLE to listOf(isAutoTogglePossible.toString())
     ))
 
   companion object {
@@ -22,11 +21,11 @@ class SeActionsFilter(val includeDisabled: Boolean, val isAutoTogglePossible: Bo
     fun from(state: SeFilterState): SeActionsFilter {
       when (state) {
         is SeFilterState.Data -> {
-          val includeDisabled = state.map[KEY_INCLUDE_DISABLED]?.let {
-            it as? SeFilterValue.One
-          }?.value?.toBoolean() ?: SeEverywhereFilter.isEverywhere(state) ?: false
+          val includeDisabled = state.getBoolean(KEY_INCLUDE_DISABLED)
+                                ?: SeEverywhereFilter.isEverywhere(state)
+                                ?: false
 
-          val isAutoTogglePossible = state.map[IS_AUTO_TOGGLE_POSSIBLE]?.let { it as? SeFilterValue.One }?.value?.toBoolean() ?: false
+          val isAutoTogglePossible = state.getBoolean(IS_AUTO_TOGGLE_POSSIBLE) ?: false
 
           return SeActionsFilter(includeDisabled, isAutoTogglePossible)
         }

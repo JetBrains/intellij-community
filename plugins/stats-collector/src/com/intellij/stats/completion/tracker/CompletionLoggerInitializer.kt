@@ -9,7 +9,12 @@ import com.intellij.completion.ml.tracker.LookupTracker
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionResult
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager

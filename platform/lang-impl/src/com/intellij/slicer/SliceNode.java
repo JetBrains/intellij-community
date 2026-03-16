@@ -19,7 +19,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

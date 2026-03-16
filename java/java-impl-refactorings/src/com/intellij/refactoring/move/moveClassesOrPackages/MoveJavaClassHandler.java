@@ -4,7 +4,17 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
@@ -119,13 +129,13 @@ public final class MoveJavaClassHandler implements MoveClassHandler {
   }
 
   @Override
-  public String getName(PsiClass clazz) {
+  public String getName(@NotNull PsiClass clazz) {
     final PsiFile file = clazz.getContainingFile();
     if (!(file instanceof PsiJavaFile)) return null;
     return ((PsiJavaFile)file).getClasses().length > 1 ? clazz.getName() + "." + JavaFileType.INSTANCE.getDefaultExtension() : file.getName();
   }
 
   @Override
-  public void preprocessUsages(Collection<UsageInfo> results) {
+  public void preprocessUsages(@NotNull Collection<UsageInfo> results) {
   }
 }

@@ -6,6 +6,7 @@ package org.jetbrains.idea.maven.utils
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path

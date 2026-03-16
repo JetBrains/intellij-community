@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class EclipseFileType implements FileType {
   public static final FileType INSTANCE = new EclipseFileType();

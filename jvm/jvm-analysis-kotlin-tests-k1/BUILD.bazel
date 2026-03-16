@@ -4,7 +4,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "analysis-kotlin-tests-k1",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//plugins/kotlin/plugin/k1"]
 )
 
 jvm_library(
@@ -23,7 +24,7 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//jvm/jvm-analysis-kotlin-tests-shared:analysis-kotlin-tests-shared_test_lib",
   ],
-  runtime_deps = ["//plugins/kotlin/plugin/k1"]
+  runtime_deps = [":analysis-kotlin-tests-k1"]
 )
 ### auto-generated section `build intellij.jvm.analysis.kotlin.tests.k1` end
 

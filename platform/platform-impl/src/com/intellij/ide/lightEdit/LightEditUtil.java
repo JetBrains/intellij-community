@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
+import java.awt.Component;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -66,6 +66,9 @@ public final class LightEditUtil {
   public static @Nullable Project openFile(@NotNull Path path, boolean suggestSwitchToProject) {
     VirtualFile virtualFile = VfsUtil.findFile(path, true);
     if (virtualFile != null) {
+      if (virtualFile.isDirectory()){
+        return null; // directories cannot be opened in LightEditMode at the moment
+      }
       if (suggestSwitchToProject) {
         virtualFile.putUserData(SUGGEST_SWITCH_TO_PROJECT, true);
       }

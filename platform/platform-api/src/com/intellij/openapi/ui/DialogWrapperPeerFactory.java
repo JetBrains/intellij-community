@@ -7,7 +7,8 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Window;
 import java.lang.reflect.Constructor;
 
 public abstract class DialogWrapperPeerFactory {

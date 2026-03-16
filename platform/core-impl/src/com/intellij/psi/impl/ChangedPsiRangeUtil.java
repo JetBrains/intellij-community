@@ -81,8 +81,7 @@ public final class ChangedPsiRangeUtil {
     if (!file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
       return new ProperTextRange(0, psiLength);
     }
-    List<DocumentEvent> events = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject())).getEventsSinceCommit(
-      document);
+    List<DocumentEvent> events = ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(file.getProject())).getEventsSinceCommit(document);
     int prefix = Integer.MAX_VALUE;
     int suffix = Integer.MAX_VALUE;
     int lengthBeforeEvent = psiLength;

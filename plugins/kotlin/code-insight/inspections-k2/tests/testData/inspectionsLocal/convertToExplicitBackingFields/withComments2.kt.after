@@ -1,0 +1,8 @@
+// COMPILER_ARGUMENTS: -Xexplicit-backing-fields
+internal class Foo {
+    // comment 3
+    // comment
+    // comment 2
+    val x: List<Int>
+        field = mutableListOf<Int>()
+}

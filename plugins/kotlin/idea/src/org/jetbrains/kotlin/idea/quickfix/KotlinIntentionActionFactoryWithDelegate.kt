@@ -6,12 +6,14 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 abstract class KotlinSingleIntentionActionFactoryWithDelegate<E : KtElement, D : Any>(
     protected val actionPriority: IntentionActionPriority = IntentionActionPriority.NORMAL
 ) : KotlinIntentionActionFactoryWithDelegate<E, D>() {
@@ -29,6 +31,7 @@ abstract class KotlinSingleIntentionActionFactoryWithDelegate<E : KtElement, D :
     }.let(::listOf)
 }
 
+@K1Deprecation
 abstract class KotlinIntentionActionFactoryWithDelegate<E : KtElement, D : Any> : KotlinIntentionActionsFactory() {
     abstract fun getElementOfInterest(diagnostic: Diagnostic): E?
 

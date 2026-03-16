@@ -8,7 +8,15 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
@@ -16,12 +24,24 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangeListListener
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.ChangeListManagerRefreshHelper
+import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
+import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.DiffPreview.Companion.setPreviewVisible
+import com.intellij.openapi.vcs.changes.InclusionListener
+import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.shouldHaveSplitterDiffPreview
+import com.intellij.openapi.vcs.changes.ui.HoverIcon
+import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
@@ -37,14 +57,21 @@ import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EventDispatcher
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.ProportionKey
+import com.intellij.util.ui.ThreeStateCheckBox
+import com.intellij.util.ui.TwoKeySplitter
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.util.ui.launchOnShow
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.CommitWorkflowListener
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.ui.ProgressStripe
+import git4idea.GitDisposable
 import git4idea.GitVcs
 import git4idea.conflicts.GitConflictsUtil.canShowMergeWindow
 import git4idea.conflicts.GitConflictsUtil.showMergeWindow
@@ -54,17 +81,23 @@ import git4idea.index.GitStageCommitWorkflow
 import git4idea.index.GitStageCommitWorkflowHandler
 import git4idea.index.GitStageTracker
 import git4idea.index.GitStageTrackerListener
-import git4idea.index.actions.*
+import git4idea.index.actions.GitAddOperation
+import git4idea.index.actions.GitResetOperation
+import git4idea.index.actions.StagingAreaOperation
+import git4idea.index.actions.performMergeAction
+import git4idea.index.actions.performStageOperation
 import git4idea.merge.GitDefaultMergeDialogCustomizer
 import git4idea.repo.GitConflict
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.status.GitRefreshListener
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
-import java.util.*
+import java.util.EventListener
 import javax.swing.JPanel
 
 internal class GitStagePanel(
@@ -108,7 +141,6 @@ internal class GitStagePanel(
       IdeFocusManager.getInstance(project).getFocusedDescendantFor(this) != null
     }
     commitPanel.commitActionsPanel.createActions().forEach { it.registerCustomShortcutSet(this, this) }
-    commitPanel.addEditedCommitListener(_tree::editedCommitChanged, this)
     commitPanel.setIncludedRoots(_tree.getIncludedRoots())
     _tree.addIncludedRootsListener(object : IncludedRootsListener {
       override fun includedRootsChanged() {
@@ -173,6 +205,10 @@ internal class GitStagePanel(
       runInEdt(disposableFlag) { updateProgressState() }
     })
     commitWorkflowHandler.workflow.addListener(MyCommitWorkflowListener(), this)
+
+    launchOnShow("Changes refresh on changes show") {
+      ChangeListManagerRefreshHelper.requestRefresh(project)
+    }.cancelOnDispose(this)
 
     if (isRefreshInProgress()) {
       tree.setEmptyText(message("stage.loading.status"))
@@ -368,21 +404,24 @@ internal class GitStagePanel(
           includedRootsListeners.multicaster.includedRootsChanged()
         }
       }, this@GitStagePanel)
-    }
 
-    fun editedCommitChanged() {
-      requestRefresh {
-        commitPanel.editedCommit?.let {
-          val node = TreeUtil.findNodeWithObject(root, it)
-          node?.let { expandPath(TreeUtil.getPathFromRoot(node)) }
+      GitDisposable.getInstance(project).coroutineScope.launch {
+        ChangesViewWorkflowManager.getInstance(project).editedCommit.collectLatest { editedCommitPresentation ->
+          if (editedCommitPresentation != null) {
+            requestRefresh {
+              val node = TreeUtil.findNodeWithObject(root, editedCommitPresentation)
+              node?.let { expandPath(TreeUtil.getPathFromRoot(node)) }
+            }
+          } else {
+            requestRefresh()
+          }
         }
-      }
+      }.cancelOnDispose(this@GitStagePanel)
     }
 
     override fun customizeTreeModel(builder: TreeModelBuilder) {
       super.customizeTreeModel(builder)
-
-      commitPanel.editedCommit?.let { editedCommit ->
+      ChangesViewWorkflowManager.getInstance(project).editedCommit.value?.let { editedCommit ->
         insertEditedCommitNode(builder, editedCommit)
       }
     }

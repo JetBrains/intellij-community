@@ -1,22 +1,25 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.impl.VcsUserImpl
 import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitCommit
 import git4idea.log.createLogDataIn
 import git4idea.log.refreshAndWait
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.makeCommit
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.random.nextInt
@@ -56,8 +59,8 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     touch(file, "content")
 
     val authorCommits = mutableSetOf<Hash>()
-    val author = VcsUserImpl("Name", "name@server.com")
-    val anotherUser = VcsUserImpl("Another Name", "another.name@server.com")
+    val author = VcsUserUtil.createUser("Name", "name@server.com")
+    val anotherUser = VcsUserUtil.createUser("Another Name", "another.name@server.com")
     repeat(5) {
       authorCommits.add(HashImpl.build(makeCommit(author, file)))
       makeCommit(anotherUser, file)
@@ -120,8 +123,8 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     val anotherFile = "anotherFile.txt"
     touch(anotherFile, "content")
 
-    val author = VcsUserImpl("Name", "name@server.com")
-    val anotherUser = VcsUserImpl("Another Name", "another.name@server.com")
+    val author = VcsUserUtil.createUser("Name", "name@server.com")
+    val anotherUser = VcsUserUtil.createUser("Another Name", "another.name@server.com")
 
     makeCommit(author, file)
     makeCommit(anotherUser, file)
@@ -154,7 +157,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
 
     logData.refreshAndWait(repo, waitIndexFinishing = false)
     val indexingWaiter = CompletableFuture<GitHistoryTraverser.IndexedRoot>()
-    val indexWaiterDisposable = Disposable {}
+    val indexWaiterDisposable = Disposer.newDisposable()
     var blockExecutedCount = 0
     traverser.addIndexingListener(listOf(repo.root), testRootDisposable) { indexedRoots ->
       val indexedRoot = indexedRoots.single()

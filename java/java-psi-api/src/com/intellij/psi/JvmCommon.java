@@ -17,7 +17,11 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Annotation for marking {@link PsiElement} subclasses usages that they will be used in

@@ -15,7 +15,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.jetbrains.python.PythonModuleTypeBase;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;

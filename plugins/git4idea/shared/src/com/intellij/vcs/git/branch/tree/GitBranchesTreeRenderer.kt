@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.git.branch.tree
 
+import com.intellij.dvcs.ui.VcsRepositoryIconsProvider
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -73,7 +74,8 @@ abstract class GitBranchesTreeRenderer(
     val value = treeNode ?: return null
     return when (value) {
       is PopupFactoryImpl.ActionItem -> value.getIcon(isSelected)
-      is GitBranchesTreeModel.RepositoryNode -> GitBranchesTreeIconProvider.forRepository(treePopupStep.project, value.repository.repositoryId)
+        is GitBranchesTreeModel.RepositoryNode -> VcsRepositoryIconsProvider.getInstance(treePopupStep.project)
+            .getIcon(value.repository.repositoryId)
       else -> null
     }
   }

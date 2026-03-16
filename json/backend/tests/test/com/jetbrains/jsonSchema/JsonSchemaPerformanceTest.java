@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
@@ -25,6 +26,7 @@ import java.util.Collections;
 
 import static com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema;
 
+@PerformanceUnitTest
 public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
   public static final String BASE_PATH = "/tests/testData/jsonSchema/performance/";
 

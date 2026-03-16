@@ -23,7 +23,13 @@ import com.sun.jna.Structure;
 import com.sun.jna.platform.win32.COM.COMException;
 import com.sun.jna.platform.win32.COM.Wbemcli;
 import com.sun.jna.platform.win32.COM.WbemcliUtil;
-import com.sun.jna.platform.win32.*;
+import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.platform.win32.Kernel32Util;
+import com.sun.jna.platform.win32.KnownFolders;
+import com.sun.jna.platform.win32.Ole32;
+import com.sun.jna.platform.win32.Shell32Util;
+import com.sun.jna.platform.win32.WinBase;
+import com.sun.jna.platform.win32.WinNT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +38,15 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -48,7 +62,7 @@ public class WindowsDefenderChecker {
 
   private static final String IGNORE_STATUS_CHECK = "ignore.virus.scanning.warn.message";
   private static final String HELPER_SCRIPT_NAME = "defender-exclusions.ps1";
-  private static final int WMIC_COMMAND_TIMEOUT_MS = 10_000, POWERSHELL_COMMAND_TIMEOUT_MS = 30_000;
+  private static final int WMIC_COMMAND_TIMEOUT_MS = 10_000, POWERSHELL_COMMAND_TIMEOUT_MS = 60_000;
   private static final ExtensionPointName<Extension> EP_NAME = ExtensionPointName.create("com.intellij.defender.config");
 
   /**
@@ -309,7 +323,7 @@ public class WindowsDefenderChecker {
     try {
       var script = PathManager.findBinFile(HELPER_SCRIPT_NAME);
       if (script == null) {
-        LOG.info("'" + HELPER_SCRIPT_NAME + "' is missing from '" + PathManager.getBinPath() + "'");
+        LOG.info("'" + HELPER_SCRIPT_NAME + "' is missing from '" + PathManager.getBinDir() + "'");
         return false;
       }
 
@@ -374,8 +388,9 @@ public class WindowsDefenderChecker {
     }
   }
 
+  @SuppressWarnings("IO_FILE_USAGE")
   private static ProcessOutput run(ProcessBuilder command, Charset charset) throws IOException {
-    var tempDir = NioFiles.createDirectories(Path.of(PathManager.getTempPath()));
+    var tempDir = NioFiles.createDirectories(PathManager.getTempDir());
     command.environment().put("PSModulePath", "");
     command.redirectErrorStream(true);
     command.directory(tempDir.toFile());

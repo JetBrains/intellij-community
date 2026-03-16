@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -74,6 +74,12 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
 
   /**
    * Inserts given string at each caret's position. Effective caret shift will be equal to {@code caretShift} for each caret.
+   *
+   * @param editor editor to type in
+   * @param str string to type
+   * @param toProcessOverwriteMode whether to process overwrite mode
+   * @param caretShift effective caret shift for each caret, i.e., the number of characters to move the caret after insertion.
+   * @throws ReadOnlyFragmentModificationException if the operation is attempted on a read-only fragment
    */
   public static void typeInStringAtCaretHonorMultipleCarets(@NotNull Editor editor, @NotNull String str, boolean toProcessOverwriteMode, int caretShift)
     throws ReadOnlyFragmentModificationException {

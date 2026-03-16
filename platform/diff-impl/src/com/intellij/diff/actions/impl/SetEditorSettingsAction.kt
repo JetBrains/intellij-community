@@ -7,7 +7,11 @@ import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
 import com.intellij.diff.util.CombinedDiffToggle
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.diff.DiffBundle

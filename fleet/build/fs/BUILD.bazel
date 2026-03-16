@@ -1,0 +1,67 @@
+### auto-generated section `build fleet.build.fs` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_fs",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi",
+  ],
+  x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
+  x_jvm_default = "all-compatibility",
+  x_lambdas = "class"
+)
+
+resourcegroup(
+  name = "fs_test_resources",
+  srcs = glob(["resourcesJvmTest/**/*"]),
+  strip_prefix = "resourcesJvmTest"
+)
+
+jvm_library(
+  name = "fs",
+  module_name = "fleet.build.fs",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_fs",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:slf4j-api",
+    "@lib//:fleet-github-luben-zstd-jni",
+    "@lib//:fleet-tukaani-xz",
+    "@lib//:commons-compress",
+    "@lib//:commons-io",
+    "@lib//:commons-lang3",
+  ]
+)
+
+jvm_library(
+  name = "fs_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcJvmTest/**/*.kt", "srcJvmTest/**/*.java", "srcJvmTest/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  resources = [":fs_test_resources"],
+  kotlinc_opts = ":custom_fs",
+  associates = [":fs"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:slf4j-api",
+    "@lib//:fleet-github-luben-zstd-jni",
+    "@lib//:fleet-tukaani-xz",
+    "//fleet/test-runtime",
+    "@lib//:commons-compress",
+    "@lib//:commons-io",
+    "@lib//:commons-lang3",
+  ]
+)
+### auto-generated section `build fleet.build.fs` end
+
+### auto-generated section `test fleet.build.fs` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "fs_test",
+  runtime_deps = [":fs_test_lib"]
+)
+### auto-generated section `test fleet.build.fs` end

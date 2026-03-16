@@ -16,13 +16,17 @@ import com.intellij.pom.Navigatable;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 
@@ -58,7 +62,7 @@ public class TestDataGroupFileEditor extends UserDataHolderBase implements TextE
 
   @Override
   public @NotNull Editor getEditor() {
-    return (SwingUtilities.isEventDispatchThread() && isBeforeEditorFocused() ? myBeforeEditor : myAfterEditor).getEditor();
+    return (EDT.isCurrentThreadEdt() && isBeforeEditorFocused() ? myBeforeEditor : myAfterEditor).getEditor();
   }
 
   private boolean isBeforeEditorFocused() {

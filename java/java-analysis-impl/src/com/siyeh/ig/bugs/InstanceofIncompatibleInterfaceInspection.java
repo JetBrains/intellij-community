@@ -16,7 +16,12 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;

@@ -13,7 +13,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.vfs.VirtualFile
 
-private open class MoveEditorToOppositeTabGroupAction(
+internal open class MoveEditorToOppositeTabGroupAction(
   private val closeSource: Boolean,
 ) : AnAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Suppress("unused")
@@ -67,4 +67,4 @@ private open class MoveEditorToOppositeTabGroupAction(
   }
 }
 
-private class OpenEditorInOppositeTabGroupAction : MoveEditorToOppositeTabGroupAction(closeSource = false)
+internal class OpenEditorInOppositeTabGroupAction : MoveEditorToOppositeTabGroupAction(closeSource = false)

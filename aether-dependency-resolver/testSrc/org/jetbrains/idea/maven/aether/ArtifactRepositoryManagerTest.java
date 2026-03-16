@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.aether;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.repository.RemoteRepository;

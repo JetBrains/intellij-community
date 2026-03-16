@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight
 
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction
+import com.intellij.idea.TestFor
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.fixtures.PyTestCase
@@ -125,10 +126,24 @@ class PyGotoTypeDeclarationTest : PyTestCase() {
     assertEquals((myFixture.file as PyFile).findTopLevelAttribute("Movie"), type)
   }
 
-  private fun findSymbolType(text: String): PsiElement = findSymbolTypes(text).single()
+  @TestFor(issues = ["PY-84930"])
+  fun `test goto type declaration for callable`() {
+    val type = findSymbolType(
+      """
+      from typing import Callable
+      
+      class A: ...
+      a<caret>: Callable[[], A]
+      """
+    )
 
-  private fun findSymbolTypes(text: String): List<PsiElement> {
+    assertEquals((myFixture.file as PyFile).findTopLevelClass("A"), type)
+  }
+
+  private fun findSymbolType(text: String): PsiElement = findSymbolTypes(text).single()!!
+
+  private fun findSymbolTypes(text: String): List<PsiElement?> {
     myFixture.configureByText(PythonFileType.INSTANCE, text)
-    return GotoTypeDeclarationAction.findSymbolTypes(myFixture.editor, myFixture.caretOffset)?.asList() ?: emptyList()
+    return GotoTypeDeclarationAction.findSymbolTypes(myFixture.editor, myFixture.caretOffset)?.asList().orEmpty()
   }
 }

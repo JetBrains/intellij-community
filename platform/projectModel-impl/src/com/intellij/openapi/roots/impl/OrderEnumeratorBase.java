@@ -6,7 +6,23 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleManagerEx;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ExportableOrderEntry;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.ModuleSourceOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderEnumerationHandler;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.OrderEnumeratorSettings;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.OrderRootsEnumerator;
+import com.intellij.openapi.roots.RootModelProvider;
+import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.NotNullFunction;
@@ -17,7 +33,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @ApiStatus.Internal
 public abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnumeratorSettings {

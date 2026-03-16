@@ -6,3 +6,5 @@ fun bar() {
 }
 
 // ELEMENT: "{ Date -> ... }"
+
+// IGNORE_K2

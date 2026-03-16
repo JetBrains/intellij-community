@@ -1,20 +1,20 @@
 package com.intellij.execution.multilaunch.execution.conditions.impl
 
 import com.intellij.execution.ExecutionBundle
-import com.intellij.openapi.rd.util.launchBackground
-import com.intellij.ui.dsl.builder.Row
-import com.jetbrains.rd.util.lifetime.Lifetime
 import com.intellij.execution.multilaunch.MultiLaunchConfiguration
 import com.intellij.execution.multilaunch.design.ExecutableRow
 import com.intellij.execution.multilaunch.execution.ExecutionDescriptor
-import com.intellij.execution.multilaunch.execution.messaging.DefaultExecutionNotifier
-import com.intellij.execution.multilaunch.execution.executables.Executable
 import com.intellij.execution.multilaunch.execution.ExecutionMode
 import com.intellij.execution.multilaunch.execution.conditions.Condition
 import com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate
+import com.intellij.execution.multilaunch.execution.executables.Executable
+import com.intellij.execution.multilaunch.execution.messaging.DefaultExecutionNotifier
 import com.intellij.execution.multilaunch.execution.messaging.ExecutionNotifier
 import com.intellij.execution.multilaunch.state.ConditionSnapshot
 import com.intellij.internal.statistic.StructuredIdeActivity
+import com.intellij.openapi.rd.util.launchBackground
+import com.intellij.ui.dsl.builder.Row
+import com.jetbrains.rd.util.lifetime.Lifetime
 
 class ImmediatelyConditionTemplate : ConditionTemplate {
   override val type = "immediately"

@@ -13,8 +13,27 @@ import com.intellij.java.JavaBundle;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotation.TargetType;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtil;
@@ -33,10 +52,22 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
-import static com.intellij.psi.PsiModifier.*;
+import static com.intellij.psi.PsiModifier.ABSTRACT;
+import static com.intellij.psi.PsiModifier.FINAL;
+import static com.intellij.psi.PsiModifier.NATIVE;
+import static com.intellij.psi.PsiModifier.SEALED;
+import static com.intellij.psi.PsiModifier.STATIC;
 
 public final class ConvertToRecordFix implements LocalQuickFix {
   private final boolean mySuggestAccessorsRenaming;
@@ -403,8 +434,9 @@ public final class ConvertToRecordFix implements LocalQuickFix {
       }
 
       final Set<PsiStatement> otherStatements = new HashSet<>(bodyProcessor.getOtherStatements());
-      return new RecordConstructorCandidate(type, constructorMethod, bodyProcessor.getParamsToFields(),
-                                            bodyProcessor.getFieldNamesToInitializers(), otherStatements);
+      return new RecordConstructorCandidate(
+        type, constructorMethod, bodyProcessor.getParamsToFields(), bodyProcessor.getFieldNamesToInitializers(), otherStatements
+      );
     }
   }
 
@@ -412,10 +444,13 @@ public final class ConvertToRecordFix implements LocalQuickFix {
    * Encapsulates information about converting of a single constructor, for example, whether it is canonical or not.
    */
   @NotNullByDefault
-  record RecordConstructorCandidate(Kind kind, PsiMethod constructor, Map<PsiParameter, @Nullable PsiField> paramsToFields,
-                                    LinkedHashMap<String, PsiExpression> fieldNamesToInitializers,
-                                    // TODO(bartekpacia): change type to SequencedMap once we move to Java 21
-                                    Set<PsiStatement> otherStatements) {
+  record RecordConstructorCandidate(
+    Kind kind,
+    PsiMethod constructor,
+    Map<PsiParameter, @Nullable PsiField> paramsToFields,
+    LinkedHashMap<String, PsiExpression> fieldNamesToInitializers, // TODO(bartekpacia): change type to SequencedMap once we move to Java 21
+    Set<PsiStatement> otherStatements
+  ) {
 
     /// The "kind" of record constructor that [#constructor] will take after being converted to a record (if at all).
     enum Kind {

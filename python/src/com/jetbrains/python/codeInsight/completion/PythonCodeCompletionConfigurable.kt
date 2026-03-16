@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.completion
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.bindSelected
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
@@ -21,10 +20,8 @@ class PythonCodeCompletionConfigurable: UiDslUnnamedConfigurable.Simple(), Confi
     group(PyBundle.message("configurable.PythonCodeCompletionConfigurable.border.title")) {
       row {
         checkBox(PyBundle.message("configurable.PythonCodeCompletionConfigurable.checkbox.suggest.importable.names"))
-          .bindSelected({ settings.INCLUDE_IMPORTABLE_NAMES_IN_BASIC_COMPLETION },
-                        { settings.INCLUDE_IMPORTABLE_NAMES_IN_BASIC_COMPLETION = it })
-          .gap(RightGap.SMALL)
-        contextHelp(PyBundle.message("configurable.PythonCodeCompletionConfigurable.checkbox.suggest.importable.names.help"))
+          .bindSelected(settings::INCLUDE_IMPORTABLE_NAMES_IN_BASIC_COMPLETION)
+          .contextHelp(PyBundle.message("configurable.PythonCodeCompletionConfigurable.checkbox.suggest.importable.names.help"))
       }
     }
   }

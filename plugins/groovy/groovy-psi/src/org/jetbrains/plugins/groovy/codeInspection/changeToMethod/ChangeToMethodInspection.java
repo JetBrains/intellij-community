@@ -19,7 +19,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCa
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-import static org.jetbrains.plugins.groovy.codeInspection.changeToMethod.transformations.Transformations.*;
+import static org.jetbrains.plugins.groovy.codeInspection.changeToMethod.transformations.Transformations.AS_TYPE_TRANSFORMATION;
+import static org.jetbrains.plugins.groovy.codeInspection.changeToMethod.transformations.Transformations.BINARY_TRANSFORMATIONS;
+import static org.jetbrains.plugins.groovy.codeInspection.changeToMethod.transformations.Transformations.UNARY_TRANSFORMATIONS;
 
 /**
  * Replaces operator call with explicit method call.

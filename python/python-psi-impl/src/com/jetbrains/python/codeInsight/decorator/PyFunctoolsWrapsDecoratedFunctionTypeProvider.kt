@@ -5,9 +5,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
-import com.jetbrains.python.psi.PyKnownDecorator
 import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyKnownDecorator
 import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.StubAwareComputation

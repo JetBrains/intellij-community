@@ -4,7 +4,6 @@ import fleet.modules.api.FleetModule
 import fleet.modules.api.FleetModuleLayer
 import fleet.util.modules.ModuleInfo
 import java.lang.module.ModuleFinder
-import java.util.ServiceLoader
 import kotlin.io.path.Path
 import kotlin.reflect.KClass
 
@@ -50,7 +49,7 @@ class TestJvmFleetModuleLayer(
   override val modules: Set<FleetModule>
     get() = cachedModules
 
-  override fun findModule(name: String): FleetModule? = moduleByName[name]
+  override suspend fun findModule(name: String): FleetModule? = moduleByName[name]
 
   override fun <T : Any> findServices(service: KClass<T>, requestor: KClass<*>): Iterable<T> =
     modules.flatMap { it.findServices(service, requestor) } // TODO: could we do better in terms of performance here?

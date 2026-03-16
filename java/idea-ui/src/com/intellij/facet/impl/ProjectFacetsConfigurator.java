@@ -2,7 +2,13 @@
 
 package com.intellij.facet.impl;
 
-import com.intellij.facet.*;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetInfo;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetModel;
+import com.intellij.facet.FacetType;
+import com.intellij.facet.FacetTypeId;
+import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.facet.impl.ui.FacetEditorImpl;
 import com.intellij.facet.impl.ui.FacetTreeModel;
 import com.intellij.facet.impl.ui.ProjectConfigurableContext;
@@ -10,7 +16,11 @@ import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.ui.configuration.*;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
+import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
+import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -21,7 +31,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ProjectFacetsConfigurator implements FacetsProvider {
   private static final Logger LOG = Logger.getInstance(ProjectFacetsConfigurator.class);

@@ -24,6 +24,6 @@ import java.util.Collection;
 public class MavenCombineChildConverter extends MavenConstantListConverter {
   @Override
   protected Collection<String> getValues(@NotNull ConvertContext context) {
-    return Arrays.asList("append", "override");
+    return Arrays.asList("append", "override", "merge");
   }
 }

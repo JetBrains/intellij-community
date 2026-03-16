@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/core-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/settings-sync-core:settingsSync-core",
     "//platform/core-ui",
@@ -26,7 +27,6 @@ jvm_library(
     "//platform/util/jdom",
     "@lib//:cloud-config-client",
     "//platform/statistics",
-    "//plugins/performanceTesting/core:performanceTesting",
     "//platform/util/progress",
   ]
 )
@@ -40,6 +40,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/core-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/settings-sync-core:settingsSync-core",
     "//platform/settings-sync-core:settingsSync-core_test_lib",
@@ -53,11 +54,9 @@ jvm_library(
     "//platform/statistics:statistics_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//plugins/performanceTesting/core:performanceTesting",
-    "//plugins/performanceTesting/core:performanceTesting_test_lib",
     "//libraries/mockito",
     "//platform/util/progress",
-    "@lib//:kotlinx-coroutines-test",
+    "//libraries/kotlinx/coroutines/test",
   ]
 )
 ### auto-generated section `build intellij.settingsSync` end

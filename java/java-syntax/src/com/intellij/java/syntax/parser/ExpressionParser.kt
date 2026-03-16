@@ -2,13 +2,9 @@
 package com.intellij.java.syntax.parser
 
 import com.intellij.java.syntax.JavaSyntaxBundle
-import com.intellij.java.syntax.element.JavaSyntaxTokenType
 import com.intellij.platform.syntax.SyntaxElementType
-import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
-import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import org.jetbrains.annotations.PropertyKey
-import kotlin.jvm.JvmStatic
 
 class ExpressionParser(
   private val myNewExpressionParser: PrattExpressionParser,
@@ -39,22 +35,6 @@ class ExpressionParser(
   }
 
   companion object {
-    @JvmStatic
-    val SHIFT_OPS: SyntaxElementTypeSet = syntaxElementTypeSetOf(JavaSyntaxTokenType.LTLT, JavaSyntaxTokenType.GTGT, JavaSyntaxTokenType.GTGTGT)
-
-    @JvmStatic
-    val ADDITIVE_OPS: SyntaxElementTypeSet = syntaxElementTypeSetOf(JavaSyntaxTokenType.PLUS, JavaSyntaxTokenType.MINUS)
-
-    @JvmStatic
-    val MULTIPLICATIVE_OPS: SyntaxElementTypeSet = syntaxElementTypeSetOf(JavaSyntaxTokenType.ASTERISK, JavaSyntaxTokenType.DIV, JavaSyntaxTokenType.PERC)
-
-    @JvmStatic
-    val ASSIGNMENT_OPS: SyntaxElementTypeSet = syntaxElementTypeSetOf(
-      JavaSyntaxTokenType.EQ, JavaSyntaxTokenType.ASTERISKEQ, JavaSyntaxTokenType.DIVEQ, JavaSyntaxTokenType.PERCEQ,
-      JavaSyntaxTokenType.PLUSEQ, JavaSyntaxTokenType.MINUSEQ,
-      JavaSyntaxTokenType.LTLTEQ, JavaSyntaxTokenType.GTGTEQ, JavaSyntaxTokenType.GTGTGTEQ, JavaSyntaxTokenType.ANDEQ,
-      JavaSyntaxTokenType.OREQ, JavaSyntaxTokenType.XOREQ)
-
     const val FORBID_LAMBDA_MASK: Int = 0x1
   }
 }

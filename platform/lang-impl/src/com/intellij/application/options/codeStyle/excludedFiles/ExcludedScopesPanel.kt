@@ -5,7 +5,11 @@ import com.intellij.CodeStyleBundle
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.TopGap
 
 internal val isScopeBasedFormattingUI: Boolean
   get() = Registry.`is`("editor.scope.based.formatting.ui", false)

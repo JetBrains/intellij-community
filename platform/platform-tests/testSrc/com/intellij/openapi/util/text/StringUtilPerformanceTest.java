@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util.text;
 
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.junit.Test;
 
@@ -22,6 +23,7 @@ import java.util.Random;
 
 import static org.junit.Assert.assertTrue;
 
+@PerformanceUnitTest
 public class StringUtilPerformanceTest {
   private static final String TEST_STRING = "0123456789abcdefghijklmnopqrstuvwxyz";
 

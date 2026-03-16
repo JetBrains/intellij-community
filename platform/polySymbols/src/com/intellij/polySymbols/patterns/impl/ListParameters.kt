@@ -12,8 +12,6 @@ internal open class ListParameters(
   constructor(params: PolySymbolListSymbolsQueryParams)
     : this(params.queryExecutor, params.expandPatterns)
 
-  val framework: String? get() = queryExecutor.framework
-
   override fun toString(): String =
-    "list (framework: $framework)"
+    "list (context: ${queryExecutor.context})"
 }

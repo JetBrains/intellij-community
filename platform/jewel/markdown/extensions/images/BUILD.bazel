@@ -29,16 +29,16 @@ jvm_library(
   kotlinc_opts = ":custom_images",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "//platform/jewel/markdown/core",
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
     "//libraries/coil",
+    "//libraries/compose-runtime-desktop",
     "//libraries/ktor/client",
     "//libraries/compose-foundation-desktop",
   ],
-  exports = ["//libraries/coil"],
   plugins = ["@lib//:compose-plugin"]
 )
 
@@ -50,7 +50,7 @@ jvm_library(
   associates = [":images"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "//platform/jewel/markdown/core",
     "//platform/jewel/markdown/core:core_test_lib",
@@ -59,11 +59,13 @@ jvm_library(
     "//platform/jewel/foundation",
     "//platform/jewel/foundation:foundation_test_lib",
     "//libraries/coil",
+    "//libraries/junit4",
+    "//libraries/compose-runtime-desktop",
+    "//libraries/kotlinx/coroutines/test",
     "//libraries/compose-foundation-desktop-junit",
     "//libraries/ktor/client",
     "//libraries/compose-foundation-desktop",
   ],
-  exports = ["//libraries/coil"],
   plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.images` end

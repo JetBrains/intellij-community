@@ -9,7 +9,6 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.configurationStore.SchemeDataHolder;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,7 +19,15 @@ import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectTypeService;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -42,7 +49,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.NotNullLazyValue.lazy;
@@ -625,13 +640,13 @@ public class InspectionProfileImpl extends NewInspectionProfile {
                                       ? new Computable.PredefinedValueComputable<>(toolWrapper.getDisplayName())
                                       : extension::getDisplayName;
       if (toolWrapper instanceof LocalInspectionToolWrapper local) {
-        key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(), local.getAlternativeID());
+        key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(), local.getAlternativeID(), toolWrapper);
       }
       else {
-        key = HighlightDisplayKey.register(shortName, computable, shortName);
+        key = HighlightDisplayKey.register(shortName, computable, shortName, null, toolWrapper);
       }
       if (key == null) {
-        PluginException.logPluginError(LOG, "Couldn't register HighlightDisplayKey '"+shortName + "' ; number of initialized tools: " + myTools.size()+"; toolWrapper:"+toolWrapper+"; extension:"+extension, null, toolWrapper.getDescriptionContextClass());
+        // it's an error, but it was already logged in .register()
         return;
       }
     }

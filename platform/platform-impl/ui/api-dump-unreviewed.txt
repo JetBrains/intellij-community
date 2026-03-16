@@ -11,7 +11,6 @@ f:com.intellij.ui.util.UiSizeUtilKt
 - sf:getTextWidth(javax.swing.JComponent,java.lang.String):I
 - sf:getWidth(com.intellij.openapi.ui.popup.JBPopup):I
 - sf:getWidth(java.awt.Insets):I
-- sf:setHeight(com.intellij.openapi.ui.popup.JBPopup,I):V
 - sf:setMaximumHeight(javax.swing.JComponent,I):V
 - sf:setMaximumWidth(javax.swing.JComponent,I):V
 - sf:setMinimumHeight(javax.swing.JComponent,I):V

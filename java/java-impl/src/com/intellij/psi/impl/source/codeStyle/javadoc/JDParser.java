@@ -6,7 +6,11 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaDocumentedElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -967,7 +971,7 @@ public class JDParser {
   }
 
   /**
-   * Returns formatted JavaDoc tag description, according to selected configuration. Prefixs
+   * Returns formatted JavaDoc tag description, according to selected configuration. Prefixes
    * may be specified for the first lines and all subsequent lines. This distinction allows
    * partially manual formatting of the first line (by moving content from the description
    * to the first line prefix) and allow continuation lines to use different indentation.

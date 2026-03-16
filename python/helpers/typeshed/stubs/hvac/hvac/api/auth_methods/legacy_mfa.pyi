@@ -1,9 +1,7 @@
-from _typeshed import Incomplete
-
 from hvac.api.vault_api_base import VaultApiBase
 
-SUPPORTED_MFA_TYPES: Incomplete
-SUPPORTED_AUTH_METHODS: Incomplete
+SUPPORTED_MFA_TYPES: list[str]
+SUPPORTED_AUTH_METHODS: list[str]
 
 class LegacyMfa(VaultApiBase):
     def configure(self, mount_point, mfa_type: str = "duo", force: bool = False): ...

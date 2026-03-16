@@ -1,15 +1,28 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.CaretVisualAttributes;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.EditorThreading;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
@@ -25,20 +38,30 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 @ApiStatus.Internal
 public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private static final Logger LOG = Logger.getInstance(CaretImpl.class);
   private static final Key<CaretVisualAttributes> VISUAL_ATTRIBUTES_KEY = new Key<>("CaretAttributes");
+  public static final DataKey<Boolean> HONOR_CAMEL_WORDS = DataKey.create("HonorCamelWords");
 
   private final EditorImpl myEditor;
   private final @NotNull CaretModelImpl myCaretModel;
@@ -1287,29 +1310,17 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   @Override
   public void selectWordAtCaret(final boolean honorCamelWordsSettings) {
     ThreadingAssertions.assertEventDispatchThread();
-    myCaretModel.doWithCaretMerging(() -> {
-      removeSelection();
-      final EditorSettings settings = myEditor.getSettings();
-      boolean camelTemp = settings.isCamelWords();
 
-      final boolean needOverrideSetting = camelTemp && !honorCamelWordsSettings;
-      if (needOverrideSetting) {
-        settings.setCamelWords(false);
-      }
-
-      try {
-        EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
-        DataContext context = AnActionEvent.getInjectedDataContext(EditorActionHandler.caretDataContext(myEditor.getDataContext(), this));
-        Caret caret = context.getData(CommonDataKeys.CARET);
-        assert caret != null;
-        handler.execute(caret.getEditor(), caret, context);
-      }
-      finally {
-        if (needOverrideSetting) {
-          settings.resetCamelWords();
-        }
-      }
-    });
+    EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CURRENT_CARET);
+    DataContext context = AnActionEvent.getInjectedDataContext(EditorActionHandler.caretDataContext(myEditor.getDataContext(), this));
+    DataContext customizedContext = CustomizedDataContext.withSnapshot(
+      context,
+      sink -> {
+        sink.set(HONOR_CAMEL_WORDS, honorCamelWordsSettings);
+      });
+    Caret caret = customizedContext.getData(CommonDataKeys.CARET);
+    assert caret != null;
+    handler.execute(caret.getEditor(), caret, customizedContext);
   }
 
   @Override

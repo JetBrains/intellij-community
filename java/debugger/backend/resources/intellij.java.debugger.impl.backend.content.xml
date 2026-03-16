@@ -1,0 +1,12 @@
+<!--
+  This file contains extensions, actions, services, etc. without v2 dependencies,
+  so it can be included in Analyzer dependencies where V2 is not yet supported.
+
+  All new extensions, actions, services, extension points, etc. should be added to this file.
+-->
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider
+      implementation="com.intellij.java.debugger.impl.backend.BackendJavaDebuggerRemoteApiProvider"/>
+  </extensions>
+</idea-plugin>

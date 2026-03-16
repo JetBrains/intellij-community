@@ -2,12 +2,18 @@
 package com.jetbrains.python.testing.pyTestParametrized
 
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.util.ThreeState
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyDecorator
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.impl.PyEvaluator
-import com.jetbrains.python.psi.types.*
-import com.jetbrains.python.testing.isTestElement
+import com.jetbrains.python.psi.types.PyCollectionType
+import com.jetbrains.python.psi.types.PyTupleType
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyUnionType
+import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.testing.pyTestFixtures.getFixtures
 
 /**

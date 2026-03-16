@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.refactoring.move
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.move.MoveCallback
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class MoveDeclarationsDescriptor @JvmOverloads constructor(
   val project: Project,
   val moveSource: KotlinMoveSource,

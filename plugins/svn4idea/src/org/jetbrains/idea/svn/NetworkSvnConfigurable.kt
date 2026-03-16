@@ -9,7 +9,14 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.JBIntSpinner
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.bindIntValue
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.net.HttpProxyConfigurable
 import org.jetbrains.idea.svn.config.SvnConfigureProxiesDialog
 

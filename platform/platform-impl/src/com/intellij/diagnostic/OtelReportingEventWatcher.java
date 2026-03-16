@@ -3,12 +3,17 @@ package com.intellij.diagnostic;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import io.opentelemetry.api.metrics.*;
+import io.opentelemetry.api.metrics.BatchCallback;
+import io.opentelemetry.api.metrics.LongCounter;
+import io.opentelemetry.api.metrics.Meter;
+import io.opentelemetry.api.metrics.ObservableDoubleMeasurement;
+import io.opentelemetry.api.metrics.ObservableLongMeasurement;
 import org.HdrHistogram.Histogram;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.AWTEvent;
+import java.awt.EventQueue;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.EDT;
 

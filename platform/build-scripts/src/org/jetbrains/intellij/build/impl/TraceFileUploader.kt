@@ -10,7 +10,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import org.jetbrains.intellij.build.impl.compilation.executeAsync
+import org.jetbrains.intellij.build.impl.compilation.execute
 import org.jetbrains.intellij.build.impl.compilation.httpClient
 import java.io.IOException
 import java.net.URLEncoder
@@ -42,7 +42,7 @@ open class TraceFileUploader(serverUrl: String, token: String?) {
     log("Uploading metadata to '$url': $content")
     val builder = prepareRequestBuilder(url)
     builder.post(content.toRequestBody("application/json".toMediaType()))
-    httpClient.newCall(builder.build()).executeAsync().use { response ->
+    execute(httpClient.newCall(builder.build())).use { response ->
       when (response.code) {
         200, 201, 202, 204 -> return readPlainMetadata(response)
         else -> throw readError(response, response.code)
@@ -55,7 +55,7 @@ open class TraceFileUploader(serverUrl: String, token: String?) {
     log("Uploading '${file.fileName}' to '$url'")
     val builder = prepareRequestBuilder(url)
     builder.post(file.toFile().asRequestBody("application/octet-stream".toMediaType()))
-    httpClient.newCall(builder.build()).executeAsync().use { response ->
+    execute(httpClient.newCall(builder.build())).use { response ->
       return readBody(response)
     }
   }

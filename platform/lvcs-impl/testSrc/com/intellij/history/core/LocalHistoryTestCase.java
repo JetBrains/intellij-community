@@ -1,7 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.core;
 
-import com.intellij.history.core.changes.*;
+import com.intellij.history.core.changes.Change;
+import com.intellij.history.core.changes.ChangeSet;
+import com.intellij.history.core.changes.ContentChange;
+import com.intellij.history.core.changes.CreateDirectoryChange;
+import com.intellij.history.core.changes.CreateFileChange;
+import com.intellij.history.core.changes.DeleteChange;
+import com.intellij.history.core.changes.MoveChange;
+import com.intellij.history.core.changes.PutLabelChange;
+import com.intellij.history.core.changes.PutSystemLabelChange;
+import com.intellij.history.core.changes.ROStatusChange;
+import com.intellij.history.core.changes.RenameChange;
+import com.intellij.history.core.changes.StructuralChange;
 import com.intellij.history.core.storage.TestContent;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;

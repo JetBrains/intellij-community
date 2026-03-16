@@ -6,16 +6,15 @@ import org.jetbrains.idea.maven.plugins.api.MavenFixedValueReferenceProvider
 import org.jetbrains.kotlin.cli.common.arguments.K2JsArgumentConstants
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.config.isStableOrReadyForPreview
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 
 class MavenLanguageVersionsCompletionProvider : MavenFixedValueReferenceProvider(
-    LanguageVersion.entries.filter { it.isStableOrReadyForPreview() || isApplicationInternalMode() }.map { it.versionString }
+    LanguageVersion.entries.filter { it.isStable || isApplicationInternalMode() }.map { it.versionString }
         .toTypedArray()
 )
 
 class MavenApiVersionsCompletionProvider : MavenFixedValueReferenceProvider(
-    LanguageVersion.entries.filter { it.isStableOrReadyForPreview() || isApplicationInternalMode() }.map { it.versionString }
+    LanguageVersion.entries.filter { it.isStable || isApplicationInternalMode() }.map { it.versionString }
         .toTypedArray()
 )
 

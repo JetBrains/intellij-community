@@ -11,7 +11,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall
-import org.jetbrains.plugins.groovy.lang.resolve.api.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyWriteReferenceBase
+import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument
 
 class GrMapConstructorPropertyReference(element: GrArgumentLabel) : GroovyPropertyWriteReferenceBase<GrArgumentLabel>(element) {
 

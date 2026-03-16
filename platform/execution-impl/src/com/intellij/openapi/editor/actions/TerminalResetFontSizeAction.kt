@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction.Companion.getHandler
 import com.intellij.openapi.project.DumbAwareAction
 
-private class TerminalResetFontSizeAction : DumbAwareAction(), LightEditCompatible {
+internal class TerminalResetFontSizeAction : DumbAwareAction(), LightEditCompatible {
   override fun actionPerformed(e: AnActionEvent) {
     val handler = getHandler(e) ?: return
     handler.resetTerminalFontSize()

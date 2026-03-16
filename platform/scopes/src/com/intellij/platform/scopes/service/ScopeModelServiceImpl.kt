@@ -25,7 +25,7 @@ import org.jetbrains.concurrency.await
 private val LOG = logger<ScopeModelServiceImpl>()
 
 @ApiStatus.Internal
-private class ScopeModelServiceImpl(private val project: Project, private val coroutineScope: CoroutineScope) : ScopeModelService {
+internal class ScopeModelServiceImpl(private val project: Project, private val coroutineScope: CoroutineScope) : ScopeModelService {
   private var scopeIdToDescriptor = mapOf<String, ScopeDescriptor>()
   private var itemsLoadingJob: Job? = null
   private var editScopesJob: Job? = null

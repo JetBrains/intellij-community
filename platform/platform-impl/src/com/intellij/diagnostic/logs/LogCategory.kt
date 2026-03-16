@@ -2,8 +2,6 @@
 package com.intellij.diagnostic.logs
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.annotations.ApiStatus
 
 @Serializable
-@ApiStatus.Internal
 data class LogCategory(val category: String, val level: DebugLogLevel)

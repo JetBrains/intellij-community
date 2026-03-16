@@ -28,7 +28,11 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.VcsCloneColl
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandlerListener;
+import git4idea.commands.GitShallowCloneOptions;
+import git4idea.commands.GitStandardProgressAnalyzer;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitCloneDialogComponent;
 import org.jetbrains.annotations.NonNls;
@@ -128,7 +132,7 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
 
         GitCommandResult result;
         try {
-          result = git.clone(project, new File(parentDirectory), sourceRepositoryURL, directoryName, shallowCloneOptions, progressListener);
+          result = git.clone(project, Path.of(parentDirectory), sourceRepositoryURL, directoryName, shallowCloneOptions, progressListener);
         }
         catch (Exception e) {
           if (listener instanceof GitCheckoutListener) {
@@ -180,7 +184,8 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
     indicator.setIndeterminate(false);
 
     GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(indicator);
-    GitCommandResult result = git.clone(project, new File(parentDirectory), sourceRepositoryURL, directoryName, shallowCloneOptions, progressListener);
+    GitCommandResult result =
+      git.clone(project, Path.of(parentDirectory), sourceRepositoryURL, directoryName, shallowCloneOptions, progressListener);
     if (result.success()) {
       return true;
     }

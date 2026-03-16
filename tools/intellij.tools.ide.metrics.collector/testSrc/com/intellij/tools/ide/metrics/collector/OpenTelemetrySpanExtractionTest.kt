@@ -111,8 +111,8 @@ class OpenTelemetrySpanExtractionTest {
     assertThat(metrics).containsAll(listOf(
       Metric.newDuration("performance_test", 13497),
       Metric.newDuration("delayType", 3739),
-      Metric.newCounter("test#max_awt_delay", 141),
-      Metric.newCounter("test#average_awt_delay", 8),
+      Metric.newDuration("test#max_awt_delay", 141),
+      Metric.newDuration("test#average_awt_delay", 8),
     ))
   }
 
@@ -124,11 +124,11 @@ class OpenTelemetrySpanExtractionTest {
     assertThat(metrics).containsAll(listOf(
       Metric.newDuration("performance_test", 81444),
       Metric.newDuration("timer_1", 1184),
-      Metric.newCounter("timer_1#average_awt_delay", 3),
-      Metric.newCounter("timer_1#max_awt_delay", 57),
+      Metric.newDuration("timer_1#average_awt_delay", 3),
+      Metric.newDuration("timer_1#max_awt_delay", 57),
       Metric.newDuration("timer_2", 1519),
-      Metric.newCounter("timer_2#average_awt_delay", 7),
-      Metric.newCounter("timer_2#max_awt_delay", 84),
+      Metric.newDuration("timer_2#average_awt_delay", 7),
+      Metric.newDuration("timer_2#max_awt_delay", 84),
       Metric.newDuration("timer", 2703),
       Metric.newCounter("timer#count", 2),
       Metric.newDuration("timer#mean_value", 1351),
@@ -278,8 +278,8 @@ class OpenTelemetrySpanExtractionTest {
       Metric.newCounter("arrangeItems#count", 15),
       Metric.newDuration("arrangeItems#mean_value", 17),
       Metric.newDuration("arrangeItems#standard_deviation", 16),
-      Metric.newCounter("test#max_awt_delay", 714),
-      Metric.newCounter("test#average_awt_delay", 7),
+      Metric.newDuration("test#max_awt_delay", 714),
+      Metric.newDuration("test#average_awt_delay", 7),
     ))
   }
 

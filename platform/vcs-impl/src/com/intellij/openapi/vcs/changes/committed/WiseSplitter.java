@@ -7,9 +7,10 @@ import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Dimension;
 import java.util.HashMap;
 import java.util.Map;
 

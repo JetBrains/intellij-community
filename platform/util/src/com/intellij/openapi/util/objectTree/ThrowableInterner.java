@@ -93,7 +93,15 @@ public final class ThrowableInterner {
 
   static {
     try {
-      BACKTRACE_FIELD = Throwable.class.getDeclaredField("backtrace");
+      Field j9WalkBack;
+      try {
+        // OpenJ9 has java.lang.Throwable.walkback instead of java.lang.Throwable.backtrace
+        j9WalkBack = Throwable.class.getDeclaredField("walkback");
+      }
+      catch (NoSuchFieldException e) {
+        j9WalkBack = null;
+      }
+      BACKTRACE_FIELD = j9WalkBack == null ? Throwable.class.getDeclaredField("backtrace") : j9WalkBack;
     }
     catch (NoSuchFieldException e) {
       throw new RuntimeException(e);

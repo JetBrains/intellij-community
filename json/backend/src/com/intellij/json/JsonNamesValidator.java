@@ -39,8 +39,8 @@ public final class JsonNamesValidator implements NamesValidator {
     myLexer.start(name);
     SyntaxElementType type = myLexer.getTokenType();
 
-    return myLexer.getTokenEnd() == name.length() && (type == JsonSyntaxElementTypes.DOUBLE_QUOTED_STRING ||
-                                                      type == JsonSyntaxElementTypes.SINGLE_QUOTED_STRING);
+    return myLexer.getTokenEnd() == name.length() && (type == JsonSyntaxElementTypes.INSTANCE.getDOUBLE_QUOTED_STRING() ||
+                                                      type == JsonSyntaxElementTypes.INSTANCE.getSINGLE_QUOTED_STRING());
   }
 
 }

@@ -1,5 +1,5 @@
-from _typeshed import Incomplete, SupportsGetItem
-from collections.abc import Iterable
+from _typeshed import Incomplete
+from collections.abc import Iterable, Mapping
 
 from networkx.classes.graph import Graph, _Node
 from networkx.utils.backends import _dispatchable
@@ -15,7 +15,7 @@ def attribute_mixing_matrix(
     G: Graph[_Node],
     attribute: str,
     nodes: Iterable[Incomplete] | None = None,
-    mapping: SupportsGetItem[Incomplete, Incomplete] | None = None,
+    mapping: Mapping[Incomplete, Incomplete] | None = None,
     normalized: bool = True,
 ): ...
 @_dispatchable
@@ -30,7 +30,7 @@ def degree_mixing_matrix(
     weight: str | None = None,
     nodes: Iterable[Incomplete] | None = None,
     normalized: bool = True,
-    mapping: SupportsGetItem[Incomplete, Incomplete] | None = None,
+    mapping: Mapping[Incomplete, Incomplete] | None = None,
 ): ...
 @_dispatchable
 def mixing_dict(xy, normalized: bool = False) -> dict[Incomplete, Incomplete]: ...

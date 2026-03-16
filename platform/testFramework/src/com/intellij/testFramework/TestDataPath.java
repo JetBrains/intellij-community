@@ -8,12 +8,15 @@ import java.lang.annotation.Target;
 
 /**
  * Specifies the path to testdata for the current test case class.
- * May use the variable $CONTENT_ROOT to specify the module content root or
- * $PROJECT_ROOT to use the project base directory.
- * Affects only navigation to testdata inside the IDE, not actual test execution.
+ * <p>
+ * May use the variable {@code $CONTENT_ROOT} to specify the module content root or
+ * {@code $PROJECT_ROOT} to use the project base directory.
+ * <p>
+ * Affects only navigation to testdata inside the IDE, not actual test execution –
+ * unless noted otherwise, for example, in {@link com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt#codeInsightFixture}.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
+@Target(ElementType.TYPE)
 public @interface TestDataPath {
   String value();
 }

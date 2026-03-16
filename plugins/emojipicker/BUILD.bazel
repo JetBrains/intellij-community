@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   resources = [":emojipicker_resources"],
   deps = [
+    "@lib//:kotlin-stdlib",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",

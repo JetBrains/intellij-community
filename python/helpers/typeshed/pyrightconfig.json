@@ -28,8 +28,6 @@
     // No effect in stubs
     "reportMissingSuperCall": "none",
     "reportUninitializedInstanceVariable": "none",
-    // stdlib stubs trigger reportShadowedImports
-    "reportShadowedImports": "none",
     // Stubs are allowed to use private variables
     "reportPrivateUsage": "none",
     // Stubs don't need the actual modules to be installed

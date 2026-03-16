@@ -17,13 +17,7 @@ package com.jetbrains.python.remote;
 
 public interface PyCredentialsContribution<T> {
 
-  boolean isValid(T credentials);
-
   boolean isPackageManagementEnabled();
 
-  boolean isSpecificCoverageAttach();
-
   boolean isSpecificCoveragePatch();
-
-  boolean isRemoteProcessStartSupported();
 }

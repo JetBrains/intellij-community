@@ -3,7 +3,7 @@ package training.learn.lesson
 
 import training.learn.course.Lesson
 import training.statistic.LessonStartingWay
-import java.util.*
+import java.util.EventListener
 
 interface LessonListener : EventListener {
 

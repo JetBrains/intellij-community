@@ -11,6 +11,5 @@ interface NotebookCellController : Disposable.Default {
    * This logic is supposed to be as simple as check `isValid` and `offset` attributes of inlays
    * so it should not introduce significant performance degradation.
    */
-  fun checkAndRebuildInlays() {
-  }
+  fun checkAndRebuildInlays(): Unit = Unit
 }

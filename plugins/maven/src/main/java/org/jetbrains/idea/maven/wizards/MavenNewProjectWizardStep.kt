@@ -17,7 +17,6 @@ import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
@@ -53,7 +52,7 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   override fun findAllParents(): List<MavenProject> {
     val project = context.project ?: return emptyList()
     val projectsManager = MavenProjectsManager.getInstance(project)
-    return projectsManager.projects
+    return if(projectsManager.isInitialized) projectsManager.projects else emptyList()
   }
 
   override fun ValidationInfoBuilder.validateGroupId(): ValidationInfo? {
@@ -88,29 +87,13 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     builder.projectId = MavenId(groupId, artifactId, version)
     builder.isInheritGroupId = parentData?.mavenId?.groupId == groupId
     builder.isInheritVersion = parentData?.mavenId?.version == version
+    builder.moduleJdk = context.projectJdk
 
     configure(builder)
 
-    val sdkDownloadTask = jdkIntent.downloadTask
-    val isCreatingNewProject = context.isCreatingNewProject
-
-    if (isCreatingNewProject) {
-      if (sdkDownloadTask is JdkDownloadTask) {
-        // Download the SDK on project creation
-        builder.sdkDownloadedFuture = project.service<JdkDownloadService>()
-          .scheduleDownloadJdkForNewProject(sdkDownloadTask)
-      }
-    }
+    builder.sdkDownloadedFuture = project.service<JdkDownloadService>().scheduleDownloadSdk(context.projectJdk)
 
     val module = setupProjectFromBuilder(project, builder)
-
-    if (null != module) {
-      if (!isCreatingNewProject) {
-        if (sdkDownloadTask is JdkDownloadTask) {
-          module.project.service<JdkDownloadService>().scheduleDownloadJdk(sdkDownloadTask, module, false)
-        }
-      }
-    }
 
     return module
   }

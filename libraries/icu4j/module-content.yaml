@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.icu4j.jar
   modules:
   - name: intellij.libraries.icu4j
   library: icu4j

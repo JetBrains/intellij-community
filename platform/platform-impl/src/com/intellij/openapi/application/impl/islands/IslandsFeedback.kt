@@ -22,7 +22,7 @@ internal class IslandsFeedback : ProjectActivity {
       return isIslandTheme(LafManager.getInstance().currentUIThemeLookAndFeel?.id ?: return false)
     }
 
-    internal fun isIslandTheme(themeId: String) = themeId == "Islands Dark" || themeId == "Islands Light"
+    internal fun isIslandTheme(themeId: String) = themeId == "Islands Dark" || themeId == "Islands Light" || themeId == "Islands Darcula"
 
     @Volatile
     private var myFirstProject = true

@@ -9,7 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.ComponentUtil
 
-private class ReopenClosedTabAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+internal class ReopenClosedTabAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
     val window = getEditorWindow(e)
     if (window == null) {

@@ -5,13 +5,19 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -87,7 +93,7 @@ class KotlinMemberInplaceRenameHandler : MemberInplaceRenameHandler() {
 
     override fun isAvailable(element: PsiElement?, editor: Editor, file: PsiFile): Boolean {
         if (!editor.settings.isVariableInplaceRenameEnabled) return false
-        val currentElement = element?.substitute() as? KtNamedDeclaration ?: return false
+        val currentElement = element?.substitute()?.unwrapped as? KtNamedDeclaration ?: return false
         val elementAtCaret = file.findElementAt(editor.caretModel.offset)
         val thisExpression = PsiTreeUtil.getParentOfType(elementAtCaret, KtThisExpression::class.java)
         if (thisExpression != null && PsiTreeUtil.isAncestor(thisExpression.instanceReference, elementAtCaret!!, false)) {

@@ -2,12 +2,15 @@
 
 package org.jetbrains.kotlin.j2k.ast
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.ClassKind
 import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.j2k.append
 
+@K1Deprecation
 abstract class Member(var annotations: Annotations, val modifiers: Modifiers) : Element()
 
+@K1Deprecation
 class ClassBody(
         val primaryConstructor: PrimaryConstructor?,
         val primaryConstructorSignature: PrimaryConstructorSignature?,

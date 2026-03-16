@@ -4,7 +4,12 @@ package com.intellij.platform.searchEverywhere
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+/**
+ * Interface for providing preview information for search items
+ *
+ * See [SeItemsProvider], [SePreviewInfoFactory]
+ */
+@ApiStatus.Experimental
 interface SeItemsPreviewProvider {
   suspend fun getPreviewInfo(item: SeItem, project: Project): SePreviewInfo?
 }

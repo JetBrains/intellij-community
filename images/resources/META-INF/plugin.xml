@@ -121,7 +121,7 @@
     <action class="org.intellij.images.scientific.action.BinarizeImageAction"
             id="Images.BinarizeImageAction">
     </action>
-    <action class="org.intellij.images.scientific.action.ConfigureActions"
+    <action class="org.intellij.images.scientific.action.ConfigureBinarization"
             id="Images.ConfigureActions">
     </action>
     <action class="org.intellij.images.scientific.action.GrayscaleImageAction"
@@ -158,7 +158,8 @@
       <reference ref="Images.RotateImageAction"/>
       <reference ref="Images.NormalizeImageAction"/>
       <group id="Images.ImageOperationsGroup"
-             class="org.intellij.images.scientific.action.ImageOperationsActionGroup"/>
+             class="org.intellij.images.scientific.action.ImageOperationsActionGroup"
+             popup="true"/>
     </group>
     <group id="Images.EditorToolbar">
       <reference ref="Images.ToggleTransparencyChessboard"/>

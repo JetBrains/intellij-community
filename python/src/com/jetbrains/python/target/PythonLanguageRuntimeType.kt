@@ -52,10 +52,13 @@ class PythonLanguageRuntimeType : LanguageRuntimeType<PythonLanguageRuntimeConfi
   override fun findLanguageRuntime(target: TargetEnvironmentConfiguration): PythonLanguageRuntimeConfiguration? =
     target.runtimes.findByType()
 
-  companion object {
-    const val TYPE_ID = "PythonLanguageRuntime"
-
+  object Helper {
     @JvmStatic
-    fun getInstance() = EXTENSION_NAME.findExtensionOrFail(PythonLanguageRuntimeType::class.java)
+    fun getInstance(): PythonLanguageRuntimeType = EXTENSION_NAME.findExtensionOrFail(PythonLanguageRuntimeType::class.java)
+  }
+
+  companion object {
+    const val TYPE_ID: String = "PythonLanguageRuntime"
+
   }
 }

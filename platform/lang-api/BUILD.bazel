@@ -34,10 +34,11 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/execution",
     "//platform/refactoring",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
   ],
-  exports = [
-    "//platform/platform-api:ide",
-    "//platform/execution",
-  ]
+  exports = ["//platform/platform-api:ide"]
 )
 ### auto-generated section `build intellij.platform.lang` end

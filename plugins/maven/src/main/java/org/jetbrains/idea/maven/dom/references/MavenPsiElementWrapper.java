@@ -8,7 +8,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.RenameableFakePsiElement;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 

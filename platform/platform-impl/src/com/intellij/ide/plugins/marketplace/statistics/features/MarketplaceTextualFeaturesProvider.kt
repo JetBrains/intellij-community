@@ -2,8 +2,8 @@
 package com.intellij.ide.plugins.marketplace.statistics.features
 
 import com.intellij.internal.statistic.eventLog.events.EventField
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

@@ -8,7 +8,9 @@ import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleType;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.util.EnumSet;

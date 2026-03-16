@@ -5,7 +5,11 @@ import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UAnonymousClass;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UElementKt;
+import org.jetbrains.uast.UastUtils;
 
 import java.util.Collection;
 

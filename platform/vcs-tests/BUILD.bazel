@@ -22,6 +22,8 @@ jvm_library(
     "//platform/indexing-impl",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5/eel",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.testFramework` end
@@ -30,7 +32,28 @@ jvm_library(
 jvm_library(
   name = "vcs-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  exports = ["//platform/vcs-tests:vcs-testFramework"],
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/vcs-tests:vcs-testFramework",
+    "//platform/vcs-impl",
+    "//platform/lang-impl",
+    "//platform/vcs-impl/lang",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/vcs-api:vcs",
+    "//platform/core-api:core",
+    "//platform/ide-core-impl",
+    "//platform/projectModel-impl",
+    "@lib//:junit4",
+    "//platform/util-ex",
+    "//platform/indexing-impl",
+    "//platform/platform-api:ide",
+    "//platform/diff-impl",
+    "@lib//:assert_j",
+    "//platform/core-ui",
+    "//libraries/fastutil",
+  ]
 )
 
 jvm_library(
@@ -57,7 +80,9 @@ jvm_library(
     "//platform/vcs-api:vcs",
     "//platform/core-api:core",
     "//platform/ide-core-impl",
+    "//platform/projectModel-impl",
     "@lib//:junit4",
+    "//platform/util-ex",
     "//platform/indexing-impl",
     "//platform/platform-api:ide",
     "//platform/diff-impl/tests:tests_test_lib",
@@ -73,8 +98,14 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
+    "//platform/core-impl",
+    "@lib//:app-cash-turbine-jvm",
+    "@lib//:mockito-kotlin",
   ],
-  exports = ["//platform/vcs-tests:vcs-testFramework"]
+  exports = ["//platform/vcs-tests:vcs-testFramework"],
+  runtime_deps = [":vcs-tests"]
 )
 ### auto-generated section `build intellij.platform.vcs.tests` end
 

@@ -5,8 +5,10 @@ import com.intellij.designer.designSurface.EditableArea;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.Cursor;
+import java.awt.MouseInfo;
+import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;

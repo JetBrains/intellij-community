@@ -20,7 +20,6 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorState
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
 
 class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
@@ -33,7 +32,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       override fun invokeLater(runnable: Runnable) {
         runnable.run()
       }
-    }, testRootDisposable)
+    }, myDisposable)
     initProjectsManager(false)
 
     withContext(Dispatchers.EDT) {
@@ -41,7 +40,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       myNavigator!!.initForTests()
       myNavigator!!.groupModules = true
 
-      myStructure = myNavigator!!.structureForTests
+      myStructure = myNavigator!!.structureForTests()
     }
   }
 
@@ -185,7 +184,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
                        """.trimIndent())
     readFiles(projectPom)
     assertEquals(1, rootNodes.size)
-    MavenUtil.cleanAllRunnables()
+    awaitConfiguration()
 
     waitForImportWithinTimeout {
       projectsManager.removeManagedFiles(listOf(projectPom))

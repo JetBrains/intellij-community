@@ -31,7 +31,13 @@ import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.Extra
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.ExtractionEngineHelper
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.validate
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AnalysisResult
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionGeneratorOptions
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionOptions
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionTarget
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionEngine
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.processDuplicatesSilently
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.propertyTargets
 import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetSibling
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHintByKey

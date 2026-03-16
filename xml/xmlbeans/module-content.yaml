@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.xml.xmlbeans.jar
   modules:
   - name: intellij.xml.xmlbeans
     libraries:

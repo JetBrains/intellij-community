@@ -21,7 +21,7 @@ variable_annotation: LiteralString
 
 
 def my_function(literal_string: LiteralString) -> LiteralString:
-    ...
+    raise NotImplementedError
 
 
 class Foo:
@@ -77,7 +77,7 @@ def func2(a: LiteralString, b: LiteralString):
 
 # > Conditional statements and expressions work as expected.
 def condition1() -> bool:
-    ...
+    raise NotImplementedError
 
 
 def return_literal_string() -> LiteralString:

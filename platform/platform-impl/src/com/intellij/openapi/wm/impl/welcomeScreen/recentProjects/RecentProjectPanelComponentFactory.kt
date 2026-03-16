@@ -20,12 +20,17 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.WelcomeScree
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.containers.JBTreeTraverser
 import com.intellij.util.ui.tree.TreeUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
@@ -36,13 +41,17 @@ object RecentProjectPanelComponentFactory {
   private const val UPDATE_INTERVAL = 50L // 50ms -- 20 frames per second
 
   @JvmStatic
-  fun createComponent(parentDisposable: Disposable, collectors: List<() -> List<RecentProjectTreeItem>>,
-                      treeBackground: Color? = WelcomeScreenUIManager.getProjectsBackground()
+  fun createComponent(
+    parentDisposable: Disposable,
+    collectors: List<() -> List<RecentProjectTreeItem>>,
+    treeBackground: Color? = WelcomeScreenUIManager.getProjectsBackground(),
+    disableSearchFieldBorder: Boolean = true,
   ): RecentProjectFilteringTree {
     val tree = Tree().apply {
       background = treeBackground
     }
-    val filteringTree = RecentProjectFilteringTree(tree, parentDisposable, collectors).apply {
+    val filteringTree = RecentProjectFilteringTree(tree, parentDisposable, collectors,
+                                                   disableSearchFieldBorder = disableSearchFieldBorder).apply {
       installSearchField()
       expandGroups()
     }

@@ -6,12 +6,13 @@ import com.intellij.execution.lineMarker.RunLineMarkerContributor.Info
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.jetbrains.python.fixtures.PyTestCase
-import junit.framework.TestCase
 
 open class PyTestRunLineMarkerTest : PyTestCase() {
   companion object {
     const val TESTS_DIR = "/pyTestLineMarker/"
     const val PYTHON_FILE = "pythonFile.py"
+    const val FIXTURE_FILE = "fixtureTest.py"
+    const val PYTHON_FILE_WITH_NESTED_CLASSES = "nestedTest.py"
   }
 
   override fun getTestDataPath(): String = super.getTestDataPath() + TESTS_DIR
@@ -25,9 +26,9 @@ open class PyTestRunLineMarkerTest : PyTestCase() {
 
   protected fun getCaretElement(fileName: String): PsiElement? {
     val psiFile = configureByFile(fileName)
-    TestCase.assertNotNull("Can't find test file", psiFile)
+    assertNotNull("Can't find test file", psiFile)
     val element = psiFile?.findElementAt(myFixture.caretOffset)
-    TestCase.assertNotNull("Can't find caret element", element)
+    assertNotNull("Can't find caret element", element)
     return element
   }
 
@@ -37,19 +38,46 @@ open class PyTestRunLineMarkerTest : PyTestCase() {
 
   protected fun assertInfoFound(element: PsiElement, lineMarkerContributor: RunLineMarkerContributor) {
     val info = getInfo(element, lineMarkerContributor)
-    TestCase.assertNotNull("Info is not found", info)
+    assertNotNull("Info is not found", info)
     if (info != null) {
-      TestCase.assertNotNull("Run icon is not found", info.icon)
+      assertNotNull("Run icon is not found", info.icon)
     }
   }
 
   protected fun assertInfoNotFound(element: PsiElement, lineMarkerContributor: RunLineMarkerContributor) {
-    TestCase.assertNull("Info is found", getInfo(element, lineMarkerContributor))
+    assertNull("Info is found", getInfo(element, lineMarkerContributor))
   }
 
   fun testPythonFile() {
     val lineMarkerContributor = PyTestLineMarkerContributor()
     val element = getCaretElement(PYTHON_FILE)
+    if (element != null) {
+      assertInfoFound(element, lineMarkerContributor)
+    }
+  }
+
+  fun testFixtureWithTestPrefix() {
+    val lineMarkerContributor = PyTestLineMarkerContributor()
+
+    myFixture.configureByText(FIXTURE_FILE, """
+      import pytest
+
+      @pytest.fixture
+      def <caret>test_fixture():
+          return 42
+
+      def test_actual():
+          assert True
+    """.trimIndent())
+
+    val fixtureElement = myFixture.file.findElementAt(myFixture.caretOffset)
+    assertNotNull(fixtureElement)
+    assertInfoNotFound(fixtureElement!!, lineMarkerContributor)
+  }
+
+  fun testNestedTestClass() {
+    val lineMarkerContributor = PyTestLineMarkerContributor()
+    val element = getCaretElement(PYTHON_FILE_WITH_NESTED_CLASSES)
     if (element != null) {
       assertInfoFound(element, lineMarkerContributor)
     }

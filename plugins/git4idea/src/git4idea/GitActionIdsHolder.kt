@@ -3,7 +3,7 @@ package git4idea
 
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdsHolder
 
-class GitActionIdsHolder : ActionIdsHolder {
+internal class GitActionIdsHolder : ActionIdsHolder {
 
   enum class Id(@JvmField val id: String) {
 

@@ -468,7 +468,9 @@ public abstract class Logger {
   public boolean assertTrue(boolean value, @Nullable Object message) {
     if (!value) {
       String resultMessage = "Assertion failed";
-      if (message != null) resultMessage += ": " + message;
+      if (message != null) {
+        resultMessage += ": " + message;
+      }
       error(resultMessage, new Throwable(resultMessage));
     }
 

@@ -19,7 +19,44 @@ import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiCaseLabelElement;
+import com.intellij.psi.PsiCaseLabelElementList;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiDeconstructionPattern;
+import com.intellij.psi.PsiDefaultCaseLabelElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiLabeledStatement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiPattern;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrimaryPattern;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
+import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.JavaPsiPatternUtil;
@@ -31,9 +68,20 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.java.codeserver.core.JavaPatternExhaustivenessUtil.hasExhaustivenessError;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
@@ -926,12 +974,9 @@ public final class SwitchUtils {
    * Evaluates the exhaustiveness state of a switch block.
    *
    * @param switchBlock                          the PsiSwitchBlock to evaluate
-   * @param considerNestedDeconstructionPatterns flag indicating whether to consider nested deconstruction patterns. It is necessary to take into account,
-   *                                             because nested deconstruction patterns don't cover null values
    * @return exhaustiveness state.
    */
-  public static @NotNull SwitchExhaustivenessState evaluateSwitchCompleteness(@NotNull PsiSwitchBlock switchBlock,
-                                                                              boolean considerNestedDeconstructionPatterns) {
+  public static @NotNull SwitchExhaustivenessState evaluateSwitchCompleteness(@NotNull PsiSwitchBlock switchBlock) {
     PsiExpression selector = switchBlock.getExpression();
     if (selector == null) return SwitchExhaustivenessState.MALFORMED;
     PsiType selectorType = selector.getType();
@@ -950,15 +995,6 @@ public final class SwitchUtils {
       return SwitchExhaustivenessState.EXHAUSTIVE_NO_DEFAULT;
     }
     if (!needToCheckCompleteness && !isEnumSelector) return SwitchExhaustivenessState.INCOMPLETE;
-    // It is necessary because deconstruction patterns don't cover cases 
-    // when some of their components are null and deconstructionPattern too
-    if (!considerNestedDeconstructionPatterns) {
-      labelElements = ContainerUtil.filter(
-        labelElements, label -> !(label instanceof PsiDeconstructionPattern deconstructionPattern &&
-                                  ContainerUtil.or(
-                                    deconstructionPattern.getDeconstructionList().getDeconstructionComponents(),
-                                    component -> component instanceof PsiDeconstructionPattern)));
-    }
     boolean hasError = hasExhaustivenessError(switchBlock, labelElements);
     // if a switch block is needed to check completeness and switch is incomplete we let highlighting to inform about it as it's a compilation error
     if (!hasError) {

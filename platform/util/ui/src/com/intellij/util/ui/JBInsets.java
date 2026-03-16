@@ -6,9 +6,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.UIManager;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -17,7 +19,7 @@ import java.util.function.Supplier;
  * @author Konstantin Bulenkov
  */
 public class JBInsets extends Insets {
-  private final @Nullable Supplier<@Nullable Insets> unscaledSupplier;
+  private final @Nullable Supplier<? extends @Nullable Insets> unscaledSupplier;
   private final @NotNull Insets unscaledDefault;
 
   @ApiStatus.Internal
@@ -66,7 +68,7 @@ public class JBInsets extends Insets {
 
   @SuppressWarnings("UseDPIAwareInsets")
   private JBInsets(
-    @Nullable Supplier<@Nullable Insets> unscaledSupplier,
+    @Nullable Supplier<? extends @Nullable Insets> unscaledSupplier,
     @NotNull Insets unscaledDefault,
     int scaledTop,
     int scaledLeft,
@@ -130,7 +132,7 @@ public class JBInsets extends Insets {
   }
 
   @ApiStatus.Internal
-  public static @NotNull JBInsets create(@Nullable Supplier<@Nullable Insets> unscaledSupplier, @NotNull Insets unscaledDefault) {
+  public static @NotNull JBInsets create(@Nullable Supplier<? extends @Nullable Insets> unscaledSupplier, @NotNull Insets unscaledDefault) {
     // zero values will be overwritten by update()
     var result = new JBInsets(unscaledSupplier, unscaledDefault, 0, 0, 0, 0);
     result.update();

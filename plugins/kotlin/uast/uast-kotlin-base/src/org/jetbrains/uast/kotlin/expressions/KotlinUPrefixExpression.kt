@@ -8,7 +8,14 @@ import com.intellij.psi.ResolveResult
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtPrefixExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UMultiResolvable
+import org.jetbrains.uast.UPrefixExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.UastPrefixOperator
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.internal.getResolveResultVariants
 
 @ApiStatus.Internal
@@ -31,7 +38,7 @@ class KotlinUPrefixExpression(
     override fun resolveOperator(): PsiMethod? =
         baseResolveProviderService.resolveCall(sourcePsi)
 
-    override val operator = when (sourcePsi.operationToken) {
+    override val operator: UastPrefixOperator = when (sourcePsi.operationToken) {
         KtTokens.EXCL -> UastPrefixOperator.LOGICAL_NOT
         KtTokens.PLUS -> UastPrefixOperator.UNARY_PLUS
         KtTokens.MINUS -> UastPrefixOperator.UNARY_MINUS

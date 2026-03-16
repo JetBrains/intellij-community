@@ -2,7 +2,12 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiRecordHeader;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiRecordHeaderStub;
 import org.jetbrains.annotations.NotNull;

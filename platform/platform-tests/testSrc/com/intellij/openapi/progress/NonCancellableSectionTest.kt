@@ -2,7 +2,11 @@
 package com.intellij.openapi.progress
 
 import com.intellij.testFramework.common.timeoutRunBlocking
-import kotlinx.coroutines.*
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows

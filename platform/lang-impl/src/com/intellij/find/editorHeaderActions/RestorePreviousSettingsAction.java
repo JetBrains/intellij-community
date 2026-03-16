@@ -5,14 +5,19 @@ import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.KeyStroke;
 import java.awt.event.KeyEvent;
 
 @ApiStatus.Internal

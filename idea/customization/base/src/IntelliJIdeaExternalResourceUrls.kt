@@ -6,7 +6,7 @@ import com.intellij.platform.ide.impl.customization.BaseJetBrainsExternalProduct
 import com.intellij.util.Url
 import com.intellij.util.Urls
 
-class IntelliJIdeaExternalResourceUrls : BaseJetBrainsExternalProductResourceUrls() {
+internal class IntelliJIdeaExternalResourceUrls : BaseJetBrainsExternalProductResourceUrls() {
   override val basePatchDownloadUrl: Url
     get() = Urls.newFromEncoded("https://download.jetbrains.com/idea/")
 

@@ -12,12 +12,13 @@ fun IdeaFrameUI.jbTerminalPanel(): JBTerminalPanelUiComponent =
 class JBTerminalPanelUiComponent(data: ComponentData) : UiComponent(data) {
   private val terminal by lazy { driver.cast(component, JBTerminalPanelRef::class) }
   val text: String
-    get() {
-      val builder = StringBuilder()
+    get() = buildString {
       for (i in 0 until terminal.getTerminalTextBuffer().historyLinesStorage.size) {
-        builder.append(terminal.getTerminalTextBuffer().historyLinesStorage.get(i).getText())
+        append(terminal.getTerminalTextBuffer().historyLinesStorage.get(i).getText())
       }
-      return builder.toString()
+      for (i in 0 until terminal.getTerminalTextBuffer().screenLinesStorage.size) {
+        append(terminal.getTerminalTextBuffer().screenLinesStorage.get(i).getText())
+      }
     }
 }
 
@@ -29,7 +30,8 @@ interface JBTerminalPanelRef {
 
 @Remote("com.jediterm.terminal.model.TerminalTextBuffer")
 interface TerminalTextBufferRef {
-  var historyLinesStorage: LinesStorage
+  val historyLinesStorage: LinesStorage
+  val screenLinesStorage: LinesStorage
 }
 
 @Remote("com.jediterm.terminal.model.LinesStorage")

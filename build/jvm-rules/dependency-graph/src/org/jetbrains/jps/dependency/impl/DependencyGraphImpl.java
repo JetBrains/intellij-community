@@ -2,17 +2,47 @@
 package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.AffectionScopeMetaUsage;
+import org.jetbrains.jps.dependency.BackDependencyIndex;
+import org.jetbrains.jps.dependency.CompositeBackDependencyIndex;
+import org.jetbrains.jps.dependency.CompositeGraph;
+import org.jetbrains.jps.dependency.Delta;
+import org.jetbrains.jps.dependency.DependencyGraph;
+import org.jetbrains.jps.dependency.DifferentiateContext;
+import org.jetbrains.jps.dependency.DifferentiateParameters;
+import org.jetbrains.jps.dependency.DifferentiateResult;
+import org.jetbrains.jps.dependency.DifferentiateStrategy;
+import org.jetbrains.jps.dependency.Graph;
+import org.jetbrains.jps.dependency.MapletFactory;
+import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.ReferenceID;
+import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy;
 import org.jetbrains.jps.dependency.kotlin.KotlinSourceOnlyDifferentiateStrategy;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.contains;
+import static org.jetbrains.jps.util.Iterators.count;
+import static org.jetbrains.jps.util.Iterators.filter;
+import static org.jetbrains.jps.util.Iterators.find;
+import static org.jetbrains.jps.util.Iterators.flat;
+import static org.jetbrains.jps.util.Iterators.isEmpty;
+import static org.jetbrains.jps.util.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.unique;
 
 public final class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
 
@@ -310,9 +340,10 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     DifferentiateParameters params = diffResult.getParameters();
     final Delta delta = diffResult.getDelta();
 
+    Set<NodeSource> differentiatedSources = collect(flat(List.of(params.isCompiledWithErrors()? List.of() : delta.getBaseSources(), delta.getSources(), delta.getDeletedSources())), new HashSet<>());
+
     // handle deleted nodes and sources
     if (!isEmpty(diffResult.getDeletedNodes())) {
-      Set<NodeSource> differentiatedSources = collect(flat(List.of(params.isCompiledWithErrors()? List.of() : delta.getBaseSources(), delta.getSources(), delta.getDeletedSources())), new HashSet<>());
       for (var deletedNode : diffResult.getDeletedNodes()) { // the set of deleted nodes includes ones corresponding to deleted sources
         Set<NodeSource> nodeSources = collect(myNodeToSourcesMap.get(deletedNode.getReferenceID()), new HashSet<>());
         nodeSources.removeAll(differentiatedSources);
@@ -329,10 +360,39 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     }
 
     var updatedNodes = collect(flat(map(delta.getSources(), this::getNodes)), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
+    // for all deleted and delta sources find also the nodes with the same IDs, but associated with some sources out of this scope (shadowed nodes)
+    // all such additional nodes should be added to the 'updatedNodes' set and indexed with the delta index like deltaIndex.indexNode(node)
+    // this ensures that index data for such nodes remains in the index and des not get lost because of changes in just recompiled nodes with same IDs
+    Set<Node<?, ?>> shadowedNodes = new HashSet<>();
+    Set<ReferenceID> differentiatedNodeIds = collect(map(flat(updatedNodes, diffResult.getDeletedNodes()), Node::getReferenceID), new HashSet<>());
+    for (NodeSource unchanged : unique(filter(flat(map(differentiatedNodeIds, myNodeToSourcesMap::get)), src -> !differentiatedSources.contains(src)))) {
+      collect(filter(mySourceToNodesMap.get(unchanged), n -> differentiatedNodeIds.contains(n.getReferenceID())), shadowedNodes);
+    }
+
+    Map<String, BackDependencyIndex> shadowedNodesIndices;
+    if (shadowedNodes.isEmpty()) {
+      shadowedNodesIndices = Map.of();
+    }
+    else {
+      shadowedNodesIndices = new HashMap<>();
+      for (BackDependencyIndex index : getIndexFactory().createIndices(Containers.MEMORY_CONTAINER_FACTORY)) {
+        shadowedNodesIndices.put(index.getName(), index);
+      }
+    }
+
     for (BackDependencyIndex index : getIndices()) {
       BackDependencyIndex deltaIndex = delta.getIndex(index.getName());
       assert deltaIndex != null;
-      index.integrate(diffResult.getDeletedNodes(), updatedNodes, deltaIndex);
+
+      BackDependencyIndex snIndex = shadowedNodesIndices.get(index.getName());
+      if (snIndex != null) {
+        for (Node<?, ?> shadowedNode : shadowedNodes) {
+          snIndex.indexNode(shadowedNode);
+        }
+        deltaIndex = CompositeBackDependencyIndex.create(deltaIndex.getName(), List.of(deltaIndex, snIndex));
+      }
+
+      index.integrate(diffResult.getDeletedNodes(), flat(updatedNodes, shadowedNodes), deltaIndex);
     }
 
     var deltaNodes = unique(map(flat(map(delta.getSources(), delta::getNodes)), Node::getReferenceID));

@@ -8,24 +8,25 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.createComponentActionLabel
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
+import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
-import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import java.util.function.Function
 import javax.swing.JComponent
 
+@K1Deprecation
 class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
 
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
@@ -36,7 +37,7 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
         if (KotlinScriptingSettingsImpl.getInstance(project).suppressDefinitionsCheck) return null
 
         val applicableDefinitions = project.service<ScriptDefinitionProvider>().currentDefinitions.filter {
-                !it.isDefault && it.isScript(KtFileScriptSource(ktFile)) && KotlinScriptingSettingsImpl.getInstance(project)
+                !it.isDefault && it.isScript(KtFileScriptSource(ktFile)) && KotlinScriptingSettings.getInstance(project)
                     .isScriptDefinitionEnabled(it)
             }.toList()
         if (applicableDefinitions.size < 2 || applicableDefinitions.all { it.isGradleDefinition() }) return null
@@ -60,11 +61,7 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
                 val list = JBPopupFactory.getInstance().createListPopup(
                     object : BaseListPopupStep<ScriptDefinition>(null, defs) {
                         override fun getTextFor(value: ScriptDefinition): String {
-                            @NlsSafe
-                            val text = value.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.let {
-                                it.name + " (${it.scriptFilePattern})"
-                            } ?: (value.name + " (${value.fileExtension})")
-                            return text
+                            return value.name + " (${value.fileExtension})"
                         }
                     }
                 )

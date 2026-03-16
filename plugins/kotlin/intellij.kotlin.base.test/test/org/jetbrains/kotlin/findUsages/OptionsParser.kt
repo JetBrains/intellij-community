@@ -1,0 +1,237 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.findUsages
+
+import com.intellij.find.findUsages.FindUsagesOptions
+import com.intellij.find.findUsages.JavaFindUsagesOptions
+import com.intellij.find.findUsages.JavaMethodFindUsagesOptions
+import com.intellij.find.findUsages.JavaPackageFindUsagesOptions
+import com.intellij.find.findUsages.JavaVariableFindUsagesOptions
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiPackage
+import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightMethodForDecompiledDeclaration
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinClassFindUsagesOptions
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFunctionFindUsagesOptions
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesOptions
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.KtTypeParameter
+
+internal enum class OptionsParser {
+    CLASS {
+        override fun parse(text: String, project: Project): FindUsagesOptions {
+            return KotlinClassFindUsagesOptions(project).apply {
+                isUsages = false
+                isSearchForTextOccurrences = false
+                isConstructorUsages = false
+                for (s in InTextDirectivesUtils.findListWithPrefixes(text, "// OPTIONS: ")) {
+                    if (parseCommonOptions(this, s)) continue
+
+                    when (s) {
+                        "constructorUsages" -> isConstructorUsages = true
+                        "derivedInterfaces" -> isDerivedInterfaces = true
+                        "derivedClasses" -> isDerivedClasses = true
+                        "functionUsages" -> isMethodsUsages = true
+                        "propertyUsages" -> isFieldsUsages = true
+                        "expected" -> searchExpected = true
+                        else -> throw IllegalStateException("Invalid option: $s")
+                    }
+                }
+            }
+        }
+    },
+    FUNCTION {
+        override fun parse(text: String, project: Project): FindUsagesOptions {
+            return KotlinFunctionFindUsagesOptions(project).apply {
+                isUsages = false
+                for (s in InTextDirectivesUtils.findListWithPrefixes(text, "// OPTIONS: ")) {
+                    if (parseCommonOptions(this, s)) continue
+
+                    when (s) {
+                        "overrides" -> {
+                            isOverridingMethods = true
+                            isImplementingMethods = true
+                        }
+                        "overloadUsages" -> {
+                            isIncludeOverloadUsages = true
+                            isUsages = true
+                        }
+                        "expected" -> {
+                            searchExpected = true
+                            isUsages = true
+                        }
+                        else -> throw IllegalStateException("Invalid option: $s")
+                    }
+                }
+            }
+        }
+    },
+    CONSTRUCTOR {
+        override fun parse(text: String, project: Project): FindUsagesOptions {
+            return KotlinFunctionFindUsagesOptions(project).apply {
+                isUsages = false
+                for (s in InTextDirectivesUtils.findListWithPrefixes(text, "// OPTIONS: ")) {
+                    if (parseCommonOptions(this, s)) continue
+
+                    when (s) {
+                        "overloadUsages" -> {
+                            isIncludeOverloadUsages = true
+                        }
+                        else -> throw IllegalStateException("Invalid option: $s")
+                    }
+                }
+            }
+        }
+    },
+    PROPERTY {
+        override fun parse(text: String, project: Project): FindUsagesOptions {
+            return KotlinPropertyFindUsagesOptions(project).apply {
+                isUsages = false
+                for (s in InTextDirectivesUtils.findListWithPrefixes(text, "// OPTIONS: ")) {
+                    if (parseCommonOptions(this, s)) continue
+
+                    when (s) {
+                        "overrides" -> searchOverrides = true
+                        "skipRead" -> isReadAccess = false
+                        "skipWrite" -> isWriteAccess = false
+                        "overridingMethods" -> isSearchInOverridingMethods = true
+                        "expected" -> searchExpected = true
+                        else -> throw IllegalStateException("Invalid option: $s")
+                    }
+                }
+            }
+        }
+    },
+    JAVA_CLASS {
+        override fun parse(text: String, project: Project): FindUsagesOptions {
+            return KotlinClassFindUsagesOptions(project).apply {
+                isUsages = false
+                isConstructorUsages = false
+                for (s in InTextDirectivesUtils.findListWithPrefixes(text, "// OPTIONS: ")) {
+                    if (parseCommonOptions(this, s)) continue
+
+                    when (s) {
+                        "constructorUsages" -> isConstructorUsages = true
+                        "derivedInterfaces" -> isDerivedInterfaces = true
+                        "derivedClasses" -> isDerivedClasses = true
+                        "implementingClasses" -> isImplementingClasses = true
+                        "methodUsages" -> isMethodsUsages = true
+                        "fieldUsages" -> isFieldsUsages = true
+                        else -> throw IllegalStateException("Invalid option: $s")
+                    }
+                }
+            }
+        }
+    },
+    JAVA_METHOD {
+        override fun parse(text: String, project: Project): FindUsagesOptions {
+            return JavaMethodFindUsagesOptions(project).apply {
+                isUsages = false
+                for (s in InTextDirectivesUtils.findListWithPrefixes(text, "// OPTIONS: ")) {
+                    if (parseCommonOptions(this, s)) continue
+
+                    when (s) {
+                        "overrides" -> {
+                            isOverridingMethods = true
+                            isImplementingMethods = true
+                        }
+                        else -> throw IllegalStateException("Invalid option: $s")
+                    }
+                }
+            }
+        }
+    },
+    JAVA_FIELD {
+        override fun parse(text: String, project: Project): FindUsagesOptions {
+            return JavaVariableFindUsagesOptions(project).apply {
+                for (s in InTextDirectivesUtils.findListWithPrefixes(text, "// OPTIONS: ")) {
+                    if (parseCommonOptions(this, s)) continue
+
+                    when (s) {
+                        "skipRead" -> isReadAccess = false
+                        "skipWrite" -> isWriteAccess = false
+                        else -> throw IllegalStateException("Invalid option: `$s`")
+                    }
+                }
+            }
+        }
+    },
+    JAVA_PACKAGE {
+        override fun parse(text: String, project: Project): FindUsagesOptions {
+            return JavaPackageFindUsagesOptions(project).apply {
+                for (s in InTextDirectivesUtils.findListWithPrefixes(text, "// OPTIONS: ")) {
+                    if (parseCommonOptions(this, s)) continue
+
+                    throw IllegalStateException("Invalid option: `$s`")
+                }
+            }
+        }
+    },
+    DEFAULT {
+        override fun parse(text: String, project: Project): FindUsagesOptions {
+            return FindUsagesOptions(project).apply {
+                for (s in InTextDirectivesUtils.findListWithPrefixes(text, "// OPTIONS: ")) {
+                    if (parseCommonOptions(this, s)) continue
+
+                    throw IllegalStateException("Invalid option: `$s`")
+                }
+            }
+        }
+    };
+
+    abstract fun parse(text: String, project: Project): FindUsagesOptions
+
+    companion object {
+        protected fun parseCommonOptions(options: JavaFindUsagesOptions, s: String): Boolean {
+            if (parseCommonOptions(options as FindUsagesOptions, s)) {
+                return true
+            }
+
+            return when (s) {
+                "skipImports" -> {
+                    options.isSkipImportStatements = true
+                    true
+                }
+                else -> false
+            }
+        }
+
+
+        protected fun parseCommonOptions(options: FindUsagesOptions, s: String): Boolean {
+            return when (s) {
+                "usages" -> {
+                    options.isUsages = true
+                    true
+                }
+                "textOccurrences" -> {
+                    options.isSearchForTextOccurrences = true
+                    true
+                }
+                else -> false
+            }
+        }
+
+        fun getParserByPsiElementClass(klass: Class<out PsiElement>): OptionsParser? {
+            return when (klass) {
+                KtNamedFunction::class.java, KtLightMethodForDecompiledDeclaration::class.java -> FUNCTION
+                KtPrimaryConstructor::class.java, KtSecondaryConstructor::class.java -> CONSTRUCTOR
+                KtProperty::class.java, KtParameter::class.java -> PROPERTY
+                KtClass::class.java -> CLASS
+                PsiMethod::class.java -> JAVA_METHOD
+                PsiClass::class.java -> JAVA_CLASS
+                PsiField::class.java -> JAVA_FIELD
+                PsiPackage::class.java -> JAVA_PACKAGE
+                KtTypeParameter::class.java -> DEFAULT
+                else -> null
+            }
+        }
+    }
+}

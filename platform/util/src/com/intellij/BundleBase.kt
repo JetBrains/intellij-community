@@ -19,7 +19,8 @@ import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.text.MessageFormat
-import java.util.*
+import java.util.MissingResourceException
+import java.util.ResourceBundle
 import java.util.function.BiConsumer
 
 private val LOG: Logger

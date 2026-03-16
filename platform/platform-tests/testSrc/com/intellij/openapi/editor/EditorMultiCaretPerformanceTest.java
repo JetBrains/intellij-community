@@ -18,8 +18,10 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
+@PerformanceUnitTest
 public class EditorMultiCaretPerformanceTest extends AbstractEditorTest {
   public void testTyping() {
     int caretCount = 1000;

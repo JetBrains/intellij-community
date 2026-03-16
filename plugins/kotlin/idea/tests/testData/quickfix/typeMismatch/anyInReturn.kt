@@ -1,4 +1,4 @@
-// "Change return type of enclosing function 'foo' to 'Any'" "true"
+// "Specify 'Any' return type for enclosing function 'foo'" "true"
 fun foo() {
     class A
 

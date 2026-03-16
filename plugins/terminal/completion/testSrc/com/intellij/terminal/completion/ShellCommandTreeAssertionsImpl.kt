@@ -1,6 +1,10 @@
 package com.intellij.terminal.completion
 
-import com.intellij.terminal.completion.engine.*
+import com.intellij.terminal.completion.engine.ShellArgumentNode
+import com.intellij.terminal.completion.engine.ShellCommandNode
+import com.intellij.terminal.completion.engine.ShellCommandTreeNode
+import com.intellij.terminal.completion.engine.ShellOptionNode
+import com.intellij.terminal.completion.engine.ShellUnknownNode
 import com.intellij.util.containers.TreeTraversal
 import junit.framework.TestCase.assertTrue
 

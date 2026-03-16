@@ -15,7 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.AutoCompletionContext;
+import com.intellij.codeInsight.completion.AutoCompletionDecision;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.completion.JavaMethodMergingContributor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;

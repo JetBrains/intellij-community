@@ -37,7 +37,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
-import java.util.*
+import java.util.UUID
 import kotlin.io.path.readText
 import kotlin.test.assertContains
 import kotlin.test.fail

@@ -10,7 +10,9 @@ import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 

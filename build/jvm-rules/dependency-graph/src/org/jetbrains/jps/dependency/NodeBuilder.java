@@ -9,5 +9,7 @@ public interface NodeBuilder {
 
   void addUsage(Usage usage);
 
+  void setHasImplicitTypes();
+
   Node<?, ?> getResult();
 }

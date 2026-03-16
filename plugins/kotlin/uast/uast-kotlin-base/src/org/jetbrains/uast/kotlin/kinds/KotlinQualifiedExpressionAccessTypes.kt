@@ -8,5 +8,5 @@ import org.jetbrains.uast.UastQualifiedExpressionAccessType
 @ApiStatus.Internal
 object KotlinQualifiedExpressionAccessTypes {
     @JvmField
-    val SAFE = UastQualifiedExpressionAccessType("?.")
+    val SAFE: UastQualifiedExpressionAccessType = UastQualifiedExpressionAccessType("?.")
 }

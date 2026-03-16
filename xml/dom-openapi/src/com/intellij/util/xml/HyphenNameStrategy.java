@@ -12,11 +12,7 @@ import org.jetbrains.annotations.NotNull;
 public class HyphenNameStrategy extends DomNameStrategy {
   @Override
   public @NotNull String convertName(@NotNull String propertyName) {
-    final String[] words = NameUtilCore.nameToWords(propertyName);
-    for (int i = 0; i < words.length; i++) {
-      words[i] = StringUtil.decapitalize(words[i]);
-    }
-    return StringUtil.join(words, "-");
+    return StringUtil.join(NameUtilCore.nameToWordList(propertyName), StringUtil::decapitalize, "-");
   }
 
   @Override

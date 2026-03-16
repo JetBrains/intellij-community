@@ -28,7 +28,11 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.*;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;

@@ -6,9 +6,17 @@ import com.intellij.DynamicBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.*
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginAware
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.openapi.util.text.StringUtil
@@ -22,7 +30,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.Method
-import java.util.*
+import java.util.ResourceBundle
 import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal

@@ -22,7 +22,7 @@ import com.jetbrains.python.psi.PyWithItem
 import com.jetbrains.python.psi.PyWithStatement
 import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyLiteralType
-import com.jetbrains.python.psi.types.PyTypeUtil
+import com.jetbrains.python.psi.types.PyTypeUtil.convertToType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyWithItemImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyWithItem {
@@ -34,7 +34,7 @@ class PyWithItemImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyWithItem {
     val withStmt = PsiTreeUtil.getParentOfType(this, PyWithStatement::class.java, false) ?: return false
     val abstractType = if (withStmt.isAsync) "contextlib.AbstractAsyncContextManager" else "contextlib.AbstractContextManager"
     return context.getType(expression)
-      .let { PyTypeUtil.convertToType(it, abstractType, this, context) }
+      .let { it.convertToType(abstractType, this, context) }
       .let { (it as? PyCollectionType)?.elementTypes?.getOrNull(1) }
       .let {
         it == PyBuiltinCache.getInstance(this).boolType ||

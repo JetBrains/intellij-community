@@ -9,8 +9,16 @@ import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
+import javax.swing.JTextArea;
+import javax.swing.ScrollPaneConstants;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 /**
  * @author alex

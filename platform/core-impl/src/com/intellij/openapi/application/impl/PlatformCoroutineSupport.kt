@@ -3,7 +3,9 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.CoroutineSupport
 import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
-import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind.*
+import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind.LEGACY
+import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind.RELAX
+import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind.STRICT
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 

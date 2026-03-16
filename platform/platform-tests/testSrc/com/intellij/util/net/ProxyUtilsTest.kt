@@ -2,8 +2,21 @@
 package com.intellij.util.net
 
 import com.intellij.credentialStore.Credentials
-import com.intellij.util.net.ProxyConfiguration.ProxyProtocol.*
-import com.intellij.util.proxy.JavaProxyProperty.*
+import com.intellij.util.net.ProxyConfiguration.ProxyProtocol.HTTP
+import com.intellij.util.net.ProxyConfiguration.ProxyProtocol.SOCKS
+import com.intellij.util.proxy.JavaProxyProperty.HTTPS_HOST
+import com.intellij.util.proxy.JavaProxyProperty.HTTPS_PORT
+import com.intellij.util.proxy.JavaProxyProperty.HTTPS_PROXY_PASSWORD
+import com.intellij.util.proxy.JavaProxyProperty.HTTPS_PROXY_USER
+import com.intellij.util.proxy.JavaProxyProperty.HTTP_HOST
+import com.intellij.util.proxy.JavaProxyProperty.HTTP_NON_PROXY_HOSTS
+import com.intellij.util.proxy.JavaProxyProperty.HTTP_PORT
+import com.intellij.util.proxy.JavaProxyProperty.HTTP_PROXY_PASSWORD
+import com.intellij.util.proxy.JavaProxyProperty.HTTP_PROXY_USER
+import com.intellij.util.proxy.JavaProxyProperty.SOCKS_HOST
+import com.intellij.util.proxy.JavaProxyProperty.SOCKS_PASSWORD
+import com.intellij.util.proxy.JavaProxyProperty.SOCKS_PORT
+import com.intellij.util.proxy.JavaProxyProperty.SOCKS_USERNAME
 import org.junit.jupiter.api.Test
 import java.io.IOException
 import java.net.InetSocketAddress

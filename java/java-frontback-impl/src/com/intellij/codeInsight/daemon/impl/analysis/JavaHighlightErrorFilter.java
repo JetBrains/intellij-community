@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
-import com.intellij.idea.AppMode;
 import com.intellij.java.codeserver.highlighting.JavaSyntaxErrorChecker;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiErrorElement;

@@ -5,11 +5,13 @@ package org.jetbrains.kotlin.idea.project
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.stubindex.KotlinProbablyNothingFunctionShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinProbablyNothingPropertyShortNameIndex
 import org.jetbrains.kotlin.resolve.lazy.ProbablyNothingCallableNames
 
+@K1Deprecation
 class ProbablyNothingCallableNamesImpl(project: Project) : ProbablyNothingCallableNames {
     private val functionNames = createCachedValue(project) { KotlinProbablyNothingFunctionShortNameIndex.getAllKeys(project) }
     private val propertyNames = createCachedValue(project) { KotlinProbablyNothingPropertyShortNameIndex.getAllKeys(project) }

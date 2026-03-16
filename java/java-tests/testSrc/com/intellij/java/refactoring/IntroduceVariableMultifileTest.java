@@ -21,8 +21,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 

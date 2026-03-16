@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.navbar.monolith
 
 import com.intellij.openapi.actionSystem.DataContext
@@ -8,7 +8,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.platform.navbar.backend.NavBarItem
-import com.intellij.platform.navbar.backend.impl.*
+import com.intellij.platform.navbar.backend.impl.IdeNavBarVmItem
+import com.intellij.platform.navbar.backend.impl.ProjectNavBarItem
+import com.intellij.platform.navbar.backend.impl.fireOnFileChanges
+import com.intellij.platform.navbar.backend.impl.pathToItem
+import com.intellij.platform.navbar.backend.impl.toVmItems
 import com.intellij.platform.navbar.frontend.NavBarServiceDelegate
 import com.intellij.platform.navbar.frontend.fireOnIdeActivity
 import kotlinx.coroutines.channels.awaitClose

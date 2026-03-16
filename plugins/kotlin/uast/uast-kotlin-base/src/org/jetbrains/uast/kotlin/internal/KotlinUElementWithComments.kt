@@ -11,7 +11,12 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UComment
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UParameter
 
 @ApiStatus.Internal
 interface KotlinUElementWithComments : UElement {

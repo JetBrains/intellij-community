@@ -10,7 +10,7 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
-import java.util.*
+import java.util.Date
 
 @IntellijInternalApi
 internal class PluginDtoDescriptorWrapper(private val pluginDto: PluginDto) : IdeaPluginDescriptor {

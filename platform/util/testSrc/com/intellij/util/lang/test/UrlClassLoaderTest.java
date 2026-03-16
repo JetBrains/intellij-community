@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ijent.community.buildConstants.IjentBuildScriptsConstantsKt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.lang.ClassPath;
@@ -21,7 +22,11 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Objects;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -31,7 +36,11 @@ import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static com.intellij.openapi.util.io.IoTestUtil.*;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
+import static com.intellij.openapi.util.io.IoTestUtil.createTestDir;
+import static com.intellij.openapi.util.io.IoTestUtil.createTestFile;
+import static com.intellij.openapi.util.io.IoTestUtil.createTestJar;
+import static com.intellij.openapi.util.io.IoTestUtil.toLocalUncPath;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -121,9 +130,7 @@ public class UrlClassLoaderTest {
           }));
         }
 
-        for (Future<?> future : futures) {
-          future.get();
-        }
+        ConcurrencyUtil.getAll(futures);
       }
     }
     finally {

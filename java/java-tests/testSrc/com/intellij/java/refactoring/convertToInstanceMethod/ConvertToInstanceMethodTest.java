@@ -2,15 +2,21 @@
 package com.intellij.java.refactoring.convertToInstanceMethod;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.java.refactoring.LightRefactoringTestCase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodHandler;
 import com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodProcessor;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.List;
 
-public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
+public class ConvertToInstanceMethodTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {

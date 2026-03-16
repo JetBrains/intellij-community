@@ -10,8 +10,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
 
 import java.util.List;
 import java.util.Map;
@@ -24,7 +22,6 @@ public class PyPackageService implements
                               PersistentStateComponent<PyPackageService> {
   public volatile Map<String, Boolean> sdkToUsersite = new ConcurrentHashMap<>();
   public volatile List<String> additionalRepositories = ContainerUtil.createConcurrentList();
-  public volatile @SystemIndependent String virtualEnvBasePath;
   public volatile Boolean PYPI_REMOVED = false;
 
   @Override
@@ -68,13 +65,5 @@ public class PyPackageService implements
 
   public static PyPackageService getInstance() {
     return ApplicationManager.getApplication().getService(PyPackageService.class);
-  }
-
-  public @Nullable @SystemIndependent String getVirtualEnvBasePath() {
-    return virtualEnvBasePath;
-  }
-
-  public void setVirtualEnvBasePath(@NotNull @SystemIndependent String virtualEnvBasePath) {
-    this.virtualEnvBasePath = virtualEnvBasePath;
   }
 }

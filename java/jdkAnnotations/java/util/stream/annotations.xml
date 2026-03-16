@@ -1218,6 +1218,10 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; ofNullable(T)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
   <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; peek(java.util.function.Consumer&lt;? super T&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>

@@ -3,6 +3,6 @@ package git4idea.log;
 
 import com.intellij.vcs.log.ui.actions.ShowCommitInLogAction;
 
-@Deprecated
+@Deprecated(forRemoval = true)
 public class GitShowCommitInLogAction extends ShowCommitInLogAction {
 }

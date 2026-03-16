@@ -2,7 +2,14 @@
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.diagnostic.Logger
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -16,7 +23,7 @@ class ProcessFunctions(
     withContext(NonCancellable) {
       logger.warn("Sending kill to $processNameForDebug")
       killProcess()
-      logger.warn("Kill send to $processNameForDebug, waiting")
+      logger.warn("Kill sent to $processNameForDebug, waiting")
       waitForExit()
       logger.warn("Process $processNameForDebug died")
     }
@@ -25,7 +32,7 @@ class ProcessFunctions(
 
 /**
  * This is an implementation detail to be reused by other parts of a system.
- * Do not call it directly, use [bindToScope]
+ * Do not call it directly. Use [com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions.scope]
  */
 @ApiStatus.Internal
 fun CoroutineScope.bindProcessToScopeImpl(

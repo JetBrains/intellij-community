@@ -20,12 +20,12 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.searchEverywhere.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
-import com.intellij.platform.searchEverywhere.SeItemPresentation
-import com.intellij.platform.searchEverywhere.SeOptionActionItemPresentation
-import com.intellij.platform.searchEverywhere.SeRunnableActionItemPresentation
-import com.intellij.platform.searchEverywhere.SeRunnableActionItemPresentation.Promo
+import com.intellij.platform.searchEverywhere.presentations.SeActionItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeOptionActionItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeRunnableActionItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeRunnableActionItemPresentation.Promo
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import com.intellij.util.text.nullize
@@ -81,8 +81,11 @@ object SeActionPresentationProvider {
         presentation = presentation.run { copy(shortcut = it) }
       }
 
-      val decoratedText = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      val decoratedText: String = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         ActionPresentationDecorator.decorateTextIfNeeded(anAction, actionPresentation.text)
+      } ?: run {
+        SeLog.log(ITEM_EMIT) { "Couldn't generate an action presentation. Action text is null: ${matchedValue.value}" }
+        ""
       }
       val displayText = if (decoratedText.startsWith("<html>")) StringUtil.removeHtmlTags(decoratedText) else decoratedText
 

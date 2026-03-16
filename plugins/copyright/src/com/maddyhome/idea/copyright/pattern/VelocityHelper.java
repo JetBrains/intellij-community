@@ -3,6 +3,7 @@
 package com.maddyhome.idea.copyright.pattern;
 
 import com.intellij.copyright.CopyrightManager;
+import com.intellij.ide.fileTemplates.VelocityWrapper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -101,6 +102,10 @@ public final class VelocityHelper
 
               engine.setProperty("file.resource.loader.class", "org.apache.velocity.runtime.resource.loader.FileResourceLoader");
               engine.setProperty("file.resource.loader.path", PathManager.getPluginsPath() + "/Copyright/resources");
+
+              engine.setProperty(RuntimeConstants.UBERSPECT_CLASSNAME, VelocityWrapper.INTROSPECTION_SECURE_UBERSPECTOR);
+              engine.setProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_PACKAGES, VelocityWrapper.INTROSPECTOR_RESTRICT_PACKAGES);
+              engine.setProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_CLASSES, VelocityWrapper.INTROSPECTOR_RESTRICT_CLASSES);
 
               engine.setProperty(RuntimeConstants.RUNTIME_LOG_NAME, CopyrightManager.class.getName());
 

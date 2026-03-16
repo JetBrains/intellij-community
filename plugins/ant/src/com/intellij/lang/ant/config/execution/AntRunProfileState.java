@@ -15,7 +15,7 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 final class AntRunProfileState implements RunProfileState {
   static final Key<AntBuildMessageView> MESSAGE_VIEW = Key.create("ANT_MESSAGE_VIEW");

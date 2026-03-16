@@ -7,7 +7,11 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
@@ -17,7 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.psi.util.ImportsUtil.*;
+import static com.intellij.psi.util.ImportsUtil.collectReferencesThrough;
+import static com.intellij.psi.util.ImportsUtil.expand;
+import static com.intellij.psi.util.ImportsUtil.replaceAllAndDeleteImport;
 
 public final class ExpandStaticImportAction extends PsiBasedModCommandAction<PsiIdentifier> {
   private final @NotNull ThreeState myExpandAll;

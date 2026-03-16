@@ -2,7 +2,18 @@
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.pom.java.JavaFeature
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDeclarationStatement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.PsiYieldStatement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil
 import com.intellij.psi.util.PsiUtil
@@ -10,11 +21,17 @@ import com.intellij.refactoring.IntroduceVariableUtil
 import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.createDeclaration
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
-import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.ArtificialBooleanOutput
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.EmptyOutput
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.ExpressionOutput
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.VariableOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput
-import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.*
+import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.ConditionalFlow
+import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.EmptyFlow
+import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.UnconditionalFlow
 import com.intellij.refactoring.util.RefactoringChangeUtil
+
 class CallBuilder(private val context: PsiElement) {
 
   private val factory: PsiElementFactory = PsiElementFactory.getInstance(context.project)

@@ -27,7 +27,7 @@ internal class KotlinUnresolvedKDocHighlightVisitor : HighlightVisitor {
     override fun visit(element: PsiElement) {
         if (element !is KDocName) return
         val reference = element.mainReference
-        if (reference.resolve() != null) return
+        if (reference.multiResolve(incompleteCode = false).isNotEmpty()) return
         val builder = HighlightInfo
             .newHighlightInfo(HighlightInfoType.WARNING)
             .range(reference.absoluteRange)

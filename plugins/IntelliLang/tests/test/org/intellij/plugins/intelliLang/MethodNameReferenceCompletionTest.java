@@ -2,7 +2,11 @@
 package org.intellij.plugins.intelliLang;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.plugins.intelliLang.references.InjectedReferencesInspection;
 

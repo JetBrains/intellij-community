@@ -2,7 +2,11 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
+import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
+import com.intellij.openapi.fileTypes.FileNameMatcher;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;

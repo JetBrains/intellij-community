@@ -4,7 +4,7 @@ package com.intellij.platform.ide.progress;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
 
 public sealed interface ModalTaskOwner
   permits ProjectModalTaskOwner,

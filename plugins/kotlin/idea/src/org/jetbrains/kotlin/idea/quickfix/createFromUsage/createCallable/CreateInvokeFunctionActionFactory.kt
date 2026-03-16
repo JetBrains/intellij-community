@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.project.builtIns
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
+@K1Deprecation
 object CreateInvokeFunctionActionFactory : CreateCallableMemberFromUsageFactory<KtCallExpression>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtCallExpression? {
         return diagnostic.psiElement.parent as? KtCallExpression

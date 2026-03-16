@@ -7,15 +7,19 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.codeInsight.lookup.WeighingContext
 import com.intellij.openapi.util.Key
 import com.intellij.psi.codeStyle.NameUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import kotlin.math.min
 
+@K1Deprecation
 val NAME_SIMILARITY_KEY: Key<Int> = Key<Int>("NAME_SIMILARITY_KEY")
 
+@K1Deprecation
 object NameSimilarityWeigher : LookupElementWeigher("kotlin.nameSimilarity") {
     override fun weigh(element: LookupElement, context: WeighingContext) = -(element.getUserData(NAME_SIMILARITY_KEY) ?: 0)
 }
 
+@K1Deprecation
 fun calcNameSimilarity(name: String, expectedInfos: Collection<ExpectedInfo>): Int =
     expectedInfos.mapNotNull { it.expectedName }.maxOfOrNull { calcNameSimilarity(name, it) } ?: 0
 

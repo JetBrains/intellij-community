@@ -2,7 +2,11 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchBlock;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;

@@ -8,8 +8,10 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.ID
+import org.jetbrains.kotlin.K1Deprecation
 import java.util.concurrent.ConcurrentHashMap
 
+@K1Deprecation
 @Suppress("LightServiceMigrationCode")
 class ShortNamesCacheService(private val project: Project) {
 

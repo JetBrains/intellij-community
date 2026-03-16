@@ -1,4 +1,5 @@
 // "Change type to 'Int'" "true"
+// K2_ACTION: "Specify 'Int' type" "true"
 // ERROR: Null can not be a value of a non-null type Int
 // K2_AFTER_ERROR: Null cannot be a value of a non-null type 'Int'.
 interface Test<T> {

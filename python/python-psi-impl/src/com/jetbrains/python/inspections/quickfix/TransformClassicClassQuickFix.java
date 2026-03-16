@@ -24,17 +24,18 @@ public class TransformClassicClassQuickFix extends PsiUpdateModCommandQuickFix {
   public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     element = PsiTreeUtil.getParentOfType(element, PyClass.class);
     if (element != null) {
-      PyClass pyClass = (PyClass) element;
+      PyClass pyClass = (PyClass)element;
       PyExpression[] superClassExpressions = pyClass.getSuperClassExpressions();
       PyElementGenerator generator = PyElementGenerator.getInstance(project);
       if (superClassExpressions.length == 0) {
         pyClass.replace(generator.createFromText(LanguageLevel.getDefault(), PyClass.class,
                                                  "class " + pyClass.getName() + "(" +
                                                  PyNames.OBJECT + "):\n    " + pyClass.getStatementList().getText()));
-      } else {
+      }
+      else {
         StringBuilder stringBuilder = new StringBuilder("class ");
         stringBuilder.append(pyClass.getName()).append("(");
-        for (PyExpression expression: superClassExpressions) {
+        for (PyExpression expression : superClassExpressions) {
           stringBuilder.append(expression.getText()).append(", ");
         }
         stringBuilder.append(PyNames.OBJECT).append(":\n    ");

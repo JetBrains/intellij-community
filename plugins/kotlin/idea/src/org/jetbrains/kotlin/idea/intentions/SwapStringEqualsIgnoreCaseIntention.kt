@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 
+@K1Deprecation
 class SwapStringEqualsIgnoreCaseIntention : SelfTargetingRangeIntention<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java,
     KotlinBundle.messagePointer("flip.equals")

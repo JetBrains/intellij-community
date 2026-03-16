@@ -22,7 +22,8 @@ import com.intellij.util.indexing.testEntities.WithReferenceTestEntity
 import com.intellij.util.indexing.testEntities.WithReferenceTestEntityBuilder
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import io.kotest.common.runBlocking
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -219,7 +220,8 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
     }
     referredTestEntityContributor.numberOfCalls.set(0)
 
-    model.update("Rename entity and rename it back") {
+
+    (model as WorkspaceModelImpl).updateUnderWriteAction("Rename entity and rename it back") {
       val newEntity = it.modifyEntity(ReferredTestEntityBuilder::class.java, referredTestEntity) {
         name = "New Name"
       }

@@ -9,11 +9,23 @@ import com.intellij.ide.repaintWhenProjectGradientOffsetChanged
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.MainMenuDisplayMode
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.customization.*
+import com.intellij.ide.ui.customization.ActionGroupCustomizationExtension
+import com.intellij.ide.ui.customization.ActionUrl
+import com.intellij.ide.ui.customization.CustomActionsListener
+import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.ide.ui.laf.darcula.ui.MainToolbarComboBoxButtonUI
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
@@ -27,14 +39,12 @@ import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.application.impl.BorderPainterHolder
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
@@ -43,12 +53,18 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHe
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ExpandableMenu
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.ui.*
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.JBColor
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.ScreenUtil
+import com.intellij.ui.UIBundle
+import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import com.intellij.util.ui.showingScope
@@ -58,10 +74,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
-import java.util.*
+import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
@@ -114,12 +135,10 @@ class MainToolbar(
   isOpaque: Boolean = false,
   background: Color? = null,
   private val isFullScreen: () -> Boolean,
-) : JPanel(HorizontalLayout(layoutGap)), BorderPainterHolder {
+) : JPanel(HorizontalLayout(layoutGap)) {
   private val flavor: MainToolbarFlavor
   private val widthCalculationListeners = mutableSetOf<ToolbarWidthCalculationListener>()
   private val cachedWidths by lazy { ConcurrentHashMap<String, Int>() }
-
-  override var borderPainter: BorderPainter = DefaultBorderPainter()
 
   init {
     this.background = background
@@ -168,11 +187,6 @@ class MainToolbar(
     return components.filterIsInstance<ActionToolbar>().sumOf { it.component.preferredSize.width} + 4 * JBUI.scale(layoutGap)
   }
 
-  @Internal
-  fun addToolbarListeners(listener: ActionToolbarListener, disposable: Disposable) {
-    components.filterIsInstance<ActionToolbar>().forEach { it.addListener(listener, disposable) }
-  }
-
   private fun updateToolbarActions() {
     for (component in components) {
       if (component is ActionToolbarImpl) {
@@ -181,7 +195,9 @@ class MainToolbar(
     }
   }
 
-  override fun getComponentGraphics(g: Graphics): Graphics = JBSwingUtilities.runGlobalCGTransform(this, g)
+  override fun getComponentGraphics(g: Graphics): Graphics {
+    return InternalUICustomization.runGlobalCGTransformWithInactiveFrameSupport(this, g)
+  }
 
   suspend fun init(customTitleBar: WindowDecorations.CustomTitleBar? = null) {
     val schema = CustomActionsSchema.getInstanceAsync()
@@ -297,13 +313,7 @@ class MainToolbar(
     super.paintComponent(g)
     if (!CustomWindowHeaderUtil.isToolbarInHeader(UISettings.getInstance(), isFullScreen())) {
       ProjectWindowCustomizerService.getInstance().paint(frame, this, g as Graphics2D)
-      InternalUICustomization.getInstance()?.paintFrameBackground(frame as IdeFrame, this, g)
     }
-  }
-
-  override fun paintChildren(g: Graphics) {
-    super.paintChildren(g)
-    borderPainter.paintAfterChildren(this, g)
   }
 
   private fun installClickListener(popupHandler: PopupHandler, customTitleBar: WindowDecorations.CustomTitleBar?) {

@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:JvmName("ModuleExtensions")
-
 package com.intellij.platform.workspace.jps.entities.impl
 
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -11,10 +9,10 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -34,22 +32,18 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class TestModulePropertiesEntityImpl(private val dataSource: TestModulePropertiesEntityData) : TestModulePropertiesEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class TestModulePropertiesEntityImpl(private val dataSource: TestModulePropertiesEntityData) : TestModulePropertiesEntity,
+                                                                                                        WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, TestModulePropertiesEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
-
-    private val connections = listOf<ConnectionId>(
-      MODULE_CONNECTION_ID,
-    )
+    internal val MODULE_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ModuleEntity::class.java, TestModulePropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    private val connections = listOf<ConnectionId>(MODULE_CONNECTION_ID)
 
   }
 
   override val module: ModuleEntity
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
-
   override val productionModuleId: ModuleId
     get() {
       readField("productionModuleId")
@@ -67,8 +61,8 @@ internal class TestModulePropertiesEntityImpl(private val dataSource: TestModule
   }
 
 
-  internal class Builder(result: TestModulePropertiesEntityData?) : ModifiableWorkspaceEntityBase<TestModulePropertiesEntity, TestModulePropertiesEntityData>(
-    result), TestModulePropertiesEntity.Builder {
+  internal class Builder(result: TestModulePropertiesEntityData?) :
+    ModifiableWorkspaceEntityBase<TestModulePropertiesEntity, TestModulePropertiesEntityData>(result), TestModulePropertiesEntity.Builder {
     internal constructor() : this(TestModulePropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -81,15 +75,13 @@ internal class TestModulePropertiesEntityImpl(private val dataSource: TestModule
           error("Entity TestModulePropertiesEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -135,7 +127,6 @@ internal class TestModulePropertiesEntityImpl(private val dataSource: TestModule
         changedProperty.add("entitySource")
 
       }
-
     override var module: ModuleEntityBuilder
       get() {
         val _diff = diff
@@ -155,7 +146,7 @@ internal class TestModulePropertiesEntityImpl(private val dataSource: TestModule
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
+// else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -165,8 +156,7 @@ internal class TestModulePropertiesEntityImpl(private val dataSource: TestModule
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
+// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
@@ -183,6 +173,7 @@ internal class TestModulePropertiesEntityImpl(private val dataSource: TestModule
 
     override fun getEntityClass(): Class<TestModulePropertiesEntity> = TestModulePropertiesEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -202,7 +193,7 @@ internal class TestModulePropertiesEntityData : WorkspaceEntityData<TestModulePr
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-    // TODO verify logic
+// TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     val removedItem_productionModuleId = mutablePreviousSet.remove(productionModuleId)
     if (!removedItem_productionModuleId) {
@@ -247,8 +238,7 @@ internal class TestModulePropertiesEntityData : WorkspaceEntityData<TestModulePr
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -270,9 +260,7 @@ internal class TestModulePropertiesEntityData : WorkspaceEntityData<TestModulePr
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as TestModulePropertiesEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.productionModuleId != other.productionModuleId) return false
     return true
@@ -281,9 +269,7 @@ internal class TestModulePropertiesEntityData : WorkspaceEntityData<TestModulePr
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as TestModulePropertiesEntityData
-
     if (this.productionModuleId != other.productionModuleId) return false
     return true
   }

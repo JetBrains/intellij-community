@@ -5,7 +5,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.VcsDirtyScope
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeVfsListener
+import com.intellij.openapi.vcs.changes.VcsInvalidated
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.vcs.test.VcsPlatformTest

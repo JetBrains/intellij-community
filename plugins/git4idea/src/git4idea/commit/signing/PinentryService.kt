@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commit.signing
 
-import com.intellij.externalProcessAuthHelper.toExternalAppEntry
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
@@ -12,14 +11,23 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.ExternalCliOptions
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.util.cancelOnDispose
+import com.intellij.platform.eel.provider.utils.serveExternalCli
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.net.NetUtils
 import git4idea.gpg.CryptoUtils
 import git4idea.gpg.PinentryApp
 import git4idea.i18n.GitBundle
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.net.ServerSocket
@@ -62,18 +70,15 @@ internal class PinentryService(private val cs: CoroutineScope) {
     val address = startServer() ?: return null
     return if (eelTarget != null) {
       runBlockingMaybeCancellable {
-        val script = eelTarget.exec.createExternalCli(object : ExternalCliOptions {
+        val childScope = cs.childScope("serve external cli")
+        listenJob = childScope.coroutineContext.job
+        val options = object : ExternalCliOptions {
           override val filePrefix = "pinentry-ide"
           override val envVariablesToCapture: List<String> = listOf(PINENTRY_USER_DATA_ENV)
-        })
-        listenJob = cs.launch {
-          script.consumeInvocations { process ->
-            process.toExternalAppEntry().use { externalAppEntry ->
-              PinentryApp().entryPoint(externalAppEntry)
-            }
-          }
+          override val lifecycle: EelExecApi.ExternalCliLifecycle = EelExecApi.ExternalCliLifecycle.Reusable(cs)
         }
-        PinentryData(publicKeyStr, address, script.path)
+        val script = eelTarget.exec.serveExternalCli(childScope, PinentryApp(), options)
+        PinentryData(publicKeyStr, address, script)
       }
     }
     else {
@@ -119,14 +124,6 @@ internal class PinentryService(private val cs: CoroutineScope) {
       }
     }
 
-    cs.launch {
-      while (isActive) {
-        delay(100L)
-      }
-    }.invokeOnCompletion {
-      stopSession()
-    }
-
     return Address(host, port)
   }
 
@@ -170,7 +167,7 @@ internal class PinentryService(private val cs: CoroutineScope) {
     fun requestPassword(description: @NlsSafe String?): String?
   }
 
-  private class DefaultPasswordUiRequester() : PasswordUiRequester {
+  private class DefaultPasswordUiRequester : PasswordUiRequester {
     override fun requestPassword(description: @NlsSafe String?): String? {
       return Messages.showPasswordDialog(
         if (description != null) description else GitBundle.message("gpg.pinentry.default.description"),

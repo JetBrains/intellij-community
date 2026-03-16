@@ -29,7 +29,6 @@ class _FileDownloaderParams(TypedDict):
     throttledratelimit: int | None
     updatetime: bool
     verbose: bool
-    xattr_set_filesize: bool
 
 class FileDownloader:
     params: _FileDownloaderParams | None

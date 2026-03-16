@@ -18,9 +18,9 @@ jvm_library(
     "//libraries/gson",
     "//platform/util",
     "//platform/platform-impl:ide-impl",
-    "@lib//:netty-codec-http",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
     "//libraries/fastutil",
-    "@lib//:netty-buffer",
+    "//libraries/netty/buffer",
   ],
   runtime_deps = ["//platform/backend"]
 )

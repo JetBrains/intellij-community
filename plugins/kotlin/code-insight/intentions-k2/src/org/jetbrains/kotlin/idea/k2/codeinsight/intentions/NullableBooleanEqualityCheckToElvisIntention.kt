@@ -7,7 +7,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.enhancedTypeOrSelf
 import org.jetbrains.kotlin.analysis.api.components.expressionType
 import org.jetbrains.kotlin.analysis.api.components.isBooleanType
 import org.jetbrains.kotlin.analysis.api.components.isNullable
@@ -15,7 +14,12 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 
 class NullableBooleanEqualityCheckToElvisIntention : KotlinApplicableModCommandAction<KtBinaryExpression, Unit>(KtBinaryExpression::class) {
     override fun invoke(
@@ -55,6 +59,6 @@ class NullableBooleanEqualityCheckToElvisIntention : KotlinApplicableModCommandA
 
         val expressionType = lhs.expressionType ?: return false
 
-        return expressionType.isNullable && (expressionType.enhancedTypeOrSelf?.isBooleanType == true)
+        return expressionType.isNullable && expressionType.isBooleanType
     }
 }

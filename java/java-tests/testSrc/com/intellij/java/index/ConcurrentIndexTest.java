@@ -17,13 +17,14 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.search.JavaNullMethodArgumentUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.BombedProgressIndicator;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ref.GCWatcher;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +39,7 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject())).disableBackgroundCommit(getProject());
+    ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(getProject())).disableBackgroundCommit(getProject());
   }
 
   public void test_concurrent_switching_with_checkCanceled() throws ExecutionException, InterruptedException {
@@ -82,7 +83,7 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
         }));
       }
 
-      for (Future<?> future : futuresToWait) future.get();
+      ConcurrencyUtil.getAll(futuresToWait);
     }
   }
 
@@ -109,7 +110,8 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
         ((PsiJavaFile)file).getImportList()
           .add(JavaPsiFacade.getElementFactory(getProject()).createImportStatementOnDemand("foo.bar" + finalI));
       });
-      GCWatcher.tracking(file.getNode()).ensureCollected();
+      // Wait for com.intellij.codeInsight.daemon.impl.PsiChangeHandler$Change to release the reference
+      GCWatcher.tracking(file.getNode()).ensureCollectedWithinTimeout(5_000);
       assertFalse(file.isContentsLoaded());
 
       List<Future<?>> futuresToWait = new ArrayList<>();
@@ -149,7 +151,7 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
       }
 
 
-      for (Future<?> future : futuresToWait) future.get();
+      ConcurrencyUtil.getAll(futuresToWait);
     }
   }
 
@@ -169,7 +171,8 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
         ((PsiJavaFile)file).getImportList()
           .add(JavaPsiFacade.getElementFactory(getProject()).createImportStatementOnDemand("foo.bar" + finalI));
       });
-      GCWatcher.tracking(file.getNode()).ensureCollected();
+
+      GCWatcher.tracking(file.getNode()).ensureCollectedWithinTimeout(5_000); // wait for document commit queue
       assertFalse(file.isContentsLoaded());
 
       myFixture.addFileToProject("Foo" + i + ".java",
@@ -209,7 +212,7 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
         }));
       }
 
-      for (Future<?> future : futuresToWait) future.get();
+      ConcurrencyUtil.getAll(futuresToWait);
     }
   }
 
@@ -232,7 +235,9 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
         document.insertString(document.getText().indexOf("(null") + 1, " ");
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       });
-      GCWatcher.tracking(file.getNode()).ensureCollected();
+
+      // Wait for com.intellij.codeInsight.daemon.impl.PsiChangeHandler$Change to release the reference
+      GCWatcher.tracking(file.getNode()).ensureCollectedWithinTimeout(5_000);
       assertFalse(file.isContentsLoaded());
 
       assertTrue(file.getNode().getLighterAST() instanceof FCTSBackedLighterAST);
@@ -253,12 +258,10 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
           public void run(@NotNull ProgressIndicator indicator) {
             ReadAction.run(() -> {
               assertNotNull(JavaPsiFacade.getInstance(project).findClass("Foo", GlobalSearchScope.allScope(project)));
-              });
+            });
           }
         }));
-      for (Future<?> future : futures) {
-        future.get();
-      }
+      ConcurrencyUtil.getAll(futures);
     }
   }
 }

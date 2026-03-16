@@ -37,7 +37,15 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.AWTEvent
+import java.awt.BufferCapabilities
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.ImageCapabilities
+import java.awt.Insets
+import java.awt.Rectangle
+import java.awt.Window
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.MouseEvent
@@ -107,6 +115,9 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   // when this client property is true, we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
   @JvmField
   internal var togglingFullScreenInProgress: Boolean = false
+
+  @JvmField
+  internal var isAboutToBeMaximized: Boolean = false
 
   private var lastInactiveMouseXAbs: Int = 0
   private var lastInactiveMouseYAbs: Int = 0

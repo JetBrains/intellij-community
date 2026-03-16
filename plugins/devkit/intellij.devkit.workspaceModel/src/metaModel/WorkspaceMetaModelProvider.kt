@@ -3,13 +3,13 @@ package com.intellij.devkit.workspaceModel.metaModel
 
 import com.intellij.openapi.module.Module
 import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
-import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
 
 interface WorkspaceMetaModelProvider {
   fun loadObjModules(
-    ktClasses: HashMap<String, KtClass>,
+    ktClasses: HashMap<String, KtClassOrObject>,
     module: Module,
     processAbstractTypes: Boolean,
     isTestSourceFolder: Boolean,
-  ): List<CompiledObjModule>
+  ): Pair<List<CompiledObjModule>, List<MetaProblem>>
 }

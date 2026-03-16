@@ -11,7 +11,6 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -24,8 +23,9 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.python.common.tools.ToolId
-import com.intellij.python.pyproject.model.internal.PyProjectTomlWorkspaceEntity
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlWorkspaceEntity
 import com.intellij.python.pyproject.model.internal.PyProjectTomlWorkspaceEntityBuilder
+import com.intellij.python.pyproject.model.internal.workspaceBridge.impl.MetadataStorageImpl
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -229,7 +229,7 @@ internal class PyProjectTomlWorkspaceEntityData : WorkspaceEntityData<PyProjectT
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.python.pyproject.model.internal.PyProjectTomlWorkspaceEntity") as EntityMetadata
+      "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlWorkspaceEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

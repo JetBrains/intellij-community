@@ -2,10 +2,19 @@
 package com.intellij.openapi.module.impl
 
 import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.notification.*
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.AutomaticModuleUnloader
 import com.intellij.openapi.module.ModuleManager
@@ -119,14 +128,14 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
     val actions = mutableListOf<NotificationAction>()
 
     if (modulesToUnload.isNotEmpty()) {
-      val args = arrayOf(modulesToUnload.size, modulesToUnload[0], if (modulesToUnload.size == 2) modulesToUnload[1] else modulesToUnload.size - 1)
+      val args = arrayOf<Any>(modulesToUnload.size, modulesToUnload[0], if (modulesToUnload.size == 2) modulesToUnload[1] else modulesToUnload.size - 1)
       messages += ProjectBundle.message("auto.unloaded.notification", *args)
       val text = ProjectBundle.message(if (modulesToUnload.isEmpty()) "auto.unloaded.revert.short" else "auto.unloaded.revert.full", *args)
       actions += createAction(text) { list -> list.removeAll(modulesToUnload) }
     }
 
     if (modulesToLoad.isNotEmpty()) {
-      val args = arrayOf(modulesToLoad.size, modulesToLoad[0], if (modulesToLoad.size == 2) modulesToLoad[1] else modulesToLoad.size - 1)
+      val args = arrayOf<Any>(modulesToLoad.size, modulesToLoad[0], if (modulesToLoad.size == 2) modulesToLoad[1] else modulesToLoad.size - 1)
       messages += ProjectBundle.message("auto.loaded.notification", *args)
       val action = ProjectBundle.message(if (modulesToUnload.isEmpty()) "auto.loaded.revert.short" else "auto.loaded.revert.full", *args)
       actions += createAction(action) { list -> list.addAll(modulesToLoad) }

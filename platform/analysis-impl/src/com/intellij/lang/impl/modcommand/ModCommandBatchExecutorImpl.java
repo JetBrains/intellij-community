@@ -4,10 +4,43 @@ package com.intellij.lang.impl.modcommand;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
-import com.intellij.codeInspection.options.*;
+import com.intellij.codeInspection.options.LocMessage;
+import com.intellij.codeInspection.options.OptCheckbox;
+import com.intellij.codeInspection.options.OptControl;
+import com.intellij.codeInspection.options.OptNumber;
+import com.intellij.codeInspection.options.OptString;
+import com.intellij.codeInspection.options.OptStringList;
+import com.intellij.codeInspection.options.OptionContainer;
+import com.intellij.codeInspection.options.OptionController;
+import com.intellij.codeInspection.options.OptionControllerProvider;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.FutureVirtualFile;
+import com.intellij.modcommand.ModChooseAction;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcommand.ModCompositeCommand;
+import com.intellij.modcommand.ModCopyToClipboard;
+import com.intellij.modcommand.ModCreateFile;
+import com.intellij.modcommand.ModDeleteFile;
+import com.intellij.modcommand.ModDisplayMessage;
+import com.intellij.modcommand.ModEditOptions;
+import com.intellij.modcommand.ModHighlight;
+import com.intellij.modcommand.ModLaunchEditorAction;
+import com.intellij.modcommand.ModMoveFile;
+import com.intellij.modcommand.ModNavigate;
+import com.intellij.modcommand.ModOpenUrl;
+import com.intellij.modcommand.ModRegisterTabOut;
+import com.intellij.modcommand.ModShowConflicts;
+import com.intellij.modcommand.ModStartRename;
+import com.intellij.modcommand.ModStartTemplate;
+import com.intellij.modcommand.ModUpdateFileText;
 import com.intellij.modcommand.ModUpdateFileText.Fragment;
+import com.intellij.modcommand.ModUpdateReferences;
+import com.intellij.modcommand.ModUpdateSystemOptions;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -16,6 +49,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -29,7 +63,11 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -87,6 +125,8 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       return Result.INTERACTIVE;
     }
     return switch (command) {
+      case ModLaunchEditorAction action -> action.optional() ? Result.NOTHING : Result.INTERACTIVE;
+      case ModRegisterTabOut ignored -> Result.NOTHING;
       case ModUpdateFileText upd -> executeUpdate(project, upd) ? Result.SUCCESS : Result.ABORT;
       case ModCreateFile create -> {
         String message = executeCreate(project, create);
@@ -111,7 +151,7 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       case ModChooseAction chooser -> executeChooseInBatch(context, chooser);
       case ModShowConflicts ignored -> Result.CONFLICTS;
       case ModEditOptions<?> editOptions -> bypassEditOptions(editOptions, context);
-      case ModDisplayMessage(String text, var kind) -> switch (kind) {
+      case ModDisplayMessage(@NlsContexts.Tooltip String text, var kind) -> switch (kind) {
         case ERROR -> new Error(text);
         case INFORMATION -> Result.INTERACTIVE;
       };
@@ -223,7 +263,7 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
         }
         updateText(file.getProject(), file.getViewProvider().getDocument(), updateFileText);
       }
-      else if (!(cmd instanceof ModNavigate) && !(cmd instanceof ModHighlight)) {
+      else if (!(cmd instanceof ModNavigate) && !(cmd instanceof ModHighlight) && !(cmd instanceof ModRegisterTabOut)) {
         throw new UnsupportedOperationException("Unexpected command: " + command);
       }
     }
@@ -240,7 +280,9 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       return;
     }
     ModCommand command = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.nonBlocking(commandSupplier::get).executeSynchronously(),
+      () -> ReadAction.nonBlocking(commandSupplier::get)
+        .expireWhen(() -> context.project().isDisposed() || (editor != null && editor.isDisposed()))
+        .executeSynchronously(),
       title, true, context.project());
     if (!command.isEmpty()) {
       CommandProcessor commandProcessor = CommandProcessor.getInstance();
@@ -374,6 +416,12 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
           html = (IntentionPreviewInfo.Html)IntentionPreviewInfo.rename(fileToCreate, targetFile.getName());
         }
         fsActions.add(html.content());
+      }
+      else if (command instanceof ModLaunchEditorAction(String id, boolean optional) && !optional) {
+        AnAction anAction = ActionManager.getInstance().getAction(id);
+        if (anAction != null) {
+          fsActions.add(text(AnalysisBundle.message("preview.execute.action", anAction.getTemplateText())));
+        }
       }
       else if (command instanceof ModUpdateSystemOptions options) {
         HtmlChunk preview = createOptionsPreview(context, options);

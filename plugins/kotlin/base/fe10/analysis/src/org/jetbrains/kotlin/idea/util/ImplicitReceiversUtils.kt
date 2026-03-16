@@ -2,7 +2,12 @@
 
 package org.jetbrains.kotlin.idea.util
 
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyAccessorDescriptor
+import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
+import org.jetbrains.kotlin.descriptors.ScriptDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtExpression
@@ -17,24 +22,26 @@ import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.getImplicitReceiversHierarchy
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
-import java.util.*
-import kotlin.collections.LinkedHashSet
 
+@K1Deprecation
 fun LexicalScope.getImplicitReceiversWithInstance(excludeShadowedByDslMarkers: Boolean = false): Collection<ReceiverParameterDescriptor> {
     return getImplicitReceiversWithInstanceToExpression(excludeShadowedByDslMarkers).keys
 }
 
+@K1Deprecation
 interface ReceiverExpressionFactory {
     val isImmediate: Boolean
     val expressionText: String
     fun createExpression(psiFactory: KtPsiFactory, shortThis: Boolean = true): KtExpression
 }
 
+@K1Deprecation
 fun LexicalScope.getFactoryForImplicitReceiverWithSubtypeOf(receiverType: KotlinType): ReceiverExpressionFactory? =
     getImplicitReceiversWithInstanceToExpression().entries.firstOrNull { (receiverDescriptor, _) ->
         receiverDescriptor.type.isSubtypeOf(receiverType)
     }?.value
 
+@K1Deprecation
 fun LexicalScope.getImplicitReceiversWithInstanceToExpression(
     excludeShadowedByDslMarkers: Boolean = false
 ): Map<ReceiverParameterDescriptor, ReceiverExpressionFactory?> {

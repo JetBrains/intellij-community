@@ -7,6 +7,7 @@
 
     <group id="LangCodeInsightActions">
       <action id="EditorSelectWord" class="com.intellij.openapi.editor.actions.SelectWordAtCaretAction"/>
+      <action id="EditorSelectWordAtCurrentCaret" class="com.intellij.openapi.editor.actions.SelectWordAtCurrentCaretAction"/>
       <action id="EditorUnSelectWord" class="com.intellij.openapi.editor.actions.UnselectWordAtCaretAction"/>
 
       <add-to-group group-id="EditorActions" anchor="last"/>
@@ -247,7 +248,9 @@
         <override-text place="MainMenu"/>
         <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
       </action>
+      <!--suppress PluginXmlCapitalization -->
       <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction">
+        <!--suppress PluginXmlCapitalization -->
         <override-text place="MainMenu"/>
         <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
       </action>
@@ -294,7 +297,6 @@
         <!--suppress PluginXmlCapitalization -->
         <action id="Floating.CodeToolbar.SurroundWithIf" class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
       </group>
-      <reference ref="XDebugger.Code.Toolbar"/>
     </group>
 
     <action id="CodeFloatingToolbar.GotoNextMenu" class="com.intellij.ui.codeFloatingToolbar.GotoNextFloatingToolbarMenu" />
@@ -346,6 +348,7 @@
         <reference ref="InsertInlineCompletionAction"/>
         <reference ref="InsertInlineCompletionWordAction"/>
         <reference ref="InsertInlineCompletionLineAction"/>
+        <!--suppress PluginXmlCapitalization -->
         <action class="com.intellij.codeInsight.completion.command.configuration.EnableCommandCompletionAction"
                 id="EnableCommandCompletion"/>
       </group>
@@ -548,7 +551,7 @@
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction">
         <override-text place="GoToAction"/>
       </action>
-      <group class="com.intellij.ide.fileTemplates.actions.FileTemplateSeparator" id="FileTemplateSeparatorGroup"/>
+      <group id="FileTemplateSeparatorGroup" searchable="false"/> <!-- kept for backward compatibility -->
       <group id="NewWebDevelopment" class="com.intellij.ide.actions.NewWebDevelopmentGroup"/>
       <group id="NewMicroservices" class="com.intellij.ide.actions.NewMicroservicesGroup"/>
       <group id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
@@ -942,9 +945,6 @@
       <reference ref="EvaluateExpression"/>
       <reference ref="RunToCursor"/>
       <reference ref="ForceRunToCursor"/>
-      <reference ref="Debugger.AddToWatch"/>
-      <reference ref="Debugger.AddInlineWatch"/>
-      <reference ref="Debugger.EvaluateInConsole"/>
       <separator/>
       <group id="EditorPopupMenuDebugHotSwap">
         <separator/>
@@ -1149,6 +1149,7 @@
       <action id="DumpRunConfigurationTypesAction" internal="true" class="com.intellij.internal.DumpRunConfigurationTypesAction"/>
       <action id="DumpFormattingModel" class="com.intellij.internal.DumpFormattingModelAction" internal="true"/>
       <action id="CheckClassLoading" internal="true" class="com.intellij.internal.CheckClassLoadingAction"/>
+      <action id="DumpCodeStyleCache" class="com.intellij.ide.actions.DumpCodeStyleCacheAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
   </actions>

@@ -1,6 +1,6 @@
 fun test() {
-    if (!(Foo().check(1, 2))) {
-        
+    if (!Foo().check(1, 2)) {
+
     }
 }
 

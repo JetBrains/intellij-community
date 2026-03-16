@@ -7,11 +7,15 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
 
 public final class FoldingUtil {
   private FoldingUtil() { }
@@ -39,7 +43,7 @@ public final class FoldingUtil {
     return result;
   }
 
-  public static FoldRegion[] getFoldRegionsAtOffset(Editor editor, int offset) {
+  public static @NotNull FoldRegion @NotNull [] getFoldRegionsAtOffset(@NotNull Editor editor, int offset) {
     List<FoldRegion> list = new ArrayList<>();
     FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
     for (FoldRegion region : allRegions) {
@@ -51,12 +55,6 @@ public final class FoldingUtil {
     FoldRegion[] regions = list.toArray(FoldRegion.EMPTY_ARRAY);
     Arrays.sort(regions, Collections.reverseOrder(RangeMarker.BY_START_OFFSET));
     return regions;
-  }
-
-  @ApiStatus.Internal
-  public static boolean caretInsideRange(final Editor editor, final TextRange range) {
-    final int offset = editor.getCaretModel().getOffset();
-    return range.contains(offset) && range.getStartOffset() != offset;
   }
 
   public static boolean isHighlighterFolded(@NotNull Editor editor, @NotNull RangeHighlighter highlighter) {
@@ -76,8 +74,8 @@ public final class FoldingUtil {
   /**
    * Iterates fold region tree in a depth-first order (pre-order)
    */
-  public static Iterator<FoldRegion> createFoldTreeIterator(@NotNull Editor editor) {
-    final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
+  public static @NotNull Iterator<FoldRegion> createFoldTreeIterator(@NotNull Editor editor) {
+    FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
     return new Iterator<>() {
       private int sectionStart;
       private int current;

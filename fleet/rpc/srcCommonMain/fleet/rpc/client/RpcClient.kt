@@ -1,29 +1,77 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.rpc.client
 
-import fleet.multiplatform.shims.ConcurrentHashMap
+import fleet.multiplatform.shims.MultiplatformConcurrentHashMap
 import fleet.multiplatform.shims.newSingleThreadCoroutineDispatcher
 import fleet.rpc.RemoteApiDescriptor
 import fleet.rpc.RemoteKind
-import fleet.rpc.client.proxy.*
-import fleet.rpc.core.*
+import fleet.rpc.client.proxy.ProxyClosure
+import fleet.rpc.client.proxy.SuspendInvocationHandler
+import fleet.rpc.client.proxy.poisoned
+import fleet.rpc.client.proxy.suspendProxy
+import fleet.rpc.client.proxy.tracing
+import fleet.rpc.core.AssumptionsViolatedException
+import fleet.rpc.core.FailureInfo
+import fleet.rpc.core.InstanceId
+import fleet.rpc.core.InternalStreamDescriptor
+import fleet.rpc.core.InternalStreamMessage
+import fleet.rpc.core.PrefetchStrategy
+import fleet.rpc.core.RemoteObject
+import fleet.rpc.core.RemoteResource
+import fleet.rpc.core.RemoteResourceConsumedException
+import fleet.rpc.core.RequestCompletionHandler
+import fleet.rpc.core.RpcException
+import fleet.rpc.core.RpcMessage
+import fleet.rpc.core.RpcToken
+import fleet.rpc.core.StreamDescriptor
+import fleet.rpc.core.Transport
+import fleet.rpc.core.TransportDisconnectedException
+import fleet.rpc.core.TransportMessage
+import fleet.rpc.core.classMethodDisplayName
+import fleet.rpc.core.message
+import fleet.rpc.core.methodParamDisplayName
+import fleet.rpc.core.parseMessage
+import fleet.rpc.core.rpcCallFailureMessage
+import fleet.rpc.core.rpcJsonImplementationDetail
+import fleet.rpc.core.rpcStreamFailureMessage
+import fleet.rpc.core.serveStream
+import fleet.rpc.core.withSerializationContext
 import fleet.rpc.serializer
 import fleet.util.UID
-import fleet.util.async.*
+import fleet.util.async.Resource
+import fleet.util.async.onContext
+import fleet.util.async.resource
+import fleet.util.async.use
+import fleet.util.async.withSupervisor
 import fleet.util.causeOfType
 import fleet.util.channels.consumeAll
 import fleet.util.channels.isFull
 import fleet.util.logging.KLoggers
 import kotlinx.collections.immutable.toPersistentSet
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.selects.whileSelect
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resumeWithException
@@ -43,6 +91,7 @@ private data class OutgoingRequest(
 
 private data class OngoingRequest(val request: OutgoingRequest)
 
+@ApiStatus.Internal
 fun rpcClient(
   transport: Transport,
   origin: UID,
@@ -81,13 +130,13 @@ private class RpcClient(
     element.second?.invoke(RpcClientDisconnectedException("Request channel closed", null))
   }
 
-  private val grayList = ConcurrentHashMap<UID, CompletableDeferred<Unit>>()
+  private val grayList = MultiplatformConcurrentHashMap<UID, CompletableDeferred<Unit>>()
 
-  private val outgoingRpc = ConcurrentHashMap<UID, OngoingRequest>()
-  private val completedRpc = ConcurrentHashMap<UID, TransferredResource>()
-  private val streams = ConcurrentHashMap<UID, InternalStreamDescriptor>()
-  private val remoteResources = ConcurrentHashMap<InstanceId, Set<Pair<InstanceId, RemoteResource>>>()
-  private val resourceParents = ConcurrentHashMap<InstanceId, InstanceId>()
+  private val outgoingRpc = MultiplatformConcurrentHashMap<UID, OngoingRequest>()
+  private val completedRpc = MultiplatformConcurrentHashMap<UID, TransferredResource>()
+  private val streams = MultiplatformConcurrentHashMap<UID, InternalStreamDescriptor>()
+  private val remoteResources = MultiplatformConcurrentHashMap<InstanceId, Set<Pair<InstanceId, RemoteResource>>>()
+  private val resourceParents = MultiplatformConcurrentHashMap<InstanceId, InstanceId>()
 
   private val remoteObjectFactory = this.asHandlerFactory().tracing()
 
@@ -128,17 +177,23 @@ private class RpcClient(
   }
 
   private suspend fun <T> ChannelResult<T>.receiveSuccess(f: suspend (T) -> Unit): Boolean {
-    return when {
-      this.isSuccess -> {
-        f(this.getOrThrow())
-        true
+    return if (isSuccess) {
+      f(this.getOrThrow())
+      true
+    }
+    else {
+      // the operation has failed
+      if (isClosed) {
+        when (val ex = this.exceptionOrNull()) {
+          null -> false // closed normally
+          else -> throw ex // closed exceptionally
+        }
       }
-      this.isClosed -> false
-      this.isFailure -> {
-        throw this.exceptionOrNull() ?: error("receive is a failure without exception")
-      }
-      else -> {
-        error("unreachable")
+      else {
+        // this branch should never trigger
+        // * It is guaranteed that the only way this function can return a [failed][ChannelResult.isFailure] result is when
+        //  * the channel is [closed for `receive`][isClosedForReceive], so [ChannelResult.isClosed] is also true.
+        throw (this.exceptionOrNull() ?: error("receive is a failure without exception"))
       }
     }
   }
@@ -456,6 +511,7 @@ private class RpcClient(
         error.conflict != null -> AssumptionsViolatedException(error.conflict)
         error.serviceNotReady != null -> RpcServiceNotReady(rpc.call)
         error.unresolvedService != null -> UnresolvedServiceException(rpc.call.service)
+        error.producerCancelled != null -> RemoteIsCancelledException(error.producerCancelled, null)
         else -> RpcException.callFailed(rpc.call, error)
       }
 
@@ -502,7 +558,7 @@ private class RpcClient(
       is InternalStreamDescriptor.FromRemote -> {
         val producerCancelled = error?.producerCancelled
         val causePrime = if (producerCancelled != null) {
-          ProducerIsCancelledException(msg = rpcStreamFailureMessage(desc.displayName, error.message()), cause = null) as Throwable?
+          RemoteIsCancelledException(msg = rpcStreamFailureMessage(desc.displayName, error.message()), cause = null) as Throwable?
         }
         else {
           cause as Throwable? // without `as Throwable?` wasm compiles but throws on wasm compilation in the browser (same as in FL-32234)

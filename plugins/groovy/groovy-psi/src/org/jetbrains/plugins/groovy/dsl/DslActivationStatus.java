@@ -16,7 +16,11 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @State(name = "DslActivationStatus", storages = @Storage(value = "dslActivationStatus.xml", roamingType = RoamingType.DISABLED))
 public final class DslActivationStatus implements PersistentStateComponent<DslActivationStatus.State> {

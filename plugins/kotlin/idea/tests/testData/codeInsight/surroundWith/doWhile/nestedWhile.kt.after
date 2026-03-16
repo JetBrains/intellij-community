@@ -1,0 +1,8 @@
+fun foo() {
+    while (x > 0) {
+        do {
+            println(x)
+            x--
+        } while (<selection><caret>true</selection>)
+    }
+}

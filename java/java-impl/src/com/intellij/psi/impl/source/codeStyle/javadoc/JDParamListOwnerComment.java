@@ -71,7 +71,10 @@ public class JDParamListOwnerComment extends JDComment {
 
     StringBuilder fill = new StringBuilder(prefix.length() + tag.length() + maxNameLength + 1);
     fill.append(prefix);
-    StringUtil.repeatSymbol(fill, ' ', maxNameLength + 1 + tag.length());
+    // Since in Markdown comments, spaces have meaning, avoid continuation indent
+    if(!getIsMarkdown()) {
+      StringUtil.repeatSymbol(fill, ' ', maxNameLength + 1 + tag.length());
+    }
 
     for (TagDescription nd : tagBlocks) {
       if (isNull(nd.desc()) && !generate_empty_tags) continue;

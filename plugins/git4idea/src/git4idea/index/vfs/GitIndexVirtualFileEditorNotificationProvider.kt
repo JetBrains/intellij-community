@@ -12,7 +12,7 @@ import git4idea.i18n.GitBundle
 import java.util.function.Function
 import javax.swing.JComponent
 
-private class GitIndexVirtualFileEditorNotificationProvider : EditorNotificationProvider, DumbAware {
+internal class GitIndexVirtualFileEditorNotificationProvider : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (file !is GitIndexVirtualFile) {
       return null

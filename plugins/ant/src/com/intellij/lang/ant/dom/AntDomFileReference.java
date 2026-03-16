@@ -7,9 +7,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class AntDomFileReference extends FileReference implements AntDomReference{
+public final class AntDomFileReference extends FileReference implements AntDomReference{
 
   private boolean mySkipByAnnotator;
 
@@ -18,7 +17,7 @@ public class AntDomFileReference extends FileReference implements AntDomReferenc
   }
 
   @Override
-  public @Nullable @NlsSafe String getText() {
+  public @NlsSafe @NotNull String getText() {
     final AntDomFileReferenceSet refSet = getFileReferenceSet();
     final String _path = AntStringResolver.computeString(refSet.getAttributeValue(), super.getText());
     final String text = FileUtil.toSystemIndependentName(_path);
@@ -35,7 +34,7 @@ public class AntDomFileReference extends FileReference implements AntDomReferenc
     return AntBundle.message("file.doesnt.exist", getCanonicalRepresentationText());
   }
 
-  public @Nullable String getCanonicalRepresentationText() {
+  public @NotNull String getCanonicalRepresentationText() {
     final String value = getCanonicalText();
     return AntStringResolver.computeString(getFileReferenceSet().getAttributeValue(), value);
   }

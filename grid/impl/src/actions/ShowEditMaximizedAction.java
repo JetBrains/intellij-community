@@ -17,7 +17,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 import static com.intellij.database.run.ui.EditMaximizedViewKt.findEditMaximized;
 

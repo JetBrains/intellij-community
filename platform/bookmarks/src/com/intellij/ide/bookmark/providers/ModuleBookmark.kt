@@ -3,7 +3,7 @@ package com.intellij.ide.bookmark.providers
 
 import com.intellij.ide.bookmark.Bookmark
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Objects
 
 internal class ModuleBookmark(override val provider: ModuleBookmarkProvider, val name: @Nls String, val isGroup: Boolean) : Bookmark {
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.index.propertyBased
 
-import com.intellij.platform.testFramework.loadExtensionWithText
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -9,6 +8,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.ByteSequence
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.testFramework.loadExtensionWithText
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.SkipSlowTestLocally

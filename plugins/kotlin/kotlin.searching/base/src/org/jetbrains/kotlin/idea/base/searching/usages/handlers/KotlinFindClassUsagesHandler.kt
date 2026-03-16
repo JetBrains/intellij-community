@@ -28,7 +28,13 @@ import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOpt
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.search.usagesSearch.buildProcessDelegationCallKotlinConstructorUsagesTask
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.allConstructors
 import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.psi.psiUtil.effectiveDeclarations
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
@@ -69,7 +75,7 @@ class KotlinFindClassUsagesHandler(
         override fun buildTaskList(forHighlight: Boolean): Boolean {
             val classOrObject = element as KtClassOrObject
 
-            if (kotlinOptions.isUsages || kotlinOptions.searchConstructorUsages) {
+            if (kotlinOptions.isUsages || kotlinOptions.isConstructorUsages) {
                 processClassReferencesLater(classOrObject)
             }
 
@@ -81,7 +87,7 @@ class KotlinFindClassUsagesHandler(
                 if (!processCompanionObjectInternalReferences(classOrObject, referenceProcessor)) return false
             }
 
-            if (kotlinOptions.searchConstructorUsages) {
+            if (kotlinOptions.isConstructorUsages) {
                 for (constructor in classOrObject.allConstructors) {
                     addTask { ReferencesSearch.search(constructor, options.searchScope).forEach(referenceProcessor) }
                     addTask(
@@ -147,7 +153,7 @@ class KotlinFindClassUsagesHandler(
                 usagesQuery = FilteredQuery(usagesQuery) { !it.isImportUsage() }
             }
 
-            if (!kotlinOptions.searchConstructorUsages) {
+            if (!kotlinOptions.isConstructorUsages) {
                 usagesQuery = FilteredQuery(usagesQuery) { !it.isConstructorUsage(classOrObject) }
             } else if (!options.isUsages && classOrObject !is KtObjectDeclaration && !(classOrObject as KtClass).isEnum()) {
                 usagesQuery = FilteredQuery(usagesQuery) { it.isConstructorUsage(classOrObject) }

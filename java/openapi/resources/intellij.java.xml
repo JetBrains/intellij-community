@@ -1,0 +1,56 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.xml.dom"/>
+
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.java.analysis"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.xml.psi"/>
+
+    <module name="intellij.platform.backend"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.methodImplementor" interface="com.intellij.codeInsight.MethodImplementor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.javaExpressionSurrounder"
+                    interface="com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.unscrambleSupport" interface="com.intellij.unscramble.UnscrambleSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.repositoryLibrary" beanClass="com.intellij.jarRepository.RepositoryLibraryDefinition"
+                    dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint qualifiedName="com.intellij.encapsulateFields.Helper" beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.encapsulateFields.EncapsulateFieldHelper"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.hierarchy.referenceProcessor"
+                    interface="com.intellij.ide.hierarchy.call.CallReferenceProcessor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.hierarchy.elementProvider"
+                    interface="com.intellij.ide.hierarchy.call.CallHierarchyElementProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.refactoring.pullUpHelperFactory" beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.memberPullUp.PullUpHelperFactory"/>
+    </extensionPoint>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint qualifiedName="com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.attachSourcesProvider" interface="com.intellij.codeInsight.AttachSourcesProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.attachSourcesProviderFilter" interface="com.intellij.codeInsight.AttachSourcesProviderFilter"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.debuggerClassFilterProvider"
+                    interface="com.intellij.ui.classFilter.DebuggerClassFilterProvider" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class PyQuickFixUtil {
-  public static @Nullable Editor getEditor(@NotNull  PsiElement element) {
+  public static @Nullable Editor getEditor(@NotNull PsiElement element) {
     Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
     if (document == null) {
       return null;

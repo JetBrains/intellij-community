@@ -1,8 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
-import com.intellij.collaboration.async.*
-import com.intellij.collaboration.ui.codereview.details.model.*
+import com.intellij.collaboration.async.computationStateFlow
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeList
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModelBase
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewCommitsChangesStateHandler
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.map

@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":ultimate-promo_resources"],
   deps = [
+    "@lib//:kotlin-stdlib",
     "//platform/platform-impl:ide-impl",
     "//plugins/github/github-core:vcs-github",
     "//platform/analysis-api:analysis",

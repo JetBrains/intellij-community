@@ -3,7 +3,11 @@
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupEvent;
+import com.intellij.codeInsight.lookup.LookupListener;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
@@ -12,8 +16,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
 
 
 public abstract class PopupUpdateProcessor extends PopupUpdateProcessorBase {

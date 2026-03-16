@@ -7,7 +7,6 @@ plugins {
   id("fleet.project-module-conventions")
   id("fleet.toolchain-conventions")
   id("fleet.module-publishing-conventions")
-  id("fleet.sdk-repositories-publishing-conventions")
   alias(libs.plugins.dokka)
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
@@ -28,6 +27,8 @@ kotlin {
   wasmJs {
     browser {}
   }
+  iosArm64 {}
+  iosSimulatorArm64 {}
   sourceSets.commonMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonMain")) }
   sourceSets.commonMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesCommonMain")) }
   sourceSets.commonTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonTest")) }
@@ -42,6 +43,10 @@ kotlin {
   sourceSets.wasmJsMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesWasmJsMain")) }
   sourceSets.wasmJsTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcWasmJsTest")) }
   sourceSets.wasmJsTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesWasmJsTest")) }
+  sourceSets.iosMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcIosMain")) }
+  sourceSets.iosMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesIosMain")) }
+  sourceSets.iosTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcIosTest")) }
+  sourceSets.iosTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesIosTest")) }
   sourceSets.commonMain.dependencies {
     api(jps.io.ktor.ktor.client.core.jvm53990062.get().let { "${it.group}:ktor-client-core:${it.version}" }) {
       isTransitive = false
@@ -77,7 +82,7 @@ kotlin {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
     }
-    implementation(jps.com.intellij.platform.kotlinx.coroutines.core.jvm134738847.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
+    implementation(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.core.jvm930800474.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
       isTransitive = false
     }
     implementation(jps.org.jetbrains.kotlinx.kotlinx.io.core.jvm479158162.get().let { "${it.group}:kotlinx-io-core:${it.version}" }) {
@@ -95,7 +100,7 @@ kotlin {
     api(jps.io.ktor.ktor.network.jvm1442946683.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }
-    implementation(jps.com.intellij.platform.kotlinx.coroutines.slf4j1899700727.get().let { "${it.group}:${it.name}:${it.version}" }) {
+    implementation(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.slf4j1547890256.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }
   }

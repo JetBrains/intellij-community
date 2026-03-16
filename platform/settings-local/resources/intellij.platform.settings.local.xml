@@ -1,4 +1,19 @@
-<idea-plugin package="com.intellij.platform.settings.local">
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.aalto.xml"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.kotlinx.serialization.cbor"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.kotlinx.serialization.protobuf"/>
+    <module name="intellij.libraries.mvstore"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+  </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
       serviceInterface="com.intellij.platform.settings.SettingsController"

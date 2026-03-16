@@ -7,6 +7,7 @@ import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.CompilerConfigurationUtils;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -26,7 +27,11 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -41,7 +46,11 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
-import org.apache.oro.text.regex.*;
+import org.apache.oro.text.regex.MatchResult;
+import org.apache.oro.text.regex.Pattern;
+import org.apache.oro.text.regex.PatternCompiler;
+import org.apache.oro.text.regex.Perl5Compiler;
+import org.apache.oro.text.regex.Perl5Matcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,10 +65,21 @@ import org.jetbrains.jps.model.serialization.java.compiler.AnnotationProcessorPr
 import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
-import static com.intellij.compiler.ExternalCompilerConfigurationStorageKt.*;
+import static com.intellij.compiler.ExternalCompilerConfigurationStorageKt.getFilteredModuleNameList;
+import static com.intellij.compiler.ExternalCompilerConfigurationStorageKt.readByteTargetLevel;
+import static com.intellij.compiler.ExternalCompilerConfigurationStorageKt.writeBytecodeTarget;
 import static org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns.normalizeWildcards;
 import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.DEFAULT_WILDCARD_PATTERNS;
 
@@ -135,12 +155,12 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     }
     BackendCompiler.EP_NAME.getPoint(project).addChangeListener(() -> {
       myRegisteredCompilers = collectCompilers();
-    }, project);
+    }, JavaPluginDisposable.getInstance(project));
   }
 
   private static @NotNull ExcludedEntriesConfiguration createExcludedEntriesConfiguration(@NotNull Project project) {
     final ExcludedEntriesConfiguration cfg = new ExcludedEntriesConfiguration(project.getMessageBus().syncPublisher(ExcludedEntriesListener.TOPIC));
-    Disposer.register(project, cfg);
+    Disposer.register(JavaPluginDisposable.getInstance(project), cfg);
     project.getMessageBus().connect().subscribe(ExcludedEntriesListener.TOPIC, new ExcludedEntriesListener() {
       @Override
       public void onEntryAdded(@NotNull ExcludeEntryDescription description) {

@@ -4,13 +4,22 @@ package com.intellij.openapi.wm.impl.welcomeScreen
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionGroupWrapper
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.dsl.builder.AlignX
@@ -21,11 +30,10 @@ import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.FocusUtil
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Font
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
-
 
 @RequiresEdt
 internal fun emptyStateProjectPanel(disposable: Disposable): JComponent = panel {
@@ -42,22 +50,36 @@ internal fun emptyStateProjectPanel(disposable: Disposable): JComponent = panel 
       text(text).align(AlignX.CENTER).customize(UnscaledGaps(0)).applyToComponent { foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND }
     }.customize(UnscaledGapsY(bottom = 7))
   }
-  val (mainActions, moreActions) = createActionToolbars(disposable)
-  panel {
+
+  if (Registry.`is`("station.enable.welcome.screen.promo")) {
+    val actionManager = ActionManager.getInstance()
+    val group = actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_EMPTY_STATE) as ActionGroup
+    val toolbar = createFrameWelcomeScreenVerticalToolbar(group, disposable)
+
     row {
-      cell(mainActions).align(AlignX.FILL)
+      cell(toolbar.component)
+        .customize(UnscaledGaps(27))
+        .align(AlignX.CENTER)
+        .resizableColumn()
     }
-  }.align(AlignX.CENTER).customize(UnscaledGaps(27))
-  row {
-    cell(moreActions).align(AlignX.CENTER)
+  }
+  else {
+    val (mainActions, moreActions) = createActionToolbars(disposable)
+    panel {
+      row {
+        cell(mainActions).align(AlignX.FILL)
+      }
+    }.align(AlignX.CENTER).customize(UnscaledGaps(27))
+    row {
+      cell(moreActions).align(AlignX.CENTER)
+    }
   }
 }.apply {
   background = WelcomeScreenUIManager.getMainAssociatedComponentBackground()
 }
 
-
 // Returns main actions, more actions
-@ApiStatus.Internal
+@Internal
 fun createActionToolbars(parentDisposable: Disposable): Pair<ActionToolbarImpl, ActionToolbarImpl> {
   val actionManager = ActionManager.getInstance()
   val baseGroup = actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_EMPTY_STATE) as ActionGroup

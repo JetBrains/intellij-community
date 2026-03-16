@@ -7,11 +7,11 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;

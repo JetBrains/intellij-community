@@ -5,9 +5,12 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.idea.IJIgnore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.DefaultLogger;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.BlockingProgressIndicator;
 import com.intellij.openapi.progress.impl.ProgressResult;
 import com.intellij.openapi.progress.impl.ProgressRunner;
@@ -18,7 +21,6 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.Semaphore;
@@ -31,7 +33,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.awt.*;
+import java.awt.EventQueue;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -127,14 +129,11 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     task.release();
 
     if (EDT.isCurrentThreadEdt()) {
-      ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
-        // Waiting rationale: a task to write thread might have not been submitted yet
-        TimeoutUtil.sleep(100);
-        // Dispatching rationale: a task might be submitted to write thread. Hence, we need to ensure flush queue
-        // has finished processing pending events.
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-        return null;
-      });
+      // Waiting rationale: a task to write thread might have not been submitted yet
+      TimeoutUtil.sleep(100);
+      // Dispatching rationale: a task might be submitted to write thread. Hence, we need to ensure flush queue
+      // has finished processing pending events.
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     }
 
     ProgressResult<?> result = future.get(1000, TimeUnit.MILLISECONDS);
@@ -408,21 +407,6 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     assertSame(t, result.getThrowable());
   }
 
-  @Override
-  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    super.runTestRunnable(() -> {
-      if (runInDispatchThread() && myReleaseIWLockOnRun) {
-        ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
-          testRunnable.run();
-          return null;
-        });
-      }
-      else {
-        testRunnable.run();
-      }
-    });
-  }
-
   private static <T> T computeAssertingExceptionConditionally(boolean shouldFail, @NotNull Supplier<T> computation) {
     try {
       T result = computation.get();
@@ -455,18 +439,12 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
 
   private static void dispatchEverything() {
     if (EDT.isCurrentThreadEdt()) {
-      ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-        return null;
-      });
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     }
     else if (ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
       LaterInvocator.pollWriteThreadEventsOnce();
-      ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
-        ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance(), ModalityState.any());
-        return null;
-      });
+      ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance(), ModalityState.any());
     }
     else {
       Semaphore semaphore = new Semaphore(1);

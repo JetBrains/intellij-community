@@ -9,6 +9,7 @@ __all__ = [
     "diamond_graph",
     "dodecahedral_graph",
     "frucht_graph",
+    "generalized_petersen_graph",
     "heawood_graph",
     "hoffman_singleton_graph",
     "house_graph",
@@ -62,6 +63,8 @@ def octahedral_graph(create_using=None): ...
 def pappus_graph(): ...
 @_dispatchable
 def petersen_graph(create_using=None): ...
+@_dispatchable
+def generalized_petersen_graph(n: int, k: int, *, create_using=None): ...
 @_dispatchable
 def sedgewick_maze_graph(create_using=None): ...
 @_dispatchable

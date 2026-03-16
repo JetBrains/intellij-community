@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
+import com.intellij.devkit.core.icons.DevkitCoreIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -12,11 +13,16 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
-import org.jetbrains.idea.devkit.util.*;
+import org.jetbrains.idea.devkit.util.ActionCandidate;
+import org.jetbrains.idea.devkit.util.ComponentCandidate;
+import org.jetbrains.idea.devkit.util.ExtensionCandidate;
+import org.jetbrains.idea.devkit.util.ExtensionLocatorKt;
+import org.jetbrains.idea.devkit.util.ListenerCandidate;
+import org.jetbrains.idea.devkit.util.PluginRelatedLocatorsUtils;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.List;
 
@@ -38,7 +44,7 @@ final class PluginDescriptorDeclarationRelatedItemLineMarkerProvider extends Dev
 
   @Override
   public @NotNull Icon getIcon() {
-    return DevKitIcons.Gutter.Plugin;
+    return DevkitCoreIcons.Gutter.Plugin;
   }
 
   @Override

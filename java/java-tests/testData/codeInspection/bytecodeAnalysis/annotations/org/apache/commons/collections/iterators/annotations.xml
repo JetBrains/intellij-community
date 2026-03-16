@@ -574,9 +574,6 @@
     <item name='org.apache.commons.collections.iterators.LoopingListIterator LoopingListIterator(java.util.List) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.collections.iterators.LoopingListIterator java.lang.Object previous()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.iterators.ObjectArrayIterator ObjectArrayIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>

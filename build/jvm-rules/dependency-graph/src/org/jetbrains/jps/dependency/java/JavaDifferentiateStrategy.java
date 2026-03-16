@@ -2,16 +2,38 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.DifferentiateContext;
+import org.jetbrains.jps.dependency.Graph;
+import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.ReferenceID;
+import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.util.Pair;
 
 import java.lang.annotation.RetentionPolicy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.asIterable;
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.contains;
+import static org.jetbrains.jps.util.Iterators.filter;
+import static org.jetbrains.jps.util.Iterators.find;
+import static org.jetbrains.jps.util.Iterators.flat;
+import static org.jetbrains.jps.util.Iterators.isEmpty;
+import static org.jetbrains.jps.util.Iterators.lazyIterable;
+import static org.jetbrains.jps.util.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.recurseDepth;
+import static org.jetbrains.jps.util.Iterators.unique;
 
 public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
 
@@ -151,6 +173,11 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
 
     if (!changedClass.isAnonymous() && !changedClass.isPrivate() && classDiff.flagsChanged() && changedClass.isInnerClass()) {
       debug(context, "Some modifiers (access flags) were changed for non-private inner class, adding class usage to affected usages");
+      context.affectUsage(new ClassUsage(changedClass.getReferenceID()));
+    }
+
+    if (classDiff.metadataKindChanged()) {
+      debug(context, "Some class metadata has been added or removed (=> metadata kind has changed), added class usage to affected usages");
       context.affectUsage(new ClassUsage(changedClass.getReferenceID()));
     }
 
@@ -308,7 +335,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
         continue;
       }
 
-      Iterable<JvmNodeReferenceID> propagated = lazy(() -> {
+      Iterable<JvmNodeReferenceID> propagated = lazyIterable(() -> {
         return future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), changedMethod);
       });
 
@@ -429,7 +456,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     for (JvmMethod removedMethod : removed) {
       debug(context, "Method ", removedMethod.getName());
 
-      Iterable<JvmNodeReferenceID> propagated = lazy(() -> {
+      Iterable<JvmNodeReferenceID> propagated = lazyIterable(() -> {
         return future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), removedMethod);
       });
 
@@ -449,7 +476,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
         }
       }
       else {
-        Iterable<Pair<JvmClass, JvmMethod>> overridden = removedMethod.isConstructor()? Collections.emptyList() : lazy(() -> {
+        Iterable<Pair<JvmClass, JvmMethod>> overridden = removedMethod.isConstructor()? Collections.emptyList() : lazyIterable(() -> {
           return future.getOverriddenMethods(changedClass, removedMethod::isSameByJavaRules);
         });
         boolean isClearlyOverridden = removedMethod.getSignature().isEmpty() && !extendsLibraryClass.get() && !isEmpty(overridden) && isEmpty(
@@ -510,7 +537,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
         continue;
       }
 
-      Iterable<JvmNodeReferenceID> propagated = lazy(() -> {
+      Iterable<JvmNodeReferenceID> propagated = lazyIterable(() -> {
         return future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), addedMethod);
       });
 
@@ -529,7 +556,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
       }
 
       Predicate<JvmMethod> lessSpecificCond = future.lessSpecific(addedMethod);
-      for (JvmMethod lessSpecific : filter(changedClass.getMethods(), lessSpecificCond::test)) {
+      for (JvmMethod lessSpecific : filter(changedClass.getMethods(), lessSpecificCond)) {
         debug(context, "Found less specific method, affecting method usages; ", lessSpecific.getName(), lessSpecific.getDescriptor());
         affectMemberUsages(context, changedClass.getReferenceID(), lessSpecific, present.collectSubclassesWithoutMethod(changedClass.getReferenceID(), lessSpecific));
       }
@@ -573,7 +600,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
             return future.getNodes(new JvmNodeReferenceID(cl.getOuterFqName()), JvmClass.class);
           }))) {
             if (future.isMethodVisible(outerClass, addedMethod)  || future.inheritsFromLibraryClass(outerClass)) {
-              for (NodeSource source : filter(sources, context.getParams().affectionFilter()::test)) {
+              for (NodeSource source : filter(sources, context.getParams().affectionFilter())) {
                 debug(context, "Affecting file due to local overriding: ", source);
                 context.affectNodeSource(source);
               }
@@ -696,7 +723,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
 
     debug(context, "Field: ", changedField.getName());
 
-    Iterable<JvmNodeReferenceID> propagated = lazy(() -> {
+    Iterable<JvmNodeReferenceID> propagated = lazyIterable(() -> {
       return future.collectSubclassesWithoutField(changedClass.getReferenceID(), changedField);
     });
     JVMFlags addedFlags = diff.getAddedFlags();

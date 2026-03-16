@@ -537,7 +537,7 @@
     </item>
     <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int, int) 2'>
       <annotation name='org.jetbrains.annotations.Range'>
-        <val name="from" val="0"/>
+        <val name="from" val="1"/>
         <val name="to" val="31"/>
       </annotation>
     </item>

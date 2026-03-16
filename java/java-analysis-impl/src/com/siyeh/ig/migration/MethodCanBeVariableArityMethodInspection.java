@@ -1,11 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -22,7 +30,7 @@ import static com.siyeh.InspectionGadgetsBundle.message;
 
 public final class MethodCanBeVariableArityMethodInspection extends BaseInspection {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreByteAndShortArrayParameters = false;
 
   public boolean ignoreAllPrimitiveArrayParameters = false;
@@ -122,17 +130,11 @@ public final class MethodCanBeVariableArityMethodInspection extends BaseInspecti
           }
         }
       }
-      final PsiElement nameIdentifier = method.getNameIdentifier();
-      if (nameIdentifier == null) {
-        return;
-      }
       if (isVisibleHighlight(method)) {
-        registerErrorAtOffset(method, nameIdentifier.getStartOffsetInParent(), nameIdentifier.getTextLength());
+        registerMethodError(method);
       }
       else {
-        final int offset = nameIdentifier.getStartOffsetInParent();
-        final int length = parameterList.getStartOffsetInParent() + parameterList.getTextLength() - offset;
-        registerErrorAtOffset(method, offset, length);
+        registerErrorAtRange(method.getFirstChild(), method.getParameterList());
       }
     }
   }

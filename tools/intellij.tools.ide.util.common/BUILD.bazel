@@ -21,7 +21,7 @@ jvm_library(
   resources = [":ide-util-common_resources"],
   kotlinc_opts = ":custom_ide-util-common",
   deps = [
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:kotlin-stdlib",
   ]
 )

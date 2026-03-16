@@ -14,6 +14,7 @@ import org.jetbrains.idea.maven.utils.MavenArtifactScope
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.kotlin.idea.base.util.isMavenModule
 import org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager
+import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
 
 class MavenKotlinBuildSystemDependencyManager(
@@ -55,8 +56,7 @@ class MavenKotlinBuildSystemDependencyManager(
     }
 
     override fun isProjectSyncInProgress(): Boolean {
-        // TODO: Find a way to check this
-        return false
+        return KotlinProjectConfigurationService.getInstance(project).isSyncInProgress()
     }
 
     override fun startProjectSync() {

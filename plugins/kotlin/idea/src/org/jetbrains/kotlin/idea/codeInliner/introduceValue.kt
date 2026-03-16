@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeInliner
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -16,7 +17,13 @@ import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.getAllAccessibleVariables
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtVariableDeclaration
+import org.jetbrains.kotlin.psi.buildExpression
+import org.jetbrains.kotlin.psi.createDeclarationByPattern
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
@@ -128,6 +135,7 @@ internal fun MutableCodeToInline.introduceValue(
     }
 }
 
+@K1Deprecation
 fun String.nameHasConflictsInScope(lexicalScope: LexicalScope, languageVersionSettings: LanguageVersionSettings): Boolean {
     return lexicalScope.getAllAccessibleVariables(Name.identifier(this)).any {
         !it.isExtension && it.isVisible(lexicalScope.ownerDescriptor, languageVersionSettings)

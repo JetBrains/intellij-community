@@ -2,9 +2,9 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
 import com.intellij.execution.junit.codeInspection.naming.TestClassNamingConvention;
 import com.intellij.execution.junit.codeInspection.naming.TestSuiteNamingConvention;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers

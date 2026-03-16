@@ -10,8 +10,10 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
 
 /**
  * @author Alexander Lobas

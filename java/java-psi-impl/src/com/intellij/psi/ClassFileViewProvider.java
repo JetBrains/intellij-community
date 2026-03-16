@@ -58,11 +58,12 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
   }
 
   /**
-   * @deprecated use {@link #isInnerClass(VirtualFile)} or {@link #isInnerClass(VirtualFile, ClassReader)} 
+   * @deprecated use {@link #isInnerClass(VirtualFile)} or {@link #isInnerClass(VirtualFile, ClassReader)}
    */
   @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
+  //used from org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsClassFinder.isKotlinInternalCompiledFile in org.jetbrains.kotlin:kotlin-compiler-embeddable
   public static boolean isInnerClass(@NotNull VirtualFile file, byte @NotNull [] content) {
     return isInnerClass(file, (ClassReader) null);
   }

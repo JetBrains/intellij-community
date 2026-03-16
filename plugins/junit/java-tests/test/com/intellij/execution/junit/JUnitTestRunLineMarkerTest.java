@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -10,13 +10,18 @@ import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.codeInsight.navigation.LineMarkerTestCase;
 import com.intellij.java.codeInsight.navigation.MockGradleRunConfiguration;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.junit.testFramework.JUnitProjectDescriptor;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUiKind;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
@@ -25,18 +30,29 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.testFramework.DumbModeTestUtils;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testIntegration.TestRunLineMarkerProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Date;
 import java.util.List;
 
+import static com.intellij.junit.testFramework.JUnitLibrary.JUNIT3;
+import static com.intellij.junit.testFramework.JUnitLibrary.JUNIT4;
+import static com.intellij.junit.testFramework.JUnitLibrary.JUNIT5;
+import static com.intellij.junit.testFramework.JUnitLibrary.PIONEER;
+import static com.intellij.pom.java.LanguageLevel.HIGHEST;
+
 public class JUnitTestRunLineMarkerTest extends LineMarkerTestCase {
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return new JUnitProjectDescriptor(HIGHEST, JUNIT3, JUNIT4, JUNIT5, PIONEER);
+  }
+
   public void testAbstractTestClassMethods() {
-    myFixture.addClass("package junit.framework; public class TestCase {}");
     myFixture.configureByText("MyTest.java", """
       public abstract class MyTest extends junit.framework.TestCase {
           public void test<caret>Foo() {
@@ -48,18 +64,16 @@ public class JUnitTestRunLineMarkerTest extends LineMarkerTestCase {
 
   public void testNestedTestClass() {
     String testUrl = "java:suite://Main$MainTest";
-    myFixture.addClass("package junit.framework; public class TestCase {}");
     myFixture.configureByText("MainTest.java", """
-        public class Main {
-          public static class Main<caret>Test extends junit.framework.TestCase {
-            public void testFoo() {
-            }
-          }}""");
+      public class Main {
+        public static class Main<caret>Test extends junit.framework.TestCase {
+          public void testFoo() {
+          }
+        }}""");
     doTestState(testUrl, TestStateInfo.Magnitude.FAILED_INDEX.getValue(), AllIcons.RunConfigurations.TestState.Red2);
   }
 
   public void testTestAnnotationInSuperMethodOnly() {
-    myFixture.addClass("package org.junit; public @interface Test {}");
     myFixture.addClass("class Foo { @Test public void testFoo() {}}");
     myFixture.configureByText("MyTest.java", """
       public class MyTest extends Foo {
@@ -111,15 +125,15 @@ public class JUnitTestRunLineMarkerTest extends LineMarkerTestCase {
 
   public void testDisabledTestMethodWithJunitConfiguration() {
     doTestWithDisabledAnnotation(new JUnitConfiguration("DisabledMethodTest", myFixture.getProject()), 1, """
-      import org.junit.jupiter.api.Disabled;
-      import org.junit.jupiter.api.Test;
-     
-      class DisabledMethodTest {
-        @Disabled
-        @Test
-        public void testDisabled<caret>() {}
-      }
-     """);
+       import org.junit.jupiter.api.Disabled;
+       import org.junit.jupiter.api.Test;
+      
+       class DisabledMethodTest {
+         @Disabled
+         @Test
+         public void testDisabled<caret>() {}
+       }
+      """);
   }
 
   public void testDisabledTestClassWithGradleConfiguration() {
@@ -159,19 +173,18 @@ public class JUnitTestRunLineMarkerTest extends LineMarkerTestCase {
 
   public void testDisabledTestClassWithJunitConfiguration() {
     doTestWithDisabledAnnotation(new JUnitConfiguration("DisabledMethodTest", myFixture.getProject()), 1, """
-      import org.junit.jupiter.api.Disabled;
-      import org.junit.jupiter.api.Test;
-     
-      class Disabled<caret>MethodTest {
-        @Disabled
-        @Test
-        public void testDisabled() {}
-      }
-     """);
+       import org.junit.jupiter.api.Disabled;
+       import org.junit.jupiter.api.Test;
+      
+       class Disabled<caret>MethodTest {
+         @Disabled
+         @Test
+         public void testDisabled() {}
+       }
+      """);
   }
 
   public void testClassInDumbMode() {
-    myFixture.addClass("package junit.framework; public class TestCase {}");
     PsiFile file = myFixture.configureByText("MyTest.java", """
       public class My<caret>Test extends junit.framework.TestCase {
           public void testFoo() {
@@ -186,7 +199,6 @@ public class JUnitTestRunLineMarkerTest extends LineMarkerTestCase {
   }
 
   public void testRetryingTestAnnotationSingle() {
-    JUnit5TestFrameworkSetupUtil.setupJunit5WithExtensionLibrary(myFixture);
     myFixture.configureByText("ClassWithRetryingTest.java", """
       import org.junitpioneer.jupiter.RetryingTest;
       
@@ -201,7 +213,6 @@ public class JUnitTestRunLineMarkerTest extends LineMarkerTestCase {
   }
 
   public void testRetryingTestAnnotationWithRegularTest() {
-    JUnit5TestFrameworkSetupUtil.setupJunit5WithExtensionLibrary(myFixture);
     myFixture.configureByText("ClassWithRetryingTest.java", """
       import org.junit.jupiter.api.Test;
       import org.junitpioneer.jupiter.RetryingTest;
@@ -222,7 +233,6 @@ public class JUnitTestRunLineMarkerTest extends LineMarkerTestCase {
   }
 
   public void testRetryingTestAnnotationWithDifferentParameters() {
-    JUnit5TestFrameworkSetupUtil.setupJunit5WithExtensionLibrary(myFixture);
     myFixture.configureByText("ClassWithRetryingTestWithDifferentParameters.java", """
       import org.junit.jupiter.api.Test;
       import org.junitpioneer.jupiter.RetryingTest;
@@ -242,7 +252,6 @@ public class JUnitTestRunLineMarkerTest extends LineMarkerTestCase {
   }
 
   public void testRetryingTestAnnotationSupportGradle() {
-    JUnit5TestFrameworkSetupUtil.setupJunit5WithExtensionLibrary(myFixture);
 
     myFixture.configureByText("ClassWithRetryingTest.java", """
       import org.junitpioneer.jupiter.RetryingTest;
@@ -254,12 +263,11 @@ public class JUnitTestRunLineMarkerTest extends LineMarkerTestCase {
       }
       """);
     setupRunConfiguration(new MockGradleRunConfiguration(myFixture.getProject(), "ClassWithRetryingTest"));
-    doTestState("java:suite://ClassWithRetryingTest/retryingTest", TestStateInfo.Magnitude.PASSED_INDEX.getValue(), AllIcons.RunConfigurations.TestState.Green2);
-
+    doTestState("java:suite://ClassWithRetryingTest/retryingTest", TestStateInfo.Magnitude.PASSED_INDEX.getValue(),
+                AllIcons.RunConfigurations.TestState.Green2);
   }
 
   private void doTestClassWithMain(Runnable setupExisting) {
-    myFixture.addClass("package junit.framework; public class TestCase {}");
     myFixture.configureByText("MainTest.java", """
       public class <caret>MainTest extends junit.framework.TestCase {
           public static void main(String[] args) {
@@ -295,9 +303,6 @@ public class JUnitTestRunLineMarkerTest extends LineMarkerTestCase {
   }
 
   private void doTestWithDisabledAnnotation(RunConfiguration configuration, int marksCount, String testClass) {
-    JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture);
-    myFixture.addClass("package org.junit.jupiter.api; public @interface Disabled {}");
-
     setupRunConfiguration(configuration);
 
     myFixture.configureByText("DisabledMethodTest.java", testClass);
@@ -312,7 +317,8 @@ public class JUnitTestRunLineMarkerTest extends LineMarkerTestCase {
                                                                    "", ""));
 
 
-      RunLineMarkerContributor.Info info = new TestRunLineMarkerProvider().getInfo(myFixture.getFile().findElementAt(myFixture.getCaretOffset()));
+      RunLineMarkerContributor.Info info =
+        new TestRunLineMarkerProvider().getInfo(myFixture.getFile().findElementAt(myFixture.getCaretOffset()));
       assertNotNull(info);
       assertEquals(expectedIcon, info.icon);
     }

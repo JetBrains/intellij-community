@@ -7,7 +7,7 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 import static com.intellij.codeInspection.options.OptMultiSelector.OptElement;
 

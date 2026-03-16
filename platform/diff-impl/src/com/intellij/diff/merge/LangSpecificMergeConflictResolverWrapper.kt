@@ -20,9 +20,14 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -70,7 +75,9 @@ class LangSpecificMergeConflictResolverWrapper(private val project: Project?, co
   }
 
   @RequiresEdt
-  fun updateHighlighting(fileList: List<PsiFile>, mergeChangeList: List<TextMergeChange>, scheduleRediff: Runnable) {
+  fun updateHighlighting(fileList: List<PsiFile>, mergeChangeList: List<TextMergeChange>,
+                         highlighters: Map<TextMergeChange, ThreesideMergeHighlighters>,
+                         scheduleRediff: Runnable) {
     val localMergeChangeList = mergeChangeList.toList()
     if (!isAvailable() || project == null || !hasChunksInitiallyResolved || localMergeChangeList.size != resolvedChanges.size) return
     project.scope.coroutineContext.cancelChildren()
@@ -91,7 +98,7 @@ class LangSpecificMergeConflictResolverWrapper(private val project: Project?, co
 
           type.resolutionStrategy = if (resolveResult != null) MergeConflictResolutionStrategy.SEMANTIC else null
 
-          textMergeChange.reinstallHighlighters()
+          highlighters[textMergeChange]?.reinstallAll()
         }
         scheduleRediff.run()
       }

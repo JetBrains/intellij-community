@@ -1,4 +1,5 @@
 fragment label on Label {
   title
   description
+  color
 }

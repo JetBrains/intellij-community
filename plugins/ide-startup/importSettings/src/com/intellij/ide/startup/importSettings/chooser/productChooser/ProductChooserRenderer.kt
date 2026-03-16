@@ -23,7 +23,13 @@ import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.accessibility.AccessibleContext
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JEditorPane
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
 
 class ProductChooserRenderer : ListCellRenderer<PopupFactoryImpl.ActionItem> {
   private val component = ProductComponent()

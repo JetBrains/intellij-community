@@ -17,7 +17,7 @@ import com.theoryinpractice.testng.ui.actions.RerunFailedTestsAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class TestNGConsoleProperties extends JavaAwareTestConsoleProperties<TestNGConfiguration> {
 

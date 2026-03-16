@@ -6,15 +6,6 @@ import org.gradle.tooling.events.internal.DefaultFinishEvent
 import org.gradle.tooling.events.task.internal.DefaultTaskFailureResult
 import org.gradle.tooling.events.task.internal.DefaultTaskFinishEvent
 import org.jetbrains.plugins.gradle.util.GradleTaskClassifier.classifyTaskName
-import kotlin.apply
-import kotlin.collections.forEach
-import kotlin.collections.last
-import kotlin.let
-import kotlin.run
-import kotlin.text.contains
-import kotlin.text.split
-import kotlin.text.startsWith
-import kotlin.text.trim
 
 class GradleTaskExecutionListener(val handler: GradleTaskExecutionHandler) {
 

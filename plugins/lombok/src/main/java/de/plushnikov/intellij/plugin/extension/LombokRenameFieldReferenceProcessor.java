@@ -1,7 +1,15 @@
 package de.plushnikov.intellij.plugin.extension;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
 import com.intellij.util.containers.ContainerUtil;

@@ -16,11 +16,11 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.test.util.invalidateCaches
 
 abstract class KotlinStructuralSearchTest : KotlinLightCodeInsightFixtureTestCase() {
 

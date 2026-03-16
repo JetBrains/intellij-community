@@ -42,9 +42,11 @@ dc4_1 = DC4(0.0, "", (1,))
 
 @dataclass
 class DC5:
-    # This should generate an error because a default value of
-    # type list, dict, or set generate a runtime error.
-    x: list[int] = []  # E
+    # While this generates an error at runtime for the stdlib dataclass,
+    # other libraries that use dataclass_transform don't have similar
+    # restrictions. It is therefore not required that a type checker
+    # report an error here.
+    x: list[int] = []  # E?
 
 
 @dataclass

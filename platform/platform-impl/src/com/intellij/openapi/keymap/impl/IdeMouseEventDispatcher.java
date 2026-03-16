@@ -4,7 +4,14 @@ package com.intellij.openapi.keymap.impl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.MouseShortcut;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -29,8 +36,18 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JRootPane;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JWindow;
+import javax.swing.SwingUtilities;
+import java.awt.Adjustable;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Window;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -39,7 +56,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-import static java.awt.event.MouseEvent.*;
+import static java.awt.event.MouseEvent.BUTTON3;
+import static java.awt.event.MouseEvent.BUTTON3_DOWN_MASK;
+import static java.awt.event.MouseEvent.MOUSE_CLICKED;
+import static java.awt.event.MouseEvent.MOUSE_DRAGGED;
+import static java.awt.event.MouseEvent.MOUSE_ENTERED;
+import static java.awt.event.MouseEvent.MOUSE_EXITED;
+import static java.awt.event.MouseEvent.MOUSE_MOVED;
+import static java.awt.event.MouseEvent.MOUSE_PRESSED;
+import static java.awt.event.MouseEvent.MOUSE_RELEASED;
+import static java.awt.event.MouseEvent.MOUSE_WHEEL;
+import static java.awt.event.MouseEvent.NOBUTTON;
 
 /**
  * Current implementation of the dispatcher is intended to filter mouse event addressed to

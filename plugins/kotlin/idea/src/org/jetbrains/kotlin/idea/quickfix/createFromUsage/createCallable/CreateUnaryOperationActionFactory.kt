@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.CallableInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.FunctionInfo
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.psi.KtUnaryExpression
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
+@K1Deprecation
 object CreateUnaryOperationActionFactory : CreateCallableMemberFromUsageFactory<KtUnaryExpression>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtUnaryExpression? {
         return diagnostic.psiElement.parent as? KtUnaryExpression

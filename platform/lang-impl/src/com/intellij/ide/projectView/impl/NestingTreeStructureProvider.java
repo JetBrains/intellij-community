@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.ide.projectView.*;
+import com.intellij.ide.projectView.ProjectViewNestingRulesProvider;
+import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.ProjectViewSettings;
+import com.intellij.ide.projectView.TreeStructureProvider;
+import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService.NestingRule;
 import com.intellij.ide.projectView.impl.nodes.NestingTreeNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
@@ -16,7 +20,11 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Function;
 
 /**

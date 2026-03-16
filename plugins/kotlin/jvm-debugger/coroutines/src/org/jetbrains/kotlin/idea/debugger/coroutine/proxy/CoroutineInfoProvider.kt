@@ -15,8 +15,10 @@ import com.sun.jdi.ThreadReference
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.callMethodFromHelper
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.*
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.*
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackFramesProvider
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.StackTraceElementData
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.findDebugProbesImplClass
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -99,7 +101,8 @@ internal class CoroutinesInfoFromJsonAndReferencesProvider(
             if (stackTrace == null) emptyList()
             else {
                 AsyncStacksUtils.parseAgentAsyncStackTrace(stackTrace.value(), executionContext.vm)
-                    .mapNotNull { it?.location() }
+                    ?.mapNotNull { it?.location() }
+                    ?: emptyList()
             }
         }
 

@@ -13,7 +13,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Dimension;
 
 /**
  * This class is a base for implementing such properties

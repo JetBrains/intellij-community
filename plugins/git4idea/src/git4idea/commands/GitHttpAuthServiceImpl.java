@@ -5,11 +5,13 @@ import com.intellij.externalProcessAuthHelper.AuthenticationGate;
 import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import com.intellij.openapi.project.Project;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 
+@ApiStatus.Internal
 class GitHttpAuthServiceImpl extends GitHttpAuthService {
   GitHttpAuthServiceImpl(CoroutineScope coroutineScope) {
     super(coroutineScope);
@@ -18,7 +20,7 @@ class GitHttpAuthServiceImpl extends GitHttpAuthService {
   @Override
   public @NotNull GitHttpGuiAuthenticator createAuthenticator(@NotNull Project project,
                                                               @NotNull Collection<String> urls,
-                                                              @NotNull File workingDirectory,
+                                                              @NotNull Path workingDirectory,
                                                               @NotNull AuthenticationGate authenticationGate,
                                                               @NotNull AuthenticationMode authenticationMode) {
     return new GitHttpGuiAuthenticator(project, urls, workingDirectory, authenticationGate, authenticationMode);

@@ -1,10 +1,13 @@
 import datetime
+from _io import _BufferedReaderStream
 from _typeshed import Incomplete
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Iterator, Mapping
+from socket import SocketIO
 from typing import Literal, NamedTuple, TypedDict, overload, type_check_only
 from typing_extensions import NotRequired
 
 from docker._types import ContainerWeightDevice, WaitContainerResponse
+from docker.transport.sshconn import SSHSocket
 from docker.types import EndpointConfig
 from docker.types.containers import DeviceRequest, LogConfig, Ulimit
 from docker.types.daemon import CancellableStream
@@ -17,6 +20,11 @@ from .resource import Collection, Model
 class _RestartPolicy(TypedDict):
     MaximumRetryCount: NotRequired[int]
     Name: NotRequired[Literal["always", "on-failure"]]
+
+@type_check_only
+class _TopResult(TypedDict):
+    Titles: list[str]
+    Processes: list[list[str]]
 
 class Container(Model):
     @property
@@ -31,10 +39,43 @@ class Container(Model):
     def health(self) -> str: ...
     @property
     def ports(self) -> dict[Incomplete, Incomplete]: ...
-    def attach(self, **kwargs): ...
-    def attach_socket(self, **kwargs): ...
-    def commit(self, repository: str | None = None, tag: str | None = None, **kwargs): ...
-    def diff(self): ...
+    @overload
+    def attach(
+        self,
+        *,
+        stdout: bool = True,
+        stderr: bool = True,
+        stream: Literal[False] = False,
+        logs: bool = False,
+        demux: Literal[False] = False,
+    ) -> bytes: ...
+    @overload
+    def attach(
+        self,
+        *,
+        stdout: bool = True,
+        stderr: bool = True,
+        stream: Literal[False] = False,
+        logs: bool = False,
+        demux: Literal[True],
+    ) -> tuple[bytes | None, bytes | None]: ...
+    @overload
+    def attach(
+        self,
+        *,
+        stdout: bool = True,
+        stderr: bool = True,
+        stream: Literal[True],
+        logs: bool = False,
+        demux: Literal[False] = False,
+    ) -> CancellableStream[bytes]: ...
+    @overload
+    def attach(
+        self, *, stdout: bool = True, stderr: bool = True, stream: Literal[True], logs: bool = False, demux: Literal[True]
+    ) -> CancellableStream[tuple[bytes | None, bytes | None]]: ...
+    def attach_socket(self, **kwargs) -> SocketIO | _BufferedReaderStream | SSHSocket: ...
+    def commit(self, repository: str | None = None, tag: str | None = None, **kwargs) -> Image: ...
+    def diff(self) -> list[dict[str, Incomplete]]: ...
     def exec_run(
         self,
         cmd: str | list[str],
@@ -47,15 +88,15 @@ class Container(Model):
         detach: bool = False,
         stream: bool = False,
         socket: bool = False,
-        environment=None,
-        workdir=None,
+        environment: dict[str, str] | list[str] | None = None,
+        workdir: str | None = None,
         demux: bool = False,
     ) -> ExecResult: ...
     def export(self, chunk_size: int | None = 2097152) -> str: ...
     def get_archive(
         self, path: str, chunk_size: int | None = 2097152, encode_stream: bool = False
     ) -> tuple[Incomplete, Incomplete]: ...
-    def kill(self, signal=None): ...
+    def kill(self, signal: str | int | None = None) -> None: ...
     @overload
     def logs(
         self,
@@ -85,14 +126,14 @@ class Container(Model):
     def pause(self) -> None: ...
     def put_archive(self, path: str, data) -> bool: ...
     def remove(self, *, v: bool = False, link: bool = False, force: bool = False) -> None: ...
-    def rename(self, name: str): ...
-    def resize(self, height: int, width: int): ...
-    def restart(self, *, timeout: float | None = 10): ...
+    def rename(self, name: str) -> None: ...
+    def resize(self, height: int, width: int) -> None: ...
+    def restart(self, *, timeout: float | None = 10) -> None: ...
     def start(self) -> None: ...
-    def stats(self, **kwargs): ...
+    def stats(self, **kwargs) -> Iterator[dict[str, Incomplete]] | dict[str, Incomplete]: ...
     def stop(self, *, timeout: float | None = None) -> None: ...
-    def top(self, *, ps_args: str | None = None) -> str: ...
-    def unpause(self): ...
+    def top(self, *, ps_args: str | None = None) -> _TopResult: ...
+    def unpause(self) -> None: ...
     def update(
         self,
         *,
@@ -325,7 +366,7 @@ class ContainerCollection(Collection[Container]):
         cpu_shares: int | None = None,
         cpuset_cpus: str | None = None,
         cpuset_mems: str | None = None,
-        detach: Literal[True],
+        detach: bool = False,
         device_cgroup_rules: list[Incomplete] | None = None,
         device_read_bps: list[Mapping[str, str | int]] | None = None,
         device_read_iops: list[Mapping[str, str | int]] | None = None,
@@ -400,13 +441,13 @@ class ContainerCollection(Collection[Container]):
         self,
         all: bool = False,
         before: str | None = None,
-        filters=None,
+        filters: dict[str, Incomplete] | None = None,
         limit: int = -1,
         since: str | None = None,
         sparse: bool = False,
         ignore_removed: bool = False,
-    ): ...
-    def prune(self, filters=None): ...
+    ) -> list[Container]: ...
+    def prune(self, filters: dict[str, Incomplete] | None = None) -> dict[str, Incomplete]: ...
 
 RUN_CREATE_KWARGS: list[str]
 RUN_HOST_CONFIG_KWARGS: list[str]

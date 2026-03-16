@@ -11,7 +11,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object HtmlSymbolMatchCustomizer : PolySymbolMatchCustomizer {
 
-  override fun mergeModifiers(current: Set<PolySymbolModifier>?, toMerge: Set<PolySymbolModifier>, symbol: PolySymbol): Set<PolySymbolModifier>? {
+  override fun mergeModifiers(
+    current: Set<PolySymbolModifier>?,
+    toMerge: Set<PolySymbolModifier>,
+    symbol: PolySymbol,
+  ): Set<PolySymbolModifier>? {
     val result = HashSet<PolySymbolModifier>()
 
     // If any of the matched symbols are virtual, the whole symbol match is also virtual
@@ -31,7 +35,7 @@ object HtmlSymbolMatchCustomizer : PolySymbolMatchCustomizer {
 
   class Factory : PolySymbolMatchCustomizerFactory {
     override fun create(symbol: PolySymbolMatch): PolySymbolMatchCustomizer? =
-      if (symbol.qualifiedKind.namespace == NAMESPACE_HTML)
+      if (symbol.kind.namespace == NAMESPACE_HTML)
         HtmlSymbolMatchCustomizer
       else
         null

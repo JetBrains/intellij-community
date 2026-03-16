@@ -1,6 +1,15 @@
 package com.intellij.database.run.ui.treetable;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.DataGridListener;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRequestSource;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.ModelIndexSet;
+import com.intellij.database.datagrid.RawIndexConverter;
+import com.intellij.database.datagrid.ResultView;
+import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.extractors.DisplayType;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.ResultViewWithCells;
@@ -13,15 +22,21 @@ import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.JComponent;
+import javax.swing.JScrollBar;
+import javax.swing.KeyStroke;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static com.intellij.database.run.ui.grid.GridColorSchemeUtil.*;
+import static com.intellij.database.run.ui.grid.GridColorSchemeUtil.doGetForeground;
+import static com.intellij.database.run.ui.grid.GridColorSchemeUtil.doGetSelectionBackground;
+import static com.intellij.database.run.ui.grid.GridColorSchemeUtil.doGetSelectionForeground;
 import static com.intellij.database.run.ui.table.UnparsedValueHoverListener.Companion.Place.LEFT;
 
 /**

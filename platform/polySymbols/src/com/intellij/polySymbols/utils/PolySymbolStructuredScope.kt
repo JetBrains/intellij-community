@@ -3,8 +3,12 @@ package com.intellij.polySymbols.utils
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.TextRange
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolQualifiedKind
-import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.query.PolySymbolCompoundScope
+import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryStack
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.CachedValueProvider
@@ -20,7 +24,7 @@ abstract class PolySymbolStructuredScope<T : PsiElement, R : PsiElement>(protect
 
   protected abstract val scopesBuilderProvider: (rootPsiScope: R, holder: PolySymbolPsiScopesHolder) -> PsiElementVisitor?
 
-  protected abstract val providedSymbolKinds: Set<PolySymbolQualifiedKind>
+  protected abstract val providedSymbolKinds: Set<PolySymbolKind>
 
   override fun build(queryExecutor: PolySymbolQueryExecutor, consumer: (PolySymbolScope) -> Unit) {
     getCurrentScope()
@@ -64,7 +68,7 @@ abstract class PolySymbolStructuredScope<T : PsiElement, R : PsiElement>(protect
   protected open fun findBestMatchingScope(rootScope: PolySymbolPsiScope): PolySymbolPsiScope? =
     (rootScope as PolySymbolPsiScopeImpl).findBestMatchingScope(location.textOffset)
 
-  protected class PolySymbolPsiScopesHolder(val rootElement: PsiElement, val providedSymbolKinds: Set<PolySymbolQualifiedKind>) {
+  protected class PolySymbolPsiScopesHolder(val rootElement: PsiElement, val providedSymbolKinds: Set<PolySymbolKind>) {
     private val scopes = Stack<PolySymbolPsiScope>()
 
     internal val topLevelScope: PolySymbolPsiScope
@@ -90,7 +94,7 @@ abstract class PolySymbolStructuredScope<T : PsiElement, R : PsiElement>(protect
     fun pushScope(
       scopePsiElement: PsiElement,
       properties: Map<String, Any> = emptyMap(),
-      exclusiveSymbolKinds: Set<PolySymbolQualifiedKind> = emptySet(),
+      exclusiveSymbolKinds: Set<PolySymbolKind> = emptySet(),
       updater: (ScopeModifier.() -> Unit)? = null,
     ) {
       val scope = PolySymbolPsiScopeImpl(scopePsiElement, properties,
@@ -115,8 +119,8 @@ abstract class PolySymbolStructuredScope<T : PsiElement, R : PsiElement>(protect
 
     private inner class ScopeModifierImpl(private val scope: PolySymbolPsiScopeImpl) : ScopeModifier {
       override fun addSymbol(symbol: PolySymbol) {
-        if (symbol.qualifiedKind !in providedSymbolKinds)
-          throw IllegalStateException("PolySymbol of kind ${symbol.qualifiedKind} should not be provided by ${this::class.java.name}")
+        if (symbol.kind !in providedSymbolKinds)
+          throw IllegalStateException("PolySymbol of kind ${symbol.kind} should not be provided by ${this::class.java.name}")
         scope.add(symbol)
       }
 
@@ -132,7 +136,7 @@ abstract class PolySymbolStructuredScope<T : PsiElement, R : PsiElement>(protect
     val properties: Map<String, Any>
     val children: List<PolySymbolPsiScope>
     val localSymbols: List<PolySymbol>
-    fun getAllSymbols(qualifiedKind: PolySymbolQualifiedKind): List<PolySymbol>
+    fun getAllSymbols(kind: PolySymbolKind): List<PolySymbol>
   }
 
   private class PolySymbolPsiScopeWithPointer(
@@ -156,8 +160,8 @@ abstract class PolySymbolStructuredScope<T : PsiElement, R : PsiElement>(protect
     override val source: PsiElement,
     override val properties: Map<String, Any>,
     override val parent: PolySymbolPsiScopeImpl?,
-    private val providedSymbolKinds: Set<PolySymbolQualifiedKind>,
-    private val exclusiveSymbolKinds: Set<PolySymbolQualifiedKind>,
+    private val providedSymbolKinds: Set<PolySymbolKind>,
+    private val exclusiveSymbolKinds: Set<PolySymbolKind>,
   ) : PolySymbolPsiScope {
 
     override val children = ArrayList<PolySymbolPsiScopeImpl>()
@@ -190,23 +194,23 @@ abstract class PolySymbolStructuredScope<T : PsiElement, R : PsiElement>(protect
       return curScope
     }
 
-    override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =
-      scopesInHierarchy.any { it.exclusiveSymbolKinds.contains(qualifiedKind) }
+    override fun isExclusiveFor(kind: PolySymbolKind): Boolean =
+      scopesInHierarchy.any { it.exclusiveSymbolKinds.contains(kind) }
 
     override fun getSymbols(
-      qualifiedKind: PolySymbolQualifiedKind,
+      kind: PolySymbolKind,
       params: PolySymbolListSymbolsQueryParams,
       stack: PolySymbolQueryStack,
     ): List<PolySymbol> =
-      getAllSymbols(qualifiedKind)
+      getAllSymbols(kind)
 
-    override fun getAllSymbols(qualifiedKind: PolySymbolQualifiedKind): List<PolySymbol> =
-      if (qualifiedKind in providedSymbolKinds)
+    override fun getAllSymbols(kind: PolySymbolKind): List<PolySymbol> =
+      if (kind in providedSymbolKinds)
       // TODO - consider optimizing in case there are many symbols in the scope
         scopesInHierarchy
-          .takeWhileInclusive { !it.isExclusiveFor(qualifiedKind) }
+          .takeWhileInclusive { !it.isExclusiveFor(kind) }
           .flatMap { it.localSymbols }
-          .filter { it.qualifiedKind == qualifiedKind }
+          .filter { it.kind == kind }
           .distinctBy { it.name }
           .toList()
       else

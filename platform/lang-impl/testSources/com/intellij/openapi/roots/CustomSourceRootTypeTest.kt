@@ -10,7 +10,10 @@ import com.intellij.testFramework.rules.TempDirectory
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
-import org.junit.*
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 
 class CustomSourceRootTypeTest {
   companion object {

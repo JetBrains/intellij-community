@@ -1,7 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.ASTBlock;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.ChildAttributes;
+import com.intellij.formatting.FormattingMode;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Wrap;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
@@ -218,14 +224,14 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
 
     if (FormatterUtil.containsWhiteSpacesOnly(child)) return isPartOfCodeBlock(child.getTreeNext());
     if (child.getElementType() == JavaTokenType.END_OF_LINE_COMMENT) return isPartOfCodeBlock(child.getTreeNext());
-    return child.getElementType() == JavaDocElementType.DOC_COMMENT;
+    return JavaDocElementType.DOC_COMMENT_TOKENS.contains(child.getElementType());
   }
 
 
 
   @Override
   public @NotNull ChildAttributes getChildAttributes(final int newChildIndex) {
-    if (isAfter(newChildIndex, new IElementType[]{JavaDocElementType.DOC_COMMENT})) {
+    if (isAfter(newChildIndex, new IElementType[]{JavaDocElementType.DOC_COMMENT, JavaDocElementType.DOC_MARKDOWN_COMMENT})) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
     }
 

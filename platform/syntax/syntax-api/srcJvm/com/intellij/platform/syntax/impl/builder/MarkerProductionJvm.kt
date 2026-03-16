@@ -8,7 +8,7 @@ import kotlin.math.min
  * JVM implementation of [makeStackTraceRelative]
  */
 @Suppress("unused")
-@Actual("makeStackTraceRelative")
+@Actual
 internal fun makeStackTraceRelativeJvm(th: Throwable, relativeTo: Throwable): Throwable {
   val trace = th.stackTrace
   val rootTrace = relativeTo.stackTrace

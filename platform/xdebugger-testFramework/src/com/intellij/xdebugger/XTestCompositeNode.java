@@ -18,6 +18,7 @@ import static org.junit.Assert.assertNull;
 
 public class XTestCompositeNode extends XTestContainer<XValue> implements XCompositeNode {
   private final @NotNull AtomicReference<Runnable> myNextChildrenRunnableReference = new AtomicReference<>();
+  private final List<XValue> myTopValues = new ArrayList<>();
 
   public XTestCompositeNode() {
   }
@@ -26,12 +27,17 @@ public class XTestCompositeNode extends XTestContainer<XValue> implements XCompo
     myNextChildrenRunnableReference.set(() -> value.computeChildren(this));
   }
 
+  public List<XValue> getTopValues() {
+    return myTopValues;
+  }
+
   @Override
   public void addChildren(@NotNull XValueChildrenList children, boolean last) {
     final List<XValue> list = new ArrayList<>();
     for (int i = 0; i < children.size(); i++) {
       list.add(children.getValue(i));
     }
+    myTopValues.addAll(children.getTopValues());
     addChildren(list, last);
   }
 

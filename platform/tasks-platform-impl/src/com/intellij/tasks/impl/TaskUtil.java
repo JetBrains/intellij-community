@@ -17,6 +17,7 @@ import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
+import com.intellij.util.text.matching.MatchingMode;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,13 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 
 import static java.util.Objects.requireNonNullElse;
@@ -219,7 +226,7 @@ public final class TaskUtil {
       builder.append("* ");
     }
 
-    return NameUtil.buildMatcher(builder.toString(), NameUtil.MatchingCaseSensitivity.NONE);
+    return NameUtil.buildMatcher(builder.toString(), MatchingMode.IGNORE_CASE);
   }
 
   static String updateToVelocity(String format) {

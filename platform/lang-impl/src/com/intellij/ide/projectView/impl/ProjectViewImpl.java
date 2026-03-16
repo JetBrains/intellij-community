@@ -8,7 +8,11 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.bookmark.BookmarksListener;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
-import com.intellij.ide.projectView.*;
+import com.intellij.ide.projectView.HelpID;
+import com.intellij.ide.projectView.NodeSortKey;
+import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
@@ -23,7 +27,18 @@ import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.ToggleOptionAction;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -51,7 +66,13 @@ import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.SplitterProportionsData;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.BusyObject;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -60,19 +81,27 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.*;
+import com.intellij.ui.AutoScrollFromSourceHandler;
+import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.GuiUtils;
+import com.intellij.ui.IconDeferrer;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IJSwingUtilities;
@@ -84,21 +113,41 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTree;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.FocusEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.intellij.application.options.OptionId.PROJECT_VIEW_SHOW_VISIBILITY_ICONS;
+import static com.intellij.ide.projectView.impl.SelectInProjectViewImplKt.selectInProjectViewLog;
 import static com.intellij.ide.scratch.ScratchTreeStructureProvider.SCRATCHES_NODE_SETTING;
+import static com.intellij.ui.tree.project.ProjectViewUpdateCauseUtilKt.guessProjectViewUpdateCauseByCaller;
 import static com.intellij.ui.treeStructure.Tree.AUTO_SCROLL_FROM_SOURCE_BLOCKED;
 
 @State(name = "ProjectView", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), getStateRequiresEdt = true)
@@ -741,6 +790,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @ApiStatus.Internal
   @CalledInAny
   public synchronized void addProjectPane(final @NotNull AbstractProjectViewPane pane, boolean restoreState) {
+    if (idToPane.containsKey(pane.getId())) {
+      LOG.error("Pane with ID=" + pane.getId() + " already exists. Please remove it first with removeProjectPane(pane).");
+      removeProjectPane(idToPane.get(pane.getId()));
+    }
+
     uninitializedPanes.add(pane);
     if (restoreState) {
       applyUninitializedPaneState(pane);
@@ -769,9 +823,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @Override
   public synchronized void removeProjectPane(@NotNull AbstractProjectViewPane pane) {
     ThreadingAssertions.assertEventDispatchThread();
-    uninitializedPanes.remove(pane);
     //assume we are completely initialized here
     @NotNull String idToRemove = pane.getId();
+
+    var oldPaneState = getPaneState(pane);
+    if (oldPaneState != null) {
+      myUninitializedPaneState.put(idToRemove, oldPaneState);
+    }
+    uninitializedPanes.remove(pane);
 
     if (!idToPane.containsKey(idToRemove)) return;
     for (int i = getContentManager().getContentCount() - 1; i >= 0; i--) {
@@ -832,7 +891,31 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       selectSubID = content.getUserData(SUB_ID_KEY);
     }
 
-    if (selectID != null) {
+    // startup pane policy must be applied no matter the saved result
+    @Nullable String startupPaneId = null;
+    var startupUiPolicy = ApplicationManager.getApplication().getService(ProjectFrameCapabilitiesService.class).getUiPolicy(project);
+    if (startupUiPolicy != null) {
+      startupPaneId = startupUiPolicy.getProjectPaneToActivateId();
+    }
+    boolean startupPaneApplied = false;
+    if (startupPaneId != null && getProjectViewPaneById(startupPaneId) != null) {
+      String fallbackSelectID = selectID;
+      String fallbackSelectSubID = selectSubID;
+      ActionCallback startupPaneSelection = changeViewCB(startupPaneId, null);
+      if (startupPaneSelection.isRejected()) {
+        startupPaneApplied = startupPaneId.equals(currentViewId);
+      }
+      else {
+        startupPaneApplied = true;
+        startupPaneSelection.doWhenRejected(() -> {
+          if (!project.isDisposed() && fallbackSelectID != null) {
+            changeView(fallbackSelectID, fallbackSelectSubID);
+          }
+        });
+      }
+    }
+
+    if (!startupPaneApplied && selectID != null) {
       changeView(selectID, selectSubID);
     }
 
@@ -1212,11 +1295,17 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public void refresh() {
+    refresh(guessProjectViewUpdateCauseByCaller(ProjectViewImpl.class));
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void refresh(@NotNull ProjectViewUpdateCause cause) {
     AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
     if (currentProjectViewPane != null) {
       // may be null for e.g. default project
       IconDeferrer.getInstance().clearCache(); // icons may have changed
-      currentProjectViewPane.updateFromRoot(false);
+      currentProjectViewPane.updateFromRoot(false, cause);
     }
   }
 
@@ -1515,19 +1604,25 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private void writePaneState(@NotNull Element panesElement) {
     for (AbstractProjectViewPane pane : idToPane.values()) {
-      Element paneElement = new Element(ELEMENT_PANE);
-      paneElement.setAttribute(ATTRIBUTE_ID, pane.getId());
-      try {
-        pane.writeExternal(paneElement);
-      }
-      catch (WriteExternalException e) {
-        continue;
-      }
+      Element paneElement = getPaneState(pane);
+      if (paneElement == null) continue;
       panesElement.addContent(paneElement);
     }
     for (Element element : myUninitializedPaneState.values()) {
       panesElement.addContent(element.clone());
     }
+  }
+
+  private static @Nullable Element getPaneState(AbstractProjectViewPane pane) {
+    Element paneElement = new Element(ELEMENT_PANE);
+    paneElement.setAttribute(ATTRIBUTE_ID, pane.getId());
+    try {
+      pane.writeExternal(paneElement);
+    }
+    catch (WriteExternalException e) {
+      return null;
+    }
+    return paneElement;
   }
 
   private static ProjectViewSharedSettings getGlobalOptions() {
@@ -1551,9 +1646,18 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private boolean isAutoscrollFromSourceEnabled(String paneId) {
-    if (project.isDisposed()) return false;
-    if (!myAutoscrollFromSource.isSelected()) return false;
-    if (!myAutoscrollFromSource.isEnabled(paneId)) return false;
+    if (project.isDisposed()) {
+      selectInProjectViewLog().debug("Always Select Opened File not available: the project is disposed");
+      return false;
+    }
+    if (!myAutoscrollFromSource.isSelected()) {
+      selectInProjectViewLog().debug("Always Select Opened File not available: it's turned off");
+      return false;
+    }
+    if (!myAutoscrollFromSource.isEnabled(paneId)) {
+      selectInProjectViewLog().debug("Always Select Opened File not available: not enabled for " + paneId);
+      return false;
+    }
     return true;
   }
 
@@ -1938,7 +2042,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         if (withComparator) {
           pane.installComparator();
         }
-        pane.updateFromRoot(false);
+        pane.updateFromRoot(false, ProjectViewUpdateCause.SETTINGS);
         if (info != null) {
           info.apply(pane);
         }

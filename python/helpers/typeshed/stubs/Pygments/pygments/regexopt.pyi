@@ -1,7 +1,7 @@
-from typing import Any
+from _typeshed import Incomplete
 
-CS_ESCAPE: Any
-FIRST_ELEMENT: Any
+CS_ESCAPE: Incomplete
+FIRST_ELEMENT: Incomplete
 
 def make_charset(letters): ...
 def regex_opt_inner(strings, open_paren): ...

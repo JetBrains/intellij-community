@@ -1,6 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("EelProviderUtil")
-
 package com.intellij.platform.eel.provider
 
 import com.intellij.openapi.application.ApplicationManager
@@ -9,10 +8,18 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.platform.eel.*
+import com.intellij.openapi.util.Key
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelMachine
+import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelPosixApi
+import com.intellij.platform.eel.EelWindowsApi
+import com.intellij.platform.eel.LocalEelApi
+import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
-import com.intellij.platform.util.coroutines.forEachConcurrent
+import com.intellij.platform.util.coroutines.mapNotNullConcurrent
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
@@ -20,7 +27,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
 import java.nio.file.Path
-import kotlin.jvm.Throws
 
 @ApiStatus.Experimental
 interface LocalWindowsEelApi : LocalEelApi, EelWindowsApi
@@ -55,14 +61,45 @@ interface LocalPosixEelApi : LocalEelApi, EelPosixApi
 @ApiStatus.Internal
 class EelUnavailableException(override val message: @Nls String, cause: Throwable? = null) : IOException(message, cause)
 
+private val EEL_MACHINE_KEY: Key<EelMachine> = Key.create("com.intellij.platform.eel.machine")
+
+fun Project.getEelMachine(): EelMachine {
+  val descriptor = getEelDescriptor()
+
+  if (descriptor is LocalEelDescriptor) {
+    return LocalEelMachine
+  }
+
+  val cachedEelMachine = getUserData(EEL_MACHINE_KEY)
+
+  if (cachedEelMachine != null) {
+    return cachedEelMachine
+  }
+  else {
+    val resolvedEelMachine = descriptor.getResolvedEelMachine()
+
+    if (resolvedEelMachine != null) {
+      logger.error("EelMachine is not initialized for project: $this. Using resolved EelMachine: $resolvedEelMachine")
+      return resolvedEelMachine
+    }
+
+    error("Cannot find EelMachine for project: $this.")
+  }
+}
+
+private fun Project.setEelMachine(machine: EelMachine) {
+  putUserData(EEL_MACHINE_KEY, machine)
+}
+
+private val logger = logger<EelInitialization>()
+
 @ApiStatus.Internal
 object EelInitialization {
-  private val logger = logger<EelInitialization>()
 
-  @Throws(EelUnavailableException::class)
-  suspend fun runEelInitialization(path: String) {
+  @ThrowsChecked(EelUnavailableException::class)
+  suspend fun runEelInitialization(path: String): EelMachine {
     val eels = EelProvider.EP_NAME.extensionList
-    eels.forEachConcurrent { eelProvider ->
+    val machines = eels.mapNotNullConcurrent { eelProvider ->
       try {
         eelProvider.tryInitialize(path)
       }
@@ -74,11 +111,23 @@ object EelInitialization {
       }
       catch (e: Throwable) {
         logger.error(e)
+        null
       }
     }
+
+    if (machines.isEmpty()) {
+      logger.debug("No EEL machines found for path: $path")
+      return LocalEelMachine
+    }
+
+    if (machines.size > 1) {
+      logger.error("Several EEL machines $machines found for path: $path")
+    }
+
+    return machines.first()
   }
 
-  @Throws(EelUnavailableException::class)
+  @ThrowsChecked(EelUnavailableException::class)
   suspend fun runEelInitialization(project: Project) {
     if (project.isDefault) {
       return
@@ -87,14 +136,25 @@ object EelInitialization {
     val projectFile = project.projectFilePath
     check(projectFile != null) { "Impossible: project is not default, but it does not have project file" }
 
-    runEelInitialization(projectFile)
+    val machine = runEelInitialization(projectFile)
+
+    project.setEelMachine(machine)
   }
 }
 
 @ApiStatus.Experimental
 fun Path.getEelDescriptor(): EelDescriptor {
-  return EelProvider.EP_NAME.extensionList.firstNotNullOfOrNull { eelProvider -> eelProvider.getEelDescriptor(this) } ?: LocalEelDescriptor
+  val application = ApplicationManager.getApplication()
+  if (application != null) {
+    for (eelProvider in EelProvider.EP_NAME.getExtensionsIfPointIsRegistered(application)) {
+      eelProvider.getEelDescriptor(this)?.let { return it }
+    }
+  }
+  return LocalEelDescriptor
 }
+
+@get:ApiStatus.Experimental
+val Path.osFamily: EelOsFamily get() = getEelDescriptor().osFamily
 
 /**
  * Retrieves [EelDescriptor] for the environment where [this] is located.
@@ -118,7 +178,8 @@ fun Project.getEelDescriptor(): EelDescriptor {
 
 @get:ApiStatus.Experimental
 val localEel: LocalEelApi by lazy {
-  if (SystemInfo.isWindows) ApplicationManager.getApplication().service<LocalWindowsEelApi>() else ApplicationManager.getApplication().service<LocalPosixEelApi>()
+  if (OS.CURRENT == OS.Windows) ApplicationManager.getApplication().service<LocalWindowsEelApi>()
+  else ApplicationManager.getApplication().service<LocalPosixEelApi>()
 }
 
 @Deprecated("Use toEelApiBlocking() instead", ReplaceWith("toEelApiBlocking()"))
@@ -136,35 +197,38 @@ fun EelDescriptor.toEelApiBlocking(): EelApi {
 
 @ApiStatus.Experimental
 data object LocalEelMachine : EelMachine {
-  private val LOG = logger<LocalEelDescriptor>()
-  override val name: @NonNls String = "Local: ${System.getProperty("os.name")}"
-
-  override val osFamily: EelOsFamily by lazy {
-    when {
-      SystemInfo.isWindows -> EelOsFamily.Windows
-      SystemInfo.isMac || SystemInfo.isLinux || SystemInfo.isFreeBSD -> EelOsFamily.Posix
-      else -> {
-        LocalEelMachine.LOG.info("Eel is not supported on current platform")
-        EelOsFamily.Posix
-      }
-    }
-  }
+  override val internalName: String = "Local"
 
   override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {
     check(descriptor === LocalEelDescriptor) { "Wrong descriptor: $descriptor for machine: $this" }
     return localEel
   }
+
+  override fun ownsPath(path: Path): Boolean = path.getEelDescriptor() === LocalEelDescriptor
 }
 
 @ApiStatus.Experimental
 data object LocalEelDescriptor : EelDescriptor {
-  override val machine: EelMachine = LocalEelMachine
+  private val LOG = logger<LocalEelDescriptor>()
+
+  override val name: @NonNls String = "Local: ${System.getProperty("os.name")}"
+
+  override val osFamily: EelOsFamily by lazy {
+    when (OS.CURRENT) {
+      OS.Windows -> EelOsFamily.Windows
+      OS.macOS, OS.Linux, OS.FreeBSD -> EelOsFamily.Posix
+      else -> {
+        LOG.info("Eel is not supported on current platform")
+        EelOsFamily.Posix
+      }
+    }
+  }
 }
 
 @ApiStatus.Internal
 interface EelProvider {
   companion object {
-    val EP_NAME: ExtensionPointName<EelProvider> = ExtensionPointName<EelProvider>("com.intellij.eelProvider")
+    val EP_NAME: ExtensionPointName<EelProvider> = ExtensionPointName("com.intellij.eelProvider")
   }
 
   /**
@@ -174,13 +238,13 @@ interface EelProvider {
    * This function is called for every opening [Project],
    * so the implementation is expected to exit quickly if it decides that it is not responsible for [path].
    */
-  @Throws(EelUnavailableException::class)
-  suspend fun tryInitialize(path: @MultiRoutingFileSystemPath String)
+  @ThrowsChecked(EelUnavailableException::class)
+  suspend fun tryInitialize(path: @MultiRoutingFileSystemPath String): EelMachine?
 
   /**
    * Returns the descriptor for some path or `null` if this provider doesn't support such paths.
    */
-  fun getEelDescriptor(path: @MultiRoutingFileSystemPath Path): EelDescriptor?
+  fun getEelDescriptor(path: Path): EelDescriptor?
 
   fun getMountProvider(eelDescriptor: EelDescriptor): EelMountProvider? = null
 
@@ -190,13 +254,6 @@ interface EelProvider {
    * Returns additional elements to be returned by `FileSystems.getDefault().getRootDirectories()`
    */
   fun getCustomRoots(eelDescriptor: EelDescriptor): Collection<@MultiRoutingFileSystemPath String>?
-
-  // TODO Better name.
-  // TODO Move it into the EelDescriptor?
-  fun getInternalName(eelMachine: EelMachine): String?
-
-  // TODO Better name.
-  fun getEelMachineByInternalName(internalName: String): EelMachine?
 }
 
 @ApiStatus.Internal

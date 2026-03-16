@@ -3,7 +3,6 @@ package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.designer.DesignerEditorPanelFacade;
 import com.intellij.designer.LightToolWindow;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;

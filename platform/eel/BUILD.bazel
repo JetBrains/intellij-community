@@ -6,10 +6,11 @@ jvm_library(
   module_name = "intellij.platform.eel",
   visibility = ["//visibility:public"],
   srcs = glob(["gen-builders/**/*.kt", "gen-builders/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
   ]
 )
 ### auto-generated section `build intellij.platform.eel` end
@@ -18,7 +19,19 @@ jvm_library(
 jvm_library(
   name = "eel-codegen",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//plugins/copyright",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//platform/testFramework",
+    "//platform/testFramework/junit5",
+    "//platform/util/jdom",
+    "//plugins/kotlin/base/test",
+    "//plugins/kotlin:kotlin-plugin-community-main",
+  ]
 )
 
 jvm_library(
@@ -30,11 +43,12 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//plugins/copyright",
     "//plugins/copyright:copyright_test_lib",
     "//java/openapi:java",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/indexing-api:indexing",
@@ -48,8 +62,10 @@ jvm_library(
     "//platform/util/jdom",
     "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/base/indices",
+    "//platform/execution",
   ],
-  runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"]
+  runtime_deps = [":eel-codegen"]
 )
 ### auto-generated section `build intellij.platform.eel.codegen` end
 
@@ -64,6 +80,13 @@ jps_test(
 
 ### auto-generated section `build intellij.platform.eel.tests` start
 jvm_library(
+  name = "eel-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["@lib//:kotlin-stdlib"]
+)
+
+jvm_library(
   name = "eel-tests_test_lib",
   module_name = "intellij.platform.eel.tests",
   visibility = ["//visibility:public"],
@@ -75,9 +98,10 @@ jvm_library(
     "@lib//:junit5Params",
     "@lib//:kotlin-test",
     "@lib//:kotlin-test-assertions-core-jvm",
-    "@lib//:kotlinx-coroutines-test",
+    "//libraries/kotlinx/coroutines/test",
     "//platform/util-class-loader:util-classLoader",
-  ]
+  ],
+  runtime_deps = [":eel-tests"]
 )
 ### auto-generated section `build intellij.platform.eel.tests` end
 

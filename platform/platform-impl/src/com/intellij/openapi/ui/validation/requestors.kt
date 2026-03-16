@@ -4,7 +4,9 @@ package com.intellij.openapi.ui.validation
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.properties.whenPropertyChanged
-import com.intellij.openapi.observable.util.*
+import com.intellij.openapi.observable.util.whenDocumentChanged
+import com.intellij.openapi.observable.util.whenStateChanged
+import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.ui.EditorTextField
 import java.awt.ItemSelectable
 import javax.swing.text.JTextComponent

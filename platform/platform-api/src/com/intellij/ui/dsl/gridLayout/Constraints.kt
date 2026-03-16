@@ -60,12 +60,12 @@ data class Constraints(
   val verticalAlign: VerticalAlign = VerticalAlign.CENTER,
 
   /**
-   * If true then vertical align is done by baseline:
+   * If `true`, then vertical alignment is done using the baseline:
    *
    * 1. All cells in the same grid row with [baselineAlign] true, [height] equals 1 and with the same [verticalAlign]
    * (except [VerticalAlign.FILL], which doesn't support baseline) are aligned by baseline together
    * 2. Sub grids (see [com.intellij.ui.dsl.gridLayout.impl.GridImpl.registerSubGrid]) with only one row and that contain cells only with [VerticalAlign.FILL] and another
-   * specific [VerticalAlign] (at least one cell without fill align) have own baseline and can be aligned by baseline in parent grid
+   * specific [VerticalAlign] (at least one cell without fill alignment) have own baseline and can be aligned by baseline in parent grid
    */
   val baselineAlign: Boolean = false,
 
@@ -75,7 +75,7 @@ data class Constraints(
   val gaps: UnscaledGaps = UnscaledGaps.EMPTY,
 
   /**
-   * Gaps between component bounds and its visual bounds. Can be used when component has focus ring outside of
+   * Gaps between component bounds and its visual bounds. Can be used when a component has a focus ring outside
    * its usual size. In such case components size is increased on focus size (so focus ring is not clipped)
    * and [visualPaddings] should be set to maintain right alignments
    *
@@ -87,16 +87,10 @@ data class Constraints(
   var visualPaddings: UnscaledGaps = UnscaledGaps.EMPTY,
 
   /**
-   * All components from the same width group will have the same width equals to maximum width from the group.
+   * All components from the same width group will have the same width equals to the maximum width from the group.
    * Cannot be used together with [HorizontalAlign.FILL] or for sub-grids (see [GridLayout.addLayoutSubGrid])
    */
   val widthGroup: String? = null,
-
-  /**
-   * Component helper for custom behaviour
-   */
-  @ApiStatus.Experimental
-  val componentHelper: ComponentHelper? = null
 ) {
 
   init {
@@ -109,18 +103,4 @@ data class Constraints(
       throw UiDslException("Width group cannot be used with horizontal align FILL: $widthGroup")
     }
   }
-}
-
-/**
- * A helper for custom behaviour for components in cells
- */
-@ApiStatus.Experimental
-interface ComponentHelper {
-
-  /**
-   * Returns custom baseline or null if default baseline calculation should be used
-   *
-   * @see JComponent.getBaseline
-   */
-  fun getBaseline(width: Int, height: Int): Int?
 }

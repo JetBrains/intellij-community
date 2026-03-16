@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.application.ModalityState;
@@ -29,7 +29,7 @@ public interface CheckoutProvider {
    * Migrate to {@link com.intellij.util.ui.cloneDialog.VcsCloneDialog} or {@link VcsCloneComponent}
    */
   @Deprecated(forRemoval = true)
-  void doCheckout(final @NotNull Project project, @Nullable Listener listener);
+  default void doCheckout(final @NotNull Project project, @Nullable Listener listener) { }
 
   @Nls @NotNull String getVcsName();
 

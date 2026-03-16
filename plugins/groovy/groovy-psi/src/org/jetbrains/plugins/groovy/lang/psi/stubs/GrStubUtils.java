@@ -2,12 +2,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.stubs.StubBuildCachedValuesManager.StubBuildCachedValueProvider;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,10 +27,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.openapi.util.io.DataInputOutputUtilRt.readSeq;
 import static com.intellij.openapi.util.io.DataInputOutputUtilRt.writeSeq;
+import static com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueStubBuildOptimized;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListUtil.hasMaskModifier;
 
 public final class GrStubUtils {
@@ -55,7 +65,13 @@ public final class GrStubUtils {
 
   private static @NotNull Map<String, String> getAliasMapping(@Nullable PsiFile file) {
     if (!(file instanceof GroovyFile)) return Collections.emptyMap();
-    return CachedValuesManager.getCachedValue(file, () -> {
+    return getCachedValueStubBuildOptimized(file, GET_ALIAS_MAPPING_PROVIDER_NEW);
+  }
+
+  private static final StubBuildCachedValueProvider<Map<String, String>, PsiFile>
+    GET_ALIAS_MAPPING_PROVIDER_NEW = new StubBuildCachedValueProvider<>(
+    "groovy.aliasMapping",
+    file -> {
       Map<String, String> mapping = new HashMap<>();
       for (GrImportStatement importStatement : ((GroovyFile)file).getImportStatements()) {
         String fqn = importStatement.getImportFqn();
@@ -67,8 +83,8 @@ public final class GrStubUtils {
         }
       }
       return CachedValueProvider.Result.create(mapping, file);
-    });
-  }
+    }
+  );
 
   public static @Nullable String getReferenceName(@NotNull GrReferenceElement element) {
     final String referenceName = element.getReferenceName();

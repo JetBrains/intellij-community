@@ -4,7 +4,11 @@ package com.intellij.execution.rmi.ssl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.net.ssl.*;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;

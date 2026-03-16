@@ -7,7 +7,7 @@ import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class GroovyFrameworkType extends FrameworkTypeEx {
   public GroovyFrameworkType() {

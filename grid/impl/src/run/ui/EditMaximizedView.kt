@@ -1,9 +1,14 @@
 package com.intellij.database.run.ui
 
 import com.intellij.database.DatabaseDataKeys.DATA_GRID_KEY
-import com.intellij.database.datagrid.*
-import com.intellij.database.extractors.DisplayType
+import com.intellij.database.datagrid.DataGrid
+import com.intellij.database.datagrid.DataGridListener
+import com.intellij.database.datagrid.GridColumn
+import com.intellij.database.datagrid.GridRequestSource
+import com.intellij.database.datagrid.GridUtil
+import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.datagrid.RemovableView
+import com.intellij.database.extractors.DisplayType
 import com.intellij.execution.ui.layout.impl.JBRunnerTabs
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext

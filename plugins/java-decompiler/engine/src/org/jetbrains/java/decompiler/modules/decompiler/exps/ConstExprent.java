@@ -20,8 +20,13 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
-import java.util.*;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 public class ConstExprent extends Exprent {
   private static final String SHORT_SIG = "java/lang/Short";

@@ -13,7 +13,11 @@ import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.macro.MacroWithParams;
 import com.intellij.ide.macro.PromptingMacro;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PathMacroManager;
@@ -33,13 +37,22 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.execution.util.EnvFilesUtilKt.configureEnvsFromFiles;
 

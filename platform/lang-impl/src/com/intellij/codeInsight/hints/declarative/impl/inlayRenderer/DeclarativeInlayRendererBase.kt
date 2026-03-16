@@ -10,8 +10,8 @@ import com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
 import com.intellij.codeInsight.hints.declarative.impl.interaction.DefaultInlayInteractionHandler
 import com.intellij.codeInsight.hints.declarative.impl.interaction.InlayInteractionHandler
 import com.intellij.codeInsight.hints.declarative.impl.views.CapturedPointInfo
-import com.intellij.codeInsight.hints.declarative.impl.views.InlayTopLevelElement
 import com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationList
+import com.intellij.codeInsight.hints.declarative.impl.views.InlayTopLevelElement
 import com.intellij.codeInsight.hints.declarative.impl.views.computeFullWidth
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStamp
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage

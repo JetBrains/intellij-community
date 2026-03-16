@@ -21,7 +21,12 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.FileStatusListener
+import com.intellij.openapi.vcs.FileStatusManager
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vcs.changes.ChangeList
 import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -42,7 +47,7 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.TimeUnit
 
 @VisibleForTesting

@@ -14,9 +14,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Image;
+import java.awt.Window;
 import java.util.List;
 
 public final class WindowWrapperBuilder {
@@ -28,6 +34,7 @@ public final class WindowWrapperBuilder {
   private @Nullable Computable<JComponent> myPreferredFocusedComponent;
   private @NonNls @Nullable String myDimensionServiceKey;
   private @Nullable Dimension myInitialSize;
+  private @Nullable Boolean myMaximizable;
   private @Nullable Runnable myOnShowCallback;
   private @Nullable BooleanGetter myOnCloseHandler;
 
@@ -88,6 +95,11 @@ public final class WindowWrapperBuilder {
     };
   }
 
+  public WindowWrapperBuilder setMaximizable(boolean maximizable) {
+    myMaximizable = maximizable;
+    return this;
+  }
+
   private static void installOnShowCallback(@Nullable Window window, final @Nullable Runnable onShowCallback) {
     if (window == null || onShowCallback == null) return;
     UIUtil.runWhenWindowOpened(window, onShowCallback);
@@ -108,6 +120,9 @@ public final class WindowWrapperBuilder {
       myDialog = builder.myParent != null
                  ? new MyDialogWrapper(builder.myParent, builder.myComponent)
                  : new MyDialogWrapper(builder.myProject, builder.myComponent);
+      if (builder.myMaximizable != null) {
+        myDialog.setMaximizable(builder.myMaximizable);
+      }
       myDialog.setParameters(builder.myDimensionServiceKey, builder.myInitialSize, builder.myPreferredFocusedComponent,
                              builder.myOnCloseHandler);
 

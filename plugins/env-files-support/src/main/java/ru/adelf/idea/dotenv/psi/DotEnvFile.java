@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.DotEnvFileType;
 import ru.adelf.idea.dotenv.DotEnvLanguage;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class DotEnvFile extends PsiFileBase {
     public DotEnvFile(@NotNull FileViewProvider viewProvider) {

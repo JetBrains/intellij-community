@@ -20,7 +20,14 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PySubscriptionExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +59,7 @@ public class PyReplaceTupleWithListQuickFix extends PsiUpdateModCommandQuickFix 
   }
 
   private static void replaceWithListLiteral(PsiElement element, PyTupleExpression expression) {
-    final String expressionText = expression.isEmpty() ? "" :expression.getText();
+    final String expressionText = expression.isEmpty() ? "" : expression.getText();
     final PyExpression literal = PyElementGenerator.getInstance(element.getProject()).
       createExpressionFromText(LanguageLevel.forElement(element),
                                "[" + expressionText + "]");

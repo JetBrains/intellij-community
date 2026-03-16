@@ -5,18 +5,35 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
@@ -112,7 +129,7 @@ public final class AssignFieldFromParameterAction extends PsiUpdateModCommandAct
                                                        @NotNull PsiField field,
                                                        @NotNull PsiParameter parameter,
                                                        @NotNull Editor editor) throws IncorrectOperationException {
-    return addFieldAssignmentStatement(project, field, parameter, EditorUtil.asPsiNavigator(editor));
+    return addFieldAssignmentStatement(project, field, parameter, editor.asModNavigator());
   }
 
   /**
@@ -127,7 +144,7 @@ public final class AssignFieldFromParameterAction extends PsiUpdateModCommandAct
   public static @Nullable PsiStatement addFieldAssignmentStatement(@NotNull Project project,
                                                                    @NotNull PsiField field,
                                                                    @NotNull PsiParameter parameter,
-                                                                   @Nullable ModPsiNavigator updater) {
+                                                                   @Nullable ModNavigator updater) {
     PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
     PsiCodeBlock methodBody = method.getBody();
     if (methodBody == null) return null;

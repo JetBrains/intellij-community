@@ -25,6 +25,7 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.io.URLUtil
 import junit.framework.TestCase
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoot
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
@@ -38,13 +39,13 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.messageCollector
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.ConfigurationKind
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtilsImpl
 import org.jetbrains.kotlin.idea.test.testFramework.resetApplicationToNull
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
@@ -117,6 +118,7 @@ abstract class AbstractKotlinUastTest : TestCase(),
 
         val trace = NoScopeRecordCliBindingTrace(project)
 
+        @Suppress("DEPRECATION_ERROR")
         TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(
             project = project,
             files = kotlinCoreEnvironment.getSourceFiles(),
@@ -152,7 +154,7 @@ abstract class AbstractKotlinUastTest : TestCase(),
 
         project.registerService(
             PsiNameHelper::class.java,
-            PsiNameHelperImpl(project),
+            PsiNameHelperImpl::class.java,
         )
         project.registerService(UastContext::class.java)
 
@@ -198,6 +200,7 @@ abstract class AbstractKotlinUastTest : TestCase(),
         compilerConfiguration.put(JVMConfigurationKeys.USE_PSI_CLASS_FILES_READING, true)
         compilerConfiguration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, TestKotlinArtifacts.kotlinCompiler.toFile())
 
+        @OptIn(K1Deprecation::class)
         kotlinCoreEnvironment = KotlinCoreEnvironment.createForTests(
             parentDisposable = testRootDisposable,
             initialConfiguration = compilerConfiguration,
@@ -226,7 +229,7 @@ abstract class AbstractKotlinUastTest : TestCase(),
     }
 
     private fun createKotlinCompilerConfiguration(sourceFile: File): CompilerConfiguration {
-        return KotlinTestUtils.newConfiguration(ConfigurationKind.STDLIB_REFLECT, TestJdkKind.FULL_JDK).apply {
+        return KotlinTestUtilsImpl.newConfiguration(ConfigurationKind.STDLIB_REFLECT, TestJdkKind.FULL_JDK).apply {
             addKotlinSourceRoot(sourceFile.canonicalPath)
 
             messageCollector = PrintingMessageCollector(System.err, MessageRenderer.PLAIN_RELATIVE_PATHS, true)

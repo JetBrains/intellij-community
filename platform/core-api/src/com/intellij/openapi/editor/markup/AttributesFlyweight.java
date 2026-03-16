@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;

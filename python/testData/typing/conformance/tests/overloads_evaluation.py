@@ -59,7 +59,8 @@ def example1_2(b: Literal[True] = ...) -> int: ...
 def example1_2(b: bool) -> float: ...
 
 
-def example1_2(b: bool = True) -> float: ...
+def example1_2(b: bool = True) -> float:
+    raise NotImplementedError
 
 
 def check_example1_2() -> None:
@@ -141,7 +142,7 @@ def check_expand_bool(v: bool) -> None:
 
 class Color(Enum):
     RED = 1
-    BLUE = 1
+    BLUE = 2
 
 
 @overload
@@ -288,7 +289,8 @@ def example6(a: int, b: Any) -> float: ...
 def example6(a: float, b: T) -> T: ...
 
 
-def example6(a: float, b: T) -> T: ...
+def example6(a: float, b: T) -> T:
+    raise NotImplementedError
 
 
 def check_example6(a: list[Any], b: Any, c: str) -> None:

@@ -4,12 +4,14 @@ package org.jetbrains.kotlin.idea.refactoring.move
 import com.intellij.psi.PsiElement
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 
+@K1Deprecation
 sealed class OuterInstanceReferenceUsageInfo(element: PsiElement, private val isIndirectOuter: Boolean) : UsageInfo(element) {
     open fun reportConflictIfAny(conflicts: MultiMap<PsiElement, String>): Boolean {
         val element = element ?: return false

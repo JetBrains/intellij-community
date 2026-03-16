@@ -11,7 +11,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.*;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CoderResult;
+import java.nio.charset.CodingErrorAction;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,10 +36,10 @@ public final class CharsetUtil {
     return false;
   }
 
-  public static Charset extractCharsetFromFileContent(@Nullable Project project,
-                                                      @Nullable VirtualFile virtualFile,
-                                                      @Nullable FileType fileType,
-                                                      @NotNull CharSequence text) {
+  public static @Nullable Charset extractCharsetFromFileContent(@Nullable Project project,
+                                                                @Nullable VirtualFile virtualFile,
+                                                                @Nullable FileType fileType,
+                                                                @NotNull CharSequence text) {
     if (fileType instanceof LanguageFileType &&
         // otherwise the default implementations will always convert CharSequence to String unnecessarily, producing garbage
         ourSupportsCharsetDetection.computeIfAbsent(fileType.getClass().getName(),

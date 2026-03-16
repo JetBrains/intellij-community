@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHNode
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
-import java.util.*
+import java.util.Date
 
 @GraphQLFragment("/graphql/fragment/pullRequestReview.graphql")
 data class GHPullRequestReview(override val id: String,

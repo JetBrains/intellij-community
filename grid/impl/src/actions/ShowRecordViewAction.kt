@@ -1,7 +1,7 @@
 package com.intellij.database.actions
 
 import com.intellij.database.datagrid.GridUtil
-import com.intellij.database.run.ui.*
+import com.intellij.database.run.ui.RecordViewInfoProvider
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction

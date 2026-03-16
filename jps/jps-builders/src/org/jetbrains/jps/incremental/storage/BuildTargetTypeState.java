@@ -15,7 +15,12 @@ import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.model.JpsModel;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;

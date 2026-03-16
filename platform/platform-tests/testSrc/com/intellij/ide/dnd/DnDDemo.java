@@ -6,8 +6,14 @@ import com.intellij.ui.tree.TreeTestUtil;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.JTree;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.Point;
 
 public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
   public static void main(String[] args) {

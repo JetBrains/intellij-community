@@ -8,7 +8,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private class EncodingProjectManagerStartUpActivity : ProjectActivity {
+internal class EncodingProjectManagerStartUpActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     // do not try to init on EDT due to VFS usage in loadState
     val service = project.serviceAsync<EncodingProjectManager>() as EncodingProjectManagerImpl

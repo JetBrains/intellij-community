@@ -6,6 +6,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
@@ -17,9 +18,23 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdate
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.getTypeInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
 
-internal class SpecifyTypeExplicitlyIntention:
+/**
+ * Intention to specify type explicitly for callable declarations.
+ *
+ * If [useTemplate] is `true`, the intention will provide user with a template to select a specific type to insert;
+ * otherwise, the inferred type will be inserted right away. See [TypeInfo.useTemplate] for the implementation.
+ *
+ * By default, and when instantiated by IntelliJ IDEA, [useTemplate] is set to `true`.
+ */
+@ApiStatus.Internal
+class SpecifyTypeExplicitlyIntention @JvmOverloads constructor(private val useTemplate: Boolean = true) :
     KotlinApplicableModCommandAction<KtCallableDeclaration, TypeInfo>(KtCallableDeclaration::class) {
 
     override fun getApplicableRanges(element: KtCallableDeclaration): List<TextRange> =
@@ -59,7 +74,7 @@ internal class SpecifyTypeExplicitlyIntention:
         if (skip(element)) {
             null
         } else {
-            getTypeInfo(element, useSmartCastType = true).takeUnless { it.defaultType.isError }
+            getTypeInfo(element, useSmartCastType = true, useTemplate).takeUnless { it.defaultType.isError }
         }
 
     override fun invoke(

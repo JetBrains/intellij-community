@@ -6,7 +6,11 @@ import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.ComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
 
 public class EnumEditor extends PropertyEditor<Enum> {

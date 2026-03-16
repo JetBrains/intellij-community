@@ -33,7 +33,7 @@ import java.util.List;
 
 public class ResolveResultList extends ArrayList<RatedResolveResult> {
   public static List<RatedResolveResult> to(PsiElement element) {
-    if (element== null) {
+    if (element == null) {
       return Collections.emptyList();
     }
     final ResolveResultList list = new ResolveResultList();

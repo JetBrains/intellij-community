@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.idea.TestFor;
@@ -9,11 +9,19 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class RegistryTest {
   private static final String INTEGER_KEY = "editor.mouseSelectionStateResetDeadZone";
@@ -238,7 +246,7 @@ public class RegistryTest {
   public void checkOptionsUpdatedProperly() {
     String registryName = "testOptions";
     String registryValue = "[option1*|option2|option3]";
-    RegistryValue registry = new RegistryValue(Registry.getInstance(), registryName, new RegistryKeyDescriptor(registryName, "", registryValue, false, false, null));
+    RegistryValue registry = new RegistryValue(Registry.getInstance(), registryName, new RegistryKeyDescriptor(registryName, "", registryValue, false, false, null, null));
     assertEquals("option1", registry.getSelectedOption());
     registry.setSelectedOption("option2");
     assertThat(registry.getSelectedOption()).isEqualTo("option2");

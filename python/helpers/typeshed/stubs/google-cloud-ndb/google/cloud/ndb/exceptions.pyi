@@ -1,4 +1,4 @@
-from typing import Any
+from _typeshed import Incomplete
 
 class Error(Exception): ...
 
@@ -12,7 +12,7 @@ class Rollback(Error): ...
 class BadQueryError(Error): ...
 
 class BadFilterError(Error):
-    filter: Any
+    filter: Incomplete
     def __init__(self, filter) -> None: ...
 
 class NoLongerImplementedError(NotImplementedError):

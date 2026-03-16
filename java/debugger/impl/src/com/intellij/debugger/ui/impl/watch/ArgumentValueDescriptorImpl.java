@@ -19,7 +19,11 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

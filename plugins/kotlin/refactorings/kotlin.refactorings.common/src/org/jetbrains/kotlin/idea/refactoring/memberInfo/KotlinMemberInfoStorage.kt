@@ -7,7 +7,11 @@ import com.intellij.refactoring.classMembers.AbstractMemberInfoStorage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.refactoring.resolveDirectSupertypes
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 
 @ApiStatus.Internal
 class KotlinMemberInfoStorage(

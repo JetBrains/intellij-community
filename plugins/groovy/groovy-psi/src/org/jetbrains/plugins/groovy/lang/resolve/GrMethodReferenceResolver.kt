@@ -1,7 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.ResolveState
 import com.intellij.psi.impl.light.LightMethodBuilder
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult

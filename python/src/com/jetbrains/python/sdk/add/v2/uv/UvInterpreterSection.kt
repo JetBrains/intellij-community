@@ -14,7 +14,7 @@ import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.PythonNewEnvironmentDialogNavigator.Companion.FAV_MODE
 import com.jetbrains.python.sdk.add.v2.booleanProperty
-import com.jetbrains.python.sdk.uv.impl.hasUvExecutable
+import com.jetbrains.python.sdk.uv.impl.hasUvExecutableLocal
 import kotlinx.coroutines.CoroutineScope
 
 /**
@@ -47,7 +47,7 @@ internal class UvInterpreterSection(
 
   private suspend fun selectUvIfExists() {
     if (PropertiesComponent.getInstance().getValue(FAV_MODE) != null) return
-    if (hasUvExecutable() && selectedMode.get() != PythonInterpreterSelectionMode.PROJECT_UV) {
+    if (hasUvExecutableLocal() && selectedMode.get() != PythonInterpreterSelectionMode.PROJECT_UV) {
       selectedMode.set(PythonInterpreterSelectionMode.PROJECT_UV)
     }
   }

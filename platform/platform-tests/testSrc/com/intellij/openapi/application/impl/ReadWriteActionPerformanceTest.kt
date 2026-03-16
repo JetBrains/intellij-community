@@ -5,6 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAndBackgroundWriteActionUndispatched
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.junit5.StressTestApplication
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicBoolean
 
 @StressTestApplication
+@PerformanceUnitTest
 class ReadWriteActionPerformanceTest {
 
   @Test

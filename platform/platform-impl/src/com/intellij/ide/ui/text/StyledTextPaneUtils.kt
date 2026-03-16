@@ -2,7 +2,12 @@
 package com.intellij.ide.ui.text
 
 import com.intellij.ui.scale.JBUIScale
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Font
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.RenderingHints
 import java.awt.geom.RoundRectangle2D
 import javax.swing.Icon
 import javax.swing.JTextPane

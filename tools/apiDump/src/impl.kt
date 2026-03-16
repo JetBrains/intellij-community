@@ -1,17 +1,30 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UnusedReceiverParameter", "DATA_CLASS_INVISIBLE_COPY_USAGE_WARNING")
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UnusedReceiverParameter", "DATA_CLASS_INVISIBLE_COPY_USAGE_WARNING", "DATA_CLASS_INVISIBLE_COPY_USAGE_ERROR")
 
 package com.intellij.tools.apiDump
 
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.toPersistentHashMap
-import kotlinx.validation.api.*
+import kotlinx.validation.api.ClassBinarySignature
+import kotlinx.validation.api.MEMBER_SORT_ORDER
+import kotlinx.validation.api.MemberBinarySignature
+import kotlinx.validation.api.MethodBinarySignature
+import kotlinx.validation.api.isEffectivelyPublic
+import kotlinx.validation.api.loadApiFromJvmClasses
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AnnotationNode
+import java.nio.file.FileSystems
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.inputStream
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.name
+import kotlin.io.path.walk
 import kotlin.metadata.jvm.JvmFieldSignature
 import kotlin.metadata.jvm.JvmMethodSignature
 
@@ -56,7 +69,8 @@ class ApiIndex private constructor(
     for ((packageName, packageAnnotations) in packages) {
       val existingAnnotations = this.packages[packageName]
       if (existingAnnotations != null && existingAnnotations != packageAnnotations) {
-        error("$packageName has different annotations in different modules. The current root = $root")
+        error("$packageName has different annotations in different modules. The current root = $root (${root.fileSystem}). " +
+              "The existing annotations = $existingAnnotations, the new one = $packageAnnotations")
       }
       builder[packageName] = packageAnnotations
     }
@@ -108,28 +122,29 @@ class API internal constructor(
 fun api(index: ApiIndex, root: Path): API {
   @Suppress("NAME_SHADOWING")
   var index = index
-  val classFilePaths: Sequence<Path> = classFilePaths(root)
 
-  val packages: Map<String, ApiAnnotations> = classFilePaths.packages()
-  index = index.discoverPackages(packages, root)
+  return withClassRootEntries(root) { classFilePaths ->
+    val packages: Map<String, ApiAnnotations> = classFilePaths.packages()
+    index = index.discoverPackages(packages, root)
 
-  val signatures: List<ClassBinarySignature> = classFilePaths
-    .map { it.inputStream() }
-    .loadApiFromJvmClasses()
-    .filter { !it.isComposableSingleton() }
-    .map { it.removeSyntheticBridges() }
-    .map { it.removeToString() }
-    .map { signature ->
-      signature.handleAnnotationsAndVisibility(index).also {
-        /**
-         * Class has to be saved to the [ApiIndex.classes] map in the same iteration
-         * because the next [handleAnnotationsAndVisibility] call relies on it
-         * to resolve the outer class name.
-         */
-        index = index.discoverClass(it, root)
+    val signatures: List<ClassBinarySignature> = classFilePaths
+      .map { it.inputStream() }
+      .loadApiFromJvmClasses()
+      .filter { !it.isComposableSingleton() }
+      .map { it.removeSyntheticBridges() }
+      .map { it.removeToString() }
+      .map { signature ->
+        signature.handleAnnotationsAndVisibility(index).also {
+          /**
+           * Class has to be saved to the [ApiIndex.classes] map in the same iteration
+           * because the next [handleAnnotationsAndVisibility] call relies on it
+           * to resolve the outer class name.
+           */
+          index = index.discoverClass(it, root)
+        }
       }
-    }
-  return API(index, signatures)
+    API(index, signatures)
+  }
 }
 
 /**
@@ -249,6 +264,7 @@ private fun publicApi(index: ApiIndex, classSignatures: List<ClassBinarySignatur
             memberSignature.access.access,
             annotationExperimental = memberSignature.annotations.isExperimental() || companionAnnotations.isExperimental,
             annotationNonExtendable = memberSignature.annotations.isNonExtendable(),
+            annotationDeprecated = memberSignature.annotations.isDeprecated() || companionAnnotations.isDeprecated,
           ),
         )
       }
@@ -261,6 +277,7 @@ private fun publicApi(index: ApiIndex, classSignatures: List<ClassBinarySignatur
         signature.access.access,
         signature.annotations.isExperimental(),
         signature.annotations.isNonExtendable(),
+        signature.annotations.isDeprecated(),
       ),
       supers = signature.supertypes,
       members,
@@ -304,16 +321,31 @@ private fun stableAndExperimentalApi(classSignatures: List<ApiClass>): Pair<List
 }
 
 @OptIn(ExperimentalPathApi::class)
-private fun classFilePaths(classRoot: Path): Sequence<Path> {
-  return classRoot
-    .walk()
-    .filter { path ->
-      path.extension == "class" &&
-      !classRoot.relativize(path).startsWith("META-INF/")
-    }
+private fun <R> withClassRootEntries(classRoot: Path, block: (entries: Sequence<Path>) -> R): R {
+  return withClassRoot(classRoot) { nioRoot ->
+    val sequence = nioRoot
+      .walk()
+      .filter { path ->
+        path.extension == "class" && !classRoot.relativize(path).startsWith("META-INF/")
+      }
+    block(sequence)
+  }
 }
 
-internal data class ApiAnnotations(val isInternal: Boolean, val isExperimental: Boolean) {
+private fun <R> withClassRoot(classRoot: Path, block: (root: Path) -> R): R {
+  return when {
+    classRoot.isDirectory() -> block(classRoot)
+    classRoot.isRegularFile() && classRoot.extension == "jar" -> {
+      FileSystems.newFileSystem(classRoot).use {
+        block(it.rootDirectories.single())
+      }
+    }
+    !classRoot.exists() -> error("Classes output root does not exist: $classRoot")
+    else -> error("Unsupported classes output root: $classRoot")
+  }
+}
+
+internal data class ApiAnnotations(val isInternal: Boolean, val isExperimental: Boolean, val isDeprecated: Boolean) {
 
   operator fun plus(other: ApiAnnotations): ApiAnnotations {
     if (other == unannotated && this == unannotated) {
@@ -322,11 +354,12 @@ internal data class ApiAnnotations(val isInternal: Boolean, val isExperimental: 
     return ApiAnnotations(
       isInternal || other.isInternal,
       isExperimental || other.isExperimental,
+      isDeprecated || other.isDeprecated,
     )
   }
 }
 
-private val unannotated = ApiAnnotations(false, false)
+private val unannotated = ApiAnnotations(false, false, false)
 
 /**
  * @receiver sequence of paths to class files
@@ -346,11 +379,14 @@ private fun Sequence<Path>.packages(): Map<String, ApiAnnotations> {
 private const val API_STATUS_INTERNAL_DESCRIPTOR = "Lorg/jetbrains/annotations/ApiStatus\$Internal;"
 private const val API_STATUS_EXPERIMENTAL_DESCRIPTOR = "Lorg/jetbrains/annotations/ApiStatus\$Experimental;"
 private const val API_STATUS_NON_EXTENDABLE = "Lorg/jetbrains/annotations/ApiStatus\$NonExtendable;"
+private const val JAVA_DEPRECATED = "Ljava/lang/Deprecated;"
+private const val KOTLIN_DEPRECATED = "Lkotlin/Deprecated;"
 
 private fun List<AnnotationNode>?.apiAnnotations(): ApiAnnotations {
   if (this == null) return unannotated
   var isInternal = false
   var isExperimental = false
+  var isDeprecated = false
   for (node in this) {
     if (node.desc == API_STATUS_INTERNAL_DESCRIPTOR) {
       isInternal = true
@@ -358,9 +394,12 @@ private fun List<AnnotationNode>?.apiAnnotations(): ApiAnnotations {
     if (node.desc == API_STATUS_EXPERIMENTAL_DESCRIPTOR) {
       isExperimental = true
     }
+    if (node.desc == JAVA_DEPRECATED || node.desc == KOTLIN_DEPRECATED) {
+      isDeprecated = true
+    }
   }
-  if (isInternal || isExperimental) {
-    return ApiAnnotations(isInternal, isExperimental)
+  if (isInternal || isExperimental || isDeprecated) {
+    return ApiAnnotations(isInternal, isExperimental, isDeprecated)
   }
   else {
     return unannotated
@@ -381,6 +420,10 @@ private fun List<AnnotationNode>?.isExperimental(): Boolean {
 
 private fun List<AnnotationNode>?.isNonExtendable(): Boolean {
   return hasAnnotation(API_STATUS_NON_EXTENDABLE)
+}
+
+private fun List<AnnotationNode>?.isDeprecated(): Boolean {
+  return this != null && any { it.desc == JAVA_DEPRECATED || it.desc == KOTLIN_DEPRECATED }
 }
 
 private typealias ClassResolver = (String) -> ClassBinarySignature?

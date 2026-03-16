@@ -4,8 +4,18 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
-import com.intellij.collaboration.ui.util.*
-import com.intellij.openapi.actionSystem.*
+import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
+import com.intellij.collaboration.ui.util.bindChildIn
+import com.intellij.collaboration.ui.util.name
+import com.intellij.collaboration.ui.util.performAction
+import com.intellij.collaboration.ui.util.toAnAction
+import com.intellij.openapi.actionSystem.ActionPromoter
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -15,14 +25,22 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 
 object CommentInputActionsComponentFactory {
 

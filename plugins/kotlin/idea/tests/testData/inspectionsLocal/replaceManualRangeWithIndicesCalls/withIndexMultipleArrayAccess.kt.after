@@ -1,0 +1,10 @@
+// WITH_STDLIB
+// FIX: Replace with 'withIndex()'
+fun test() {
+    val list = listOf("a", "b", "c")
+    for ((i, element) in list.withIndex()) {
+        println("Processing index $i")
+        val item = element
+        println("Item: $item, also ${element.length}")
+    }
+}

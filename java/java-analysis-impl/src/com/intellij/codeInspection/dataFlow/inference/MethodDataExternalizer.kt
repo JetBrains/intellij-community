@@ -5,13 +5,16 @@ import com.intellij.codeInsight.Nullability
 import com.intellij.codeInspection.dataFlow.ContractReturnValue
 import com.intellij.codeInspection.dataFlow.StandardMethodContract
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint
-import com.intellij.openapi.util.io.DataInputOutputUtilRt.*
+import com.intellij.openapi.util.io.DataInputOutputUtilRt.readINT
+import com.intellij.openapi.util.io.DataInputOutputUtilRt.readSeq
+import com.intellij.openapi.util.io.DataInputOutputUtilRt.writeINT
+import com.intellij.openapi.util.io.DataInputOutputUtilRt.writeSeq
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil.readNullable
 import com.intellij.util.io.DataInputOutputUtil.writeNullable
 import java.io.DataInput
 import java.io.DataOutput
-import java.util.*
+import java.util.BitSet
 
 internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> {
   override fun save(out: DataOutput, value: Map<Int, MethodData>?) {

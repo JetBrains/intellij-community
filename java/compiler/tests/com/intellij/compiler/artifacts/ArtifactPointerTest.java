@@ -1,6 +1,11 @@
 package com.intellij.compiler.artifacts;
 
-import com.intellij.packaging.artifacts.*;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.artifacts.ArtifactPointer;
+import com.intellij.packaging.artifacts.ArtifactPointerManager;
+import com.intellij.packaging.artifacts.ModifiableArtifact;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 

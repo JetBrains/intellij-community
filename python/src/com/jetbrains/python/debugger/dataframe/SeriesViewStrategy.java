@@ -4,7 +4,8 @@ package com.jetbrains.python.debugger.dataframe;
 import com.jetbrains.python.debugger.containerview.ColumnFilter;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 
 public class SeriesViewStrategy extends DataFrameViewStrategy {
 

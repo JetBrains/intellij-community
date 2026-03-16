@@ -4,7 +4,11 @@ package com.intellij.configurationStore
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.extensions.RequiredElement
-import com.intellij.openapi.options.*
+import com.intellij.openapi.options.ExternalizableSchemeAdapter
+import com.intellij.openapi.options.Scheme
+import com.intellij.openapi.options.SchemeManager
+import com.intellij.openapi.options.SchemeProcessor
+import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Key

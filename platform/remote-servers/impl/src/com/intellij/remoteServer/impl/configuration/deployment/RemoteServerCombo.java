@@ -12,18 +12,27 @@ import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurable;
-import com.intellij.ui.*;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JList;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 
 public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWithBrowseButton implements UserActivityProviderComponent {
   private static final Comparator<RemoteServer<?>> SERVERS_COMPARATOR =

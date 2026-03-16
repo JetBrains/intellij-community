@@ -1,18 +1,26 @@
-from _typeshed import Incomplete
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal, overload
 
 from docker.types.daemon import CancellableStream
 
 class DaemonApiMixin:
     def df(self) -> dict[str, Any]: ...
+    @overload
     def events(
         self,
         since: datetime | int | None = None,
         until: datetime | int | None = None,
         filters: dict[str, Any] | None = None,
-        decode: bool | None = None,
-    ) -> CancellableStream[Incomplete]: ...
+        decode: Literal[False] | None = None,
+    ) -> CancellableStream[str]: ...
+    @overload
+    def events(
+        self,
+        since: datetime | int | None = None,
+        until: datetime | int | None = None,
+        filters: dict[str, Any] | None = None,
+        decode: Literal[True] = ...,
+    ) -> CancellableStream[dict[str, Any]]: ...
     def info(self) -> dict[str, Any]: ...
     def login(
         self,

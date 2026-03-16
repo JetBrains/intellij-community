@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  Server$Inner.class
+  Server.class
+End of files
+Compiling files:
+  java/fieldProperties/innerConstantChange/a/Server.java
+End of files
+Cleaning output files:
+  Client.class
+End of files
+Compiling files:
+  java/fieldProperties/innerConstantChange/a/Client.java
+End of files
+------------------------------------------
+Exit code: OK

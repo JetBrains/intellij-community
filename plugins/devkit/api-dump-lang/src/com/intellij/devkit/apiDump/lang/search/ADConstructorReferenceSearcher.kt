@@ -31,7 +31,7 @@ internal class ADConstructorReferenceSearcher : QueryExecutorBase<PsiReference, 
     val targetClass = targetConstructor.containingClass ?: return
     val targetClassFQN = targetClass.qualifiedName ?: return
 
-    val adFilesInScope = PsiSearchScopeUtil.restrictScopeTo(queryParameters.effectiveSearchScope, ADFileType.INSTANCE)
+    val adFilesInScope = PsiSearchScopeUtil.restrictScopeTo(queryParameters.effectiveSearchScope, ADFileType)
     queryParameters.optimizer.searchWord(
       /* word = */ targetClassFQN,
       /* searchScope = */ adFilesInScope,

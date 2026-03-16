@@ -107,8 +107,7 @@ final class ComputeVirtualFileNameStatAction extends AnAction implements DumbAwa
       for (Object2IntMap.Entry<String> entry : suffixes.object2IntEntrySet()) {
         String s = entry.getKey();
         int count = entry.getIntValue();
-        for (int i = picked.size() - 1; i >= 0; i--) {
-          String pick = picked.get(i);
+        for (String pick : picked.reversed()) {
           if (pick.endsWith(s)) {
             count -= suffixes.getInt(pick);
             break;

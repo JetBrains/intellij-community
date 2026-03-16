@@ -1,4 +1,4 @@
-// "Change return type of enclosing function 'test' to 'String?'" "true"
+// "Specify 'String?' return type for enclosing function 'test'" "true"
 fun test(): String? {
     if (true) return "foo"
     return null<caret>

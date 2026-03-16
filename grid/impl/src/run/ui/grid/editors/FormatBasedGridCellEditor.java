@@ -1,6 +1,7 @@
 package com.intellij.database.run.ui.grid.editors;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.database.DataGridBundle;
@@ -19,7 +20,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -43,9 +43,15 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.JComponent;
+import javax.swing.UIManager;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.text.ParsePosition;
 import java.util.EventObject;
 import java.util.Objects;
@@ -148,13 +154,12 @@ public class FormatBasedGridCellEditor extends GridCellEditor.Adapter implements
   private static void setHighlighting(@NotNull MarkupModel markupModel, @Nullable HighlightInfo info) {
     markupModel.removeAllHighlighters();
     if (info != null) {
-      RangeHighlighterEx highlighter = ((MarkupModelEx)markupModel).addRangeHighlighterAndChangeAttributes(
+      ((MarkupModelEx)markupModel).addRangeHighlighterAndChangeAttributes(
         info.forcedTextAttributesKey, info.startOffset, info.endOffset,
         HighlighterLayer.ERROR, HighlighterTargetArea.EXACT_RANGE, false,
         rh -> {
-          rh.setErrorStripeTooltip(info);
+          BackgroundUpdateHighlightersUtil.associateInfoAndHighlighter(info, rh);
         });
-      info.setHighlighter(highlighter);
     }
   }
 

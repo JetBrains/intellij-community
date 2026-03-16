@@ -17,7 +17,6 @@ interface Properties {
 
 GradleLifecycleUtil.afterProject(gradle) { project ->
   GradleCollectionUtil.register(project.tasks, Properties.taskName, GradleDependencyReportTask) { task ->
-    task.content = GradleDependencyReportTask.collectDependencies(project)
     task.outputPath = Properties.outputPath
   }
 }

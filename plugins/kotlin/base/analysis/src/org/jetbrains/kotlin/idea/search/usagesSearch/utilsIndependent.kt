@@ -15,7 +15,12 @@ import org.jetbrains.kotlin.idea.base.util.restrictByFileType
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.createConstructorHandle
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.psiUtil.contains
 
 fun PsiElement.processDelegationCallConstructorUsages(scope: SearchScope, process: (KtCallElement) -> Boolean): Boolean {

@@ -3,19 +3,12 @@ package com.intellij.build.eventBuilders
 
 import com.intellij.build.events.BuildEventsNls.Description
 import com.intellij.build.events.BuildEventsNls.Hint
-import com.intellij.build.events.BuildEventsNls.Message
-import com.intellij.build.events.EventResult
 import com.intellij.build.events.FinishBuildEvent
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.CheckReturnValue
 
-@Experimental
 @NonExtendable
 interface FinishBuildEventBuilder {
-
-  @CheckReturnValue // mandatory field
-  fun withStartBuildId(startBuildId: Any): FinishBuildEventBuilder
 
   @CheckReturnValue
   fun withParentId(parentId: Any?): FinishBuildEventBuilder
@@ -23,17 +16,11 @@ interface FinishBuildEventBuilder {
   @CheckReturnValue
   fun withTime(time: Long?): FinishBuildEventBuilder
 
-  @CheckReturnValue // mandatory field
-  fun withMessage(message: @Message String): FinishBuildEventBuilder
-
   @CheckReturnValue
   fun withHint(hint: @Hint String?): FinishBuildEventBuilder
 
   @CheckReturnValue
   fun withDescription(description: @Description String?): FinishBuildEventBuilder
-
-  @CheckReturnValue // mandatory field
-  fun withResult(result: EventResult): FinishBuildEventBuilder
 
   fun build(): FinishBuildEvent
 }

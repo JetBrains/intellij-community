@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.storage
 
-import com.intellij.util.indexing.IdFilter
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.indexing.IdFilter
 import com.intellij.util.indexing.IdFilter.FilterScopeType
 import com.intellij.util.io.EnumeratorStringDescriptor
 import junit.framework.TestCase

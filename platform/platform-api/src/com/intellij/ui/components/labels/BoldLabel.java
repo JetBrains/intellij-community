@@ -6,7 +6,8 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
 
 /**
  * @author kir

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.application.options.CodeStyle;
@@ -25,7 +25,7 @@ public final class LanguageImportStatements extends LanguageExtension<ImportOpti
     }
     Set<ImportOptimizer> optimizers = new HashSet<>();
     for (PsiFile psiFile : file.getViewProvider().getAllFiles()) {
-      List<ImportOptimizer> langOptimizers = allForLanguage(psiFile.getLanguage());
+      List<ImportOptimizer> langOptimizers = allForLanguageOrAny(psiFile.getLanguage());
       for (ImportOptimizer optimizer : langOptimizers) {
         if (optimizer != null && optimizer.supports(psiFile)) {
           optimizers.add(optimizer);

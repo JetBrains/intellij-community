@@ -16,7 +16,7 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Objects;
 
 public final class ReplaceConstructorWithBuilderAction extends PsiElementBaseIntentionAction implements Iconable {

@@ -7,7 +7,11 @@ import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
-import org.gradle.tooling.*
+import org.gradle.tooling.BuildActionExecuter
+import org.gradle.tooling.GradleConnectionException
+import org.gradle.tooling.LongRunningOperation
+import org.gradle.tooling.ProjectConnection
+import org.gradle.tooling.StreamedValueListener
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper

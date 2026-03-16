@@ -8,8 +8,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclaration
 import org.jetbrains.kotlin.idea.run.AbstractRunConfigurationTest
 import org.jetbrains.kotlin.idea.run.getJavaRunParameters
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtObjectDeclaration
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 

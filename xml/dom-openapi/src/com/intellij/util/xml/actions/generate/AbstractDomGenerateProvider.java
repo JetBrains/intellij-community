@@ -16,7 +16,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -112,7 +111,7 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
   }
 
   protected static String getDescription(final Class<? extends DomElement> aClass) {
-    return StringUtil.join(Arrays.asList(NameUtilCore.nameToWords(aClass.getSimpleName())), " ");
+    return StringUtil.join(NameUtilCore.nameToWordList(aClass.getSimpleName()), " ");
   }
 
   public @Nullable String getMappingId() {

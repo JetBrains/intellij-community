@@ -31,11 +31,6 @@ class BuildProblemLogMessage(description: String, val identity: String?) : LogMe
 
 @ApiStatus.Internal
 class ConsoleBuildMessageLogger : BuildMessageLoggerBase() {
-  companion object {
-    @JvmField
-    val FACTORY: () -> BuildMessageLogger = ::ConsoleBuildMessageLogger
-  }
-
   override fun processMessage(message: LogMessage) {
     when (message.kind) {
       // reported by trace exporter
@@ -48,13 +43,25 @@ class ConsoleBuildMessageLogger : BuildMessageLoggerBase() {
         }
         throw BuildScriptsLoggedError(message.errorMessages.joinToString(prefix = "${message.text}:\n", separator = "\n"))
       }
+      LogMessage.Kind.INFO,
+      LogMessage.Kind.DEBUG,
+      LogMessage.Kind.PROGRESS,
+      LogMessage.Kind.STATISTICS -> {
+        if (verbose) {
+          super.processMessage(message)
+        }
+      }
       else -> super.processMessage(message)
     }
   }
 
-  override fun shouldBePrinted(kind: LogMessage.Kind) = kind != LogMessage.Kind.DEBUG
+  override fun shouldBePrinted(kind: LogMessage.Kind): Boolean = kind != LogMessage.Kind.DEBUG
 
   override fun printLine(line: String) {
     println(line)
   }
 }
+
+private const val VERBOSE_PROPERTY = "intellij.build.console.messages.verbose"
+private const val VERBOSE_DEFAULT = "true"
+private val verbose = System.getProperty(VERBOSE_PROPERTY, VERBOSE_DEFAULT).toBooleanStrict()

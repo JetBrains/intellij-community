@@ -215,6 +215,7 @@ f:com.intellij.ide.GeneralSettings
 - f:isAutoSaveIfInactive():Z
 - f:isBackgroundSync():Z
 - f:isConfirmExit():Z
+- f:isDeletingToBin():Z
 - f:isReopenLastProject():Z
 - f:isSaveOnFrameDeactivation():Z
 - f:isSearchInBackground():Z
@@ -229,6 +230,7 @@ f:com.intellij.ide.GeneralSettings
 - f:setBackgroundSync(Z):V
 - f:setConfirmExit(Z):V
 - f:setConfirmOpenNewProject(I):V
+- f:setDeletingToBin(Z):V
 - f:setInactiveTimeout(I):V
 - f:setProcessCloseConfirmation(com.intellij.ide.ProcessCloseConfirmation):V
 - f:setReopenLastProject(Z):V
@@ -260,6 +262,7 @@ f:com.intellij.ide.GeneralSettingsState
 - confirmExit:Z
 - confirmOpenNewProject2:java.lang.Integer
 - defaultProjectDirectory:java.lang.String
+- deleteToBin:Z
 - inactiveTimeout:I
 - isShowWelcomeScreen:Z
 - isUseSafeWrite:Z
@@ -270,17 +273,18 @@ f:com.intellij.ide.GeneralSettingsState
 - supportScreenReaders:Z
 - useDefaultBrowser:Z
 - <init>():V
-- <init>(java.lang.String,java.lang.String,java.lang.Boolean,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,java.lang.Integer,com.intellij.ide.ProcessCloseConfirmation,I,Z):V
-- b:<init>(java.lang.String,java.lang.String,java.lang.Boolean,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,java.lang.Integer,com.intellij.ide.ProcessCloseConfirmation,I,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,java.lang.String,java.lang.Boolean,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,java.lang.Integer,com.intellij.ide.ProcessCloseConfirmation,I,Z):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.Boolean,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,java.lang.Integer,com.intellij.ide.ProcessCloseConfirmation,I,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():java.lang.String
 - f:component10():Z
 - f:component11():Z
 - f:component12():Z
 - f:component13():Z
-- f:component14():java.lang.Integer
-- f:component15():com.intellij.ide.ProcessCloseConfirmation
-- f:component16():I
-- f:component17():Z
+- f:component14():Z
+- f:component15():java.lang.Integer
+- f:component16():com.intellij.ide.ProcessCloseConfirmation
+- f:component17():I
+- f:component18():Z
 - f:component2():java.lang.String
 - f:component3():java.lang.Boolean
 - f:component4():Z
@@ -289,8 +293,8 @@ f:com.intellij.ide.GeneralSettingsState
 - f:component7():Z
 - f:component8():Z
 - f:component9():Z
-- f:copy(java.lang.String,java.lang.String,java.lang.Boolean,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,java.lang.Integer,com.intellij.ide.ProcessCloseConfirmation,I,Z):com.intellij.ide.GeneralSettingsState
-- bs:copy$default(com.intellij.ide.GeneralSettingsState,java.lang.String,java.lang.String,java.lang.Boolean,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,java.lang.Integer,com.intellij.ide.ProcessCloseConfirmation,I,Z,I,java.lang.Object):com.intellij.ide.GeneralSettingsState
+- f:copy(java.lang.String,java.lang.String,java.lang.Boolean,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,java.lang.Integer,com.intellij.ide.ProcessCloseConfirmation,I,Z):com.intellij.ide.GeneralSettingsState
+- bs:copy$default(com.intellij.ide.GeneralSettingsState,java.lang.String,java.lang.String,java.lang.Boolean,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,java.lang.Integer,com.intellij.ide.ProcessCloseConfirmation,I,Z,I,java.lang.Object):com.intellij.ide.GeneralSettingsState
 - equals(java.lang.Object):Z
 - hashCode():I
 e:com.intellij.ide.ProcessCloseConfirmation
@@ -446,10 +450,8 @@ c:com.intellij.notification.Notification
 - <init>(java.lang.String,javax.swing.Icon,java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationType,com.intellij.notification.NotificationListener):V
 - addAction(com.intellij.openapi.actionSystem.AnAction):com.intellij.notification.Notification
 - addActions(java.util.Collection):com.intellij.notification.Notification
-- f:assertHasTitleOrContent():V
 - configureDoNotAskOption(java.lang.String,java.lang.String):V
 - expire():V
-- s:fire(com.intellij.notification.Notification,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.DataContext):V
 - s:get(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.notification.Notification
 - getActions():java.util.List
 - getBalloon():com.intellij.openapi.ui.popup.Balloon
@@ -1009,12 +1011,10 @@ f:com.intellij.openapi.fileTypes.StdFileTypes
 - com.intellij.openapi.fileTypes.FileTypes
 - s:CLASS:com.intellij.openapi.fileTypes.FileType
 - s:DTD:com.intellij.openapi.fileTypes.LanguageFileType
-- s:GUI_DESIGNER_FORM:com.intellij.openapi.fileTypes.FileType
 - s:HTML:com.intellij.openapi.fileTypes.LanguageFileType
 - s:JAVA:com.intellij.openapi.fileTypes.LanguageFileType
 - s:JS:com.intellij.openapi.fileTypes.LanguageFileType
 - s:JSP:com.intellij.openapi.fileTypes.LanguageFileType
-- s:JSPX:com.intellij.openapi.fileTypes.LanguageFileType
 - s:PROPERTIES:com.intellij.openapi.fileTypes.LanguageFileType
 - s:XHTML:com.intellij.openapi.fileTypes.LanguageFileType
 - s:XML:com.intellij.openapi.fileTypes.LanguageFileType
@@ -1935,7 +1935,6 @@ f:com.intellij.util.proxy.CommonProxy
 - s:getHostNameReliably(java.lang.String,java.net.InetAddress,java.net.URL):java.lang.String
 - s:getInstance():com.intellij.util.proxy.CommonProxy
 - s:isInstalledAssertion():V
-- removeCustom(java.lang.String):V
 - removeCustomAuth(java.lang.String):V
 - select(java.net.URI):java.util.List
 - select(java.net.URL):java.util.List

@@ -13,14 +13,23 @@ import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.Trap;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiDisjunctionType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Objects;
 
 public class TryCatchTrap implements Trap {
   private final PsiElement myStatement;

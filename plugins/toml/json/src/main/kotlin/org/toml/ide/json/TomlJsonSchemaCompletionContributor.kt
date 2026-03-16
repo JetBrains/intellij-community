@@ -39,7 +39,7 @@ import org.toml.lang.psi.TomlTableHeader
 import org.toml.lang.psi.ext.TomlLiteralKind
 import org.toml.lang.psi.ext.kind
 
-private class TomlJsonSchemaCompletionContributor : CompletionContributor() {
+internal class TomlJsonSchemaCompletionContributor : CompletionContributor() {
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
         if (!TomlExperiments.isJsonSchemaEnabled) return
         if (!TomlJsonSchemaCompletionFileFilter.shouldCompleteInFile(parameters.originalFile)) return

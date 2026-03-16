@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.dsl
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.service.completion.GradleLookupWeigher
+import com.intellij.gradle.java.groovy.service.completion.GradleLookupWeigher
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.junit.jupiter.api.Assertions.assertTrue

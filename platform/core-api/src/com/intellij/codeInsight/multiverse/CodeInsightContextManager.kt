@@ -12,7 +12,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.*
+import java.util.EventListener
 
 /**
  * Handles contexts for virtual files and allows running a code insight session with a given [CodeInsightContext].
@@ -45,24 +45,15 @@ interface CodeInsightContextManager {
   fun getCodeInsightContext(fileViewProvider: FileViewProvider): CodeInsightContext
 
   /**
-   * Internal API, use with care
+   * Internal API, use it with care.
+   *
+   * Does not infer the substitution for `anyContext`.
    *
    * @return the context associated with [fileViewProvider] or [anyContext] if it's not *yet* associated with any context
    */
   @Internal
   @RequiresReadLock
   fun getCodeInsightContextRaw(fileViewProvider: FileViewProvider): CodeInsightContext
-
-  /**
-   * DANGEROUS API, AUTHORIZED PERSONNEL ONLY
-   *
-   * Tries to assign context of [fileViewProvider] to [context] if it's not yet assigned to something else.
-   *
-   * @return the context assigned to [fileViewProvider]
-   */
-  @Internal
-  @Deprecated("DANGEROUS API, AUTHORIZED PERSONNEL ONLY")
-  fun getOrSetContext(fileViewProvider: FileViewProvider, context: CodeInsightContext): CodeInsightContext
 
   /**
    * Subscribe to this flow to listen for context changes.

@@ -12,7 +12,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPackage
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
+import java.util.StringJoiner
 
 
 fun createTestWildcardFilter(): String {

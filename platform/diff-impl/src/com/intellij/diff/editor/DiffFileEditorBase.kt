@@ -1,11 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.editor
 
+import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.util.FileEditorBase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,6 +30,16 @@ abstract class DiffFileEditorBase(
 ) : FileEditorBase() {
   companion object {
     private val LOG = logger<DiffFileEditorBase>()
+
+    fun editorSelectNotify(project: Project?, viewer: DiffEditorViewer, fileEditor: FileEditor) {
+      viewer.fireProcessorActivated()
+
+      val project = project ?: viewer.context.project
+      if (project != null) {
+        // DiffEditorTabTitleProvider relies on the FileEditor, that is not available for the initial query
+        FileEditorManager.getInstance(project).updateFilePresentation(fileEditor.file)
+      }
+    }
   }
 
   private val panel = MyPanel(component)

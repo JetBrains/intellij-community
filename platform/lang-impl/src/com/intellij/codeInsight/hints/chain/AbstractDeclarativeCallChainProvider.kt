@@ -1,7 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.chain
 
-import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.declarative.HintFormat
+import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
+import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
+import com.intellij.codeInsight.hints.declarative.InlayTreeSink
+import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
+import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
+import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project

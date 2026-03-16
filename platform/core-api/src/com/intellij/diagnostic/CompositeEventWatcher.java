@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.AWTEvent;
 
 import static java.util.Objects.requireNonNull;
 

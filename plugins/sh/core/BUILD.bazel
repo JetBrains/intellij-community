@@ -25,6 +25,7 @@ jvm_library(
     "//platform/refactoring",
     "//platform/statistics",
     "//platform/core-ui",
+    "//platform/forms_rt:java-guiForms-rt",
     "//libraries/fastutil",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",
@@ -34,11 +35,28 @@ jvm_library(
     "//platform/eel-impl",
     "//platform/analysis-api:analysis",
     "//platform/projectModel-api:projectModel",
+    "//platform/core-impl",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.sh.core` end
 
 ### auto-generated section `build intellij.sh.tests` start
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/sh/core",
+    "//platform/analysis-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "//platform/testRunner",
+  ]
+)
+
 jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.sh.tests",
@@ -50,6 +68,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",
+    "//platform/core-impl",
     "//plugins/sh/core",
     "//plugins/sh/backend",
     "//plugins/sh/plugin:plugin-main",
@@ -60,12 +79,14 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/analysis-impl",
+    "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//platform/eel",
     "//platform/eel-provider",
     "//platform/testRunner",
     "//platform/testRunner:testRunner_test_lib",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.sh.tests` end
 

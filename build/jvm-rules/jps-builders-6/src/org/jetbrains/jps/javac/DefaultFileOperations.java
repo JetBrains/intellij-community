@@ -5,8 +5,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.Iterators;
-import org.jetbrains.jps.util.Iterators.BooleanFunction;
-import org.jetbrains.jps.util.Iterators.Function;
 
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
@@ -14,7 +12,16 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -55,39 +62,23 @@ final class DefaultFileOperations implements FileOperations {
   @Override
   @NotNull
   public Iterable<File> listFiles(final File file, final boolean recursively) {
-    final Iterable<File> childrenIterable = Iterators.lazy(new Iterators.Provider<Iterable<File>>() {
-      @Override
-      public Iterable<File> get() {
-        final Iterable<File> children = listChildren(file);
-        return children == null? Collections.<File>emptyList() : children;
-      }
+    final Iterable<File> childrenIterable = Iterators.lazyIterable(() -> {
+      final Iterable<File> children = listChildren(file);
+      return children == null? Collections.emptyList() : children;
     });
-    return !recursively? childrenIterable : Iterators.flat(Iterators.map(childrenIterable, new Function<File, Iterable<File>>() {
-      @Override
-      public Iterable<File> fun(File ff) {
-        return asRecursiveIterable(ff);
-      }
-    }));
+    return !recursively? childrenIterable : Iterators.flat(Iterators.map(childrenIterable, this::asRecursiveIterable));
   }
 
   private Iterable<File> asRecursiveIterable(final File file) {
-    return Iterators.flat(Iterators.map(Iterators.asIterable(file), new Function<File, Iterable<File>>() {
-      @Override
-      public Iterable<File> fun(File f) {
-        final Iterable<File> children = listChildren(f);
-        if (children == null) { // not a dir
-          return Iterators.asIterable(f);
-        }
-        if (Iterators.isEmptyCollection(children)) {
-          return children;
-        }
-        return Iterators.flat(Iterators.map(children, new Function<File, Iterable<File>>() {
-          @Override
-          public Iterable<File> fun(File ff) {
-            return asRecursiveIterable(ff);
-          }
-        }));
+    return Iterators.flat(Iterators.map(Iterators.asIterable(file), f -> {
+      final Iterable<File> children = listChildren(f);
+      if (children == null) { // not a dir
+        return Iterators.asIterable(f);
       }
+      if (Iterators.isEmptyCollection(children)) {
+        return children;
+      }
+      return Iterators.flat(Iterators.map(children, ff -> asRecursiveIterable(ff)));
     }));
   }
 
@@ -232,12 +223,7 @@ final class DefaultFileOperations implements FileOperations {
     private final ZipFile myZip;
     private final Map<String, Collection<ZipEntry>> myPaths = new HashMap<>();
     private final Function<ZipEntry, JavaFileObject> myToFileObjectConverter;
-    private static final FileObjectKindFilter<ZipEntry> ourEntryFilter = new FileObjectKindFilter<>(new Function<ZipEntry, String>() {
-      @Override
-      public String fun(ZipEntry zipEntry) {
-        return zipEntry.getName();
-      }
-    });
+    private static final FileObjectKindFilter<ZipEntry> ourEntryFilter = new FileObjectKindFilter<>(ZipEntry::getName);
 
     ZipArchive(final File root, final String encodingName, final JavaFileManager.Location location) throws IOException {
       myZip = new ZipFile(root, ZipFile.OPEN_READ);
@@ -254,12 +240,7 @@ final class DefaultFileOperations implements FileOperations {
           children.add(entry);
         }
       }
-      myToFileObjectConverter = new Function<ZipEntry, JavaFileObject>() {
-        @Override
-        public JavaFileObject fun(ZipEntry zipEntry) {
-          return new ZipFileObject(root, myZip, zipEntry, encodingName, location);
-        }
-      };
+      myToFileObjectConverter = zipEntry -> new ZipFileObject(root, myZip, zipEntry, encodingName, location);
     }
 
     @NotNull
@@ -275,19 +256,11 @@ final class DefaultFileOperations implements FileOperations {
           entriesIterable = Iterators.flat(myPaths.values());
         }
         else {
-          final Iterable<Map.Entry<String, Collection<ZipEntry>>> baseIterable = Iterators.filter(myPaths.entrySet(), new BooleanFunction<Map.Entry<String, Collection<ZipEntry>>>() {
-            @Override
-            public boolean fun(Map.Entry<String, Collection<ZipEntry>> e) {
-              final String dir = e.getKey();
-              return dir.startsWith(relPath) && (dir.length() == relPath.length() || dir.charAt(relPath.length()) == '/');
-            }
+          final Iterable<Map.Entry<String, Collection<ZipEntry>>> baseIterable = Iterators.filter(myPaths.entrySet(), e -> {
+            final String dir = e.getKey();
+            return dir.startsWith(relPath) && (dir.length() == relPath.length() || dir.charAt(relPath.length()) == '/');
           });
-          entriesIterable = Iterators.flat(Iterators.map(baseIterable, new Function<Map.Entry<String, Collection<ZipEntry>>, Iterable<ZipEntry>>() {
-            @Override
-            public Iterable<ZipEntry> fun(Map.Entry<String, Collection<ZipEntry>> e) {
-              return e.getValue();
-            }
-          }));
+          entriesIterable = Iterators.flat(Iterators.map(baseIterable, Map.Entry::getValue));
         }
       }
       return Iterators.map(Iterators.filter(entriesIterable, ourEntryFilter.getFor(kinds)), myToFileObjectConverter);

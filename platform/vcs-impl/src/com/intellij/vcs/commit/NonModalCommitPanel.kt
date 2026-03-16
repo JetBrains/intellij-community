@@ -4,7 +4,13 @@ package com.intellij.vcs.commit
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButtonUtil
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.editor.colors.EditorColorsListener
@@ -32,7 +38,6 @@ import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcsUtil.VcsUIUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.LayoutFocusTraversalPolicy
@@ -235,11 +240,6 @@ abstract class NonModalCommitPanel(
     internal const val COMMIT_TOOLBAR_PLACE: String = "ChangesView.CommitToolbar"
     internal const val COMMIT_EDITOR_PLACE: String = "ChangesView.Editor"
     internal val COMMIT_OPTIONS_POPUP_MINIMUM_SIZE = 300
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Extracted to a separate file",
-                replaceWith = ReplaceWith("showAbove(component)", "com.intellij.vcsUtil.showAbove"))
-    fun JBPopup.showAbove(component: JComponent) = VcsUIUtil.showPopupAbove(this, component)
   }
 }
 

@@ -27,7 +27,7 @@ def boxplot(
     dodge: bool | Literal["auto"] = "auto",
     width: float = 0.8,
     gap: float = 0,
-    whis: float = 1.5,
+    whis: float | tuple[float, float] = 1.5,
     linecolor: ColorType = "auto",
     linewidth: float | None = None,
     fliersize: float | None = None,

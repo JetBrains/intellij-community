@@ -6,7 +6,6 @@ import com.sun.net.httpserver.HttpsConfigurator
 import com.sun.net.httpserver.HttpsParameters
 import com.sun.net.httpserver.HttpsServer
 import org.jetbrains.idea.maven.server.ssl.MavenTLSCertificateChecker
-import org.jetbrains.idea.maven.utils.MavenLog
 import java.net.InetSocketAddress
 import java.security.KeyStore
 import java.security.PrivateKey

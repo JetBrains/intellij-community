@@ -13,7 +13,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.CalledInAny
 
-private class DiffEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
+internal class DiffEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
   override fun getEditorTabTitle(project: Project, file: VirtualFile): @NlsContexts.TabTitle String? {
     val title = getEditorTabName(project, file) ?: return null
     return shortenTitleIfNeeded(project, file, title)

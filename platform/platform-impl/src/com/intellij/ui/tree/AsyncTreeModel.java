@@ -22,7 +22,11 @@ import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Obsolescent;
 import org.jetbrains.concurrency.Promise;
@@ -31,8 +35,21 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import java.util.*;
-import java.util.function.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.function.IntFunction;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
 
 import static java.util.Collections.emptyList;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
@@ -50,20 +67,24 @@ public final class AsyncTreeModel extends AbstractTreeModel
   private final TreeModelListener listener = new TreeModelAdapter() {
     @Override
     protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
+      var request = wrapRequest(event instanceof RequestedTreeModelUpdateEvent requested ? requested.getRequest() : null);
       TreePath path = event.getTreePath();
       if (path == null) {
         // request a new root from model according to the specification
-        submit(new CmdGetRoot("Reload root", null));
+        submit(new CmdGetRoot(request, "Reload root", null));
         return;
       }
       Object object = path.getLastPathComponent();
       if (object == null) {
         LOG.warn("unsupported path: " + path);
+        if (request != null) {
+          request.finished();
+        }
         return;
       }
       if (path.getParentPath() == null && type == EventType.StructureChanged) {
         // set a new root object according to the specification
-        submit(new CmdGetRoot("Update root", object));
+        submit(new CmdGetRoot(request, "Update root", object));
         return;
       }
       onValidThread(() -> {
@@ -80,17 +101,25 @@ public final class AsyncTreeModel extends AbstractTreeModel
           AsyncTreeModel.this.treeNodesChanged(event.getTreePath(), null, null);
         }
         else if (type == EventType.NodesInserted) {
-          submit(new CmdGetChildren("Insert children", node, false));
+          submit(new CmdGetChildren(request, "Insert children", node, false));
         }
         else if (type == EventType.NodesRemoved) {
-          submit(new CmdGetChildren("Remove children", node, false));
+          submit(new CmdGetChildren(request, "Remove children", node, false));
         }
         else {
-          submit(new CmdGetChildren("Update children", node, true));
+          submit(new CmdGetChildren(request, "Update children", node, true));
+        }
+        // If no command was submitted, report the request as finished.
+        if (request != null && request.commandsInProgress.get() == 0) {
+          request.finished();
         }
       });
     }
   };
+  
+  private static @Nullable RequestHandler wrapRequest(@Nullable TreeModelUpdateRequest request) {
+    return request == null ? null : new RequestHandler(request);
+  }
 
   public AsyncTreeModel(@NotNull TreeModel model, @NotNull Disposable parent) {
     this(model, true, parent);
@@ -360,7 +389,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     if (disposed) {
       return rejectedPromise();
     }
-    return tree.queue.promise(command -> submit(command), () -> new CmdGetRoot("Load root", null));
+    return tree.queue.promise(command -> submit(command), () -> new CmdGetRoot(null, "Load root", null));
   }
 
   private @NotNull Promise<Node> promiseChildren(@NotNull Node node) {
@@ -378,7 +407,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
       else {
         node.setLoading(null);
       }
-      return new CmdGetChildren("Load children", node, false);
+      return new CmdGetChildren(null, "Load children", node, false);
     });
   }
 
@@ -429,7 +458,11 @@ public final class AsyncTreeModel extends AbstractTreeModel
       return emptyList();
     }
     if (node.isLoadingRequired()) {
-      promiseChildren(node);
+      if (object instanceof CachedTreePresentationNode) {
+        node.setLoading(new Node(new LoadingNode(), LeafState.ALWAYS));
+      } else {
+        promiseChildren(node);
+      }
     }
     return node.getChildren();
   }
@@ -534,17 +567,57 @@ public final class AsyncTreeModel extends AbstractTreeModel
     return emptyList();
   }
 
+  private static class RequestHandler {
+    private final @NotNull TreeModelUpdateRequest request;
+    private final @NotNull AtomicInteger commandsInProgress = new AtomicInteger();
+
+    RequestHandler(@NotNull TreeModelUpdateRequest request) {
+      this.request = request;
+    }
+
+    void commandStarted() {
+      commandsInProgress.incrementAndGet();
+    }
+
+    void commandFinished() {
+      if (commandsInProgress.decrementAndGet() == 0) {
+        request.finished();
+      }
+    }
+
+    void nodesLoaded(int count) {
+      request.nodesLoaded(count);
+    }
+
+    void finished() {
+      request.finished();
+    }
+  }
+
   private abstract static class Command implements Obsolescent {
     final AsyncPromise<Node> promise = new AsyncPromise<>();
+    final @Nullable RequestHandler request;
     final String name;
     final Object object;
     volatile boolean started;
 
-    Command(@NotNull @NonNls String name, Object object) {
+    Command(@Nullable RequestHandler request, @NotNull @NonNls String name, Object object) {
+      this.request = request;
+      if (request != null) {
+        request.commandStarted();
+        promise.onProcessed(loaded -> {
+          if (loaded != null) {
+            request.nodesLoaded(getLoadedNodeCount(loaded));
+          }
+          request.commandFinished();
+        });
+      }
       this.name = name;
       this.object = object;
       if (LOG.isTraceEnabled()) LOG.debug("create command: ", this);
     }
+    
+    abstract int getLoadedNodeCount(@NotNull Node loaded);
 
     boolean canRunAsync() {
       return false;
@@ -606,9 +679,14 @@ public final class AsyncTreeModel extends AbstractTreeModel
   }
 
   private final class CmdGetRoot extends Command {
-    private CmdGetRoot(@NotNull @NonNls String name, Object object) {
-      super(name, object);
+    private CmdGetRoot(@Nullable RequestHandler request, @NotNull @NonNls String name, Object object) {
+      super(request, name, object);
       tree.queue.add(this, old -> old.started || old.object != object);
+    }
+
+    @Override
+    int getLoadedNodeCount(@NotNull Node loaded) {
+      return 1;
     }
 
     @Override
@@ -640,7 +718,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
         tree.fixEqualButNotSame(root, loaded.object);
         if (LOG.isTraceEnabled()) LOG.debug("same root: ", root.object);
         if (!root.isLoadingRequired()) {
-          submit(new CmdGetChildren("Update root children", root, true));
+          submit(new CmdGetChildren(request, "Update root children", root, true));
         }
         tree.queue.done(this, root);
         return;
@@ -681,8 +759,8 @@ public final class AsyncTreeModel extends AbstractTreeModel
     private final Node node;
     private volatile boolean deep;
 
-    CmdGetChildren(@NotNull @NonNls String name, @NotNull Node node, boolean deep) {
-      super(name, node.object);
+    CmdGetChildren(@Nullable RequestHandler request, @NotNull @NonNls String name, @NotNull Node node, boolean deep) {
+      super(request, name, node.object);
       this.node = node;
       if (deep) {
         this.deep = true;
@@ -693,6 +771,11 @@ public final class AsyncTreeModel extends AbstractTreeModel
         }
         return true;
       });
+    }
+
+    @Override
+    int getLoadedNodeCount(@NotNull Node loaded) {
+      return loaded.getChildren().size();
     }
 
     @Override
@@ -895,7 +978,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
       if (!reload.isEmpty()) {
         for (Node child : newChildren) {
           if (reload.contains(child.object)) {
-            submit(new CmdGetChildren("Update children recursively", child, true));
+            submit(new CmdGetChildren(request, "Update children recursively", child, true));
           }
         }
       }

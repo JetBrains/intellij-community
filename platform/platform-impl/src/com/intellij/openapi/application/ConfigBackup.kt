@@ -10,8 +10,12 @@ import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.util.*
-import kotlin.io.path.*
+import java.util.UUID
+import kotlin.io.path.createDirectory
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 
 @ApiStatus.Internal
 class ConfigBackup(private val configDir: Path) {

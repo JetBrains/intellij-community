@@ -10,12 +10,14 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.grazie.core" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
@@ -27,19 +29,19 @@
     <orderEntry type="module" module-name="intellij.platform.ml.impl" />
     <orderEntry type="module-library">
       <library name="ai.grazie.spell.gec.engine.local.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:gec-spell-engine-local:0.8.74">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:gec-spell-engine-local:0.8.122">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.74/gec-spell-engine-local-0.8.74.jar">
-              <sha256sum>9bc5a572406da07a704d5e71e662dd183dfe9385e7c06cab1a49debc5a355638</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.122/gec-spell-engine-local-0.8.122.jar">
+              <sha256sum>2473c004da638741ac5f96586f1fadb0003bc2d08ae3c2341e24a71e4b0a314a</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.74/gec-spell-engine-local-0.8.74.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.122/gec-spell-engine-local-0.8.122.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.74/gec-spell-engine-local-0.8.74-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.122/gec-spell-engine-local-0.8.122-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.tree.TreeSelectionModel;
 import java.io.File;
 

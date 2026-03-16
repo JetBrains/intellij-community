@@ -10,7 +10,12 @@ import com.intellij.xdebugger.frame.XNamedValue
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.*
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutinePreflightFrame
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackFrameItem
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.CreationCoroutineStackFrameItem
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.RunningCoroutineStackFrameItem
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.fetchCoroutineStacksInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.safeSkipCoroutineStackFrameProxy
 

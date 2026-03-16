@@ -10,6 +10,7 @@ import java.awt.Image
 
 @Internal
 @VisibleForTesting
+@ConsistentCopyVisibility
 data class DocumentationData internal constructor(
   internal val content: DocumentationContentData,
   internal val links: LinkData = LinkData(),

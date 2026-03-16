@@ -8,13 +8,12 @@ import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.createBuildTasks
-import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.BuildUtils.checkedReplace
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginVersionEvaluator
 import org.jetbrains.intellij.build.impl.PluginVersionEvaluatorResult
 import org.jetbrains.intellij.build.impl.consumeDataByPrefix
-import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.intellij.build.impl.createBuildContext
 import java.nio.file.Path
 
 abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getProperty("kotlin.plugin.kind")?.let(KotlinPluginKind::valueOf) ?: KotlinPluginKind.IJ) {
@@ -44,6 +43,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlin.base.scripting.k1",
       "intellij.kotlin.base.scripting",
       "intellij.kotlin.base.scripting.shared",
+      "intellij.kotlin.base.scripting.scratch.definition",
       "intellij.kotlin.base.analysis.platform",
       "intellij.kotlin.base.analysis",
       "intellij.kotlin.base.codeInsight",
@@ -67,7 +67,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.jvm",
       "kotlin.jvm.k1",
       "intellij.kotlin.compilerReferenceIndex",
-      "kotlin.compiler-plugins.parcelize.common",
+      "intellij.kotlin.compilerPlugins.parcelize.common",
       "kotlin.compiler-plugins.parcelize.k1",
       "intellij.kotlin.compilerPlugins.parcelize",
       "kotlin.compiler-plugins.parcelize.gradle",
@@ -115,6 +115,7 @@ Android Studio: workaround for b/218317110 */
       "kotlin.gradle.scripting.shared",
       "intellij.kotlin.gradle.codeInsight.groovy",
       "intellij.kotlin.gradle.codeInsight.toml",
+      "intellij.kotlin.gradle.codeInsight.toml.k2",
       "intellij.kotlin.native",
       "intellij.kotlin.grazie",
       "intellij.kotlin.runConfigurations.jvm",
@@ -160,9 +161,9 @@ Android Studio: workaround for b/218317110 */
       "intellij.kotlin.jvm.debugger.coroutines",
       "kotlin.jvm-debugger.sequence.k1",
       "intellij.kotlin.jvm.debugger.eval4j",
-      "kotlin.uast.uast-kotlin-base",
+      "intellij.kotlin.uast.base",
       "kotlin.uast.uast-kotlin",
-      "kotlin.uast.uast-kotlin-idea-base",
+      "intellij.kotlin.uast.idea.base",
       "kotlin.uast.uast-kotlin-idea",
       "intellij.kotlin.i18n",
       "intellij.kotlin.migration",
@@ -212,10 +213,10 @@ Android Studio: workaround for b/218317110 */
       "intellij.kotlin.refactorings.move",
       "intellij.kotlin.refactorings.rename",
       "intellij.kotlin.performanceExtendedPlugin",
-      "kotlin.bundled-compiler-plugins-support",
+      "intellij.kotlin.compilerPlugins.support.bundled",
       "kotlin.jsr223",
       "intellij.kotlin.internal",
-      "intellij.kotlin.base.serialization",
+      "intellij.kotlin.base.serialization"
     )
 
     private val KOTLIN_SCRIPTING_LIBRARIES = java.util.List.of(
@@ -348,7 +349,7 @@ Android Studio: workaround for b/218317110 */
   }
 
   suspend fun build(home: Path, properties: ProductProperties) {
-    val context = BuildContextImpl.createContext(
+    val context = createBuildContext(
       setupTracer = true,
       projectHome = home,
       productProperties = properties,
@@ -389,8 +390,7 @@ private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayo
   spec.withProjectLibrary(kotlincKotlinCompilerCommon)
 
   spec.withPatch { patcher, context ->
-    val library = context.project.libraryCollection.findLibrary(kotlincKotlinCompilerCommon)!!
-    val jars = library.getPaths(JpsOrderRootType.COMPILED)
+    val jars = context.outputProvider.findLibraryRoots(kotlincKotlinCompilerCommon, moduleLibraryModuleName = null)
     if (jars.size != 1) {
       throw IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
     }
@@ -404,8 +404,7 @@ private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayo
 private fun withKotlincInPluginDirectory(libName: String = "kotlin-dist", target: String = "kotlinc", spec: PluginLayout.PluginLayoutSpec) {
   spec.withGeneratedResources { targetDir, context ->
     val distLibName = "kotlinc.$libName"
-    val library = context.project.libraryCollection.findLibrary(distLibName)!!
-    val jars = library.getPaths(JpsOrderRootType.COMPILED)
+    val jars = context.outputProvider.findLibraryRoots(distLibName, moduleLibraryModuleName = null)
     if (jars.size != 1) {
       throw IllegalStateException("$distLibName is expected to have only one jar")
     }

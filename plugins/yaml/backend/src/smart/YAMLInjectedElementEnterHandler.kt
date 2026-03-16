@@ -23,7 +23,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.TreeSet
 
 class YAMLInjectedElementEnterHandler : EnterHandlerDelegate {
 

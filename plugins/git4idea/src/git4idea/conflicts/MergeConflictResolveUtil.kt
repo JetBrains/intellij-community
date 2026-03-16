@@ -5,7 +5,11 @@ import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.DiffRequestFactory
 import com.intellij.diff.chains.DiffRequestProducerException
-import com.intellij.diff.merge.*
+import com.intellij.diff.merge.MergeCallback
+import com.intellij.diff.merge.MergeRequest
+import com.intellij.diff.merge.MergeRequestProducer
+import com.intellij.diff.merge.MergeResult
+import com.intellij.diff.merge.MergeUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState

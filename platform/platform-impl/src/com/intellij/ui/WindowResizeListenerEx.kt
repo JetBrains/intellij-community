@@ -7,6 +7,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
@@ -80,6 +81,9 @@ private fun defaultZone(): Int = if (SystemInfo.isMac) {
 else if (SystemInfo.isWindows) {
   Registry.intValue("popup.resize.zone.windows", 4)
 }
+else if (StartupUiUtil.isWaylandToolkit()) {
+  Registry.intValue("popup.resize.zone.wayland", 8)
+}
 else {
-  Registry.intValue("popup.resize.zone.linux", 4)
+  Registry.intValue("popup.resize.zone.x11", 4)
 }

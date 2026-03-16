@@ -5,9 +5,9 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -23,14 +23,12 @@ import com.intellij.util.indexing.testEntities.ReferredTestEntityId
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntityData) : ReferredTestEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntityData) : ReferredTestEntity,
+                                                                                        WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
-
-    private val connections = listOf<ConnectionId>(
-    )
+    private val connections = listOf<ConnectionId>()
 
   }
 
@@ -41,7 +39,6 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
       readField("name")
       return dataSource.name
     }
-
   override val file: VirtualFileUrl
     get() {
       readField("file")
@@ -59,8 +56,8 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
   }
 
 
-  internal class Builder(result: ReferredTestEntityData?) : ModifiableWorkspaceEntityBase<ReferredTestEntity, ReferredTestEntityData>(
-    result), ReferredTestEntityBuilder {
+  internal class Builder(result: ReferredTestEntityData?) :
+    ModifiableWorkspaceEntityBase<ReferredTestEntity, ReferredTestEntityData>(result), ReferredTestEntityBuilder {
     internal constructor() : this(ReferredTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -73,16 +70,14 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
           error("Entity ReferredTestEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
       index(this, "file", this.file)
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -122,7 +117,6 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
         changedProperty.add("entitySource")
 
       }
-
     override var name: String
       get() = getEntityData().name
       set(value) {
@@ -130,7 +124,6 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
         getEntityData(true).name = value
         changedProperty.add("name")
       }
-
     override var file: VirtualFileUrl
       get() = getEntityData().file
       set(value) {
@@ -143,6 +136,7 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
 
     override fun getEntityClass(): Class<ReferredTestEntity> = ReferredTestEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -180,8 +174,7 @@ internal class ReferredTestEntityData : WorkspaceEntityData<ReferredTestEntity>(
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return ReferredTestEntity(name, file, entitySource) {
-    }
+    return ReferredTestEntity(name, file, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
@@ -192,9 +185,7 @@ internal class ReferredTestEntityData : WorkspaceEntityData<ReferredTestEntity>(
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ReferredTestEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.name != other.name) return false
     if (this.file != other.file) return false
@@ -204,9 +195,7 @@ internal class ReferredTestEntityData : WorkspaceEntityData<ReferredTestEntity>(
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ReferredTestEntityData
-
     if (this.name != other.name) return false
     if (this.file != other.file) return false
     return true

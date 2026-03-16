@@ -46,11 +46,13 @@ import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.openapi.vfs.newvfs.NewVirtualFile.asCacheAvoiding;
 
 public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements NavigatableWithText, PathElementIdProvider, NodeWithMeasurableExpand {
   // the chain from a parent directory to this one usually contains only one virtual file
@@ -178,8 +180,23 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
   @Override
   public @NotNull String getPathElementId() {
-    var value = getEqualityObject();
-    return value == null ? "" : value.toString();
+    if (shouldUseSimplifiedProjectTreeState()) {
+      String name = getName();
+      return name == null ? "<noname>" : name;
+    }
+    else {
+      var value = getEqualityObject();
+      return value == null ? "" : value.toString();
+    }
+  }
+
+  @Override
+  public @Nullable String getPathElementType() {
+    if (shouldUseSimplifiedProjectTreeState()) {
+      return GENERIC_PROJECT_VIEW_NODE_TYPE;
+    } else {
+      return null;
+    }
   }
 
   protected static boolean canRealModuleNameBeHidden() {
@@ -426,7 +443,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   public boolean isAlwaysShowPlus() {
     final VirtualFile file = getVirtualFile();
     if (file == null || !file.isValid()) return false;
-    VirtualFile[] children = file.getChildren();
+    VirtualFile[] children = asCacheAvoiding(file).getChildren();
     if (ArrayUtil.isEmpty(children)) return false;
     if (ContainerUtil.exists(children, child -> !child.isDirectory())) return true;
     ViewSettings settings = getSettings();

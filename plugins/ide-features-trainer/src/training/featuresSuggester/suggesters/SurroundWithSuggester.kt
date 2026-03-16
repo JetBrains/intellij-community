@@ -7,7 +7,12 @@ import training.featuresSuggester.FeatureSuggesterBundle
 import training.featuresSuggester.NoSuggestion
 import training.featuresSuggester.SuggesterSupport
 import training.featuresSuggester.Suggestion
-import training.featuresSuggester.actions.*
+import training.featuresSuggester.actions.Action
+import training.featuresSuggester.actions.ChildAddedAction
+import training.featuresSuggester.actions.ChildReplacedAction
+import training.featuresSuggester.actions.ChildrenChangedAction
+import training.featuresSuggester.actions.EditorTextInsertedAction
+import training.featuresSuggester.actions.PsiAction
 import training.util.WeakReferenceDelegator
 
 class SurroundWithSuggester : AbstractFeatureSuggester() {

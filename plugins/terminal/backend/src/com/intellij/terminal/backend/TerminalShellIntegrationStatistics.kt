@@ -1,9 +1,9 @@
 package com.intellij.terminal.backend
 
 import com.intellij.openapi.project.Project
-import fleet.multiplatform.shims.ConcurrentHashMap
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
 
 internal class TerminalShellIntegrationStatisticsListener(private val project: Project) : TerminalShellIntegrationEventsListener {
@@ -15,7 +15,7 @@ internal class TerminalShellIntegrationStatisticsListener(private val project: P
     ReworkedTerminalUsageCollector.logCommandStarted(project, command)
   }
 
-  override fun commandFinished(command: String, exitCode: Int, currentDirectory: String) {
+  override fun commandFinished(command: String, exitCode: Int, currentDirectory: String?) {
     val now = System.currentTimeMillis()
     var duration = 0L
     // All this defensive coding is likely unnecessary, as this thing is probably invoked in a single thread,

@@ -1,0 +1,12 @@
+JsonFile: n_structure_unclosed_array_unfinished_false.json
+  JsonArray
+    PsiElement([)('[')
+    PsiWhiteSpace(' ')
+    JsonBooleanLiteral
+      PsiElement(true)('true')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    JsonReferenceExpression
+      PsiElement(IDENTIFIER)('fals')
+    PsiErrorElement:',' or ']' expected
+      <empty list>

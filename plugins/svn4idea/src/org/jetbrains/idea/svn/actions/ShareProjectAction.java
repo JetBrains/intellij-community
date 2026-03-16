@@ -17,18 +17,27 @@ import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
-import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.ShareDialog;
 
 import static com.intellij.openapi.progress.ProgressManager.progress;
-import static com.intellij.openapi.ui.Messages.*;
+import static com.intellij.openapi.ui.Messages.YES;
+import static com.intellij.openapi.ui.Messages.getWarningIcon;
+import static com.intellij.openapi.ui.Messages.showInfoMessage;
+import static com.intellij.openapi.ui.Messages.showYesNoDialog;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.ArrayUtil.isEmpty;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
-import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.*;
+import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.BRANCHES_NAME;
+import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.TAGS_NAME;
+import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.TRUNK_NAME;
 
 public class ShareProjectAction extends BasicAction {
 

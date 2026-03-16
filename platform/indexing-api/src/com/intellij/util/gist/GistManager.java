@@ -12,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * A helper class for working with file gists: associating persistent data with current VFS or PSI file contents.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/indexing-and-psi-stubs.html#gists">Gists (IntelliJ Platform Docs)</a>
  */
 @NonExtendable
 public abstract class GistManager {

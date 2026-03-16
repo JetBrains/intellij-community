@@ -14,14 +14,23 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.CacheManager;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopeUtil;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /** Search engine implementation based on {@link com.intellij.find.ngrams.TrigramIndex} */
 @ApiStatus.Internal

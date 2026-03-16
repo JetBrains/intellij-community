@@ -4,8 +4,8 @@ package com.intellij.execution.services;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.BorderLayout;
 
 /**
  * Component wrapper for service view descriptor with complex content components,

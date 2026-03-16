@@ -10,8 +10,15 @@ import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.plugins.emojipicker.EmojiSkinTone;
 import org.jetbrains.plugins.emojipicker.service.EmojiService;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.Component;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Point;
+import java.awt.RenderingHints;
 import java.awt.font.TextLayout;
 import java.util.EnumMap;
 import java.util.Map;

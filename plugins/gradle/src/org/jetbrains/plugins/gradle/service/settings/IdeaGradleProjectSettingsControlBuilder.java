@@ -21,11 +21,21 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
@@ -51,16 +61,32 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -68,7 +94,9 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil.INSE
 import static com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil.createUniqueSdkName;
 import static com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel.createJdkComboBoxModel;
 import static com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo;
-import static org.jetbrains.plugins.gradle.util.GradleJvmComboBoxUtil.*;
+import static org.jetbrains.plugins.gradle.util.GradleJvmComboBoxUtil.addUsefulGradleJvmReferences;
+import static org.jetbrains.plugins.gradle.util.GradleJvmComboBoxUtil.getSelectedGradleJvmReference;
+import static org.jetbrains.plugins.gradle.util.GradleJvmComboBoxUtil.setSelectedGradleJvmReference;
 import static org.jetbrains.plugins.gradle.util.GradleJvmResolutionUtil.getGradleJvmLookupProvider;
 import static org.jetbrains.plugins.gradle.util.GradleJvmUtil.nonblockingResolveGradleJvmInfo;
 
@@ -488,7 +516,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   public void apply(GradleProjectSettings settings) {
     settings.setCompositeBuild(myInitialSettings.getCompositeBuild());
     if (myGradleHomePathField != null) {
-      Path gradleHomePath = Path.of(FileUtil.toCanonicalPath(myGradleHomePathField.getText()));
+      Path gradleHomePath = Path.of(myGradleHomePathField.getText().trim());
       Path finalGradleHomePath;
       if (GradleInstallationManager.getInstance().isGradleSdkHome(myProjectRef.get(), gradleHomePath)) {
         finalGradleHomePath = gradleHomePath;
@@ -501,13 +529,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
           });
         }
       }
-      if (finalGradleHomePath == null) {
-        settings.setGradleHome(null);
-      }
-      else {
-        String finalGradleHome = finalGradleHomePath.toString();
-        settings.setGradleHome(finalGradleHome);
-        GradleUtil.storeLastUsedGradleHome(finalGradleHome);
+      settings.setGradleHomePath(finalGradleHomePath);
+      if (finalGradleHomePath != null) {
+        GradleUtil.storeLastUsedGradleHome(finalGradleHomePath.toString());
       }
     }
 
@@ -605,12 +629,12 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     }
 
     if (myGradleHomePathField == null) return false;
-    String gradleHome = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
+    String gradleHome = myGradleHomePathField.getText().trim();
     if (StringUtil.isEmpty(gradleHome)) {
-      return !StringUtil.isEmpty(myInitialSettings.getGradleHome());
+      return myInitialSettings.getGradleHomePath() != null;
     }
     else {
-      return !gradleHome.equals(myInitialSettings.getGradleHome());
+      return !Path.of(gradleHome).equals(myInitialSettings.getGradleHomePath());
     }
   }
 
@@ -626,11 +650,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
                     @Nullable WizardContext wizardContext) {
     updateProjectRef(project, wizardContext);
 
-    String gradleHome = settings.getGradleHome();
+    Path gradleHomePath = settings.getGradleHomePath();
     if (myGradleHomePathField != null) {
       GradleRuntimeTargetUI.installActionListener(myGradleHomePathField, myProjectRef.get(),
                                                   GradleBundle.message("gradle.settings.text.home.path"));
-      myGradleHomePathField.setText(gradleHome == null ? "" : gradleHome);
+      myGradleHomePathField.setText(gradleHomePath == null ? "" : gradleHomePath.toString());
       myGradleHomePathField.getTextField().setForeground(GradleLocationSettingType.EXPLICIT_CORRECT.getColor());
     }
     resetImportControls(settings);
@@ -640,12 +664,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     resetWrapperControls(settings.getExternalProjectPath(), settings, isDefaultModuleCreation);
     resetGradleDelegationControls(wizardContext);
 
-    if (StringUtil.isEmpty(gradleHome)) {
+    if (gradleHomePath == null) {
       myGradleHomeSettingType = GradleLocationSettingType.UNKNOWN;
       deduceGradleHomeIfPossible();
     }
     else {
-      Path gradleHomePath = Path.of(gradleHome);
       if (GradleInstallationManager.getInstance().isGradleSdkHome(project, gradleHomePath)) {
         myGradleHomeSettingType = GradleLocationSettingType.EXPLICIT_CORRECT;
       }

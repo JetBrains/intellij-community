@@ -4,8 +4,6 @@ import com.intellij.grazie.jlanguage.Lang
 
 class HunspellGermanTest : HunspellTest() {
 
-  override val enableGrazieChecker: Boolean = true
-
   fun `test hunspell de`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
     runHighlightTestForFile("hunspell/Hunspell.java")

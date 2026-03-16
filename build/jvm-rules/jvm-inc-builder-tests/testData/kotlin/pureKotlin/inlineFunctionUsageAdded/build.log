@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_inlineFunctionUsageAdded-a.kotlin_module
+  UsageKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/inlineFunctionUsageAdded/a/usage.kt
+End of files
+------------------------------------------
+Exit code: OK

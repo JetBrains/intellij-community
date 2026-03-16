@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.frontend.changes.tree
 
+import com.intellij.platform.vcs.impl.frontend.changes.getBranchPresentationBackground
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.ChangesBrowserNodeRenderer
+import com.intellij.platform.vcs.impl.frontend.shelf.tree.EntityChangesBrowserNode
+import com.intellij.platform.vcs.impl.shared.rhizome.RepositoryNodeEntity
 import com.intellij.ui.JBColor
 import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.SimpleTextAttributes
@@ -12,9 +15,6 @@ import com.intellij.util.ui.CheckboxIcon
 import com.intellij.util.ui.ColorIcon
 import com.intellij.util.ui.JBUI.insets
 import com.intellij.util.ui.UIUtil.getTreeBackground
-import com.intellij.platform.vcs.impl.frontend.changes.getBranchPresentationBackground
-import com.intellij.platform.vcs.impl.frontend.shelf.tree.EntityChangesBrowserNode
-import com.intellij.platform.vcs.impl.shared.rhizome.RepositoryNodeEntity
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color

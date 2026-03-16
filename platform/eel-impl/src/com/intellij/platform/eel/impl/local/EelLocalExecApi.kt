@@ -12,19 +12,38 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesDeferred
+import com.intellij.platform.eel.EelExecPosixApi
+import com.intellij.platform.eel.EelExecWindowsApi
+import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelPosixProcess
+import com.intellij.platform.eel.EelUserPosixInfo
+import com.intellij.platform.eel.EelWindowsProcess
+import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.LocalEelExecApi
 import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.eel.impl.bindProcessToScopeIfSet
+import com.intellij.platform.eel.impl.commandLineForDebug
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
-import com.intellij.platform.eel.provider.utils.bindToScope
 import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.ShellEnvironmentReader
 import com.intellij.util.fastutil.skip
 import com.pty4j.PtyProcess
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -33,7 +52,11 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isExecutable
+import kotlin.io.path.isRegularFile
 
 @OptIn(EelDelicateApi::class)
 @ApiStatus.Internal
@@ -49,7 +72,7 @@ class EelLocalExecPosixApi(
       LocalEelPosixProcess.create(process, process::setWinSize)
     else
       LocalEelPosixProcess.create(process, null)
-    generatedBuilder.scope?.let { r.bindToScope(it) }
+    generatedBuilder.bindProcessToScopeIfSet(r)
     return r
   }
 
@@ -204,12 +227,12 @@ class EelLocalExecWindowsApi : EelExecWindowsApi, LocalEelExecApi {
     generatedBuilder: EelExecApi.ExecuteProcessOptions,
   ): EelWindowsProcess {
     val process = executeImpl(generatedBuilder)
-    val commandLineForDebug = (listOf(generatedBuilder.exe) + generatedBuilder.args).joinToString(" ")
+    val commandLineForDebug = generatedBuilder.commandLineForDebug
     val r = if (process is PtyProcess)
       LocalEelWindowsProcess.create(process, process::setWinSize, commandLineForDebug)
     else
       LocalEelWindowsProcess.create(process, null, commandLineForDebug)
-    generatedBuilder.scope?.let { r.bindToScope(it) }
+    generatedBuilder.bindProcessToScopeIfSet(r)
     return r
   }
 

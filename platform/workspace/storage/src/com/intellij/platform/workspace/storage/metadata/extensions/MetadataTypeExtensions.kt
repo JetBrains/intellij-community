@@ -2,7 +2,14 @@
 package com.intellij.platform.workspace.storage.metadata.extensions
 
 import com.intellij.platform.workspace.storage.metadata.StorageMetadata
-import com.intellij.platform.workspace.storage.metadata.model.*
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.metadata.model.ExtPropertyMetadata
+import com.intellij.platform.workspace.storage.metadata.model.ExtendableClassMetadata
+import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
+import com.intellij.platform.workspace.storage.metadata.model.OwnPropertyMetadata
+import com.intellij.platform.workspace.storage.metadata.model.PropertyMetadata
+import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
+import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 
 private const val UNKNOWN_METADATA_TYPE = "Unknown metadata type"
 

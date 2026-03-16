@@ -11,7 +11,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,11 +145,12 @@ final class FileStatus {
   public @NonNls String toString() {
     return
       (defensivelyMarked.isEmpty() ? "" : "defensivelyMarked = " + defensivelyMarked)
-      +(wolfPassFinished ? "" : "; wolfPassFinished = "+wolfPassFinished)
-      +(errorFound ? "; errorFound = "+errorFound : "")
+      +(wolfPassFinished ? "" : "; wolfPassFinished")
+      +(errorFound ? "; errorFound" : "")
       +(dirtyScopes.isEmpty() ? "" : "; dirtyScopes: (" +
+        (allDirtyScopesAreNull() ? "all null" :
                                      StringUtil.join(dirtyScopes.int2ObjectEntrySet(), e ->
-        " pass: "+e.getIntKey()+" -> "+(e.getValue() == WholeFileDirtyMarker.INSTANCE ? "Whole file" : e.getValue()), ";") + ")");
+        " pass: "+e.getIntKey()+" -> "+(e.getValue() == WholeFileDirtyMarker.INSTANCE ? "Whole file" : e.getValue()), ";")) + ")");
   }
 
   void setDirtyScope(int passId, @Nullable RangeMarker scope) {

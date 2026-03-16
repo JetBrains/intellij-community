@@ -3,70 +3,48 @@ package com.intellij.devkit.workspaceModel
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.devkit.workspaceModel.codegen.writer.CodeWriter
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.psi.PsiManager
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import kotlinx.coroutines.runBlocking
+import org.editorconfig.Utils
+import org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
+import org.jetbrains.kotlin.psi.KtFile
+import java.nio.file.Files
 import java.nio.file.Path
 
 abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() {
-  protected val INDENT_SIZE = 2
-  protected val TAB_SIZE = 2
-  protected val CONTINUATION_INDENT_SIZE = 2
-
   override fun setUp() {
     super.setUp()
+    IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
     // Load codegen jar on warm-up phase
     runBlocking {
       CodegenJarLoader.getInstance(project).getClassLoader()
     }
-    val settings = EditorSettingsExternalizable.getInstance()
-    val oldTrailingSpacesValue = settings.stripTrailingSpaces
-    settings.stripTrailingSpaces = EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE
-
-    //set up code style accordingly to settings used in intellij project to ensure that generated code follows it
-    val codeStyleSettings = CodeStyle.createTestSettings()
-
-    val state = JDOMUtil.load(Path.of(PathManager.getHomePath(), ".idea", "codeStyles", "Project.xml")).children.first()
-
-    codeStyleSettings.readExternal(state)
-    CodeStyle.setTemporarySettings(project, codeStyleSettings)
-    disposeOnTearDown(Disposable {
-      settings.stripTrailingSpaces = oldTrailingSpacesValue
-    })
+    // KotlinLightCodeInsightFixtureTestCase sets temporary settings
+    CodeStyle.dropTemporarySettings(project)
+    // Enable .editorconfig in tests
+    EditorConfigCodeStyleSettingsModifier.Handler.setEnabledInTests(true)
+    Utils.isEnabledInTests = true
   }
 
-  override fun tearDown() {
-    try {
-      CodeStyle.dropTemporarySettings(project)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
-  }
-
-  override fun getProjectDescriptor(): LightProjectDescriptor = WorkspaceEntitiesProjectDescriptor(shouldAddWorkspaceStorageLibrary,
-                                                                                                   shouldAddWorkspaceJpsEntityLibrary)
+  override fun getProjectDescriptor(): LightProjectDescriptor =
+    WorkspaceEntitiesProjectDescriptor(shouldAddWorkspaceStorageLibrary, shouldAddWorkspaceJpsEntityLibrary)
 
   /**
    * Returns `true` if compiled content of intellij.platform.workspaceModel.storage should be added as a library.
@@ -80,57 +58,76 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
   protected open val shouldAddWorkspaceJpsEntityLibrary: Boolean
     get() = true
 
+  private fun onTheFlyReformat(virtualFile: VirtualFile) {
+    if (virtualFile.isDirectory) {
+      virtualFile.getChildren()?.forEach { onTheFlyReformat(it) }
+    }
+    else {
+      val psiFile = PsiManager.getInstance(project).findFile(virtualFile) as? KtFile? ?: return
+      CodeStyleManager.getInstance(project).reformat(psiFile)
+    }
+  }
+
+  private fun testDirName(suffix: String): String = "${CodeGenerationTestBase::class.java.simpleName}_${testDirectoryName}_${suffix}"
+
   protected fun generateAndCompare(
-    dirWithExpectedApiFiles: Path, dirWithExpectedImplFiles: Path,
+    dirWithExpectedApiFiles: Path,
+    dirWithExpectedImplFiles: Path,
     pathToPackage: String = ".",
-    processAbstractTypes: Boolean, explicitApiEnabled: Boolean,
+    processAbstractTypes: Boolean,
+    explicitApiEnabled: Boolean,
     isTestModule: Boolean,
+    formatCode: Boolean
   ) {
-    val (srcRoot, genRoot) = generateCode(
-      relativePathToEntitiesDirectory = ".",
-      processAbstractTypes = processAbstractTypes,
-      explicitApiEnabled = explicitApiEnabled,
-      isTestModule = isTestModule
-    )
+    val (srcRoot, genRoot) = generateCode(relativePathToEntitiesDirectory = ".",
+                                          processAbstractTypes = processAbstractTypes,
+                                          explicitApiEnabled = explicitApiEnabled,
+                                          isTestModule = isTestModule,
+                                          formatCode = formatCode)
 
     val srcPackageDir = srcRoot.findFileByRelativePath(pathToPackage) ?: error("Cannot find $pathToPackage under $srcRoot")
     val genPackageDir = genRoot.findFileByRelativePath(pathToPackage) ?: error("Cannot find $pathToPackage under $genRoot")
 
-    val expectedApiDirPath = FileUtil.createTempDirectory(CodeGenerationTestBase::class.java.simpleName, "${testDirectoryName}_api", true)
-    val expectedApiDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(expectedApiDirPath.toPath())!!
+    val actualApiDirPath = Files.createTempDirectory(testDirName("api_expected"))
+    val actualApiDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(actualApiDirPath)!!
     if (dirWithExpectedImplFiles.startsWith(dirWithExpectedApiFiles) && dirWithExpectedImplFiles != dirWithExpectedApiFiles) {
       runWriteActionAndWait {
-        VfsUtil.copyDirectory(this, srcPackageDir, expectedApiDir, null)
+        VfsUtil.copyDirectory(this, srcPackageDir, actualApiDir, null)
       }
-      expectedApiDirPath.assertMatches(directoryContentOf(dirWithExpectedApiFiles))
+      actualApiDirPath.assertMatches(directoryContentOf(dirWithExpectedApiFiles))
     }
     else {
-      val expectedImplDirPath: Path = FileUtil.createTempDirectory(CodeGenerationTestBase::class.java.simpleName, "${testDirectoryName}_impl", true).toPath()
-      val expectedImplDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(expectedImplDirPath)!!
+      val actualImplDirPath: Path = Files.createTempDirectory(testDirName("impl_expected"))
+      val actualImplDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(actualImplDirPath)!!
       runWriteActionAndWait {
-        VfsUtil.copyDirectory(this, srcPackageDir, expectedApiDir, VirtualFileFilter { it != genRoot })
-        VfsUtil.copyDirectory(this, genPackageDir, expectedImplDir, null)
+        VfsUtil.copyDirectory(this, srcPackageDir, actualApiDir, VirtualFileFilter { it != genRoot })
+        VfsUtil.copyDirectory(this, genPackageDir, actualImplDir, null)
       }
-      expectedApiDirPath.assertMatches(directoryContentOf(dirWithExpectedApiFiles))
-      expectedImplDirPath.assertMatches(directoryContentOf(dirWithExpectedImplFiles))
+      actualApiDirPath.assertMatches(directoryContentOf(dirWithExpectedApiFiles))
+      actualImplDirPath.assertMatches(directoryContentOf(dirWithExpectedImplFiles))
     }
   }
 
   protected fun generateCode(
-    relativePathToEntitiesDirectory: String, processAbstractTypes: Boolean, explicitApiEnabled: Boolean, isTestModule: Boolean,
+    relativePathToEntitiesDirectory: String,
+    processAbstractTypes: Boolean,
+    explicitApiEnabled: Boolean,
+    isTestModule: Boolean,
+    formatCode: Boolean,
   ): Pair<VirtualFile, VirtualFile> {
     val srcRoot = myFixture.findFileInTempDir(relativePathToEntitiesDirectory)
     val genRoot = myFixture.tempDirFixture.findOrCreateDir("gen/$relativePathToEntitiesDirectory")
     runBlocking {
-      CodeWriter.generate(
-        project, module, srcRoot,
-        processAbstractTypes = processAbstractTypes,
-        explicitApiEnabled = explicitApiEnabled,
-        isTestSourceFolder = false,
-        isTestModule = isTestModule,
-        targetFolderGenerator = { genRoot },
-        existingTargetFolder = { genRoot }
-      )
+      CodeWriter.generate(project = project,
+                          module = module,
+                          srcRoot,
+                          processAbstractTypes = processAbstractTypes,
+                          explicitApiEnabled = explicitApiEnabled,
+                          isTestSourceFolder = false,
+                          isTestModule = isTestModule,
+                          targetFolderGenerator = { genRoot },
+                          existingTargetFolder = { genRoot },
+                          formatCode = formatCode)
       FileDocumentManager.getInstance().saveAllDocuments()
     }
     return srcRoot to genRoot
@@ -144,7 +141,8 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
       val contentEntry = model.contentEntries.first()
       val genFolder = VfsUtil.createDirectoryIfMissing(contentEntry.file, "gen")
 
-      contentEntry.addSourceFolder(genFolder, JavaSourceRootType.SOURCE,
+      contentEntry.addSourceFolder(genFolder,
+                                   JavaSourceRootType.SOURCE,
                                    JpsJavaExtensionService.getInstance().createSourceRootProperties("", true))
       if (addWorkspaceStorageLibrary) {
         LibrariesRequiredForWorkspace.workspaceStorage.add(model)

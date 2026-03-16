@@ -3,8 +3,8 @@ package com.jetbrains.python.tests
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.SdksKeeper
 import com.jetbrains.python.sdk.Product
+import com.jetbrains.python.sdk.SdksKeeper
 import org.junit.Test
 
 class SdksTest {

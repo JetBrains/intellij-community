@@ -13,7 +13,7 @@ import com.intellij.openapi.wm.StartPagePromoter.Companion.PRIORITY_LEVEL_NORMAL
 import com.intellij.ui.LicensingFacade
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Calendar
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel

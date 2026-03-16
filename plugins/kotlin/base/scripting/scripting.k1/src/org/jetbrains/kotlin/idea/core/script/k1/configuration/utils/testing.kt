@@ -3,7 +3,9 @@
 package org.jetbrains.kotlin.idea.core.script.k1.configuration.utils
 
 import com.intellij.openapi.application.Application
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 var testScriptConfigurationNotification: Boolean = false
 
 internal val Application.isUnitTestModeWithoutScriptLoadingNotification: Boolean

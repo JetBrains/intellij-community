@@ -14,6 +14,6 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":tools-jps-antTasks_resources"],
   kotlinc_opts = "@community//:k8",
-  deps = ["@lib//ant/lib:ant-antlr-provided"]
+  deps = ["@lib//ant/lib:ant-provided"]
 )
 ### auto-generated section `build intellij.tools.jps.antTasks` end

@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from typing import Any
 
 from .services import DriverConfig
@@ -17,7 +16,7 @@ class SwarmSpec(dict[str, Any]):
         node_cert_expiry: int | None = None,
         external_cas: list[SwarmExternalCA] | None = None,
         name: str | None = None,
-        labels: dict[str, Incomplete] | None = None,
+        labels: dict[str, str] | None = None,
         signing_ca_cert: str | None = None,
         signing_ca_key: str | None = None,
         ca_force_rotate: int | None = None,
@@ -27,9 +26,5 @@ class SwarmSpec(dict[str, Any]):
 
 class SwarmExternalCA(dict[str, Any]):
     def __init__(
-        self,
-        url: str,
-        protocol: str | None = None,
-        options: dict[Incomplete, Incomplete] | None = None,
-        ca_cert: str | None = None,
+        self, url: str, protocol: str | None = None, options: dict[str, str] | None = None, ca_cert: str | None = None
     ) -> None: ...

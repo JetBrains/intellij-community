@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 
 class MoveKotlinAliasClassHandler : MoveClassHandler {
     override fun doMoveClass(aClass: PsiClass, moveDestination: PsiDirectory): PsiClass? = null
-    override fun getName(clazz: PsiClass?): String? = null
+    override fun getName(clazz: PsiClass): String? = null
 
     override fun preprocessUsages(results: MutableCollection<UsageInfo>) {
         results.removeAll { usageInfo ->

@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
+import com.intellij.util.MathUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -88,9 +89,10 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
       });
 
       for (HighlightInfo info : infos) {
+        int insideOffset = MathUtil.clamp(info.getActualStartOffset(), 0, document.getTextLength());
         for (ReferenceImporter importer : ReferenceImporter.EP_NAME.getExtensionList()) {
           if (importer.isAddUnambiguousImportsOnTheFlyEnabled(myPsiFile)) {
-            BooleanSupplier action = importer.computeAutoImportAtOffset(myEditor, myPsiFile, info.getActualStartOffset(), false);
+            BooleanSupplier action = importer.computeAutoImportAtOffset(myEditor, myPsiFile, insideOffset, false);
             ContainerUtil.addIfNotNull(result, action);
           }
         }

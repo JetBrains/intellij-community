@@ -6,10 +6,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.frame.XDescriptor
-import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Creates a plugin-specific state for a given [XDescriptor].

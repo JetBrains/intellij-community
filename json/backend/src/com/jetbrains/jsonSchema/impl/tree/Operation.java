@@ -2,11 +2,9 @@
 package com.jetbrains.jsonSchema.impl.tree;
 
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SmartList;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
-import com.jetbrains.jsonSchema.impl.JsonSchemaObjectImpl;
 import com.jetbrains.jsonSchema.impl.SchemaResolveState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +14,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.*;
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.ALL_OF;
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.ANY_OF;
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.IF;
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.ONE_OF;
 
 public abstract class Operation {
   public final @NotNull JsonSchemaNodeExpansionRequest myExpansionRequest;
@@ -52,10 +53,6 @@ public abstract class Operation {
       return;
     }
 
-    // lets do that to make the returned object smaller
-    myAnyOfGroup.forEach(Operation::clearVariants);
-    myOneOfGroup.forEach(list -> list.forEach(Operation::clearVariants));
-
     for (Operation myChildOperation : myChildOperations) {
       ProgressManager.checkCanceled();
       myChildOperation.doReduce();
@@ -64,24 +61,15 @@ public abstract class Operation {
     myChildOperations.clear();
   }
 
-  private static void clearVariants(@NotNull JsonSchemaObject object) {
-    if (!(object instanceof JsonSchemaObjectImpl cst)) {
-      return;
-    }
-    cst.setAllOf(null);
-    cst.setAnyOf(null);
-    cst.setOneOf(null);
-  }
-
   protected @Nullable Operation createExpandOperation(@NotNull JsonSchemaObject schema,
                                                       @NotNull JsonSchemaService service,
                                                       @Nullable JsonSchemaNodeExpansionRequest expansionRequest) {
     Operation forConflict = getOperationForConflict(schema, service, expansionRequest);
     if (forConflict != null) return forConflict;
-    if (Registry.is("json.schema.object.v2") && schema.hasChildNode(ANY_OF) || schema.getAnyOf() != null) return new AnyOfOperation(schema, service, expansionRequest);
-    if (Registry.is("json.schema.object.v2") && schema.hasChildNode(ONE_OF) || schema.getOneOf() != null) return new OneOfOperation(schema, service, expansionRequest);
-    if (Registry.is("json.schema.object.v2") && schema.hasChildNode(ALL_OF) || schema.getAllOf() != null) return new AllOfOperation(schema, service, expansionRequest);
-    if (Registry.is("json.schema.object.v2") && schema.hasChildNode(IF) || schema.getIfThenElse() != null) return new IfThenElseBranchOperation(schema, expansionRequest, service);
+    if (schema.hasChildNode(ANY_OF)) return new AnyOfOperation(schema, service, expansionRequest);
+    if (schema.hasChildNode(ONE_OF)) return new OneOfOperation(schema, service, expansionRequest);
+    if (schema.hasChildNode(ALL_OF)) return new AllOfOperation(schema, service, expansionRequest);
+    if (schema.hasChildNode(IF)) return new IfThenElseBranchOperation(schema, expansionRequest, service);
     return null;
   }
 
@@ -89,10 +77,9 @@ public abstract class Operation {
                                                              @NotNull JsonSchemaService service,
                                                              @Nullable JsonSchemaNodeExpansionRequest expansionRequest) {
     // in case of several incompatible operations, choose the most permissive one
-    var anyOf = Registry.is("json.schema.object.v2") && schema.hasChildNode(ANY_OF) || schema.getAnyOf() != null;
-    var oneOf = Registry.is("json.schema.object.v2") && schema.hasChildNode(ONE_OF) || schema.getOneOf() != null;
-    var allOf = Registry.is("json.schema.object.v2") && schema.hasChildNode(ALL_OF) || schema.getAllOf() != null;
-
+    var anyOf = schema.hasChildNode(ANY_OF);
+    var oneOf = schema.hasChildNode(ONE_OF);
+    var allOf = schema.hasChildNode(ALL_OF);
 
     if (anyOf && (oneOf || allOf)) {
       return new AnyOfOperation(schema, service, expansionRequest) {{

@@ -1,11 +1,13 @@
 package com.jetbrains.lsp.protocol
 
-import kotlinx.serialization.*
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.nullable
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonContentPolymorphicSerializer
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.jvm.JvmInline
@@ -232,6 +234,7 @@ interface CompletionOptions: WorkDoneProgressOptions { /**
     )
 }
 
+@Suppress("unused")
 @Serializable
 data class CompletionRegistrationOptionsImpl(
     override val triggerCharacters: List<String>?,
@@ -344,7 +347,7 @@ data class CompletionList(
 ) {
 
     companion object {
-        val EMPTY_COMPLETE: CompletionList = CompletionList(
+        val EMPTY: CompletionList = CompletionList(
             isIncomplete = false,
             itemDefaults = null,
             items = emptyList(),
@@ -670,10 +673,18 @@ data class CompletionItem(
                 }
             }
         }
+
+      companion object {
+        fun emptyAtPosition(position: Position): Edit {
+          val range = Range(position, position)
+          return InsertReplace(InsertReplaceEdit("", range, range))
+        }
+      }
     }
 }
 
 // todo: custom serializer needed
+@Suppress("unused")
 @Serializable
 @JvmInline
 value class TextEditOrInsertReplaceEdit private constructor(val edit: JsonElement) {

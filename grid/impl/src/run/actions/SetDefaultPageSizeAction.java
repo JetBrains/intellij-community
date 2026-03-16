@@ -2,7 +2,9 @@ package com.intellij.database.run.actions;
 
 import com.intellij.database.DataGridBundle;
 import com.intellij.database.DatabaseDataKeys;
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridHelper;
+import com.intellij.database.datagrid.GridUtilCore;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -38,7 +40,7 @@ public class SetDefaultPageSizeAction extends DumbAwareAction {
     int pageSize = grid.getDataHookup().getPageModel().getPageSize();
     GridHelper helper = GridHelper.get(grid);
 
-    helper.setDefaultPageSize(pageSize);
-    helper.setLimitDefaultPageSize(!GridUtilCore.isPageSizeUnlimited(pageSize));
+    helper.getProperties().setDefaultPageSize(pageSize);
+    helper.getProperties().setDefaultLimitPageSize(!GridUtilCore.isPageSizeUnlimited(pageSize));
   }
 }

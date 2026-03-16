@@ -4,8 +4,8 @@ package com.intellij.ide.startup.importSettings.transfer.backend
 import com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector
 import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
 import com.intellij.ide.startup.importSettings.models.FailedIdeVersion
-import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsProvider
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import kotlinx.coroutines.async
@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.job
-import java.util.*
+import java.util.Objects
 import java.util.stream.Collectors
 import kotlin.time.Duration.Companion.nanoseconds
 

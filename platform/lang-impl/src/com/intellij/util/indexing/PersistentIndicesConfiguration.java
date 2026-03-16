@@ -5,7 +5,11 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 

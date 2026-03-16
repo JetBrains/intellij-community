@@ -10,6 +10,8 @@ class RhizomedbComponentRegistrar(
   private val readProvider: ((String) -> List<String>)? = null,
   private val writeProvider: ((String, Collection<String>) -> Unit)? = null
 ) : CompilerPluginRegistrar() {
+  override val pluginId: String
+    get() = "rhizomedb-compiler-plugin"
   override val supportsK2: Boolean = true
   override fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration) {
     val output = getJvmOutputDir(configuration)

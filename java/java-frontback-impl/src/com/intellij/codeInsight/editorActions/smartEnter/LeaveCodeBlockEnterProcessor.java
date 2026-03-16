@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.ide.DataManager;
@@ -8,32 +8,35 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
-import com.intellij.psi.tree.ParentAwareTokenSet;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.impl.source.BasicJavaElementType.*;
+public class LeaveCodeBlockEnterProcessor implements EnterProcessor {
 
-public class LeaveCodeBlockEnterProcessor implements ASTNodeEnterProcessor {
-  private final ParentAwareTokenSet CONTROL_FLOW_ELEMENT_TYPES =
-    ParentAwareTokenSet.create(BASIC_IF_STATEMENT, BASIC_WHILE_STATEMENT, BASIC_DO_WHILE_STATEMENT, BASIC_FOR_STATEMENT,
-                               BASIC_FOREACH_STATEMENT);
-
+  private static final TokenSet CONTROL_FLOW_ELEMENT_TYPES = TokenSet.create(
+    JavaElementType.IF_STATEMENT, JavaElementType.WHILE_STATEMENT, JavaElementType.DO_WHILE_STATEMENT, JavaElementType.FOR_STATEMENT,
+    JavaElementType.FOREACH_STATEMENT
+  );
 
   @Override
-  public boolean doEnter(@NotNull Editor editor, @NotNull ASTNode astNode, boolean isModified) {
-    ASTNode parent = astNode.getTreeParent();
-    if (!(BasicJavaAstTreeUtil.is(parent, BASIC_CODE_BLOCK))) {
+  public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {
+    PsiElement parent = psiElement.getParent();
+    if (!(parent instanceof PsiCodeBlock)) {
       return false;
     }
 
-    if (CONTROL_FLOW_ELEMENT_TYPES.contains(astNode.getElementType())) {
+    final ASTNode node = psiElement.getNode();
+    if (node != null && CONTROL_FLOW_ELEMENT_TYPES.contains(node.getElementType())) {
       return false;
     }
 
-    boolean leaveCodeBlock = isControlFlowBreak(astNode);
+    boolean leaveCodeBlock = isControlFlowBreak(psiElement);
     if (!leaveCodeBlock) {
       return false;
     }
@@ -77,9 +80,9 @@ public class LeaveCodeBlockEnterProcessor implements ASTNodeEnterProcessor {
    *     [caret]
    *   }
    * </pre>
+   *
    */
-  private static boolean isControlFlowBreak(@Nullable ASTNode element) {
-    return BasicJavaAstTreeUtil.is(element, BASIC_RETURN_STATEMENT) ||
-           BasicJavaAstTreeUtil.is(element, BASIC_THROW_STATEMENT);
+  private static boolean isControlFlowBreak(@Nullable PsiElement element) {
+    return element instanceof PsiReturnStatement || element instanceof PsiThrowStatement;
   }
 }

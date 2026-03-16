@@ -109,8 +109,12 @@ public class DefaultLogger extends Logger {
     if (t != null) {
       String prefix = "\n\nAttachments:\n";
       String attachments = ExceptionUtil.causeAndSuppressed(t, ExceptionWithAttachments.class)
-        .flatMap(e -> Stream.of(e.getAttachments()))
-        .map(ATTACHMENT_TO_STRING)
+        .flatMap(e -> Stream.of(e.getAttachments()).map(attachment -> {
+          if (attachment == null) {
+            throw new NullPointerException(e + " returned null attachment from getAttachments() method");
+          }
+          return ATTACHMENT_TO_STRING.apply(attachment);
+        }))
         .collect(Collectors.joining("\n----\n", prefix, ""));
       if (!attachments.equals(prefix)) {
         return attachments;

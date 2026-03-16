@@ -1,6 +1,10 @@
 package org.intellij.plugins.markdown.ui.actions.styling
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.client.currentSessionOrNull
 import com.intellij.openapi.command.executeCommand

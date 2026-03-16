@@ -20,7 +20,7 @@ jvm_library(
     "//platform/execution.dashboard",
     "//platform/kernel/rpc.backend",
     "//platform/kernel/backend",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/project/shared:project",
     "//platform/core-api:core",
     "//platform/execution",

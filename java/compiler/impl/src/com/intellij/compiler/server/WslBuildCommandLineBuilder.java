@@ -22,7 +22,9 @@ import org.jetbrains.jps.api.GlobalOptions;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.List;
 

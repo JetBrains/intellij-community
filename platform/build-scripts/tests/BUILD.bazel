@@ -8,6 +8,12 @@ resourcegroup(
 )
 
 jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.platform.buildScripts.tests",
   visibility = ["//visibility:public"],
@@ -31,21 +37,22 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//libraries/commons/compress",
     "//build",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/util/zip",
     "//platform/util/jdom",
     "//platform/util-ex",
     "@community//build:zip",
-    "@lib//:netty-buffer",
+    "//libraries/netty/buffer",
     "//libraries/hash4j",
     "//libraries/fastutil",
-    "@lib//:maven-resolver-provider",
+    "//libraries/maven-resolver-provider",
     "//libraries/mockito",
     "@lib//:mockito-kotlin",
     "//jps/model-serialization",
     "//jps/model-api:model",
     "//libraries/jsoup",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.platform.buildScripts.tests` end
 

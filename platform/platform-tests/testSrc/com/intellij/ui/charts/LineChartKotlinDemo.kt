@@ -14,9 +14,22 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.Graphics2D
 import java.util.function.BiConsumer
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.BoxLayout
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JTabbedPane
+import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
+import javax.swing.UIManager
 import javax.swing.border.Border
-import kotlin.math.*
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.log2
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.pow
+import kotlin.math.sin
 import kotlin.random.Random
 import kotlin.system.exitProcess
 

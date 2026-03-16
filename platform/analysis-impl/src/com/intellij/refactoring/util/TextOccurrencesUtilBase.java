@@ -9,7 +9,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.TextOccurenceProcessor;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.util.PairProcessor;
@@ -23,6 +27,9 @@ public final class TextOccurrencesUtilBase {
   private TextOccurrencesUtilBase() {
   }
 
+  /**
+   * @param results must be thread-safe
+   */
   public static void addTextOccurrences(@NotNull PsiElement element,
                                         @NotNull String stringToSearch,
                                         @NotNull GlobalSearchScope searchScope,
@@ -50,6 +57,7 @@ public final class TextOccurrencesUtilBase {
 
   /**
    * @param includeReferences usage with a reference ot offset would be skipped iff {@code includeReferences == false} 
+   * @param processor must be thread-safe
    */
   public static boolean processUsagesInStringsAndComments(@NotNull PsiElement element,
                                                    @NotNull SearchScope searchScope,
@@ -64,10 +72,13 @@ public final class TextOccurrencesUtilBase {
            helper.processCommentsContainingIdentifier(stringToSearch, scope, commentOrLiteralProcessor);
   }
 
+  /**
+   * @param processor must be thread-safe
+   */
   private static boolean processStringLiteralsContainingIdentifier(@NotNull String identifier,
                                                                    @NotNull SearchScope searchScope,
-                                                                   PsiSearchHelper helper,
-                                                                   final Processor<? super PsiElement> processor) {
+                                                                   @NotNull PsiSearchHelper helper,
+                                                                   @NotNull Processor<? super PsiElement> processor) {
     TextOccurenceProcessor occurenceProcessor = (element, offsetInElement) -> {
       if (isStringLiteralElement(element)) {
         return processor.process(element);
@@ -87,10 +98,10 @@ public final class TextOccurrencesUtilBase {
     return node != null && definition.getStringLiteralElements().contains(node.getElementType());
   }
 
-  private static boolean processTextIn(PsiElement scope,
-                                       String stringToSearch,
+  private static boolean processTextIn(@NotNull PsiElement scope,
+                                       @NotNull String stringToSearch,
                                        boolean allowReferences,
-                                       PairProcessor<? super PsiElement, ? super TextRange> processor) {
+                                       @NotNull PairProcessor<? super PsiElement, ? super TextRange> processor) {
     String text = scope.getText();
     for (int offset = 0; offset < text.length(); offset++) {
       offset = text.indexOf(stringToSearch, offset);
@@ -124,22 +135,5 @@ public final class TextOccurrencesUtilBase {
       offset += stringToSearch.length();
     }
     return true;
-  }
-
-  public static void addUsagesInStringsAndComments(@NotNull PsiElement element,
-                                            @NotNull SearchScope searchScope,
-                                            @NotNull String stringToSearch,
-                                            @NotNull Collection<? super UsageInfo> results,
-                                            @NotNull UsageInfoFactory factory) {
-    Object lock = new Object();
-    processUsagesInStringsAndComments(element, searchScope, stringToSearch, false, (commentOrLiteral, textRange) -> {
-      UsageInfo usageInfo = factory.createUsageInfo(commentOrLiteral, textRange.getStartOffset(), textRange.getEndOffset());
-      if (usageInfo != null) {
-        synchronized (lock) {
-          results.add(usageInfo);
-        }
-      }
-      return true;
-    });
   }
 }

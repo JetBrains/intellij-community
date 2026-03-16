@@ -48,9 +48,15 @@ abstract class SpellCheckerQuickFixFactory {
       return EP_NAME.extensionList.firstNotNullOfOrNull { it.createSaveToFix(element, rangeInElement, word, layer) }
              ?: SaveTo(word, layer, tracker)
     }
+
+    @JvmStatic
+    fun additionalFixes(): List<LocalQuickFix> {
+      return EP_NAME.extensionList.flatMap { it.createAdditionalFixes() }
+    }
   }
 
   open fun createRename(element: PsiElement): LocalQuickFix? = null
   open fun createChangeToVariantsFixes(element: PsiElement, rangeInElement: TextRange, word: String): List<LocalQuickFix>? = null
   open fun createSaveToFix(element: PsiElement, rangeInElement: TextRange, word: String, layer: DictionaryLayer?): LocalQuickFix? = null
+  open fun createAdditionalFixes(): List<LocalQuickFix> = emptyList()
 }

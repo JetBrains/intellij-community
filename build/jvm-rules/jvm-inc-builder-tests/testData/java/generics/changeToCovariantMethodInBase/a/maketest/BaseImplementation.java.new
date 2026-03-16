@@ -1,0 +1,7 @@
+package maketest;
+
+public class BaseImplementation {
+    public DataEx getData() {
+        return new DataEx();
+    }
+}

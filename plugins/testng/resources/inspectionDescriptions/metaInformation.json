@@ -2,15 +2,15 @@
   "inspections": [
     {
       "id": "groupsTestNG",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "JUnitTestNG",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Unspecified"
     },
     {
       "id": "UndeclaredTests",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "ConvertJavadoc",

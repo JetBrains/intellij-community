@@ -2,10 +2,12 @@
   modules:
   - name: intellij.compose.ide.plugin
   contentModules:
-  - name: intellij.compose.ide.plugin.shared
   - name: intellij.compose.ide.plugin.k1
   - name: intellij.compose.ide.plugin.k2
   - name: intellij.compose.ide.plugin.resources
 - name: lib/modules/intellij.compose.ide.plugin.gradleTooling.rt.jar
   contentModules:
   - name: intellij.compose.ide.plugin.gradleTooling.rt
+- name: lib/modules/intellij.compose.ide.plugin.shared.jar
+  contentModules:
+  - name: intellij.compose.ide.plugin.shared

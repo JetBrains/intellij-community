@@ -56,6 +56,7 @@ jvm_library(
     "//java/codeserver/core",
     "//platform/refactoring",
     "//xml/xml-analysis-api:analysis",
+    "//libraries/jsoup",
   ],
   exports = [
     "//platform/analysis-impl",

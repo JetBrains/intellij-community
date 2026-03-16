@@ -2,7 +2,15 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.psi.PsiElement;
-import org.intellij.lang.regexp.psi.*;
+import org.intellij.lang.regexp.psi.RegExpAtom;
+import org.intellij.lang.regexp.psi.RegExpBoundary;
+import org.intellij.lang.regexp.psi.RegExpChar;
+import org.intellij.lang.regexp.psi.RegExpElement;
+import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpNamedCharacter;
+import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
+import org.intellij.lang.regexp.psi.RegExpNumber;
+import org.intellij.lang.regexp.psi.RegExpSimpleClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +48,14 @@ public interface RegExpLanguageHost {
     return false;
   }
 
+  /**
+   * Returns whether possessive quantifiers and atomic groups are supported.
+   * <p>
+   * Possessive quantifiers (e.g., {@code *+}, {@code ++}, {@code ?+}, {@code {n,m}+}) match as much as possible
+   * without backtracking.
+   * <p>
+   * Atomic groups (e.g., {@code (?>pattern)}) prevent backtracking within the group once it matches.
+   */
   default boolean supportsPossessiveQuantifiers(RegExpElement context) {
     return supportsPossessiveQuantifiers();
   }

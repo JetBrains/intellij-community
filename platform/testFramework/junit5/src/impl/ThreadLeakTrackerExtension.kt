@@ -7,25 +7,48 @@ import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.set
 import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import kotlin.jvm.optionals.getOrNull
 
 @TestOnly
-internal class ThreadLeakTrackerExtension : BeforeEachCallback, AfterEachCallback {
+internal class ThreadLeakTrackerExtension : BeforeEachCallback, AfterEachCallback, BeforeAllCallback, AfterAllCallback {
 
   companion object {
     private val threadsBeforeKey = TypedStoreKey.createKey<Map<String, Thread>>()
   }
 
   override fun beforeEach(context: ExtensionContext) {
-    context[threadsBeforeKey] = ThreadLeakTracker.getThreads()
+    if (context.testInstanceLifecycle.getOrNull() != TestInstance.Lifecycle.PER_CLASS) {
+      context[threadsBeforeKey] = ThreadLeakTracker.getThreads()
+    }
   }
 
   override fun afterEach(context: ExtensionContext) {
-    val threadsBefore = context[threadsBeforeKey] ?: return
-    Assertions.assertFalse(EDT.isCurrentThreadEdt())
-    ThreadLeakTracker.awaitQuiescence()
-    ThreadLeakTracker.checkLeak(threadsBefore)
+    if (context.testInstanceLifecycle.getOrNull() != TestInstance.Lifecycle.PER_CLASS) {
+      val threadsBefore = context[threadsBeforeKey] ?: return
+      Assertions.assertFalse(EDT.isCurrentThreadEdt())
+      ThreadLeakTracker.awaitQuiescence()
+      ThreadLeakTracker.checkLeak(threadsBefore)
+    }
+  }
+
+  override fun beforeAll(context: ExtensionContext) {
+    if (context.testInstanceLifecycle.getOrNull() == TestInstance.Lifecycle.PER_CLASS) {
+      context[threadsBeforeKey] = ThreadLeakTracker.getThreads()
+    }
+  }
+
+  override fun afterAll(context: ExtensionContext) {
+    if (context.testInstanceLifecycle.getOrNull() == TestInstance.Lifecycle.PER_CLASS) {
+      val threadsBefore = context[threadsBeforeKey] ?: return
+      Assertions.assertFalse(EDT.isCurrentThreadEdt())
+      ThreadLeakTracker.awaitQuiescence()
+      ThreadLeakTracker.checkLeak(threadsBefore)
+    }
   }
 }

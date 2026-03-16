@@ -14,8 +14,13 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
-import kotlin.io.path.*
+import java.util.Locale
+import kotlin.io.path.createDirectories
+import kotlin.io.path.extension
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.name
+import kotlin.io.path.walk
+import kotlin.io.path.writeLines
 import kotlin.streams.asSequence
 
 class HelpIndexer

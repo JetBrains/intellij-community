@@ -11,12 +11,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.path.EelPath.Companion.parse
 import com.intellij.platform.eel.pathSeparator
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getEelMachine
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.where
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -97,7 +98,7 @@ internal class ShDocumentationProvider(private val scope: CoroutineScope) : Docu
     val eelDescriptor = project.getEelDescriptor()
 
     if (commandName == null) return null
-    val manExecutablePromise = myManExecutableCache.computeIfAbsent(eelDescriptor.machine) {
+    val manExecutablePromise = myManExecutableCache.computeIfAbsent(project.getEelMachine()) {
       scope.suspendingLazy {
         val eel = eelDescriptor.toEelApi()
         val path = eel.exec.fetchLoginShellEnvVariables()["PATH"]
@@ -118,7 +119,7 @@ internal class ShDocumentationProvider(private val scope: CoroutineScope) : Docu
     }
 
     return runBlockingMaybeCancellable { // fixme: is this good idea call blocking code here?
-      myManCache.computeIfAbsent(eelDescriptor.machine to commandName) {
+      myManCache.computeIfAbsent(project.getEelMachine() to commandName) {
         scope.suspendingLazy {
           val manExecutable = manExecutablePromise.getValue()
 

@@ -15,10 +15,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -39,7 +39,7 @@ public class GitBinaryHandler extends GitHandler {
     super(project, vcsRoot, command, Collections.emptyList());
   }
 
-  public GitBinaryHandler(@NotNull File directory, @NotNull GitExecutable pathToExecutable, @NotNull GitCommand command) {
+  public GitBinaryHandler(@NotNull Path directory, @NotNull GitExecutable pathToExecutable, @NotNull GitCommand command) {
     super(null, directory, pathToExecutable, command, Collections.emptyList());
   }
 
@@ -74,7 +74,8 @@ public class GitBinaryHandler extends GitHandler {
         }
       }
       catch (IOException e) {
-        if (!myException.compareAndSet(null, new VcsException(GitBundle.message("git.error.cant.process.output", e.getLocalizedMessage()), e))) {
+        if (!myException.compareAndSet(null,
+                                       new VcsException(GitBundle.message("git.error.cant.process.output", e.getLocalizedMessage()), e))) {
           LOG.error("Problem reading stream", e);
         }
       }
@@ -159,7 +160,7 @@ public class GitBinaryHandler extends GitHandler {
       }
     });
     if (vcsConsoleWriter != null && !mySilent) {
-      vcsConsoleWriter.showCommandLine("[" + GitImpl.stringifyWorkingDir(project.getBasePath(), getWorkingDirectory()) + "] "
+      vcsConsoleWriter.showCommandLine("[" + GitImplBase.stringifyWorkingDir(project.getBasePath(), getWorkingDirectory()) + "] "
                                        + printableCommandLine());
     }
     try {

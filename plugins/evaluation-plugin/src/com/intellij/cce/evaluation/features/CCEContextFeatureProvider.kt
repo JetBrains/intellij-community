@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import java.util.*
+import java.util.UUID
 
 class CCEContextFeatureProvider(private val logLocation: Boolean) : ContextFeatureProvider {
   override fun getName(): String = "cce"

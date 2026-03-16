@@ -1,0 +1,10 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.multiplatform.shims"/>
+    <module name="fleet.reporting.api"/>
+    <module name="fleet.reporting.shared"/>
+    <module name="fleet.util.core"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

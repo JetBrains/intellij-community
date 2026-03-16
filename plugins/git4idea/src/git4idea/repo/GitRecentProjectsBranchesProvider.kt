@@ -19,12 +19,16 @@ import git4idea.GitUtil
 import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
 import git4idea.util.CaffeineUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.future.future
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Files
 import java.nio.file.Path
@@ -35,7 +39,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.readText
 
-private class GitRecentProjectsBranchesProvider : RecentProjectsBranchesProvider {
+internal class GitRecentProjectsBranchesProvider : RecentProjectsBranchesProvider {
   override fun getCurrentBranch(projectPath: String, nameIsDistinct: Boolean): String? {
     return application.service<GitRecentProjectsBranchesService>().getCurrentBranch(projectPath, nameIsDistinct)
   }
@@ -130,6 +134,8 @@ internal class GitRecentProjectsBranchesService(private val coroutineScope: Coro
     private val REFRESH_IN = Duration.ofSeconds(30)
     private val EXPIRE_IN = Duration.ofSeconds(60)
 
+    private val INVALID = ".invalid"
+
     private val LOG = thisLogger()
 
     @VisibleForTesting
@@ -159,7 +165,10 @@ internal class GitRecentProjectsBranchesService(private val coroutineScope: Coro
         (if (GitRefUtil.parseHash(headFileContent) == null) GitRefUtil.getTarget(headFileContent) else null)
         ?: return GitRecentProjectCachedBranch.NotOnBranch(headFile.absolutePathString())
 
-      return GitRecentProjectCachedBranch.KnownBranch(branchName = GitBranchUtil.stripRefsPrefix(targetRef), headFilePath = headFile.absolutePathString())
+      val branchName = GitBranchUtil.stripRefsPrefix(targetRef)
+      if (branchName == INVALID) return GitRecentProjectCachedBranch.Invalid
+
+      return GitRecentProjectCachedBranch.KnownBranch(branchName = branchName, headFilePath = headFile.absolutePathString())
     }
 
     private suspend fun findGitHead(projectPath: String): Path? = withContext(Dispatchers.IO) {
@@ -176,6 +185,11 @@ internal sealed class GitRecentProjectCachedBranch {
   open val headFilePath: String? = null
 
   data object Unknown : GitRecentProjectCachedBranch()
+
+  /**
+   * e.g reftable format is used
+   */
+  data object Invalid : GitRecentProjectCachedBranch()
   data class NotOnBranch(override val headFilePath: String) : GitRecentProjectCachedBranch()
   data class KnownBranch(val branchName: String, override val headFilePath: String) : GitRecentProjectCachedBranch()
 }

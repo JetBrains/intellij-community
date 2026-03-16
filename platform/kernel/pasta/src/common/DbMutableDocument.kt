@@ -1,9 +1,22 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.pasta.common
 
-import andel.editor.*
+import andel.editor.AnchorId
+import andel.editor.AnchorLifetime
+import andel.editor.DocumentComponent
+import andel.editor.DocumentComponentKey
+import andel.editor.DocumentMeta
+import andel.editor.DocumentMetaKey
+import andel.editor.MutableDocument
+import andel.editor.RangeMarkerId
 import andel.intervals.AnchorStorage
-import andel.operation.*
+import andel.operation.EditLog
+import andel.operation.Op
+import andel.operation.Operation
+import andel.operation.Sticky
+import andel.operation.captureOperation
+import andel.operation.isIdentity
+import andel.operation.rebase
 import andel.text.LineEnding
 import andel.text.Text
 import andel.text.TextRange
@@ -14,9 +27,13 @@ import fleet.util.UID
 import fleet.util.openmap.BoundedOpenMap
 import fleet.util.openmap.MutableBoundedOpenMap
 import fleet.util.openmap.MutableOpenMap
-import org.jetbrains.annotations.ApiStatus.Experimental
 
-@Experimental
+
+object DocToEntityUpdate : DocumentMetaKey<Boolean>
+
+internal val DbMutableDocument.docToDb: Boolean?
+  get() = meta[DocToEntityUpdate]
+
 internal class DbMutableDocument(
   val dbDocument: DocumentEntity,
   private val changeScope: ChangeScope,
@@ -68,7 +85,9 @@ internal class DbMutableDocument(
         ChangeDocument(
           operationId = UID.random(),
           documentId = dbDocument.eid,
-          operation = versionedOperation.rebase(this@DbMutableDocument)),
+          operation = versionedOperation.rebase(this@DbMutableDocument),
+          docToDb = docToDb ?: false,
+        ),
       )
     }
     val textAfter = text

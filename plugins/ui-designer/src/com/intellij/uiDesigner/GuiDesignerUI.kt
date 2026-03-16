@@ -65,6 +65,11 @@ internal class GuiDesignerUI(project: Project) {
         .bindSelected(configuration::COPY_FORMS_RUNTIME_TO_OUTPUT)
     }
 
+    row {
+      checkBox(UIDesignerBundle.message("chk.generate.final.fields"))
+        .bindSelected(configuration::GENERATE_SOURCES_FINAL_FIELDS)
+    }
+
     row(UIDesignerBundle.message("default.layout.manager")) {
       comboBox(LayoutManagerRegistry.getNonDeprecatedLayoutManagerNames().toList(),
                textListCellRenderer("", LayoutManagerRegistry::getLayoutManagerDisplayName))

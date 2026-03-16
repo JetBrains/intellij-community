@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.ui.scale.JBUIScale.scale
 import org.jetbrains.annotations.Nls
 import java.awt.Font
@@ -10,7 +11,11 @@ import java.awt.event.ActionListener
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole.HYPERLINK
 import javax.accessibility.AccessibleValue
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.SwingConstants
+import javax.swing.UIManager
 
 open class ActionLink() : JButton() {
   override fun getUIClassID(): String = "LinkButtonUI"
@@ -30,7 +35,11 @@ open class ActionLink() : JButton() {
     this.action = action
   }
 
-  constructor(@Nls text: String, perform: (ActionEvent) -> Unit) : this(text, ActionListener { perform(it) })
+  constructor(@Nls text: String, perform: (ActionEvent) -> Unit) : this(text, ActionListener {
+    WriteIntentReadAction.run {
+      perform(it)
+    }
+  })
 
   @JvmOverloads
   constructor(@Nls text: String, listener: ActionListener? = null) : this() {

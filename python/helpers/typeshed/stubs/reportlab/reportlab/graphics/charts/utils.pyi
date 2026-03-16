@@ -1,6 +1,29 @@
 from _typeshed import Incomplete
-from typing import Final
+from collections.abc import Sequence
+from typing import Final, Literal
 
+__all__ = (
+    "angle2corner",
+    "angle2dir",
+    "boxCornerCoords",
+    "CustomDrawChanger",
+    "DrawTimeCollector",
+    "FillPairedData",
+    "find_good_grid",
+    "find_interval",
+    "findNones",
+    "lineSegmentIntersect",
+    "makeCircularString",
+    "maverage",
+    "mkTimeTuple",
+    "nextRoundNumber",
+    "pairFixNones",
+    "pairMaverage",
+    "seconds2str",
+    "str2seconds",
+    "ticks",
+    "xyDist",
+)
 __version__: Final[str]
 
 def mkTimeTuple(timeString): ...
@@ -43,3 +66,7 @@ class CustomDrawChanger:
 class FillPairedData(list[Incomplete]):
     other: Incomplete
     def __init__(self, v, other: int = 0) -> None: ...
+
+def angle2dir(angle: float) -> Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"]: ...
+def angle2corner(angle: float) -> Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"]: ...
+def boxCornerCoords(bb: Sequence[float], cn: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"]) -> tuple[float, float]: ...

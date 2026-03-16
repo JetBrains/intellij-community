@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.java.psi.impl;
 
 import com.intellij.openapi.module.Module;
@@ -14,8 +14,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.PyImportCandidateProvider;
 
-
-public final class PyJavaImportCandidateProvider implements PyImportCandidateProvider {
+final class PyJavaImportCandidateProvider implements PyImportCandidateProvider {
   @Override
   public void addImportCandidates(PsiReference reference, String name, AutoImportQuickFix quickFix) {
     final PsiElement element = reference.getElement();

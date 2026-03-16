@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffProcessorViewModelImpl
@@ -30,6 +31,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDis
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModelsImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.LoadAllGitLabMergeRequestTimelineViewModel
+import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 /**
@@ -40,41 +42,55 @@ internal class GitLabMergeRequestViewModels(
   parentCs: CoroutineScope,
   projectData: GitLabProject,
   private val avatarIconProvider: IconsProvider<GitLabUserDTO>,
+  private val imageLoader: GitLabImageLoader,
   private val mergeRequest: GitLabMergeRequest,
   currentUser: GitLabUserDTO,
   private val openMergeRequestDetails: (String, GitLabStatistics.ToolWindowOpenTabActionPlace, Boolean) -> Unit,
   private val openMergeRequestTimeline: (String, Boolean) -> Unit,
   private val openMergeRequestDiff: (String, Boolean) -> Unit,
 ) {
+  private val htmlConverter: GitLabMarkdownToHtmlConverter =
+    GitLabMarkdownToHtmlConverter(
+      project,
+      projectData.gitRemote.repository,
+      projectData.projectCoordinates.serverPath,
+      projectData.projectId,
+      projectData.projectCoordinates.projectPath
+    )
+
   private val cs = parentCs.childScope(javaClass.name)
 
   private val lazyDetailsVm = lazy {
-    GitLabMergeRequestDetailsViewModelImpl(project, cs, currentUser, projectData, mergeRequest, avatarIconProvider).also {
+    GitLabMergeRequestDetailsViewModelImpl(project, cs, currentUser, projectData, mergeRequest, avatarIconProvider, htmlConverter).also {
       setupDetailsVm(it)
     }
   }
   val detailsVm: GitLabMergeRequestDetailsViewModel by lazyDetailsVm
 
   val timelineVm: GitLabMergeRequestTimelineViewModel by lazy {
-    LoadAllGitLabMergeRequestTimelineViewModel(project, cs, projectData, project.service(), currentUser, mergeRequest).also {
+    LoadAllGitLabMergeRequestTimelineViewModel(project, cs, projectData, project.service(), currentUser, mergeRequest, htmlConverter).also {
       setupTimelineVm(it)
     }
   }
 
   private val discussionsVms: GitLabMergeRequestDiscussionsViewModels by lazy {
-    GitLabMergeRequestDiscussionsViewModelsImpl(project, cs, projectData, currentUser, mergeRequest)
+    GitLabMergeRequestDiscussionsViewModelsImpl(project, cs, projectData, currentUser, mergeRequest, htmlConverter)
   }
 
   private val _diffVm by lazy {
-    GitLabMergeRequestDiffProcessorViewModelImpl(project, cs, currentUser, mergeRequest, discussionsVms, avatarIconProvider).apply {
+    GitLabMergeRequestDiffProcessorViewModelImpl(project, cs, currentUser, mergeRequest, discussionsVms,
+                                                 avatarIconProvider, imageLoader).apply {
       setup()
     }
   }
   val diffVm: GitLabMergeRequestDiffViewModel get() = _diffVm
 
   val editorReviewVm: GitLabMergeRequestEditorReviewViewModel by lazy {
-    GitLabMergeRequestEditorReviewViewModel(cs, project, projectData.projectMapping, currentUser, mergeRequest,
-                                            discussionsVms, avatarIconProvider, openMergeRequestDetails, openMergeRequestDiff).apply {
+    GitLabMergeRequestEditorReviewViewModel(cs, project,
+                                            projectData.gitRemote, projectData.projectCoordinates,
+                                            currentUser, mergeRequest,
+                                            discussionsVms, avatarIconProvider, imageLoader,
+                                            openMergeRequestDetails, openMergeRequestDiff).apply {
       setup()
     }
   }

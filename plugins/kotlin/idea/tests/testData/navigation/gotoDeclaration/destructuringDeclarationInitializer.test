@@ -1,0 +1,19 @@
+// FILE: before.kt
+// COMPILER_ARGUMENTS: -Xname-based-destructuring
+package c
+
+data class Person(val fullName: String, val age: Int)
+
+fun test(person: Person) {
+    (val a = full<caret>Name, val b = age) = person
+}
+
+// FILE: after.kt
+// COMPILER_ARGUMENTS: -Xname-based-destructuring
+package c
+
+data class Person(val <caret>fullName: String, val age: Int)
+
+fun test(person: Person) {
+    (val a = fullName, val b = age) = person
+}

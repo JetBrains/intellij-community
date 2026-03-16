@@ -5,7 +5,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.StandardVersionFilterComponent;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class GitVersionFilterComponent extends StandardVersionFilterComponent<ChangeBrowserSettings> {
 

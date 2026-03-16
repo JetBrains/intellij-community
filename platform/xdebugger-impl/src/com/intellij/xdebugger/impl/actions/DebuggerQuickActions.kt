@@ -4,14 +4,18 @@ package com.intellij.xdebugger.impl.actions
 import com.intellij.ide.ui.customization.GroupEnd
 import com.intellij.ide.ui.customization.ToolbarAddQuickActionInfo
 import com.intellij.ide.ui.customization.ToolbarAddQuickActionsAction
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.xdebugger.impl.actions.XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP
 import com.intellij.xdebugger.impl.actions.XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP
 
 private val insertStrategy = GroupEnd(TOOL_WINDOW_TOP_TOOLBAR_3_GROUP)
 
-private class DebuggerToolbarQuickActionsGroup : ActionGroup(), ActionRemoteBehaviorSpecification.Frontend {
+internal class DebuggerToolbarQuickActionsGroup : ActionGroup(), ActionRemoteBehaviorSpecification.Frontend {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val actionManager = ActionManager.getInstance()
     val mainGroup = actionManager.getAction(TOOL_WINDOW_TOP_TOOLBAR_3_GROUP) as ActionGroup

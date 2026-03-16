@@ -8,7 +8,7 @@ import com.intellij.icons.AllIcons;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class EntryPointsNode extends InspectionNode {
   private volatile boolean myExcluded;

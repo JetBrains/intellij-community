@@ -5,12 +5,20 @@ import com.intellij.codeInsight.controlflow.Instruction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyAssertStatement
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyExpressionStatement
+import com.jetbrains.python.psi.PyRaiseStatement
+import com.jetbrains.python.psi.PyStatement
+import com.jetbrains.python.psi.PyStatementList
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.ArrayDeque
 
 data class FlowContext(val typeEvalContext: TypeEvalContext, val checkNoReturnCalls: Boolean)
 
@@ -180,7 +188,7 @@ private fun PyStatement.isIgnoredUnreachableStatement(context: FlowContext): Boo
 private fun PsiElement.isTerminatingStatement(context: TypeEvalContext): Boolean {
   return when (this) {
     is PyRaiseStatement -> true
-    is PyAssertStatement -> getArguments().firstOrNull()?.asBooleanNoResolve() == false
+    is PyAssertStatement -> arguments.firstOrNull()?.asBooleanNoResolve() == false
     is PyExpressionStatement -> expression is PyCallExpression && context.getType(expression) is PyNeverType
     else -> false
   }

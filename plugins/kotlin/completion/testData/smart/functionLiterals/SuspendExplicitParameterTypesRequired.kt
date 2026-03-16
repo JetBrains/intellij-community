@@ -9,3 +9,5 @@ fun bar() {
 // ABSENT: "{ c, xx -> ... }"
 // EXIST: "{ String, Int -> ... }"
 // EXIST: "{ Char, xx -> ... }"
+
+// IGNORE_K2

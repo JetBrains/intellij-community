@@ -22,7 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.IMPL_VERSION_MISMATCH;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.NOT_CLOSED_PROPERLY;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.UNRECOGNIZED;
 
 /**
  * Static helper responsible for 'connecting' (opening, initializing) {@linkplain PersistentFSConnection} object,

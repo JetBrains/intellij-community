@@ -25,6 +25,7 @@ final class LazyStubList extends StubList {
   private int mySize;
   private final AtomicInteger myInstantiated = new AtomicInteger(1);
   private volatile LazyStubData myData;
+  private final StubElementRegistryService myStubElementRegistryService = StubElementRegistryService.getInstance();
 
   LazyStubList(int size, StubBase<?> root, ObjectStubSerializer<?, ?> rootSerializer) {
     super(size);
@@ -90,7 +91,7 @@ final class LazyStubList extends StubList {
     try {
       StubBase<?> parent = get(data.getParentIndex(index));
       IElementType elementType = getStubElementType(index);
-      ObjectStubSerializer<?, Stub> serializer = StubElementRegistryService.getInstance().getStubSerializer(elementType);
+      ObjectStubSerializer<?, Stub> serializer = myStubElementRegistryService.getStubSerializer(elementType);
       if (serializer == null) {
           throw new IllegalStateException("Stub serializer is null for the element type: " + elementType);
       }

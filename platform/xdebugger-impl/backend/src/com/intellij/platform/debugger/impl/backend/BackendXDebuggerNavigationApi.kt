@@ -4,10 +4,10 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.debugger.impl.rpc.TimeoutSafeResult
 import com.intellij.platform.debugger.impl.rpc.XDebuggerNavigationApi
+import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.XNavigatable
 import com.intellij.xdebugger.frame.XValue
-import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers

@@ -36,7 +36,8 @@ import java.util.Optional;
  * Example: %altEnter Find cause|true
  */
 public final class ShowAltEnter extends AbstractCommand implements Disposable {
-  public static final String PREFIX = CMD_PREFIX + "altEnter";
+  public static final String NAME = "altEnter";
+  public static final String PREFIX = CMD_PREFIX + NAME;
   public static final String SPAN_NAME = "showQuickFixes";
 
   public ShowAltEnter(@NotNull String text, int line) {

@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.TimeoutUtil
-import java.util.*
+import java.util.MissingResourceException
 import kotlin.random.Random
 
 internal class DumbModeTrembleAction : DumbAwareAction() {

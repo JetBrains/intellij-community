@@ -6,7 +6,7 @@ import com.intellij.psi.impl.cache.impl.OccurrenceConsumer
 import com.intellij.psi.impl.cache.impl.id.LexerBasedIdIndexer
 import com.jetbrains.python.lexer.PythonLexer
 
-private class PyIdIndexer : LexerBasedIdIndexer() {
+internal class PyIdIndexer : LexerBasedIdIndexer() {
   override fun createLexer(consumer: OccurrenceConsumer): Lexer {
     return createPyIndexingLexer(consumer)
   }

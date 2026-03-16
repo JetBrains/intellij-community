@@ -14,7 +14,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ExperimentalUI
 import java.util.function.Supplier
 
-private class MeetNewUIAction : AnAction(), DumbAware {
+internal class MeetNewUIAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     getToolWindow(e)?.activate(null)
   }

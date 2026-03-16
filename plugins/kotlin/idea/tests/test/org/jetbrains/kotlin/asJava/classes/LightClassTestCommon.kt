@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.asJava.classes
 
@@ -6,13 +6,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiClass
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
+import org.jetbrains.kotlin.idea.asJava.PsiClassRendererImpl
 import java.io.File
 import java.util.regex.Pattern
 
 object LightClassTestCommon {
-    internal val SKIP_IDE_TEST_DIRECTIVE = "SKIP_IDE_TEST"
-    internal val SKIP_LIBRARY_EXCEPTIONS = "IGNORE_LIBRARY_EXCEPTIONS"
-
     private val SUBJECT_FQ_NAME_PATTERN = Pattern.compile("^//\\s*(.*)$", Pattern.MULTILINE)
     private const val NOT_GENERATED_DIRECTIVE = "// NOT_GENERATED"
 
@@ -42,7 +40,7 @@ object LightClassTestCommon {
             return NOT_GENERATED_DIRECTIVE
         }
         TestCase.assertTrue("Not a light class: $lightClass ($fqName)", lightClass is KtLightClass)
-        return normalizeText(PsiClassRenderer.renderClass(lightClass, renderInner = true, membersFilter = membersFilter))
+        return normalizeText(PsiClassRendererImpl.renderClass(lightClass, renderInner = true, membersFilter = membersFilter))
     }
 
     // Actual text for light class is generated with ClsElementImpl.appendMirrorText() that can find empty DefaultImpl inner class in stubs

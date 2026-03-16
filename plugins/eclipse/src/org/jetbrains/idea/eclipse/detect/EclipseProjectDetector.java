@@ -11,13 +11,14 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppJavaExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -29,10 +30,14 @@ import java.io.StringReader;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Properties;
 import java.util.function.Consumer;
 
-@ApiStatus.Internal
+@Internal
 public final class EclipseProjectDetector extends ProjectDetector {
   private static final Logger LOG = Logger.getInstance(EclipseProjectDetector.class);
 
@@ -53,7 +58,7 @@ public final class EclipseProjectDetector extends ProjectDetector {
     for (String appLocation : getStandardAppLocations()) {
       collectProjects(projects, Path.of(appLocation));
     }
-    if (PropertiesComponent.getInstance().getBoolean("eclipse.scan.home.directory", true)) {
+    if (Registry.is("eclipse.scan.home.directory", true)) {
       visitFiles(new File(home), file1 -> scanForProjects(file1.getPath(), projects), 2);
     }
   }
@@ -80,7 +85,7 @@ public final class EclipseProjectDetector extends ProjectDetector {
         ProjectGroup group = ContainerUtil.find(manager.getGroups(), g -> groupName.equals(g.getName()));
         String property = "eclipse.projects.detected";
         if (group == null && PropertiesComponent.getInstance().isValueSet(property)) {
-          // the group was removed by user
+          // the user removed the group
           return;
         }
 

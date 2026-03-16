@@ -8,18 +8,28 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.JavaProjectDependenciesAnalyzer
+import com.intellij.openapi.roots.ModuleOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModel
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.RootModelProvider
 import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.packageDependencies.DependenciesToolWindow
 import com.intellij.packageDependencies.ForwardDependenciesBuilder
 import com.intellij.packageDependencies.ui.DependenciesPanel
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 /**
  * Finds and removes dependencies which aren't used in the code.
@@ -36,25 +46,25 @@ class ModuleDependenciesCleaner(
   internal suspend fun findDependenciesToRemove(moduleFileProcessor: ExtractModuleFileProcessor): Set<Module> {
     readAction {
       val fileIndex = ProjectFileIndex.getInstance(module.project)
-      moduleFileProcessor.referencedClasses
-        .asSequence()
-        .mapNotNull { className ->
-          findFile(className)?.virtualFile
-        }
-        .forEach { virtualFile ->
-          val dependencyModule = fileIndex.getModuleForFile(virtualFile)
-          if (dependencyModule != null) {
-            usedModules.add(dependencyModule)
-          }
-          else {
-            fileIndex.getOrderEntriesForFile(virtualFile).asSequence()
-              .filterIsInstance<LibraryOrderEntry>()
-              .filter { !it.isModuleLevel }
-              .mapNotNull { it.library }
-              .firstOrNull()
-              ?.let { usedLibraries.add(it) }
+      for (className in moduleFileProcessor.referencedClasses) {
+        val virtualFile = findFile(className)?.virtualFile ?: continue
+        val dependencyModule = fileIndex.getModuleForFile(virtualFile)
+        if (dependencyModule != null) {
+          if (usedModules.add(dependencyModule)) {
+            LOG.debug { "Module ${dependencyModule.name} contains class $className still referenced from some class in ${module.name} module"}
           }
         }
+        else {
+          val usedLibrary = fileIndex.findContainingLibraries(virtualFile).asSequence()
+            .filterNot { it.tableId.level == JpsLibraryTableSerializer.MODULE_LEVEL }
+            .firstNotNullOfOrNull { it.findLibraryBridge(WorkspaceModel.getInstance(project).currentSnapshot) }
+          if (usedLibrary != null) {
+            if (usedLibraries.add(usedLibrary)) {
+              LOG.debug { "Library ${usedLibrary.name} contains class $className still referenced from some class in ${module.name} module"}
+            }
+          }
+        }
+      }
     }
 
     val dependenciesToRemove =
@@ -153,7 +163,7 @@ class ModuleDependenciesCleaner(
     notification.notify(project)
   }
 
-  private class ShowDependenciesAction(private val module: Module, private val builder: ForwardDependenciesBuilder)
+  internal class ShowDependenciesAction(private val module: Module, private val builder: ForwardDependenciesBuilder)
     : NotificationAction(JavaUiBundle.message("notification.action.text.show.dependencies")) {
     private val project = module.project
 
@@ -166,3 +176,5 @@ class ModuleDependenciesCleaner(
     }
   }
 }
+
+private val LOG = logger<ModuleDependenciesCleaner>()

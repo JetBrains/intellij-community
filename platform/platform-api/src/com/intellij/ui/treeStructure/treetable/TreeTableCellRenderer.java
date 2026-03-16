@@ -25,11 +25,15 @@ import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleState;
 import javax.accessibility.AccessibleStateSet;
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
 
 /**
  * A TreeCellRenderer that displays a JTree.

@@ -3,7 +3,11 @@ package com.jetbrains.python.refactoring.extractmethod;
 
 import com.intellij.codeInsight.codeFragment.CannotCreateCodeFragmentException;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiComment;
@@ -152,7 +156,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
 
     final PsiElement statement1 = PyPsiUtils.getParentRightBefore(element1, statementList);
     final PsiElement statement2 = PyPsiUtils.getParentRightBefore(element2, statementList);
-    if (statement1 == null || statement2 == null){
+    if (statement1 == null || statement2 == null) {
       return null;
     }
 

@@ -7,8 +7,9 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.List;
 

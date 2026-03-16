@@ -32,7 +32,31 @@ data class ClientWindowCapabilities(
     val showDocument: ShowDocumentClientCapabilities? = null
 )
 
-typealias Unknown = JsonElement
+@Serializable
+data class ShowMessageRequestClientCapabilities(
+    /**
+     * Capabilities specific to the `MessageActionItem` type.
+     */
+    val messageActionItem: MessageActionItem? = null,
+) {
+    @Serializable
+    data class MessageActionItem(
+        /**
+         * Whether the client supports additional attributes which
+         * are preserved and sent back to the server in the
+         * request's response.
+         */
+        val additionalPropertiesSupport: Boolean? = null,
+    )
+}
 
-typealias ShowMessageRequestClientCapabilities = Unknown 
-typealias ShowDocumentClientCapabilities = Unknown 
+@Serializable
+data class ShowDocumentClientCapabilities(
+    /**
+     * The client has support for the show document
+     * request.
+     */
+    val support: Boolean,
+)
+
+typealias Unknown = JsonElement

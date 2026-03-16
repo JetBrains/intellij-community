@@ -15,7 +15,7 @@
  */
 package com.intellij.tasks;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * This auxiliary interface was added to support creation of configured generic repositories.

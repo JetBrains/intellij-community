@@ -2,7 +2,6 @@
 package com.intellij.util.indexing
 
 import com.intellij.find.ngrams.TrigramIndex
-import com.intellij.platform.testFramework.loadExtensionWithText
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.project.DumbService
@@ -11,9 +10,15 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.testFramework.loadExtensionWithText
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.psi.stubs.StubUpdatingIndex
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase

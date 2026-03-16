@@ -20,7 +20,6 @@ This section will guide you through getting the project sources and help avoid c
 
 #### Prerequisites
 - [Git](https://git-scm.com/) installed
-- ~2GB free disk space
 - Install [IntelliJ IDEA 2023.2](https://www.jetbrains.com/idea/download) or higher.
 - For **Windows** set these git config to avoid common issues during cloning:
   ```
@@ -63,6 +62,12 @@ Run the following script from project root `<IDEA_HOME>` to get the required mod
 
 ---
 ## Building IntelliJ IDEA
+
+> [Standard GitHub runners](https://docs.github.com/en/actions/concepts/runners/github-hosted-runners) can no longer be used to build the project due to the disk size limitation.
+> Now we use [larger runners](https://docs.github.com/en/enterprise-cloud@latest/actions/concepts/runners/larger-runners) which are only available for organizations and enterprises using the GitHub Team or GitHub Enterprise Cloud plans.
+> Users of personal GitHub accounts can use [the prebuilt binaries](https://github.com/JetBrains/intellij-community/releases), 
+> or build IntelliJ IDEA from source code locally.
+
 These instructions will help you build IntelliJ IDEA from source code, which is the basis for IntelliJ Platform development.
 IntelliJ IDEA '**2023.2**' or newer is required.
 
@@ -102,14 +107,12 @@ If IntelliJ IDEA displays a message about a missing or out-of-date required plug
 Options to build installers are passed as system properties to `installers.cmd` command.
 You may find the list of available properties in [BuildOptions.kt](platform/build-scripts/src/org/jetbrains/intellij/build/BuildOptions.kt)
 
+Pass --debug to suspend and wait for debugger at port 5005
+
 Installer build examples:
 ```bash
 # Build installers only for current operating system:
 ./installers.cmd -Dintellij.build.target.os=current
-```
-```bash
-# Build source code _incrementally_ (do not build what was already built before):
-./installers.cmd -Dintellij.build.incremental.compilation=true
 ```
 
 > [!TIP]
@@ -121,15 +124,13 @@ Installer build examples:
 #### Dockerized Build Environment
 To build installation packages inside a Docker container with preinstalled dependencies and tools, run the following command in `<IDEA_HOME>` directory (on Windows, use PowerShell):
 ```bash
-docker run --rm -it --user "$(id -u)" --volume "${PWD}:/community" "$(docker build --quiet . --target intellij_idea)"
+docker build . --target intellij_idea --tag intellij_idea_env
+docker run --rm --user "$(id -u)" --volume "${PWD}:/community" intellij_idea_env
 ```
 > [!NOTE]
 > 
 > Please remember to specify the `--user "$(id -u)"` argument for the container's user to match the host's user.
-> This prevents issues with permissions for the checked-out repository, the build output, and the mounted Maven cache, if any.
-> 
-To reuse the existing Maven cache from the host system, add the following option to `docker run` command:
-`--volume "$HOME/.m2:/home/ide_builder/.m2"`
+> This prevents issues with permissions for the checked-out repository, the build output, if any.
 
 ---
 ## Running IntelliJ IDEA
@@ -147,13 +148,15 @@ Options to run tests are passed as system properties to `tests.cmd` command.
 You may find the list of available properties in [TestingOptions.kt](platform/build-scripts/src/org/jetbrains/intellij/build/TestingOptions.kt)
 
 ```bash
-# Build source code _incrementally_ (do not build what was already built before): `
-./tests.cmd -Dintellij.build.incremental.compilation=true
+# Run specific run configuration:
+./tests.cmd -Dintellij.build.test.configurations=ApiCheckTest
 ```
 ```bash
-#Run a specific test: 
+# Run a specific test: 
 ./tests.cmd -Dintellij.build.test.patterns=com.intellij.util.ArrayUtilTest
 ```
+
+to debug tests use: `-Dintellij.build.test.debug.suspend=true -Dintellij.build.test.debug.port=5005`
 
 `tests.cmd` is used just to run [CommunityRunTestsBuildTarget](build/src/CommunityRunTestsBuildTarget.kt) from the command line.
 You can also call it directly from IDEA, see run configuration `tests` for an example.

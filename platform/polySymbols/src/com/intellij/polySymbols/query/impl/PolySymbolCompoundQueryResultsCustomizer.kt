@@ -3,12 +3,13 @@ package com.intellij.polySymbols.query.impl
 
 import com.intellij.model.Pointer
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizer
 
-internal class PolySymbolCompoundQueryResultsCustomizer(private val customizers: List<PolySymbolQueryResultsCustomizer>) : PolySymbolQueryResultsCustomizer {
+internal class PolySymbolCompoundQueryResultsCustomizer(private val customizers: List<PolySymbolQueryResultsCustomizer>) :
+  PolySymbolQueryResultsCustomizer {
 
   override fun apply(
     matches: List<PolySymbol>, strict: Boolean,
@@ -20,10 +21,10 @@ internal class PolySymbolCompoundQueryResultsCustomizer(private val customizers:
 
   override fun apply(
     item: PolySymbolCodeCompletionItem,
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
   ): PolySymbolCodeCompletionItem? =
     customizers.foldRight(item as PolySymbolCodeCompletionItem?) { scope, i ->
-      i?.let { scope.apply(it, qualifiedKind) }
+      i?.let { scope.apply(it, kind) }
     }
 
   override fun createPointer(): Pointer<out PolySymbolQueryResultsCustomizer> {

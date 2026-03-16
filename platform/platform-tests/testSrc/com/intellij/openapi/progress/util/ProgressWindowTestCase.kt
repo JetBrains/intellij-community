@@ -1,10 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util
 
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.concurrency.Semaphore
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert
 import java.awt.EventQueue
 
@@ -18,6 +23,7 @@ abstract class ProgressWindowTestCase<Process> : BasePlatformTestCase() {
   abstract fun showDialog(process: Process)
 
   abstract fun assertUninitialized(process: Process)
+
   abstract fun assertInitialized(process: Process)
 
   fun `test can start off EDT, still running when processing EventQueue`(): Unit = runBlocking {
@@ -75,11 +81,12 @@ abstract class ProgressWindowTestCase<Process> : BasePlatformTestCase() {
     }
   }
 
-  private suspend fun createProcessOffEdt(): Process =
-    withContext(Dispatchers.Default) {
+  private suspend fun createProcessOffEdt(): Process {
+    return withContext(Dispatchers.Default) {
       assertIsNotDispatchThread()
       createProcess()
     }
+  }
 
   protected fun assertIsNotDispatchThread() {
     Assert.assertFalse("should not be running on dispatch thread", EventQueue.isDispatchThread())

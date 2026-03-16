@@ -3,7 +3,12 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.ApiStatus;

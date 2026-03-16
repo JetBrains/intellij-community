@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.metadata.validator
 
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.jetbrains.fus.reporting.api.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.utils.PluginType
@@ -106,7 +106,7 @@ private fun newContext(plugin_type: String?, plugin: String?): EventContext {
 class TestCheckPluginTypeCustomValidationRule(private val fromJBPlugin: Boolean) : CustomValidationRule() {
   override fun acceptRuleId(ruleId: String?): Boolean = true
 
-  override fun doValidate(data: String, context: EventContext): ValidationResultType {
+  override fun doValidate(data: String, context: EventContext): com.intellij.internal.statistic.eventLog.validator.ValidationResultType {
     return if (fromJBPlugin) acceptWhenReportedByJetBrainsPlugin(context) else acceptWhenReportedByPluginFromPluginRepository(context)
   }
 }

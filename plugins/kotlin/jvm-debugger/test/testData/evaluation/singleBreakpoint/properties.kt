@@ -106,5 +106,3 @@ fun main(args: Array<String>) {
 
 // EXPRESSION: A.op6 = 106; A.op6
 // RESULT: 107: I
-
-// IGNORE_BACKEND: JVM_IR_WITH_OLD_EVALUATOR

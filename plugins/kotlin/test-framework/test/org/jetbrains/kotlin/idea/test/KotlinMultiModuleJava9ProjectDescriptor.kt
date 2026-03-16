@@ -7,7 +7,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.LanguageLevelModuleExtension
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem

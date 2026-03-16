@@ -12,8 +12,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 public abstract class UpdatableDebuggerView extends JPanel implements DebuggerView {
   private final Project myProject;

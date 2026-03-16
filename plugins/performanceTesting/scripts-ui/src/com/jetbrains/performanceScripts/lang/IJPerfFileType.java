@@ -6,7 +6,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.jetbrains.performanceScripts.PerformanceScriptsBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class IJPerfFileType extends LanguageFileType {
 

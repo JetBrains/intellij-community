@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_objectConstantChanged-a.kotlin_module
+  test/Object.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/objectConstantChanged/a/const.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_objectConstantChanged-a.kotlin_module
+  test/Usage.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/objectConstantChanged/a/usage.kt
+End of files
+------------------------------------------
+Exit code: OK

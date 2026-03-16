@@ -4,19 +4,30 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ArrayUtil;
+import com.jetbrains.JBR;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.util.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 
 final class EditorColorSchemeDelegate extends DelegateColorScheme {
@@ -251,6 +262,7 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
     float globalFontSize = getDelegate().getEditorFontSize2D();
     myMaxFontSize = Math.max(EditorFontsConstants.getMaxEditorFontSize(), globalFontSize);
     reinitFonts();
+    myEditor.reinitStickyLines();
   }
 
   @Override
@@ -392,6 +404,12 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
       ? myUseLigatures
       : fontPreferences.useLigatures()
     );
+    if (!fontPreferences.getCharacterVariants().isEmpty()) {
+      fontWithLigatures = JBR.getFontExtensions().deriveFontWithFeatures(
+        fontWithLigatures,
+        ArrayUtil.toStringArray(fontPreferences.getCharacterVariants())
+      );
+    }
     myFontsMap.put(fontType, fontWithLigatures);
   }
 
@@ -418,6 +436,7 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
       preferences.register(font, fontSize);
     }
     preferences.setUseLigatures(useLigatures != null ? useLigatures : delegatePreferences.useLigatures());
+    preferences.setCharacterVariants(delegatePreferences.getCharacterVariants());
     preferences.setRegularSubFamily(delegatePreferences.getRegularSubFamily());
     preferences.setBoldSubFamily(delegatePreferences.getBoldSubFamily());
   }

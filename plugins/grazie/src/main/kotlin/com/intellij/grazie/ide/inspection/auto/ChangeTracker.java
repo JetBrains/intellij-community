@@ -7,23 +7,30 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Service
 public final class ChangeTracker implements Disposable {
-  private static final Key<List<RecentChange>> DATA_KEY = Key.create("Grazie.Pro.RecentChanges");
+  private static final int RANGES_THRESHOLD = 100;
+  private static final Key<Deque<RecentChange>> DATA_KEY = Key.create("Grazie.Pro.RecentChanges");
   private static final Key<List<RangeMarker>> UNDONE_RANGES = Key.create("Grazie.Pro.UndoneChanges");
 
   ChangeTracker() {
@@ -47,19 +54,18 @@ public final class ChangeTracker implements Disposable {
     String cmdName = CommandProcessor.getInstance().getCurrentCommandName();
     return EditorBundle.message("typing.in.editor.command.name").equals(cmdName) ||
            CodeInsightBundle.message("completion.automatic.command.name").equals(cmdName) ||
-           Arrays.stream(editors).anyMatch(e -> LookupManager.getActiveLookup(e) != null);
+           ContainerUtil.exists(editors, e -> LookupManager.getActiveLookup(e) != null);
   }
 
   private static boolean isUndoInProgress(Editor[] editors) {
-    return Arrays.stream(editors)
-      .anyMatch(e -> e.getProject() != null && UndoManager.getInstance(e.getProject()).isUndoInProgress());
+    return ContainerUtil.exists(editors, e -> e.getProject() != null && UndoManager.getInstance(e.getProject()).isUndoInProgress());
   }
 
   private synchronized void registerChange(DocumentEvent event) {
     Document document = event.getDocument();
-    List<RecentChange> changes = document.getUserData(DATA_KEY);
+    Deque<RecentChange> changes = document.getUserData(DATA_KEY);
     if (changes == null) {
-      document.putUserData(DATA_KEY, changes = new ArrayList<>());
+      document.putUserData(DATA_KEY, changes = new ArrayDeque<>(RANGES_THRESHOLD));
     }
 
     long now = System.nanoTime();
@@ -71,13 +77,24 @@ public final class ChangeTracker implements Disposable {
       }
     }
 
-    changes.add(new RecentChange(now, createMarker(event)));
+    while (changes.size() >= RANGES_THRESHOLD) {
+      changes.removeFirst().marker.dispose();
+    }
+
+    if (!ContainerUtil.exists(changes, change -> coversSameRange(change.marker, event))) {
+      changes.addLast(new RecentChange(now, createMarker(event)));
+    }
+  }
+
+  private static boolean coversSameRange(RangeMarker marker, DocumentEvent event) {
+    return marker.getStartOffset() == event.getOffset() && marker.getEndOffset() == event.getOffset() + event.getNewLength();
   }
 
   @NotNull
   private static RangeMarker createMarker(DocumentEvent event) {
     return event.getDocument().createRangeMarker(TextRange.from(event.getOffset(), event.getNewLength()));
   }
+
 
   private synchronized void registerUndo(DocumentEvent event) {
     Document document = event.getDocument();
@@ -98,12 +115,12 @@ public final class ChangeTracker implements Disposable {
     if (changes == null) return false;
 
     long now = System.nanoTime();
-    return changes.stream().anyMatch(c -> c.isRelevant(now) && c.marker.getTextRange().intersects(range));
+    return ContainerUtil.exists(changes, c -> c.isRelevant(now) && c.marker.getTextRange().intersects(range));
   }
 
   synchronized boolean isExplicitlyUndone(Document document, TextRange range) {
     var undone = document.getUserData(UNDONE_RANGES);
-    return undone != null && undone.stream().anyMatch(r -> r.isValid() && r.getTextRange().intersects(range));
+    return undone != null && ContainerUtil.exists(undone, r -> r.isValid() && r.getTextRange().intersects(range));
   }
 
   @Override
@@ -114,7 +131,7 @@ public final class ChangeTracker implements Disposable {
     private static final long TRACKING_INTERVAL = TimeUnit.MINUTES.toNanos(1);
 
     boolean isRelevant(long now) {
-      return marker.isValid() && now - time <= TRACKING_INTERVAL;
+      return marker.isValid() && !marker.getTextRange().isEmpty() && now - time <= TRACKING_INTERVAL;
     }
   }
 }

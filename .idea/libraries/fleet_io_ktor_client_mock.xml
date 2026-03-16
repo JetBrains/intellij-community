@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="fleet:io.ktor.client.mock" type="repository">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-mock-jvm:3.3.2">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-mock-jvm/3.3.2/ktor-client-mock-jvm-3.3.2.jar">
+          <sha256sum>85304717327b3156ad1f9d5f081090d330147ffc185599b05235d01d45168f02</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-mock-jvm/3.3.2/ktor-client-mock-jvm-3.3.2.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-mock-jvm/3.3.2/ktor-client-mock-jvm-3.3.2-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-mock-jvm/3.3.2/ktor-client-mock-jvm-3.3.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

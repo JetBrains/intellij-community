@@ -19,7 +19,12 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExceptPart;
+import com.jetbrains.python.psi.PyForStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyListCompExpression;
+import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.impl.PyExceptPartNavigator;
 import com.jetbrains.python.psi.impl.PyForStatementNavigator;
 import com.jetbrains.python.psi.impl.PyListCompExpressionNavigator;
@@ -35,26 +40,26 @@ public final class ScopeUtil {
   private ScopeUtil() {
   }
 
-  public static @Nullable PsiElement getParameterScope(final PsiElement element){
-    if (element instanceof PyNamedParameter){
+  public static @Nullable PsiElement getParameterScope(final PsiElement element) {
+    if (element instanceof PyNamedParameter) {
       final PyFunction function = getParentOfType(element, PyFunction.class, false);
-      if (function != null){
+      if (function != null) {
         return function;
       }
     }
 
     final PyExceptPart exceptPart = PyExceptPartNavigator.getPyExceptPartByTarget(element);
-    if (exceptPart != null){
+    if (exceptPart != null) {
       return exceptPart;
     }
 
     final PyForStatement forStatement = PyForStatementNavigator.getPyForStatementByIterable(element);
-    if (forStatement != null){
+    if (forStatement != null) {
       return forStatement;
     }
 
     final PyListCompExpression listCompExpression = PyListCompExpressionNavigator.getPyListCompExpressionByVariable(element);
-    if (listCompExpression != null){
+    if (listCompExpression != null) {
       return listCompExpression;
     }
     return null;

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.caches.project
 
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.config.KotlinSourceRootType
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.utils.closure
 
+@K1Deprecation
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule' instead.",
     ReplaceWith("this.isNewMultiPlatformModule", imports = ["org.jetbrains.kotlin.idea.base.facet"]),
@@ -33,6 +35,7 @@ import org.jetbrains.kotlin.utils.closure
 val Module.isNewMPPModule: Boolean
     get() = isNewMultiPlatformModule
 
+@K1Deprecation
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType' instead.",
     ReplaceWith("sourceType", imports = ["org.jetbrains.kotlin.idea.base.facet"]),
@@ -46,6 +49,7 @@ val Module.sourceType: SourceType?
         else -> null
     }
 
+@K1Deprecation
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule' instead.",
     ReplaceWith("isMultiPlatformModule", imports = ["org.jetbrains.kotlin.idea.base.facet"]),
@@ -55,6 +59,7 @@ val Module.sourceType: SourceType?
 val Module.isMPPModule: Boolean
     get() = isMultiPlatformModule
 
+@K1Deprecation
 val ModuleDescriptor.implementingDescriptors: List<ModuleDescriptor>
     get() {
         val moduleInfo = getCapability(ModuleInfo.Capability)
@@ -72,9 +77,11 @@ val ModuleDescriptor.implementingDescriptors: List<ModuleDescriptor>
         return implementingModuleInfos.mapNotNull { it.toDescriptor() }
     }
 
+@K1Deprecation
 val ModuleDescriptor.allImplementingDescriptors: Collection<ModuleDescriptor>
     get() = implementingDescriptors.closure(preserveOrder = true) { it.implementingDescriptors }
 
+@K1Deprecation
 fun Module.getModuleInfo(sourceRootType: KotlinSourceRootType): ModuleSourceInfo? {
     return when (sourceRootType) {
         SourceKotlinRootType -> productionSourceInfo
@@ -85,6 +92,7 @@ fun Module.getModuleInfo(sourceRootType: KotlinSourceRootType): ModuleSourceInfo
 /**
  * This function returns immediate parents in dependsOn graph
  */
+@K1Deprecation
 val ModuleDescriptor.implementedDescriptors: List<ModuleDescriptor>
     get() {
         val moduleInfo = getCapability(ModuleInfo.Capability)
@@ -95,17 +103,21 @@ val ModuleDescriptor.implementedDescriptors: List<ModuleDescriptor>
         return moduleSourceInfo.expectedBy.mapNotNull { it.toDescriptor() }
     }
 
+@K1Deprecation
 fun Module.toDescriptor() = (productionSourceInfo ?: testSourceInfo)?.toDescriptor()
 
+@K1Deprecation
 fun ModuleSourceInfo.toDescriptor() = KotlinCacheService.getInstance(module.project)
     .getResolutionFacadeByModuleInfo(this, platform)?.moduleDescriptor
 
+@K1Deprecation
 fun PsiElement.getPlatformModuleInfo(desiredPlatform: TargetPlatform): PlatformModuleInfo? {
     assert(!desiredPlatform.isCommon()) { "Platform module cannot have Common platform" }
     val moduleInfo = this.moduleInfoOrNull as? ModuleSourceInfo ?: return null
     return doGetPlatformModuleInfo(moduleInfo, desiredPlatform)
 }
 
+@K1Deprecation
 fun getPlatformModuleInfo(moduleInfo: ModuleSourceInfo, desiredPlatform: TargetPlatform): PlatformModuleInfo? {
     assert(!desiredPlatform.isCommon()) { "Platform module cannot have Common platform" }
     return doGetPlatformModuleInfo(moduleInfo, desiredPlatform)

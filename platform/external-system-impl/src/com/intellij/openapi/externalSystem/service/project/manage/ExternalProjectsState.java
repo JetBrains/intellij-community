@@ -3,7 +3,11 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewState;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XMap;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.LinkedHashMap;

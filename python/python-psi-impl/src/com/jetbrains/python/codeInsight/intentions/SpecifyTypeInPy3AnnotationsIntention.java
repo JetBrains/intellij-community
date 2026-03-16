@@ -38,7 +38,14 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAnnotation;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyType;
@@ -213,7 +220,8 @@ public final class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
 
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(annotationValue);
       builder.replaceRange(TextRange.create(0, returnTypeText.length()), returnTypeText);
-      final Editor targetEditor = PythonUiService.getInstance().openTextEditor(project, annotatedFunction.getContainingFile().getVirtualFile(), offset);
+      final Editor targetEditor =
+        PythonUiService.getInstance().openTextEditor(project, annotatedFunction.getContainingFile().getVirtualFile(), offset);
       if (targetEditor != null) {
         builder.run(targetEditor, true);
       }

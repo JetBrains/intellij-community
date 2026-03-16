@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
+import com.intellij.devkit.core.icons.DevkitCoreIcons;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.module.Module;
@@ -14,7 +15,6 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.inspections.DescriptionType;
 import org.jetbrains.idea.devkit.inspections.DescriptionTypeResolver;
 import org.jetbrains.idea.devkit.util.PsiUtil;
@@ -32,10 +32,10 @@ final class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedCl
 
   private final Option myDescriptionOption = new Option("devkit.description",
                                                         DevKitBundle.message("gutter.related.option.description"),
-                                                        DevKitIcons.Gutter.DescriptionFile);
+                                                        DevkitCoreIcons.Gutter.DescriptionFile);
   private final Option myBeforeAfterOption = new Option("devkit.beforeAfter",
                                                         DevKitBundle.message("gutter.related.option.before.after.templates"),
-                                                        DevKitIcons.Gutter.Diff);
+                                                        DevkitCoreIcons.Gutter.Diff);
 
   @Override
   public Option @NotNull [] getOptions() {
@@ -88,7 +88,7 @@ final class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedCl
                                                    PsiFile descriptionFile,
                                                    Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
-      .create(DevKitIcons.Gutter.DescriptionFile, CONVERTER, RELATED_ITEM_PROVIDER)
+      .create(DevkitCoreIcons.Gutter.DescriptionFile, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTarget(descriptionFile)
       .setTooltipText(DevKitBundle.message("gutter.related.navigation.popup.description.tooltip"))
       .setAlignment(GutterIconRenderer.Alignment.RIGHT)
@@ -101,7 +101,7 @@ final class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedCl
                                                             Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     //noinspection DialogTitleCapitalization
     final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
-      .create(DevKitIcons.Gutter.Diff, CONVERTER, RELATED_ITEM_PROVIDER)
+      .create(DevkitCoreIcons.Gutter.Diff, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTargets(templateFiles)
       .setPopupTitle(DevKitBundle.message("gutter.related.navigation.popup.template.title"))
       .setTooltipText(DevKitBundle.message("gutter.related.navigation.popup.template.tooltip"))

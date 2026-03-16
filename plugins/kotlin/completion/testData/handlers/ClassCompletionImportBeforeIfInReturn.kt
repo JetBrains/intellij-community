@@ -5,4 +5,3 @@ fun test(): Int? {
 }
 
 // ELEMENT: SortedSet
-// USE_EXPENSIVE_RENDERER

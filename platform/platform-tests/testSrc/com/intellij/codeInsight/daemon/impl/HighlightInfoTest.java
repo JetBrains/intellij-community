@@ -12,7 +12,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.function.Consumer;
 
 public class HighlightInfoTest extends TestCase {

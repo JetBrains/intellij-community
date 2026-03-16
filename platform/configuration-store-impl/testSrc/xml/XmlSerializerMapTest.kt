@@ -16,7 +16,7 @@ import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.TreeMap
 
 internal class XmlSerializerMapTest {
   @Test

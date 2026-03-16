@@ -9,7 +9,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -17,8 +16,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 class PsiViewerSourceWrapper implements Comparable<PsiViewerSourceWrapper> {
 
@@ -74,8 +77,7 @@ class PsiViewerSourceWrapper implements Comparable<PsiViewerSourceWrapper> {
   }
 
   private static boolean isAcceptableFileType(FileType fileType) {
-    return fileType != StdFileTypes.GUI_DESIGNER_FORM &&
-           fileType != ModuleFileType.INSTANCE &&
+    return fileType != ModuleFileType.INSTANCE &&
            fileType != ProjectFileType.INSTANCE &&
            fileType != WorkspaceFileType.INSTANCE &&
            fileType != ArchiveFileType.INSTANCE &&

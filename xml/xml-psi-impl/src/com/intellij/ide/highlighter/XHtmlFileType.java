@@ -6,7 +6,7 @@ import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.xml.XmlCoreBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class XHtmlFileType extends HtmlFileType {
   public static final XHtmlFileType INSTANCE = new XHtmlFileType();

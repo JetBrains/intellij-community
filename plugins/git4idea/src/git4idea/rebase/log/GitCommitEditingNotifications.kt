@@ -21,6 +21,56 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import kotlinx.coroutines.launch
 
+internal fun List<GitCommitEditingOperationResult.Complete>.notifySuccess(
+  @NlsContexts.NotificationTitle title: String,
+  @NlsContexts.NotificationContent content: String?,
+  @NlsContexts.ProgressTitle undoProgressTitle: String,
+  @NlsContexts.ProgressTitle undoImpossibleTitle: String,
+  @NlsContexts.ProgressTitle undoErrorTitle: String,
+  logUiEx: VcsLogUiEx? = null,
+  editAgain: (() -> Unit)? = null,
+) {
+
+  val resultsByRepository = associateBy { it.repository }
+  val project = first().repository.project
+  val notification = if (content.isNullOrEmpty()) {
+    VcsNotifier.standardNotification().createNotification(title, NotificationType.INFORMATION)
+  }
+  else {
+    VcsNotifier.standardNotification().createNotification(title, content, NotificationType.INFORMATION)
+  }
+  notification.setDisplayId(GitNotificationIdsHolder.COMMIT_EDIT_SUCCESS)
+  notification.addAction(NotificationAction.createSimple(
+    GitBundle.messagePointer("action.NotificationAction.GitRewordOperation.text.undo"),
+    Runnable {
+      forEach { completeResult ->
+        undoInBackground(project, undoProgressTitle, undoImpossibleTitle, undoErrorTitle, completeResult, logUiEx) { notification.expire() }
+      }
+    }
+  ))
+
+  editAgain?.let {
+    notification.addAction(NotificationAction.createSimpleExpiring(
+      GitBundle.message("action.NotificationAction.GitRewordOperation.text.edit.again"),
+      Runnable { it() }
+    ))
+  }
+
+  val connection = project.messageBus.connect()
+  notification.whenExpired { connection.disconnect() }
+  connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
+    BackgroundTaskUtil.executeOnPooledThread(it, Runnable {
+      resultsByRepository[it]?.let { completeResult ->
+        if (completeResult.checkUndoPossibility() !== UndoPossibility.Possible) {
+          notification.expire()
+        }
+      }
+    })
+  })
+
+  VcsNotifier.getInstance(project).notify(notification)
+}
+
 internal fun GitCommitEditingOperationResult.Complete.notifySuccess(
   @NlsContexts.NotificationTitle title: String,
   @NlsContexts.NotificationContent content: String?,
@@ -28,32 +78,8 @@ internal fun GitCommitEditingOperationResult.Complete.notifySuccess(
   @NlsContexts.ProgressTitle undoImpossibleTitle: String,
   @NlsContexts.ProgressTitle undoErrorTitle: String,
   logUiEx: VcsLogUiEx? = null,
-) {
-  val project = repository.project
-  val notification = if (content.isNullOrEmpty()) VcsNotifier.standardNotification().createNotification(title, NotificationType.INFORMATION)
-  else VcsNotifier.standardNotification().createNotification(title, content, NotificationType.INFORMATION)
-  notification.setDisplayId(GitNotificationIdsHolder.COMMIT_EDIT_SUCCESS)
-  notification.addAction(NotificationAction.createSimple(
-    GitBundle.messagePointer("action.NotificationAction.GitRewordOperation.text.undo"),
-    Runnable {
-      undoInBackground(project, undoProgressTitle, undoImpossibleTitle, undoErrorTitle, this@notifySuccess, logUiEx) { notification.expire() }
-    }
-  ))
-
-  val connection = project.messageBus.connect()
-  notification.whenExpired { connection.disconnect() }
-  connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
-    if (it == repository) {
-      BackgroundTaskUtil.executeOnPooledThread(repository, Runnable {
-        if (checkUndoPossibility() !== UndoPossibility.Possible) {
-          notification.expire()
-        }
-      })
-    }
-  })
-
-  VcsNotifier.getInstance(project).notify(notification)
-}
+  editAgain: (() -> Unit)? = null,
+) = listOf(this).notifySuccess(title, content, undoProgressTitle, undoImpossibleTitle, undoErrorTitle, logUiEx, editAgain)
 
 internal fun UndoResult.Error.notifyUndoError(project: Project, @NlsContexts.NotificationTitle title: String) {
   VcsNotifier.getInstance(project).notifyError(REBASE_COMMIT_EDIT_UNDO_ERROR, title, errorHtml)
@@ -86,19 +112,19 @@ private fun undoInBackground(
 ) {
   GitDisposable.getInstance(project).coroutineScope.launch {
     withBackgroundProgress(project, undoProgressTitle) {
-        val possibility = result.checkUndoPossibility()
-        if (possibility is UndoPossibility.Impossible) {
-          possibility.notifyUndoImpossible(project, undoImpossibleTitle)
+      val possibility = result.checkUndoPossibility()
+      if (possibility is UndoPossibility.Impossible) {
+        possibility.notifyUndoImpossible(project, undoImpossibleTitle)
+        expireUndoAction()
+        return@withBackgroundProgress
+      }
+      when (val undoResult = result.undo()) {
+        is UndoResult.Error -> undoResult.notifyUndoError(project, undoErrorTitle)
+        is UndoResult.Success -> {
+          logUiEx?.focusCommitWhenReady(result.repository, result.commitToFocusOnUndo)
           expireUndoAction()
-          return@withBackgroundProgress
         }
-        when (val undoResult = result.undo()) {
-          is UndoResult.Error -> undoResult.notifyUndoError(project, undoErrorTitle)
-          is UndoResult.Success -> {
-            logUiEx?.focusCommitWhenReady(result.repository, result.commitToFocusOnUndo)
-            expireUndoAction()
-          }
-        }
+      }
     }
   }
 }

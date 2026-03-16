@@ -3,12 +3,12 @@ package com.intellij.codeInsight.stickyLines
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.openapi.editor.Document
-import com.intellij.ui.components.breadcrumbs.StickyLineInfo
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesCollector
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiFile
+import com.intellij.ui.components.breadcrumbs.StickyLineInfo
 
 internal class StickyLinesPass(
   private val document: Document,

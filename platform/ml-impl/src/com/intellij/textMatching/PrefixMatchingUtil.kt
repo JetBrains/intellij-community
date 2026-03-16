@@ -37,6 +37,7 @@ object PrefixMatchingUtil {
     features.addFeature("matched_last_word", prefixMatchingScores.exactFinal, false)
   }
 
+  @ConsistentCopyVisibility
   data class PrefixMatchingScores internal constructor(
     val exact: Boolean,
     val exactFinal: Boolean,
@@ -73,7 +74,7 @@ object PrefixMatchingUtil {
 
       fun build(prefix: String, lookupString: String): PrefixMatchingScores {
         if (prefix.isEmpty()) return EMPTY_PREFIX_MATCHING_SCORE
-        val words = NameUtil.nameToWords(lookupString).filter { it.all { it.isLetterOrDigit() } }
+        val words = NameUtil.nameToWordList(lookupString).filter { it.all { it.isLetterOrDigit() } }
         startMatchingCount = commonPrefixLength(prefix, lookupString)
         exact = lookupString == prefix
         wordsCount = words.size

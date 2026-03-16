@@ -13,7 +13,11 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.settingsSync.core.*
+import com.intellij.settingsSync.core.SettingsSyncBundle
+import com.intellij.settingsSync.core.SettingsSyncEventListener
+import com.intellij.settingsSync.core.SettingsSyncEvents
+import com.intellij.settingsSync.core.SettingsSyncMain
+import com.intellij.settingsSync.core.isSettingsSyncEnabledInSettings
 import git4idea.log.showExternalGitLogInToolwindow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

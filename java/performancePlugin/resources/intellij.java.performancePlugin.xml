@@ -1,7 +1,18 @@
-<idea-plugin package="com.intellij.java.performancePlugin">
+<idea-plugin>
   <dependencies>
     <module name="intellij.performanceTesting.vcs"/>
     <plugin id="com.jetbrains.performancePlugin"/>
+    <module name="intellij.java.analysis.impl"/>
+    <module name="intellij.java.compiler"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.impl.refactorings"/>
+    <module name="intellij.java"/>
+
+    <module name="intellij.platform.backend"/>
+
+
   </dependencies>
   <extensions defaultExtensionNs="com.jetbrains">
     <performancePlugin.commandProvider implementation="com.intellij.java.performancePlugin.JavaCommandProvider"/>

@@ -2,7 +2,10 @@
 package org.jetbrains.idea.maven.execution
 
 import com.intellij.ide.actions.runAnything.RunAnythingContext
-import com.intellij.ide.actions.runAnything.RunAnythingContext.*
+import com.intellij.ide.actions.runAnything.RunAnythingContext.BrowseRecentDirectoryContext
+import com.intellij.ide.actions.runAnything.RunAnythingContext.ModuleContext
+import com.intellij.ide.actions.runAnything.RunAnythingContext.ProjectContext
+import com.intellij.ide.actions.runAnything.RunAnythingContext.RecentDirectoryContext
 import com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject
 import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandLineProvider
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider

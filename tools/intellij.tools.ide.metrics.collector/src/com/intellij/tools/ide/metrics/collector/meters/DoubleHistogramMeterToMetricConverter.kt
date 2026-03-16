@@ -1,6 +1,11 @@
 package com.intellij.tools.ide.metrics.collector.meters
 
-import com.intellij.tools.ide.metrics.collector.metrics.*
+import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
+import com.intellij.tools.ide.metrics.collector.metrics.calculatePercentile
+import com.intellij.tools.ide.metrics.collector.metrics.mad
+import com.intellij.tools.ide.metrics.collector.metrics.median
+import com.intellij.tools.ide.metrics.collector.metrics.range
+import com.intellij.tools.ide.metrics.collector.metrics.standardDeviation
 import io.opentelemetry.sdk.metrics.data.HistogramPointData
 import io.opentelemetry.sdk.metrics.data.MetricData
 

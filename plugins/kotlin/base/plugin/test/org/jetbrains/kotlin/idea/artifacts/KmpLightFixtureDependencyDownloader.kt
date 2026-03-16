@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.konan.target.TargetSupportException
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.EnumSet
 import kotlin.io.path.notExists
 
 /**

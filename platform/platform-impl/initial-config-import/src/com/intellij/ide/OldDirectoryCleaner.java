@@ -37,10 +37,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;

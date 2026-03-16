@@ -3,7 +3,11 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.util.containers.Convertor;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
@@ -164,15 +168,6 @@ public final class ObjectUtils {
   @Contract("null, _ -> null")
   public static @Nullable <T> T nullizeByCondition(@Nullable T obj, @NotNull Predicate<? super T> condition) {
     return condition.test(obj) ? null : obj;
-  }
-
-  /**
-   * @deprecated Use Kotlin takeIf
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static @Nullable <T> T nullizeIfDefaultValue(@Nullable T obj, @NotNull T defaultValue) {
-    return obj == defaultValue ? null : obj;
   }
 
   /**

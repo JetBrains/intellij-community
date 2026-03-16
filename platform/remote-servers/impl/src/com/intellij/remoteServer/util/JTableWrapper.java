@@ -18,12 +18,12 @@ package com.intellij.remoteServer.util;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

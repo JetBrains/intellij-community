@@ -180,4 +180,9 @@ public class BuilderTest extends AbstractLombokParsingTestCase {
   public void testBuilder$BuilderWithBuilderClassNameOnConstructor() {
     doTest(true);
   }
+
+  // Verifies that builder class names start lowercase when the target class starts lowercase
+  public void testBuilder$BuilderWithLowercaseInnerClass() {
+    doTest(true);
+  }
 }

@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;

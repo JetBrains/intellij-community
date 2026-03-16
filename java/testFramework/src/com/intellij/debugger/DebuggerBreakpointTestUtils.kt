@@ -3,7 +3,11 @@ package com.intellij.debugger
 
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
+import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.util.ConcurrencyUtil
+
+@JvmField
+val USE_XSESSION_PAUSE_LISTENER_KEY: KeyWithDefaultValue<Boolean?> = KeyWithDefaultValue.create("USE_XSESSION_PAUSE_LISTENER_KEY", false)
 
 /**
  * It allows to avoid the hell with listeners by pretty linear program.

@@ -1,5 +1,14 @@
 ### auto-generated section `build kotlin.base.scripting.k1` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_scripting.k1",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
 
 resourcegroup(
   name = "scripting.k1_resources",
@@ -13,6 +22,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   resources = [":scripting.k1_resources"],
+  kotlinc_opts = ":custom_scripting.k1",
   deps = [
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
@@ -25,7 +35,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-common",
     "@lib//:kotlinc-kotlin-scripting-jvm",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/workspace/storage",
@@ -63,6 +73,9 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//platform/refactoring",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//plugins/kotlin/preferences",
   ]
 )
 
@@ -70,6 +83,7 @@ jvm_library(
   name = "scripting.k1_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_scripting.k1",
   associates = [":scripting.k1"],
   deps = [
     "//platform/core-api:core",
@@ -83,7 +97,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-common",
     "@lib//:kotlinc-kotlin-scripting-jvm",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:junit5",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
@@ -116,6 +130,7 @@ jvm_library(
     "//platform/collaboration-tools",
     "//platform/collaboration-tools:collaboration-tools_test_lib",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//platform/backend/workspace",
     "//plugins/kotlin/code-insight/utils",
     "//platform/workspace/jps",
@@ -126,6 +141,9 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//platform/refactoring",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//plugins/kotlin/preferences",
   ]
 )
 ### auto-generated section `build kotlin.base.scripting.k1` end

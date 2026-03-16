@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -14,10 +14,30 @@ import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoFileAction;
 import com.intellij.ide.impl.DataValidators;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.model.Pointer;
+import com.intellij.model.Symbol;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileTypes.UnknownFileType;
@@ -34,7 +54,11 @@ import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -54,7 +78,13 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.*;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ExpandedItemListCellRendererWrapper;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
@@ -64,27 +94,89 @@ import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usages.*;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageLimitUtil;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsageViewManagerImpl;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.AstLoadingFilter;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
-import com.intellij.util.ui.*;
+import com.intellij.util.text.matching.MatchingMode;
+import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JLayeredPane;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.JWindow;
+import javax.swing.KeyStroke;
+import javax.swing.LayoutFocusTraversalPolicy;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.PointerInfo;
+import java.awt.Rectangle;
+import java.awt.Window;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   public static final String TEMPORARILY_FOCUSABLE_COMPONENT_KEY = "ChooseByNameBase.TemporarilyFocusableComponent";
@@ -277,6 +369,11 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
           selection, o -> getElement(o));
         return PsiUtilCore.toPsiElementArray(result);
       });
+
+      sink.lazy(CommonDataKeys.SYMBOLS, () -> {
+        if (myCalcElementsThread != null) return null;
+        return selection.stream().flatMap(o -> getSymbols(o).stream()).toList();
+      });
     }
 
     private static @Nullable PsiElement getElement(Object element) {
@@ -289,6 +386,24 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
           data, CommonDataKeys.PSI_ELEMENT.getName(), element);
       }
       return null;
+    }
+
+    private static @NotNull List<Symbol> getSymbols(Object element) {
+      if (element instanceof Pointer<?>) {
+        element = ((Pointer<?>)element).dereference();
+      }
+      if (element instanceof Symbol o) {
+        return Collections.singletonList(o);
+      }
+      if (element instanceof DataProvider o) {
+        List<Symbol> data = CommonDataKeys.SYMBOLS.getData(o);
+        if (data != null) {
+          //noinspection unchecked
+          data = (List<Symbol>)DataValidators.validOrNull(data, CommonDataKeys.SYMBOLS.getName(), element);
+        }
+        return data == null ? Collections.emptyList() : data;
+      }
+      return Collections.emptyList();
     }
 
     @Override
@@ -1203,7 +1318,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       int code = keyStroke.getKeyCode();
       int modifiers = keyStroke.getModifiers();
       try {
-        super.processKeyEvent(e);
+        WriteIntentReadAction.run(() -> {
+          super.processKeyEvent(e);
+        });
       }
       catch (NullPointerException e1) {
         if (!Patches.SUN_BUG_ID_6322854) {
@@ -1444,7 +1561,12 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       LOG.assertTrue(myCalcElementsThread == this, myCalcElementsThread);
 
       if (!isProjectDisposed() && !checkDisposed()) {
-        new CalcElementsThread(myPattern, myCheckboxState, myModalityState, mySelectionPolicy, myCallback).scheduleThread();
+        CalcElementsThread thread = new CalcElementsThread(myPattern, myCheckboxState, myModalityState, mySelectionPolicy, myCallback);
+        if (EDT.isCurrentThreadEdt()) {
+          thread.scheduleThread();
+        } else {
+          ApplicationManager.getApplication().invokeLater(thread::scheduleThread);
+        }
       }
     }
 
@@ -1519,7 +1641,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   }
 
   private static @NotNull Matcher buildPatternMatcher(@NotNull String pattern) {
-    return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+    return NameUtil.buildMatcher(pattern, MatchingMode.IGNORE_CASE);
   }
 
   private static final class HintLabel extends JLabel {

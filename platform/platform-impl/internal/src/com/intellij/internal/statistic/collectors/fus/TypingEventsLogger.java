@@ -5,7 +5,15 @@ import com.intellij.internal.performance.LatencyDistributionRecord;
 import com.intellij.internal.performance.LatencyDistributionRecordKey;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowUtilValidator;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.*;
+import com.intellij.internal.statistic.eventLog.events.EnumEventField;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId;
+import com.intellij.internal.statistic.eventLog.events.EventId2;
+import com.intellij.internal.statistic.eventLog.events.EventId3;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.events.IntEventField;
+import com.intellij.internal.statistic.eventLog.events.StringEventField;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.EventRateThrottleResult;
 import com.intellij.internal.statistic.utils.EventsRateWindowThrottle;
@@ -19,7 +27,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.actionSystem.LatencyListener;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,23 +44,28 @@ import java.util.ArrayList;
 
 @ApiStatus.Internal
 public final class TypingEventsLogger extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("editor.typing", 10);
+  private static final EventLogGroup GROUP = new EventLogGroup("editor.typing", 12);
 
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
   private static final StringEventField TOOL_WINDOW =
     EventFields.StringValidatedByCustomRule("toolwindow_id", ToolWindowUtilValidator.class);
   private static final VarargEventId TYPED = GROUP.registerVarargEvent("typed", EDITOR_KIND, TOOL_WINDOW, EventFields.Language);
+  private static final IntEventField SELECTION_LENGTH =
+    EventFields.Int("selection_length", "How many selected characters were deleted");
+  private static final EnumEventField<SelectionDeleteAction> DELETE_ACTION =
+    EventFields.Enum("delete_action", SelectionDeleteAction.class);
+  private static final VarargEventId SELECTION_DELETED =
+    GROUP.registerVarargEvent("selection.deleted", EDITOR_KIND, EventFields.Language, SELECTION_LENGTH, DELETE_ACTION);
   private static final EventId TOO_MANY_EVENTS = GROUP.registerEvent("too.many.events");
+  private static final IntEventField LATENCY_NUMBER_EVENTS = EventFields.Int("number_of_events");
   private static final IntEventField LATENCY_MAX = EventFields.Int("latency_max_ms");
   private static final IntEventField LATENCY_90 = EventFields.Int("latency_90_ms");
-  private static final EventId3<Integer, Integer, FileType> LATENCY = GROUP.registerEvent("latency", LATENCY_MAX, LATENCY_90, EventFields.FileType);
-  private static final EventId2<Language, Language> TYPED_IN_INJECTED =
-    GROUP.registerEvent("typed.in.injected.language",
-                        EventFields.Language("original_lang"),
-                        EventFields.Language("injected_lang"),
-                        "Logs typing when the first language is the original language and the second language is injected language. " +
-                        "In case of multiple carets, logged for each caret individually"
-    );
+  private static final IntEventField LATENCY_50 = EventFields.Int("latency_50_ms");
+  private static final VarargEventId LATENCY = GROUP.registerVarargEvent("latency", LATENCY_MAX, LATENCY_90, LATENCY_50, LATENCY_NUMBER_EVENTS, EventFields.FileType);
+  private static final EventId2<Language, Language> TYPED_IN_INJECTED = GROUP.registerEvent(
+    "typed.in.injected.language",
+    EventFields.Language("original_lang"), EventFields.Language("injected_lang")
+  );
   private static final EventId TOO_MANY_INJECTED_EVENTS = GROUP.registerEvent("too.many.injected.events");
 
   private static final EventsRateWindowThrottle ourThrottle =
@@ -71,6 +88,51 @@ public final class TypingEventsLogger extends CounterUsagesCollector {
     else if (result == EventRateThrottleResult.DENY_AND_REPORT) {
       TOO_MANY_INJECTED_EVENTS.log(project);
     }
+  }
+
+  public static void logSelectionDeleted(@NotNull Editor editor,
+                                         @NotNull DataContext dataContext,
+                                         int selectionLength,
+                                         @NotNull SelectionDeleteAction deleteAction) {
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project == null) return;
+    Language fileLanguage = DataContextUtils.getFileLanguage(dataContext);
+    if (fileLanguage == null) return;
+    logSelectionDeletedInternal(project, editor, fileLanguage, selectionLength, deleteAction);
+  }
+
+  public static void logSelectionDeleted(@NotNull Project project,
+                                         @NotNull Editor editor,
+                                         @NotNull PsiFile file,
+                                         int selectionLength,
+                                         @NotNull SelectionDeleteAction deleteAction) {
+    logSelectionDeletedInternal(project, editor, file.getLanguage(), selectionLength, deleteAction);
+  }
+
+  private static void logSelectionDeletedInternal(@NotNull Project project,
+                                                  @NotNull Editor editor,
+                                                  @NotNull Language language,
+                                                  int selectionLength,
+                                                  @NotNull SelectionDeleteAction deleteAction) {
+    if (selectionLength <= 0 || !StatisticsUploadAssistant.isCollectAllowedOrForced()) return;
+
+    ArrayList<EventPair<?>> pairs = new ArrayList<>(4);
+    try {
+      pairs.add(EDITOR_KIND.with(editor.getEditorKind()));
+    }
+    catch (UnsupportedOperationException ignore) {
+      // See com.intellij.openapi.editor.impl.ImaginaryEditor
+    }
+    pairs.add(EventFields.Language.with(language));
+    pairs.add(SELECTION_LENGTH.with(selectionLength));
+    pairs.add(DELETE_ACTION.with(deleteAction));
+    SELECTION_DELETED.log(project, pairs);
+  }
+
+  public enum SelectionDeleteAction {
+    BACKSPACE,
+    DELETE,
+    TYPING,
   }
 
   public static final class TypingEventsListener implements AnActionListener {
@@ -124,9 +186,9 @@ public final class TypingEventsLogger extends CounterUsagesCollector {
       logCurrentLatency();
 
       FileEditor editor = event.getNewEditor();
-      if (editor instanceof TextEditor) {
+      if (editor instanceof TextEditor te) {
         myCurrentFile = event.getNewFile();
-        myCurrentEditor = ((TextEditor)editor).getEditor();
+        myCurrentEditor = te.getEditor();
         myLatencyRecord = new LatencyDistributionRecord(new LatencyDistributionRecordKey("FUS"));
       }
       else {
@@ -137,8 +199,11 @@ public final class TypingEventsLogger extends CounterUsagesCollector {
 
     private void logCurrentLatency() {
       if (myLatencyRecord != null && myLatencyRecord.getTotalLatency().getTotalLatency() > 0) {
-        LATENCY.log(myLatencyRecord.getTotalLatency().getMaxLatency(), myLatencyRecord.getTotalLatency().percentile(90),
-                    myCurrentFile.getFileType());
+        LATENCY.log(LATENCY_MAX.with(myLatencyRecord.getTotalLatency().getMaxLatency()),
+                    LATENCY_90.with(myLatencyRecord.getTotalLatency().percentile(90)),
+                    LATENCY_50.with(myLatencyRecord.getTotalLatency().percentile(50)),
+                    LATENCY_NUMBER_EVENTS.with(myLatencyRecord.getTotalLatency().getSamples().size()),
+                    EventFields.FileType.with(myCurrentFile.getFileType()));
       }
     }
 

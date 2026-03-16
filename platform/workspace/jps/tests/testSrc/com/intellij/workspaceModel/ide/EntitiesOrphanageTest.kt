@@ -6,7 +6,11 @@ import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager

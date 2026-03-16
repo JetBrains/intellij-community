@@ -1,10 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiLambdaExpression
+import com.intellij.psi.PsiType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.UastEmptyExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
+import org.jetbrains.uast.getParentOfType
 
 @ApiStatus.Internal
 class JavaULambdaExpression(

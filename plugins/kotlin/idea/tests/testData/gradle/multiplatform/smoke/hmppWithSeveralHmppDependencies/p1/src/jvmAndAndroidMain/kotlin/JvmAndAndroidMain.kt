@@ -40,7 +40,7 @@ interface JvmAndAndroidMain : CommonMain {
     }
 
 
-    override fun androidSdkIsNotVisible(context: <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference: Context'")!>Context<!>) {
+    override fun androidSdkIsNotVisible(context: <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference 'Context'.'")!>Context<!>) {
 
     }
 

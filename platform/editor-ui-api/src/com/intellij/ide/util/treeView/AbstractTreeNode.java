@@ -20,9 +20,14 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tree.LeafState;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Collection;
 import java.util.Map;
 

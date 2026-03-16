@@ -24,7 +24,40 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAssignmentExpression;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyAugAssignmentStatement;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyBoolLiteralExpression;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyComprehensionElement;
+import com.jetbrains.python.psi.PyDelStatement;
+import com.jetbrains.python.psi.PyDictCompExpression;
+import com.jetbrains.python.psi.PyDictLiteralExpression;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExceptPart;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyForStatement;
+import com.jetbrains.python.psi.PyGeneratorExpression;
+import com.jetbrains.python.psi.PyLambdaExpression;
+import com.jetbrains.python.psi.PyListCompExpression;
+import com.jetbrains.python.psi.PyListLiteralExpression;
+import com.jetbrains.python.psi.PyNoneLiteralExpression;
+import com.jetbrains.python.psi.PyNumericLiteralExpression;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyPrefixExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PySetCompExpression;
+import com.jetbrains.python.psi.PySetLiteralExpression;
+import com.jetbrains.python.psi.PyStarExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.PyWithItem;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
@@ -112,7 +145,8 @@ public class PyAssignTargetAnnotatorVisitor extends PyElementVisitor {
 
   @Override
   public void visitPyAssignmentExpression(@NotNull PyAssignmentExpression node) {
-    final PyComprehensionElement comprehensionElement = PsiTreeUtil.getParentOfType(node, PyComprehensionElement.class, true, ScopeOwner.class);
+    final PyComprehensionElement comprehensionElement =
+      PsiTreeUtil.getParentOfType(node, PyComprehensionElement.class, true, ScopeOwner.class);
     if (ScopeUtil.getScopeOwner(comprehensionElement) instanceof PyClass) {
       getHolder().newAnnotation(HighlightSeverity.ERROR,
                                 message("ANN.assignment.expressions.within.a.comprehension.cannot.be.used.in.a.class.body")).create();
@@ -250,12 +284,14 @@ public class PyAssignTargetAnnotatorVisitor extends PyElementVisitor {
 
     @Override
     public void visitPyDictCompExpression(@NotNull PyDictCompExpression node) {
-      getHolder().markError(node, message(myOp == Operation.AugAssign ? "ANN.cant.aug.assign.to.dict.comprh" : "ANN.cant.assign.to.dict.comprh"));
+      getHolder().markError(node,
+                            message(myOp == Operation.AugAssign ? "ANN.cant.aug.assign.to.dict.comprh" : "ANN.cant.assign.to.dict.comprh"));
     }
 
     @Override
     public void visitPySetCompExpression(@NotNull PySetCompExpression node) {
-      getHolder().markError(node, message(myOp == Operation.AugAssign ? "ANN.cant.aug.assign.to.set.comprh" : "ANN.cant.assign.to.set.comprh"));
+      getHolder().markError(node,
+                            message(myOp == Operation.AugAssign ? "ANN.cant.aug.assign.to.set.comprh" : "ANN.cant.assign.to.set.comprh"));
     }
 
     @Override
@@ -287,7 +323,9 @@ public class PyAssignTargetAnnotatorVisitor extends PyElementVisitor {
     }
 
     private void checkLiteral(@NotNull PsiElement node) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, message(myOp == Operation.Delete ? "ANN.cant.delete.literal" : "ANN.cant.assign.to.literal")).range(node).create();
+      getHolder().newAnnotation(HighlightSeverity.ERROR,
+                                message(myOp == Operation.Delete ? "ANN.cant.delete.literal" : "ANN.cant.assign.to.literal")).range(node)
+        .create();
     }
 
     @Override

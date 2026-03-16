@@ -6,7 +6,11 @@ import com.intellij.codeInspection.flattenedAttributeValues
 import com.intellij.execution.junit.references.BaseJunitAnnotationReference
 import com.intellij.navigation.GotoRelatedItem
 import com.intellij.navigation.GotoRelatedProvider
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.toUElementOfType
 

@@ -24,7 +24,12 @@ import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -81,15 +86,15 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
       }
       final ASTNode previous = PyPsiUtils.getPrevNonWhitespaceSibling(beforeWhat);
       PyUtil.addListNode(this, param, beforeWhat, !isLast || params.length == 0 ||
-                                          previous.getElementType() == PyTokenTypes.COMMA, isLast,
-                                          beforeWhat.getElementType() != PyTokenTypes.RPAR);
+                                                  previous.getElementType() == PyTokenTypes.COMMA, isLast,
+                         beforeWhat.getElementType() != PyTokenTypes.RPAR);
     }
   }
 
   @Override
   public boolean hasPositionalContainer() {
-    for (PyParameter parameter: getParameters()) {
-      if (parameter instanceof PyNamedParameter && ((PyNamedParameter) parameter).isPositionalContainer()) {
+    for (PyParameter parameter : getParameters()) {
+      if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).isPositionalContainer()) {
         return true;
       }
     }
@@ -98,8 +103,8 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
 
   @Override
   public boolean hasKeywordContainer() {
-    for (PyParameter parameter: getParameters()) {
-      if (parameter instanceof PyNamedParameter && ((PyNamedParameter) parameter).isKeywordContainer()) {
+    for (PyParameter parameter : getParameters()) {
+      if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).isKeywordContainer()) {
         return true;
       }
     }

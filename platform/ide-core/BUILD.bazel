@@ -28,7 +28,7 @@ jvm_library(
     "//platform/util/jdom",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/diagnostic",
     "//platform/util",
     "//platform/settings",

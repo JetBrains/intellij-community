@@ -4,7 +4,11 @@ package com.intellij.terminal.tests.block
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.tests.block.TerminalTextHighlighterTest.Companion.green
-import com.intellij.testFramework.*
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.RuleChain
+import com.intellij.testFramework.RunsInEdt
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TextWithHighlightings
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.NEW_TERMINAL_OUTPUT_CAPACITY_KB

@@ -55,7 +55,13 @@ import org.jetbrains.kotlin.idea.searching.kmp.findAllActualForExpect
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtModifierList
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.tooling.core.withClosure
 import java.awt.Component
 import javax.swing.DefaultListCellRenderer

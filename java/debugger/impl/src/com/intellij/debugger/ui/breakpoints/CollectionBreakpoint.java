@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerManagerEx;
@@ -28,7 +28,14 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.sun.jdi.*;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Field;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Value;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.event.ModificationWatchpointEvent;
 import com.sun.jdi.request.ClassPrepareRequest;
@@ -41,9 +48,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaCollectionBreakpointProperties;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.intellij.debugger.impl.DebuggerUtilsEx.mirrorOfString;
 
 @ApiStatus.Experimental
 public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCollectionBreakpointProperties> {
@@ -462,7 +475,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
       return;
     }
 
-    Value fieldName = frameProxy.getVirtualMachine().mirrorOf(getFieldName());
+    Value fieldName = mirrorOfString(getFieldName(), context);
     Value shouldSave = frameProxy.getVirtualMachine().mirrorOf(shouldSaveStack);
 
     ArrayList<Value> args = new ArrayList<>();
@@ -486,7 +499,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
       return null;
     }
 
-    Value clsTypeDescRef = frameProxy.getVirtualMachine().mirrorOf(clsTypeDesc);
+    Value clsTypeDescRef = mirrorOfString(clsTypeDesc, context);
 
     return CollectionBreakpointUtils.invokeInstrumentorMethod(debugProcess, context,
                                                               GET_INTERNAL_CLS_NAME_METHOD_NAME,
@@ -518,8 +531,8 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
       return;
     }
 
-    Value clsTypeDescRef = frameProxy.getVirtualMachine().mirrorOf(clsTypeDesc);
-    Value fieldName = frameProxy.getVirtualMachine().mirrorOf(getFieldName());
+    Value clsTypeDescRef = mirrorOfString(clsTypeDesc, context);
+    Value fieldName = mirrorOfString(getFieldName(), context);
 
     CollectionBreakpointUtils.invokeInstrumentorMethod(debugProcess, context, PUT_FIELD_TO_CAPTURE_METHOD_NAME,
                                                        PUT_FIELD_TO_CAPTURE_METHOD_DESC, List.of(clsTypeDescRef, fieldName));
@@ -532,7 +545,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
       return;
     }
 
-    List<Value> args = ContainerUtil.map(myUnprocessedClasses, clsName -> frameProxy.getVirtualMachine().mirrorOf(clsName));
+    List<Value> args = ContainerUtil.map(myUnprocessedClasses, clsName -> mirrorOfString(clsName, context));
     myUnprocessedClasses.clear();
     CollectionBreakpointUtils.invokeInstrumentorMethod(debugProcess, context, EMULATE_FIELD_WATCHPOINT_METHOD_NAME,
                                                        EMULATE_FIELD_WATCHPOINT_METHOD_DESC, args);

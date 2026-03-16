@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.adapters;
 
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonBooleanLiteral;
+import com.intellij.json.psi.JsonNullLiteral;
+import com.intellij.json.psi.JsonNumberLiteral;
+import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.jsonSchema.extension.adapters.JsonArrayValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;

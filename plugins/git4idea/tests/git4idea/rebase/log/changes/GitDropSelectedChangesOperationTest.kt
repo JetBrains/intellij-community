@@ -3,7 +3,6 @@ package git4idea.rebase.log.changes
 
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.log.VcsCommitMetadata
-import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.test.GitSingleRepoTest
@@ -11,7 +10,6 @@ import git4idea.test.assertCommitted
 import git4idea.test.assertStagedChanges
 import git4idea.test.commit
 import git4idea.test.filterChangesByFileName
-
 import kotlinx.coroutines.runBlocking
 
 class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
@@ -207,7 +205,7 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test drop selected changes fails due to the rebase fail and notifies about saved changes`() {
+  fun `test drop selected changes fails due to the rebase fail and restores saved local changes`() {
     file("a").create().addCommit("Add a")
 
     file("b").create().add()
@@ -216,30 +214,29 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
 
     file("d").create().addCommit("Add d")
 
-    file("c").append("local change")
+    val localChange = "local change"
+    file("c").append(localChange)
 
     refresh()
     updateChangeListManager()
 
     git.setShouldRebaseFail { true }
 
-    val changesToDrop = filterChangesByFileName(targetCommit, listOf("c"))
+    val changesToDrop = filterChangesByFileName(targetCommit, listOf("b"))
 
     val result = executeDropSelectedChangesOperation(changesToDrop, targetCommit)
 
     assertTrue("Operation should fail due to rebase fail", result is GitCommitEditingOperationResult.Incomplete)
 
-    file("c").assertNotExists()
+    with(repo) {
+      assertCommitted(1) { deleted("b") } // fixup commit
+      assertCommitted(2) {
+        added("d")
+      }
+    }
 
-    val gitSettings = GitVcsSettings.getInstance(project)
-    val savePolicy = gitSettings.saveChangesPolicy
-    assertWarningNotification(
-      GitBundle.message("restore.notification.failed.title"),
-      savePolicy.selectBundleMessage(
-        GitBundle.message("restore.notification.failed.stash.message", GitBundle.message("rebase.log.changes.action.operation.drop.name")),
-        GitBundle.message("restore.notification.failed.shelf.message", GitBundle.message("rebase.log.changes.action.operation.drop.name"))
-      )
-    )
+    file("c").assertExists()
+    assertEquals("Local changes should be preserved", localChange, file("c").read())
   }
 
   fun `test drop all changes from middle commit fails in rebase`() {

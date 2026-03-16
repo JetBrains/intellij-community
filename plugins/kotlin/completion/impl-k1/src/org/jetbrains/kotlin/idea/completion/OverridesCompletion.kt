@@ -5,8 +5,13 @@ package org.jetbrains.kotlin.idea.completion
 import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
 import com.intellij.ui.RowIcon
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.ShortenReferences
@@ -15,9 +20,14 @@ import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMembersHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
+@K1Deprecation
 class OverridesCompletion(
     private val collector: LookupElementsCollector,
     private val lookupElementFactory: BasicLookupElementFactory

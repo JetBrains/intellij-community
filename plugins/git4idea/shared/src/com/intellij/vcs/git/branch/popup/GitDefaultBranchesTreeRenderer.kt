@@ -65,7 +65,7 @@ class GitDefaultBranchesTreeRenderer(treePopupStep: GitBranchesPopupStepBase) : 
     if (incomingOutgoingState != GitInOutCountersInProject.EMPTY) {
       GitIncomingOutgoingUi.updateIncomingCommitLabel(incomingLabel, incomingOutgoingState)
       GitIncomingOutgoingUi.updateOutgoingCommitLabel(outgoingLabel, incomingOutgoingState)
-      tree.toolTipText = incomingOutgoingState.calcTooltip()
+      tree.toolTipText = incomingOutgoingState.calcTooltip(GitInOutStateHolder.getInstance(treePopupStep.project).lastFetchTime)
     }
     else {
       incomingLabel.isVisible = false

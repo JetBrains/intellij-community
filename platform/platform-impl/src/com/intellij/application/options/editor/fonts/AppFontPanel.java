@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor.fonts;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
@@ -21,11 +21,13 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 
 @ApiStatus.Internal
 public final class AppFontPanel implements Disposable {
@@ -56,11 +58,18 @@ public final class AppFontPanel implements Disposable {
     };
     splitter.setFirstComponent(myOptionsPanel);
     splitter.setSecondComponent(myPreview.getPanel());
+    splitter.setHonorComponentsMinimumSize(true);
     innerPanel.add(splitter, BorderLayout.CENTER);
     myOptionsPanel.addListener(
       new ColorAndFontSettingsListener.Abstract() {
         @Override
         public void fontChanged() {
+          updatePreview();
+          updateWarning();
+        }
+
+        @Override
+        public void schemeChanged(@NotNull Object source) {
           updatePreview();
           updateWarning();
         }

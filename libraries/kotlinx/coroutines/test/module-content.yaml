@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinx.coroutines.test.jar
+  modules:
+  - name: intellij.libraries.kotlinx.coroutines.test
+  library: kotlinx-coroutines-test
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-test-jvm/1/kotlinx-coroutines-test-jvm-1.jar

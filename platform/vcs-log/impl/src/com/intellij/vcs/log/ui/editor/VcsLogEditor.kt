@@ -45,7 +45,7 @@ abstract class VcsLogFile(name: String) : LightVirtualFile(name, VcsLogFileType.
   abstract fun createMainComponent(project: Project): JComponent
 }
 
-private class VcsLogIconProvider : FileIconProvider {
+internal class VcsLogIconProvider : FileIconProvider {
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? = (file as? VcsLogFile)?.fileType?.icon
 }
 
@@ -61,7 +61,7 @@ class VcsLogEditor(private val project: Project, private val vcsLogFile: VcsLogF
   override fun getFile() = vcsLogFile
 }
 
-private class VcsLogEditorProvider : FileEditorProvider, StructureViewFileEditorProvider, DumbAware {
+internal class VcsLogEditorProvider : FileEditorProvider, StructureViewFileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean = file is VcsLogFile
 
   override fun acceptRequiresReadAction() = false

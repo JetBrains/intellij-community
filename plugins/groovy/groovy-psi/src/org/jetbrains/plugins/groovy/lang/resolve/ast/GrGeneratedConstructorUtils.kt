@@ -4,7 +4,13 @@
 package org.jetbrains.plugins.groovy.lang.resolve.ast
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PropertyUtilBase
@@ -19,7 +25,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.inferBooleanA
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.inferStringAttribute
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.hasCodeModifierProperty
 import org.jetbrains.plugins.groovy.lang.psi.impl.getArrayValue
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_MAP_CONSTRUCTOR
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_PROPERTY_OPTIONS
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR
 
 val constructorGeneratingAnnotations: List<String> = listOf(
   GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR,
@@ -59,6 +68,7 @@ private fun inferStringArrayValueShallow(anno: PsiAnnotation, attributeName: Str
 /**
  * For specific annotation (@MapConstructor/@TupleConstructor) this class computes all actually affected members
  */
+@ConsistentCopyVisibility
 data class AffectedMembersCache internal constructor(private val order: List<PsiNamedElement>,
                                                      private val hasPropertyOptions: Boolean,
                                                      private val referencedFromExcludes: List<PsiNamedElement>) {

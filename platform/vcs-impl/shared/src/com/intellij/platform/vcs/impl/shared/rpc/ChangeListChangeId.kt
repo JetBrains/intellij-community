@@ -9,6 +9,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
 
+/**
+ * @see [com.intellij.vcs.changes.ChangesViewChangeIdProvider]
+ */
 @Serializable
 @ApiStatus.Internal
 sealed class ChangeId {
@@ -24,14 +27,21 @@ sealed class ChangeId {
         return ChangeListChangeId(change.changeListId, filePath)
       }
 
-      return NonChangeListChangeId(filePath)
+      return NonChangeListChangeId(
+        filePath = filePath,
+        beforeRevision = change.beforeRevision?.revisionNumber?.asString(),
+        afterRevision = change.afterRevision?.revisionNumber?.asString(),
+      )
     }
   }
-
 }
 
 @Serializable
-private data class NonChangeListChangeId(override val filePath: @SystemIndependent String) : ChangeId()
+private data class NonChangeListChangeId(
+  override val filePath: @SystemIndependent String,
+  val beforeRevision: String?,
+  val afterRevision: String?,
+) : ChangeId()
 
 @Serializable
 private data class ChangeListChangeId(

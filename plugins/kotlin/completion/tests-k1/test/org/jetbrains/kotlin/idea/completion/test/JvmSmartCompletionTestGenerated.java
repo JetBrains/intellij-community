@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test;
 
@@ -924,6 +924,11 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
             runTest("../testData/smart/multipleArgsItem/11.kt");
         }
 
+        @TestMetadata("12.kt")
+        public void test12() throws Exception {
+            runTest("../testData/smart/multipleArgsItem/12.kt");
+        }
+
         @TestMetadata("2.kt")
         public void test2() throws Exception {
             runTest("../testData/smart/multipleArgsItem/2.kt");
@@ -972,6 +977,21 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
         @TestMetadata("notFirstArgument.kt")
         public void testNotFirstArgument() throws Exception {
             runTest("../testData/smart/multipleArgsItem/notFirstArgument.kt");
+        }
+
+        @TestMetadata("notFirstArgumentBrackets.kt")
+        public void testNotFirstArgumentBrackets() throws Exception {
+            runTest("../testData/smart/multipleArgsItem/notFirstArgumentBrackets.kt");
+        }
+
+        @TestMetadata("shadowing.kt")
+        public void testShadowing() throws Exception {
+            runTest("../testData/smart/multipleArgsItem/shadowing.kt");
+        }
+
+        @TestMetadata("shadowingReverse.kt")
+        public void testShadowingReverse() throws Exception {
+            runTest("../testData/smart/multipleArgsItem/shadowingReverse.kt");
         }
     }
 
@@ -1508,6 +1528,16 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
         @TestMetadata("NamedArgument.kt")
         public void testNamedArgument() throws Exception {
             runTest("../testData/smart/NamedArgument.kt");
+        }
+
+        @TestMetadata("NamedArgumentsAbsent.kt")
+        public void testNamedArgumentsAbsent() throws Exception {
+            runTest("../testData/smart/NamedArgumentsAbsent.kt");
+        }
+
+        @TestMetadata("NamedArgumentsAfterNamedArg.kt")
+        public void testNamedArgumentsAfterNamedArg() throws Exception {
+            runTest("../testData/smart/NamedArgumentsAfterNamedArg.kt");
         }
 
         @TestMetadata("NoAssertFailsWith.kt")

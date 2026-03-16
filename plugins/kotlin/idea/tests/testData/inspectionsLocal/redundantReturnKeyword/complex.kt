@@ -11,8 +11,8 @@ fun foo(input: String): String {
                             "a"
                         } else if (input == "b") {
                             "b"
-                        } else if (input == "c")
-                            ret<caret>urn "d"
+                        } else if (input.startsWith("c"))
+                            input.takeIf { it.length > 1 } ?: ret<caret>urn "d"
                         else {
                             "e"
                         }

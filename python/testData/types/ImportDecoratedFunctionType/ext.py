@@ -1,8 +1,9 @@
-from typing import Callable, TypeVar
+from typing import Callable, TypeVar, ParamSpec
 
 T = TypeVar("T")
+P = ParamSpec("P")
 
-def dec(fun: T) -> Callable[[str], int]:
+def dec(fun: Callable[P, T]) -> Callable[P, int]:
   def wrapper():
     return 1
   return wrapper

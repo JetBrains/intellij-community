@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import training.learn.lesson.LessonManager
 import training.util.LearningLessonsAutoExecutor
 
-private class AutorunCurrentLesson : AnAction() {
+internal class AutorunCurrentLesson : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val currentLesson = LessonManager.instance.currentLesson ?: return

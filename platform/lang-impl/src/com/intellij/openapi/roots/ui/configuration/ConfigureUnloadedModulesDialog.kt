@@ -28,7 +28,11 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.graph.*
+import com.intellij.util.graph.CachingSemiGraph
+import com.intellij.util.graph.Graph
+import com.intellij.util.graph.GraphAlgorithms
+import com.intellij.util.graph.GraphGenerator
+import com.intellij.util.graph.InboundSemiGraph
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xml.util.XmlStringUtil
@@ -39,7 +43,11 @@ import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.MutableTreeNode

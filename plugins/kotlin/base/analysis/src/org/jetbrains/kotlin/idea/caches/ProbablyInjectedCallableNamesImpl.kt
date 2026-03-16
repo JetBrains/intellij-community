@@ -7,11 +7,13 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.indexing.DumbModeAccessType
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.stubindex.KotlinProbablyInjectedFunctionShortNameIndex
 
 internal class ProbablyInjectedCallableNamesImpl(private val project: Project): ProbablyInjectedCallableNames {
+    @OptIn(KaPlatformInterface::class)
     private val functionNames = CachedValuesManager.getManager(project).createCachedValue(
         {
             val allKeys = project.runReadActionInSmartMode { KotlinProbablyInjectedFunctionShortNameIndex.getAllKeys(project) }

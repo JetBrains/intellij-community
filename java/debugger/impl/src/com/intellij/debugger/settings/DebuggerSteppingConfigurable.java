@@ -13,11 +13,25 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
-import static java.awt.GridBagConstraints.*;
+import static java.awt.GridBagConstraints.BOTH;
+import static java.awt.GridBagConstraints.CENTER;
+import static java.awt.GridBagConstraints.NONE;
+import static java.awt.GridBagConstraints.NORTHWEST;
+import static java.awt.GridBagConstraints.RELATIVE;
+import static java.awt.GridBagConstraints.WEST;
 
 class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
   private JCheckBox myCbAlwaysSmartStep;

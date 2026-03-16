@@ -1,10 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
 import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.*;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.OccurenceNavigator;
+import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.ide.todo.nodes.TodoFileNode;
@@ -13,7 +17,20 @@ import com.intellij.ide.todo.nodes.TodoTreeHelper;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
@@ -28,7 +45,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.*;
+import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.tree.AsyncTreeModel;
@@ -36,7 +57,10 @@ import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usages.impl.UsagePreviewPanel;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -44,12 +68,17 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTree;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
-import java.awt.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
+import java.awt.BorderLayout;
 
 public abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavigator, Disposable {
 
@@ -169,7 +198,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
           }
         }
       }).onSuccess(path -> {
-        if (todoItem.equals(getTodoItem(path))) {
+        if (path != null && todoItem.equals(getTodoItem(path))) {
           // TODO setSelectionPath does not work on the first opening right away.
           //      I don't know how to fix that without this hack
           new Alarm().addRequest(() -> {
@@ -612,7 +641,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
 
   @ApiStatus.Internal
   static final class MyShowModulesAction extends ToggleAction implements DumbAware {
-    public MyShowModulesAction() {
+    MyShowModulesAction() {
       super(IdeBundle.messagePointer("action.group.by.modules"), AllIcons.Actions.GroupByModule);
     }
 
@@ -646,7 +675,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
 
   @ApiStatus.Internal
   static final class MyFlattenPackagesAction extends ToggleAction implements DumbAware {
-    public MyFlattenPackagesAction() {
+    MyFlattenPackagesAction() {
       super(IdeBundle.messagePointer("action.flatten.view"), PlatformIcons.FLATTEN_PACKAGES_ICON);
     }
 

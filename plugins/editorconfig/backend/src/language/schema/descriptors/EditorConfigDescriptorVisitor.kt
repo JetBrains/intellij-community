@@ -1,7 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.schema.descriptors
 
-import org.editorconfig.language.schema.descriptors.impl.*
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigConstantDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclarationDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigListDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigNumberDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigPairDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigQualifiedKeyDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigReferenceDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigStringDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigUnionDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigUnsetValueDescriptor
 
 interface EditorConfigDescriptorVisitor {
   fun visitDescriptor(descriptor: EditorConfigDescriptor) {}

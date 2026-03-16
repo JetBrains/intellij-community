@@ -11,7 +11,7 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap
 import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
 import org.junit.Test
-import java.util.*
+import java.util.Properties
 
 class MavenConnectorApiTest : MavenMultiVersionImportingTestCase() {
 

@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.JavaMethodChainsDeclarativeInlayProvider
-import com.intellij.lang.java.JavaLanguage
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
 import org.intellij.lang.annotations.Language
 
@@ -205,21 +204,6 @@ public class Chains {
   }
 }
 """)
-  }
-
-  fun testPreview() {
-    doTestPreview("""
-import java.util.stream.*;
-class Foo {
-  {
-    Stream.of(1, 2, 3).filter(x -> x % 2 == 0)/*<# Stream<Integer> #>*/
-      .map(x -> x * 2)/*<# Stream<Integer> #>*/
-      .map(x -> "item: " + x)/*<# Stream<String> #>*/
-      .forEach(System.out::println);
-  }
-} 
-    """.trimIndent(), JavaMethodChainsDeclarativeInlayProvider.PROVIDER_ID, JavaMethodChainsDeclarativeInlayProvider(),
-                  JavaLanguage.INSTANCE)
   }
 
   fun test() {

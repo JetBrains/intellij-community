@@ -17,7 +17,12 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SystemProperties
 import com.intellij.util.SystemProperties.getIntProperty
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.asContextElement
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.LongAdder

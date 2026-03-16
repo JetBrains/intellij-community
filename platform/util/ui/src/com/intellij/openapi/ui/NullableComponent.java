@@ -2,7 +2,7 @@
 
 package com.intellij.openapi.ui;
 
-import java.awt.*;
+import java.awt.Component;
 
 public interface NullableComponent {
 

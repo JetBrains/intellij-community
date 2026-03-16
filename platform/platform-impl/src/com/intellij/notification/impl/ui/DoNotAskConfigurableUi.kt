@@ -28,6 +28,7 @@ internal class DoNotAskConfigurableUi {
     result.emptyText.clear()
     val projectTitle = IdeBundle.message("notifications.configurable.do.not.ask.project.title")
     result.cellRenderer = textListCellRenderer("") { if (it.forProject) it.name + " (${projectTitle})" else it.name }
+    result.accessibleContext.accessibleName = IdeBundle.message("notifications.configurable.do.not.ask.list.accessible.name")
     return result
   }
 

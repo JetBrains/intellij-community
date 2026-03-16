@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor.tables.ui.presentation
 
 import com.intellij.codeInsight.hint.HintManager
@@ -268,7 +268,11 @@ internal class VerticalBarPresentation(
     fun create(factory: PresentationFactory, editor: Editor, row: PsiElement): InlayPresentation {
       return factory.changeOnHover(
         wrapPresentation(factory, editor, VerticalBarPresentation(editor, row, false)),
-        { wrapPresentation(factory, editor, VerticalBarPresentation(editor, row, true)) }
+        {
+          runReadAction {
+            wrapPresentation(factory, editor, VerticalBarPresentation(editor, row, true))
+          }
+        }
       )
     }
   }

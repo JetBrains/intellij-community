@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.Project
 import com.intellij.platform.whatsNew.reaction.FUSReactionChecker
 import kotlinx.coroutines.launch
@@ -55,7 +54,7 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     if (project != null) {
-      currentThreadCoroutineScope().launch {
+      e.coroutineScope.launch {
         openWhatsNewPage(project, e.dataContext, true)
       }
     } else {

@@ -1,3 +1,4 @@
+// IGNORE_K1
 package test;
 
 import as.type.val.var.fun.is.in.object.when.typeof;

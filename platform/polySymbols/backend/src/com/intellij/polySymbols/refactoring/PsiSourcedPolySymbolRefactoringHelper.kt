@@ -11,7 +11,7 @@ import com.intellij.refactoring.RefactoringHelper
 import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.usageView.UsageInfo
 
-private class PsiSourcedPolySymbolRefactoringHelper : RefactoringHelper<List<RenameHandler>> {
+internal class PsiSourcedPolySymbolRefactoringHelper : RefactoringHelper<List<RenameHandler>> {
   override fun prepareOperation(usages: Array<out UsageInfo>, elements: List<PsiElement>): List<RenameHandler> =
     usages.mapNotNull { (it.reference as? PsiSourcedPolySymbolReference)?.createRenameHandler() }
 

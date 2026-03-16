@@ -2,7 +2,7 @@
 package org.jetbrains.idea.devkit.references
 
 import com.intellij.lang.properties.psi.Property
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
@@ -259,14 +259,14 @@ class EventLogDescriptionReferenceContributorTest : LightJavaCodeInsightFixtureT
     )
   }
 
-  private fun testResolve(expectedFile: String, expectedText: String) = runReadAction {
+  private fun testResolve(expectedFile: String, expectedText: String) = runReadActionBlocking {
     val reference = fixture.getReferenceAtCaretPosition()
     assertNotNull(reference)
     assertEventDescriptionReference(reference, expectedFile, expectedText)
   }
 
   @Suppress("SameParameterValue")
-  private fun testMultiResolve(expectedFile: String, vararg expectedTexts: String) = runReadAction {
+  private fun testMultiResolve(expectedFile: String, vararg expectedTexts: String) = runReadActionBlocking {
     val reference = fixture.getReferenceAtCaretPosition()
     val multiReference = assertInstanceOf<PsiMultiReference>(reference)
     val references = multiReference.references

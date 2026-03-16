@@ -4,7 +4,13 @@ package com.intellij.internal.ui.sandbox.dsl
 import com.intellij.internal.ui.sandbox.UISandboxPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Placeholder
+import com.intellij.ui.dsl.builder.bindIntText
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.Alarm
 import java.awt.Font
 import javax.swing.JComponent

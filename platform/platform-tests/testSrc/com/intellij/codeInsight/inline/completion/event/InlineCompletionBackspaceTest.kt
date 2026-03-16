@@ -1,13 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.event
 
-import com.intellij.codeInsight.inline.completion.*
+import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
+import com.intellij.codeInsight.inline.completion.InlineCompletionHandler
+import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
+import com.intellij.codeInsight.inline.completion.InlineCompletionProviderID
+import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
+import com.intellij.codeInsight.inline.completion.InlineCompletionTestCase
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
+import com.intellij.codeInsight.inline.completion.testInlineCompletion
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import org.junit.Test
 import org.junit.runner.RunWith

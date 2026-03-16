@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
@@ -6,7 +6,12 @@ import com.intellij.application.options.codeStyle.properties.MagicIntegerConstAc
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.NlsContexts.ConfigurableName;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleConfigurable;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.util.PlatformUtils;
 import com.intellij.xml.XmlUiBundle;
@@ -15,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
-public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
+public final class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @Override
   public @NotNull CodeStyleConfigurable createConfigurable(final @NotNull CodeStyleSettings baseSettings,
                                                            final @NotNull CodeStyleSettings modelSettings) {

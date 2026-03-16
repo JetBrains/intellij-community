@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.resolve.lazy
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 interface ProbablyContractedCallableNames {
     fun isProbablyContractedCallableName(name: String): Boolean
 

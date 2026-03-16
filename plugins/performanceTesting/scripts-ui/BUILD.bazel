@@ -23,6 +23,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 
@@ -44,6 +45,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.performanceTesting.ui` end

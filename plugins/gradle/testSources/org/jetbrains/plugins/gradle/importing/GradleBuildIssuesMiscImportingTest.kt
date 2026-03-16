@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing
 
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.junit.Test
 import java.util.function.Consumer
 
@@ -28,11 +29,16 @@ class GradleBuildIssuesMiscImportingTest : BuildViewMessagesImportingTestCase() 
     val buildScript = myProjectConfig.toNioPath().toString()
 
     val oomMessage = if (lastImportErrorMessage!!.contains("Java heap space")) "Java heap space" else "GC overhead limit exceeded"
+    val deprecatedGradleMessage =
+      if (GradleJvmSupportMatrix.isGradleDeprecatedByIdea(currentGradleVersion)) "  Deprecated Gradle Version\n"
+      else ""
+
     assertSyncViewTreeEquals { treeTestPresentation ->
       assertThat(treeTestPresentation).satisfiesAnyOf(
         Consumer {
           assertThat(it).isEqualTo("-\n" +
                                    " -failed\n" +
+                                   deprecatedGradleMessage +
                                    "  -build.gradle\n" +
                                    "   $oomMessage")
 
@@ -40,6 +46,7 @@ class GradleBuildIssuesMiscImportingTest : BuildViewMessagesImportingTestCase() 
         Consumer {
           assertThat(it).isEqualTo("-\n" +
                                    " -failed\n" +
+                                   deprecatedGradleMessage +
                                    "  $oomMessage")
 
         }

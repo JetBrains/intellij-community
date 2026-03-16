@@ -30,9 +30,6 @@ class K2MppRegressionTests : AbstractKotlinMppGradleImportingTest(), ReferenceTa
     override val allowOnNonMac: Boolean
         get() = false
 
-    override val pluginMode: KotlinPluginMode
-    get() = KotlinPluginMode.K2
-
     /**
      * Issue: KTIJ-30257
      *

@@ -8,7 +8,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.ExportableOrderEntry
+import com.intellij.openapi.roots.JdkOrderEntry
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleSourceOrderEntry
+import com.intellij.openapi.roots.OrderEntry
+import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.config.KotlinSourceRootType
 import org.jetbrains.kotlin.config.SourceKotlinRootType
@@ -17,7 +24,10 @@ import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
 import org.jetbrains.kotlin.idea.base.projectStructure.kmp.HmppSourceModuleDependencyFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.kmp.NegatedModuleDependencyFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.kmp.NonHmppSourceModuleDependenciesFilter
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.isSupportedDependency
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.platform.TargetPlatform

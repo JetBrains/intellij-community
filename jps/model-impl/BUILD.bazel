@@ -32,7 +32,11 @@ resourcegroup(
 jvm_library(
   name = "model-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//jps/model-impl",
+    "@lib//:kotlin-stdlib",
+  ]
 )
 
 jvm_library(
@@ -51,7 +55,8 @@ jvm_library(
     "@lib//:assert_j",
     "//platform/testFramework/extensions:testExtensions",
     "//jps/model-test-framework:model-testFramework",
-  ]
+  ],
+  runtime_deps = [":model-tests"]
 )
 ### auto-generated section `build intellij.platform.jps.model.tests` end
 

@@ -1,0 +1,63 @@
+### auto-generated section `build intellij.python.test.env.conda` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "conda_test_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "conda",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//python/python-test-env/core",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util",
+    "//python:python-community-impl",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/execution",
+    "//platform/analysis-api:analysis",
+    "//python/python-exec-service:community-execService",
+  ]
+)
+
+jvm_library(
+  name = "conda_test_lib",
+  module_name = "intellij.python.test.env.conda",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":conda_test_resources"],
+  deps = [
+    "//python/python-test-env/core",
+    "//python/python-test-env/core:core_test_lib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util",
+    "//python:python-community-impl",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/execution",
+    "//platform/analysis-api:analysis",
+    "//python/python-exec-service:community-execService",
+    "//python/python-exec-service:community-execService_test_lib",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
+  ],
+  runtime_deps = [":conda"]
+)
+### auto-generated section `build intellij.python.test.env.conda` end
+
+### auto-generated section `test intellij.python.test.env.conda` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "conda_test",
+  runtime_deps = [":conda_test_lib"]
+)
+### auto-generated section `test intellij.python.test.env.conda` end

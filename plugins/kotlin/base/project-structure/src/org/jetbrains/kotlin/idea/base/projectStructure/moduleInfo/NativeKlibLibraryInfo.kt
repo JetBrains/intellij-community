@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.library.KLIB_PROPERTY_NATIVE_TARGETS
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.metadata.DeserializedKlibModuleOrigin
 import org.jetbrains.kotlin.library.metadata.KlibModuleOrigin
+import org.jetbrains.kotlin.library.metadata.SyntheticModulesOrigin
 import org.jetbrains.kotlin.library.nativeTargets
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatforms.nativePlatformByTargetNames
@@ -29,7 +30,7 @@ class NativeKlibLibraryInfo internal constructor(project: Project, library: Libr
     override val capabilities: Map<ModuleCapability<*>, Any?>
         get() {
             val capabilities = super.capabilities.toMutableMap()
-            capabilities += KlibModuleOrigin.CAPABILITY to DeserializedKlibModuleOrigin(resolvedKotlinLibrary)
+            capabilities += KlibModuleOrigin.CAPABILITY to (resolvedKotlinLibrary?.let(::DeserializedKlibModuleOrigin) ?: SyntheticModulesOrigin)
             capabilities += ImplicitIntegerCoercion.MODULE_CAPABILITY to resolvedKotlinLibrary.safeRead(false) { isInterop }
             return capabilities
         }
@@ -65,8 +66,11 @@ object CommonizerNativeTargetsCompat {
 }
 
 @ApiStatus.Internal
-fun <T> KotlinLibrary.safeRead(defaultValue: T, action: KotlinLibrary.() -> T) = try {
-    action()
-} catch (_: IOException) {
-    defaultValue
-}
+inline fun <T> KotlinLibrary?.safeRead(defaultValue: T, action: KotlinLibrary.() -> T): T =
+    if (this == null) {
+        defaultValue
+    } else try {
+        action()
+    } catch (_: IOException) {
+        defaultValue
+    }

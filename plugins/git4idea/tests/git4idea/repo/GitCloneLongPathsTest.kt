@@ -21,7 +21,7 @@ class GitCloneLongPathsTest : GitSingleRepoTest() {
 
     val cloned = projectNioRoot.resolve("cloned")
     val cloneResult = Git.getInstance().clone(project,
-                                              cloned.parent.toFile(),
+                                              cloned.parent,
                                               "file://${repo.root.path}",
                                               cloned.name)
 

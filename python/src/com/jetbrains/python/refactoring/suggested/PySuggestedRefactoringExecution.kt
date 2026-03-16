@@ -38,11 +38,11 @@ internal class PySuggestedRefactoringExecution(support: PySuggestedRefactoringSu
                                newParametersValues: Iterator<NewParameterValue>): Pair<String?, Boolean> {
     if (!ParamHelper.couldHaveDefaultValue(newParameter.name)) return null to false
 
-    val newDefaultValueInSignature = PySuggestedRefactoringSupport.defaultValue(newParameter)
+    val newDefaultValueInSignature = PySuggestedRefactoringSupport.Helper.defaultValue(newParameter)
 
     val defaultValue = defaultValueForProcessor(
       newDefaultValueInSignature,
-      oldParameter?.let { PySuggestedRefactoringSupport.defaultValue(it) },
+      oldParameter?.let { PySuggestedRefactoringSupport.Helper.defaultValue(it) },
       oldParameter == null,
       newParametersValues
     ) ?: return null to false

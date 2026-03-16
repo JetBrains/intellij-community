@@ -2,7 +2,7 @@
 package com.intellij.openapi.diff.impl.combined.search
 
 import com.intellij.openapi.editor.Editor
-import java.util.*
+import java.util.EventListener
 
 /**
  * A listener for events related to [CombinedEditorSearchSession] (session with multiple editor session aggregated)

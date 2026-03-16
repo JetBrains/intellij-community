@@ -11,9 +11,19 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.LineMarkerRenderer;
+import com.intellij.openapi.editor.markup.LineSeparatorRenderer;
+import com.intellij.openapi.editor.markup.MarkupEditorFilter;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.impl.NonCancelableIndicator;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
@@ -22,14 +32,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.Objects;
 
 /**
  * Implementation of the markup element for the editor and document.
  */
 @ApiStatus.Internal
-public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx permits PersistentRangeHighlighterImpl {
+sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
+  permits PersistentRangeHighlighterImpl {
   private static final Logger LOG = Logger.getInstance(RangeHighlighterImpl.class);
   @SuppressWarnings({"InspectionUsingGrayColors", "UseJBColor"})
   private static final Color NULL_COLOR = new Color(0, 0, 0); // must be a new instance to work as a sentinel
@@ -82,8 +94,8 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
     myModel = model;
 
     registerInTree((DocumentEx)model.getDocument(), start, end, greedyToLeft, greedyToRight, layer);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("RangeHighlighterImpl: create " + this);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("RangeHighlighterImpl: create " + this+"; "+getId()+(ProgressIndicatorProvider.getGlobalProgressIndicator() == null ? "" : "; progress=" +ProgressIndicatorProvider.getGlobalProgressIndicator()));
     }
   }
 
@@ -275,8 +287,8 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   @Override
   public void setThinErrorStripeMark(boolean value) {
     boolean old = isThinErrorStripeMark();
-    setFlag(ERROR_STRIPE_IS_THIN_MASK, value);
     if (old != value) {
+      setFlag(ERROR_STRIPE_IS_THIN_MASK, value);
       fireChanged(false, false, false);
     }
   }
@@ -328,8 +340,8 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   @Override
   public void setAfterEndOfLine(boolean afterEndOfLine) {
     boolean old = isAfterEndOfLine();
-    setFlag(AFTER_END_OF_LINE_MASK, afterEndOfLine);
     if (old != afterEndOfLine) {
+      setFlag(AFTER_END_OF_LINE_MASK, afterEndOfLine);
       fireChanged(false, false, false);
     }
   }
@@ -337,8 +349,8 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   @Override
   public void setGreedyToLeft(boolean greedy) {
     boolean old = isGreedyToLeft();
-    super.setGreedyToLeft(greedy);
     if (old != greedy) {
+      super.setGreedyToLeft(greedy);
       fireChanged(false, false, false);
     }
   }
@@ -346,8 +358,8 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   @Override
   public void setGreedyToRight(boolean greedy) {
     boolean old = isGreedyToRight();
-    super.setGreedyToRight(greedy);
     if (old != greedy) {
+      super.setGreedyToRight(greedy);
       fireChanged(false, false, false);
     }
   }
@@ -355,15 +367,15 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   @Override
   public void setStickingToRight(boolean value) {
     boolean old = isStickingToRight();
-    super.setStickingToRight(value);
     if (old != value) {
+      super.setStickingToRight(value);
       fireChanged(false, false, false);
     }
   }
 
   @Override
   public void fireChanged(boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
-    runUnderWriteLock(EmptyRunnable.getInstance()); // throw exception if changed under read lock
+    myNode.getTree().assertMayModify();
     if (isFlagSet(IN_BATCH_CHANGE_MASK)) {
       // under IN_BATCH_CHANGE_MASK, do not fire events, just add flags above
       int changedFlags = CHANGED_MASK|RENDERERS_CHANGED_MASK|FONT_STYLE_CHANGED_MASK|FOREGROUND_COLOR_CHANGED_MASK;
@@ -456,8 +468,10 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
 
   @Override
   public void dispose() {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("RangeHighlighterImpl: dispose " + this);
+    if (LOG.isTraceEnabled()) {
+      ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
+      LOG.trace("RangeHighlighterImpl: dispose " + this + "; (" + myId + ")" +
+                (progress == null || progress instanceof NonCancelableIndicator ? "" : "; progress=" + progress));
     }
     super.dispose();
     GutterIconRenderer renderer = getGutterIconRenderer();
@@ -475,7 +489,11 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   @Override
   public @NonNls String toString() {
     return "RangeHighlighter: " +
-           (isValid() ? "" : "(invalid)") +
-           "("+getStartOffset()+","+getEndOffset()+"); layer:"+getLayer()+"; tooltip: "+getErrorStripeTooltip();
+           (isValid() ? "" : "(invalid)")
+           +"("+getStartOffset()+","+getEndOffset()+")"
+           +"; layer:"+getLayer()
+           +(getErrorStripeTooltip() == null ? "" : "; tooltip: "+getErrorStripeTooltip())
+           +(getTextAttributesKey() == null ? "" : "; textAttributeKey: "+getTextAttributesKey())
+      ;
   }
 }

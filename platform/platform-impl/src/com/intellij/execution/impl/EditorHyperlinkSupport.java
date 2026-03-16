@@ -6,7 +6,11 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCoreUtil;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
@@ -20,13 +24,27 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Expirable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.NavigatableAdapter;
-import com.intellij.util.*;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.FilteringProcessor;
+import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.SmartList;
 import kotlin.Unit;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.awt.*;
+import java.awt.Cursor;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -80,7 +98,10 @@ public final class EditorHyperlinkSupport {
         MouseEvent initialMouseEvent = myInitialMouseEvent;
         myInitialMouseEvent = null;
         MouseEvent mouseEvent = e.getMouseEvent();
-        if (mouseEvent.getButton() == MouseEvent.BUTTON1 && !mouseEvent.isPopupTrigger()) {
+        if (mouseEvent.getButton() == MouseEvent.BUTTON1 &&
+            !mouseEvent.isPopupTrigger() &&
+            e.getCollapsedFoldRegion() == null) {
+
           if (initialMouseEvent != null && (mouseEvent.getComponent() != initialMouseEvent.getComponent() ||
                                        !mouseEvent.getPoint().equals(initialMouseEvent.getPoint()))) {
             return;
@@ -248,12 +269,24 @@ public final class EditorHyperlinkSupport {
   }
 
   private @Nullable RangeHighlighter findLinkRangeAt(int offset) {
-    Ref<RangeHighlighter> ref = Ref.create();
-    processHyperlinksAndHighlightings(offset, offset, myEditor, true, false, range -> {
-      ref.set(range);
-      return false;
+    // It should be synced with c.i.o.editor.impl.view.IterationState.LayerComparator.compare()
+    Ref<RangeHighlighter> minHighlighter = new Ref<>();
+    processHyperlinksAndHighlightings(offset, offset, myEditor, true, false, highlighter -> {
+      if (minHighlighter.isNull()) {
+        minHighlighter.set(highlighter);
+      }
+      else {
+        var minRange = minHighlighter.get().getTextRange();
+        var newRange = highlighter.getTextRange();
+        // Choose the smaller one. In case of equal sizes, prefer the left one. That's how IterationState works de facto.
+        if (newRange.getLength() < minRange.getLength() ||
+            newRange.getLength() == minRange.getLength() && newRange.getStartOffset() < minRange.getStartOffset()) {
+          minHighlighter.set(highlighter);
+        }
+      }
+      return true;
     });
-    return ref.get();
+    return minHighlighter.get();
   }
 
   public @Nullable HyperlinkInfo getHyperlinkAt(int offset) {
@@ -472,12 +505,17 @@ public final class EditorHyperlinkSupport {
       HyperlinkInfoTextAttributes attrs = highlighter.getUserData(HYPERLINK);
       return attrs == null ? null : attrs.hoveredHyperlinkAttributes();
     }
+
+    @Override
+    public boolean isInvisibleLink(@NotNull RangeHighlighterEx highlighter) {
+      return false;
+    }
   }
 
   /**
    * @deprecated use {@link EditorHyperlinkSupport#getNextOccurrence(int, Consumer)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nullable OccurenceNavigator.OccurenceInfo getNextOccurrence(@NotNull Editor editor,
                                                                              int delta,
                                                                              @NotNull com.intellij.util.Consumer<? super RangeHighlighter> action) {

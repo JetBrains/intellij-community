@@ -1,7 +1,7 @@
 [
  {
   matchedName: "html/attributes/v-cool:foo.foo.ba456",
-  origin: "vue@3.0.0 (vue)",
+  origin: "test-lib@2.0.0-rc.24 (vue)",
   attrValue: {
    kind: EXPRESSION,
    type: STRING,

@@ -10,7 +10,7 @@ import com.intellij.xdebugger.hotswap.HotSwapProvider
 import com.intellij.xdebugger.hotswap.HotSwapResultListener
 import com.intellij.xdebugger.impl.hotswap.HotSwapDebugSessionManager
 
-private class JvmHotSwapInDebugSessionEnabler : HotSwapInDebugSessionEnabler {
+internal class JvmHotSwapInDebugSessionEnabler : HotSwapInDebugSessionEnabler {
   override fun createProvider(process: XDebugProcess): HotSwapProvider<*>? {
     val session = (process as? JavaDebugProcess)?.debuggerSession ?: return null
     return JvmHotSwapProvider(session)

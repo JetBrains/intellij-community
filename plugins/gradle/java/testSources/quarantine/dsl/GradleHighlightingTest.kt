@@ -266,7 +266,7 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
     }
   }
 
-  /** @see org.jetbrains.plugins.gradle.service.resolve.transformation.GradleActionToClosureMemberContributor */
+  /** @see com.intellij.gradle.java.groovy.service.resolve.GradleActionToClosureMemberContributor */
   @ParameterizedTest
   @BaseGradleVersionSource
   fun `test deprecation of generated method with Closure instead of Action` (gradleVersion: GradleVersion) {

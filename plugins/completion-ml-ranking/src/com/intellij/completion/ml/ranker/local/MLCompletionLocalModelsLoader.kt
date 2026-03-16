@@ -5,7 +5,7 @@ import com.intellij.internal.ml.DecisionFunction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.SequentialTaskExecutor
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.Future
 import java.util.zip.ZipFile
 

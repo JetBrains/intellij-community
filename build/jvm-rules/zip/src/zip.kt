@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.io
 import java.nio.file.AccessDeniedException
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 import java.nio.file.StandardCopyOption

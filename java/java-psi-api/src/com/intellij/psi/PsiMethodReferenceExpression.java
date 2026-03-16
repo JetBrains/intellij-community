@@ -19,6 +19,13 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a method or constructor reference.
+ * <p>
+ * Example:
+ * <pre>{@code
+ * Function<String, Integer> f = Integer::parseInt;
+ *                               ^^^^^^^^^^^^^^^^^
+ *                               PsiMethodReferenceExpression
+ * }</pre>
  */
 public interface PsiMethodReferenceExpression extends PsiReferenceExpression, PsiFunctionalExpression {
   /**

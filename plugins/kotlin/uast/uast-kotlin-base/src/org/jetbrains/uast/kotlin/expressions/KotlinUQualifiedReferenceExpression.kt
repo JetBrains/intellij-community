@@ -6,7 +6,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UNINITIALIZED_UAST_PART
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UastQualifiedExpressionAccessType
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
 @ApiStatus.Internal
@@ -41,7 +46,7 @@ class KotlinUQualifiedReferenceExpression(
             return selectorPart as UExpression
         }
 
-    override val accessType = UastQualifiedExpressionAccessType.SIMPLE
+    override val accessType: UastQualifiedExpressionAccessType = UastQualifiedExpressionAccessType.SIMPLE
 
     override fun resolve(): PsiElement? = sourcePsi.selectorExpression?.let { baseResolveProviderService.resolveToDeclaration(it) }
 

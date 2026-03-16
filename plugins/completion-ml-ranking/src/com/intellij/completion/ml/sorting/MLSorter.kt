@@ -4,6 +4,7 @@ package com.intellij.completion.ml.sorting
 
 import com.intellij.codeInsight.completion.CompletionFinalSorter
 import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.NewRdCompletionSupport
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
@@ -24,7 +25,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.textMatching.PrefixMatchingUtil
-import java.util.*
+import java.util.IdentityHashMap
 import java.util.concurrent.TimeUnit
 
 class MLSorterFactory : CompletionFinalSorter.Factory {
@@ -75,6 +76,7 @@ class MLSorter : CompletionFinalSorter() {
   }
 
   override fun sort(items: Iterable<LookupElement>, parameters: CompletionParameters): Iterable<LookupElement> {
+    if (NewRdCompletionSupport.isFrontendRdCompletionOn()) return items // todo support it on frontend
     val lookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl ?: return items
     val lookupStorage = MutableLookupStorage.get(lookup) ?: return items
     // Do nothing if unable to reorder items or to log the weights

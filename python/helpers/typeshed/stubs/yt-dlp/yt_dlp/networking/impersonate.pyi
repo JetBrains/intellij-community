@@ -18,7 +18,7 @@ class ImpersonateTarget:
     def from_str(cls, target: str) -> Self: ...
 
 class ImpersonateRequestHandler(RequestHandler, ABC):
-    _SUPPORTED_IMPERSONATE_TARGET_MAP: dict[ImpersonateTarget, Any] = ...  # Copied from source.
+    _SUPPORTED_IMPERSONATE_TARGET_MAP: dict[ImpersonateTarget, Any]  # Copied from source.
 
     def __init__(
         self,

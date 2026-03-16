@@ -7,20 +7,20 @@
   <b>Examples:</b>
 </p>
 <pre><code>
-  from typing import NewType
+from typing import NewType
 
-  InvalidName = NewType("Name", int)  # Variable name 'InvalidName' does not match NewType name 'Name'
+InvalidName = NewType("Name", int)  # Variable name 'InvalidName' does not match NewType name 'Name'
 </code></pre>
 <pre><code>
-  from typing import Literal
+from typing import Literal
 
-  InvalidType = NewType("InvalidType", Literal[1])  # NewType cannot be used with 'Literal[1]'
+InvalidType = NewType("InvalidType", Literal[1])  # NewType cannot be used with 'Literal[1]'
 </code></pre>
 <pre><code>
-  Base = NewType("Base", str)
+Base = NewType("Base", str)
 
-  class Derived(Base):  # 'Base' cannot be subclassed
-      pass
+class Derived(Base):  # 'Base' cannot be subclassed
+    pass
 </code></pre>
 </body>
 </html>

@@ -6,18 +6,27 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider;
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService;
+import com.intellij.openapi.wm.ex.ProjectFrameCapability;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.awt.*;
-import java.util.*;
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public final class FileColorManagerImpl extends FileColorManager {
   private static final String FC_ENABLED = "FileColorsEnabled";
@@ -52,8 +61,8 @@ public final class FileColorManagerImpl extends FileColorManager {
 
   @Override
   public boolean isEnabled() {
-    if (WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject(myProject) &&
-        WelcomeScreenProjectProvider.Companion.isForceDisabledFileColors()) {
+    //noinspection deprecation
+    if (ProjectFrameCapabilitiesService.Companion.getInstanceSync().has(myProject, ProjectFrameCapability.FORCE_DISABLE_FILE_COLORS)) {
       return false;
     }
 

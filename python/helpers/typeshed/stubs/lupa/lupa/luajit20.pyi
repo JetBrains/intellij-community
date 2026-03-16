@@ -1,6 +1,7 @@
 from _typeshed import MaybeNone
 from collections.abc import Callable, Iterator
 from typing import Any, Final, Generic, TypeVar, type_check_only
+from typing_extensions import disjoint_base
 
 __all__ = [
     "LUA_VERSION",
@@ -54,6 +55,7 @@ class _LuaObject: ...
 
 _bint = TypeVar("_bint", bool, int)
 
+@disjoint_base
 class FastRLock(Generic[_bint]):
     # @classmethod
     # def __init__(cls, /, *args: Any, **kwargs: Any) -> None: ...
@@ -66,6 +68,7 @@ class LuaError(Exception): ...
 class LuaSyntaxError(LuaError): ...
 class LuaMemoryError(LuaError, MemoryError): ...
 
+@disjoint_base
 class LuaRuntime:
     lua_implementation: Final[str]
     lua_version: Final[tuple[int, int]]

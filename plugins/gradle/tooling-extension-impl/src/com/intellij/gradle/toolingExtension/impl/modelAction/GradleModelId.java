@@ -70,6 +70,12 @@ public final class GradleModelId implements Serializable {
     return new GradleModelId(classId, buildId, projectId);
   }
 
+  public static @NotNull GradleModelId createRootModelId(@NotNull Class<?> modelClass) {
+    String classId = createClassId(modelClass);
+    String projectId = ":";
+    return new GradleModelId(classId, "", projectId);
+  }
+
   public static @NotNull GradleModelId createProjectModelId(@NotNull ProjectModel projectModel, @NotNull Class<?> modelClass) {
     ProjectIdentifier projectIdentifier = getProjectIdentifier(projectModel);
     BuildIdentifier buildIdentifier = projectIdentifier.getBuildIdentifier();

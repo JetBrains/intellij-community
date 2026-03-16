@@ -16,10 +16,9 @@
 package org.intellij.lang.xpath.validation.inspections.quickfix;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.psi.XPathElement;
 import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
-
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class ReplaceElementFix<TYPE extends XPathElement> extends XPathQuickFixFactory.Fix<TYPE> {

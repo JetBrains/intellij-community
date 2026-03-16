@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.test.kotlin.comparison
 
+import com.intellij.idea.IJIgnore
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
@@ -105,4 +106,7 @@ class FE1UastResolveApiTest : AbstractFE1UastTest() {
             doTest("Resolve", ::checkCallbackForResolve)
         }
     }
+
+    @IJIgnore(issue = "AT-3959")
+    fun testDummy() = Unit  // junit.framework.AssertionFailedError: No tests found in org.jetbrains.uast.test.kotlin.comparison.FE1UastResolveApiTest
 }

@@ -6,7 +6,7 @@ import com.intellij.ui.IconManager;
 import icons.KotlinBaseResourcesIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public interface KotlinIcons {
     /** 16x16 */ @NotNull Icon SMALL_LOGO = KotlinBaseResourcesIcons.Kotlin;
@@ -44,6 +44,7 @@ public interface KotlinIcons {
     /** 16x16 */ @NotNull Icon TYPE_ALIAS = KotlinBaseResourcesIcons.TypeAlias;
     Icon VAR = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable);
     /** 16x16 */ @NotNull Icon VAL = KotlinBaseResourcesIcons.Value;
+    /** 16x16 */ @NotNull Icon J2K = KotlinBaseResourcesIcons.ConvertJavaToKotlin;
 
     final class Wizard {
         /** 16x16 */ public static final @NotNull Icon ANDROID = KotlinBaseResourcesIcons.Wizard.Android;

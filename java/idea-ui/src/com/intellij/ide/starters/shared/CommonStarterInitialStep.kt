@@ -10,10 +10,16 @@ import com.intellij.ide.projectWizard.projectWizardJdkComboBox
 import com.intellij.ide.projectWizard.toEelDescriptorProperty
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.local.StarterModuleBuilder
-import com.intellij.ide.starters.shared.ValidationFunctions.*
+import com.intellij.ide.starters.shared.ValidationFunctions.CHECK_ARTIFACT_SIMPLE_FORMAT
+import com.intellij.ide.starters.shared.ValidationFunctions.CHECK_GROUP_FORMAT
+import com.intellij.ide.starters.shared.ValidationFunctions.CHECK_LOCATION_FOR_ERROR
+import com.intellij.ide.starters.shared.ValidationFunctions.CHECK_NOT_EMPTY
+import com.intellij.ide.starters.shared.ValidationFunctions.CHECK_NO_RESERVED_WORDS
+import com.intellij.ide.starters.shared.ValidationFunctions.CHECK_NO_WHITESPACES
+import com.intellij.ide.starters.shared.ValidationFunctions.CHECK_SIMPLE_NAME_FORMAT
+import com.intellij.ide.starters.shared.ValidationFunctions.createLocationWarningValidator
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
-import com.intellij.ide.util.projectWizard.ModuleBuilderListener
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GIT_PROPERTY_NAME
@@ -22,13 +28,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.util.*
+import com.intellij.openapi.observable.util.bindBooleanStorage
+import com.intellij.openapi.observable.util.bindStorage
+import com.intellij.openapi.observable.util.joinSystemDependentPath
+import com.intellij.openapi.observable.util.transform
+import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -38,7 +45,17 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.columns
 import org.jetbrains.annotations.Nls
 import java.io.File
 import javax.swing.JComponent
@@ -142,27 +159,15 @@ abstract class CommonStarterInitialStep(
   protected fun Panel.addSdkUi() {
     row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
       projectWizardJdkComboBox(
-        this,
+        wizardContext,
         locationProperty.toEelDescriptorProperty(),
         jdkIntentProperty,
-        wizardContext.disposable,
-        wizardContext.projectJdk,
         { sdk -> moduleBuilder.isSuitableSdkType(sdk.sdkType) }
       )
 
-      moduleBuilder.addListener(object : ModuleBuilderListener {
-        override fun moduleCreated(module: Module) {
-          val downloadTask = jdkIntentProperty.get().downloadTask ?: return
-          val downloadService = module.project.service<JdkDownloadService>()
-          val jdk = downloadService.setupInstallableSdk(downloadTask)
-          if (wizardContext.isCreatingNewProject) {
-            ProjectRootManager.getInstance(module.project).projectSdk = jdk
-          } else {
-            ModuleRootModificationUtil.setModuleSdk(module, jdk)
-          }
-          downloadService.downloadSdk(jdk)
-        }
-      })
+      moduleBuilder.addListener { module ->
+        module.project.service<JdkDownloadService>().scheduleDownloadSdk(wizardContext.projectJdk)
+      }
     }.bottomGap(BottomGap.SMALL)
   }
 

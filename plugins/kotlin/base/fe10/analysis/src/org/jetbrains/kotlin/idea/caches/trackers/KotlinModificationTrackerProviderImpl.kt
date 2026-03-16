@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.caches.trackers
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinModificationTrackerProvider
 
+@K1Deprecation
 class KotlinModificationTrackerProviderImpl(private val project: Project) : KotlinModificationTrackerProvider {
     override val projectTracker: ModificationTracker
         get() = KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker

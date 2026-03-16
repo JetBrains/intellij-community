@@ -33,6 +33,6 @@ private val currentPlatform by lazy {
   }
 }
 
-fun Iterable<Coordinates>.filterCoordinatesByPlatform(): List<Coordinates> = filter { coordinates ->
-  coordinates.platforms?.contains(currentPlatform) != false
+fun Iterable<Coordinates>.filterCoordinatesByPlatform(platform: CoordinatesPlatform? = currentPlatform): List<Coordinates> = filter { coordinates ->
+  coordinates.platforms?.contains(platform) != false
 }

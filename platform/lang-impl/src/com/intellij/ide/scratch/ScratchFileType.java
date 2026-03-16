@@ -7,7 +7,7 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * NOT USED.

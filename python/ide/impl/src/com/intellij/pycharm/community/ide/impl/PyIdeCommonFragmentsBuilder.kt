@@ -2,7 +2,6 @@
 package com.intellij.pycharm.community.ide.impl
 
 import com.intellij.application.options.ModulesComboBox
-import com.jetbrains.python.run.EnvFileComponent.Companion.createEnvFilesFragment
 import com.intellij.execution.ui.CommandLinePanel
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.execution.ui.SettingsEditorFragmentType
@@ -11,6 +10,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
+import com.jetbrains.python.run.EnvFileComponent.Companion.createEnvFilesFragment
 import com.jetbrains.python.run.PyCommonFragmentsBuilder
 import com.jetbrains.python.run.configuration.AbstractPythonConfigurationFragmentedEditor.Companion.MIN_FRAGMENT_WIDTH
 import com.jetbrains.python.run.configuration.PyPathMappingsEditorFragment

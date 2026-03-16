@@ -19,9 +19,11 @@ kotlin {
     jvm() 
     js(IR)
 
+    val jsMain by sourceSets.getting
+
     sourceSets {
         val jvmMain by getting { }
 
-        js().compilations["main"].source(jvmMain)
+        jsMain.dependsOn(jvmMain)
     }
 }

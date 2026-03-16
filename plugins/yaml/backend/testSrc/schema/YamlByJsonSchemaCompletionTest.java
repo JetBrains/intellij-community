@@ -111,4 +111,61 @@ public class YamlByJsonSchemaCompletionTest extends JsonBySchemaCompletionBaseTe
      CompletionType.SMART,
      "var_b_1", "var_b_2", "var_b_3");
   }
+
+  public void testNestedPropertyNotSuppressedByOuter() throws Exception {
+    @Language("JSON") String schema = "{\"properties\": {\"Identifier\": {\"type\": \"string\"}, \"Baa\": {\"properties\": {\"Identifier\": {\"type\": \"string\"}}}}}";
+    testBySchema(schema, "Identifier: \"123\"\nBaa:\n  <caret>", "someFile.yml", "Identifier");
+  }
+
+  public void testNestedPropertySuppressedBySameLevel() throws Exception {
+    @Language("JSON") String schema = "{\"properties\": {\"Identifier\": {\"type\": \"string\"}, \"Baa\": {\"properties\": {\"Identifier\": {\"type\": \"string\"}}}}}";
+    testBySchema(schema, "Identifier: \"123\"\nBaa:\n  Identifier: \"already here\"\n  <caret>", "someFile.yml");
+  }
+
+  public void testDeepNestingIsolation() throws Exception {
+    @Language("JSON") String schema = """
+      {
+        "properties": {
+          "Level1": {
+            "properties": {
+              "Level2": {
+                "properties": {
+                  "Level3": {
+                    "properties": {
+                      "Level1": { "type": "string" },
+                      "Other": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }""";
+    testBySchema(schema, "Level1:\n  Level2:\n    Level3:\n      Level1: \"value\"\n      <caret>", "someFile.yml", "Other");
+  }
+
+  public void testTransitionFromKeyToNewObject() throws Exception {
+    @Language("JSON") String schema = "{\"properties\": {\"Identifier\": {}, \"Baa\": {\"properties\": {\"Nested\": {}}}}}";
+    // Caret not yet indented - should suggest top-level properties
+    testBySchema(schema, "Baa:\n<caret>", "someFile.yml", "Identifier");
+    // Caret indented - should suggest nested properties
+    testBySchema(schema, "Baa:\n  <caret>", "someFile.yml", "Nested");
+  }
+
+  public void testSiblingMappingIsolation() throws Exception {
+    @Language("JSON") String schema = """
+      {
+        "properties": {
+          "ObjectA": { "properties": { "Identifier": {} } },
+          "ObjectB": { "properties": { "Identifier": {} } }
+        }
+      }""";
+    testBySchema(schema, "ObjectA:\n  Identifier: \"A\"\nObjectB:\n  <caret>", "someFile.yml", "Identifier");
+  }
+
+  public void testEmptyMappingAtEndOfFile() throws Exception {
+    @Language("JSON") String schema = "{\"properties\": {\"Identifier\": {}, \"Baa\": {\"properties\": {\"Identifier\": {}}}}}";
+    testBySchema(schema, "Identifier: \"123\"\nBaa:\n  <caret>", "someFile.yml", "Identifier");
+  }
 }

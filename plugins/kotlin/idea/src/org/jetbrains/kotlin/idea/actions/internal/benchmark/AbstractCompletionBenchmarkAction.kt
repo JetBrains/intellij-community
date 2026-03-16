@@ -22,8 +22,13 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.uiDesigner.core.GridConstraints
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
@@ -35,10 +40,11 @@ import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
-import java.util.*
+import java.util.Random
 import javax.swing.JFileChooser
 import javax.swing.JPanel
 
+@K1Deprecation
 abstract class AbstractCompletionBenchmarkAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return

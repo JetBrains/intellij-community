@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.events.impl;
 
-import com.intellij.build.events.BuildEvents;
 import com.intellij.build.events.BuildEventsNls.Description;
 import com.intellij.build.events.BuildEventsNls.Hint;
 import com.intellij.build.events.BuildEventsNls.Message;
@@ -48,7 +47,7 @@ public class MessageEventImpl extends AbstractBuildEvent implements MessageEvent
   }
 
   /**
-   * @deprecated Use {@link BuildEvents#message()} event builder instead.
+   * @deprecated Use {@link MessageEvent#builder} event builder instead.
    */
   @Deprecated
   public MessageEventImpl(

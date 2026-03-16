@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.inlays
 
+import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.hints.AnnotationInlayProvider
+import com.intellij.codeInsight.hints.AnnotationInlaySettings
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.JavaPsiFacade
@@ -11,8 +13,17 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
 import org.intellij.lang.annotations.Language
+import java.util.regex.Pattern
 
 class AnnotationHintsTest : DeclarativeInlayHintsProviderTestCase() {
+
+  override fun getBasePath(): String {
+    return JavaTestUtil.getJavaTestDataPath()
+  }
+
+  override fun getTestDataPath(): String {
+    return "/codeInsight/daemonCodeAnalyzer/annotations/"
+  }
 
   override fun getProjectDescriptor(): LightProjectDescriptor {
     return JAVA_21
@@ -20,84 +31,96 @@ class AnnotationHintsTest : DeclarativeInlayHintsProviderTestCase() {
 
   fun `test contract inferred annotation`() {
     val text = """
-class Demo {
-  /*<# block [@Contract(pure = true)] #>*/
-  private static int pure(int x, int y) {
-    return x * y + 10;
-  }
-}"""
-    testAnnotations(text)
+      class Demo {
+        /*<# block [@Contract(pure = true)] #>*/
+        private static int pure(int x, int y) {
+          return x * y + 10;
+        }
+      }""".trimIndent()
+    testAnnotations(text, convert(text))
   }
 
   fun `test arrays`() {
-    val text = """
+    testAnnotations("""
       final class Demo {
         /*<# block [@Contract(value = "_ -> new", pure = true)] #>*/
         String/*<# @NotNull #>*/[][] data(String/*<# @NotNull #>*/... arr) {
           if (arr.length == 0) return new String[10][20];
           return new String[20][30];
         }
-      }
-    """.trimIndent()
-    testAnnotations(text)
-  }
-
-  fun `test arrays java7`() {
-    val text = """
+      }""".trimIndent(), """
       final class Demo {
-        /*<# block [@Contract(value = "_ -> new", pure = true)] [@NotNull] #>*/
-        String[][] data(/*<# @NotNull #>*/String... arr) {
+        /*<# block [@Contract(value = "_ -> new", pure = true)] #>*/
+        String[]/*<# ! #>*/[] data(String.../*<# ! #>*/ arr) {
           if (arr.length == 0) return new String[10][20];
           return new String[20][30];
         }
-      }
-    """.trimIndent()
+      }""".trimIndent())
+  }
+
+  fun `test arrays java7`() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_7) {
-      testAnnotations(text)
+      testAnnotations(
+        """
+          final class Demo {
+            /*<# block [@Contract(value = "_ -> new", pure = true)] [@NotNull] #>*/
+            String[][] data(/*<# @NotNull #>*/String... arr) {
+              if (arr.length == 0) return new String[10][20];
+              return new String[20][30];
+            }
+          }""".trimIndent(), """
+          final class Demo {
+            /*<# block [@Contract(value = "_ -> new", pure = true)] #>*/
+            String[]/*<# ! #>*/[] data(String.../*<# ! #>*/ arr) {
+              if (arr.length == 0) return new String[10][20];
+              return new String[20][30];
+            }
+          }""".trimIndent())
     }
   }
 
   fun `test contract nullable`() {
     val text = """
-public class E {
-  /*<# block [@Contract("null -> true")] #>*/
-  static boolean foo(E e) {
-    if (e != null) {
-      e.foo(new E());
-    } else {
-      return true;
-    }
-  }
-}"""
-    testAnnotations(text)
+      public class E {
+        /*<# block [@Contract("null -> true")] #>*/
+        static boolean foo(E e) {
+          if (e != null) {
+            e.foo(new E());
+          } else {
+            return true;
+          }
+        }
+      }""".trimIndent()
+    testAnnotations(text, convert(text))
   }
 
   fun `test no parameters have no parens`() {
     val text = """
-public class E {
-  /*<# block [@Contract(pure = true)] #>*/
-  static /*<# @Nullable #>*/Boolean foo(E e) {
-    if (true) return false;
-    return null;
-  }
-}"""
-    testAnnotations(text)
+      public class E {
+        /*<# block [@Contract(pure = true)] #>*/
+        static /*<# @Nullable #>*/Boolean foo(E e) {
+          if (true) return false;
+          return null;
+        }
+      }""".trimIndent()
+    testAnnotations(text, convert(text))
   }
 
   fun `test parameters annotations on the same line`() {
     val text = """
-public class E {
-  void foo(
-      /*<# @NotNull #>*/String s
-    ) {
-    s.length();  
-  }
-}"""
-    testAnnotations(text)
+      public class E {
+        void foo(
+            /*<# @NotNull #>*/String s
+          ) {
+          s.length();  
+        }
+      }""".trimIndent()
+    testAnnotations(text, convert(text))
   }
 
   fun `test external annotations`() {
-    val optionalClass = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_UTIL_OPTIONAL, GlobalSearchScope.allScope(project))!!
+    val optionalClass = JavaPsiFacade.getInstance(project)
+      .findClass(CommonClassNames.JAVA_UTIL_OPTIONAL, GlobalSearchScope.allScope(project))!!
     val file = optionalClass.containingFile
     myFixture.configureFromExistingVirtualFile(file.virtualFile)
     val expected = """//
@@ -257,24 +280,64 @@ public final class Optional</*<# @NotNull #>*/T> {
     }
 }
 """
-    doTestProviderWithConfigured(myFixture.editor.document.text,
-                                 expected,
-                                 AnnotationInlayProvider(),
-                                 enabledOptions = mapOf(AnnotationInlayProvider.SHOW_INFERRED to false,
-                                                        AnnotationInlayProvider.SHOW_EXTERNAL to true),
-                                 testMode = ProviderTestMode.SIMPLE)
+    val settings = AnnotationInlaySettings.getInstance()
+    val old = settings.shortenNotNull
+    settings.shortenNotNull = true
+    try {
+      doTestProviderWithConfigured(myFixture.editor.document.text,
+                                   convert(expected),
+                                   AnnotationInlayProvider(),
+                                   enabledOptions = mapOf(AnnotationInlayProvider.SHOW_INFERRED to false,
+                                                          AnnotationInlayProvider.SHOW_EXTERNAL to true),
+                                   testMode = ProviderTestMode.SIMPLE)
+    } finally {
+      settings.shortenNotNull = old
+    }
+  }
+  
+  private fun convert(text: String): String{
+    val matcher = Pattern.compile("/\\*<# @(NotNull|Nullable) #>\\*/").matcher(text)
+    val result = StringBuilder()
+    var from = 0
+    while (matcher.find()) {
+      result.append(text.substring(from, matcher.start()))
+      from = matcher.end();
+      while (Character.isAlphabetic(text[from].code)) {
+        result.append(text[from])
+        from++
+      }
+      result.append(if (matcher.group(1).equals("NotNull")) "/*<# ! #>*/" else "/*<# ? #>*/")
+    }
+    result.append(text.substring(from))
+    return result.toString()
   }
 
   private fun testAnnotations(
-    @Language("JAVA") text: String,
+    @Language("JAVA") annotatedText: String,
+    @Language("JAVA") nullnessMarkerText: String,
     enabledOptions: Map<String, Boolean> = mapOf("showInferred" to true, "showExternal" to true),
   ) {
-    doTestProvider(
-      "test.java",
-      text,
-      AnnotationInlayProvider(),
-      enabledOptions,
-      testMode = ProviderTestMode.SIMPLE,
-    )
+    val settings = AnnotationInlaySettings.getInstance()
+    val old = settings.shortenNotNull
+    settings.shortenNotNull = false
+    try {
+      doTestProvider(
+        "test.java",
+        annotatedText,
+        AnnotationInlayProvider(),
+        enabledOptions,
+        testMode = ProviderTestMode.SIMPLE,
+      )
+      settings.shortenNotNull = true
+      doTestProvider(
+        "test.java",
+        nullnessMarkerText,
+        AnnotationInlayProvider(),
+        enabledOptions,
+        testMode = ProviderTestMode.SIMPLE,
+      )
+    } finally {
+      settings.shortenNotNull = old
+    }
   }
 }

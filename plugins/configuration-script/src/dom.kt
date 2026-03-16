@@ -1,6 +1,10 @@
 package com.intellij.configurationScript
 
-import org.snakeyaml.engine.v2.nodes.*
+import org.snakeyaml.engine.v2.nodes.MappingNode
+import org.snakeyaml.engine.v2.nodes.Node
+import org.snakeyaml.engine.v2.nodes.NodeTuple
+import org.snakeyaml.engine.v2.nodes.ScalarNode
+import org.snakeyaml.engine.v2.nodes.SequenceNode
 
 internal fun findValueNodeByPath(namePath: String, rootNodes: List<NodeTuple>): List<NodeTuple>? {
   return findNodeByPath(namePath, rootNodes, MappingNodeTypeFilter)

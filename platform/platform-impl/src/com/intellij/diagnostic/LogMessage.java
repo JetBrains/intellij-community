@@ -62,16 +62,6 @@ public final class LogMessage extends AbstractMessage {
 
   /** @deprecated use {@link IdeaLoggingEvent#IdeaLoggingEvent} directly */
   @Deprecated(forRemoval = true)
-  public static IdeaLoggingEvent eventOf(
-    @NotNull Throwable throwable,
-    @Nullable String userMessage,
-    @NotNull List<@NotNull Attachment> attachments
-  ) {
-    return new IdeaLoggingEvent(userMessage, throwable, new LogMessage(throwable, userMessage, attachments));
-  }
-
-  /** @deprecated use {@link IdeaLoggingEvent#IdeaLoggingEvent} directly */
-  @Deprecated(forRemoval = true)
   public static IdeaLoggingEvent createEvent(@NotNull Throwable throwable, @Nullable String userMessage, Attachment @NotNull ... attachments) {
     return new IdeaLoggingEvent(userMessage, throwable, new LogMessage(throwable, userMessage, List.of(attachments)));
   }

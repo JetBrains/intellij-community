@@ -19,8 +19,8 @@ import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.ui.components.BasicOptionButtonUI
 import com.intellij.ui.popup.PopupFactoryImpl
 import git4idea.GitLocalBranch
-import git4idea.actions.ref.GitCheckoutAction
 import git4idea.actions.branch.GitCheckoutWithRebaseAction
+import git4idea.actions.ref.GitCheckoutAction
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
@@ -29,7 +29,14 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchPopupActions
 import org.jetbrains.annotations.Nls
-import training.dsl.*
+import training.dsl.LearningBalloonConfig
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
+import training.dsl.TaskContext
+import training.dsl.TaskTestContext
+import training.dsl.defaultRestoreDelay
+import training.dsl.dropMnemonic
+import training.dsl.gotItStep
 import training.git.GitFeaturesTrainerIcons
 import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.clickTreeRow
@@ -43,6 +50,7 @@ import training.git.GitLessonsUtil.triggerOnCheckout
 import training.git.GitLessonsUtil.triggerOnNotification
 import training.git.GitProjectUtil
 import java.io.File
+import java.nio.file.Path
 import javax.swing.JButton
 import javax.swing.JDialog
 
@@ -266,9 +274,9 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     modifyRemoteProject(remoteProjectRoot)
   }
 
-  private fun modifyRemoteProject(remoteProjectRoot: File) {
+  private fun modifyRemoteProject(remoteProjectRoot: Path) {
     val files = mutableListOf<File>()
-    FileUtil.processFilesRecursively(remoteProjectRoot, files::add)
+    FileUtil.processFilesRecursively(remoteProjectRoot.toFile(), files::add)
     val fileToCommit = files.find { it.name == fileToCommitName }
                        ?: error("Failed to find file $fileToCommitName to modify in $remoteProjectRoot")
     gitChange(remoteProjectRoot, "user.name", committerName)
@@ -276,13 +284,13 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     createOneFileCommit(remoteProjectRoot, fileToCommit)
   }
 
-  private fun gitChange(root: File, param: String, value: String) {
+  private fun gitChange(root: Path, param: String, value: String) {
     val handler = GitLineHandler(null, root, GitCommand.CONFIG)
     handler.addParameters(param, value)
     runGitCommandSynchronously(handler)
   }
 
-  private fun createOneFileCommit(root: File, fileToCommit: File) {
+  private fun createOneFileCommit(root: Path, fileToCommit: File) {
     fileToCommit.appendText(fileAddition)
     val handler = GitLineHandler(null, root, GitCommand.COMMIT)
     handler.addParameters("-a")

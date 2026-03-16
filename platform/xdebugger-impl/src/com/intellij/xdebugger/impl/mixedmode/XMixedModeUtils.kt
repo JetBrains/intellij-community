@@ -1,14 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.mixedmode
 
-import org.jetbrains.annotations.ApiStatus
-
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcessExtension
 import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcessExtension
+import org.jetbrains.annotations.ApiStatus
 
 val XDebugSession.mixedModeExecutionStack: XMixedModeExecutionStack?
   @ApiStatus.Internal

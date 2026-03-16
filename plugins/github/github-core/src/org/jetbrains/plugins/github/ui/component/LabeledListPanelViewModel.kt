@@ -8,16 +8,10 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface LabeledListPanelViewModel<T> {
-  val isEditingAllowed: Boolean
   val items: StateFlow<List<T>>
 
   // convert to batches
   val selectableItems: StateFlow<ComputedResult<List<T>>>
-  val adjustmentProcessState: StateFlow<ComputedResult<Unit>?>
-
-  val editRequests: SharedFlow<Unit>
-
-  fun requestEdit()
 
   fun adjustList(newList: List<T>)
 }

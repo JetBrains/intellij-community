@@ -10,8 +10,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.StatusText;
 import com.intellij.vcs.log.VcsLogBundle;
-import com.intellij.vcs.log.data.DataPack;
-import com.intellij.vcs.log.data.DataPackBase;
+import com.intellij.vcs.log.data.VcsLogGraphData;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
@@ -53,10 +52,9 @@ class VcsLogMainGraphTable extends VcsLogGraphTable {
     StatusText statusText = getEmptyText();
     VisiblePack visiblePack = getModel().getVisiblePack();
 
-    DataPackBase dataPack = visiblePack.getDataPack();
-    if (dataPack instanceof DataPack.ErrorDataPack) {
-      setErrorEmptyText(((DataPack.ErrorDataPack)dataPack).getError(),
-                        VcsLogBundle.message("vcs.log.error.loading.commits.status"));
+    VcsLogGraphData dataPack = visiblePack.getDataPack();
+    if (dataPack instanceof VcsLogGraphData.Error error) {
+      setErrorEmptyText(error.getError(), VcsLogBundle.message("vcs.log.error.loading.commits.status"));
       appendActionToEmptyText(VcsLogBundle.message("vcs.log.refresh.status.action"),
                               () -> getLogData().refresh(getLogData().getLogProviders().keySet()));
     }

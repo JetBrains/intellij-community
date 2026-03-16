@@ -22,8 +22,18 @@ import com.intellij.util.ui.UIUtil;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JViewport;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.ScrollPaneLayout;
+import javax.swing.Scrollable;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ScrollBarUI;
@@ -31,7 +41,16 @@ import javax.swing.plaf.ScrollPaneUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollPaneUI;
-import java.awt.*;
+import java.awt.Adjustable;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -84,7 +103,7 @@ public class JBScrollPane extends JScrollPane {
    */
   private boolean paintBorderAllowed;
 
-  protected JComponent statusComponent;
+  private @Nullable JComponent statusComponent;
 
   public JBScrollPane(int viewportWidth) {
     init(false);
@@ -143,6 +162,37 @@ public class JBScrollPane extends JScrollPane {
       revalidate();
       repaint();
     }
+  }
+
+  private static boolean isOverlappingScrollBar(JScrollPane scrollPane) {
+    return (scrollPane instanceof JBScrollPane) && ((JBScrollPane)scrollPane).isOverlappingScrollBar();
+  }
+
+  /**
+   * Determines whether the presence of the vertical scrollbar changes the viewport's width.
+   * <p>
+   * Can be used by client code to decide on the vertical scrollbar's visibility policy.
+   * If the scrollbar affects the viewport's width, it might be desirable to use
+   * {@link ScrollPaneConstants#VERTICAL_SCROLLBAR_ALWAYS} to avoid width changes caused by height changes,
+   * or, worse, infinite resize loops.
+   * </p>
+   * @return true iff the presence of the vertical scrollbar changes the viewport's width
+   */
+  public boolean verticalScrollBarNeedsSpace() {
+    return verticalScrollBarNeedsSpace(this);
+  }
+
+  private static boolean verticalScrollBarNeedsSpace(@NotNull JScrollPane pane) {
+    var vsb = pane.getVerticalScrollBar();
+    var viewPort = pane.getViewport();
+    var view = viewPort == null ? null : viewPort.getView();
+    // Our layout forces the scrollbar to be opaque if the view is always-opaque.
+    var isViewAlwaysOpaque = isAlwaysOpaque(view);
+    return vsb != null && (isViewAlwaysOpaque || vsb.isOpaque()) && !isOverlappingScrollBar(pane);
+  }
+
+  private static boolean isAlwaysOpaque(@Nullable Component view) {
+    return !SystemInfo.isMac && ScrollSettings.isNotSupportedYet(view);
   }
 
   static Color getViewBackground(JScrollPane pane) {
@@ -206,7 +256,7 @@ public class JBScrollPane extends JScrollPane {
    * Adds status component which is anchored to the top right corner above the right scrollbar.
    * This component obeys the {@link Flip}.
    */
-  public void setStatusComponent(JComponent statusComponent) {
+  public void setStatusComponent(@Nullable JComponent statusComponent) {
     JComponent old = getStatusComponent();
     this.statusComponent = statusComponent;
     if (statusComponent != null) {
@@ -221,7 +271,7 @@ public class JBScrollPane extends JScrollPane {
     repaint();
   }
 
-  public JComponent getStatusComponent() {
+  public @Nullable JComponent getStatusComponent() {
     return statusComponent;
   }
 
@@ -349,7 +399,7 @@ public class JBScrollPane extends JScrollPane {
     }
   }
 
-  public static ViewportBorder createIndentBorder() {
+  public static @NotNull ViewportBorder createIndentBorder() {
     return new ViewportBorder(2);
   }
 
@@ -492,7 +542,7 @@ public class JBScrollPane extends JScrollPane {
   public static class Layout extends ScrollPaneLayout {
     private static final Insets EMPTY_INSETS = JBInsets.emptyInsets();
 
-    protected Component statusComponent;
+    private @Nullable Component statusComponent;
 
     @Override
     public void syncWithScrollPane(JScrollPane sp) {
@@ -594,7 +644,7 @@ public class JBScrollPane extends JScrollPane {
       Rectangle vsbBounds = new Rectangle(0, viewportBounds.y - insets.top, 0, 0);
       if (vsb != null) {
         if (isAlwaysOpaque(view)) vsb.setOpaque(true);
-        vsbRequiresSpace = vsb.isOpaque() && !isOverlappingScrollBar;
+        vsbRequiresSpace = verticalScrollBarNeedsSpace(pane);
         if (vsbNeeded) {
           adjustForVSB(viewportBounds, insets, vsbBounds, vsbRequiresSpace, vsbOnLeft, isOverlappingScrollBar, wholePaneBounds);
           if (vsbRequiresSpace && viewport != null) {
@@ -914,14 +964,6 @@ public class JBScrollPane extends JScrollPane {
       return preferredSize;
     }
 
-    private static boolean isOverlappingScrollBar(JScrollPane scrollPane) {
-      return (scrollPane instanceof JBScrollPane) && ((JBScrollPane)scrollPane).isOverlappingScrollBar();
-    }
-
-    private static boolean isAlwaysOpaque(Component view) {
-      return !SystemInfo.isMac && ScrollSettings.isNotSupportedYet(view);
-    }
-
     private static void updateCornerBounds(Rectangle bounds, int x, int y) {
       bounds.width = Math.abs(bounds.x - x);
       bounds.height = Math.abs(bounds.y - y);
@@ -1022,6 +1064,7 @@ public class JBScrollPane extends JScrollPane {
    * @param event a mouse wheel event to check for validity
    * @return {@code true} if the specified event is valid, {@code false} otherwise
    */
+  @ApiStatus.Internal
   public static boolean isScrollEvent(@NotNull MouseWheelEvent event) {
     // event should not be consumed yet
     if (event.isConsumed()) return false;

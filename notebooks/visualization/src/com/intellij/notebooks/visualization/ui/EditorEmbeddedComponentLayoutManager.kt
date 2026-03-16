@@ -1,18 +1,28 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.ui.components.JBScrollPane
-import java.awt.*
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.LayoutManager2
+import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JScrollPane
 import kotlin.math.min
 
-internal class EditorEmbeddedComponentLayoutManager(private val editor: EditorEx) : LayoutManager2 {
+internal class EditorEmbeddedComponentLayoutManager(private val editor: EditorEx) : LayoutManager2, Disposable {
   private val constraints: MutableList<Pair<JComponent, Constraint>> = mutableListOf()
   private val myEditorScrollPane: JScrollPane
     get() = editor.scrollPane
+
+
+  override fun dispose() {
+    constraints.clear()
+  }
 
   override fun addLayoutComponent(comp: Component, constraints: Any?) {
     if (constraints !is Constraint) return

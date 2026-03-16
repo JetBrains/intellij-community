@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode.K2
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K1
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K2
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.idea.test.util.trimTrailingWhitespacesAndAddNewlineAtEOF
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtParameter
@@ -45,9 +44,6 @@ private val ignoreDirectives: Set<String> = setOf(IGNORE_K1, IGNORE_K2)
 
 internal val J2K_FULL_JDK_PROJECT_DESCRIPTOR: KotlinWithJdkAndRuntimeLightProjectDescriptor =
     KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
-
-internal fun KtFile.getFileTextWithErrors(pluginMode: KotlinPluginMode): String =
-    if (pluginMode === K2) getK2FileTextWithErrors(this) else dumpTextWithErrors()
 
 internal fun getDisableTestDirective(pluginMode: KotlinPluginMode): String =
     if (pluginMode === K2) IGNORE_K2 else IGNORE_K1
@@ -100,7 +96,7 @@ internal fun getExpectedFile(testFile: File, isCopyPaste: Boolean, pluginMode: K
 
 // TODO: adapted from `org.jetbrains.kotlin.idea.test.TestUtilsKt.dumpTextWithErrors`
 @OptIn(KaAllowAnalysisOnEdt::class)
-internal fun getK2FileTextWithErrors(file: KtFile): String {
+fun getK2FileTextWithErrors(file: KtFile): String {
     val errors: List<String> = allowAnalysisOnEdt {
         analyze(file) {
             val diagnostics = file.collectDiagnostics(filter = ONLY_COMMON_CHECKERS).asSequence()

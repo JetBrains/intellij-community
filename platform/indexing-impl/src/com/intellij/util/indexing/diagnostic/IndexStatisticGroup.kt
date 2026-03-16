@@ -12,7 +12,7 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.indexing.FileBasedIndex.RebuildRequestedByUserAction
 import com.intellij.util.indexing.ID
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.*
+import java.util.Locale
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 

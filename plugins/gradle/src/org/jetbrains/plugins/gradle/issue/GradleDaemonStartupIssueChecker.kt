@@ -31,7 +31,7 @@ import kotlin.io.path.isRegularFile
  * This issue checker provides quick fixes to deal with known startup issues of the Gradle daemon.
  */
 @ApiStatus.Experimental
-private class GradleDaemonStartupIssueChecker : GradleIssueChecker {
+internal class GradleDaemonStartupIssueChecker : GradleIssueChecker {
   override fun check(issueData: GradleIssueData): BuildIssue? {
     val rootCause = getRootCauseAndLocation(issueData.error).first
     val rootCauseText = rootCause.toString()

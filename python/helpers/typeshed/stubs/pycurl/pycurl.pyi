@@ -1,6 +1,6 @@
 import sys
 from _typeshed import Incomplete
-from typing import Final, final
+from typing import Any, Final, final
 from typing_extensions import Self
 
 version: str
@@ -22,8 +22,10 @@ class Curl:
     def perform(self) -> None: ...
     def perform_rb(self) -> bytes: ...
     def perform_rs(self) -> str: ...
-    def getinfo(self, info): ...
-    def getinfo_raw(self, info): ...
+    # For getinfo and getinfo_raw, the exact return type depends on the passed value:
+    # http://pycurl.io/docs/latest/curlobject.html#pycurl.Curl.getinfo
+    def getinfo(self, info: int) -> Any: ...
+    def getinfo_raw(self, info: int) -> Any: ...
     def reset(self) -> None: ...
     def unsetopt(self, option: int): ...
     def pause(self, bitmask): ...
@@ -310,6 +312,7 @@ GSSAPI_DELEGATION_NONE: Final = 0
 GSSAPI_DELEGATION_POLICY_FLAG: Final = 1
 HAPROXYPROTOCOL: Final = 274
 HAPROXY_CLIENT_IP: Final = 10323
+ECH: Final = 10325
 HEADER: Final = 42
 HEADERFUNCTION: Final = 20079
 HEADEROPT: Final = 229
@@ -407,6 +410,9 @@ MAXCONNECTS: Final = 71
 MAXFILESIZE: Final = 30117
 MAXFILESIZE_LARGE: Final = 30117
 MAXLIFETIME_CONN: Final = 314
+PREREQFUNCTION: Final = 20312
+PREREQFUNC_OK: Final = 0
+PREREQFUNC_ABORT: Final = 1
 MAXREDIRS: Final = 68
 MAX_RECV_SPEED_LARGE: Final = 30146
 MAX_SEND_SPEED_LARGE: Final = 30145

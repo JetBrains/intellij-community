@@ -29,7 +29,9 @@ import java.util.concurrent.ThreadLocalRandom;
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.HEADER_CONNECTION_STATUS_OFFSET;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Tests VFS's ability to recover from various corruptions

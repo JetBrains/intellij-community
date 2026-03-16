@@ -32,6 +32,7 @@ jvm_library(
     "//platform/project/shared:project",
     "//fleet/rpc",
     "//platform/platform-api:ide",
+    "//libraries/compose-runtime-desktop",
     "//platform/jewel/ui",
     "//platform/jewel/ide-laf-bridge",
     "//platform/compose",

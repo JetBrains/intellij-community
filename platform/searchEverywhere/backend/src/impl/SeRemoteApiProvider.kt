@@ -7,7 +7,7 @@ import fleet.rpc.remoteApiDescriptor
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-private class SeRemoteApiProvider: RemoteApiProvider {
+internal class SeRemoteApiProvider: RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<SeRemoteApi>()) {
       SeRemoteApiImpl()

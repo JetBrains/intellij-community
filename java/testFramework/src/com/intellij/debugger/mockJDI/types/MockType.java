@@ -6,7 +6,12 @@ package com.intellij.debugger.mockJDI.types;
 
 import com.intellij.debugger.mockJDI.MockMirror;
 import com.intellij.debugger.mockJDI.MockVirtualMachine;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiUtil;
 import com.sun.jdi.Type;
 

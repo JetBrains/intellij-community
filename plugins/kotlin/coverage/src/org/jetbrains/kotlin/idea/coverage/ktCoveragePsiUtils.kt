@@ -9,7 +9,19 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtDoWhileExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
+import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
+import org.jetbrains.kotlin.psi.KtStatementExpression
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
+import org.jetbrains.kotlin.psi.KtWhenEntry
+import org.jetbrains.kotlin.psi.KtWhenExpression
+import org.jetbrains.kotlin.psi.KtWhileExpression
 
 
 internal fun getSwitches(psiFile: PsiFile, range: TextRange): List<SwitchCoverageExpression> {

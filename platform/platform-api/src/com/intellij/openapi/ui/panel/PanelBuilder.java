@@ -15,7 +15,7 @@ package com.intellij.openapi.ui.panel;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 
 public interface PanelBuilder {
   /**

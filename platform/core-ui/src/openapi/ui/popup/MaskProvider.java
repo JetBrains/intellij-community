@@ -2,7 +2,8 @@
 
 package com.intellij.openapi.ui.popup;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Shape;
 
 public interface MaskProvider {
 

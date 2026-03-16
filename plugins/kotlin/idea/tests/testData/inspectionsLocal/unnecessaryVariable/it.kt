@@ -9,4 +9,3 @@ fun foo(a: List<String>, b: List<Int>) {
         }
     }
 }
-// IGNORE_K2

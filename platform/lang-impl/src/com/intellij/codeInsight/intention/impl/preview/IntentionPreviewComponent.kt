@@ -8,7 +8,11 @@ import com.intellij.ide.plugins.MultiPanel
 import com.intellij.openapi.Disposable
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.system.OS
-import com.intellij.util.ui.*
+import com.intellij.util.ui.ExtendableHTMLViewFactory
+import com.intellij.util.ui.HTMLEditorKitBuilder
+import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Container
 import java.awt.Dimension

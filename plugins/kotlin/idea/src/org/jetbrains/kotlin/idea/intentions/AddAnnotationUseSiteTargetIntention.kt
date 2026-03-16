@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.resolve.AnnotationChecker
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class AddAnnotationUseSiteTargetIntention : SelfTargetingIntention<KtAnnotationEntry>(
     KtAnnotationEntry::class.java,
     KotlinBundle.messagePointer("add.use.site.target")
@@ -36,6 +38,7 @@ class AddAnnotationUseSiteTargetIntention : SelfTargetingIntention<KtAnnotationE
     }
 }
 
+@K1Deprecation
 fun KtAnnotationEntry.getApplicableUseSiteTargets(): List<AnnotationUseSiteTarget> {
     val context = analyze(BodyResolveMode.PARTIAL)
     val descriptor = context[BindingContext.ANNOTATION, this]

@@ -10,7 +10,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import java.util.List;
 
 public final class ListModelEditor<T> extends ListModelEditorBase<T> {

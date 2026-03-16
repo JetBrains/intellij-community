@@ -11,7 +11,7 @@ import com.intellij.psi.FileViewProvider
 import com.intellij.psi.util.childrenOfType
 
 internal class ADFileImpl(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, ADLanguage), ADFile {
-  override fun getFileType(): FileType = ADFileType.INSTANCE
+  override fun getFileType(): FileType = ADFileType
 
   override val classDeclarations: List<ADClassDeclaration>
     get() = childrenOfType<ADClassDeclaration>()

@@ -46,6 +46,7 @@
     <orderEntry type="module" module-name="intellij.properties.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.ide.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.ide.customization" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.ide.customization.training" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.resources.en" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="RUNTIME" />
@@ -66,6 +67,7 @@
     <orderEntry type="module" module-name="intellij.idea.community.customization" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.ui.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.copyright" scope="RUNTIME" />
@@ -100,7 +102,6 @@
     <orderEntry type="module" module-name="intellij.relaxng" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.java" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.remoteServers.impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.properties.resource.bundle.editor" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.dom.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.javaFX.community" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.javaFX.jps" scope="RUNTIME" />
@@ -118,6 +119,8 @@
     <orderEntry type="module" module-name="intellij.platform.structuralSearch.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.structuralSearch" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.groovy.git" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.groovy.ant" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.groovy.byteCodeViewer" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.json.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.json.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.typeMigration" scope="RUNTIME" />
@@ -125,7 +128,6 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diff.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.tools.updater" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.scriptDebugger.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.terminal" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.terminal.frontend" scope="RUNTIME" />
@@ -139,7 +141,7 @@
     <orderEntry type="module" module-name="intellij.completionMlRanking.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.debugger.streams.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.debugger.streams" scope="RUNTIME" />
-    <orderEntry type="library" scope="RUNTIME" name="jgoodies-common" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jgoodies.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.testng.rt.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.editorconfig.plugin.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage.tests" scope="TEST" />
@@ -214,6 +216,7 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.jps.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.newUiOnboarding" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.newUsersOnboarding" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ide.nonModalWelcomeScreen" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.onboarding.promoter" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.execution.process.elevation" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.gitlab.yaml" scope="RUNTIME" />
@@ -256,7 +259,16 @@
     <orderEntry type="module" module-name="intellij.maven.server.m40" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.mcpserver" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.textmate.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.processOutput" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.processOutput.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.ide.starter.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.productDsl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.terminal.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vcs.git.terminal" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.instanceContainer.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.chat" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.sessions" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.polySymbols.tests" scope="TEST" />
   </component>
 </module>

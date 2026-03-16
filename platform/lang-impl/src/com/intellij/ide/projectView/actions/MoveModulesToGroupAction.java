@@ -6,7 +6,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -14,6 +19,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +77,7 @@ public class MoveModulesToGroupAction extends AnAction {
 
     AbstractProjectViewPane pane = ProjectView.getInstance(project).getCurrentProjectViewPane();
     if (pane != null) {
-      pane.updateFromRoot(true);
+      pane.updateFromRoot(true, ProjectViewUpdateCause.REFACTORING);
     }
 
     String targetGroupName = group == null ? null : group.toString();

@@ -4,13 +4,35 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.completion.CompletionMemory
 import com.intellij.codeInsight.completion.JavaMethodCallElement
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaResolveResult
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiBinaryExpression
+import com.intellij.psi.PsiCall
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEllipsisType
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiPolyadicExpression
+import com.intellij.psi.PsiPrefixExpression
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiThisExpression
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.IncorrectOperationException
 import com.siyeh.ig.callMatcher.CallMatcher
-import java.util.*
+import java.util.Locale
 
 
 internal object JavaInlayHintsProvider {

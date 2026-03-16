@@ -17,9 +17,9 @@
 package com.intellij.stats.completion.network
 
 import com.intellij.openapi.application.ApplicationManager
-import javax.swing.SwingUtilities
+import com.intellij.util.ui.EDT
 
 fun assertNotEDT() {
     val isInTestMode = ApplicationManager.getApplication().isUnitTestMode
-    assert(!SwingUtilities.isEventDispatchThread() || isInTestMode)
+    assert(!EDT.isCurrentThreadEdt() || isInTestMode)
 }

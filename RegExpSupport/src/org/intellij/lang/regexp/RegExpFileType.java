@@ -21,7 +21,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class RegExpFileType extends LanguageFileType {
     public static final RegExpFileType INSTANCE = new RegExpFileType();

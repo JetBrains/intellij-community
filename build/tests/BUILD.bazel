@@ -2,6 +2,12 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.idea.community.build.tests",
   visibility = ["//visibility:public"],
@@ -13,9 +19,10 @@ jvm_library(
     "@lib//:junit5",
     "@lib//:assert_j",
     "//platform/util",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/build-scripts/downloader",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.idea.community.build.tests` end
 

@@ -12,7 +12,11 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class IfHelper {
   public static boolean mergeAllIfs(RootStatement root) {

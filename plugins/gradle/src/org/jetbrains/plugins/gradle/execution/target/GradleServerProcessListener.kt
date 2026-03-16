@@ -15,7 +15,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.text.nullize
 import org.gradle.initialization.BuildEventConsumer
-import org.gradle.tooling.BuildCancelledException
 import org.gradle.tooling.ResultHandler
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean

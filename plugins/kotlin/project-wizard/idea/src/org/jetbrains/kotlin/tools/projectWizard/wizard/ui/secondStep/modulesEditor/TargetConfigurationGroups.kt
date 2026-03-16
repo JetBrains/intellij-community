@@ -2,11 +2,16 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.modulesEditor
 
-import com.intellij.openapi.options.advanced.AdvancedSettings
-import org.jetbrains.kotlin.tools.projectWizard.core.buildList
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.*
+import org.jetbrains.kotlin.tools.projectWizard.core.buildList
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.AndroidTargetConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.CommonTargetConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsBrowserTargetConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsNodeTargetConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JvmTargetConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.NativeForCurrentSystemTarget
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.RealNativeTargetConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 

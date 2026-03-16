@@ -51,7 +51,7 @@ public class FileAttribute {
   }
 
   /** @deprecated use {@link FileAttribute#FileAttribute(String, int, boolean)} -- shouldEnumerate is ignored (was never implemented) */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public FileAttribute(@NonNls @NotNull String id,
                        int version,
                        boolean fixedSize,

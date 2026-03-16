@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Cursor;
 
 /**
  * @author Konstantin Bulenkov

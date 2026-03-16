@@ -5,7 +5,6 @@ package com.intellij.mock
 
 import com.intellij.lang.MetaLanguage
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -21,6 +20,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -91,7 +91,7 @@ open class MockApplication(parentDisposable: Disposable) : MockComponentManager(
 
   override fun getCoroutineScope(): CoroutineScope = appCoroutineScope
 
-  override fun isDispatchThread(): Boolean = SwingUtilities.isEventDispatchThread()
+  override fun isDispatchThread(): Boolean = EDT.isCurrentThreadEdt()
 
   override fun isWriteIntentLockAcquired(): Boolean = true
 
@@ -166,10 +166,6 @@ open class MockApplication(parentDisposable: Disposable) : MockComponentManager(
   override fun <T, E : Throwable?> runWriteAction(computation: ThrowableComputable<T?, E?>): T? {
     return computation.compute()
   }
-
-  override fun acquireReadActionLock(): AccessToken = AccessToken.EMPTY_ACCESS_TOKEN
-
-  override fun acquireWriteActionLock(marker: Class<*>): AccessToken = AccessToken.EMPTY_ACCESS_TOKEN
 
   override fun hasWriteAction(actionClass: Class<*>): Boolean = false
 

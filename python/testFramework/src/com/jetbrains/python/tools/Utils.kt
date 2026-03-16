@@ -16,9 +16,10 @@ import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.sdk.PythonSdkUpdater
-import com.jetbrains.python.venvReader.VirtualEnvReader
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.tools.sdkTools.PySdkTools
 import com.jetbrains.python.tools.sdkTools.SdkCreationType
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import java.io.File
 import java.nio.file.Paths
 import kotlin.io.path.Path
@@ -31,7 +32,7 @@ fun createSdkForPerformance(module: Module,
                             sdkHome: String = File(TestPath, "envs/py36_64").absolutePath): Sdk {
   ApplicationManagerEx.setInStressTest(true)
   // To disable slow debugging
-  val executable = VirtualEnvReader.Instance.findPythonInPythonRoot(Path(sdkHome))?.toFile() ?: throw AssertionError("No python on $sdkHome")
+  val executable = VirtualEnvReader().findPythonInPythonRoot(Path(sdkHome))?.toFile() ?: throw AssertionError("No python on $sdkHome")
   println("Creating Python SDK $sdkHome")
   return PySdkTools.createTempSdk(VfsUtil.findFileByIoFile(executable, true)!!, sdkCreationType, module,
                                   PyPackagingSettings.getInstance(module.project))
@@ -48,7 +49,7 @@ fun createPythonSdkProducer(sdkHome: String): (Project, Module) -> Sdk {
     run {
       val sdk = createSdkForPerformance(module, SdkCreationType.SDK_PACKAGES_AND_SKELETONS, sdkHome)
       UIUtil.invokeAndWaitIfNeeded(Runnable {
-        PythonSdkUpdater.update(sdk, project, null)
+        PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project)
       })
       sdk
     }
@@ -67,7 +68,7 @@ fun openProjectWithSdk(projectPath: String,
 
     val sdk = sdkProducer(project, module)
 
-    ModuleRootModificationUtil.setModuleSdk(module, sdk)
+    module.pythonSdk = sdk
 
     if (sdk != null) {
       assert(ModuleRootManager.getInstance(module).orderEntries().classesRoots.isNotEmpty())

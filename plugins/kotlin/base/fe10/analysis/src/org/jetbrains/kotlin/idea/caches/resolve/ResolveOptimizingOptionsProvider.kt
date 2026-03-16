@@ -3,10 +3,12 @@ package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.resolve.scopes.optimization.OptimizingOptions
 
+@K1Deprecation
 interface ResolveOptimizingOptionsProvider {
     fun getOptimizingOptions(project: Project, descriptor: ModuleDescriptor, moduleInfo: IdeaModuleInfo): OptimizingOptions?
 

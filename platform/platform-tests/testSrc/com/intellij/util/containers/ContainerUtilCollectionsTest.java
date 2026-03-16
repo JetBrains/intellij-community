@@ -5,7 +5,6 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.RunFirst;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ref.GCUtil;
@@ -18,9 +17,15 @@ import org.junit.rules.TestRule;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 /**
@@ -31,7 +36,6 @@ import java.util.stream.IntStream;
  * {@link ConcurrentCollectionFactory}.create*
  * collections for being really weak/soft/concurrent
  */
-@RunFirst
 public class ContainerUtilCollectionsTest extends Assert {
   @Rule
   public TestRule watcher = TestLoggerFactory.createTestWatcher();
@@ -144,7 +148,7 @@ public class ContainerUtilCollectionsTest extends Assert {
       public boolean equals(Object o1, Object o2) {
         return o1.equals(o2);
       }
-    }, (__, ___) -> {
+    }, (__, __2, __3) -> {
     });
     checkKeyTossedEventually(map);
   }
@@ -227,7 +231,7 @@ public class ContainerUtilCollectionsTest extends Assert {
   @Test(timeout = TIMEOUT)
   public void testConcurrentSoftMapWithStrategyAndListenerTossed() {
     AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
-    map.set(CollectionFactory.createConcurrentSoftMap(HashingStrategy.identity(), (thisMap,value) ->
+    map.set(CollectionFactory.createConcurrentSoftMap(HashingStrategy.identity(), (thisMap,hash, value) ->
       assertSame(map.get(), thisMap)
     ));
     checkKeyTossedEventually(map.get());
@@ -577,10 +581,16 @@ public class ContainerUtilCollectionsTest extends Assert {
     map.put("a", ref1.get());
     map.put("b", ref2.get());
 
-    GCWatcher.fromClearedRef(ref2).ensureCollected();
+    GCWatcher gcwRef2 = GCWatcher.fromClearedRef(ref2);
+    gcwRef2.ensureCollected();
+
+    gcwRef2.waitForReferenceQueue(); // map.size() will only be updated after gc-ed objects are processed by the ReferenceQueue
     assertEquals(1, map.size());
 
-    GCWatcher.fromClearedRef(ref1).ensureCollected();
+    GCWatcher gcw1 = GCWatcher.fromClearedRef(ref1);
+    gcw1.ensureCollected();
+
+    gcw1.waitForReferenceQueue(); // map.size() will only be updated after gc-ed objects are processed by the ReferenceQueue
     assertTrue(map.toString(), map.isEmpty());
   }
 
@@ -750,12 +760,13 @@ public class ContainerUtilCollectionsTest extends Assert {
     Ref<Object> ref = Ref.create(new Object());
     set.add(ref.get());
 
-    GCWatcher.fromClearedRef(ref).ensureCollected();
+    GCWatcher watcher = GCWatcher.fromClearedRef(ref);
+    watcher.ensureCollected();
+    watcher.waitForReferenceQueue();
     assertFalse(set.remove(this)); // to run processQueue
     assertTrue(set.isEmpty());
 
     assertTrue(set.add(this));  // to run processQueues();
-    //noinspection ConstantValue -- set contract is tested, not implied here
     assertFalse(set.isEmpty());
     assertTrue(set.remove(this));
 
@@ -924,63 +935,43 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test
   public void testKeyEvictionListenerWorksInConcurrentSoftMap() {
-    AtomicReference<Object> evicted = new AtomicReference<>();
-    AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
-    map.set(CollectionFactory.createConcurrentSoftMap((thisMap,value) -> {
-      assertTrue(evicted.compareAndSet(null, value));
-      assertSame(map.get(), thisMap);
-    }));
-    Object value = new Object();
-    map.get().put(new Object(), value);
-
-    GCUtil.tryGcSoftlyReachableObjects(() -> map.get().remove("") != null/*to call processQueue()*/ || map.get().isEmpty());
-    map.get().remove(""); // to call processQueue()
-    assertSame(value, evicted.get());
+    // canonical strategy in createConcurrentSoftMap slightly differs from Object.hashCode()
+    assertKeyEvictionListenerWorks((HashingStrategy<Object>)CollectionFactory.createConcurrentSoftMap(), evictionListener -> CollectionFactory.createConcurrentSoftMap(evictionListener));
   }
   @Test
   public void testKeyEvictionListenerWorksInConcurrentSoftMapWithHashingStrategy() {
-    AtomicReference<Object> evicted = new AtomicReference<>();
-    AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
-    map.set(CollectionFactory.createConcurrentSoftMap(HashingStrategy.identity(), (thisMap,value) -> {
-      assertTrue(evicted.compareAndSet(null, value));
-      assertSame(map.get(), thisMap);
-    }));
-    Object value = new Object();
-    map.get().put(new Object(), value);
-
-    GCUtil.tryGcSoftlyReachableObjects(() -> map.get().remove("") != null/*to call processQueue()*/ || map.get().isEmpty());
-    map.get().remove(""); // to call processQueue()
-    assertSame(value, evicted.get());
+    assertKeyEvictionListenerWorks(HashingStrategy.identity(), evictionListener -> CollectionFactory.createConcurrentSoftMap(HashingStrategy.identity(),evictionListener));
   }
 
   @Test
   public void testKeyEvictionListenerWorksInSoftMap() {
-    AtomicReference<Object> evicted = new AtomicReference<>();
-    AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
-    map.set(CollectionFactory.createSoftMap((thisMap, value) -> {
-      assertTrue(evicted.compareAndSet(null, value));
-      assertSame(map.get(), thisMap);
-    }));
-    Object value = new Object();
-    map.get().put(new Object(), value);
-
-    GCUtil.tryGcSoftlyReachableObjects(() -> map.get().remove("") != null/*to call processQueue()*/ || map.get().isEmpty());
-    map.get().remove(""); // to call processQueue()
-    assertSame(value, evicted.get());
+    assertKeyEvictionListenerWorks(HashingStrategy.canonical(), evictionListener-> CollectionFactory.createSoftMap(evictionListener));
   }
   @Test
   public void testKeyEvictionListenerWorksInSoftMapWithCustomStrategy() {
+    assertKeyEvictionListenerWorks(HashingStrategy.identity(), evictionListener-> CollectionFactory.createSoftMap(HashingStrategy.identity(), evictionListener));
+  }
+
+  private static void assertKeyEvictionListenerWorks(@NotNull HashingStrategy<Object> hashingStrategy,
+                                                     @NotNull Function<? super CollectionFactory.EvictionListener<Object, Object, Object>, ? extends Map<Object, Object>> mapCreator) {
     AtomicReference<Object> evicted = new AtomicReference<>();
     AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
-    map.set(CollectionFactory.createSoftMap(HashingStrategy.identity(), (thisMap, value) -> {
+    AtomicReference<Object> key = new AtomicReference<>(new Object());
+    int keyHashCode = hashingStrategy.hashCode(key.get());
+    CollectionFactory.EvictionListener<Object, Object, Object> evictionListener = (thisMap, hash, value) -> {
       assertTrue(evicted.compareAndSet(null, value));
       assertSame(map.get(), thisMap);
-    }));
+      assertEquals(hash, keyHashCode);
+    };
+    map.set(mapCreator.apply(evictionListener));
     Object value = new Object();
-    map.get().put(new Object(), value);
+    map.get().put(key.get(), value);
+    key.set(null);
 
-    GCUtil.tryGcSoftlyReachableObjects(() -> map.get().remove("") != null/*to call processQueue()*/ || map.get().isEmpty());
-    map.get().remove(""); // to call processQueue()
+    GCUtil.tryGcSoftlyReachableObjects();
+    while (!((ReferenceQueueable)map.get()).processQueue()) {
+      Thread.yield();
+    }
     assertSame(value, evicted.get());
   }
 
@@ -988,15 +979,18 @@ public class ContainerUtilCollectionsTest extends Assert {
   public void testValueEvictionListenerWorks() {
     AtomicReference<Object> evicted = new AtomicReference<>();
     AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
-    map.set(CollectionFactory.createConcurrentSoftValueMap((thisMap,key) -> {
-      assertTrue(evicted.compareAndSet(null, key));
-      assertSame(map.get(), thisMap);
-    }));
+    AtomicReference<Object> value = new AtomicReference<>(new Object());
     Object key = new Object();
+    int keyHashCode = System.identityHashCode(key);
+    map.set(CollectionFactory.createConcurrentSoftValueMap((thisMap,hash, keyForEvictedValue) -> {
+      assertTrue(evicted.compareAndSet(null, keyForEvictedValue));
+      assertSame(map.get(), thisMap);
+      assertEquals(hash, keyHashCode);
+    }));
     map.get().put(key, new Object());
 
-    GCUtil.tryGcSoftlyReachableObjects(() -> map.get().remove("") != null/*to call processQueue()*/ || map.get().isEmpty());
-    map.get().remove(""); // to call processQueue()
+    GCUtil.tryGcSoftlyReachableObjects(() -> ((ReferenceQueueable)map.get()).processQueue());
+    ((ReferenceQueueable)map.get()).processQueue();
     assertSame(key, evicted.get());
   }
 }

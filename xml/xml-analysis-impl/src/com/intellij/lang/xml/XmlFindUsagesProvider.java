@@ -8,7 +8,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeDecl;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NotNull;
 

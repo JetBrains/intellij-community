@@ -55,6 +55,7 @@ jvm_library(
     "//platform/backend/workspace",
     "//xml/xml-psi-api:psi",
     "@lib//:kotlin-stdlib",
+    "//platform/execution",
     ":platform_java-guiForms-rt_provided",
   ],
   exports = [
@@ -62,6 +63,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
     "//java/java-analysis-api:analysis",
-  ]
+  ],
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.java` end

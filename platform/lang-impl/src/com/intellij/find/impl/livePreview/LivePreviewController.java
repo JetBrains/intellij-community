@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl.livePreview;
 
-import com.intellij.find.*;
+import com.intellij.find.FindBundle;
+import com.intellij.find.FindManager;
+import com.intellij.find.FindModel;
+import com.intellij.find.FindResult;
+import com.intellij.find.FindUtil;
+import com.intellij.find.SearchSession;
 import com.intellij.find.impl.FindResultImpl;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;

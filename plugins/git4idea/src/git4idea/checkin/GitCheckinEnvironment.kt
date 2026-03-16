@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin
 
 import com.google.common.collect.HashMultiset
@@ -20,8 +20,19 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.*
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.IssueNavigationConfiguration
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsRoot
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListChange
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.CurrentContentRevision
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment
 import com.intellij.openapi.vcs.checkin.PostCommitChangeConverter
@@ -35,25 +46,19 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableConsumer
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.addIfNotNull
+import com.intellij.util.system.OS
 import com.intellij.vcs.commit.AmendCommitAware
 import com.intellij.vcs.commit.ToggleAmendCommitOption.Companion.isAmendCommitOptionSupported
 import com.intellij.vcs.commit.commitWithoutChangesRoots
 import com.intellij.vcs.commit.isAmendCommitMode
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.GitUtil
 import git4idea.GitVcs
-import git4idea.changes.GitChangeUtils
-import git4idea.changes.GitChangeUtils.GitDiffChange
 import git4idea.checkin.GitCheckinExplicitMovementProvider.Movement
-import git4idea.commands.Git
-import git4idea.commands.GitCommand
-import git4idea.commands.GitLineHandler
 import git4idea.commit.GitMergeCommitMessageReader
 import git4idea.config.GitConfigUtil
 import git4idea.config.GitEelExecutableDetectionHelper
@@ -71,7 +76,7 @@ import java.io.IOException
 import java.io.OutputStreamWriter
 import java.nio.file.Files
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
@@ -107,7 +112,14 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
   }
 
   override fun getCheckinOperationName(): String {
-    return GitBundle.message("commit.action.name")
+    // To fix Mac commit mnemonic issue (IJPL-54603) while keeping same behavior for other users
+    return when (OS.CURRENT) {
+      OS.macOS -> GitBundle.message("commit.action.name.mac")
+      OS.Windows,
+      OS.Linux,
+      OS.FreeBSD,
+      OS.Other -> GitBundle.message("commit.action.name")
+    }
   }
 
   override fun isAmendCommitSupported(): Boolean {
@@ -264,7 +276,6 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     ): List<VcsException> {
       val exceptions = mutableListOf<VcsException>()
       val project = repository.project
-      val root = repository.root
 
       try {
         // Stage partial changes
@@ -276,10 +287,8 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
         if (!exceptions.isEmpty()) return exceptions
         changedWithIndex.addAll(caseOnlyRenameChanges)
 
-        runWithMessageFile(project, root, message) { messageFile: File ->
-          exceptions.addAll(commitUsingIndex(project, repository, changes, changedWithIndex,
-                                             messageFile, commitOptions))
-        }
+        exceptions.addAll(commitUsingIndex(project, repository, changes, changedWithIndex,
+                                           message, commitOptions))
         if (!exceptions.isEmpty()) return exceptions
 
         applyPartialChanges(partialCommitHelpers)
@@ -303,71 +312,60 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       repository: GitRepository,
       rootChanges: Collection<ChangedPath>,
       changedWithIndex: Set<ChangedPath>,
+      message: String,
+      commitOptions: GitCommitOptions,
+    ): List<VcsException> = stageAndCommit(project, repository, rootChanges, changedWithIndex, commitOptions) { committer ->
+      committer.commitStaged(message)
+    }
+
+    @Deprecated("Use commitUsingIndex(..., message: String, ...) instead")
+    @JvmStatic
+    fun commitUsingIndex(
+      project: Project,
+      repository: GitRepository,
+      rootChanges: Collection<ChangedPath>,
+      changedWithIndex: Set<ChangedPath>,
       messageFile: File,
       commitOptions: GitCommitOptions,
+    ): List<VcsException> = stageAndCommit(project, repository, rootChanges, changedWithIndex, commitOptions) { committer ->
+      committer.commitStaged(messageFile)
+    }
+
+    private fun stageAndCommit(
+      project: Project,
+      repository: GitRepository,
+      rootChanges: Collection<ChangedPath>,
+      changedWithIndex: Set<ChangedPath>,
+      commitOptions: GitCommitOptions,
+      commitStaged: (GitRepositoryCommitter) -> Unit,
     ): List<VcsException> {
       val exceptions = mutableListOf<VcsException>()
       try {
-        val added: Set<FilePath> = rootChanges.mapNotNullTo(HashSet()) { it.afterPath }
-        val removed: Set<FilePath> = rootChanges.mapNotNullTo(HashSet()) { it.beforePath }
+        val toCommitAdded: Set<FilePath> = rootChanges.mapNotNullTo(HashSet()) { it.afterPath }
+        val toCommitRemoved: Set<FilePath> = rootChanges.mapNotNullTo(HashSet()) { it.beforePath }
 
-        val root = repository.root
-        val rootPath = root.path
+        // Save and reset what is staged besides our changes
+        val stagingAreaManager = GitStagingAreaStateManager.create(repository)
+        stagingAreaManager.prepareStagingArea(toCommitAdded, toCommitRemoved)
 
-        val unmergedFiles = GitChangeUtils.getUnmergedFiles(repository)
-        if (!unmergedFiles.isEmpty()) {
-          throw VcsException(GitBundle.message("error.commit.cant.commit.with.unmerged.paths"))
-        }
-
-        // Check what is staged besides our changes
-        val stagedChanges = GitChangeUtils.getStagedChanges(project, root)
-        LOG.debug("Found staged changes: " + GitUtil.getLogStringGitDiffChanges(rootPath, stagedChanges))
-        val excludedStagedChanges = mutableListOf<ChangedPath>()
-        val excludedStagedAdditions = mutableListOf<FilePath>()
-        processExcludedPaths(stagedChanges, added, removed) { before, after ->
-          if (before != null || after != null) excludedStagedChanges.add(ChangedPath(before, after))
-          if (before == null && after != null) excludedStagedAdditions.add(after)
-        }
-
-        // Find files with 'AD' status, we will not be able to restore them after using 'git add' command,
-        // getting "pathspec 'file.txt' did not match any files" error (and preventing us from adding other files).
-        val unstagedChanges = GitChangeUtils.getUnstagedChanges(project, root, excludedStagedAdditions, false)
-        LOG.debug("Found unstaged changes: " + GitUtil.getLogStringGitDiffChanges(rootPath, unstagedChanges))
-        val excludedUnstagedDeletions = HashSet<FilePath>()
-        processExcludedPaths(unstagedChanges, added, removed) { before, after ->
-          if (before != null && after == null) excludedUnstagedDeletions.add(before)
-        }
-
-        if (!excludedStagedChanges.isEmpty()) {
-          // Reset staged changes which are not selected for commit
-          LOG.info("Staged changes excluded for commit: " + getLogString(rootPath, excludedStagedChanges))
-          resetExcluded(project, root, excludedStagedChanges)
-        }
-        try {
+        stagingAreaManager.use {
           val alreadyHandledPaths = getPaths(changedWithIndex)
           // Stage what else is needed to commit
-          val toAdd = HashSet(added)
+          val toAdd = HashSet(toCommitAdded)
           toAdd.removeAll(alreadyHandledPaths)
 
-          val toRemove = HashSet(removed)
+          val toRemove = HashSet(toCommitRemoved)
           toRemove.removeAll(toAdd)
           toRemove.removeAll(alreadyHandledPaths)
 
           LOG.debug(String.format("Updating index: added: %s, removed: %s", toAdd, toRemove))
-          updateIndex(project, root, toAdd, toRemove, exceptions)
+          GitFileUtils.stageForCommit(project, repository.root, toAdd, toRemove, exceptions)
           if (!exceptions.isEmpty()) return exceptions
-
 
           // Commit the staging area
           LOG.debug("Performing commit...")
           val committer = GitRepositoryCommitter(repository, commitOptions)
-          committer.commitStaged(messageFile)
-        }
-        finally {
-          // Stage back the changes unstaged before commit
-          if (!excludedStagedChanges.isEmpty()) {
-            restoreExcluded(project, root, excludedStagedChanges, excludedUnstagedDeletions)
-          }
+          commitStaged(committer)
         }
       }
       catch (e: VcsException) {
@@ -542,17 +540,9 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       val pathsToDelete = caseOnlyRenames.map { it.beforePath!! }
 
       LOG.debug(String.format("Updating index for case only changes: added: %s,\n removed: %s", pathsToAdd, pathsToDelete))
-      updateIndex(repository.project, repository.root, pathsToAdd, pathsToDelete, exceptions)
+      GitFileUtils.stageForCommit(repository.project, repository.root, pathsToAdd, pathsToDelete, exceptions)
 
       return caseOnlyRenames
-    }
-
-    private fun isCaseOnlyRename(change: ChangedPath): Boolean {
-      if (SystemInfo.isFileSystemCaseSensitive) return false
-      if (!change.isMove) return false
-      val afterPath = change.afterPath!!
-      val beforePath = change.beforePath!!
-      return GitUtil.isCaseOnlyChange(beforePath.path, afterPath.path)
     }
 
     private fun getPaths(changes: Collection<ChangedPath>): List<FilePath> {
@@ -569,25 +559,6 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       return files
     }
 
-    private fun processExcludedPaths(
-      changes: Collection<GitDiffChange>,
-      added: Set<FilePath>,
-      removed: Set<FilePath>,
-      function: (before: FilePath?, after: FilePath?) -> Unit,
-    ) {
-      for (change in changes) {
-        var before = change.beforePath
-        var after = change.afterPath
-        if (removed.contains(before)) before = null
-        if (added.contains(after)) after = null
-        function(before, after)
-      }
-    }
-
-    private fun getLogString(root: String, changes: Collection<ChangedPath>): @NonNls String {
-      return GitUtil.getLogString(root, changes, { it.beforePath }, { it.afterPath })
-    }
-
     private fun commitExplicitRenames(
       repository: GitRepository,
       changes: Collection<CommitChange>,
@@ -595,7 +566,6 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       commitOptions: GitCommitOptions,
     ): Pair<Collection<CommitChange>, List<VcsException>> {
       val project = repository.project
-      val root = repository.root
 
       val providers = GitCheckinExplicitMovementProvider.EP_NAME.extensionList.filter { it.isEnabled(project) }
 
@@ -623,10 +593,8 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
         val (movedChanges, newRootChanges) = addExplicitMovementsToIndex(repository, changes, movedPaths)
                                              ?: return Pair(changes, exceptions)
 
-        runWithMessageFile(project, root, newMessage) { moveMessageFile ->
-          exceptions.addAll(commitUsingIndex(project, repository, movedChanges, HashSet(movedChanges),
-                                             moveMessageFile, commitOptions))
-        }
+        exceptions.addAll(commitUsingIndex(project, repository, movedChanges, HashSet(movedChanges),
+                                           newMessage, commitOptions))
 
         val committedMovements = movedChanges.map { Couple.of(it.beforePath, it.afterPath) }
         for (provider in providers) {
@@ -847,116 +815,6 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       return CommitChange(beforePath, afterPath, beforeRevision, afterRevision, changelistIds, virtualFile)
     }
 
-
-    @Throws(VcsException::class)
-    private fun resetExcluded(
-      project: Project,
-      root: VirtualFile,
-      changes: Collection<ChangedPath>,
-    ) {
-      val allPaths: MutableSet<FilePath> = CollectionFactory.createCustomHashingStrategySet(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY)
-      for (change in changes) {
-        ContainerUtil.addIfNotNull(allPaths, change.afterPath)
-        ContainerUtil.addIfNotNull(allPaths, change.beforePath)
-      }
-
-      for (paths in VcsFileUtil.chunkPaths(root, allPaths)) {
-        val handler = GitLineHandler(project, root, GitCommand.RESET)
-        handler.endOptions()
-        handler.addParameters(paths)
-        Git.getInstance().runCommand(handler).throwOnError()
-      }
-    }
-
-    private fun restoreExcluded(
-      project: Project,
-      root: VirtualFile,
-      changes: Collection<ChangedPath>,
-      unstagedDeletions: Set<FilePath>,
-    ) {
-      val restoreExceptions = mutableListOf<VcsException>()
-
-      val toAdd = HashSet<FilePath>()
-      val toRemove = HashSet<FilePath>()
-
-      for (change in changes) {
-        if (addAsCaseOnlyRename(project, root, change, restoreExceptions)) continue
-
-        if (change.beforePath == null && unstagedDeletions.contains(change.afterPath)) {
-          // we can't restore ADDED-DELETED files
-          LOG.info("Ignored added-deleted staged change in " + change.afterPath)
-          continue
-        }
-
-        ContainerUtil.addIfNotNull(toAdd, change.afterPath)
-        ContainerUtil.addIfNotNull(toRemove, change.beforePath)
-      }
-      toRemove.removeAll(toAdd)
-
-      LOG.debug(String.format("Restoring staged changes after commit: added: %s, removed: %s", toAdd, toRemove))
-      updateIndex(project, root, toAdd, toRemove, restoreExceptions)
-
-      for (e in restoreExceptions) {
-        LOG.warn(e)
-      }
-    }
-
-    private fun addAsCaseOnlyRename(
-      project: Project, root: VirtualFile, change: ChangedPath,
-      exceptions: MutableList<in VcsException>,
-    ): Boolean {
-      try {
-        if (!isCaseOnlyRename(change)) return false
-
-        val beforePath = change.beforePath!!
-        val afterPath = change.afterPath!!
-
-        LOG.debug(String.format("Restoring staged case-only rename after commit: %s", change))
-        val h = GitLineHandler(project, root, GitCommand.MV)
-        h.addParameters("-f", beforePath.path, afterPath.path)
-        Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError()
-        return true
-      }
-      catch (e: VcsException) {
-        exceptions.add(e)
-        return false
-      }
-    }
-
-    /**
-     * Update index (delete and remove files)
-     *
-     * @param project    the project
-     * @param root       a vcs root
-     * @param added      added/modified files to commit
-     * @param removed    removed files to commit
-     * @param exceptions a list of exceptions to update
-     */
-    private fun updateIndex(
-      project: Project,
-      root: VirtualFile,
-      added: Collection<FilePath>,
-      removed: Collection<FilePath>,
-      exceptions: MutableList<in VcsException>,
-    ) {
-      if (!removed.isEmpty()) {
-        try {
-          GitFileUtils.deletePaths(project, root, removed, "--ignore-unmatch", "--cached", "-r")
-        }
-        catch (ex: VcsException) {
-          exceptions.add(ex)
-        }
-      }
-      if (!added.isEmpty()) {
-        try {
-          GitFileUtils.addPathsForce(project, root, added)
-        }
-        catch (ex: VcsException) {
-          exceptions.add(ex)
-        }
-      }
-    }
-
     /**
      * Create a file that contains the specified message
      *
@@ -971,7 +829,8 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       // filter comment lines
       val file = if (GitEelExecutableDetectionHelper.canUseEel()) {
         EelPathUtils.createTemporaryFile(project, GIT_COMMIT_MSG_FILE_PREFIX, GIT_COMMIT_MSG_FILE_EXT, true)
-      } else {
+      }
+      else {
         FileUtil.createTempFile(GIT_COMMIT_MSG_FILE_PREFIX, GIT_COMMIT_MSG_FILE_EXT).also {
           @Suppress("SSBasedInspection")
           it.deleteOnExit()
@@ -1047,6 +906,18 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
         val movements = provider.collectExplicitMovements(project, beforePaths, afterPaths)
         filterExcludedChanges(movements, changes).isNotEmpty()
       }
+    }
+
+    fun isCaseOnlyRename(change: ChangedPath): Boolean {
+      if (SystemInfo.isFileSystemCaseSensitive) return false
+      if (!change.isMove) return false
+      val afterPath = change.afterPath!!
+      val beforePath = change.beforePath!!
+      return GitUtil.isCaseOnlyChange(beforePath.path, afterPath.path)
+    }
+
+    fun getLogString(rootPath: String, changes: Collection<ChangedPath>): @NonNls String {
+      return GitUtil.getLogString(rootPath, changes, { it.beforePath }, { it.afterPath })
     }
   }
 

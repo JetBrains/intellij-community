@@ -10,3 +10,7 @@ serial.tools.list_ports_posix  # Posix only
 # io.RawIOBase but at runtime they are normal arguments that don't have consistent
 # names.
 serial.serialwin32.Serial.write
+
+# Depending on the Windows variant, ULONG_PTR is either c_longlong or c_ulong,
+# but when running stubtest, only one of these is seen.
+serial.win32.ULONG_PTR

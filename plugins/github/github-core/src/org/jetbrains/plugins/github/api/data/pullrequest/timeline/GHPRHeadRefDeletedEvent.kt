@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.github.api.data.GHActor
-import java.util.*
+import java.util.Date
 
 data class GHPRHeadRefDeletedEvent(override val actor: GHActor?,
                                    override val createdAt: Date,

@@ -11,7 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 interface EditorContextManager {
   companion object {
@@ -62,6 +62,8 @@ interface EditorContextManager {
 
   @RequiresWriteLock
   fun setEditorContext(editor: Editor, contexts: EditorSelectedContexts)
+  @ApiStatus.Internal
+  fun setEditorContextNoFire(editor: Editor, contexts: EditorSelectedContexts)
 
   val eventFlow: Flow<ChangeEvent>
 

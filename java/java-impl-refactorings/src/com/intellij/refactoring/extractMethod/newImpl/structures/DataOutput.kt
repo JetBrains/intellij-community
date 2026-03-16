@@ -2,7 +2,11 @@
 package com.intellij.refactoring.extractMethod.newImpl.structures
 
 import com.intellij.codeInsight.Nullability
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.PsiVariable
 
 sealed class DataOutput {
   abstract val type: PsiType

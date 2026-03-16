@@ -39,9 +39,9 @@ public class PyClassMembersProviderBase implements PyClassMembersProvider {
    * @return found member or null
    */
   public static @Nullable PsiElement resolveMemberByName(@NotNull Collection<? extends PyCustomMember> members,
-                                               @NotNull String name,
-                                               @NotNull PsiElement context,
-                                               @NotNull PyResolveContext resolveContext) {
+                                                         @NotNull String name,
+                                                         @NotNull PsiElement context,
+                                                         @NotNull PyResolveContext resolveContext) {
     for (PyCustomMember member : members) {
       if (member.getName().equals(name)) {
         return member.resolve(context, resolveContext);

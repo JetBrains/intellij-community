@@ -7,7 +7,7 @@ import fleet.util.multiplatform.Actual
  * JS implementation of [makeStackTraceRelative]
  */
 @Suppress("unused")
-@Actual("makeStackTraceRelative")
+@Actual
 internal fun makeStackTraceRelativeJs(th: Throwable, relativeTo: Throwable): Throwable {
   return th
 }

@@ -3,18 +3,33 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.lang.java.parser.JavaBinaryOperations;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -171,7 +186,7 @@ public final class UnnecessaryExplicitNumericCastInspection extends BaseInspecti
           }
         }
       }
-      else if (JavaBinaryOperations.SHIFT_OPS.contains(tokenType)) {
+      else if (ElementType.SHIFT_OPS.contains(tokenType)) {
         final PsiExpression firstOperand = polyadicExpression.getOperands()[0];
         if (!PsiTreeUtil.isAncestor(firstOperand, expression, false)) {
           return true;

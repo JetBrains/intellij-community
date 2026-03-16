@@ -15,7 +15,12 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 final class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer {
   private final CompileContext myContext;

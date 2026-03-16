@@ -1,18 +1,28 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.hyperlinks
 
 import com.intellij.execution.filters.CompositeFilter
 import com.intellij.execution.filters.ConsoleFilterProvider
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.impl.ConsoleViewUtil
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalFilterScope
@@ -25,7 +35,11 @@ private data class ComputedFilter(
 )
 
 @ApiStatus.Internal
-class CompositeFilterWrapper(private val project: Project, coroutineScope: CoroutineScope) {
+class CompositeFilterWrapper(
+  private val project: Project,
+  coroutineScope: CoroutineScope,
+  private val filterContext: TerminalHyperlinkFilterContext? = null,
+) {
   private val filtersUpdatedListeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
 
   private val customFilters: MutableList<Filter> = CopyOnWriteArrayList()
@@ -48,7 +62,7 @@ class CompositeFilterWrapper(private val project: Project, coroutineScope: Corou
         filterFlow.value = newValue
         // Using UiWithModelAccess because the listeners interact with the editor and its document,
         // so they need to take locks, and therefore the strict dispatcher won't do.
-        withContext(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           fireFiltersUpdated()
           filterFlow.value = newValue.copy(listenersFired = true)
         }
@@ -58,7 +72,7 @@ class CompositeFilterWrapper(private val project: Project, coroutineScope: Corou
 
   private suspend fun computeFilter(): CompositeFilter {
     val filters = readAction {
-      ConsoleViewUtil.computeConsoleFilters(project, null, TerminalFilterScope(project))
+      ConsoleViewUtil.computeConsoleFilters(project, null, TerminalFilterScope(project, filterContext))
     }
     return CompositeFilter(project, customFilters + filters).also {
       it.setForceUseAllFilters(true)

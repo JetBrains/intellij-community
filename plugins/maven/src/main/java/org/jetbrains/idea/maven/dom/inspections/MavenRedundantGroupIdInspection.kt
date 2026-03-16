@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
-import org.jetbrains.idea.maven.server.MavenDistribution
 
 class MavenRedundantGroupIdInspection : AbstractMavenRedundantParentInspection() {
   override val elementName: String = "groupId"

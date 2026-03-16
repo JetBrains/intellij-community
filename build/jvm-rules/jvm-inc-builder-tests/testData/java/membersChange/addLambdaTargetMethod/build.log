@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  Runner1.class
+End of files
+Compiling files:
+  java/membersChange/addLambdaTargetMethod/a/Runner1.java
+End of files
+Cleaning output files:
+  Main.class
+End of files
+Compiling files:
+  java/membersChange/addLambdaTargetMethod/a/Main.java
+End of files
+------------------------------------------
+Exit code: ERROR

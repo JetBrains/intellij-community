@@ -3,7 +3,7 @@ package com.intellij.uiDesigner.lw;
 
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.LayoutManager;
 
 public final class LwScrollPane extends LwContainer {
   LwScrollPane(String className) {

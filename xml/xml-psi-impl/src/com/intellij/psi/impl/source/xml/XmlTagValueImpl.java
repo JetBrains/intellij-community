@@ -9,7 +9,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.impl.source.xml.behavior.DefaultXmlPsiPolicy;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagChild;
+import com.intellij.psi.xml.XmlTagValue;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 

@@ -9,7 +9,19 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.InheritedJdkOrderEntry
+import com.intellij.openapi.roots.JdkOrderEntry
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleJdkOrderEntry
+import com.intellij.openapi.roots.ModuleOrderEntry
+import com.intellij.openapi.roots.ModuleSourceOrderEntry
+import com.intellij.openapi.roots.OrderEntry
+import com.intellij.openapi.roots.OrderEnumerator
+import com.intellij.openapi.roots.ProjectModelExternalSource
+import com.intellij.openapi.roots.RootPolicy
 import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.roots.impl.RootModelBase.CollectDependentModules
@@ -23,8 +35,23 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
-import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.jps.entities.DependencyScope as EntitiesDependencyScope
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity
+import com.intellij.platform.workspace.jps.entities.ModuleDependency
+import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
+import com.intellij.platform.workspace.jps.entities.SdkDependency
+import com.intellij.platform.workspace.jps.entities.SdkId
+import com.intellij.platform.workspace.jps.entities.customImlData
+import com.intellij.platform.workspace.jps.entities.modifyModuleCustomImlDataEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
+import com.intellij.platform.workspace.jps.entities.sourceRoots
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntitySource
@@ -46,6 +73,7 @@ import org.jdom.Element
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.ConcurrentHashMap
+import com.intellij.platform.workspace.jps.entities.DependencyScope as EntitiesDependencyScope
 
 internal class ModifiableRootModelBridgeImpl(
   diff: MutableEntityStorage,
@@ -610,7 +638,7 @@ internal class ModifiableRootModelBridgeImpl(
     }
     else {
       if (ModifiableRootModelBridge.findSdk(project, jdk.name, jdk.sdkType.name) == null) {
-        error("setSdk: sdk '${jdk.name}' type '${jdk.sdkType.name}' is not registered in ProjectJdkTable")
+        LOG.info("setSdk: sdk '${jdk.name}' type '${jdk.sdkType.name}' is not registered in ProjectJdkTable")
       }
       setInvalidSdk(jdk.name, jdk.sdkType.name)
     }

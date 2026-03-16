@@ -20,13 +20,22 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.width
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.util.concurrent.ConcurrentHashMap
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.ActionMap
+import javax.swing.Icon
+import javax.swing.JFrame
+import javax.swing.MenuSelectionManager
 import javax.swing.event.ChangeListener
 import kotlin.math.roundToInt
 

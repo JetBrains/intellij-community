@@ -64,7 +64,7 @@ internal object WorkspaceEntity {
   private val fqn = fqn(packageName, className)
 
   val simpleName = fqn.simpleName
-  val Builder = fqn(packageName, "Modifiable$className")
+  val Builder = fqn(packageName, "${className}Builder")
   override fun toString(): String {
     return fqn.toString()
   }

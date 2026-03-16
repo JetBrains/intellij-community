@@ -1,7 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.rhizomedb.rql
 
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.Attribute
+import com.jetbrains.rhizomedb.DB
+import com.jetbrains.rhizomedb.Datom
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.EntityType
+import com.jetbrains.rhizomedb.IndexQuery
+import com.jetbrains.rhizomedb.displayAttribute
 
 data class QueryResult(val columnLabels: List<String>, val rows: List<List<Any?>>)
 

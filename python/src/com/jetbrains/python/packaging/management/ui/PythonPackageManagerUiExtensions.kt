@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management.ui
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.awt.RelativePoint
 import com.jetbrains.python.PyBundle
@@ -13,15 +14,6 @@ import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import org.jetbrains.annotations.ApiStatus
-
-/**
- * @return List of all installed packages or null if the operation was failed.
- */
-@ApiStatus.Internal
-suspend fun PythonPackageManagerUI.updatePackageBackground(
-  pyPackage: String,
-): List<PythonPackage>? =
-  updatePackagesByNamesBackground(listOf(pyPackage))
 
 /**
  * @return List of all installed packages or null if the operation was failed.
@@ -53,12 +45,19 @@ fun PythonPackageManagerUI.launchInstallPackageWithBalloonBackground(packageName
                                                                     PythonPackageManagerUIHelpers.BalloonStyle.INFO)
 
       PyPackagesUsageCollector.installAllEvent.log(confirmed.size)
-      installPyRequirementsBackground(confirmed)
+      val isInstalled = installPyRequirementsBackground(confirmed) != null
 
       installingBalloon.hide()
 
-      PyPackagesUsageCollector.installPackageFromConsole.log(project)
-      PythonPackageManagerUIHelpers.showBalloon(point, PyBundle.message("python.packaging.notification.description.installed.packages", packageName), PythonPackageManagerUIHelpers.BalloonStyle.SUCCESS)
+      if (isInstalled) {
+        PyPackagesUsageCollector.installPackageFromConsole.log(project)
+        PythonPackageManagerUIHelpers.showBalloon(point, PyBundle.message("python.packaging.notification.description.installed.packages", packageName), PythonPackageManagerUIHelpers.BalloonStyle.SUCCESS)
+      }
+      else {
+        PyPackagesUsageCollector.failInstallPackageFromConsole.log(project)
+        PythonPackageManagerUIHelpers.showBalloon(point, PyBundle.message("python.new.project.install.failed.title", packageName), PythonPackageManagerUIHelpers.BalloonStyle.ERROR)
+      }
+
     }
     catch (t: Throwable) {
       installingBalloon?.hide()
@@ -76,6 +75,7 @@ fun PythonPackageManagerUI.launchInstallPackageWithBalloonBackground(packageName
 suspend fun PythonPackageManagerUI.installPyRequirementsBackground(
   packages: List<PyRequirement>,
   options: List<String> = emptyList(),
+  module: Module? = null,
 ): List<PythonPackage>? {
   //Wait here to load spec
   manager.waitForInit()
@@ -83,7 +83,8 @@ suspend fun PythonPackageManagerUI.installPyRequirementsBackground(
     manager.repositoryManager.findPackageSpecification(it)
   }
   return installPackagesRequestBackground(PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specifications),
-                                          options = options)
+                                          options = options,
+                                          module)
 }
 
 @ApiStatus.Internal
@@ -100,7 +101,16 @@ suspend fun PythonPackageManagerUI.installPyRequirementsDetachedBackground(
 }
 
 
-@ApiStatus.Internal
+/**
+ * Installs packages by name, resolving specifications from the repository first.
+ *
+ * Must not be called from modal dialogs (e.g., Settings) because this method uses
+ * a background write action internally. Use [PythonPackageManagerUI.installPackagesWithModalProgressBlocking]
+ * for modal contexts instead.
+ *
+ * @return list of all installed packages after installation, or null if the operation failed
+ */
+@ApiStatus.Experimental
 suspend fun PythonPackageManagerUI.installPackagesBackground(
   packages: List<String>,
   options: List<String> = emptyList(),
@@ -124,4 +134,3 @@ suspend fun PythonPackageManagerUI.installPackageBackground(
   options: List<String> = emptyList(),
 ): List<PythonPackage>? = installPyRequirementsBackground(listOf(pyRequirement(pyPackage, versionSpec)),
                                                           options = options)
-

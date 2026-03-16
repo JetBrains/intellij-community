@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import java.awt.*;
+import java.awt.Point;
 
 /**
  * Represents a logical position in the editor, including line and column values (both zero-based). Line value relates to the corresponding

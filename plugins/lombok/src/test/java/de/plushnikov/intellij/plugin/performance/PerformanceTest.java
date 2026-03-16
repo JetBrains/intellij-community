@@ -5,9 +5,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 
+@PerformanceUnitTest
 public class PerformanceTest extends AbstractLombokLightCodeInsightTestCase {
 
   public void testFieldDefaults() {

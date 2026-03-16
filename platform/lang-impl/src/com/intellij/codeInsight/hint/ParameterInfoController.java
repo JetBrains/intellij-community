@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -32,7 +32,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.LightweightHint;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.CharArrayUtil;
@@ -43,8 +48,17 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.List;
 
 import static com.intellij.codeInsight.hint.ParameterInfoTaskRunnerUtil.runTask;
@@ -111,7 +125,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
           @Override
           public void run() {
             if (activeLookup != null) {
-              WriteIntentReadAction.run((Runnable)ParameterInfoController.this::updateComponent);
+              WriteIntentReadAction.run(ParameterInfoController.this::updateComponent);
             }
           }
         });

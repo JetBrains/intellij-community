@@ -42,7 +42,8 @@ private val highPreset: Map<String, String> = basePreset + mapOf(
   IFernflowerPreferences.DECOMPILE_CLASS_1_4 to "1",
   IFernflowerPreferences.DECOMPILE_ASSERTIONS to "1",
   IFernflowerPreferences.HIDE_EMPTY_SUPER to "1",
-  IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR to "1",
+  //it is better to show it because it is hard to skip it in the stub builder
+  IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR to "0",
   IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES to "1",
   IFernflowerPreferences.NO_EXCEPTIONS_RETURN to "1",
   IFernflowerPreferences.DECOMPILE_ENUM to "1",

@@ -25,9 +25,16 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel
 import org.assertj.swing.core.MouseButton
 import org.assertj.swing.timing.Timeout
-import training.dsl.*
+import training.dsl.LearningBalloonConfig
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
+import training.dsl.TaskContext
+import training.dsl.TaskTestContext
+import training.dsl.defaultRestoreDelay
+import training.dsl.dropMnemonic
+import training.dsl.proceedLink
 import training.git.GitLessonsBundle
 import training.ui.IftTestContainerFixture
 import training.ui.LearningUiUtil.findComponentWithTimeout

@@ -8,15 +8,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.gradle.scripting.k1.roots.GradleBuildRootsLocatorImpl
 import org.jetbrains.kotlin.gradle.scripting.shared.isGradleKotlinScript
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.listener.ScriptChangeListener
 
+@K1Deprecation
 class GradleScriptListener(project: Project) : ScriptChangeListener(project) {
     // todo(gradle6): remove
-    private val buildRootsManager: GradleBuildRootsLocator
-        get() = GradleBuildRootsLocator.getInstance(project)
+    private val buildRootsManager: GradleBuildRootsLocatorImpl
+        get() = GradleBuildRootsLocator.getInstance(project) as GradleBuildRootsLocatorImpl
 
     init {
         // listen changes using VFS events, including gradle-configuration related files

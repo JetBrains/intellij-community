@@ -35,6 +35,7 @@ from _pydevd_bundle._debug_adapter.pydevd_schema import (
     BreakpointEventBody,
     InitializedEvent,
 )
+from _pydevd_bundle.custom.pydevd_tables import TableCommandType
 from _pydevd_bundle.pydevd_api import PyDevdAPI
 from _pydevd_bundle.pydevd_breakpoints import get_exception_class, FunctionBreakpoint
 from _pydevd_bundle.pydevd_comm_constants import (
@@ -1359,10 +1360,11 @@ class PyDevJsonCommandProcessor(object):
         frame_id = args.frameId
         init_command = args.command
         command_type = args.commandType
-        start_index = args.start
-        end_index = args.end
-        df_format = args.format
+        start_index = args.parametersJson.start
+        end_index = args.parametersJson.end
+        df_format = args.parametersJson.format
         error_msg = self.api.request_get_table(py_db, request.seq, thread_id, frame_id, init_command, command_type, start_index, end_index, df_format)
+
         if error_msg:
             response = pydevd_base_schema.build_response(
                 request,
@@ -1372,7 +1374,6 @@ class PyDevJsonCommandProcessor(object):
                     "message": error_msg,
                 },
             )
-            pydev_log.error("ERR WHILE EXECUTING GETTABLE" + error_msg)
             return NetCommand(CMD_RETURN, 0, response, is_json=True)
         return None
 
@@ -1396,6 +1397,32 @@ class PyDevJsonCommandProcessor(object):
                     "message": error_msg,
                 },
             )
-            pydev_log.error("ERR WHILE EXECUTING GETTABLE" + error_msg)
+            return NetCommand(CMD_RETURN, 0, response, is_json=True)
+        return None
+
+    def on_gettableimage_request(self, py_db, request):
+        args = request.arguments
+        thread_id = args.threadId
+        frame_id = args.frameId
+        init_command = args.command
+        command_type = args.commandType
+        offset = args.parametersJson.offset
+        image_id = args.parametersJson.imageId
+
+        if command_type == TableCommandType.IMAGE_CHUNK_LOAD:
+            error_msg = self.api.request_get_image_load_chunk(py_db, request.seq, thread_id, frame_id, init_command, command_type, offset, image_id)
+        elif command_type == TableCommandType.IMAGE_START_CHUNK_LOAD:
+            error_msg = self.api.request_get_image_start(py_db, request.seq, thread_id, frame_id, init_command, command_type)
+        else:
+            error_msg = f"Unknown command type: {command_type}"
+        if error_msg:
+            response = pydevd_base_schema.build_response(
+                request,
+                kwargs={
+                    "body": {},
+                    "success": False,
+                    "message": error_msg,
+                },
+            )
             return NetCommand(CMD_RETURN, 0, response, is_json=True)
         return None

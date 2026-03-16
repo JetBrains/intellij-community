@@ -10,7 +10,7 @@ import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public final class LightEditDumbService extends DumbServiceImpl {
   public LightEditDumbService(Project project, CoroutineScope scope) {

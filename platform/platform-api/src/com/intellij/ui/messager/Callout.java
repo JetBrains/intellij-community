@@ -6,9 +6,18 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.tree.TreeUtil;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTree;
+import javax.swing.SwingConstants;
+import javax.swing.WindowConstants;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.FlowLayout;
+import java.awt.GridBagLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 

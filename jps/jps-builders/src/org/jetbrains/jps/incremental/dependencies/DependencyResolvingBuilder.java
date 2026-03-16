@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.platform.jps.model.resolver.JpsDependencyResolverConfiguration;
 import com.intellij.platform.jps.model.resolver.JpsDependencyResolverConfigurationService;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
@@ -32,7 +33,12 @@ import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.BuilderCategory;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.GlobalContextKey;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.ModuleLevelBuilder;
+import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -42,8 +48,12 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryDescription;
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService;
-import org.jetbrains.jps.model.library.*;
+import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor.ArtifactVerification;
+import org.jetbrains.jps.model.library.JpsOrderRootType;
+import org.jetbrains.jps.model.library.JpsRepositoryLibraryType;
+import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsLibraryDependency;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -62,12 +72,25 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
+
 import static org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath;
 
 /**
@@ -226,7 +249,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
       ExecutorService executorService = Executors.newFixedThreadPool(parallelism);
       try {
         List<Future<?>> futures = ContainerUtil.map(libs, lib -> executorService.submit(() -> resolveAction.accept(lib)));
-        for (Future<?> future : futures) future.get();
+        ConcurrencyUtil.getAll(futures);
       }
       finally {
         executorService.shutdown();

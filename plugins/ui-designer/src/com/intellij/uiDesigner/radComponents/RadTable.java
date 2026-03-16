@@ -6,7 +6,7 @@ import com.intellij.uiDesigner.ModuleProvider;
 import com.intellij.uiDesigner.palette.Palette;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 

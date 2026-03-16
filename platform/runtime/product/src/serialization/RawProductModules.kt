@@ -3,6 +3,7 @@ package com.intellij.platform.runtime.product.serialization
 
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
+import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule
 import java.io.IOException
 import java.io.InputStream
 

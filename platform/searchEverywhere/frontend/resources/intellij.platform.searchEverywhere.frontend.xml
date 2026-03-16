@@ -3,16 +3,18 @@
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.searchEverywhere"/>
   </dependencies>
-  <actions>
-    <action id="SeNewSearchToggleAction"
-            class="com.intellij.platform.searchEverywhere.frontend.actions.SeNewSearchToggleAction"
-            text="Toggle Search Everywhere Implementation"
-            internal="true"/>
+
+  <actions resource-bundle="messages.searchEverywhereFrontendBundle">
+    <action id="SeNewSearchToggleAction" class="com.intellij.platform.searchEverywhere.frontend.actions.SeNewSearchToggleAction"/>
   </actions>
 
   <extensionPoints>
     <extensionPoint name="searchEverywhere.tabFactory"
                     interface="com.intellij.platform.searchEverywhere.frontend.SeTabFactory"
+                    dynamic="true"/>
+
+    <extensionPoint name="searchEverywhere.previewPanelListener"
+                    interface="com.intellij.platform.searchEverywhere.frontend.ui.SePreviewPanelListener"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -27,5 +29,9 @@
     <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.symbols.SeSymbolsTabFactory"/>
     <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionsTabFactory"/>
     <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextTabFactory"/>
+
+    <applicationService serviceInterface="com.intellij.platform.searchEverywhere.frontend.SeTabsCustomizer"
+                        serviceImplementation="com.intellij.platform.searchEverywhere.frontend.SeDefaultTabsCustomizer"
+                        open="true"/>"
   </extensions>
 </idea-plugin>

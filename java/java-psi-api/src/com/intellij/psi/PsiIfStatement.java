@@ -16,8 +16,8 @@
 package com.intellij.psi;
 
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a Java {@code if} or {@code if ... else} statement.

@@ -4,7 +4,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "test",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  exports = ["//plugins/junit_rt:junit-rt"]
 )
 
 jvm_library(
@@ -34,7 +35,8 @@ jvm_library(
     "@lib//:slf4j-api",
     "//java/java-runtime:rt",
   ],
-  exports = ["//plugins/junit_rt:junit-rt"]
+  exports = ["//plugins/junit_rt:junit-rt"],
+  runtime_deps = [":test"]
 )
 ### auto-generated section `build kotlin.base.test` end
 

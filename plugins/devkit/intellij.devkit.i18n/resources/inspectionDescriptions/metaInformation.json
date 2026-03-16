@@ -10,7 +10,7 @@
     },
     {
       "id": "DevKitPropertiesMessageValidation",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "PluginXmlCapitalization",

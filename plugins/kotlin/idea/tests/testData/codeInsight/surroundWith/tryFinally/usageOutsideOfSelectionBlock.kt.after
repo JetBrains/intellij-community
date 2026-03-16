@@ -1,0 +1,17 @@
+fun bar(): String {
+    return "some string"
+}
+fun foo(): String {
+    val b: String
+    val a = try {
+        b = bar()
+        "$b$b"
+    } finally {
+        <selection><caret></selection>
+    }
+    if (b.length == 1) {
+
+    }
+    val x = a + b
+    return x
+}

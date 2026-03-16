@@ -4,8 +4,12 @@ package com.intellij.codeInsight.template.postfix.templates;
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.postfix.templates.editable.*;
+import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateEditor;
+import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition;
+import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor;
+import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateExpressionCondition;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -27,7 +31,9 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
 import java.util.Set;
 
-import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.*;
+import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.readExternalConditions;
+import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.readExternalLiveTemplate;
+import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.readExternalTopmostAttribute;
 
 
 public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {

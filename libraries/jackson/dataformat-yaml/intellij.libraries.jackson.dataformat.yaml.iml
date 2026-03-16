@@ -8,5 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="jackson-dataformat-yaml" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" scope="RUNTIME" />
   </component>
 </module>

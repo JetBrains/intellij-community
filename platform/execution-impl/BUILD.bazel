@@ -51,15 +51,17 @@ jvm_library(
     "//platform/wsl-impl",
     "//platform/util/jdom",
     "//platform/workspace/storage",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jna",
     "//libraries/hash4j",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//platform/diagnostic",
+    "//platform/project-frame",
     "//platform/ijent",
     "//platform/ijent/impl",
-    "@lib//:rd-core",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/rd/core",
     "//platform/rd-platform-community:rd-community",
     "//platform/util/coroutines",
     "//platform/eel-provider",
@@ -68,6 +70,7 @@ jvm_library(
     "//platform/kernel/shared:kernel",
     "//platform/project/shared:project",
     "//platform/platform-impl/rpc",
+    "//platform/remote-topics/shared:rpc-topics",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.impl` end
@@ -76,7 +79,12 @@ jvm_library(
 jvm_library(
   name = "execution-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/pty4j",
+  ]
 )
 
 jvm_library(
@@ -95,13 +103,17 @@ jvm_library(
     "//platform/execution",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
+    "@lib//:kotlin-stdlib",
     "@lib//:assert_j",
     "//platform/core-ui",
     "//libraries/jediterm-core",
     "//libraries/jediterm-ui",
     "//platform/eel",
     "//platform/eel-provider",
-  ]
+    "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/pty4j",
+  ],
+  runtime_deps = [":execution-tests"]
 )
 ### auto-generated section `build intellij.platform.execution.tests` end
 

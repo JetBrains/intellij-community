@@ -3890,7 +3890,6 @@
     <module>asynchat</module>
     <module>asyncio.compat</module>
     <module>asyncio.test_utils</module>
-    <module>asyncio.tools</module>
     <module>asyncore</module>
     <module>audiodev</module>
     <module>audioop</module>
@@ -3944,18 +3943,6 @@
     <module>compiler.syntax</module>
     <module>compiler.transformer</module>
     <module>compiler.visitor</module>
-    <module>compression</module>
-    <module>compression._common</module>
-    <module>compression._common._streams</module>
-    <module>compression.bz2</module>
-    <module>compression.gzip</module>
-    <module>compression.lzma</module>
-    <module>compression.zlib</module>
-    <module>compression.zstd</module>
-    <module>compression.zstd._zstdfile</module>
-    <module>concurrent.interpreters</module>
-    <module>concurrent.interpreters._crossinterp</module>
-    <module>concurrent.interpreters._queues</module>
     <module>cookielib</module>
     <module>copy_reg</module>
     <module>crypt</module>
@@ -4696,7 +4683,6 @@
     <module>sqlite3.test.userfunctions</module>
     <module>sre</module>
     <module>statvfs</module>
-    <module>string.templatelib</module>
     <module>stringold</module>
     <module>strop</module>
     <module>sunau</module>

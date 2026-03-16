@@ -1,4 +1,4 @@
-// "Replace with 'replaceAll' method call" "true"
+// "Replace with 'replaceAll()' call" "true"
 
 import java.util.HashMap;
 import java.util.Map;

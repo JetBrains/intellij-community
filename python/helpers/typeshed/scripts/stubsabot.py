@@ -161,7 +161,7 @@ class Obsolete:
 @dataclass
 class Remove:
     distribution: str
-    reason: str
+    reason: Literal["ships py.typed file", "unmaintained"]
     links: dict[str, str]
 
     def __str__(self) -> str:
@@ -171,7 +171,7 @@ class Remove:
 @dataclass
 class NoUpdate:
     distribution: str
-    reason: str
+    reason: Literal["obsolete", "no longer updated", "up to date"]
 
     def __str__(self) -> str:
         return f"{colored('skipping', 'green')} ({self.reason})"
@@ -204,7 +204,7 @@ async def with_extracted_archive(
         with zipfile.ZipFile(body) as zf:
             return handler(zf)
     elif packagetype == "sdist":
-        # sdist defaults to `.tar.gz` on Lunix and to `.zip` on Windows:
+        # sdist defaults to `.tar.gz` on Linux and to `.zip` on Windows:
         # https://docs.python.org/3.11/distutils/sourcedist.html
         if release_to_download.filename.endswith(".tar.gz"):
             with tarfile.open(fileobj=body, mode="r:gz") as zf:
@@ -642,7 +642,7 @@ async def determine_action_no_error_handling(
                 "Typeshed release": f"{pypi_info.pypi_root}",
                 "Typeshed stubs": f"https://github.com/{TYPESHED_OWNER}/typeshed/tree/main/stubs/{stub_info.distribution}",
             }
-            return Remove(stub_info.distribution, reason="older than 6 months", links=links)
+            return Remove(stub_info.distribution, reason="ships py.typed file", links=links)
         else:
             return NoUpdate(stub_info.distribution, "obsolete")
     if stub_info.no_longer_updated:
@@ -654,7 +654,7 @@ async def determine_action_no_error_handling(
                 "Typeshed release": f"{pypi_info.pypi_root}",
                 "Typeshed stubs": f"https://github.com/{TYPESHED_OWNER}/typeshed/tree/main/stubs/{stub_info.distribution}",
             }
-            return Remove(stub_info.distribution, reason="no longer updated", links=links)
+            return Remove(stub_info.distribution, reason="unmaintained", links=links)
         else:
             return NoUpdate(stub_info.distribution, "no longer updated")
 

@@ -34,6 +34,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/psi",
+    "//platform/core-impl",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/base/plugin",
@@ -50,6 +51,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/line-markers-shared:kotlin-code-insight-line-markers-shared",
     "//java/java-indexing-api:indexing",
     "//plugins/kotlin/base/project-structure",
+    "//platform/lang-api:lang",
   ]
 )
 
@@ -75,6 +77,7 @@ jvm_library(
     "//plugins/kotlin/base/psi",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/core-impl",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/base/code-insight:code-insight_test_lib",
@@ -86,8 +89,7 @@ jvm_library(
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/fir/tests:tests_test_lib",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/kotlin.searching",
@@ -104,6 +106,8 @@ jvm_library(
     "//java/java-indexing-api:indexing",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//platform/lang-api:lang",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.lineMarkers` end

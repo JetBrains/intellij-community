@@ -7,7 +7,7 @@ import sun.awt.image.FileImageSource;
 import sun.awt.image.ImageDecoder;
 import sun.awt.image.ToolkitImage;
 
-import java.awt.*;
+import java.awt.Image;
 import java.awt.image.ColorModel;
 import java.awt.image.ImageConsumer;
 import java.io.BufferedInputStream;

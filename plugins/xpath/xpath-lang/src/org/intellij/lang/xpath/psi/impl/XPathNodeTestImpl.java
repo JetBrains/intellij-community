@@ -20,7 +20,12 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.xpath.XPathTokenTypes;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.Axis;
+import org.intellij.lang.xpath.psi.PrefixedName;
+import org.intellij.lang.xpath.psi.XPathAxisSpecifier;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
+import org.intellij.lang.xpath.psi.XPathNodeTest;
+import org.intellij.lang.xpath.psi.XPathStep;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

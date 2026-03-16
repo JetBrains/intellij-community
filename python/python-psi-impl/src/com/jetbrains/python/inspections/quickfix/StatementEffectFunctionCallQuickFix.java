@@ -11,13 +11,21 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyTupleExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * User: catherine
- *
+ * <p>
  * QuickFix to replace statement that has no effect with function call
  */
 public class StatementEffectFunctionCallQuickFix extends PsiUpdateModCommandQuickFix {
@@ -30,13 +38,16 @@ public class StatementEffectFunctionCallQuickFix extends PsiUpdateModCommandQuic
   public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     if (element instanceof PyReferenceExpression) {
       final String expressionText = element.getText();
-      if (PyNames.PRINT.equals(expressionText))
+      if (PyNames.PRINT.equals(expressionText)) {
         replacePrint(element);
-      else if (PyNames.EXEC.equals(expressionText))
+      }
+      else if (PyNames.EXEC.equals(expressionText)) {
         replaceExec(element);
-      else
+      }
+      else {
         element.replace(PyElementGenerator.getInstance(project).createCallExpression(LanguageLevel.forElement(element),
-                                                                                        expressionText));
+                                                                                     expressionText));
+      }
     }
   }
 
@@ -105,8 +116,9 @@ public class StatementEffectFunctionCallQuickFix extends PsiUpdateModCommandQuic
     stringBuilder.append(binaryExpression.getLeftExpression().getText());
     stringBuilder.append(", ");
     final PyExpression rightExpression = binaryExpression.getRightExpression();
-    if (rightExpression != null)
+    if (rightExpression != null) {
       stringBuilder.append(rightExpression.getText());
+    }
   }
 
   private static void replacePrint(final @NotNull PsiElement expression) {
@@ -142,8 +154,9 @@ public class StatementEffectFunctionCallQuickFix extends PsiUpdateModCommandQuic
         }
       }
     }
-    else
+    else {
       next = whiteSpace;
+    }
 
     RemoveUnnecessaryBackslashQuickFix.removeBackSlash(next);
     if (whiteSpace != null) whiteSpace.delete();

@@ -1,0 +1,13 @@
+// "Show conflicting 'myLocalProperty' declarations" "true"
+// SHOULD_BE_AVAILABLE_AFTER_EXECUTION
+// K2_AFTER_ERROR: Conflicting declarations:<br>local val myLocalProperty: Int<br>local val myLocalProperty: String
+// K2_AFTER_ERROR: Conflicting declarations:<br>local val myLocalProperty: Int<br>local val myLocalProperty: String
+// IGNORE_K1
+package test
+
+fun testMe() {
+    val myLocalProperty<caret>: Int = 42
+
+    val myLocalProperty: String = "hello"
+}
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ShowConflictingDeclarationsAction

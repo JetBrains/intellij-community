@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.quickfix.tests;
 
@@ -296,6 +296,21 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterWithAnonymousFunction.kt");
         }
 
+        @TestMetadata("addFunctionParameterWithAnonymousObjectExtendingClass.kt")
+        public void testAddFunctionParameterWithAnonymousObjectExtendingClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterWithAnonymousObjectExtendingClass.kt");
+        }
+
+        @TestMetadata("addFunctionParameterWithAnonymousObjectMultipleSupertypes.kt")
+        public void testAddFunctionParameterWithAnonymousObjectMultipleSupertypes() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterWithAnonymousObjectMultipleSupertypes.kt");
+        }
+
+        @TestMetadata("addFunctionParameterWithAnonymousObjectViaThis.kt")
+        public void testAddFunctionParameterWithAnonymousObjectViaThis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterWithAnonymousObjectViaThis.kt");
+        }
+
         @TestMetadata("addFunctionParameterWithFunctionReference.kt")
         public void testAddFunctionParameterWithFunctionReference() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterWithFunctionReference.kt");
@@ -374,6 +389,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         @TestMetadata("changeFunctionLiteralParameters4.kt")
         public void testChangeFunctionLiteralParameters4() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/changeFunctionLiteralParameters4.kt");
+        }
+
+        @TestMetadata("changeFunctionParameterWithAnonymousObject.kt")
+        public void testChangeFunctionParameterWithAnonymousObject() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/changeFunctionParameterWithAnonymousObject.kt");
         }
 
         @TestMetadata("changeFunctionReturnTypeToNothing.kt")
@@ -815,6 +835,40 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/suppress/expressionBody")
+        public static class ExpressionBody extends AbstractK2QuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inExpressionBody.kt")
+            public void testInExpressionBody() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suppress/expressionBody/inExpressionBody.kt");
+            }
+
+            @TestMetadata("inExpressionBody2.kt")
+            public void testInExpressionBody2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suppress/expressionBody/inExpressionBody2.kt");
+            }
+
+            @TestMetadata("inExpressionBodyNewLine.kt")
+            public void testInExpressionBodyNewLine() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suppress/expressionBody/inExpressionBodyNewLine.kt");
+            }
+
+            @TestMetadata("inExpressionBodyReturnType.kt")
+            public void testInExpressionBodyReturnType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suppress/expressionBody/inExpressionBodyReturnType.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/quickfix/suppress/external")
         public static class External extends AbstractK2QuickFixTest {
             @java.lang.Override
@@ -867,11 +921,6 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
                 @TestMetadata("inDefaultArgument.kt")
                 public void testInDefaultArgument() throws Exception {
                     runTest("../../../idea/tests/testData/quickfix/suppress/forStatement/unavailable/inDefaultArgument.kt");
-                }
-
-                @TestMetadata("inExpressionBody.kt")
-                public void testInExpressionBody() throws Exception {
-                    runTest("../../../idea/tests/testData/quickfix/suppress/forStatement/unavailable/inExpressionBody.kt");
                 }
 
                 @TestMetadata("inLocalValInitializer.kt")
@@ -1743,6 +1792,16 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/optIn/appendFileAnnotationWithAnnotationList.kt");
         }
 
+        @TestMetadata("argumentUseSiteOptIn.kt")
+        public void testArgumentUseSiteOptIn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/argumentUseSiteOptIn.kt");
+        }
+
+        @TestMetadata("assignmentUseSiteOptIn.kt")
+        public void testAssignmentUseSiteOptIn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/assignmentUseSiteOptIn.kt");
+        }
+
         @TestMetadata("basicFunction.kt")
         public void testBasicFunction() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/optIn/basicFunction.kt");
@@ -1773,9 +1832,24 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/optIn/classUseOptIn.kt");
         }
 
+        @TestMetadata("destructuringDeclarationOnFunction.kt")
+        public void testDestructuringDeclarationOnFunction() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/destructuringDeclarationOnFunction.kt");
+        }
+
+        @TestMetadata("destructuringDeclarationOnStatement.kt")
+        public void testDestructuringDeclarationOnStatement() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/destructuringDeclarationOnStatement.kt");
+        }
+
         @TestMetadata("existingFileAnnotationWithPackage.kt")
         public void testExistingFileAnnotationWithPackage() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/optIn/existingFileAnnotationWithPackage.kt");
+        }
+
+        @TestMetadata("expressionUseSiteOptIn.kt")
+        public void testExpressionUseSiteOptIn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/expressionUseSiteOptIn.kt");
         }
 
         @TestMetadata("forbiddenTargetsExpression.kt")
@@ -2110,6 +2184,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("notRedundantDoubleBackslash.kt")
+        public void testNotRedundantDoubleBackslash() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantInterpolationPrefix/notRedundantDoubleBackslash.kt");
+        }
+
         @TestMetadata("prefix1.kt")
         public void testPrefix1() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/redundantInterpolationPrefix/prefix1.kt");
@@ -2256,6 +2335,16 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         @TestMetadata("ContextParameters_2_2.kt")
         public void testContextParameters_2_2() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/ContextParameters_2_2.kt");
+        }
+
+        @TestMetadata("ExplicitBackingFields_2_2.kt")
+        public void testExplicitBackingFields_2_2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/ExplicitBackingFields_2_2.kt");
+        }
+
+        @TestMetadata("ExplicitBackingFields_2_3.kt")
+        public void testExplicitBackingFields_2_3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/ExplicitBackingFields_2_3.kt");
         }
 
         @TestMetadata("MultiDollarInterpolation_2_0.kt")

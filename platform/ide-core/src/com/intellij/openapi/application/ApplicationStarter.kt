@@ -2,6 +2,9 @@
 package com.intellij.openapi.application
 
 import com.intellij.ide.CliResult
+import com.intellij.openapi.application.ApplicationStarter.Companion.ANY_MODALITY
+import com.intellij.openapi.application.ApplicationStarter.Companion.NON_MODAL
+import com.intellij.openapi.application.ApplicationStarter.Companion.NOT_IN_EDT
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus

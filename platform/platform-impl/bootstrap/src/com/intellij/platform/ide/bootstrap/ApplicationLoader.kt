@@ -3,15 +3,29 @@
 @file:Internal
 package com.intellij.platform.ide.bootstrap
 
-import com.intellij.diagnostic.*
+import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
+import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.WriteLockMeasurer
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
-import com.intellij.ide.*
+import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.ApplicationActivity
+import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.ide.ApplicationLoadListener
+import com.intellij.ide.BootstrapBundle
+import com.intellij.ide.CliResult
+import com.intellij.ide.CommandLineProcessor
+import com.intellij.ide.CommandLineProcessorResult
+import com.intellij.ide.GeneralSettings
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.ProtocolHandler
 import com.intellij.ide.bootstrap.InitAppContext
-import com.intellij.ide.plugins.BundledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
+import com.intellij.ide.plugins.saveBundledPluginsState
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.NotRoamableUiSettings
@@ -24,7 +38,14 @@ import com.intellij.idea.AppMode
 import com.intellij.idea.IdeStarter
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationStarter
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModernApplicationStarter
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -40,7 +61,6 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.useOrLogError
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
@@ -54,14 +74,25 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
+import com.intellij.util.system.OS
 import com.jetbrains.JBR
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import kotlin.coroutines.jvm.internal.CoroutineDumpState
 import kotlin.system.exitProcess
@@ -117,24 +148,24 @@ internal suspend fun loadApp(
     
     val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) null else {
       async(CoroutineName("eua document")) {
-        prepareShowEuaIfNeededTask(euaDocumentDeferred.await(), appInfoDeferred, asyncScope)
+        prepareShowEuaIfNeededTask(documentStatus = euaDocumentDeferred.await(), appInfoDeferred = appInfoDeferred, asyncScope = asyncScope)
       }
     }
 
     initServiceContainerJob.join()
 
-    val initTelemetryJob = launch(CoroutineName("opentelemetry configuration")) {
-      try {
-        TelemetryManager.setTelemetryManager(
-          TelemetryManagerImpl(app.getCoroutineScope(), app.isUnitTestMode))
+    TelemetryManager.setTelemetryManager(async(CoroutineName("opentelemetry configuration")) {
+      return@async try {
+        TelemetryManagerImpl(app.getCoroutineScope(), app.isUnitTestMode)
       }
       catch (e: CancellationException) {
         throw e
       }
       catch (e: Throwable) {
         logDeferred.await().error("Can't initialize OpenTelemetry: will use default (noop) SDK impl", e)
+        null
       }
-    }
+    })
 
     app.getCoroutineScope().launch {
       // precompute after plugin model loaded
@@ -153,17 +184,19 @@ internal suspend fun loadApp(
       initConfigurationStore(app, args)
     }
 
-    val applicationStarter = createAppStarter(args, asyncScope = this@span)
+    val applicationStarter = createAppStarter(args = args, asyncScope = this@span)
 
     launch(CoroutineName("app pre-initialization")) {
       initConfigurationStoreJob.join()
 
-      span("telemetry waiting") {
-        initTelemetryJob.join()
-      }
-
       val preloadJob = launch(CoroutineName("critical services preloading")) {
-        preloadCriticalServices(app, preloadScope = this, asyncScope, appRegisteredJob, initAwtToolkitAndEventQueueJob)
+        preloadCriticalServices(
+          app = app,
+          preloadScope = this,
+          asyncScope = asyncScope,
+          appRegistered = appRegisteredJob,
+          initAwtToolkitAndEventQueueJob = initAwtToolkitAndEventQueueJob,
+        )
 
         asyncScope.launch {
           launch {
@@ -176,7 +209,7 @@ internal suspend fun loadApp(
         }
       }
 
-      val cssInit = initLafManagerAndCss(app, asyncScope, initLafJob, loadIconMapping)
+      val cssInit = initLafManagerAndCss(app = app, asyncScope = asyncScope, initLafJob = initLafJob, loadIconMapping = loadIconMapping)
 
       if (!app.isHeadlessEnvironment) {
         euaTaskDeferred?.await()?.let {
@@ -203,12 +236,6 @@ internal suspend fun loadApp(
     }
 
     launch {
-      if (AppMode.isRemoteDevHost()) {
-        span("telemetry waiting") {
-          initTelemetryJob.join()
-        }
-      }
-
       val appInitializedListeners = appInitListeners.await()
       span("app initialized callback") {
         // An async scope here is intended for FLOW. FLOW!!! DO NOT USE the surrounding main scope.
@@ -239,7 +266,7 @@ internal suspend fun loadApp(
         delay(1.minutes)
         if (!ApplicationManagerEx.getApplicationEx().isExitInProgress) {
           span("save bundled plugin state") {
-            BundledPluginsState.saveBundledPluginsState()
+            saveBundledPluginsState()
           }
         }
       }
@@ -310,7 +337,7 @@ private suspend fun preloadNonHeadlessServices(app: ApplicationImpl, initLafJob:
     }
 
     // https://youtrack.jetbrains.com/issue/IDEA-341318
-    if (SystemInfoRt.isLinux && System.getProperty("idea.linux.scale.workaround", "false").toBoolean()) {
+    if (OS.CURRENT == OS.Linux && System.getProperty("idea.linux.scale.workaround", "false").toBoolean()) {
       // ActionManager can use UISettings (KeymapManager doesn't use it but just to be sure)
       initLafJob.join()
     }
@@ -391,7 +418,10 @@ private suspend fun initLafManagerAndCss(app: ApplicationImpl, asyncScope: Corou
       }
     }
 
-    if (app.isHeadlessEnvironment) null else {
+    if (app.isHeadlessEnvironment) {
+      null
+    }
+    else {
       asyncScope.launch {
         // preload EditorColorsManager only when LafManager is ready - that's why out of coroutineScope
         initGlobalStyleSheet()
@@ -412,7 +442,7 @@ suspend fun initConfigurationStore(app: ApplicationImpl, args: List<String>) {
     span("beforeApplicationLoaded") {
       for (extension in ApplicationLoadListener.EP_NAME.filterableLazySequence()) {
         extension.useOrLogError {
-          it.beforeApplicationLoaded(app, configDir, args)
+          it.beforeApplicationLoaded(application = app, configPath = configDir, args = args)
         }
       }
     }
@@ -467,11 +497,9 @@ private fun runPostAppInitTasks(scope: CoroutineScope) {
     createAppLocatorFile()
   }
 
-  if (!AppMode.isLightEdit()) {
-    // this functionality should be used only by plugin functionality used after start-up
-    scope.launch(CoroutineName("system properties setting")) {
-      SystemPropertyBean.initSystemProperties()
-    }
+  // this functionality should be used only by plugin functionality used after start-up
+  scope.launch(CoroutineName("system properties setting")) {
+    SystemPropertyBean.initSystemProperties()
   }
 }
 
@@ -507,15 +535,16 @@ private suspend fun createAppStarter(args: List<String>, asyncScope: CoroutineSc
   }
 }
 
-private fun createDefaultAppStarter(): ApplicationStarter =
-  if (PlatformUtils.getPlatformPrefix() == "LightEdit") IdeStarter.StandaloneLightEditStarter() else IdeStarter()
+private fun createDefaultAppStarter(): ApplicationStarter {
+  return if (PlatformUtils.getPlatformPrefix() == "LightEdit") IdeStarter.StandaloneLightEditStarter() else IdeStarter()
+}
 
 @VisibleForTesting
 internal fun createAppLocatorFile() {
-  val locatorFile = Path.of(PathManager.getSystemPath(), ApplicationEx.LOCATOR_FILE_NAME)
+  val locatorFile = PathManager.getSystemDir().resolve(ApplicationEx.LOCATOR_FILE_NAME)
   try {
     locatorFile.parent?.createDirectories()
-    Files.writeString(locatorFile, PathManager.getHomePath(), StandardCharsets.UTF_8)
+    Files.writeString(locatorFile, PathManager.getHomeDir().toString(), StandardCharsets.UTF_8)
   }
   catch (e: IOException) {
     LOG.warn("Can't store a location in '$locatorFile'", e)
@@ -557,7 +586,7 @@ private suspend fun handleExternalCommand(args: List<String>, currentDirectory: 
     return result
   }
   else {
-    return CommandLineProcessor.processExternalCommandLine(args, currentDirectory, focusApp = true)
+    return CommandLineProcessor.processExternalCommandLine(args = args, currentDirectory = currentDirectory, focusApp = true)
   }
 }
 

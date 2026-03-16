@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.hierarchy.calls
 
 import com.intellij.ide.hierarchy.call.CallHierarchyNodeDescriptor
 import com.intellij.psi.PsiMember
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 fun extractMemberFromDescriptor(nodeDescriptor: CallHierarchyNodeDescriptor): PsiMember? {
     return nodeDescriptor.enclosingElement
 }

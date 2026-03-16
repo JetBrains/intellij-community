@@ -9,7 +9,10 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtil.getRelativePath
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.Executor.cat
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.Executor.mkdir
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
@@ -23,15 +26,34 @@ import git4idea.GitNotificationIdsHolder
 import git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision
 import git4idea.branch.GitBranchUtil.getTrackInfo
 import git4idea.branch.GitBranchUtil.getTrackInfoForBranch
-import git4idea.branch.GitDeleteBranchOperation.*
-import git4idea.branch.GitSmartOperationDialog.Choice.*
+import git4idea.branch.GitDeleteBranchOperation.DELETE_TRACKED_BRANCH
+import git4idea.branch.GitDeleteBranchOperation.RESTORE
+import git4idea.branch.GitDeleteBranchOperation.VIEW_COMMITS
+import git4idea.branch.GitSmartOperationDialog.Choice.CANCEL
+import git4idea.branch.GitSmartOperationDialog.Choice.FORCE
+import git4idea.branch.GitSmartOperationDialog.Choice.SMART
 import git4idea.commands.GitCommandResult
 import git4idea.config.GitSharedSettings
 import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
 import git4idea.repo.GitRepository
-import git4idea.test.*
-import git4idea.test.GitScenarios.*
+import git4idea.test.GitPlatformTest
+import git4idea.test.GitScenarios.LOCAL_CHANGES_OVERWRITTEN_BY
+import git4idea.test.GitScenarios.branchExists
+import git4idea.test.GitScenarios.branchWithCommit
+import git4idea.test.GitScenarios.localChangesOverwrittenByWithoutConflict
+import git4idea.test.GitScenarios.unmergedFiles
+import git4idea.test.GitScenarios.untrackedFileOverwrittenBy
+import git4idea.test.UNKNOWN_ERROR_TEXT
+import git4idea.test.add
+import git4idea.test.assertCurrentBranch
+import git4idea.test.assertCurrentRevision
+import git4idea.test.branch
+import git4idea.test.cd
+import git4idea.test.commit
+import git4idea.test.file
+import git4idea.test.git
+import git4idea.test.tac
 import java.io.File
 import java.nio.file.Files
 
@@ -126,9 +148,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
       }
     })
 
-    assertCurrentBranch(first, "feature")
-    assertCurrentBranch(second, "master")
-    assertCurrentBranch(last, "master")
+    first.assertCurrentBranch("feature")
+    second.assertCurrentBranch("master")
+    last.assertCurrentBranch("master")
   }
 
   fun `test checkout without problems`() {
@@ -189,9 +211,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
       override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String) = false
     })
 
-    assertCurrentBranch(first, "feature")
-    assertCurrentBranch(second, "master")
-    assertCurrentBranch(last, "master")
+    first.assertCurrentBranch("feature")
+    second.assertCurrentBranch("master")
+    last.assertCurrentBranch("master")
   }
 
   fun `test checkout revision checkout branch with complete success`() {
@@ -228,7 +250,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     checkoutRevision("feature", TestUiHandler(project))
 
-    assertCurrentBranch(last, "master")
+    last.assertCurrentBranch("master")
     assertDetachedState(first, "feature")
     assertDetachedState(second, "feature")
 
@@ -515,9 +537,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun `test deny to smart checkout in second repo should show rollback proposal`() {
     `check deny to smart operation in second repo should show rollback proposal`("checkout")
-    assertCurrentBranch(first, "feature")
-    assertCurrentBranch(second, "master")
-    assertCurrentBranch(last, "master")
+    first.assertCurrentBranch("feature")
+    second.assertCurrentBranch("master")
+    last.assertCurrentBranch("master")
   }
 
   fun `test deny to smart merge in second repo should show rollback proposal`() {
@@ -906,9 +928,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
       }
     })
 
-    assertCurrentBranch(last, "feature")
-    assertCurrentBranch(first, "newbranch")
-    assertCurrentBranch(second, "master")
+    last.assertCurrentBranch("feature")
+    first.assertCurrentBranch("newbranch")
+    second.assertCurrentBranch("master")
   }
 
   fun `test delete remote branch`() {
@@ -1059,13 +1081,13 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   private fun assertCurrentBranch(name: String) {
     for (repository in myRepositories) {
-      assertCurrentBranch(repository, name)
+      repository.assertCurrentBranch(name)
     }
   }
 
   private fun assertCurrentRevision(reference: String) {
     for (repository in myRepositories) {
-      assertCurrentRevision(repository, reference)
+      repository.assertCurrentRevision(reference)
     }
   }
 
@@ -1214,19 +1236,8 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   private fun assertDetachedState(repository: GitRepository, reference: String) {
-    assertCurrentRevision(repository, reference)
+    repository.assertCurrentRevision(reference)
     assertEquals("Repository should be in the detached HEAD state", Repository.State.DETACHED, repository.state)
-  }
-
-  private fun assertCurrentBranch(repository: GitRepository, name: String) {
-    assertEquals("Current branch is incorrect in ${repository}", name, repository.currentBranchName)
-  }
-
-  private fun assertCurrentRevision(repository: GitRepository, reference: String) {
-    val expectedRef = repository.git("rev-parse HEAD")
-    val currentRef = repository.git("rev-parse $reference")
-
-    assertEquals("Current revision is incorrect in ${repository}", expectedRef, currentRef)
   }
 
   private fun assertBranchDeleted(repo: GitRepository, branch: String) {

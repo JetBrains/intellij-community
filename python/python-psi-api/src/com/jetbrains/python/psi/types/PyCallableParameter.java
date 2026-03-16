@@ -18,7 +18,8 @@ public interface PyCallableParameter {
    * Returns null if the parameter is tuple or star, or name is unknown.
    */
   @Nullable
-  @Nls String getName();
+  @Nls
+  String getName();
 
   /**
    * @param context type evaluation context

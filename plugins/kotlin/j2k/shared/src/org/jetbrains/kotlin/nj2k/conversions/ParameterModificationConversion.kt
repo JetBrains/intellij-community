@@ -6,7 +6,20 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.blockStatement
 import org.jetbrains.kotlin.nj2k.hasWritableUsages
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKBlockStatement
+import org.jetbrains.kotlin.nj2k.tree.JKDeclarationStatement
+import org.jetbrains.kotlin.nj2k.tree.JKFieldAccessExpression
+import org.jetbrains.kotlin.nj2k.tree.JKForInStatement
+import org.jetbrains.kotlin.nj2k.tree.JKLambdaExpression
+import org.jetbrains.kotlin.nj2k.tree.JKLocalVariable
+import org.jetbrains.kotlin.nj2k.tree.JKMethod
+import org.jetbrains.kotlin.nj2k.tree.JKMutabilityModifierElement
+import org.jetbrains.kotlin.nj2k.tree.JKNameIdentifier
+import org.jetbrains.kotlin.nj2k.tree.JKParameter
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.JKTypeElement
+import org.jetbrains.kotlin.nj2k.tree.Mutability
+import org.jetbrains.kotlin.nj2k.tree.copyTreeAndDetach
 import org.jetbrains.kotlin.nj2k.types.determineType
 
 /**

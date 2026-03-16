@@ -4,7 +4,9 @@ package org.jetbrains.jps.javac;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import javax.tools.*;
+import javax.tools.FileObject;
+import javax.tools.JavaFileManager;
+import javax.tools.JavaFileObject;
 import java.util.Set;
 
 @ApiStatus.Internal

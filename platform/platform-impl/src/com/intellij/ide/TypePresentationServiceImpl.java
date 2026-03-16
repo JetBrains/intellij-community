@@ -19,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;

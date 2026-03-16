@@ -2,6 +2,10 @@ class Test {
     interface IFactory {
         Object m();
     }
+    
+    interface FooToInt {
+      int m(Foo<?> foo);
+    }
 
     @interface Anno {}
 
@@ -29,6 +33,8 @@ class Test {
         IFactory c5 = <error descr="Cannot find class 1">1</error>::new;
         IFactory c6 = <error descr="'ABar' is abstract; cannot be instantiated">ABar::new</error>;
         IFactory c7 = <error descr="'ABaz' is abstract; cannot be instantiated">ABaz::new</error>;
+        
+        FooToInt fooToInt = Foo<?>::hashCode;
 
         foo(<error descr="'Anno' is abstract; cannot be instantiated">Anno::new</error>);
         foo(<error descr="Enum types cannot be instantiated">E::new</error>);

@@ -1,13 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.ecmascript;
 
-import com.intellij.lang.PsiParser;
-import com.intellij.lexer.Lexer;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
-import org.intellij.lang.regexp.*;
+import org.intellij.lang.regexp.RegExpCapability;
+import org.intellij.lang.regexp.RegExpFile;
+import org.intellij.lang.regexp.RegExpParserDefinition;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
@@ -17,21 +16,19 @@ import java.util.EnumSet;
  */
 public class EcmaScriptUnicodeRegexpParserDefinition extends RegExpParserDefinition {
 
-  public static final IFileElementType JS_REGEXP_FILE = new IFileElementType("JS_UNICODE_REGEXP_FILE", EcmaScriptUnicodeRegexpLanguage.INSTANCE);
+  public static final IFileElementType JS_REGEXP_FILE = 
+    new IFileElementType("JS_UNICODE_REGEXP_FILE", EcmaScriptUnicodeRegexpLanguage.INSTANCE);
   private final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(RegExpCapability.OCTAL_NO_LEADING_ZERO,
                                                                     RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS,
                                                                     RegExpCapability.NO_DANGLING_METACHARACTERS,
                                                                     RegExpCapability.PROPERTY_VALUES,
-                                                                    RegExpCapability.EXTENDED_UNICODE_CHARACTER);
+                                                                    RegExpCapability.EXTENDED_UNICODE_CHARACTER,
+                                                                    RegExpCapability.SHORTHAND_CLASS_RANGE_START_ERROR,
+                                                                    RegExpCapability.SHORTHAND_CLASS_RANGE_END_ERROR);
 
   @Override
-  public @NotNull Lexer createLexer(Project project) {
-    return new RegExpLexer(CAPABILITIES);
-  }
-
-  @Override
-  public @NotNull PsiParser createParser(Project project) {
-    return new RegExpParser(CAPABILITIES);
+  public @NotNull EnumSet<RegExpCapability> getCapabilities() {
+    return CAPABILITIES;
   }
 
   @Override

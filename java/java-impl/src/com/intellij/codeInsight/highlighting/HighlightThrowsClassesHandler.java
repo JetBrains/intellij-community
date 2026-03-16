@@ -15,7 +15,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JList;
+import javax.swing.ListSelectionModel;
 import java.util.Arrays;
 
 /**

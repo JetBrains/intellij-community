@@ -8,7 +8,19 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.refactoring.actions.*
+import com.intellij.refactoring.actions.ConvertToInstanceMethodAction
+import com.intellij.refactoring.actions.InheritanceToDelegationAction
+import com.intellij.refactoring.actions.IntroduceFunctionalVariableAction
+import com.intellij.refactoring.actions.IntroduceParameterObjectAction
+import com.intellij.refactoring.actions.MakeStaticAction
+import com.intellij.refactoring.actions.MethodDuplicatesAction
+import com.intellij.refactoring.actions.MoveAction
+import com.intellij.refactoring.actions.PullUpAction
+import com.intellij.refactoring.actions.PushDownAction
+import com.intellij.refactoring.actions.RefactoringQuickListPopupAction
+import com.intellij.refactoring.actions.ReplaceMethodWithMethodObjectAction
+import com.intellij.refactoring.actions.SafeDeleteAction
+import com.intellij.refactoring.actions.TurnRefsToSuperAction
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
 import org.jetbrains.annotations.NonNls
 

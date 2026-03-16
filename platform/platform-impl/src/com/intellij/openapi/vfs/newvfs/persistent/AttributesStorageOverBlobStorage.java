@@ -7,7 +7,12 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStreamImpl;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.platform.util.io.storages.blobstorage.RecordAlreadyDeletedException;
-import com.intellij.util.io.*;
+import com.intellij.util.io.CleanableStorage;
+import com.intellij.util.io.CorruptedException;
+import com.intellij.util.io.DataEnumerator;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
+import com.intellij.util.io.UnsyncByteArrayOutputStream;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import org.jetbrains.annotations.ApiStatus;
@@ -1151,10 +1156,10 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
   }
 
   /**
-   * @return buffer with the limit rose up to requiredLimit, if currently it is lower. If
-   * buffer capacity is not enough for requiredLimit -- new buffer is allocated with capacity=requiredLimit,
-   * and set position to buffer.position, and limit to requiredLimit. Data from buffer is not copied,
-   * use {@link #ensureLimitAndData(ByteBuffer, int)} for that.
+   * @return buffer with the limit extended up to the requiredLimit, if currently it is lower.
+   * If buffer capacity is not enough for requiredLimit -- a new buffer is allocated with capacity=requiredLimit,
+   * and set position to buffer.position, and limit to requiredLimit.
+   * Data from original buffer is not copied into the newly allocated one: use {@link #ensureLimitAndData(ByteBuffer, int)} for that.
    */
   private static @NotNull ByteBuffer ensureLimit(ByteBuffer buffer,
                                                  int requiredLimit) {
@@ -1169,9 +1174,10 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
   }
 
   /**
-   * @return buffer with limit set to at least requiredLimit. If buffer.limit() already more than
-   * requiredLimit -- do nothing. If buffer.capacity() is not big enough for requiredLimit -- method
-   * returns new buffer with same content & same position as the old one, and limit=capacity=requiredLimit.
+   * @return buffer with limit set to at least requiredLimit.
+   * If buffer.limit() already more than requiredLimit -- does nothing.
+   * If buffer.capacity() is not big enough for requiredLimit -- method returns a new buffer with the same content and position as
+   * the old one, and limit=capacity=requiredLimit.
    */
   private static ByteBuffer ensureLimitAndData(ByteBuffer buffer,
                                                int requiredLimit) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl
 
+import com.intellij.codeInsight.AnnotationTargetUtil
 import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInsight.PsiEquivalenceUtil
@@ -18,7 +19,30 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.Command
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiDeclarationStatement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiExpressionStatement
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiNameHelper
+import com.intellij.psi.PsiNameValuePair
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiReturnStatement
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypeParameterListOwner
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.PsiYieldStatement
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.impl.source.DummyHolder
@@ -29,7 +53,10 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.IntroduceVariableUtil
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
-import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.ArtificialBooleanOutput
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.EmptyOutput
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.ExpressionOutput
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.VariableOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import com.intellij.refactoring.introduceField.ElementToWorkOn
@@ -119,14 +146,16 @@ object ExtractMethodHelper {
     return physicalParent ?: throw IllegalArgumentException()
   }
 
-  fun addNullabilityAnnotation(typeElement: PsiTypeElement?, nullability: Nullability) {
-    if (typeElement == null) return
+  internal fun addNullabilityAnnotation(psiModifierListOwner: PsiModifierListOwner?, nullability: Nullability) {
+    if (psiModifierListOwner == null) return
     if (nullability == Nullability.UNKNOWN) return
-    val nullabilityManager = NullableNotNullManager.getInstance(typeElement.project)
-    val annotation = nullabilityManager.getDefaultAnnotation(nullability, typeElement)
-    val annotationElement = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotation, PsiNameValuePair.EMPTY_ARRAY, typeElement)
+    val project = psiModifierListOwner.project
+    val nullabilityManager = NullableNotNullManager.getInstance(project)
+    val annotation = nullabilityManager.getDefaultAnnotation(nullability, psiModifierListOwner)
+    val annotationOwner = AnnotationTargetUtil.getTarget(psiModifierListOwner, annotation) ?: return
+    val annotationElement = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotation, PsiNameValuePair.EMPTY_ARRAY, annotationOwner)
     if (annotationElement != null) {
-      JavaCodeStyleManager.getInstance(typeElement.project).shortenClassReferences(annotationElement)
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(annotationElement)
     }
   }
 

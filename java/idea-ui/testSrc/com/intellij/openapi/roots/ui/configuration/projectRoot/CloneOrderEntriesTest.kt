@@ -3,7 +3,12 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.JdkOrderEntry
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.ModuleSourceOrderEntry
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.testFramework.JavaModuleTestCase

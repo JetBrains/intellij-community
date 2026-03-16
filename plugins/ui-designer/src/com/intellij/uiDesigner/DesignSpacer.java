@@ -6,7 +6,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.uiDesigner.core.Spacer;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * Used in design time only. 

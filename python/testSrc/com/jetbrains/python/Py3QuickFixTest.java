@@ -132,7 +132,7 @@ public class Py3QuickFixTest extends PyTestCase {
 
     doInspectionTest(testFiles,
                      PyAbstractClassInspection.class,
-                     "Add '" + PyNames.ABC + "' to superclasses",
+                     "Add '" + PyNames.ABC + "' as base class",
                      true,
                      true);
   }
@@ -141,7 +141,7 @@ public class Py3QuickFixTest extends PyTestCase {
   public void testAddImportedABCToSuperclasses() {
     doInspectionTest("PyAbstractClassInspection/quickFix/AddImportedABCToSuperclasses/main.py",
                      PyAbstractClassInspection.class,
-                     "Add '" + PyNames.ABC + "' to superclasses",
+                     "Add '" + PyNames.ABC + "' as base class",
                      true,
                      true);
   }
@@ -150,7 +150,7 @@ public class Py3QuickFixTest extends PyTestCase {
   public void testAddABCToSuperclassesCaretAtAbstractMethod() {
     doInspectionTest("PyAbstractClassInspection/quickFix/AddABCToSuperclassesCaretAtAbstractMethod/main.py",
                      PyAbstractClassInspection.class,
-                     "Add '" + PyNames.ABC + "' to superclasses",
+                     "Add '" + PyNames.ABC + "' as base class",
                      true,
                      true);
   }

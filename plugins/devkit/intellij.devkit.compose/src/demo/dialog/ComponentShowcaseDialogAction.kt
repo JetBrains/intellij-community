@@ -5,7 +5,6 @@ package com.intellij.devkit.compose.demo.dialog
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.DumbAwareAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -20,7 +19,7 @@ internal class ComponentShowcaseDialogAction : DumbAwareAction() {
   override fun actionPerformed(event: AnActionEvent) {
     val project = checkNotNull(event.project) { "Project not available" }
 
-    currentThreadCoroutineScope().launch(Dispatchers.EDT) {
+    event.coroutineScope.launch(Dispatchers.EDT) {
       ComponentShowcaseDialog(project).showAndGet()
     }
   }

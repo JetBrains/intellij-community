@@ -20,8 +20,9 @@ import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
+import java.awt.Dimension;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Pattern;

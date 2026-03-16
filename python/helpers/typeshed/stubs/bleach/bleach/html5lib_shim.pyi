@@ -50,7 +50,7 @@ class InputStreamWithMemory:
 
 class BleachHTMLTokenizer(HTMLTokenizer):
     consume_entities: bool
-    stream: InputStreamWithMemory
+    stream: InputStreamWithMemory  # type: ignore[assignment]
     emitted_last_token: dict[str, Any] | None
     def __init__(self, consume_entities: bool = False, **kwargs: Any) -> None: ...
 

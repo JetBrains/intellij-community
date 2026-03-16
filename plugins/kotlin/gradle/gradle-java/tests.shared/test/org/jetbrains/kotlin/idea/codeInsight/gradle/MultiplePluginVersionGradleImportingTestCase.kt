@@ -12,6 +12,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestProperties
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
+import org.jetbrains.kotlin.gradle.multiplatformTests.TestVersion
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestWithKotlinPluginAndGradleVersions
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
@@ -53,13 +54,19 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     @Parameterized.Parameter(1)
     var kotlinPluginVersionParam: KotlinPluginVersionParam? = null
 
-    override val kotlinPluginVersion: KotlinToolingVersion
-        get() = checkNotNull(kotlinPluginVersionParam) {
-            "Missing 'kotlinPluginVersionParam'"
-        }.version
+    override val kotlinPluginVersion: TestVersion<KotlinToolingVersion>
+        get() = TestVersion(
+            checkNotNull(kotlinPluginVersionParam) {
+                "Missing 'kotlinPluginVersionParam'"
+            }.version,
+            null,
+        )
 
-    override var gradleVersion: String
-        get() = super.gradleVersion
+    override var testGradleVersion: TestVersion<GradleVersion>
+        get() = TestVersion(
+            GradleVersion.version(gradleVersion),
+            null,
+        )
         set(_) {}
 
     override fun setUp() {
@@ -72,7 +79,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         Commonizer runner forwarded this property and failed, because IntelliJ might set a custom
         ClassLoader, which will not be available for the Commonizer.
         */
-        if (kotlinPluginVersion < KotlinToolingVersion("1.5.20")) {
+        if (kotlinPluginVersion.version < KotlinToolingVersion("1.5.20")) {
             val classLoaderKey = "java.system.class.loader"
             System.getProperty(classLoaderKey)?.let { configuredClassLoader ->
                 System.clearProperty(classLoaderKey)
@@ -121,13 +128,13 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     }
 
     protected fun repositories(useKts: Boolean): String = GradleKotlinTestUtils.listRepositories(
-        useKts, GradleVersion.version(gradleVersion), kotlinPluginVersion
+        useKts, testGradleVersion.version, kotlinPluginVersion.version
     )
 
     override val defaultProperties: Map<String, String>
         get() = super.defaultProperties.toMutableMap().apply {
             putAll(androidImportingTestRule.properties)
-            put("kotlin_plugin_version", kotlinPluginVersion.toString())
+            put("kotlin_plugin_version", kotlinPluginVersion.version.toString())
             put("kotlin_plugin_repositories", repositories(false))
             put("kts_kotlin_plugin_repositories", repositories(true))
         }
@@ -179,7 +186,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
             configure()
         }
 
-        val testProperties = KotlinMppTestProperties.constructRaw(kotlinPluginVersion, GradleVersion.version(gradleVersion))
+        val testProperties = KotlinMppTestProperties.constructRaw(kotlinPluginVersion, testGradleVersion)
 
         OrderEntriesChecker.check(
             myProject,
@@ -192,7 +199,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 }
 
 fun MultiplePluginVersionGradleImportingTestCase.kotlinPluginVersionMatches(versionRequirement: String): Boolean {
-    return parseKotlinVersionRequirement(versionRequirement).matches(kotlinPluginVersion)
+    return parseKotlinVersionRequirement(versionRequirement).matches(kotlinPluginVersion.version)
 }
 
 /**
@@ -202,10 +209,10 @@ fun MultiplePluginVersionGradleImportingTestCase.kotlinPluginVersionMatches(vers
  * in the kotlin/928e0e7fb8b3 commit
  */
 fun MultiplePluginVersionGradleImportingTestCase.isStdlibJdk78AddedByDefault() =
-    kotlinPluginVersion >= KotlinToolingVersion("1.5.0-M1")
+    kotlinPluginVersion.version >= KotlinToolingVersion("1.5.0-M1")
 
 fun MultiplePluginVersionGradleImportingTestCase.isKgpDependencyResolutionEnabled(): Boolean =
-    kotlinPluginVersion >= KotlinToolingVersion("1.8.20-beta-0")
+    kotlinPluginVersion.version >= KotlinToolingVersion("1.8.20-beta-0")
 
 fun MultiplePluginVersionGradleImportingTestCase.gradleVersionMatches(version: String): Boolean {
     return VersionMatcher(GradleVersion.version(gradleVersion)).isVersionMatch(version, true)

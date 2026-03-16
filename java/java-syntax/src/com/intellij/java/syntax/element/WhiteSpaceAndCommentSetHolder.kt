@@ -62,20 +62,20 @@ private class PrecedingWhitespacesAndCommentsBinder(
     if (mySupportMarkdown) {
       //collect everything
       for (idx in tokens.indices.reversed()) {
-        if (tokens[idx] === JavaDocSyntaxElementType.DOC_COMMENT) return idx
+        if (tokens[idx] === JavaDocSyntaxElementType.DOC_COMMENT || tokens[idx] === JavaDocSyntaxElementType.DOC_MARKDOWN_COMMENT) return idx
       }
     }
     else {
       // To preserve previous orders, let's try to find the first non-markdown comment (and skip markdown comments).
       // If there is no non-markdown, take the first markdown
       for (idx in tokens.indices.reversed()) {
-        if (tokens[idx] === JavaDocSyntaxElementType.DOC_COMMENT && !isDocMarkdownComment(idx, getter)) {
+        if (tokens[idx] === JavaDocSyntaxElementType.DOC_COMMENT) {
           return idx
         }
       }
 
       for (idx in tokens.indices.reversed()) {
-        if (tokens[idx] === JavaDocSyntaxElementType.DOC_COMMENT) return idx
+        if (tokens[idx] === JavaDocSyntaxElementType.DOC_MARKDOWN_COMMENT) return idx
       }
     }
 

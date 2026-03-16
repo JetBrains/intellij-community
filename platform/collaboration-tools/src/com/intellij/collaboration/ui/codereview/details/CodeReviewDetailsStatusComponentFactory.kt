@@ -16,7 +16,11 @@ import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.codereview.list.search.PopupConfig
 import com.intellij.collaboration.ui.codereview.list.search.ShowDirection
 import com.intellij.collaboration.ui.icon.CIBuildStatusIcons
-import com.intellij.collaboration.ui.util.*
+import com.intellij.collaboration.ui.util.DimensionRestrictions
+import com.intellij.collaboration.ui.util.bindEnabledIn
+import com.intellij.collaboration.ui.util.bindIconIn
+import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -26,15 +30,21 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JLabelUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import java.awt.Point
 import java.awt.event.ActionListener
+import javax.swing.Action
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JTextPane
+import javax.swing.SwingConstants
 
 object CodeReviewDetailsStatusComponentFactory {
   private const val STATUS_COMPONENT_BORDER = 5
@@ -51,6 +61,24 @@ object CodeReviewDetailsStatusComponentFactory {
       JLabelUtil.setTrimOverflow(this, trim = true)
     }
 
+  fun createErrorComponent(message: @Nls String, action: Action? = null): JComponent {
+    val label = JLabel(message, CIBuildStatusIcons.failed, SwingConstants.LEFT).apply {
+      JLabelUtil.setTrimOverflow(this, trim = true)
+    }
+    if (action == null) return label
+
+    val actionLink = ActionLink(action).apply {
+      autoHideOnDisable = false
+    }
+    return HorizontalListPanel(CI_COMPONENTS_GAP).apply {
+      name = "Code review status: error"
+      border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
+
+      add(label)
+      add(actionLink)
+    }
+  }
+
   /**
    * @param resolveActionFlow If an ActionListener is emitted, there's some action to execute on click.
    *                          If a String is emitted, it's the tooltip text to tell why no action is available.
@@ -62,6 +90,7 @@ object CodeReviewDetailsStatusComponentFactory {
     isBusyFlow: Flow<Boolean> = flowOf(false),
   ): JComponent {
     val title = JLabel().apply {
+      JLabelUtil.setTrimOverflow(this, trim = true)
       bindIconIn(scope, hasConflicts.map {
         if (it == null) CIBuildStatusIcons.pending
         else CIBuildStatusIcons.failed
@@ -144,13 +173,13 @@ object CodeReviewDetailsStatusComponentFactory {
     }
   }
 
-  fun createRequiredResolveConversationsComponent(scope: CoroutineScope, requiredConversationsResolved: Flow<Boolean>): JComponent {
+  fun createRequiredResolveConversationsComponent(scope: CoroutineScope, hasUnresolvedConversations: Flow<Boolean>): JComponent {
     return ReviewDetailsStatusLabel("Code review status: required conversations resolved").apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = CIBuildStatusIcons.failed
       text = CollaborationToolsBundle.message("review.details.status.conversations")
       isVisible = false
-      bindVisibilityIn(scope, requiredConversationsResolved)
+      bindVisibilityIn(scope, hasUnresolvedConversations)
     }
   }
 
@@ -169,6 +198,7 @@ object CodeReviewDetailsStatusComponentFactory {
     val ciJobs = statusVm.ciJobs
 
     val title = JLabel().apply {
+      JLabelUtil.setTrimOverflow(this, trim = true)
       bindIconIn(scope, ciJobs.map { jobs -> calcPipelineIcon(jobs) })
       bindTextIn(scope, ciJobs.map { jobs -> calcPipelineText(jobs) })
     }

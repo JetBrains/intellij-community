@@ -19,7 +19,6 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
-    "//platform/xdebugger-impl/shared",
     "//platform/project/shared:project",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl/rpc",
@@ -27,6 +26,8 @@ jvm_library(
     "//platform/execution-impl",
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/core-api:core",
+    "//platform/execution",
+    "//platform/util/concurrency",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.rpc` end

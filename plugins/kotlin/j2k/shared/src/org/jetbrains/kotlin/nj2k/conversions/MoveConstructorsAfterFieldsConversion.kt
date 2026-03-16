@@ -7,7 +7,18 @@ import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.assignmentStatement
 import org.jetbrains.kotlin.nj2k.forEachDescendantOfType
 import org.jetbrains.kotlin.nj2k.symbols.JKUniverseFieldSymbol
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKBlockImpl
+import org.jetbrains.kotlin.nj2k.tree.JKClassBody
+import org.jetbrains.kotlin.nj2k.tree.JKDeclaration
+import org.jetbrains.kotlin.nj2k.tree.JKExpression
+import org.jetbrains.kotlin.nj2k.tree.JKField
+import org.jetbrains.kotlin.nj2k.tree.JKInitDeclaration
+import org.jetbrains.kotlin.nj2k.tree.JKJavaStaticInitDeclaration
+import org.jetbrains.kotlin.nj2k.tree.JKKtInitDeclaration
+import org.jetbrains.kotlin.nj2k.tree.JKStubExpression
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier
+import org.jetbrains.kotlin.nj2k.tree.hasOtherModifier
 import org.jetbrains.kotlin.nj2k.unboxFieldReference
 
 class MoveConstructorsAfterFieldsConversion(context: ConverterContext) : RecursiveConversion(context) {

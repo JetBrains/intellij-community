@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Maxim Mossienko
  */
-public class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool {
+public final class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool {
   @Override
   public boolean isEnabledByDefault() {
     return true;

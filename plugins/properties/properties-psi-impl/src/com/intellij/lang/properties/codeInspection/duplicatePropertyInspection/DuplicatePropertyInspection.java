@@ -2,7 +2,16 @@
 package com.intellij.lang.properties.codeInspection.duplicatePropertyInspection;
 
 import com.intellij.analysis.AnalysisBundle;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.GlobalSimpleInspectionTool;
+import com.intellij.codeInspection.HTMLComposer;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptionsProcessor;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.options.OptDropdown;
 import com.intellij.codeInspection.options.OptPane;
@@ -39,9 +48,19 @@ import com.intellij.util.text.StringSearcher;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.dropdown;
+import static com.intellij.codeInspection.options.OptPane.option;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
   public boolean CURRENT_FILE = true;

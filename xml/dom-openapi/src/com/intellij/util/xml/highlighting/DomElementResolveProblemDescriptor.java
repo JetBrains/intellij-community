@@ -15,8 +15,8 @@
  */
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.util.xml.GenericDomValue;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 
 public interface DomElementResolveProblemDescriptor extends DomElementProblemDescriptor{

@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.NlsActions.ActionDescription;

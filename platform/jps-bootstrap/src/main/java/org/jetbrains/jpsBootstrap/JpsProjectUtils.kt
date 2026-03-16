@@ -15,6 +15,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaSdkType
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer
@@ -28,7 +29,8 @@ import kotlin.io.path.listDirectoryEntries
 object JpsProjectUtils {
   fun loadJpsProject(projectHome: Path, jdkHome: Path, kotlincHome: Path): JpsModel {
     val startTime = System.currentTimeMillis()
-    val m2LocalRepository = Path.of(System.getProperty("user.home"), ".m2", "repository")
+    val m2LocalRepository = getMavenRepositoryPath()?.let { Path.of(it) }
+                            ?: Path.of(System.getProperty("user.home"), ".m2", "repository")
     val model = JpsElementFactory.getInstance().createModel()
 
     val pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)

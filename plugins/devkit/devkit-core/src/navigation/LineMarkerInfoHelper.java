@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.navigation.DomGotoRelatedItem;
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
 import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer;
+import com.intellij.devkit.core.icons.DevkitCoreIcons;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.util.NlsSafe;
@@ -20,15 +21,18 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.DevKitIcons;
-import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.Action;
+import org.jetbrains.idea.devkit.dom.Component;
+import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.Group;
+import org.jetbrains.idea.devkit.dom.Listeners;
 import org.jetbrains.idea.devkit.util.ActionCandidate;
 import org.jetbrains.idea.devkit.util.ComponentCandidate;
 import org.jetbrains.idea.devkit.util.ListenerCandidate;
 import org.jetbrains.idea.devkit.util.PointableCandidate;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -103,7 +107,7 @@ final class LineMarkerInfoHelper {
                              @Nls(capitalization = Nls.Capitalization.Title) String popup,
                              NullableFunction<T, @NlsSafe String> namer) {
     return NavigationGutterIconBuilder
-      .create(DevKitIcons.Gutter.Plugin, CONVERTER, target -> {
+      .create(DevkitCoreIcons.Gutter.Plugin, CONVERTER, target -> {
         DomElement domElement = DomUtil.getDomElement(target.pointer.getElement());
         return Collections.singletonList(new DomGotoRelatedItem(domElement, "DevKit") {
           @Override

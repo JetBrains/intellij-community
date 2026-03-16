@@ -17,7 +17,13 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyLambdaExpression;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +53,8 @@ public final class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAct
       return false;
     }
 
-    PyLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(psiFile.findElementAt(editor.getCaretModel().getOffset()), PyLambdaExpression.class);
+    PyLambdaExpression lambdaExpression =
+      PsiTreeUtil.getParentOfType(psiFile.findElementAt(editor.getCaretModel().getOffset()), PyLambdaExpression.class);
     if (lambdaExpression != null) {
       if (lambdaExpression.getBody() != null) {
         final ControlFlow flow = ControlFlowCache.getControlFlow(lambdaExpression);
@@ -62,7 +69,8 @@ public final class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAct
 
   @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyLambdaExpression.class);
+    PyLambdaExpression lambdaExpression =
+      PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyLambdaExpression.class);
     if (lambdaExpression != null) {
       String name = "function";
       while (IntroduceValidator.isDefinedInScope(name, lambdaExpression)) {
@@ -84,11 +92,12 @@ public final class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAct
       PyFunction function = functionBuilder.buildFunction();
 
       final PyStatement statement = PsiTreeUtil.getParentOfType(lambdaExpression,
-                                                                 PyStatement.class);
+                                                                PyStatement.class);
       if (statement != null) {
         final PsiElement statementParent = statement.getParent();
-        if (statementParent != null)
+        if (statementParent != null) {
           function = (PyFunction)statementParent.addBefore(function, statement);
+        }
       }
 
       function = CodeInsightUtilCore

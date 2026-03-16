@@ -6,11 +6,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.ex.JpsCompositeElementBase;
 import org.jetbrains.jps.model.ex.JpsFactoryElementChildRoleBase;
-import org.jetbrains.jps.model.java.compiler.*;
+import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
+import org.jetbrains.jps.model.java.compiler.JpsValidationConfiguration;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @ApiStatus.Internal
 public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<JpsJavaCompilerConfigurationImpl> implements JpsJavaCompilerConfiguration {

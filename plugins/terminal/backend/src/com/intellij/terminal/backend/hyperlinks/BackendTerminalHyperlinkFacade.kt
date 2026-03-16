@@ -5,6 +5,7 @@ import com.intellij.execution.filters.navigate
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
+import com.intellij.util.SlowOperations
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfo
@@ -30,9 +32,10 @@ class BackendTerminalHyperlinkFacade(
   coroutineScope: CoroutineScope,
   outputModel: TerminalOutputModel,
   isInAlternateBuffer: Boolean,
+  filterContext: TerminalHyperlinkFilterContext?,
 ) {
 
-  private val highlighter = BackendTerminalHyperlinkHighlighter(project, coroutineScope, outputModel, isInAlternateBuffer)
+  private val highlighter = BackendTerminalHyperlinkHighlighter(project, coroutineScope, outputModel, isInAlternateBuffer, filterContext)
   private val model = TerminalHyperlinksModel(if (isInAlternateBuffer) "Backend AltBuf" else "Backend Output", outputModel)
 
   val heartbeatFlow: Flow<TerminalHyperlinksHeartbeatEvent> get() = highlighter.heartbeatFlow
@@ -64,11 +67,13 @@ class BackendTerminalHyperlinkFacade(
   suspend fun hyperlinkClicked(hyperlinkId: TerminalHyperlinkId, mouseEvent: EditorMouseEvent?) {
     val hyperlink = model.getHyperlink(hyperlinkId)?.hyperlinkInfo ?: return
     withContext(Dispatchers.EDT) { // navigation might need the WIL
-      if (hyperlink is HyperlinkInfoBase && mouseEvent != null) {
-        hyperlink.navigate(project, mouseEvent.editor, mouseEvent.logicalPosition)
-      }
-      else {
-        hyperlink.navigate(project)
+      SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
+        if (hyperlink is HyperlinkInfoBase && mouseEvent != null) {
+          hyperlink.navigate(project, mouseEvent.editor, mouseEvent.logicalPosition)
+        }
+        else {
+          hyperlink.navigate(project)
+        }
       }
       ReworkedTerminalUsageCollector.logHyperlinkFollowed(hyperlink.javaClass)
     }

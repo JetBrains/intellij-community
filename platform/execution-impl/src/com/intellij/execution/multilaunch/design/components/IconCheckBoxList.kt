@@ -5,7 +5,12 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
-import javax.swing.*
+import javax.swing.DefaultListModel
+import javax.swing.Icon
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.SwingConstants
 
 abstract class IconCheckBoxList<T>(model: DefaultListModel<T>) : CheckBoxList<T>(model) {
   constructor() : this(DefaultListModel())

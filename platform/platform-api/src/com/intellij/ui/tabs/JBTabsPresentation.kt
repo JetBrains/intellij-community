@@ -8,6 +8,8 @@ import java.awt.Insets
 interface JBTabsPresentation {
   var isHideTabs: Boolean
 
+  var showBorder: Boolean
+
   fun setPaintFocus(paintFocus: Boolean): JBTabsPresentation
 
   fun setSideComponentVertical(vertical: Boolean): JBTabsPresentation

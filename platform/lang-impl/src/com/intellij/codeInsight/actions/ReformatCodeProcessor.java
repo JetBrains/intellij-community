@@ -20,7 +20,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDirectory;
@@ -139,8 +146,9 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
       return new FutureTask<>(() -> false);
     }
 
+    List<TextRange> changedRangesToFormate = processChangedTextOnly ? getChangedRangesToFormat(psiFile) : null;
     Computable<List<TextRange>> prepareRangesForFormat = () -> {
-      List<TextRange> formattingRanges = getRangesToFormat(psiFile, processChangedTextOnly);
+      List<TextRange> formattingRanges = changedRangesToFormate == null ? getRangesToFormat(psiFile) : changedRangesToFormate;
       CodeFormattingData.prepare(fileToProcess, formattingRanges);
       return formattingRanges;
     };
@@ -154,9 +162,14 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     boolean doNotKeepLineBreaks = confirmSecondReformat(psiFile);
     return new FutureTask<>(() -> {
       Ref<Boolean> result = new Ref<>();
-      CodeStyle.runWithLocalSettings(myProject, CodeStyle.getSettings(fileToProcess), (settings) -> {
+      final var fileSettings = CodeStyle.getSettings(fileToProcess);
+      if (LOG.isDebugEnabled()) {
+        //noinspection ObjectToString
+        LOG.debug("reformat " + fileToProcess.getName() + " uses " + fileSettings);
+      }
+      CodeStyle.runWithLocalSettings(myProject, fileSettings, (localSettings) -> {
         if (doNotKeepLineBreaks) {
-          settings.getCommonSettings(fileToProcess.getLanguage()).KEEP_LINE_BREAKS = false;
+          localSettings.getCommonSettings(fileToProcess.getLanguage()).KEEP_LINE_BREAKS = false;
         }
         if (commitAction != null) {
           commitAction.run();
@@ -166,6 +179,11 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
       });
       return result.get();
     });
+  }
+
+  private static @NotNull List<TextRange> getChangedRangesToFormat(@NotNull PsiFile psiFile) {
+    ChangedRangesInfo ranges = ReadAction.compute(() -> VcsFacade.getInstance().getChangedRangesInfo(psiFile));
+    return ranges != null ? ranges.allChangedRanges : Collections.emptyList();
   }
 
   private static boolean isSecondReformatDisabled() {
@@ -283,11 +301,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     }
   }
 
-  private @NotNull List<TextRange> getRangesToFormat(@NotNull PsiFile file, boolean processChangedTextOnly) {
-    if (processChangedTextOnly) {
-      ChangedRangesInfo info = VcsFacade.getInstance().getChangedRangesInfo(file);
-      return info != null ? info.allChangedRanges : Collections.emptyList();
-    }
+  private @NotNull List<TextRange> getRangesToFormat(@NotNull PsiFile file) {
     if (mySelectionModel != null) {
       return getSelectedRanges(mySelectionModel);
     }

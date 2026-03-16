@@ -17,8 +17,9 @@ package com.intellij.laf.macos;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerBorder;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JSpinner;
+import java.awt.Component;
+import java.awt.Rectangle;
 import java.awt.geom.Area;
 
 /**

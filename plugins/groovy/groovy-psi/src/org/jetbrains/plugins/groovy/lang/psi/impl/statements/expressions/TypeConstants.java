@@ -6,7 +6,9 @@ import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.RANK_TO_TYPE;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.TYPE_TO_RANK;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.getQualifiedName;
 
 public interface TypeConstants {
 

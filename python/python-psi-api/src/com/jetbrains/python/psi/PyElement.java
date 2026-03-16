@@ -23,5 +23,4 @@ public interface PyElement extends PyAstElement {
    * An empty array to return cheaply without allocating it anew.
    */
   PyElement[] EMPTY_ARRAY = new PyElement[0];
-
 }

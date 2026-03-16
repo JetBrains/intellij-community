@@ -8,7 +8,7 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 final class PsiViewerMethodExtension extends JavaPsiViewerExtension {
   @Override

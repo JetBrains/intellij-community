@@ -67,7 +67,34 @@ public final class ObjectTree {
       if (isDisposed(parent)) {
         return false;
       }
-      register(parent, child);
+      if (parent == child) {
+        throw new IllegalArgumentException("Cannot register to itself: " + parent);
+      }
+
+      myDisposedObjects.remove(child);
+      if (child instanceof Disposer.CheckedDisposableImpl) {
+        // if we dispose a child and then register it back, it means it's not disposed anymore
+        ((Disposer.CheckedDisposableImpl)child).isDisposed = false;
+      }
+
+      ObjectNode parentNode = getParentNode(parent).findOrCreateChildNode(parent);
+      ObjectNode childNode = getParentNode(child).moveChildNodeToOtherParent(child, parentNode);
+      myObject2ParentNode.put(child, parentNode);
+
+      assert childNode.getObject() == child;
+      checkWasNotAddedAlreadyAsChild(parentNode, childNode);
+
+      // parent could be disposed outside our lock while we are messing with the pointers here - undo registering in this case
+      if (isDisposed(parent)) {
+        List<Disposable> disposables = new ArrayList<>();
+        childNode.removeChildNodesRecursively(disposables, this, null, null);
+        for (Disposable disposable : disposables) {
+          myObject2ParentNode.remove(disposable);
+        }
+        parentNode.removeChildNode(childNode);
+        return false;
+      }
+
       return true;
     }
   }
@@ -155,6 +182,15 @@ public final class ObjectTree {
       for (Disposable disposable : disposables) {
         myObject2ParentNode.remove(disposable);
       }
+      
+      // Mark CheckedDisposable objects as disposed INSIDE the lock to prevent race condition
+      // where another thread could re-register the disposable between tree removal and dispose() call.
+      for (Disposable disposable : disposables) {
+        if (disposable instanceof Disposer.CheckedDisposableImpl) {
+          ((Disposer.CheckedDisposableImpl)disposable).isDisposed = true;
+        }
+      }
+      
       return disposables;
     });
   }
@@ -177,6 +213,16 @@ public final class ObjectTree {
       for (Disposable disposable : disposables) {
         myObject2ParentNode.remove(disposable);
       }
+
+      // Mark CheckedDisposable objects as disposed INSIDE the lock to prevent race condition
+      // where another thread could re-register the disposable between tree removal and dispose() call.
+      // This is safe because CheckedDisposable.dispose() is idempotent (just sets isDisposed=true).
+      for (Disposable disposable : disposables) {
+        if (disposable instanceof Disposer.CheckedDisposableImpl) {
+          ((Disposer.CheckedDisposableImpl)disposable).isDisposed = true;
+        }
+      }
+
       return disposables;
     });
   }
@@ -216,6 +262,21 @@ public final class ObjectTree {
     synchronized (getTreeLock()) {
       for (ObjectNode node : myObject2ParentNode.values()) {
         node.assertNoReferencesKept(disposableClass);
+      }
+    }
+  }
+
+  /**
+   * Asserts that no objects matching the given predicate are reachable in the Tree.
+   *
+   * @param predicate the predicate to test objects against; returns {@code true} for objects that should not be present
+   * @throws AssertionError if any object matching the predicate is found reachable from any node in the tree
+   */
+  @TestOnly
+  public void assertNoReferenceKeptInTree(@NotNull Predicate<Object> predicate) {
+    synchronized (getTreeLock()) {
+      for (ObjectNode node : myObject2ParentNode.values()) {
+        node.assertNoReferencesKept(predicate);
       }
     }
   }

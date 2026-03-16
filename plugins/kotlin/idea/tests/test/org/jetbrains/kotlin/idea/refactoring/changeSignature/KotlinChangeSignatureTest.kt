@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
@@ -16,7 +16,15 @@ import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.test.Diagnostic
+import org.jetbrains.kotlin.idea.test.k1DiagnosticsProvider
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -40,6 +48,8 @@ class KotlinChangeSignatureTest : BaseKotlinChangeSignatureTest<KotlinChangeInfo
     override fun addFullQualifier(fragment: KtExpressionCodeFragment) {
         AddFullQualifierIntention.Holder.addQualifiersRecursively(fragment)
     }
+
+    override fun getDiagnosticProvider(): (KtFile) -> List<Diagnostic> = k1DiagnosticsProvider
 
     override fun doRefactoring(configure: KotlinChangeInfo.() -> Unit) {
         KotlinChangeSignatureProcessor(project, createChangeInfo().apply { configure() }, "Change Signature").run()

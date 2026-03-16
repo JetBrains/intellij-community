@@ -8,7 +8,11 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 public final class Strings {
   private static final List<String> REPLACES_REFS = Arrays.asList("&lt;", "&gt;", "&amp;", "&#39;", "&quot;");
@@ -550,22 +554,19 @@ public final class Strings {
   public static @NotNull StringBuilder escapeToRegexp(@NotNull CharSequence text, @NotNull StringBuilder builder) {
     for (int i = 0; i < text.length(); i++) {
       final char c = text.charAt(i);
-      if (c == ' ' || Character.isLetter(c) || Character.isDigit(c) || c == '_') {
-        builder.append(c);
-      }
-      else if (c == '\n') {
+      if (c == '\n') {
         builder.append("\\n");
       }
       else if (c == '\r') {
         builder.append("\\r");
       }
+      else if (".$|()[]{}^?*+\\".indexOf(c) >= 0) {
+        // escaping ']' and '}' is not required for most regex dialects,
+        // but we do it for maximum compatibility
+        builder.append('\\').append(c);
+      }
       else {
-        final Character.UnicodeBlock block = Character.UnicodeBlock.of(c);
-        if (block == Character.UnicodeBlock.HIGH_SURROGATES || block == Character.UnicodeBlock.LOW_SURROGATES) {
-          builder.append(c);
-        } else {
-          builder.append('\\').append(c);
-        }
+        builder.append(c);
       }
     }
 

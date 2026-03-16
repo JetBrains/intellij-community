@@ -16,10 +16,10 @@ var1 = 3
 GoodAlias1 = TypeAliasType("GoodAlias1", int)
 GoodAlias2 = TypeAliasType("GoodAlias2", list[T], type_params=(T,))
 GoodAlias3 = TypeAliasType("GoodAlias3", list[T] | list[S], type_params=(S, T))
-GoodAlias4 = TypeAliasType("GoodAlias4", T | list[GoodAlias4[T]], type_params=(T,))
+GoodAlias4 = TypeAliasType("GoodAlias4", T | "list[GoodAlias4[T]]", type_params=(T,))
 GoodAlias5 = TypeAliasType(
     "GoodAlias5",
-    Callable[P, TStr] | list[S] | list[GoodAlias5[S, TStr, P]] | tuple[*Ts],
+    Callable[P, TStr] | list[S] | list["GoodAlias5[S, TStr, P]"] | tuple[*Ts],
     type_params=(S, TStr, P, Ts),
 )
 
@@ -43,9 +43,9 @@ x6: GoodAlias5[int, int, ...]  # E: incorrect type arguments
 BadAlias1 = TypeAliasType("BadAlias1", list[S], type_params=(T,))  # E: S not in scope
 BadAlias2 = TypeAliasType("BadAlias2", list[S])  # E: S not in scope
 BadAlias3 = TypeAliasType("BadAlias3", int, type_params=my_tuple)  # E: not literal tuple
-BadAlias4 = TypeAliasType("BadAlias4", BadAlias4)  # E: circular dependency
-BadAlias5 = TypeAliasType("BadAlias5", T | BadAlias5[str], type_params=(T,))  # E: circular dependency
-BadAlias6 = TypeAliasType("BadAlias6", BadAlias7)  # E: circular dependency
+BadAlias4 = TypeAliasType("BadAlias4", "BadAlias4")  # E: circular dependency
+BadAlias5 = TypeAliasType("BadAlias5", T | "BadAlias5[str]", type_params=(T,))  # E: circular dependency
+BadAlias6 = TypeAliasType("BadAlias6", "BadAlias7")  # E: circular dependency
 BadAlias7 = TypeAliasType("BadAlias7", BadAlias6)  # E?: circular dependency
 
 # The following are invalid type expressions for a type alias.
@@ -62,3 +62,5 @@ BadAlias17 = TypeAliasType("BadAlias17", True)  # E
 BadAlias18 = TypeAliasType("BadAlias18", 1)  # E
 BadAlias19 = TypeAliasType("BadAlias19", list or set)  # E
 BadAlias20 = TypeAliasType("BadAlias20", f"{'int'}")  # E
+
+BadAlias21 = TypeAliasType("BadAlias21", list[BadAlias21])  # E

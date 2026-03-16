@@ -5,7 +5,9 @@ package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 import com.intellij.debugger.streams.core.trace.dsl.Expression
 import com.intellij.debugger.streams.core.trace.dsl.StatementFactory
 import com.intellij.debugger.streams.core.trace.dsl.impl.LineSeparatedCodeBlock
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 open class KotlinCodeBlock(statementFactory: StatementFactory) : LineSeparatedCodeBlock(statementFactory) {
     override fun doReturn(expression: Expression) = addStatement(expression)
 }

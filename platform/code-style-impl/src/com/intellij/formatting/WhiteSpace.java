@@ -444,9 +444,11 @@ public final class WhiteSpace {
    * will be used for tab representation if there are non-white space symbols before it (IJ editor may use different number of columns
    * for single tabulation symbol representation).
    * <p/>
-   * Hence, we can ask current white space object to avoid using tabulation symbols.
+   * Hence, we can ask current white space object to avoid using tabulation symbols for alignment.
+   * Tab usage is not necessarily suppressed entirely: if this whitespace starts a new line, tabs may still be
+   * used for indentation while alignment remains spaces.
    *
-   * @param skip   indicates if tabulations symbols usage should be suppressed
+   * @param skip   indicates if tabulation symbols usage should be suppressed for alignment
    */
   public void setForceSkipTabulationsUsage(boolean skip) {
     myForceSkipTabulationsUsage = skip;
@@ -738,4 +740,3 @@ public final class WhiteSpace {
   private record WhiteSpaceInfo(int lineFeeds, int indentSpaces, int spaces) {
   }
 }
-

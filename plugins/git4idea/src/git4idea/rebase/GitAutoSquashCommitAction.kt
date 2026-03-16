@@ -1,9 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.vcs.log.VcsShortCommitDetails
 import git4idea.branch.GitRebaseParams
@@ -11,6 +15,7 @@ import git4idea.i18n.GitBundle
 import git4idea.rebase.interactive.getRebaseUpstreamFor
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import kotlinx.coroutines.CoroutineScope
 
 internal abstract class GitAutoSquashCommitAction : GitSingleCommitEditingAction() {
   override fun update(e: AnActionEvent, commitEditingData: SingleCommitEditingData) {
@@ -20,7 +25,7 @@ internal abstract class GitAutoSquashCommitAction : GitSingleCommitEditingAction
     }
   }
 
-  override fun actionPerformedAfterChecks(commitEditingData: SingleCommitEditingData) {
+  override fun actionPerformedAfterChecks(scope: CoroutineScope, commitEditingData: SingleCommitEditingData) {
     val commit = commitEditingData.selectedCommit
     val project = commitEditingData.project
 

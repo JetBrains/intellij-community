@@ -12,27 +12,53 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.scopes.SearchScopesInfo
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeItemsProvider
+import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SePreviewInfo
+import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
+import com.intellij.platform.searchEverywhere.SeSession
+import com.intellij.platform.searchEverywhere.SeTransferEnd
+import com.intellij.platform.searchEverywhere.SeTransferEvent
+import com.intellij.platform.searchEverywhere.SeTransferItem
+import com.intellij.platform.searchEverywhere.asRef
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
 import com.intellij.platform.searchEverywhere.providers.SeSortedProviderIds
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
+import com.intellij.platform.searchEverywhere.toProviderId
 import com.intellij.platform.searchEverywhere.utils.SeResultsCountBalancer
 import com.jetbrains.rhizomedb.EID
 import fleet.kernel.onDispose
 import fleet.kernel.rete.Rete
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.any
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
@@ -104,7 +130,11 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     dataContextId: DataContextId,
   ): SeSortedProviderIds? {
     val providersHolder = getProvidersHolder(session, dataContextId) ?: return null
-    val allProviderIds = SeItemsProviderFactory.EP_NAME.extensionList.map { it.id.toProviderId() } + providersHolder.legacyAllTabContributors.map { it.key }
+    val allProviderIds = (SeItemsProviderFactory.EP_NAME.extensionList.map { it.id.toProviderId() } +
+                          providersHolder.legacyContributors.allTab.map { it.key }).filter {
+      // Remove the frontend version of TopHit contributor
+      it.value != SeProviderIdUtils.TOP_HIT_ID
+    }
     return SeSortedProviderIds.create(allProviderIds, providersHolder, session)
   }
 
@@ -268,6 +298,18 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     return providerIds.any { providerId ->
       val provider = getProvidersHolder(session, dataContextId)?.get(providerId, isAllTab)
       provider?.isExtendedInfoEnabled() ?: false
+    }
+  }
+
+  suspend fun isCommandsSupported(
+    session: SeSession,
+    dataContextId: DataContextId,
+    providerIds: List<SeProviderId>,
+    isAllTab: Boolean,
+  ): Boolean {
+    return providerIds.any { providerId ->
+      val provider = getProvidersHolder(session, dataContextId)?.get(providerId, isAllTab)
+      provider?.isCommandsSupported() ?: false
     }
   }
 

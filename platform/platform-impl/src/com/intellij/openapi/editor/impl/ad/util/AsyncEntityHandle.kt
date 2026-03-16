@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.util
 
 import com.intellij.openapi.components.Service
@@ -14,11 +14,9 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.concurrent.atomic.AtomicReference
 
 
-@Experimental
 @Service(Level.APP)
 internal class AsyncEntityService(private val coroutineScope: CoroutineScope) {
 
@@ -53,7 +51,6 @@ internal class AsyncEntityService(private val coroutineScope: CoroutineScope) {
 private val ENTITY_IS_READY: Deferred<Entity> = CompletableDeferred()
 private val ENTITY_IS_NOT_READY: Deferred<Entity>? = null
 
-@Experimental
 internal class AsyncEntityHandle<E : Entity>(
   private val debugName: String,
   private val entityRef: AtomicReference<E>,

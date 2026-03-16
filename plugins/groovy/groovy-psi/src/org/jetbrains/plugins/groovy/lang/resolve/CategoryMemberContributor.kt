@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
+import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.PsiTypesUtil.getPsiClass

@@ -4,15 +4,28 @@ package com.intellij.util.text.matching;
 import com.intellij.openapi.util.SystemInfoRt;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * IntelliJ Platform utility for converting characters between keyboard layouts at runtime.
+ * <p>
+ * This class maintains mutable state for keyboard layout conversion.
+ * It's expected the state will be populated by IDE while capturing keyboard events and matching
+ * the physical key code with the resulting character based on the current keyboard layout.
+ * By comparing these, it builds a mapping from non-ASCII characters to their ASCII equivalents on the same physical keys.
+ * <p>
+ * Example: User presses the key that produces 'q' in English layout, but their current layout
+ * produces 'й' (Russian).
+ * The IDE stores: 'й' → 'q'.
+ * <p>
+ * On Linux key events provide raw codes) instead of key codes, so it always falls back to hard-coded mapping.
+ *
  * @author gregsh
+ * @see KeyboardLayoutConverter
+ * @see com.intellij.psi.codeStyle.PlatformKeyboardLayoutConverter
  */
 public final class KeyboardLayoutUtil {
-
   private static final Map<Character, Character> ourLLtoASCII = new ConcurrentHashMap<>();
 
   public static @Nullable Character getAsciiForChar(char a) {
@@ -25,7 +38,7 @@ public final class KeyboardLayoutUtil {
       // ASCII rawCodes can be collected to map chars via their rawCode in future.
       // That would also allow map latin chars to latin chars when a layout switches latin keys.
       char lc = Character.toLowerCase(a);
-      c = HardCoded.LL.get(lc);
+      c = RussianToEnglishKeyboardLayoutConverter.INSTANCE.convert(lc);
       if (c == null) return null;
       return lc == a ? c : Character.toUpperCase(c);
     }
@@ -42,25 +55,5 @@ public final class KeyboardLayoutUtil {
       converted = Character.toUpperCase(converted);
     }
     ourLLtoASCII.put(keyChar, converted);
-  }
-
-  private static class HardCoded {
-    private static final Map<Character, Character> LL = new HashMap<>(33);
-
-    static {
-      // keyboard layouts in lowercase
-      char[] layout = new char[]{
-        // Russian-PC
-        'й', 'q', 'ц', 'w', 'у', 'e', 'к', 'r', 'е', 't', 'н', 'y', 'г', 'u',
-        'ш', 'i', 'щ', 'o', 'з', 'p', 'х', '[', 'ъ', ']', 'ф', 'a', 'ы', 's',
-        'в', 'd', 'а', 'f', 'п', 'g', 'р', 'h', 'о', 'j', 'л', 'k', 'д', 'l',
-        'ж', ';', 'э', '\'', 'я', 'z', 'ч', 'x', 'с', 'c', 'м', 'v', 'и', 'b',
-        'т', 'n', 'ь', 'm', 'б', ',', 'ю', '.', '.', '/'
-      };
-      int i = 0;
-      while (i < layout.length) {
-        LL.put(layout[i++], layout[i++]);
-      }
-    }
   }
 }

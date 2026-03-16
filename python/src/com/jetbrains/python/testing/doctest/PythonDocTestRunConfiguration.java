@@ -12,6 +12,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec;
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -30,6 +31,8 @@ import static com.intellij.execution.target.value.TargetEnvironmentFunctions.tar
 
 public class PythonDocTestRunConfiguration extends AbstractPythonLegacyTestRunConfiguration<PythonDocTestRunConfiguration>
   implements PythonDocTestRunConfigurationParams {
+  private static final PackageAvailabilitySpec PACKAGE_SPEC = new PackageAvailabilitySpec("doctest", "doctest.DocTestRunner");
+
   protected @NlsSafe String myPluralTitle = "Doctests";
   protected @NlsSafe String myTitle = "Doctest";
 
@@ -59,7 +62,7 @@ public class PythonDocTestRunConfiguration extends AbstractPythonLegacyTestRunCo
 
   public PythonDocTestRunConfiguration(Project project,
                                        ConfigurationFactory configurationFactory) {
-    super(project, configurationFactory);
+    super(project, configurationFactory, PACKAGE_SPEC);
   }
 
   @Override

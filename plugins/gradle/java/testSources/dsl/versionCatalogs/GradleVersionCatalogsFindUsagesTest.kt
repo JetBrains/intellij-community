@@ -6,7 +6,9 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Unmodifiable
+import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.BASE_VERSION_CATALOG_FIXTURE
 import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.DYNAMICALLY_INCLUDED_SUBPROJECTS_FIXTURE
+import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.VERSION_CATALOG_COMPOSITE_BUILD_FIXTURE
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -16,15 +18,20 @@ import org.junit.jupiter.params.ParameterizedTest
 /**
  * Currently, this test does not trigger Gradle sync. So, version catalogs are determined relying on settings.gradle parsing.
  * If Gradle sync would be done, version catalog locations would be determined by GradleVersionCatalogEntity, willed with data from sync.
-*/
+ */
 class GradleVersionCatalogsFindUsagesTest : GradleCodeInsightTestCase() {
 
-  private fun testVersionCatalogFindUsages(version: GradleVersion, versionCatalogText: String, buildGradleText: String,
-                                   checker: (Collection<PsiReference>) -> Unit) {
+  private fun testVersionCatalogFindUsages(
+    version: GradleVersion,
+    versionCatalogText: String,
+    buildGradleText: String,
+    buildScriptPath: String = "build.gradle",
+    checker: (Collection<PsiReference>) -> Unit,
+  ) {
     checkCaret(versionCatalogText)
-    testEmptyProject(version) {
+    test(version, BASE_VERSION_CATALOG_FIXTURE) {
       writeTextAndCommit("gradle/libs.versions.toml", versionCatalogText)
-      writeTextAndCommit("build.gradle", buildGradleText)
+      writeTextAndCommit(buildScriptPath, buildGradleText)
       runInEdtAndWait {
         codeInsightFixture.configureFromExistingVirtualFile(getFile("gradle/libs.versions.toml"))
         val elementAtCaret = codeInsightFixture.elementAtCaret
@@ -83,21 +90,34 @@ class GradleVersionCatalogsFindUsagesTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @BaseGradleVersionSource
   fun testNestedProject(gradleVersion: GradleVersion) {
-    testEmptyProject(gradleVersion) {
-      writeTextAndCommit("gradle/libs.versions.toml", """
+    testVersionCatalogFindUsages(
+      gradleVersion,
+      versionCatalogText = """
         [libraries]
-        aaa-b<caret>bb = { group = "org.apache.groovy", name = "groovy", version = "4.0.2" }
-      """.trimIndent())
-      writeTextAndCommit("settings.gradle", """
-        rootProject.name = 'empty-project'
-        include 'app'
-      """.trimIndent())
-      writeTextAndCommit("build.gradle", "")
-      writeTextAndCommit("app/build.gradle", "libs.aaa.bbb")
+        aaa-b<caret>bb = { group = "org.apache.groovy", name = "groovy", version = "4.0.2" }""".trimIndent(),
+      buildGradleText = "libs.aaa.bbb",
+      buildScriptPath = "subproject1/build.gradle"
+    ) { usages ->
       runInEdtAndWait {
-        codeInsightFixture.configureFromExistingVirtualFile(getFile("gradle/libs.versions.toml"))
+        assertContainsUsagesInFiles(usages, "subproject1/build.gradle")
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNestedProjectOfIncludedBuild(gradleVersion: GradleVersion) {
+    test(gradleVersion, VERSION_CATALOG_COMPOSITE_BUILD_FIXTURE) {
+      writeTextAndCommit("includedBuild1/gradle/libs.versions.toml", /* language=TOML */ """
+        [libraries]
+        apache-gro<caret>ovy = { module = "org.apache.groovy:groovy", version = "4.0.0" }
+        """.trimIndent()
+      )
+      writeTextAndCommit("includedBuild1/subproject1/build.gradle", "libs.apache.groovy")
+      runInEdtAndWait {
+        codeInsightFixture.configureFromExistingVirtualFile(getFile("includedBuild1/gradle/libs.versions.toml"))
         val usages = ReferencesSearch.search(codeInsightFixture.elementAtCaret).findAll()
-        assertContainsUsagesInFiles(usages, "app/build.gradle")
+        assertContainsUsagesInFiles(usages, "includedBuild1/subproject1/build.gradle")
       }
     }
   }

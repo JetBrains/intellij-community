@@ -21,7 +21,12 @@ import com.intellij.tasks.jira.rest.api3.JiraRestApiCloud3;
 import com.intellij.tasks.jira.soap.JiraLegacyApi;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.apache.commons.httpclient.*;
+import org.apache.commons.httpclient.Cookie;
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.StatusLine;
 import org.apache.commons.httpclient.auth.HttpAuthenticator;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -37,7 +42,12 @@ import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Collections;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.Vector;
 import java.util.regex.Pattern;
 
 /**

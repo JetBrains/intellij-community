@@ -4,6 +4,7 @@ package com.jetbrains.python.spellchecker;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.inspections.Splitter;
@@ -73,12 +74,17 @@ public final class PythonSpellcheckerStrategy extends SpellcheckingStrategy impl
     }
   }
 
+  @Override
+  public boolean useTextLevelSpellchecking() {
+    return Registry.is("spellchecker.grazie.enabled", false);
+  }
+
   private final StringLiteralTokenizer myStringLiteralTokenizer = new StringLiteralTokenizer();
   private final FormatStringTokenizer myFormatStringTokenizer = new FormatStringTokenizer();
 
   @Override
   public @NotNull Tokenizer getTokenizer(PsiElement element) {
-    if (element instanceof PyStringLiteralExpression) {
+    if (element instanceof PyStringLiteralExpression && !useTextLevelSpellchecking()) {
       final InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(element.getProject());
       if (element.getTextLength() >= 2 && injectionManager.getInjectedPsiFiles(element) != null) {
         return EMPTY_TOKENIZER;

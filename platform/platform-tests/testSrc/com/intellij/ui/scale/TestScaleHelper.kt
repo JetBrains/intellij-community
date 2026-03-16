@@ -16,7 +16,11 @@ import com.intellij.util.SystemProperties
 import org.junit.AfterClass
 import org.junit.Assume
 import org.junit.BeforeClass
-import java.awt.*
+import java.awt.Graphics2D
+import java.awt.GraphicsConfiguration
+import java.awt.GraphicsDevice
+import java.awt.GraphicsEnvironment
+import java.awt.Rectangle
 import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.awt.image.ColorModel

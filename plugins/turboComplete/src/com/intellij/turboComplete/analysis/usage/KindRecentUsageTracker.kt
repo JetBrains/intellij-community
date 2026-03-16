@@ -1,7 +1,8 @@
 package com.intellij.turboComplete.analysis.usage
 
 import com.intellij.platform.ml.impl.turboComplete.CompletionKind
-import java.util.*
+import java.util.LinkedList
+import java.util.Queue
 
 data class ValuePerPeriod<T>(
   val period: Int,

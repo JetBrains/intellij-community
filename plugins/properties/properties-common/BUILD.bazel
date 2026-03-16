@@ -29,6 +29,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/refactoring",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.properties` end

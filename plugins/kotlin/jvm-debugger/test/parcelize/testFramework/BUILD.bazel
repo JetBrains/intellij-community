@@ -1,0 +1,34 @@
+### skip generation section `test intellij.kotlin.jvm.debugger.test.parcelize.testFramework`
+
+### auto-generated section `build intellij.kotlin.jvm.debugger.test.parcelize.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "testFramework_test_lib",
+  module_name = "intellij.kotlin.jvm.debugger.test.parcelize.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//java/openapi:java",
+    "//java/testFramework",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/jvm-debugger/test/k2/testFramework:testFramework_test_lib",
+    "//platform/core-ui",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
+  ],
+  runtime_deps = [":testFramework"]
+)
+### auto-generated section `build intellij.kotlin.jvm.debugger.test.parcelize.testFramework` end

@@ -7,7 +7,7 @@ import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.Path
-import java.util.*
+import java.util.Properties
 import kotlin.time.Duration
 
 @ApiStatus.Internal

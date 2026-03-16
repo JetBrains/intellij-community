@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.mmapped;
 
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage.Page;
@@ -14,11 +14,20 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
 
-import static com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory.IfNotPageAligned.*;
+import static com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory.IfNotPageAligned.CLEAN;
+import static com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory.IfNotPageAligned.EXPAND_FILE;
+import static com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory.IfNotPageAligned.THROW_EXCEPTION;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class MMappedFileStorageTest {
 
@@ -45,6 +54,11 @@ public class MMappedFileStorageTest {
     storage.closeAndClean();
   }
 
+  @Test
+  public void newlyCreatedStorage_hasActualSizeZero() throws IOException {
+    assertEquals(0, storage.actualFileSize(),
+                 "Empty storage.actualFileSize should be 0");
+  }
 
   @Test
   public void contentOfNewlyAllocatedPage_MustBeZero() throws Exception {

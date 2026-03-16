@@ -33,7 +33,7 @@
     <applicationService serviceImplementation="org.jetbrains.yaml.smart.YAMLEditorOptions"/>
     <applicationSettings service="org.jetbrains.yaml.smart.YAMLEditorOptions"/>
     <applicationService serviceImplementation="org.jetbrains.yaml.folding.YAMLFoldingSettings"/>
-    <codeFoldingOptionsProvider instance="org.jetbrains.yaml.folding.YAMLFoldingOptionsProvider"/>
+    <codeFoldingOptionsProvider instance="org.jetbrains.yaml.folding.YAMLFoldingOptionsProvider" id="YAML" order="after Android,after C++,after Dart,after General,after Go,after Handlebars,after JAVA,after JavaScript,after JPAQL,after JSON,after Kubernetes,after LinkerScript,after Markdown,after ObjectiveC,after PHP,after Python,after Ruby,after Rust,after SQL,after Swift,after XML"/>
     <rdct.remoteSettingProvider implementation="org.jetbrains.yaml.smart.YAMLRemoteSettingInfoProvider"/>
     <editorSmartKeysConfigurable instance="org.jetbrains.yaml.smart.YAMLSmartOptionsProvider"
                                  id="editor.preferences.yamlOptions"

@@ -5,7 +5,7 @@ Tests basic behaviors of of Enum classes.
 # Specification: https://typing.readthedocs.io/en/latest/spec/enums.html#enum-definition
 
 from enum import Enum
-from typing import assert_type
+from typing import assert_type, Literal
 
 # > Enum classes are iterable and indexable, and they can be called with a
 # > value to look up the enum member with that value. Type checkers should
@@ -23,8 +23,13 @@ for color in Color:
 # > constructor. Instead, the call performs a value-based lookup of an
 # > enum member.
 
-assert_type(Color["RED"], Color)  # 'Literal[Color.RED]' is also acceptable
-assert_type(Color(3), Color)  # 'Literal[Color.BLUE]' is also acceptable
+# 'Literal[Color.RED]' and 'Color' are both acceptable
+assert_type(Color["RED"], Color)  # E[red]
+assert_type(Color["RED"], Literal[Color.RED])  # E[red]
+
+# 'Literal[Color.BLUE]' and 'Color' are both acceptable
+assert_type(Color(3), Color)  # E[blue]
+assert_type(Color(3), Literal[Color.BLUE])  # E[blue]
 
 
 # > An Enum class with one or more defined members cannot be subclassed.

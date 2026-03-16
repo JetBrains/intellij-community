@@ -3,8 +3,8 @@
 package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.KtAssert
-import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import java.io.File
 
 interface UastFileComparisonTestBase {
@@ -14,7 +14,7 @@ interface UastFileComparisonTestBase {
 
     private val isTeamCityBuild: Boolean
         get() = System.getenv("TEAMCITY_VERSION") != null
-                || KtUsefulTestCase.IS_UNDER_TEAMCITY
+                || KotlinTestUtils.IS_UNDER_TEAMCITY
 
     fun cleanUpIdenticalFile(
         currentFile: File,

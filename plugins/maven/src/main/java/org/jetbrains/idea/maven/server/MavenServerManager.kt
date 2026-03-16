@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
 import java.io.File
+import java.nio.file.Path
 import java.util.function.Predicate
 
 interface MavenServerManager : Disposable {
@@ -30,6 +31,7 @@ interface MavenServerManager : Disposable {
   fun closeAllConnectorsAndWait()
 
   fun getMavenEventListener(): File
+  fun getMavenEventListenerPath(): Path
 
   fun createIndexer(): MavenIndexerWrapper
 

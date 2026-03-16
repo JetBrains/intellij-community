@@ -1,17 +1,25 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.perFileVersion
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes
+import com.intellij.util.io.Unmappable
 import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
+import java.io.IOException
 import java.nio.file.Path
 
+/**
+ * This is a simple wrapper around [SpecializedFileAttributes], either fast or a regular one.
+ * The main function of this wrapper is to make the attribute auto-reopenable, with help of [AutoRefreshingOnVfsCloseRef]:
+ * which means that the storage will be automatically reset if VFS is rebuilt, and also automatically reopened, if [close]-ed
+ *
+ * @see AutoRefreshingOnVfsCloseRef
+ */
 @ApiStatus.Internal
-sealed interface LongFileAttribute : Closeable {
+sealed interface LongFileAttribute : Closeable, Unmappable {
   companion object {
     @JvmStatic
     fun shouldUseFastAttributes(): Boolean {
@@ -44,7 +52,9 @@ sealed interface LongFileAttribute : Closeable {
     }
   }
 
+  @Throws(IOException::class)
   fun readLong(fileId: Int): Long
+  @Throws(IOException::class)
   fun writeLong(fileId: Int, value: Long)
 }
 
@@ -69,5 +79,9 @@ private class LongFileAttributeImpl(private val attribute: FileAttribute,
 
   override fun close() {
     attributeAccessor.close()
+  }
+
+  override fun closeAndUnsafelyUnmap() {
+    attributeAccessor.closeAndUnsafelyUnmap()
   }
 }

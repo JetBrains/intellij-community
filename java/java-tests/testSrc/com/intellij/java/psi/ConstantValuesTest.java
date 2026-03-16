@@ -16,7 +16,15 @@
 package com.intellij.java.psi;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 

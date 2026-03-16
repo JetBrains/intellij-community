@@ -23,7 +23,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.NotNullPredicate;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +82,7 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
                                               final @NotNull Collection<PyMemberInfo<PyTargetExpression>> members,
                                               final PyClass @NotNull ... to) {
     return moveAssignments(from, Collections2
-      .filter(Collections2.transform(fetchElements(members), ASSIGNMENT_TRANSFORM), NotNullPredicate.INSTANCE),
+                             .filter(Collections2.transform(fetchElements(members), ASSIGNMENT_TRANSFORM), NotNullPredicate.INSTANCE),
                            to);
   }
 

@@ -13,8 +13,8 @@ internal object ThreadLocalRegistryHolderWasmJs : com.intellij.platform.syntax.e
 }
 
 /**
- * @see getThreadLocalRegistry
+ * @see instantiateThreadLocalRegistry
  */
-@fleet.util.multiplatform.Actual("instantiateThreadLocalRegistry")
+@fleet.util.multiplatform.Actual
 internal fun instantiateThreadLocalRegistryWasmJs(): com.intellij.platform.syntax.extensions.impl.RegistryHolder =
   ThreadLocalRegistryHolderWasmJs

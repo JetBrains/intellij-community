@@ -5,7 +5,11 @@ import org.gradle.api.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.tooling.*;
+import org.jetbrains.plugins.gradle.tooling.DefaultMessageBuilder;
+import org.jetbrains.plugins.gradle.tooling.Message;
+import org.jetbrains.plugins.gradle.tooling.MessageReportBuilder;
+import org.jetbrains.plugins.gradle.tooling.MessageReporter;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 
 @ApiStatus.Internal
 public class DefaultMessageReportBuilder implements MessageReportBuilder {

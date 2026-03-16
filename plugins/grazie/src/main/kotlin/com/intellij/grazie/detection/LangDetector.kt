@@ -2,32 +2,23 @@
 package com.intellij.grazie.detection
 
 import ai.grazie.detector.ChainLanguageDetector
-import ai.grazie.detector.DefaultLanguageDetectors
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.tokenizer.word.StandardWordTokenizer.words
-import ai.grazie.utils.mpp.FromResourcesDataLoader
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.config.DetectionContext
 import com.intellij.grazie.jlanguage.Lang
-import com.intellij.grazie.utils.toLinkedSet
+import com.intellij.grazie.utils.LanguageDetectorHolder
 import com.intellij.util.containers.ContainerUtil
-import kotlinx.coroutines.runBlocking
 
+/**
+ * Use [BatchLangDetector] for more accurate results, if possible
+ */
 object LangDetector {
-  private val detector by lazy {
-    runBlocking {
-      DefaultLanguageDetectors.standardForLanguages(
-        Language.all.toLinkedSet(),
-        FromResourcesDataLoader
-      )
-    }
-  }
   private val cache = ContainerUtil.createConcurrentSoftValueMap<Pair<String, Boolean>, ChainLanguageDetector.ChainDetectionResult>()
-  private const val textLimit = 1_000
 
   private fun detectWithDetails(textToDetect: String, isReliable: Boolean): ChainLanguageDetector.ChainDetectionResult {
-    require(textToDetect.length <= textLimit)
-    return cache.computeIfAbsent(textToDetect to isReliable) { detector.detectWithDetails(it.first, it.second) }
+    require(textToDetect.length <= LanguageDetectorHolder.LIMIT)
+    return cache.computeIfAbsent(textToDetect to isReliable) { LanguageDetectorHolder.get().detectWithDetails(it.first, it.second) }
   }
 
   /**
@@ -38,7 +29,7 @@ object LangDetector {
    * @return Language that is detected.
    */
   fun getLanguage(text: String): Language? {
-    val detected = detectWithDetails(text.take(textLimit), isReliable = false).result.preferred
+    val detected = detectWithDetails(text.take(LanguageDetectorHolder.LIMIT), isReliable = false).result.preferred
     return if (detected == Language.UNKNOWN) null else detected
   }
 
@@ -56,7 +47,7 @@ object LangDetector {
    * Update local detection context from text
    */
   fun updateContext(text: CharSequence, context: DetectionContext.Local) {
-    val textToDetect = text.take(1_000).toString()
+    val textToDetect = text.take(LanguageDetectorHolder.LIMIT).toString()
     val details = detectWithDetails(textToDetect, isReliable = true)
     val wordsCount = textToDetect.words().count()
     context.update(text.length, wordsCount, details)

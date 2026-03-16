@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.core.ui.impl;
 
-import com.intellij.debugger.streams.core.trace.*;
+import com.intellij.debugger.streams.core.trace.IntermediateState;
+import com.intellij.debugger.streams.core.trace.NextAwareState;
+import com.intellij.debugger.streams.core.trace.PrevAwareState;
+import com.intellij.debugger.streams.core.trace.TraceElement;
+import com.intellij.debugger.streams.core.trace.Value;
 import com.intellij.debugger.streams.core.ui.PropagationDirection;
 import com.intellij.debugger.streams.core.ui.TraceContainer;
 import com.intellij.debugger.streams.core.ui.TraceController;

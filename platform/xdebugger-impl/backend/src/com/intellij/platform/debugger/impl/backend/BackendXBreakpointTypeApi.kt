@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.rpc.DocumentPatchVersion
@@ -13,16 +13,35 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.impl.EditorId
-import com.intellij.openapi.editor.impl.findEditorOrNull
 import com.intellij.openapi.extensions.ExtensionPointAdapter
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.findDocument
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.InlineBreakpointVariantWithMatchingBreakpointDto
+import com.intellij.platform.debugger.impl.rpc.InlineBreakpointVariantsOnLine
+import com.intellij.platform.debugger.impl.rpc.TimeoutSafeResult
+import com.intellij.platform.debugger.impl.rpc.VariantSelectedResponse
+import com.intellij.platform.debugger.impl.rpc.XBreakpointDto
+import com.intellij.platform.debugger.impl.rpc.XBreakpointId
+import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi
+import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeDto
+import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeIcons
+import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeId
+import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeList
+import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeSerializableStandardPanels
+import com.intellij.platform.debugger.impl.rpc.XBreakpointsLineInfo
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.rpc.XInlineBreakpointVariantDto
+import com.intellij.platform.debugger.impl.rpc.XInlineBreakpointVariantId
+import com.intellij.platform.debugger.impl.rpc.XLineBreakpointInstallationRequest
+import com.intellij.platform.debugger.impl.rpc.XLineBreakpointInstalledResponse
+import com.intellij.platform.debugger.impl.rpc.XLineBreakpointMultipleVariantResponse
+import com.intellij.platform.debugger.impl.rpc.XLineBreakpointTypeInfo
+import com.intellij.platform.debugger.impl.rpc.XLineBreakpointVariantDto
+import com.intellij.platform.debugger.impl.rpc.XNoBreakpointPossibleResponse
+import com.intellij.platform.debugger.impl.rpc.XRemoveBreakpointResponse
+import com.intellij.platform.debugger.impl.rpc.XToggleLineBreakpointResponse
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.project.findProjectOrNull
@@ -36,18 +55,29 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
-import com.intellij.xdebugger.impl.breakpoints.*
-import com.intellij.xdebugger.impl.rpc.XBreakpointId
-import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
+import com.intellij.xdebugger.impl.breakpoints.InlineBreakpointsVariantsManager
+import com.intellij.xdebugger.impl.breakpoints.InlineVariantWithMatchingBreakpoint
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.sourcePosition
 import fleet.rpc.core.toRpc
 import fleet.util.channels.use
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.launch
 import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.concurrency.await
 import java.util.concurrent.atomic.AtomicInteger
@@ -67,8 +97,9 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
           trySend(getCurrentBreakpointTypeDtos(project))
         }
       })
-      trySend(getCurrentBreakpointTypeDtos(project))
-    }.buffer(1)
+      send(getCurrentBreakpointTypeDtos(project))
+      awaitClose()
+    }.buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     return XBreakpointTypeList(
       initialTypes,
@@ -76,44 +107,30 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     )
   }
 
-  override suspend fun getBreakpointsInfoForLine(projectId: ProjectId, editorId: EditorId, line: Int): XBreakpointsLineInfo {
-    val project = projectId.findProjectOrNull() ?: return XBreakpointsLineInfo(listOf(), false)
-    val editor = editorId.findEditorOrNull() ?: return XBreakpointsLineInfo(listOf(), false)
-    val rawInfo: BreakpointsLineRawInfo? = readAction {
-      if (!DocumentUtil.isValidLine(line, editor.document)) return@readAction null
-      blockingContextToIndicator {
-        val position = XDebuggerUtil.getInstance().createPosition(FileDocumentManager.getInstance().getFile(editor.document), line)
-                       ?: return@blockingContextToIndicator null
-        computeBreakpointsLineRawInfo(project, position, editor)
-      }
-    }
-    return rawInfo?.toDto() ?: XBreakpointsLineInfo(listOf(), false)
-  }
-
-  override suspend fun getBreakpointsInfoForEditor(projectId: ProjectId, editorId: EditorId, start: Int, endInclusive: Int): List<XBreakpointsLineInfo>? {
-    val project = projectId.findProjectOrNull() ?: return null
-    val editor = editorId.findEditorOrNull() ?: return null
-    val editorBreakpointsRawInfo: List<BreakpointsLineRawInfo?> = readAction {
-      blockingContextToIndicator {
-        val editorBreakpointLinesRawInfo = mutableListOf<BreakpointsLineRawInfo?>()
-        for (line in start..endInclusive) {
-          if (!DocumentUtil.isValidLine(line, editor.document)) {
-            continue
+  override suspend fun getBreakpointsInfo(projectId: ProjectId, fileId: VirtualFileId, start: Int, endInclusive: Int): List<XBreakpointsLineInfo>? {
+    try {
+      val project = projectId.findProjectOrNull() ?: return null
+      val file = fileId.virtualFile() ?: return null
+      val editorBreakpointsRawInfo: List<BreakpointsLineRawInfo?> = readAction {
+        val document = file.findDocument()
+        blockingContextToIndicator {
+          (start..endInclusive).map { line ->
+            if (document == null) return@map null
+            if (!DocumentUtil.isValidLine(line, document)) return@map null
+            ProgressManager.checkCanceled()
+            val position = XDebuggerUtil.getInstance().createPosition(file, line) ?: return@map null
+            computeBreakpointsLineRawInfo(project, position)
           }
-          ProgressManager.checkCanceled()
-          val position = XDebuggerUtil.getInstance().createPosition(FileDocumentManager.getInstance().getFile(editor.document), line)
-          if (position == null) {
-            editorBreakpointLinesRawInfo.add(null)
-            continue
-          }
-          editorBreakpointLinesRawInfo.add(computeBreakpointsLineRawInfo(project, position, editor))
         }
-        editorBreakpointLinesRawInfo
+      }
+
+      return editorBreakpointsRawInfo.map {
+        it?.toDto() ?: XBreakpointsLineInfo(listOf(), false)
       }
     }
-
-    return editorBreakpointsRawInfo.map {
-      it?.toDto() ?: XBreakpointsLineInfo(listOf(), false)
+    catch (e: CancellationException) {
+      LOG.info("Request getBreakpointsInfo was cancelled: $e")
+      return null
     }
   }
 
@@ -279,6 +296,12 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     }
   }
 
+  override suspend fun onBreakpointRemoval(breakpointId: XBreakpointId, sessionId: XDebugSessionId) {
+    val breakpoint = breakpointId.findValue() ?: return
+    val session = sessionId.findValue() ?: return
+    session.checkActiveNonLineBreakpointOnRemoval(breakpoint)
+  }
+
   private fun getCurrentBreakpointTypeDtos(project: Project): List<XBreakpointTypeDto> {
     return XBreakpointType.EXTENSION_POINT_NAME.extensionList.map { it.toRpc(project) }
   }
@@ -320,8 +343,8 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
   }
 
   @RequiresReadLock
-  private fun computeBreakpointsLineRawInfo(project: Project, position: XSourcePosition, editor: Editor): BreakpointsLineRawInfo {
-    val lineBreakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, position, editor)
+  private fun computeBreakpointsLineRawInfo(project: Project, position: XSourcePosition): BreakpointsLineRawInfo {
+    val lineBreakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, position, selectTypeByPositionColumn = true)
     val variantsPromise = if (lineBreakpointTypes.isNotEmpty()) {
       XDebuggerUtilImpl.getLineBreakpointVariants(project, lineBreakpointTypes, position).asDeferred()
     }
@@ -356,6 +379,6 @@ private suspend fun XLineBreakpointType<*>.XLineBreakpointVariant.toRpc(project:
     InlineBreakpointsIdManager.getInstance(project).createId(this, document),
     highlightRange = readAction { highlightRange?.toRpc() },
     icon = type.enabledIcon.rpcId(),
-    tooltipDescription = tooltipDescription,
+    tooltipDescription = readAction { tooltipDescription },
   )
 }

@@ -27,7 +27,7 @@ import javax.swing.BoxLayout
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-private class IftTipAndTrickPromoter : TipAndTrickPromotionFactory {
+internal class IftTipAndTrickPromoter : TipAndTrickPromotionFactory {
   override fun createPromotionPanel(project: Project, tip: TipAndTrickBean): JPanel? {
     if (!enableLessonsAndPromoters) return null
     val lessonId = findLessonIdForTip(tip) ?: return null

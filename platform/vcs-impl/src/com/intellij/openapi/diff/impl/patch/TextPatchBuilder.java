@@ -56,17 +56,6 @@ public final class TextPatchBuilder {
     return new TextPatchBuilder(basePath, reversePatch).build(changes);
   }
 
-  /**
-   * @deprecated Use {@link #buildPatch(Collection, Path, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull List<FilePatch> buildPatch(@NotNull Collection<BeforeAfter<AirContentRevision>> changes,
-                                                    @NotNull Path basePath,
-                                                    boolean reversePatch,
-                                                    @Nullable Runnable ignoredParameter) throws VcsException {
-    return buildPatch(changes, basePath, reversePatch);
-  }
-
   private @NotNull List<FilePatch> build(@NotNull Collection<BeforeAfter<AirContentRevision>> changes) throws VcsException {
     List<FilePatch> result = new ArrayList<>();
     for (BeforeAfter<AirContentRevision> c : changes) {

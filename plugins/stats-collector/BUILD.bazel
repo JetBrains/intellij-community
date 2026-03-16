@@ -20,6 +20,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/lang-impl",
+    "//platform/core-impl",
     "//plugins/completion-ml-ranking",
     "//libraries/http-client",
     "//platform/platform-impl:ide-impl",
@@ -37,7 +38,8 @@ jvm_library(
 jvm_library(
   name = "statsCollector-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/core-ui"]
 )
 
 jvm_library(
@@ -58,7 +60,8 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/core-ui",
-  ]
+  ],
+  runtime_deps = [":statsCollector-tests"]
 )
 ### auto-generated section `build intellij.statsCollector.tests` end
 

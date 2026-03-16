@@ -9,14 +9,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.openapi.project.Project
 import com.intellij.util.PlatformUtils
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.hotswap.HotSwapUiExtension
 import javax.swing.Icon
 
-private class JvmHotSwapUiExtension : HotSwapUiExtension {
+internal class JvmHotSwapUiExtension : HotSwapUiExtension {
   override fun isApplicable(): Boolean = PlatformUtils.isIntelliJ() || PlatformUtils.isJetBrainsClient()
-  override fun showFloatingToolbar() = DebuggerSettings.getInstance().HOTSWAP_SHOW_FLOATING_BUTTON
+  override fun showFloatingToolbar(project: Project) = DebuggerSettings.getInstance().HOTSWAP_SHOW_FLOATING_BUTTON
 
   override val hotSwapIcon: Icon
     get() = AllIcons.Debugger.DebuggerSync
@@ -24,11 +25,11 @@ private class JvmHotSwapUiExtension : HotSwapUiExtension {
   override fun popupMenuActions() = DefaultActionGroup(ToggleShowButtonAction())
 }
 
-private class ToggleShowButtonAction : DumbAwareToggleAction(XDebuggerBundle.message("label.debugger.hotswap.option.suggest.in.editor")) {
+internal class ToggleShowButtonAction : DumbAwareToggleAction(XDebuggerBundle.message("label.debugger.hotswap.option.suggest.in.editor")) {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
   override fun isSelected(e: AnActionEvent) = DebuggerSettings.getInstance().HOTSWAP_SHOW_FLOATING_BUTTON
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     DebuggerSettings.getInstance().HOTSWAP_SHOW_FLOATING_BUTTON = state
-    saveSettingsForRemoteDevelopment(ApplicationManager.getApplication())
+    saveSettingsForRemoteDevelopment(e.coroutineScope, ApplicationManager.getApplication())
   }
 }

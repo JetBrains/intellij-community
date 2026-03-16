@@ -1,0 +1,17 @@
+JsonFile: n_object_repeated_null_null.json
+  JsonObject
+    PsiElement({)('{')
+    JsonProperty
+      JsonNullLiteral
+        PsiElement(null)('null')
+      PsiElement(:)(':')
+      JsonNullLiteral
+        PsiElement(null)('null')
+    PsiElement(,)(',')
+    JsonProperty
+      JsonNullLiteral
+        PsiElement(null)('null')
+      PsiElement(:)(':')
+      JsonNullLiteral
+        PsiElement(null)('null')
+    PsiElement(})('}')

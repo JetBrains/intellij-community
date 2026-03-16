@@ -16,7 +16,12 @@ import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitBinaryHandler;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitHandlerInputProcessorUtil;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitLineHandlerListener;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
@@ -36,8 +41,10 @@ import static com.intellij.openapi.diagnostic.Logger.getInstance;
 public final class GitIndexUtil {
   private static final Logger LOG = getInstance(GitIndexUtil.class);
 
-  private static final String EXECUTABLE_MODE = "100755";
-  private static final String DEFAULT_MODE = "100644";
+  public static final Hash NULL_HASH = HashImpl.build("0".repeat(40));
+  public static final String EXECUTABLE_MODE = "100755";
+  public static final String DEFAULT_MODE = "100644";
+  public static final String SUBMODULE_MODE = "160000";
 
   public static @Nullable StagedFile listStaged(@NotNull GitRepository repository, @NotNull FilePath filePath) throws VcsException {
     List<StagedFile> result = listStaged(repository, Collections.singleton(filePath));

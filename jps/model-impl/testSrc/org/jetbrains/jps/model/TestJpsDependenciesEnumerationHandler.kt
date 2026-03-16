@@ -4,7 +4,7 @@ package org.jetbrains.jps.model
 import org.jetbrains.jps.model.java.impl.JpsJavaDependenciesEnumerationHandler
 import org.jetbrains.jps.model.module.JpsModule
 import java.io.Closeable
-import java.util.*
+import java.util.Collections
 
 data class TestJpsDependenciesEnumerationHandler(
   val includeTestsFromDependentModulesToTestClasspath: Boolean,

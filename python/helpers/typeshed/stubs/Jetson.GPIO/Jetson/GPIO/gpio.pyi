@@ -1,26 +1,7 @@
 from collections.abc import Callable, Sequence
-from typing import Final, Literal
+from typing import Literal
 
-BOARD: Final = 10
-BCM: Final = 11
-TEGRA_SOC: Final = 1000
-CVM: Final = 1001
-
-PUD_OFF: Final = 20
-PUD_DOWN: Final = 21
-PUD_UP: Final = 22
-
-HIGH: Final = 1
-LOW: Final = 0
-
-RISING: Final = 31
-FALLING: Final = 32
-BOTH: Final = 33
-
-UNKNOWN: Final = -1
-OUT: Final = 0
-IN: Final = 1
-HARD_PWM: Final = 43
+from .constants import *
 
 model = ...
 JETSON_INFO = ...
@@ -44,9 +25,9 @@ def add_event_detect(
     edge: Literal[31, 32, 33],
     callback: Callable[[int], None] | None = ...,
     bouncetime: int | None = ...,
-    polltime: float = ...,
+    polltime: float = 0.2,
 ) -> None: ...
-def remove_event_detect(channel: int, timeout: float = ...) -> None: ...
+def remove_event_detect(channel: int, timeout: float = 0.5) -> None: ...
 def event_detected(channel: int) -> bool: ...
 def add_event_callback(channel: int, callback: Callable[[int], None]) -> None: ...
 def wait_for_edge(

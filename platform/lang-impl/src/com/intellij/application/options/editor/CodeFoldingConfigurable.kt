@@ -10,12 +10,17 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.Configurable.WithEpDependencies
-import com.intellij.openapi.options.ConfigurableBuilder
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 
 internal class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingOptionsProvider>(
@@ -30,7 +35,6 @@ internal class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingO
 
   override fun createPanel(): DialogPanel {
     val settings = EditorSettingsExternalizable.getInstance()
-    val sortedConfigurables = configurables.sortedBy { sortByTitle(it) }
 
     return panel {
       row {
@@ -38,6 +42,7 @@ internal class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingO
         else ApplicationBundle.message("checkbox.show.code.folding.outline")
         showGutterOutline = checkBox(text)
           .bindSelected(settings::isFoldingOutlineShown, settings::setFoldingOutlineShown)
+          .gap(RightGap.SMALL)
         if (ExperimentalUI.isNewUI()) {
           comboBox(
             listOf(false, true),
@@ -59,10 +64,10 @@ internal class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingO
 
       row {
         label(ApplicationBundle.message("label.fold.by.default"))
-      }.topGap(TopGap.SMALL)
+      }.topGap(TopGap.MEDIUM)
 
       indent {
-        for (configurable in sortedConfigurables) {
+        for (configurable in configurables) {
           appendDslConfigurable(configurable)
         }
       }
@@ -84,11 +89,6 @@ internal class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingO
   override fun apply() {
     super.apply()
     ApplicationManager.getApplication().invokeLater({ Util.applyCodeFoldingSettingsChanges() }, ModalityState.nonModal())
-  }
-
-  private fun sortByTitle(p: CodeFoldingOptionsProvider): String {
-    val title = ConfigurableBuilder.getConfigurableTitle(p)
-    return if (ApplicationBundle.message("title.general") == title) "" else title ?: "z"
   }
 
   object Util {

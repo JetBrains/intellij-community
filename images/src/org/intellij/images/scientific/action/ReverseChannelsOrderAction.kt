@@ -8,15 +8,15 @@ import org.intellij.images.scientific.utils.ScientificUtils.applyReverseChannels
 import java.awt.image.BufferedImage
 
 class ReverseChannelsOrderAction : BaseImageAction() {
-  override suspend fun performImageTransformation(
-    originalImage: BufferedImage,
-    currentImage: BufferedImage,
-    imageFile: VirtualFile,
-    transformationData: ImageTransformationData
+  override suspend fun performImageTransformation(originalImage: BufferedImage,
+                                                  currentImage: BufferedImage,
+                                                  imageFile: VirtualFile,
+                                                  transformationData: ImageTransformationData
   ): BufferedImage {
     transformationData.setIsNormalized(false)
     val transformedImage = transformationData.applyTransformations(originalImage)
     applyReverseChannelsOrder(transformedImage).also {
+      imageFile.putUserData(CURRENT_OPERATION_MODE_KEY, ImageOperationMode.REVERSED_IMAGE)
       ScientificImageActionsCollector.logReverseChannelsOrderInvoked()
       return it
     }

@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -13,7 +12,6 @@ import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ChangeSignatureViewDescriptor implements UsageViewDescriptor {
-
   private final PsiMethod myMethod;
   private final @NlsContexts.ListItem String myProcessedElementsHeader;
 
@@ -34,7 +32,6 @@ public class ChangeSignatureViewDescriptor implements UsageViewDescriptor {
 
   @Override
   public @NotNull String getCodeReferencesText(int usagesCount, int filesCount) {
-    return RefactoringBundle.message("references.to.be.changed",
-                                     UsageViewBundle.getReferencesString(usagesCount, filesCount));
+    return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 }

@@ -40,17 +40,20 @@ function Global:Prompt() {
   $Success = $Global:?
 
   $Result = ""
+  $CurrentDirectoryParam = if ($pwd.Provider.Name -eq 'FileSystem') {
+    ";current_directory=$(Global:__JetBrainsIntellijEncode $pwd.ProviderPath)"
+  } else {
+    ""
+  }
   if ($Global:__JetBrainsIntellijState.IsInitialized -eq $false) {
     $Global:__JetBrainsIntellijState.IsInitialized = $true
-    $Result += Global:__JetBrainsIntellijOSC "initialized"
-    # Return the empty aliases list for now
-    $Result += Global:__JetBrainsIntellijOSC "aliases_received"
+    $Result += Global:__JetBrainsIntellijOSC "initialized$CurrentDirectoryParam"
+    $Result += Global:__JetBrainsIntellijGetAliases
   }
   elseif ($Global:__JetBrainsIntellijState.IsCommandRunning -eq $true){
     $Global:__JetBrainsIntellijState.IsCommandRunning = $false
     $ExitCode = if ($Success) { 0 } else { 1 }
-    $CurrentDirectory = (Get-Location).Path
-    $Result += Global:__JetBrainsIntellijOSC "command_finished;exit_code=$ExitCode;current_directory=$(Global:__JetBrainsIntellijEncode $CurrentDirectory)"
+    $Result += Global:__JetBrainsIntellijOSC "command_finished;exit_code=$ExitCode$CurrentDirectoryParam"
   }
 
   $Result += Global:__JetBrainsIntellijOSC "prompt_started"
@@ -76,4 +79,65 @@ function Global:PSConsoleHostReadLine {
   }
 
   return $Command
+}
+
+function Global:__JetBrainsIntellijGetAliases {
+  $Aliases = Get-Alias | ForEach-Object { [PSCustomObject]@{ name = $_.Name; definition = $_.Definition } }
+  $AliasesJson = $Aliases | ConvertTo-Json -Compress
+  $OSC = Global:__JetBrainsIntellijOSC "aliases_received;result=$(Global:__JetBrainsIntellijEncode $AliasesJson)"
+  return $OSC
+}
+
+function Global:__JetBrainsIntellijSendCompletions {
+	$CommandText = ""
+	$CursorIndex = 0
+	[Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$CommandText, [ref]$CursorIndex)
+
+  $ResultObject = $null
+	if ($CommandText.Length -eq 0) {
+	  # TabExpansion2 will throw if command text is empty, so just return an empty result.
+	  $ResultObject = [PSCustomObject]@{
+      CommandText = ""
+      CursorIndex = 0
+      ReplacementIndex = 0
+      ReplacementLength = 0
+      CompletionMatches = @()
+    }
+	}
+	else {
+	  $Completions = $null
+  	try {
+  	  $Completions = TabExpansion2 -inputScript $CommandText -cursorColumn $CursorIndex
+  	}
+  	catch {
+  	  # Catch all possible exceptions, just in case.
+  	  # Because failure here will print an error to the terminal screen.
+  	}
+    if ($Completions -ne $null) {
+      $ResultObject = [PSCustomObject]@{
+        CommandText = $CommandText
+        CursorIndex = $CursorIndex
+        ReplacementIndex = $Completions.ReplacementIndex
+        ReplacementLength = $Completions.ReplacementLength
+        CompletionMatches = $Completions.CompletionMatches
+      }
+    }
+    else {
+      $ResultObject = [PSCustomObject]@{
+        CommandText = $CommandText
+        CursorIndex = $CursorIndex
+        ReplacementIndex = $CursorIndex
+        ReplacementLength = 0
+        CompletionMatches = @()
+      }
+    }
+	}
+
+  $ResultJson = $ResultObject | ConvertTo-Json -Compress
+  $ResultOSC = Global:__JetBrainsIntellijOSC "completion_finished;result=$(Global:__JetBrainsIntellijEncode $ResultJson)"
+  Write-Host -NoNewLine $ResultOSC
+}
+
+Set-PSReadLineKeyHandler -Chord 'F12,e' -ScriptBlock {
+	Global:__JetBrainsIntellijSendCompletions
 }

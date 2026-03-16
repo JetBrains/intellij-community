@@ -13,7 +13,12 @@ import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.isProtocol
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyKnownDecorator
+import com.jetbrains.python.psi.PyKnownDecoratorUtil
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
@@ -66,7 +71,7 @@ class PyOverloadsInspection : PyInspection() {
         requiresImplementation = false
       }
       else if (owner is PyClass) {
-        if (isProtocol(owner, myTypeEvalContext)) {
+        if (owner.isProtocol(myTypeEvalContext)) {
           requiresImplementation = false
         }
         else {
@@ -86,9 +91,9 @@ class PyOverloadsInspection : PyInspection() {
       }
 
       if (implementation != null) {
-        functions
+        overloads
           .asSequence()
-          .filter { isIncompatibleOverload(implementation, it) }
+          .filter { !PyUtil.isSignatureCompatibleTo(implementation, it, myTypeEvalContext) }
           .forEach {
             registerProblem(it.nameIdentifier,
                             PyPsiBundle.message("INSP.overloads.this.overload.signature.not.compatible.with.implementation",
@@ -144,12 +149,6 @@ class PyOverloadsInspection : PyInspection() {
           it == PyKnownDecorator.TYPING_OVERRIDE || it == PyKnownDecorator.TYPING_EXTENSIONS_OVERRIDE
         }
       }
-    }
-
-    private fun isIncompatibleOverload(implementation: PyFunction, overload: PyFunction): Boolean {
-      return implementation != overload &&
-             PyiUtil.isOverload(overload, myTypeEvalContext) &&
-             !PyUtil.isSignatureCompatibleTo(implementation, overload, myTypeEvalContext)
     }
   }
 

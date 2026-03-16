@@ -2,8 +2,16 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.configurationStore.StoreUtil;
-import com.intellij.notification.*;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.NotificationsManager;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -39,11 +47,15 @@ import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.integrate.QuickMerge;
 import org.jetbrains.idea.svn.integrate.QuickMergeInteractionImpl;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.notification.NotificationAction.createSimpleExpiring;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;

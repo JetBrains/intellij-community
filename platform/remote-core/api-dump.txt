@@ -20,6 +20,7 @@ a:com.intellij.remote.CredentialsType
 - sf:UNKNOWN:com.intellij.remote.CredentialsType
 - sf:UNKNOWN_CREDENTIALS:com.intellij.openapi.util.Key
 - p:<init>(java.lang.String,java.lang.String):V
+- p:<init>(java.lang.String,java.util.Collection):V
 - a:createCredentials():java.lang.Object
 - getCredentials(com.intellij.openapi.util.UserDataHolderBase):java.lang.Object
 - a:getCredentialsKey():com.intellij.openapi.util.Key

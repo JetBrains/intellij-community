@@ -16,7 +16,10 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
 import com.intellij.dupLocator.util.NodeFilter;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiStatement;
 
 public class StatementFilter implements NodeFilter {
 

@@ -5,7 +5,11 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 import com.intellij.ide.util.SuperMethodWarningUtil
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiFormatUtil

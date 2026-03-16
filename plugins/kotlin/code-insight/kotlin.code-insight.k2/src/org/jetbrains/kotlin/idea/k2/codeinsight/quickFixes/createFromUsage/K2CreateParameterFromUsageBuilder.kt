@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
@@ -11,19 +12,21 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.findParentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.builtinTypes
 import org.jetbrains.kotlin.analysis.api.components.expectedType
 import org.jetbrains.kotlin.analysis.api.components.expressionType
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.components.typeCreator
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.computeExpectedParams
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
@@ -37,19 +40,36 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.IntroduceParameterDescriptor
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.KotlinIntroduceParameterHelper
 import org.jetbrains.kotlin.idea.refactoring.introduce.substringContextOrThis
-import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtDeclarationWithReturnType
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
+import org.jetbrains.kotlin.types.Variance
 
 object K2CreateParameterFromUsageBuilder {
     fun generateCreateParameterAction(element: KtElement): List<IntentionAction>? {
         val refExpr = element.findParentOfType<KtNameReferenceExpression>(strict = false) ?: return null
         if (refExpr.getParentOfTypeAndBranch<KtCallableReferenceExpression> { callableReference } != null) return null
+        if ((refExpr.parent as? KtCallExpression)?.typeArguments?.isNotEmpty() == true) return null
 
         val qualifiedElement = refExpr.getQualifiedElement()
-        if (qualifiedElement == refExpr || qualifiedElement is KtCallExpression) {
+        if (qualifiedElement == refExpr || qualifiedElement is KtCallExpression || (qualifiedElement as? KtDotQualifiedExpression)?.selectorExpression is KtCallExpression) {
             //unqualified reference
             val varExpected = refExpr.getAssignmentByLHS() != null
             val containers = CreateParameterUtil.chooseContainers(refExpr, varExpected)
@@ -126,6 +146,25 @@ object K2CreateParameterFromUsageBuilder {
         override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = originalExprPointer.element != null
         override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
 
+        @OptIn(KaExperimentalApi::class)
+        override fun generatePreview(
+            project: Project,
+            editor: Editor,
+            psiFile: PsiFile
+        ): IntentionPreviewInfo {
+            val container = containerPointer.element ?: return IntentionPreviewInfo.EMPTY
+            val originalExpression = originalExprPointer.element ?: return IntentionPreviewInfo.EMPTY
+
+            val typeText = analyze(originalExpression) {
+                getExpectedType(originalExpression).render(position = Variance.IN_VARIANCE)
+            }
+            val valVar =
+                if (valVar == CreateParameterUtil.ValVar.VAR) "var " else if (valVar == CreateParameterUtil.ValVar.VAL) "val " else ""
+
+            return IntentionPreviewInfo.CustomDiff(KotlinFileType.INSTANCE, container.name, "", "$valVar${propertyName.quoteIfNeeded()}: $typeText")
+        }
+
+        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         private fun getExpectedType(expression: KtExpression): KaType {
             if (expression is KtDestructuringDeclarationEntry) {
@@ -158,11 +197,15 @@ object K2CreateParameterFromUsageBuilder {
             val parent = expression.parent
             if (parent is KtCallExpression) {
                 val expectedParameters = computeExpectedParams(parent)
-                return buildClassType(StandardClassIds.FunctionN(expectedParameters.size)) {
-                    for (parameter in expectedParameters) {
-                        argument(parameter.expectedTypes.firstOrNull()?.toKtTypeWithNullability(parent) ?: builtinTypes.nullableAny)
+                return typeCreator.functionType {
+                    val grandParent = parent.parent
+                    if (grandParent is KtDotQualifiedExpression) {
+                       receiverType = grandParent.receiverExpression.expressionType ?: builtinTypes.nullableAny
                     }
-                    argument(parent.expectedType ?: builtinTypes.unit)
+                    for (parameter in expectedParameters) {
+                        valueParameter(null, parameter.expectedTypes.firstOrNull()?.toKtTypeWithNullability(parent) ?: builtinTypes.nullableAny)
+                    }
+                    returnType = parent.expectedType ?: builtinTypes.unit
                 }
             }
 

@@ -4,9 +4,14 @@ package git4idea.tests
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.Executor.child
+import com.intellij.openapi.vcs.Executor.rm
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.FileStatus.*
+import com.intellij.openapi.vcs.FileStatus.ADDED
+import com.intellij.openapi.vcs.FileStatus.DELETED
+import com.intellij.openapi.vcs.FileStatus.MODIFIED
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.VfsTestUtil.createDir

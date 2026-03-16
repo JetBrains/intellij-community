@@ -3,7 +3,13 @@ package com.jetbrains.python.pyi;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.inspections.*;
+import com.jetbrains.python.inspections.PyCompatibilityInspection;
+import com.jetbrains.python.inspections.PyMissingConstructorInspection;
+import com.jetbrains.python.inspections.PyMissingOrEmptyDocstringInspection;
+import com.jetbrains.python.inspections.PyPropertyDefinitionInspection;
+import com.jetbrains.python.inspections.PyShadowingBuiltinsInspection;
+import com.jetbrains.python.inspections.PyStatementEffectInspection;
+import com.jetbrains.python.inspections.PyTypeCheckerInspection;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 import com.jetbrains.python.psi.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;

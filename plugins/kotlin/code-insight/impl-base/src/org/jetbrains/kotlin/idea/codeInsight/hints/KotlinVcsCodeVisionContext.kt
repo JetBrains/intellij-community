@@ -8,7 +8,14 @@ import com.siyeh.ipp.psiutils.ErrorUtil
 import org.jetbrains.kotlin.idea.statistics.KotlinCodeVisionUsagesCollector
 import org.jetbrains.kotlin.idea.util.CommentSaver.Companion.tokenType
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassInitializer
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import java.awt.event.MouseEvent
 

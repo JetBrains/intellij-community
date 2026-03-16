@@ -15,8 +15,9 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.List;
 
 

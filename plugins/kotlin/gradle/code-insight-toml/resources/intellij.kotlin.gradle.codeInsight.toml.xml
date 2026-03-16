@@ -1,10 +1,14 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="org.jetbrains.plugins.gradle"/>
     <plugin id="org.toml.lang"/>
     <module name="intellij.kotlin.gradle.gradle"/>
     <module name="intellij.kotlin.gradle.tooling"/>
+    <module name="intellij.gradle.completion"/>
+    <module name="intellij.gradle.java"/>
+    <module name="intellij.gradle.java.toml"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <gotoDeclarationHandler

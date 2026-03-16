@@ -1,0 +1,25 @@
+package fleet.codepoints
+
+import fleet.util.multiplatform.Actual
+
+@Actual internal fun codepointsToStringWasmJs(vararg codepoints: Int): String = MultiplatformCodepoints.codepointsToString(*codepoints)
+@Actual internal fun codepointOfWasmJs(highSurrogate: Char, lowSurrogate: Char): Codepoint = MultiplatformCodepoints.codepointOf(highSurrogate, lowSurrogate)
+@Actual internal fun highSurrogateWasmJs(codepoint: Int): Char = MultiplatformCodepoints.highSurrogate(codepoint)
+@Actual internal fun lowSurrogateWasmJs(codepoint: Int): Char = MultiplatformCodepoints.lowSurrogate(codepoint)
+@Actual internal fun isLetterWasmJs(codepoint: Int): Boolean = MultiplatformCodepoints.isLetter(codepoint)
+@Actual internal fun isDigitWasmJs(codepoint: Int): Boolean = MultiplatformCodepoints.isDigit(codepoint)
+@Actual internal fun isLetterOrDigitWasmJs(codepoint: Int): Boolean = MultiplatformCodepoints.isLetterOrDigit(codepoint)
+@Actual internal fun isUpperCaseWasmJs(codepoint: Int): Boolean = MultiplatformCodepoints.isUpperCase(codepoint)
+@Actual internal fun isLowerCaseWasmJs(codepoint: Int): Boolean = MultiplatformCodepoints.isLowerCase(codepoint)
+@Actual internal fun toLowerCaseWasmJs(codepoint: Int): Int = MultiplatformCodepoints.toLowerCase(codepoint)
+@Actual internal fun toUpperCaseWasmJs(codepoint: Int): Int = MultiplatformCodepoints.toUpperCase(codepoint)
+@Actual internal fun isSpaceCharWasmJs(codepoint: Int): Boolean = MultiplatformCodepoints.isSpaceChar(codepoint)
+@Actual internal fun isWhitespaceWasmJs(codepoint: Int): Boolean = MultiplatformCodepoints.isWhitespace(codepoint)
+@Actual internal fun isIdeographicWasmJs(codepoint: Int): Boolean = MultiplatformCodepoints.isIdeographic(codepoint)
+@Actual internal fun isIdentifierIgnorableWasmJs(codepoint: Int): Boolean = MultiplatformCodepoints.isIdentifierIgnorable(codepoint)
+@Actual internal fun isUnicodeIdentifierStartWasmJs(codepoint: Int): Boolean = MultiplatformCodepoints.isUnicodeIdentifierStart(codepoint)
+@Actual internal fun isUnicodeIdentifierPartWasmJs(codepoint: Int): Boolean = MultiplatformCodepoints.isUnicodeIdentifierPart(codepoint)
+@Actual internal fun isJavaIdentifierStartWasmJs(codepoint: Int): Boolean = MultiplatformCodepoints.isJavaIdentifierStart(codepoint)
+@Actual internal fun isJavaIdentifierPartWasmJs(codepoint: Int): Boolean = MultiplatformCodepoints.isJavaIdentifierPart(codepoint)
+@Actual internal fun isISOControlWasmJs(codepoint: Int): Boolean = MultiplatformCodepoints.isISOControl(codepoint)
+@Actual internal fun getUnicodeScriptWasmJs(codepoint: Int): UnicodeScript = MultiplatformCodepoints.getUnicodeScript(codepoint)

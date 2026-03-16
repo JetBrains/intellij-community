@@ -8,7 +8,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class BaseTextCommentCellAppearance implements CellAppearanceEx {
   private SimpleTextAttributes myCommentAttributes = SimpleTextAttributes.GRAY_ATTRIBUTES;

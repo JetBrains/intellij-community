@@ -22,7 +22,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Collection;
 
 @SuppressWarnings("SameParameterValue")

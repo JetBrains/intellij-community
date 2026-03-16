@@ -22,7 +22,10 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassRe
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PathListReferenceProvider;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.patterns.XmlPatterns.*;
+import static com.intellij.patterns.XmlPatterns.string;
+import static com.intellij.patterns.XmlPatterns.xmlAttribute;
+import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
+import static com.intellij.patterns.XmlPatterns.xmlTag;
 
 public class TestNGSuiteReferenceContributor extends PsiReferenceContributor {
   private static class Holder {

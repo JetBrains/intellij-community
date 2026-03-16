@@ -60,7 +60,12 @@ import org.jdom.filter2.Filter;
 import org.jdom.xpath.XPathDiagnostic;
 import org.jdom.xpath.XPathExpression;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A mostly-implemented XPathExpression that only needs two methods to be

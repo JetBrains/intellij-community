@@ -9,6 +9,7 @@ create_kotlinc_options(
     "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
     "com.jetbrains.kotlin.ocSwift.KotlinFE10Usage",
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+    "org.jetbrains.kotlin.K1Deprecation",
   ]
 )
 
@@ -39,6 +40,7 @@ jvm_library(
     "//java/java-psi-impl:psi-impl",
     "//platform/util",
     "//platform/core-api:core",
+    "//platform/analysis-api:analysis",
   ]
 )
 
@@ -68,10 +70,11 @@ jvm_library(
     "//plugins/kotlin/plugin/k1",
     "//plugins/devkit/intellij.devkit.workspaceModel/tests:tests_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
+    "//platform/analysis-api:analysis",
   ]
 )
 ### auto-generated section `build intellij.devkit.workspaceModel.k1` end

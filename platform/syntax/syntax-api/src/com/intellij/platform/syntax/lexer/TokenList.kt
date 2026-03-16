@@ -9,8 +9,8 @@ import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.impl.builder.DIAGNOSTICS
-import kotlin.jvm.JvmName
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmName
 
 /**
  * This interface represents the result of lexing: text and the tokens produced from it by some lexer.

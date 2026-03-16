@@ -5,7 +5,11 @@ import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.actions.impl.OpenInEditorAction
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
@@ -37,7 +41,7 @@ import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
-import java.util.*
+import java.util.EventListener
 import javax.swing.Icon
 import javax.swing.JComponent
 import kotlin.properties.Delegates
@@ -137,8 +141,8 @@ private class CombinedSimpleDiffHeader(project: Project,
   override fun getSelectionBackground(state: State): Color = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
   override fun changeBackgroundOnHover(state: State): Boolean = true
 
-  private class SelectableFilePathLabel(private val project: Project,
-                                        private val path: FilePath) : DumbAwareAction(), CustomComponentAction {
+  internal class SelectableFilePathLabel(private val project: Project,
+                                         private val path: FilePath) : DumbAwareAction(), CustomComponentAction {
 
     private val checkBox = CheckBox("").apply { background = UIUtil.getListBackground() }
 

@@ -2,12 +2,23 @@
 package com.intellij.xml.util;
 
 import com.intellij.html.impl.RelaxedHtmlFromSchemaNSDescriptor;
-import com.intellij.psi.filters.*;
+import com.intellij.psi.filters.AndFilter;
+import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.filters.ContentFilter;
+import com.intellij.psi.filters.OrFilter;
+import com.intellij.psi.filters.XmlTagFilter;
+import com.intellij.psi.filters.XmlTextFilter;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.TargetNamespaceFilter;
 import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.meta.MetaDataRegistrar;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttributeDecl;
+import com.intellij.psi.xml.XmlConditionalSection;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlEntityRef;
+import com.intellij.psi.xml.XmlMarkupDecl;
 import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 import com.intellij.xml.impl.schema.NamedObjectDescriptor;
 import com.intellij.xml.impl.schema.SchemaNSDescriptor;

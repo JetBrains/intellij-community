@@ -10,7 +10,9 @@ resourcegroup(
 jvm_library(
   name = "community-junit5Tests-framework",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  exports = ["//libraries/system-stubs-jupiter"],
+  runtime_deps = ["//python/pluginCore:community-plugin"]
 )
 
 jvm_library(
@@ -30,7 +32,6 @@ jvm_library(
     "@lib//:io-mockk-jvm",
     "@lib//:jna",
     "@lib//:kotlin-stdlib",
-    "@lib//:testcontainers-junit-jupiter",
     "//wintools",
     "//wintools:wintools_test_lib",
     "//libraries/system-stubs-jupiter",
@@ -56,16 +57,17 @@ jvm_library(
     "//python/openapi:community",
     "//python/openapi:community_test_lib",
     "//python/pipenv",
-    "//python/setup-test-environment:community-testFramework-testEnv",
     "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",
     "//python/python-poetry/common",
+    "//python/python-psi-impl:psi-impl",
+    "//platform/testFramework/junit5/projectStructure",
+    "//platform/testFramework/junit5/projectStructure:projectStructure_test_lib",
+    "//platform/lang-core",
+    "//platform/util/jdom",
   ],
-  exports = [
-    "//libraries/system-stubs-jupiter",
-    "//python/setup-test-environment:community-testFramework-testEnv",
-  ],
-  runtime_deps = ["//python/pluginCore:community-plugin"]
+  exports = ["//libraries/system-stubs-jupiter"],
+  runtime_deps = [":community-junit5Tests-framework"]
 )
 ### auto-generated section `build intellij.python.community.junit5Tests.framework` end
 

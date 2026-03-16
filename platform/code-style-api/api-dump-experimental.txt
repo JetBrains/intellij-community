@@ -4,6 +4,8 @@ a:com.intellij.formatting.Indent
 f:com.intellij.formatting.Indent$Type
 - *sf:OUTDENT_NORMAL:com.intellij.formatting.Indent$Type
 - *sf:OUTDENT_SPACES:com.intellij.formatting.Indent$Type
+*f:com.intellij.formatting.service.StructuredAsyncDocumentFormatting
+- sf:structuredAsyncDocumentFormattingScope(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 c:com.intellij.openapi.editor.EditorModificationUtilEx
 - *s:calcAfterLineEnd(com.intellij.openapi.editor.Editor,I,com.intellij.openapi.editor.LogicalPosition,com.intellij.openapi.editor.VisualPosition):I
 f:com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent

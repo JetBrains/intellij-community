@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.*
+import java.util.Objects
 
 @Internal
 class FileIndexingRequest private constructor(

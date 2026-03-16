@@ -5,7 +5,10 @@ import com.intellij.psi.stubs.StubOutputStream
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.io.DataInputOutputUtil
 import com.jetbrains.python.codeInsight.PyDataclassNames
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyDecorator
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.stubs.PyCustomDecoratorStub
 import com.jetbrains.python.psi.resolve.PyResolveUtil
@@ -23,7 +26,7 @@ data class PyDataclassTransformDecoratorStub(
   val eqDefault: Boolean,
   val orderDefault: Boolean,
   val kwOnlyDefault: Boolean,
-  val frozenDefault: Boolean,
+  val frozenDefault: Boolean?,
   val fieldSpecifiers: List<QualifiedName>,
 ) : PyCustomDecoratorStub {
 
@@ -36,7 +39,7 @@ data class PyDataclassTransformDecoratorStub(
     stream.writeBoolean(eqDefault)
     stream.writeBoolean(orderDefault)
     stream.writeBoolean(kwOnlyDefault)
-    stream.writeBoolean(frozenDefault)
+    DataInputOutputUtil.writeNullable(stream, frozenDefault, stream::writeBoolean)
     DataInputOutputUtil.writeSeq(stream, fieldSpecifiers) { QualifiedName.serialize(it, stream) }
   }
 
@@ -45,7 +48,7 @@ data class PyDataclassTransformDecoratorStub(
       val eqDefault = stream.readBoolean()
       val orderDefault = stream.readBoolean()
       val kwOnlyDefault = stream.readBoolean()
-      val frozenDefault = stream.readBoolean()
+      val frozenDefault = DataInputOutputUtil.readNullable(stream, stream::readBoolean)
       val fieldSpecifiers = DataInputOutputUtil.readSeq(stream) { QualifiedName.deserialize(stream)!! }
 
       return PyDataclassTransformDecoratorStub(
@@ -67,7 +70,7 @@ data class PyDataclassTransformDecoratorStub(
           eqDefault = PyEvaluator.evaluateAsBooleanNoResolve(decorator.getKeywordArgument("eq_default"), true),
           orderDefault = PyEvaluator.evaluateAsBooleanNoResolve(decorator.getKeywordArgument("order_default"), false),
           kwOnlyDefault = PyEvaluator.evaluateAsBooleanNoResolve(decorator.getKeywordArgument("kw_only_default"), false),
-          frozenDefault = PyEvaluator.evaluateAsBooleanNoResolve(decorator.getKeywordArgument("frozen_default"), false),
+          frozenDefault = PyEvaluator.evaluateAsBooleanNoResolve(decorator.getKeywordArgument("frozen_default")),
           fieldSpecifiers = fieldSpecifierList?.elements?.mapNotNull { (it as? PyReferenceExpression)?.asQualifiedName() } ?: emptyList(),
         )
       }

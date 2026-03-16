@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
-import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import kotlinx.coroutines.DEBUG_PROPERTY_NAME
@@ -20,11 +19,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 class KotlinCoroutineDebugGradleTaskManagerExtension : GradleTaskManagerExtension {
 
     companion object {
-
         private val LOG = Logger.getInstance(this::class.java)
-
-        private const val MIN_SUPPORTED_GRADLE_VERSION = "4.6" // CommandLineArgumentProvider is available only since Gradle 4.6
-
         private const val KOTLIN_COROUTINE_DEBUG_SCRIPT_NAME = "ijKotlinCoroutineJvmDebugInit"
     }
 
@@ -36,18 +31,16 @@ class KotlinCoroutineDebugGradleTaskManagerExtension : GradleTaskManagerExtensio
     ) {
         try {
             if (KotlinJvmDebuggerFacade.instance?.isCoroutineAgentAllowedInDebug == true) {
-                if (gradleVersion != null && GradleVersionUtil.isGradleAtLeast(gradleVersion, MIN_SUPPORTED_GRADLE_VERSION)) {
-                    val initScript = joinInitScripts(
-                        loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES),
-                        loadInitScript(
-                            javaClass, "/org/jetbrains/kotlin/idea/gradle/debugging/KotlinCoroutineJvmDebugInit.gradle", mapOf(
-                                "DEBUG_PROPERTY_NAME" to DEBUG_PROPERTY_NAME.toGroovyStringLiteral(),
-                                "DEBUG_PROPERTY_VALUE_OFF" to DEBUG_PROPERTY_VALUE_OFF.toGroovyStringLiteral(),
-                            )
+                val initScript = joinInitScripts(
+                    loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES),
+                    loadInitScript(
+                        javaClass, "/org/jetbrains/kotlin/idea/gradle/debugging/KotlinCoroutineJvmDebugInit.gradle", mapOf(
+                            "DEBUG_PROPERTY_NAME" to DEBUG_PROPERTY_NAME.toGroovyStringLiteral(),
+                            "DEBUG_PROPERTY_VALUE_OFF" to DEBUG_PROPERTY_VALUE_OFF.toGroovyStringLiteral(),
                         )
                     )
-                    settings.addInitScript(KOTLIN_COROUTINE_DEBUG_SCRIPT_NAME, initScript)
-                }
+                )
+                settings.addInitScript(KOTLIN_COROUTINE_DEBUG_SCRIPT_NAME, initScript)
             }
         } catch (e: Exception) {
             LOG.error("Gradle: not possible to attach a coroutine debugger agent.", e)

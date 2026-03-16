@@ -14,7 +14,7 @@ import com.intellij.util.ui.update.ComparableObjectCheck;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.awt.event.InputEvent;
 
 public abstract class SimpleNode extends PresentableNodeDescriptor<Object> implements ComparableObject, LeafState.Supplier {

@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_inlineTwoFunctionsOneChanged-a.kotlin_module
+  inline/InlineKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/inlineTwoFunctionsOneChanged/a/inline.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_inlineTwoFunctionsOneChanged-a.kotlin_module
+  usage/UsesGKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/inlineTwoFunctionsOneChanged/a/usesG.kt
+End of files
+------------------------------------------
+Exit code: OK

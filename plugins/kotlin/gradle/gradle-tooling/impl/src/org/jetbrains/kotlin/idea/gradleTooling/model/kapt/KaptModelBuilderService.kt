@@ -2,18 +2,25 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling.model.kapt
 
+import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry
 import org.gradle.api.Named
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.jetbrains.kotlin.idea.gradleTooling.*
+import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder
+import org.jetbrains.kotlin.idea.gradleTooling.AndroidAwareGradleModelProvider
+import org.jetbrains.kotlin.idea.gradleTooling.capitalize
+import org.jetbrains.kotlin.idea.gradleTooling.compilations
+import org.jetbrains.kotlin.idea.gradleTooling.getCompileKotlinTaskName
+import org.jetbrains.kotlin.idea.gradleTooling.getTarget
+import org.jetbrains.kotlin.idea.gradleTooling.getTargets
 import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 import java.io.File
 import java.io.Serializable
 import java.lang.reflect.Modifier
-import java.util.*
+import java.util.Locale
 
 interface KaptSourceSetModel : Serializable {
     val sourceSetName: String
@@ -63,11 +70,17 @@ class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilder
     override fun canBuild(modelName: String?): Boolean = modelName == KaptGradleModel::class.java.name
 
     override fun buildAll(modelName: String?, project: Project): KaptGradleModelImpl? {
-        return buildAll(project, builderContext = null, parameter = null)
+        return buildAllWithTelemetry(project, builderContext = null, parameter = null)
     }
 
     override fun buildAll(modelName: String, project: Project, builderContext: ModelBuilderContext, parameter: ModelBuilderService.Parameter?): KaptGradleModelImpl? {
-        return buildAll(project, builderContext, parameter)
+        return buildAllWithTelemetry(project, builderContext, parameter)
+    }
+
+    private fun buildAllWithTelemetry(project: Project, builderContext: ModelBuilderContext?, parameter: ModelBuilderService.Parameter?): KaptGradleModelImpl? {
+        return GradleOpenTelemetry.callWithSpan("kotlin_import_daemon_kapt_buildAll") {
+            buildAll(project, builderContext, parameter)
+        }
     }
 
     private fun buildAll(project: Project, builderContext: ModelBuilderContext?, parameter: ModelBuilderService.Parameter?): KaptGradleModelImpl? {

@@ -12,7 +12,7 @@ import com.intellij.openapi.diagnostic.logger
  *
  * If changed, please, update [StatisticsRegionSettingsService.Companion.getInstance]
  */
-private class StatisticsRegionSettingsServiceImpl : StatisticsRegionSettingsService() {
+internal class StatisticsRegionSettingsServiceImpl : StatisticsRegionSettingsService() {
   companion object {
     val LOG = logger<StatisticsRegionSettingsServiceImpl>()
   }

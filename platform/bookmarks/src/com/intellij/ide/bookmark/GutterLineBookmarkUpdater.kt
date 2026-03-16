@@ -9,7 +9,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.ProjectManager
 import kotlinx.coroutines.launch
 
-private class GutterLineBookmarkUpdater : EditorFactoryListener {
+internal class GutterLineBookmarkUpdater : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
     val file = FileDocumentManager.getInstance().getFile(event.editor.document) ?: return
     ((event.editor.project ?: ApplicationManager.getApplication()) as ComponentManagerEx).getCoroutineScope().launch {

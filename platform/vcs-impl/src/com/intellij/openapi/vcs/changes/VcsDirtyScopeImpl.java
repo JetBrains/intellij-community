@@ -19,7 +19,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope implements VcsDirtyScopeBuilder {
   private final Map<VirtualFile, Set<FilePath>> myDirtyFiles = new HashMap<>();

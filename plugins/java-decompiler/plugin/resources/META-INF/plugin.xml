@@ -33,6 +33,15 @@
       groupKey="advanced.setting.group.decompiler"
     />
 
+    <registryKey
+      key="decompiler.use.line.mapping"
+      defaultValue="true"
+      description="Maps original and decompiled line numbers when stepping in the debugger."/>
+    <registryKey
+      key="decompiler.dump.original.lines"
+      defaultValue="false"
+      description="Show original line numbers as comments in decompiled text"/>
+
   </extensions>
 
   <applicationListeners>

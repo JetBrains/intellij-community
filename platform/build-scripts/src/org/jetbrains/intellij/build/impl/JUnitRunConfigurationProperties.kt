@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -6,13 +6,12 @@ package org.jetbrains.intellij.build.impl
 import java.nio.file.Path
 import kotlin.io.path.name
 
-class JUnitRunConfigurationProperties(
+class JUnitRunConfigurationProperties private constructor(
   name: String,
   moduleName: String,
   val testSearchScope: TestSearchScope,
   val testClassPatterns: List<String>,
   vmParameters: List<String>,
-  val requiredArtifacts: List<String>,
   envVariables: Map<String, String>,
   val buildProject: Boolean,
 ) : RunConfigurationProperties(name, moduleName, vmParameters, envVariables) {
@@ -23,10 +22,10 @@ class JUnitRunConfigurationProperties(
   }
 
   companion object {
-    const val TYPE = "JUnit"
+    internal const val TYPE = "JUnit"
 
     fun loadRunConfiguration(file: Path): JUnitRunConfigurationProperties {
-      val configuration = getConfiguration(file)
+      val configuration = getRunConfiguration(file)
       if (!configuration.getAttributeValue("type").equals(TYPE)) {
         throw RuntimeException("Cannot load configuration from '${file.name}': only JUnit run configuration are supported")
       }
@@ -46,11 +45,6 @@ class JUnitRunConfigurationProperties(
         throw RuntimeException("Cannot run ${file.name} configuration: fork mode '$forkMode' is not supported")
       }
 
-      val requiredArtifacts = configuration.getChild("method")?.children("option")
-                                ?.filter { it.getAttributeValue("name") == "BuildArtifacts" && it.getAttributeValue("enabled") == "true" }
-                                ?.flatMap { it.children("artifact").map { it.getAttributeValue("name")!! } }
-                                ?.toList()
-                              ?: emptyList()
       val vmParameters = getVmParameters(options) + (if ("pattern" == testKind) listOf("-Dintellij.build.test.patterns.escaped=true") else emptyList())
       val envVariables = getEnv(configuration)
 
@@ -66,14 +60,15 @@ class JUnitRunConfigurationProperties(
           it.getAttributeValue("enabled") == "true"
         } == true
 
-      return JUnitRunConfigurationProperties(name = configuration.getAttributeValue("name")!!,
-                                             moduleName = moduleName,
-                                             testSearchScope = testSearchScope,
-                                             testClassPatterns = testClassPatterns,
-                                             vmParameters = vmParameters,
-                                             requiredArtifacts = requiredArtifacts,
-                                             envVariables = envVariables,
-                                             buildProject = buildProject)
+      return JUnitRunConfigurationProperties(
+        name = configuration.getAttributeValue("name")!!,
+        moduleName = moduleName,
+        testSearchScope = testSearchScope,
+        testClassPatterns = testClassPatterns,
+        vmParameters = vmParameters,
+        envVariables = envVariables,
+        buildProject = buildProject,
+      )
     }
   }
 }

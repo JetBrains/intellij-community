@@ -10,26 +10,50 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.DiskQueryRelay;
+import com.intellij.openapi.vfs.VFileProperty;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
+import com.intellij.openapi.vfs.newvfs.FileNavigator;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.BatchingFileSystem;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PlatformNioHelper;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemDependent;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
-import java.util.*;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
 
+import static com.intellij.openapi.vfs.VFileProperty.SYMLINK;
 import static com.intellij.openapi.vfs.impl.local.LocalFileSystemEelUtil.listWithAttributesUsingEel;
 import static com.intellij.openapi.vfs.impl.local.LocalFileSystemEelUtil.readAttributesUsingEel;
+import static com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl.createCreateEvent;
 import static com.intellij.util.containers.CollectionFactory.createFilePathMap;
 import static java.util.Objects.requireNonNullElse;
 
@@ -56,6 +80,24 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   private final DiskQueryRelay<VirtualFile, FileAttributes> myAttributeGetter = new DiskQueryRelay<>(file -> readAttributes(file));
   private final DiskQueryRelay<Pair<VirtualFile, @Nullable Set<String>>, Map<String, FileAttributes>> myChildrenAttrGetter =
     new DiskQueryRelay<>(pair -> listWithAttributesUsingEel(pair.first, pair.second));
+
+  private final FileNavigator<NewVirtualFile> NON_REFRESHING_NAVIGATOR = new FileNavigator<>() {
+    @Override
+    public @Nullable NewVirtualFile parentOf(@NotNull NewVirtualFile file) {
+      // copied from VfsImplUtil.refreshAndFindFileByPath
+      if (!file.is(SYMLINK)) {
+        return file.getParent();
+      }
+      String canonicalPath = file.getCanonicalPath();
+      return canonicalPath != null ? VfsImplUtil.refreshAndFindFileByPath(LocalFileSystemImpl.this, canonicalPath) : null;
+    }
+
+    @Override
+    public @Nullable NewVirtualFile childOf(@NotNull NewVirtualFile parent,
+                                            @NotNull String childName) {
+      return parent.findChild(childName);
+    }
+  };
 
   protected LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
@@ -226,6 +268,44 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     }
   }
 
+  @SuppressWarnings("IO_FILE_USAGE")
+  @Override
+  public void refreshIoFiles(@NotNull Iterable<? extends File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
+    refreshNioFilesInternal(ContainerUtil.map(files, File::toPath));
+    refreshFiles(ContainerUtil.mapNotNull(files, this::findFileByIoFile), async, recursive, onFinish);
+  }
+
+  @Override
+  public void refreshNioFiles(@NotNull Iterable<? extends Path> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
+    refreshNioFilesInternal(files);
+    refreshFiles(ContainerUtil.mapNotNull(files, this::findFileByNioFile), async, recursive, onFinish);
+  }
+
+  public void refreshNioFilesInternal(@NotNull Iterable<? extends Path> files) {
+    // simulate logic in VirtualDirectoryImpl.findChild but for all files at once
+    List<VFileCreateEvent> createEventsToFire = new ArrayList<>();
+    for (var file : files) {
+      FileNavigator.NavigateResult<NewVirtualFile> result = FileNavigator.navigate(this, file.toAbsolutePath().toString(), NON_REFRESHING_NAVIGATOR);
+      if (result.isResolved()) {
+        continue;
+      }
+      NewVirtualFile lastResolvedFile = result.lastResolvedFile();
+      String nextChild = result.getUnresolvedChildName();
+      if (lastResolvedFile != null && nextChild != null) {
+        FakeVirtualFile fake = new FakeVirtualFile(lastResolvedFile, nextChild);
+        String canonicallyCasedName = this.getCanonicallyCasedName(fake);
+        VFileCreateEvent event = createCreateEvent(lastResolvedFile, fake, canonicallyCasedName, this);
+        if (event != null) {
+          // file exists on disk
+          createEventsToFire.add(event);
+        }
+      }
+    }
+    if (!createEventsToFire.isEmpty()) {
+      RefreshQueue.getInstance().processEvents(/*async: */ false, createEventsToFire);
+    }
+  }
+
   @ApiStatus.Internal
   public final void symlinkUpdated(
     int fileId,
@@ -292,9 +372,9 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
-    if (SystemInfo.isUnix && file.is(VFileProperty.SPECIAL)) { // avoid opening FIFO files
-      throw new NoSuchFileException(file.getPath(), null, "Not a file");
-    }
+    //if (SystemInfo.isUnix && file.is(VFileProperty.SPECIAL)) { // avoid opening FIFO files
+    //  throw new NoSuchFileException(file.getPath(), null, "Not a file");
+    //}
     var result = myContentGetter.accessDiskWithCheckCanceled(file);
     if (result instanceof IOException e) throw e;
     return (byte[])result;
@@ -399,8 +479,9 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
   private static Object readContent(VirtualFile file) {
     try {
-      var nioFile = Path.of(toIoPath(file));
-      return readIfNotTooLarge(nioFile);
+      var nioPath = Path.of(toIoPath(file));
+      checkNotSpecialFile(file, nioPath);
+      return readIfNotTooLarge(nioPath);
     }
     catch (IOException e) {
       return e;
@@ -413,7 +494,8 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
       FileAttributes attributes = readAttributesUsingEel(nioFile);
       return amendAttributes(nioFile, attributes);
     }
-    catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
+    catch (NoSuchFileException e) { LOG.debug("File doesn't exist: " + e.getMessage()); }
+    catch (AccessDeniedException e) { LOG.debug(e); }
     catch (IOException | RuntimeException e) { LOG.warn(e); }
     return null;
   }

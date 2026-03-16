@@ -8,6 +8,12 @@ resourcegroup(
 )
 
 jvm_library(
+  name = "codeOptimizer",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
   name = "codeOptimizer_test_lib",
   module_name = "intellij.platform.buildScripts.codeOptimizer",
   visibility = ["//visibility:public"],
@@ -16,7 +22,8 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:platform-build_scripts-code_optimizer-proguard",
-  ]
+  ],
+  runtime_deps = [":codeOptimizer"]
 )
 ### auto-generated section `build intellij.platform.buildScripts.codeOptimizer` end
 

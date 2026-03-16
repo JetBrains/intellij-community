@@ -1,9 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution.eel
 
+import com.intellij.execution.target.EelTargetEnvironmentRequest
 import com.intellij.execution.target.HostPort
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.EelTargetEnvironmentRequest
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
@@ -14,6 +15,7 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.forwardLocalPort
 import com.intellij.util.PathMapper
 import com.intellij.util.net.NetUtils
@@ -63,13 +65,19 @@ class EelTargetEnvironmentConfigurationProvider(val eel: EelApi, val project: Pr
   }
 
   override fun getClientCommunicationAddress(
+    taskId: ExternalSystemTaskId?,
     targetEnvironmentConfiguration: TargetEnvironmentConfiguration,
     gradleServerHostPort: HostPort,
   ): HostPort {
-    return runBlockingCancellable {
-      val forwardedPort = forwardToolingProxyPortOntoLocalMachine(gradleServerHostPort.port)
-      return@runBlockingCancellable HostPort(NetUtils.getLocalHostString(), forwardedPort)
+    val localPort = if (taskId == null) {
+      runBlockingCancellable {
+        forwardToolingProxyPortOntoLocalMachine(gradleServerHostPort.port)
+      }
     }
+    else {
+      GradleEelProxyManager.getInstance(project).launchProxy(taskId, gradleServerHostPort.port)
+    }
+    return HostPort(NetUtils.getLocalHostString(), localPort)
   }
 
   private suspend fun forwardToolingProxyPortOntoLocalMachine(port: Int): Int {

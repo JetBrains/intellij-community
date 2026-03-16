@@ -5,3 +5,5 @@ fun f(list: List<Any>): Collection<String> {
 }
 
 // ELEMENT: foo
+
+// IGNORE_K2

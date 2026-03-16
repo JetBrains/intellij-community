@@ -13,7 +13,20 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.updater.UpdaterTestCase.*;
+import static com.intellij.updater.UpdaterTestCase.ANNOTATIONS_CHANGED_JAR;
+import static com.intellij.updater.UpdaterTestCase.ANNOTATIONS_JAR;
+import static com.intellij.updater.UpdaterTestCase.BOOTSTRAP_JAR;
+import static com.intellij.updater.UpdaterTestCase.IDEA_BAT;
+import static com.intellij.updater.UpdaterTestCase.LINK_TO_DOT_README_TXT_DOS;
+import static com.intellij.updater.UpdaterTestCase.LINK_TO_DOT_README_TXT_UNIX;
+import static com.intellij.updater.UpdaterTestCase.LINK_TO_README_TXT;
+import static com.intellij.updater.UpdaterTestCase.README_TXT;
+import static com.intellij.updater.UpdaterTestCase.createPatchSpec;
+import static com.intellij.updater.UpdaterTestCase.linkHash;
+import static com.intellij.updater.UpdaterTestCase.prepareDirectories;
+import static com.intellij.updater.UpdaterTestCase.randomFile;
+import static com.intellij.updater.UpdaterTestCase.sortActions;
+import static com.intellij.updater.UpdaterTestCase.sortResults;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @UpdaterTest

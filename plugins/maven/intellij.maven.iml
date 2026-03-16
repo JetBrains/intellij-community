@@ -9,6 +9,7 @@
       <excludeFolder url="file://$MODULE_DIR$/out" />
     </content>
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="module" module-name="intellij.repository.search.common" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
@@ -28,7 +29,7 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.ide.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
-    <orderEntry type="module" module-name="intellij.xml.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.xml.dom" exported="" />
@@ -41,7 +42,7 @@
     <orderEntry type="module" module-name="intellij.java.debugger.impl" />
     <orderEntry type="module" module-name="intellij.java.ui" exported="" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" exported="" scope="PROVIDED" />
-    <orderEntry type="library" name="jgoodies-forms" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jgoodies.forms" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.groovy" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
@@ -90,7 +91,7 @@
     <orderEntry type="module" module-name="intellij.properties.backend.psi" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.idea.community.build.dependencies" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
@@ -129,8 +130,11 @@
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
+    <orderEntry type="module" module-name="intellij.xml.analysis" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" />
+    <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
   </component>
   <component name="copyright">
     <Base>

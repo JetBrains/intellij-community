@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareAction
-import org.intellij.images.scientific.utils.ScientificUtils
 import org.intellij.images.scientific.statistics.ScientificImageActionsCollector
+import org.intellij.images.scientific.utils.ScientificUtils
 
 class CopyImageAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {

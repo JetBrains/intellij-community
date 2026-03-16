@@ -73,6 +73,7 @@ public enum OS {
   /** Represents an operating system this JVM is running on */
   public static final OS CURRENT = fromString(System.getProperty("os.name"));
 
+  @SuppressWarnings("SpellCheckingInspection")
   public static @NotNull OS fromString(@Nullable String os) {
     if (os != null) {
       os = os.toLowerCase(Locale.ENGLISH);
@@ -189,7 +190,7 @@ public enum OS {
     public boolean isUnderWsl() {
       if (isUnderWsl == null) {
         try {
-          @SuppressWarnings("SpellCheckingInspection") Path dataFile = Paths.get("/proc/sys/kernel/osrelease");
+          Path dataFile = Paths.get("/proc/sys/kernel/osrelease");
           isUnderWsl = new String(Files.readAllBytes(dataFile), StandardCharsets.US_ASCII).contains("-microsoft-");
         }
         catch (Exception ignored) {

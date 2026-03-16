@@ -1,23 +1,52 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceIsEmptyWithIfEmpty")
+
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.BundleBase
+import com.intellij.ide.TooltipTitle
 import com.intellij.ide.ui.laf.darcula.ui.DarculaScrollPaneBorder
 import com.intellij.internal.inspector.UiInspectorUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.TextWithMnemonic
+import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.dsl.UiDslException
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.HyperlinkEventAction
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.SpacingConfiguration
+import com.intellij.ui.dsl.builder.VerticalComponentGap
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
-import com.intellij.ui.dsl.gridLayout.*
+import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.GridLayoutComponentProperty
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.toUnscaled
+import com.intellij.ui.dsl.gridLayout.toUnscaledGaps
+import com.intellij.util.IconUtil
+import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.*
+import org.jetbrains.annotations.Nls
+import javax.accessibility.AccessibleContext
+import javax.swing.JCheckBox
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JRadioButton
+import javax.swing.JScrollPane
+import javax.swing.JSlider
+import javax.swing.JSpinner
+import javax.swing.JTable
+import javax.swing.JTree
 import javax.swing.text.JTextComponent
 
 /**
@@ -48,11 +77,13 @@ enum class DslComponentPropertyInternal {
 
   /**
    * Preferred columns width for DslLabel when [MAX_LINE_LENGTH_WORD_WRAP] mode is used.
-   * A temporary workaround of IJPL-62164, will be removed later.
+   * A temporary workaround of IJPL-62164 will be removed later.
    *
    * Value: Int
    */
   @ApiStatus.Experimental
+  @Deprecated("Not needed anymore, because IJPL-62164 has been implemented")
+  @ApiStatus.ScheduledForRemoval
   PREFERRED_COLUMNS_LABEL_WORD_WRAP
 }
 
@@ -88,6 +119,11 @@ val JComponent.interactiveComponent: JComponent
     val interactiveComponent = getClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT) as JComponent?
     return interactiveComponent ?: this
   }
+
+@get:ApiStatus.Internal
+@Deprecated("Quick workaround. Don't use this method, get rid of <html> instead")
+val String?.trimHtml: String?
+  get() = this?.removeSurrounding("<html>", "</html>")
 
 internal fun prepareVisualPaddings(component: JComponent): UnscaledGaps {
   var customVisualPaddings: UnscaledGaps? =
@@ -132,6 +168,24 @@ internal fun createComment(@NlsContexts.Label text: String, maxLineLength: Int, 
   result.limitPreferredSize = maxLineLength == MAX_LINE_LENGTH_WORD_WRAP
   result.text = text
   return result
+}
+
+internal fun createContextHelp(description: @NlsContexts.Tooltip String, title: @TooltipTitle String?): ContextHelpLabel {
+  val result = if (title == null) ContextHelpLabel.create(description)
+  else ContextHelpLabel.create(title, description)
+
+  result.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, AccessibleContextUtil.combineAccessibleStrings(
+    title?.stripHtml(), "\n", description.stripHtml()))
+
+  // Do not hide the context help button in the disabled state
+  result.disabledIcon = IconUtil.desaturate(result.icon)
+  return result
+}
+
+internal fun String.stripHtml(): @Nls String? {
+  @Suppress("HardCodedStringLiteral")
+  val result = StringUtil.stripHtml(this, " ").trim()
+  return if (result.isEmpty()) null else result
 }
 
 internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
@@ -189,5 +243,23 @@ internal fun warn(message: String) {
 internal fun registerCreationStacktrace(component: JComponent) {
   if (ApplicationManager.getApplication()?.isInternal == true && UiInspectorUtil.isSaveStacktraces()) {
     component.putClientProperty(DslComponentPropertyInternal.CREATION_STACKTRACE, Throwable())
+  }
+}
+
+/**
+ * Denied content and reasons
+ */
+private val DENIED_TAGS = mapOf(
+  Regex("<html>", RegexOption.IGNORE_CASE) to "tag <html> inserted automatically and shouldn't be used",
+  Regex("<body>", RegexOption.IGNORE_CASE) to "tag <body> inserted automatically and shouldn't be used",
+  Regex("""<a\s+href\s*=\s*(""|'')\s*>""", RegexOption.IGNORE_CASE) to "empty href like <a href=''> is denied, use <a> instead",
+)
+
+@ApiStatus.Internal
+fun checkDeniedHtmlTags(text: String) {
+  for ((regex, reason) in DENIED_TAGS) {
+    if (regex.find(text, 0) != null) {
+      UiDslException.error("Invalid html: $reason, text: $text")
+    }
   }
 }

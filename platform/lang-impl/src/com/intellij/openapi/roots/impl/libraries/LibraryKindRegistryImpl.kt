@@ -8,7 +8,12 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.OrderEntryUtil
-import com.intellij.openapi.roots.libraries.*
+import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.LibraryKind
+import com.intellij.openapi.roots.libraries.LibraryKindRegistry
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.roots.libraries.LibraryType
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 
 internal class LibraryKindRegistryImpl : LibraryKindRegistry() {
   init {

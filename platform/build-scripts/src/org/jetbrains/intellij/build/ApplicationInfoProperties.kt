@@ -12,7 +12,7 @@ interface ApplicationInfoProperties {
   val isEAP: Boolean
   val versionSuffix: String?
   /**
-   * The first number from 'minor' part of the version. This property is temporary added because some products specify composite number (like '1.3')
+   * The first number from 'minor' part of the version. This property is temporarily added because some products specify composite number (like '1.3')
    * in 'minor version' attribute instead of using 'micro version' (i.e. set minor='1' micro='3').
    */
   val minorVersionMainPart: String
@@ -39,5 +39,6 @@ interface ApplicationInfoProperties {
  * another product, to get the instance of the product currently being build, use [BuildContext.applicationInfo] instead.
  */
 @Internal
-fun BuildContext.loadApplicationInfoPropertiesForProduct(productProperties: ProductProperties): ApplicationInfoProperties =
-  ApplicationInfoPropertiesImpl(project, productProperties, options)
+fun loadApplicationInfoPropertiesForProduct(productProperties: ProductProperties, context: BuildContext): ApplicationInfoProperties {
+  return ApplicationInfoPropertiesImpl(context.project, productProperties, context.options)
+}

@@ -10,7 +10,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public final class JavaFxSettingsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final JavaFxSettings mySettings;

@@ -9,7 +9,7 @@ import com.intellij.rt.ant.execution.PacketProcessor;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;

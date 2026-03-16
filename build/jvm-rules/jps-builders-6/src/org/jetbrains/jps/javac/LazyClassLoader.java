@@ -3,7 +3,6 @@ package org.jetbrains.jps.javac;
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.Iterators;
-import org.jetbrains.jps.util.Iterators.Function;
 
 import java.io.Closeable;
 import java.io.File;
@@ -28,15 +27,12 @@ class LazyClassLoader extends ClassLoader implements Closeable {
 
   @Nullable
   static LazyClassLoader createFrom(@Nullable Iterable<? extends File> files, ClassLoader parent) {
-    return Iterators.isEmptyCollection(files)? null : new LazyClassLoader(Iterators.map(files, new Function<File, URL>() {
-      @Override
-      public URL fun(File f) {
-        try {
-          return f.toURI().toURL();
-        }
-        catch (MalformedURLException e) {
-          throw new AssertionError(e);
-        }
+    return Iterators.isEmptyCollection(files)? null : new LazyClassLoader(Iterators.map(files, f -> {
+      try {
+        return f.toURI().toURL();
+      }
+      catch (MalformedURLException e) {
+        throw new AssertionError(e);
       }
     }), parent);
   }
@@ -47,7 +43,7 @@ class LazyClassLoader extends ClassLoader implements Closeable {
       synchronized (myUrls) {
         delegate = myDelegate;
         if (delegate == null) {
-          myDelegate = delegate = new DelegateClassLoader(Iterators.collect(myUrls, new ArrayList<URL>()).toArray(EMPTY_URL_ARRAY), myParent);
+          myDelegate = delegate = new DelegateClassLoader(Iterators.collect(myUrls, new ArrayList<>()).toArray(EMPTY_URL_ARRAY), myParent);
         }
       }
     }

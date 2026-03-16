@@ -3,11 +3,30 @@
 
 package fleet.util.async
 
+import fleet.multiplatform.shims.SynchronizedObject
 import fleet.multiplatform.shims.synchronized
 import fleet.reporting.shared.tracing.spannedScope
 import fleet.tracing.SpanInfoBuilder
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CompletableJob
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -292,7 +311,7 @@ sealed class SharingMode(
  */
 fun <T> Resource<T>.shareIn(coroutineScope: CoroutineScope, sharing: SharingMode = SharingMode.Eager): Resource<T> =
   let { source ->
-    val lock = Any()
+    val lock = SynchronizedObject()
     var state: SharedResourceState<T> = when {
       sharing.runImmediately -> SharedResourceState.Running(1, runSharedResource(source, coroutineScope))
       else -> SharedResourceState.NotRunning()

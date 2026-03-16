@@ -17,15 +17,16 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.semantic.SemService;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
+@PerformanceUnitTest
 public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   private static final String BASE_PATH = "psi/formatter/xml";
   private static final Set<String> ourTestsWithDocumentUpdate = Set.of("Performance3", "Performance4");
@@ -74,7 +75,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
       PlatformTestUtil.assertTiming("Fix xml formatter redo performance problem", 3400, end - start);
     }
     finally {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       final VirtualFile[] selectedFiles = editorManager.getSelectedFiles();
       if (selectedFiles.length > 0) editorManager.closeFile(selectedFiles[0]);
     }
@@ -100,7 +101,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
         doTest();
       }
       finally {
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       }
   };
   }
@@ -168,7 +169,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
       doTest(resultNumber);
     }
     finally {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       xmlSettings.XML_KEEP_WHITESPACES = oldValue;
     }
   }

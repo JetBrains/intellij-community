@@ -1,18 +1,18 @@
-from typing import Any
+from _typeshed import Incomplete
 
 class AttrDef:
-    name: Any
-    key: Any
-    validate: Any
-    pre_query: Any
-    post_query: Any
-    default: Any
-    dereference_dn: Any
-    description: Any
-    mandatory: Any
-    single_value: Any
-    oid_info: Any
-    other_names: Any
+    name: Incomplete
+    key: Incomplete
+    validate: Incomplete
+    pre_query: Incomplete
+    post_query: Incomplete
+    default: Incomplete
+    dereference_dn: Incomplete
+    description: Incomplete
+    mandatory: Incomplete
+    single_value: Incomplete
+    oid_info: Incomplete
+    other_names: Incomplete
     def __init__(
         self,
         name,

@@ -17,7 +17,13 @@ package com.intellij.java.psi.impl.source.tree.java;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.util.IncorrectOperationException;

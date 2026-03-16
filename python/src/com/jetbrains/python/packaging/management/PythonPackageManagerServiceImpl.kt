@@ -15,56 +15,61 @@ import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 internal class PythonPackageManagerServiceImpl(private val serviceScope: CoroutineScope) : PythonPackageManagerService, Disposable {
-  private val cache = ConcurrentHashMap<UUID, Deferred<PythonPackageManager>>()
+  private val cache = ConcurrentHashMap<UUID, PythonPackageManager>()
 
   private val bridgeCache = ConcurrentHashMap<UUID, PythonPackageManagementServiceBridge>()
 
   /**
-   * Requires Sdk to be Python Sdk and have PythonSdkAdditionalData.
+   * Returns a cached [PythonPackageManager] for the given [sdk], creating one on first access.
+   *
+   * On cache hit the call is effectively free (a [ConcurrentHashMap] lookup).
+   * On cache miss (once per SDK per project lifetime) the method creates the manager,
+   * registers Disposer listeners and sets up VFS watchers — this may involve lightweight I/O
+   * (e.g. flavor detection in [com.jetbrains.python.sdk.getOrCreateAdditionalData]).
+   * In practice the first call happens during project/SDK setup on a background thread,
+   * so subsequent EDT callers always get a cached instance.
+   *
+   * Requires [sdk] to be a Python SDK with [com.jetbrains.python.sdk.PythonSdkAdditionalData].
    */
-  override suspend fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
+  override fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
     val cacheKey = (sdk.getOrCreateAdditionalData()).uuid
 
     return cache.computeIfAbsent(cacheKey) {
-      serviceScope.async {
-        val vfsListenerDisposable = Disposer.newDisposable("VFS listener for ${sdk.name} in scope of ${project.name}")
+      val vfsListenerDisposable = Disposer.newDisposable("VFS listener for ${sdk.name} in scope of ${project.name}")
 
-        if (sdk is Disposable) {
-          val localCache = cache
-          try {
-            Disposer.register(sdk, Disposable { localCache.remove(cacheKey) })
-            Disposer.register(sdk, Disposable { Disposer.dispose(vfsListenerDisposable) })
-          }
-          catch (e: IncorrectOperationException) {
-            throw AlreadyDisposedException("Requesting a package manager for an already disposed SDK $sdk, ${e.localizedMessage}")
-          }
-        }
-
-        val manager = PythonPackageManagerProvider.EP_NAME.extensionList.firstNotNullOf { it.createPackageManagerForSdk(project, sdk) }
+      if (sdk is Disposable) {
+        val localCache = cache
         try {
-          Disposer.register(PyPackageCoroutine.getInstance(project), manager)
-          Disposer.register(manager, vfsListenerDisposable)
+          Disposer.register(sdk, Disposable { localCache.remove(cacheKey) })
+          Disposer.register(sdk, Disposable { Disposer.dispose(vfsListenerDisposable) })
         }
         catch (e: IncorrectOperationException) {
-          throw AlreadyDisposedException("Requesting a package manager for an already disposed Project $project, ${e.localizedMessage}")
+          throw AlreadyDisposedException("Requesting a package manager for an already disposed SDK $sdk, ${e.localizedMessage}")
         }
-
-        PyPackageUtil.runOnChangeUnderInterpreterPaths(sdk, vfsListenerDisposable) {
-          PythonSdkUpdater.scheduleUpdate(sdk, project)
-        }
-
-        // I don't think it should be here
-        PythonRequirementTxtSdkUtils.migrateRequirementsTxtPathFromModuleToSdk(project, sdk)
-
-        manager
       }
-    }.await()
+
+      val manager = PythonPackageManagerProvider.EP_NAME.extensionList.firstNotNullOf { it.createPackageManagerForSdk(project, sdk) }
+      try {
+        Disposer.register(PyPackageCoroutine.getInstance(project), manager)
+        Disposer.register(manager, vfsListenerDisposable)
+      }
+      catch (e: IncorrectOperationException) {
+          throw AlreadyDisposedException("Requesting a package manager for an already disposed Project $project, ${e.localizedMessage}")
+      }
+
+      PyPackageUtil.runOnChangeUnderInterpreterPaths(sdk, vfsListenerDisposable) {
+        PythonSdkUpdater.scheduleUpdate(sdk, project)
+      }
+
+      // I don't think it should be here
+      PythonRequirementTxtSdkUtils.migrateRequirementsTxtPathFromModuleToSdk(project, sdk)
+
+      manager
+    }
   }
 
   override fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge {

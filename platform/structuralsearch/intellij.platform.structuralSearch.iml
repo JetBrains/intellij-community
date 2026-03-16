@@ -26,11 +26,12 @@
     <orderEntry type="module" module-name="intellij.xml.parser" />
     <orderEntry type="module" module-name="intellij.regexp" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
-    <orderEntry type="module" module-name="intellij.platform.duplicates.analysis" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.duplicates.analysis" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
   </component>
   <component name="copyright">
     <Base>

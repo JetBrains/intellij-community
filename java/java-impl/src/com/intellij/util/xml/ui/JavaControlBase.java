@@ -14,7 +14,8 @@ import com.intellij.util.xml.ExtendClass;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 @ApiStatus.Internal
 public abstract class JavaControlBase<T extends JComponent> extends EditorTextFieldControl<T> {

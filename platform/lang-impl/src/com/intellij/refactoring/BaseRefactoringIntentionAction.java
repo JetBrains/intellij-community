@@ -7,7 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.ui.ExperimentalUI;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class BaseRefactoringIntentionAction extends PsiElementBaseIntentionAction implements Iconable, HighPriorityAction {
   @Override

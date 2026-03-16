@@ -3,10 +3,12 @@
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common
 
 import com.intellij.openapi.application.runReadAction
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
+@K1Deprecation
 class InferenceFacade(
     private val typeVariablesCollector: ContextCollector,
     private val constraintsCollectorAggregator: ConstraintsCollectorAggregator,

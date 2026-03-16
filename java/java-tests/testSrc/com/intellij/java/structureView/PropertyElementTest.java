@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.structureView;
 
-import com.intellij.ide.structureView.impl.java.*;
+import com.intellij.ide.structureView.impl.java.FieldsFilter;
+import com.intellij.ide.structureView.impl.java.KindSorter;
+import com.intellij.ide.structureView.impl.java.PropertiesGrouper;
+import com.intellij.ide.structureView.impl.java.PropertyGroup;
+import com.intellij.ide.structureView.impl.java.PublicElementsFilter;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.InheritedMembersNodeProvider;
 import com.intellij.ide.util.treeView.smartTree.GroupWrapper;
@@ -11,11 +15,16 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.TreeModel;
 import java.util.List;
 
-import static com.intellij.ide.structureView.impl.java.PropertyGroup.*;
+import static com.intellij.ide.structureView.impl.java.PropertyGroup.PROPERTY_READ_ICON;
+import static com.intellij.ide.structureView.impl.java.PropertyGroup.PROPERTY_READ_STATIC_ICON;
+import static com.intellij.ide.structureView.impl.java.PropertyGroup.PROPERTY_READ_WRITE_ICON;
+import static com.intellij.ide.structureView.impl.java.PropertyGroup.PROPERTY_READ_WRITE_STATIC_ICON;
+import static com.intellij.ide.structureView.impl.java.PropertyGroup.PROPERTY_WRITE_ICON;
+import static com.intellij.ide.structureView.impl.java.PropertyGroup.PROPERTY_WRITE_STATIC_ICON;
 import static com.intellij.psi.util.PsiUtil.ACCESS_LEVEL_PROTECTED;
 import static com.intellij.psi.util.PsiUtil.ACCESS_LEVEL_PUBLIC;
 import static org.junit.Assert.assertArrayEquals;

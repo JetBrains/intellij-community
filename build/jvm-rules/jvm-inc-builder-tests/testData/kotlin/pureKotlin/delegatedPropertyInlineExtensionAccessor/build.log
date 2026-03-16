@@ -1,0 +1,36 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_delegatedPropertyInlineExtensionAccessor-a.kotlin_module
+  inline/InlineGetKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/delegatedPropertyInlineExtensionAccessor/a/inlineGet.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_delegatedPropertyInlineExtensionAccessor-a.kotlin_module
+  usage/UsageVal.class
+  usage/UsageVar.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/delegatedPropertyInlineExtensionAccessor/a/UsageVal.kt
+  kotlin/pureKotlin/delegatedPropertyInlineExtensionAccessor/a/UsageVar.kt
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_delegatedPropertyInlineExtensionAccessor-a.kotlin_module
+  inline/InlineSetKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/delegatedPropertyInlineExtensionAccessor/a/inlineSet.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_delegatedPropertyInlineExtensionAccessor-a.kotlin_module
+  usage/UsageVar.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/delegatedPropertyInlineExtensionAccessor/a/UsageVar.kt
+End of files
+------------------------------------------
+Exit code: OK

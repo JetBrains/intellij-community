@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Visitor which can be used to visit elements for all languages.
- *
+ * @see PsiElement#accept(PsiElementVisitor)
  * @see PsiRecursiveElementVisitor
  */
 public abstract class PsiElementVisitor {

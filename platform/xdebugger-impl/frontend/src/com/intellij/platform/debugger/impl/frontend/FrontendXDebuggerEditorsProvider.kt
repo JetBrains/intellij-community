@@ -10,7 +10,15 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
+import com.intellij.platform.debugger.impl.rpc.XDebuggerEditorsProviderDto
+import com.intellij.platform.debugger.impl.rpc.XExpressionDocumentDto
+import com.intellij.platform.debugger.impl.rpc.XExpressionDto
+import com.intellij.platform.debugger.impl.rpc.XSourcePositionDto
+import com.intellij.platform.debugger.impl.rpc.language
+import com.intellij.platform.debugger.impl.rpc.toRpc
+import com.intellij.platform.debugger.impl.rpc.xExpression
+import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
@@ -22,7 +30,10 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.future.future
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.Unmodifiable
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
 private class BoundedDocumentState(
@@ -50,7 +61,7 @@ private class BoundedDocumentState(
 
 private class FrontendXDebuggerEditorsProvider(
   private val cs: CoroutineScope,
-  private val fileTypeId: String,
+  private val editorsProviderDto: XDebuggerEditorsProviderDto,
   private val documentIdProvider: suspend (FrontendDocumentId, XExpressionDto, XSourcePositionDto?, EvaluationMode) -> XExpressionDocumentDto?,
 ) : XDebuggerEditorsProvider() {
 
@@ -76,7 +87,7 @@ private class FrontendXDebuggerEditorsProvider(
   }
 
   override fun getFileType(): FileType {
-    val localFileType = FileTypeManager.getInstance().findFileTypeByName(fileTypeId)
+    val localFileType = FileTypeManager.getInstance().findFileTypeByName(editorsProviderDto.fileTypeId)
     if (localFileType != null) {
       return localFileType
     }
@@ -88,6 +99,13 @@ private class FrontendXDebuggerEditorsProvider(
     if (xExpression != null) return xExpression
     return super.createExpression(project, document, language, mode)
   }
+
+  override fun getSupportedLanguagesAsync(project: Project, sourcePosition: XSourcePosition?): CompletableFuture<@Unmodifiable Collection<Language>> {
+    return cs.future {
+      XDebugSessionApi.getInstance().supportedLanguages(project.projectId(), editorsProviderDto.id, sourcePosition?.toRpc())
+        .mapNotNull { it.language() }
+    }
+  }
 }
 
 internal fun getEditorsProvider(
@@ -97,5 +115,5 @@ internal fun getEditorsProvider(
 ): XDebuggerEditorsProvider {
   val localEditorsProvider = editorsProviderDto.editorsProvider
   if (localEditorsProvider != null) return localEditorsProvider
-  return FrontendXDebuggerEditorsProvider(cs, editorsProviderDto.fileTypeId, documentIdProvider)
+  return FrontendXDebuggerEditorsProvider(cs, editorsProviderDto, documentIdProvider)
 }

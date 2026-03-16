@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.vfs.AfterEventShouldBeFiredBeforeOtherListeners
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.serviceContainer.AlreadyDisposedException
@@ -9,7 +10,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.RootsChangeWatc
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class WorkspaceModelRootWatcher : AsyncFileListener {
+class WorkspaceModelRootWatcher : AsyncFileListener, AfterEventShouldBeFiredBeforeOtherListeners {
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
     val appliers = ProjectManager.getInstance().openProjects.flatMap { project ->
       try {
@@ -24,11 +25,9 @@ class WorkspaceModelRootWatcher : AsyncFileListener {
       }
     }
 
-    return when {
-      appliers.isEmpty() -> null
-      appliers.size == 1 -> appliers.first()
-      else -> {
-        object : AsyncFileListener.ChangeApplier {
+    return if (appliers.isEmpty()) null
+    else {
+        object : AsyncFileListener.ChangeApplier, AfterEventShouldBeFiredBeforeOtherListeners {
           override fun beforeVfsChange() {
             for (applier in appliers) {
               applier.beforeVfsChange()
@@ -41,7 +40,6 @@ class WorkspaceModelRootWatcher : AsyncFileListener {
             }
           }
         }
-      }
     }
   }
 }

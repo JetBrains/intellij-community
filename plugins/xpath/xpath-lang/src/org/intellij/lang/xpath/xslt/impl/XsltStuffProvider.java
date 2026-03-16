@@ -23,7 +23,11 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.*;
+import com.intellij.usages.PsiElementUsageTarget;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageTarget;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
@@ -39,7 +43,7 @@ import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.xml.namespace.QName;
 
 public final class XsltStuffProvider implements UsageGroupingRuleProvider {

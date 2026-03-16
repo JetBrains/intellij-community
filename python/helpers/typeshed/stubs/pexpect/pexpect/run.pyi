@@ -1,5 +1,5 @@
 from _typeshed import FileDescriptorOrPath
-from os import _Environ
+from collections.abc import Mapping
 from typing import AnyStr
 
 from .spawnbase import _InputRePattern, _Logfile
@@ -12,7 +12,7 @@ def run(
     extra_args: None = None,
     logfile: _Logfile | None = None,
     cwd: FileDescriptorOrPath | None = None,
-    env: _Environ[str] | None = None,
+    env: Mapping[str, str] | None = None,
     **kwargs,
 ) -> AnyStr | tuple[AnyStr, int]: ...
 def runu(
@@ -23,6 +23,6 @@ def runu(
     extra_args: None = None,
     logfile: _Logfile | None = None,
     cwd: FileDescriptorOrPath | None = None,
-    env: _Environ[str] | None = None,
+    env: Mapping[str, str] | None = None,
     **kwargs,
 ) -> AnyStr | tuple[AnyStr, int]: ...

@@ -42,13 +42,10 @@ private val LOG = logger<ClassicUiToIslandsMigration>()
 internal object ClassicUiToIslandsMigration {
 
   val isEnabledFeature: Boolean by lazy {
-    isMonolith() && !java.lang.Boolean.getBoolean("idea.is.unit.test") && !ApplicationManagerEx.isInIntegrationTest()
+    AppMode.isMonolith() && !java.lang.Boolean.getBoolean("idea.is.unit.test") && !ApplicationManagerEx.isInIntegrationTest()
     // System.getProperty("disable.classic.ui.on.start.feature", "false").toBoolean()
   }
 
-  private fun isMonolith(): Boolean {
-    return !PlatformUtils.isJetBrainsClient() && !AppMode.isRemoteDevHost();
-  }
   /**
    * Remove the classic UI from the disabled plugins file if there is no classic UI plugin installed
    */

@@ -5,7 +5,7 @@ import com.intellij.ide.plugins.LocalizationPluginHelper.isActiveLocalizationPlu
 import com.intellij.ide.ui.LanguageAndRegionUi
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.diagnostic.logger
-import java.util.*
+import java.util.Locale
 
 internal class LocalizationPluginListener : DynamicPluginListener {
   override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {

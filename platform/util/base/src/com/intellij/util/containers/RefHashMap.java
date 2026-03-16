@@ -9,8 +9,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
-import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.AbstractMap;
+import java.util.AbstractSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Base class for (soft/weak) keys -> hard values map
@@ -23,15 +28,15 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, 
   private final HardKey myHardKeyInstance = new HardKey(); // "singleton"
   private final @NotNull HashingStrategy<? super K> myStrategy;
   private Set<Entry<K, V>> entrySet;
-  private final BiConsumer<? super @NotNull Map<K, V>, ? super V> myEvictionListener;
+  private final CollectionFactory.@Nullable EvictionListener<K, V, ? super V> myEvictionListener;
 
   RefHashMap(int initialCapacity, float loadFactor, @NotNull HashingStrategy<? super K> strategy) {
     this(initialCapacity, loadFactor, strategy, null);
   }
-  RefHashMap(int initialCapacity, float loadFactor, @NotNull HashingStrategy<? super K> strategy, @Nullable BiConsumer<? super @NotNull Map<K, V>, ? super V> evictionListener) {
+  RefHashMap(int initialCapacity, float loadFactor, @NotNull HashingStrategy<? super K> strategy, @Nullable CollectionFactory.EvictionListener<K,V,? super V> keyEvictionListener) {
     myStrategy = strategy;
     myMap = new MyMap(initialCapacity, loadFactor);
-    myEvictionListener = evictionListener;
+    myEvictionListener = keyEvictionListener;
   }
   RefHashMap(@NotNull HashingStrategy<? super K> hashingStrategy) {
     this(4, 0.8f, hashingStrategy);
@@ -85,6 +90,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, 
       this.mask = mask;
       maxFill = HashCommon.maxFill(n, f);
       this.key = newKey;
+      //noinspection unchecked
       this.value = (V[])newValue;
     }
   }
@@ -148,7 +154,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, 
     while ((wk = (Key<K>)myReferenceQueue.poll()) != null) {
       V v = removeKey(wk);
       if (myEvictionListener != null) {
-        myEvictionListener.accept(this, v);
+        myEvictionListener.evicted(this, wk.hashCode(), v);
       }
       processed = true;
     }

@@ -25,9 +25,11 @@ interface HotSwapSession<T> {
 
   /**
    * Start a hot swap process.
+   *
+   * @param showSuccessNotification whether to show a success notification after the hot swap is completed successfully
    * @return a callback to report the hot swap status
    */
-  fun startHotSwapListening(): HotSwapResultListener
+  fun startHotSwapListening(showSuccessNotification: Boolean = true): HotSwapResultListener
 }
 
 /**

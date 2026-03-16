@@ -12,6 +12,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -23,9 +25,15 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
 
 private val PATH_CLASS_ID: ClassId = ClassId.fromString("java/nio/file/Path")
 private val SUSPICIOUS_CALLABLE_IDS: Set<CallableId> = setOf(
@@ -76,15 +84,21 @@ internal class SuspiciousCallOnCollectionToAddOrRemovePathInspection : KotlinApp
     }
 
     override fun KaSession.prepareContext(element: KtExpression): Context? {
+        fun expressionTypeClassId(expression: KtExpression?): ClassId? =
+            when (val expressionType = expression?.expressionType) {
+                is KaFlexibleType -> expressionType.upperBound
+                else -> expressionType
+            }?.symbol?.classId
+
         val isPlus = when (element) {
             is KtBinaryExpression -> {
-                if (element.right?.expressionType?.symbol?.classId != PATH_CLASS_ID) return null
+                if (expressionTypeClassId(element.right) != PATH_CLASS_ID) return null
                 element.operationToken == KtTokens.PLUS
             }
 
             is KtCallExpression -> {
                 val argument = element.valueArguments.singleOrNull()?.getArgumentExpression() ?: return null
-                if (argument.expressionType?.symbol?.classId != PATH_CLASS_ID) return null
+                if (expressionTypeClassId(argument) != PATH_CLASS_ID) return null
                 element.calleeExpression?.text == "plus"
             }
 
@@ -92,8 +106,11 @@ internal class SuspiciousCallOnCollectionToAddOrRemovePathInspection : KotlinApp
         }
 
         val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        if (call.partiallyAppliedSymbol.symbol.callableId !in SUSPICIOUS_CALLABLE_IDS) return null
-        return Context(isPlus)
+        return if (call.symbol.callableId in SUSPICIOUS_CALLABLE_IDS) {
+            Context(isPlus)
+        } else {
+            null
+        }
     }
 
     override fun getApplicableRanges(element: KtExpression): List<TextRange> = when (element) {

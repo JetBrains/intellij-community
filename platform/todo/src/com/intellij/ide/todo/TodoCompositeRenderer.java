@@ -9,10 +9,12 @@ import com.intellij.ui.HighlightableCellRenderer;
 import com.intellij.ui.HighlightedRegion;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Font;
 
 /**
  * todo: replace this highlightable crap with regular NodeRenderer

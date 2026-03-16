@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.caches.resolve
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.PlatformAnalysisParameters
 import org.jetbrains.kotlin.analyzer.ResolverForModuleFactory
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.TargetEnvironment
 import org.jetbrains.kotlin.storage.StorageManager
 
+@K1Deprecation
 interface IdePlatformKindResolution {
     val kind: IdePlatformKind
 
@@ -71,5 +73,6 @@ interface IdePlatformKindResolution {
     }
 }
 
+@K1Deprecation
 val IdePlatformKind.resolution: IdePlatformKindResolution
     get() = IdePlatformKindResolution.getResolution(this)

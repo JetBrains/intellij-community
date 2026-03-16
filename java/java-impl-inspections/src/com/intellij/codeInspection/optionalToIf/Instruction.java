@@ -1,8 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.optionalToIf;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.PsiVariable;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -139,7 +150,7 @@ interface Instruction {
     @Override
     public String generate() {
       if (myInstructions.size() == 1 && !hasElseBranch()) {
-        Instruction instruction = myInstructions.get(0);
+        Instruction instruction = myInstructions.getFirst();
         if (!(instruction instanceof Declaration) &&
             (!(instruction instanceof CodeBlock) || ((CodeBlock)instruction).myBlock.getCodeBlock().getStatements().length == 1)) {
           return "if(" + myCondition.getText() + ")" + instruction.generate();

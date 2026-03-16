@@ -1,26 +1,27 @@
-// Copyright 2000-2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.openapi.editor.Document;
+import org.jetbrains.annotations.NotNull;
 
 public final class DocCommandGroupId {
   private final Document myDocument;
   private final Object myGroupId;
 
-  public static DocCommandGroupId noneGroupId(Document doc) {
+  public static @NotNull DocCommandGroupId noneGroupId(@NotNull Document doc) {
     return new DocCommandGroupId(doc, new Object());
   }
 
-  public static DocCommandGroupId withGroupId(Document doc, Object groupId) {
+  public static @NotNull DocCommandGroupId withGroupId(@NotNull Document doc, @NotNull Object groupId) {
     return new DocCommandGroupId(doc, groupId);
   }
 
-  private DocCommandGroupId(Document document, Object groupId) {
+  private DocCommandGroupId(@NotNull Document document, @NotNull Object groupId) {
     myDocument = document;
     myGroupId = groupId;
   }
 
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return myDocument;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -6,7 +6,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 
 /**
  * The purpose of this class is to reserve action-id in a {@code plugin.xml}, so the action appears in <em>Preferences | Keymap</em>.
@@ -41,6 +42,7 @@ public final class EmptyAction extends AnAction {
       emptyAction.getTemplatePresentation().setText(name);
       emptyAction.getTemplatePresentation().setIcon(icon);
     }
+    emptyAction.getTemplatePresentation().setRWLockRequired(false);
     return emptyAction;
   }
 

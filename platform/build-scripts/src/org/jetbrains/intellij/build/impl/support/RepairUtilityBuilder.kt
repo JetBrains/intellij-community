@@ -5,25 +5,38 @@ package org.jetbrains.intellij.build.impl.support
 
 import com.intellij.openapi.util.SystemInfoRt
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.jetbrains.intellij.build.*
+import kotlinx.coroutines.withContext
+import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions.Companion.REPAIR_UTILITY_BUNDLE_STEP
+import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.JvmArchitecture.Companion.currentJvmArch
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.OsFamily.Companion.currentOs
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.impl.Docker
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder
 import org.jetbrains.intellij.build.impl.asyncLazy
 import org.jetbrains.intellij.build.io.runProcess
+import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.nio.file.attribute.PosixFilePermission.*
-import java.util.*
+import java.nio.file.attribute.PosixFilePermission.GROUP_EXECUTE
+import java.nio.file.attribute.PosixFilePermission.GROUP_READ
+import java.nio.file.attribute.PosixFilePermission.OTHERS_EXECUTE
+import java.nio.file.attribute.PosixFilePermission.OTHERS_READ
+import java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE
+import java.nio.file.attribute.PosixFilePermission.OWNER_READ
+import java.nio.file.attribute.PosixFilePermission.OWNER_WRITE
+import java.util.UUID
+import java.util.WeakHashMap
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -44,7 +57,7 @@ class RepairUtilityBuilder {
   companion object {
     private val buildLock = Mutex()
 
-    suspend fun bundle(context: BuildContext, os: OsFamily, arch: JvmArchitecture, distributionDir: Path) {
+    suspend fun bundle(os: OsFamily, arch: JvmArchitecture, distributionDir: Path, context: BuildContext) {
       context.executeStep(spanBuilder("bundle repair-utility").setAttribute("os", os.osName), REPAIR_UTILITY_BUNDLE_STEP) {
         if (!canBinariesBeBuilt(context)) {
           return@executeStep
@@ -65,7 +78,7 @@ class RepairUtilityBuilder {
       }
     }
 
-    suspend fun generateManifest(context: BuildContext, unpackedDistribution: Path, os: OsFamily, arch: JvmArchitecture) {
+    suspend fun generateManifest(unpackedDistribution: Path, os: OsFamily, arch: JvmArchitecture, context: BuildContext) {
       context.executeStep(spanBuilder("generate installation integrity manifest")
                             .setAttribute("dir", unpackedDistribution.toString()), REPAIR_UTILITY_BUNDLE_STEP) {
         check(Files.exists(unpackedDistribution)) {
@@ -163,10 +176,12 @@ class RepairUtilityBuilder {
           buildLock.withLock {
             withContext(Dispatchers.IO) {
               retryWithExponentialBackOff {
-                runProcess(args = listOf("bash", "build.sh"), workingDir = projectHome,
-                           additionalEnvVariables = distributionUrls,
-                           timeout = 5.minutes,
-                           inheritOut = true)
+                runProcess(
+                  args = listOf("bash", "build.sh"), workingDir = projectHome,
+                  additionalEnvVariables = distributionUrls,
+                  timeout = 5.minutes,
+                  inheritOut = true,
+                )
               }
             }
           }
@@ -175,7 +190,7 @@ class RepairUtilityBuilder {
           if (TeamCityHelper.isUnderTeamCity) {
             throw e
           }
-          return@use emptyMap<Binary, Path>()
+          return@use emptyMap()
         }
 
         val binaries = BINARIES.associateWith { projectHome.resolve(it.relativeSourcePath) }

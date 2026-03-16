@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.AnnotationUtil
@@ -7,11 +7,37 @@ import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInsight.generation.GenerateMembersUtil
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.GenericsUtil
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDisjunctionType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiReturnStatement
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.PsiVariable
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.util.*
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiTypesUtil
+import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.TypeConversionUtil
+import com.intellij.psi.util.startOffset
+import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findRequiredTypeParameters
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getExpressionType
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getReturnedExpression
@@ -21,13 +47,18 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputP
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.uniqueNameOf
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.withBoxedType
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
-import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.ArtificialBooleanOutput
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.EmptyOutput
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.ExpressionOutput
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.VariableOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput
-import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.*
+import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.ConditionalFlow
+import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.EmptyFlow
+import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.UnconditionalFlow
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import com.intellij.util.Processor
-import java.util.*
+import java.util.Collections
 
 fun findExtractOptions(elements: List<PsiElement>, inferNullity: Boolean = true): ExtractOptions {
   require(elements.isNotEmpty())
@@ -76,7 +107,8 @@ fun findExtractOptions(elements: List<PsiElement>, inferNullity: Boolean = true)
     requiredVariablesInside = analyzer.findUndeclaredVariables().filterNot { it.name in parameterNames },
     typeParameters = findRequiredTypeParameters(targetClass, elements),
     inputParameters = inputParameters,
-    exposedLocalVariables = exposedVariables
+    exposedLocalVariables = exposedVariables,
+    visibility = ExtractMethodDialog.getDefaultVisibility()
   )
 
   extractOptions = ExtractMethodPipeline.withCastedParameters(extractOptions)
@@ -212,7 +244,7 @@ internal fun updateMethodAnnotations(method: PsiMethod, inputParameters: List<In
     //TODO use dataoutput.nullability instead
     val returnedExpressions = PsiUtil.findReturnStatements(method).mapNotNull(PsiReturnStatement::getReturnValue)
     val resultNullability = CodeFragmentAnalyzer.inferNullability(returnedExpressions)
-    ExtractMethodHelper.addNullabilityAnnotation(method.returnTypeElement, resultNullability)
+    ExtractMethodHelper.addNullabilityAnnotation(method, resultNullability)
     GenerateMembersUtil.sortModifiers(method, null)
   }
   val parameters = method.parameterList.parameters
@@ -221,7 +253,7 @@ internal fun updateMethodAnnotations(method: PsiMethod, inputParameters: List<In
     .forEach { inputParameter ->
       val parameterNullability = CodeFragmentAnalyzer.inferNullability(inputParameter.references)
       val parameter = parameters.find { it.name == inputParameter.name }
-      if (parameter != null) ExtractMethodHelper.addNullabilityAnnotation(parameter.typeElement, parameterNullability)
+      if (parameter != null) ExtractMethodHelper.addNullabilityAnnotation(parameter, parameterNullability)
     }
 }
 

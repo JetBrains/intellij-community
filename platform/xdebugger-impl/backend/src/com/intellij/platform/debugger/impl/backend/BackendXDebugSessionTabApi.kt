@@ -2,9 +2,16 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.openapi.application.EDT
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionAdditionalTabComponentManagerId
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionDataId
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionTabApi
+import com.intellij.platform.debugger.impl.rpc.XDebugTabLayouterEvent
+import com.intellij.platform.debugger.impl.rpc.XDebugTabLayouterId
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabEvent
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabDto
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfoCallback
 import com.intellij.xdebugger.impl.findValue
-import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.Dispatchers
@@ -22,15 +29,22 @@ internal class BackendXDebugSessionTabApi : XDebugSessionTabApi {
   }
 
   override suspend fun onTabInitialized(sessionId: XDebugSessionId, tabInfo: XDebuggerSessionTabInfoCallback) {
-    val tab = tabInfo.tab ?: return
     val session = sessionId.findValue() ?: return
-    withContext(Dispatchers.EDT) {
-      session.tabInitialized(tab)
-    }
+    session.tabInitialized(tabInfo.tab)
   }
 
   override suspend fun additionalTabEvents(tabComponentsManagerId: XDebugSessionAdditionalTabComponentManagerId): Flow<XDebuggerSessionAdditionalTabEvent> {
     val manager = tabComponentsManagerId.findValue() ?: return emptyFlow()
     return manager.tabComponentEvents
   }
+
+  override suspend fun tabLayouterEvents(tabLayouterId: XDebugTabLayouterId): Flow<XDebugTabLayouterEvent> {
+    val layouterModel = tabLayouterId.findValue() ?: return emptyFlow()
+    // TODO Support XDebugTabLayouter.registerConsoleContent
+    withContext(Dispatchers.EDT) {
+      layouterModel.layouter.registerAdditionalContent(layouterModel.ui)
+    }
+    return layouterModel.events
+  }
 }
+

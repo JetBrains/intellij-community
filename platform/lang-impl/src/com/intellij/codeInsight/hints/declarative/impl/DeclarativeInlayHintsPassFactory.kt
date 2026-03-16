@@ -9,7 +9,11 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.hints.InlayHintsSettings
-import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings
+import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
+import com.intellij.codeInsight.hints.declarative.InlayHintsProviderFactory
+import com.intellij.codeInsight.hints.declarative.InlayProviderInfo
+import com.intellij.codeInsight.hints.declarative.InlayProviderPassInfo
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory

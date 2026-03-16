@@ -3,7 +3,11 @@ package com.jetbrains.python.hatch.sdk
 
 import com.intellij.python.hatch.icons.PythonHatchIcons
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.flavors.*
+import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData
+import com.jetbrains.python.sdk.flavors.PyFlavorData
+import com.jetbrains.python.sdk.flavors.PythonFlavorProvider
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import org.jdom.Element
 import java.nio.file.Path
 import javax.swing.Icon

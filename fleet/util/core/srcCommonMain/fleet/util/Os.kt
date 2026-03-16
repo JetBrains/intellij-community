@@ -24,6 +24,7 @@ class Os private constructor() {
         normalizedName.startsWith("mac") -> Type.MacOS
         normalizedName.startsWith("win") -> Type.Windows
         normalizedName.contains("nix") || normalizedName.contains("nux") -> Type.Linux
+        normalizedName.startsWith("ios") -> Type.MacOS // TODO!!!!
         else -> Type.Unknown
       }
     }
@@ -38,6 +39,13 @@ class Os private constructor() {
     get() {
       val arch = this.arch
       return "wasm" == arch
+    }
+
+  // also includes ipadOS
+  val isIos: Boolean
+    get() {
+      val os = this.name.lowercase()
+      return os == "ios"
     }
 
   val isMac: Boolean

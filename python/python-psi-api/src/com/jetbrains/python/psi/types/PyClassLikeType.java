@@ -22,7 +22,7 @@ public interface PyClassLikeType extends PyCallableType, PyWithAncestors, PyInst
   String getClassQName();
 
   @NotNull
-  List<PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context);
+  List<@Nullable PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context);
 
   @Nullable
   List<? extends RatedResolveResult> resolveMember(final @NotNull String name,
@@ -32,6 +32,7 @@ public interface PyClassLikeType extends PyCallableType, PyWithAncestors, PyInst
                                                    boolean inherited);
 
   // TODO: Pull to PyType at next iteration
+
   /**
    * Visits all class members. This method is better then bare class since it uses type info and supports not only classes but
    * class-like structures as well. Consider using user-friendly wrapper {@link PyTypeUtil#getMembersOfType(PyClassLikeType, Class, boolean, TypeEvalContext)}

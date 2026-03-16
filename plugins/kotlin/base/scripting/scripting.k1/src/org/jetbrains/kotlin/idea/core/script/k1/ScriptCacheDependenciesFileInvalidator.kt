@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.idea.core.script.k1
 
 import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.openapi.project.ProjectManager
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.utils.ScriptClassRootsStorage
 
+@K1Deprecation
 class ScriptCacheDependenciesFileInvalidator : CachesInvalidator() {
     override fun invalidateCaches() {
         ProjectManager.getInstance().openProjects.forEach {

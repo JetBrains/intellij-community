@@ -36,7 +36,9 @@ import java.util.regex.Pattern;
 
 import static git4idea.GitBranch.REFS_HEADS_PREFIX;
 import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
-import static git4idea.GitNotificationIdsHolder.*;
+import static git4idea.GitNotificationIdsHolder.FETCH_DETAILS;
+import static git4idea.GitNotificationIdsHolder.FETCH_ERROR;
+import static git4idea.GitNotificationIdsHolder.FETCH_SUCCESS;
 import static git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS;
 
 /**

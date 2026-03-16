@@ -9,7 +9,13 @@ import com.intellij.platform.eel.path.platform
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
-import java.nio.file.*
+import java.nio.file.InvalidPathException
+import java.nio.file.LinkOption
+import java.nio.file.Path
+import java.nio.file.ProviderMismatchException
+import java.nio.file.WatchEvent
+import java.nio.file.WatchKey
+import java.nio.file.WatchService
 import java.nio.file.attribute.BasicFileAttributes
 
 /**

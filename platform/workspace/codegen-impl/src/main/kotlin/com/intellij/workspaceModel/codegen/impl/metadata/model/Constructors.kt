@@ -19,7 +19,7 @@ internal fun getCollectionConstructor(any: Any?): String {
       is Set<*> -> "setOf"
       else -> "mapOf"
     }
-    return "$constructor(${any.joinToString(",\n") { getCollectionConstructor(it) }})"
+    return "$constructor(${any.joinToString(",") { getCollectionConstructor(it) }})"
   }
   return any.toString()
 }

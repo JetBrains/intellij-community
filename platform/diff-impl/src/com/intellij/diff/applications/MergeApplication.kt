@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.applications
 
 import com.intellij.diff.DiffDialogHints
@@ -70,7 +70,7 @@ internal class MergeApplication : ApplicationStarterBase(3, 4) {
 
   private class MyMergeRequestProducer(private val project: Project?,
                                        private val outputFile: VirtualFile,
-                                       private val contents: List<VirtualFile>,
+                                       private val contents: List<VirtualFile?>,
                                        private val resultRef: AtomicReference<CliResult>) : MergeRequestProducer {
     override fun getName(): String = DiffBundle.message("merge.window.title.file", outputFile.presentableUrl)
 

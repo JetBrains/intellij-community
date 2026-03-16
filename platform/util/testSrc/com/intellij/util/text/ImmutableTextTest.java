@@ -2,8 +2,9 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
 public class ImmutableTextTest extends UsefulTestCase {
 
@@ -20,6 +21,7 @@ public class ImmutableTextTest extends UsefulTestCase {
     assertBalanced(xabc.myNode);
   }
 
+  @PerformanceUnitTest
   public void testDeleteAllPerformance() {
     ImmutableText original = ImmutableText.valueOf(StringUtil.repeat("abcdefghij", 1_900_000));
 

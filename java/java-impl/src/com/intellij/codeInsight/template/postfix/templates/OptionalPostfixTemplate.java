@@ -9,7 +9,11 @@ import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixT
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;

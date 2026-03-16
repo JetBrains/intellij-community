@@ -22,16 +22,13 @@ class EditorConfigParserDefinition : ParserDefinition {
   override fun createLexer(project: Project): Lexer = EditorConfigLexerFactory.getAdapter()
   override fun createParser(project: Project): PsiParser = EditorConfigParser()
 
-  override fun getCommentTokens(): TokenSet = EditorConfigTokenSets.COMMENTS
+  override fun getCommentTokens(): TokenSet = COMMENTS
   override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
   override fun getFileNodeType(): IFileElementType = FILE
 
   override fun createFile(viewProvider: FileViewProvider): PsiFile = EditorConfigPsiFile(viewProvider)
   override fun createElement(node: ASTNode): PsiElement = EditorConfigElementTypes.Factory.createElement(node)
-
-  private val FILE = IFileElementType(EditorConfigLanguage)
 }
 
-private object EditorConfigTokenSets {
-  val COMMENTS: TokenSet = TokenSet.create(EditorConfigElementTypes.LINE_COMMENT)
-}
+private val FILE = IFileElementType(EditorConfigLanguage)
+private val COMMENTS: TokenSet = TokenSet.create(EditorConfigElementTypes.LINE_COMMENT)

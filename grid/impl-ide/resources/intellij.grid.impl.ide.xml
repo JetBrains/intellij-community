@@ -1,0 +1,10 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.grid.core.impl"/>
+    <module name="intellij.grid.impl"/>
+  </dependencies>
+  <applicationListeners>
+    <listener class="com.intellij.grid.impl.ide.CsvDataModeEditUsageListener"
+              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
+  </applicationListeners>
+</idea-plugin>

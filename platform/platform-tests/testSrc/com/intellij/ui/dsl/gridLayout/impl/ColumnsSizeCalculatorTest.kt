@@ -95,10 +95,10 @@ class ColumnsSizeCalculatorTest {
 
     val calculator = ColumnsSizeCalculator()
     for (i in constraints.indices step 3) {
-      calculator.addConstraint(constraints[i], constraints[i + 1], constraints[i + 2])
+      calculator.addConstraint(constraints[i], constraints[i + 1], 0, constraints[i + 2])
     }
 
-    val calculatedCoords = calculator.calculateCoords(width, resizableColumns)
+    val calculatedCoords = calculator.calculateCoords(width, resizableColumns, false)
     val message = "Constraints: ${constraints.joinToString()}, width: $width, " +
                   "resizableColumns: ${resizableColumns.joinToString()}, expectedCoords: ${expectedCoords.joinToString()}"
 

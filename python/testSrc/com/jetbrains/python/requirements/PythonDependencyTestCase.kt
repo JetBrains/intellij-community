@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonMockSdk

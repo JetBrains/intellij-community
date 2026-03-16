@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
-import com.intellij.navigation.*
+import com.intellij.navigation.NAVIGATE_COMMAND
+import com.intellij.navigation.NavigatorWithinProject
+import com.intellij.navigation.PROJECT_NAME_KEY
+import com.intellij.navigation.REFERENCE_TARGET
+import com.intellij.navigation.SELECTION
 import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Caret
@@ -11,7 +15,21 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
-import com.intellij.util.PlatformUtils.*
+import com.intellij.util.PlatformUtils.APPCODE_PREFIX
+import com.intellij.util.PlatformUtils.CLION_PREFIX
+import com.intellij.util.PlatformUtils.DATASPELL_PREFIX
+import com.intellij.util.PlatformUtils.DBE_PREFIX
+import com.intellij.util.PlatformUtils.GOIDE_PREFIX
+import com.intellij.util.PlatformUtils.IDEA_CE_PREFIX
+import com.intellij.util.PlatformUtils.IDEA_PREFIX
+import com.intellij.util.PlatformUtils.PHP_PREFIX
+import com.intellij.util.PlatformUtils.PYCHARM_CE_PREFIX
+import com.intellij.util.PlatformUtils.PYCHARM_EDU_PREFIX
+import com.intellij.util.PlatformUtils.PYCHARM_PREFIX
+import com.intellij.util.PlatformUtils.RIDER_PREFIX
+import com.intellij.util.PlatformUtils.RUBY_PREFIX
+import com.intellij.util.PlatformUtils.WEB_PREFIX
+import com.intellij.util.PlatformUtils.getPlatformPrefix
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.ThreadingAssertions
 

@@ -10,7 +10,7 @@ class ExtractionConfig(
   val addQuery: Boolean = false,
   val silent: Boolean = false,
 ) {
-  fun toBuilder() = ExtractionConfigBuilder()
+  fun toBuilder(): ExtractionConfigBuilder = ExtractionConfigBuilder()
     .setAddTableDdl(addTableDdl)
     .setTransposed(isTransposed)
     .setAddComputedColumns(addComputedColumns)
@@ -30,19 +30,19 @@ class ExtractionConfigBuilder {
   private var addQuery: Boolean = false
   private var silent = false
 
-  fun setAddTableDdl(value: Boolean) = apply { addTableDdl = value }
-  fun setTransposed(value: Boolean) = apply { isTransposed = value }
-  fun setAddComputedColumns(value: Boolean) = apply { addComputedColumns = value }
-  fun setAddGeneratedColumns(value: Boolean) = apply { addGeneratedColumns = value }
-  fun setAddColumnHeader(value: Boolean?) = apply { addColumnHeader = value }
-  fun setAddRowHeader(value: Boolean?) = apply { addRowHeader = value }
-  fun setAddQuery(value: Boolean) = apply { addQuery = value }
-  fun setSilent(value: Boolean) = apply { silent = value }
+  fun setAddTableDdl(value: Boolean): ExtractionConfigBuilder = apply { addTableDdl = value }
+  fun setTransposed(value: Boolean): ExtractionConfigBuilder = apply { isTransposed = value }
+  fun setAddComputedColumns(value: Boolean): ExtractionConfigBuilder = apply { addComputedColumns = value }
+  fun setAddGeneratedColumns(value: Boolean): ExtractionConfigBuilder = apply { addGeneratedColumns = value }
+  fun setAddColumnHeader(value: Boolean?): ExtractionConfigBuilder = apply { addColumnHeader = value }
+  fun setAddRowHeader(value: Boolean?): ExtractionConfigBuilder = apply { addRowHeader = value }
+  fun setAddQuery(value: Boolean): ExtractionConfigBuilder = apply { addQuery = value }
+  fun setSilent(value: Boolean): ExtractionConfigBuilder = apply { silent = value }
 
-  fun build() = ExtractionConfig(addTableDdl, isTransposed, addComputedColumns, addGeneratedColumns, addColumnHeader, addRowHeader, addQuery, silent)
+  fun build(): ExtractionConfig = ExtractionConfig(addTableDdl, isTransposed, addComputedColumns, addGeneratedColumns, addColumnHeader, addRowHeader, addQuery, silent)
 }
 
-fun builder() = ExtractionConfigBuilder()
+fun builder(): ExtractionConfigBuilder = ExtractionConfigBuilder()
 
-@JvmField val DEFAULT_CONFIG = builder().build()
+@JvmField val DEFAULT_CONFIG: ExtractionConfig = builder().build()
 

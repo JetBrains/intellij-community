@@ -200,4 +200,13 @@
     <synonym>Remote</synonym>
     <synonym>Web Path</synonym>
   </configurable>
+
+  <configurable id="editor.preferences.appearance" configurable_name="Appearance">
+    <synonym>Smooth caret</synonym>
+    <synonym>Smooth cursor</synonym>
+    <synonym>Animated caret</synonym>
+    <synonym>Animated cursor</synonym>
+    <synonym>Caret animation</synonym>
+    <synonym>Cursor animation</synonym>
+  </configurable>
 </options>

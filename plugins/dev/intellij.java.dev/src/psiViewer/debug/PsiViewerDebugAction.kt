@@ -9,7 +9,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.memory.action.DebuggerTreeAction
 import com.intellij.dev.psiViewer.PsiViewerDialog
-import com.intellij.idea.AppMode
 import com.intellij.java.dev.JavaDevBundle
 import com.intellij.lang.Language
 import com.intellij.notification.NotificationType
@@ -19,9 +18,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.application
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeBackendOnlyActionBase
 import com.sun.jdi.ObjectReference
 
@@ -40,7 +39,6 @@ internal class PsiViewerDebugAction : XDebuggerTreeBackendOnlyActionBase() {
   override fun perform(value: XValue, nodeName: @NlsSafe String, e: AnActionEvent) {
     val project = e.project ?: return
     val debugProcess = JavaDebugProcess.getCurrentDebugProcess(e)
-    val debugSessionProxy = DebuggerUIUtil.getSessionProxy(e)
     val suspendContext = debugProcess?.suspendManager?.getPausedContext()
     suspendContext?.managerThread?.schedule(object : SuspendContextCommandImpl(suspendContext) {
       override fun contextAction(suspendContext: SuspendContextImpl) {
@@ -55,7 +53,7 @@ internal class PsiViewerDebugAction : XDebuggerTreeBackendOnlyActionBase() {
           val languageId = psiFileObj.getLanguageId(debugProcess, evalContext)
           val language = Language.findLanguageByID(languageId) ?: return
 
-          DebuggerUIUtil.invokeLater {
+          application.invokeLater {
             val editorFactory = EditorFactory.getInstance()
             val document = editorFactory.createDocument(fileText)
             val editor = editorFactory.createEditor(document) as EditorEx
@@ -69,14 +67,14 @@ internal class PsiViewerDebugAction : XDebuggerTreeBackendOnlyActionBase() {
             fun showDebugTab() {
               val debugSession = debugProcess.session?.xDebugSession ?: return
               // TODO: [XDebugSessionImpl.getUI] in split
-              val runnerLayoutUi = debugSessionProxy?.sessionTab?.ui ?: return
+              val runnerLayoutUi = debugSession.ui ?: return
               val psiViewerPanel = PsiViewerDebugPanel(project, editor, language, nodeName, debugSession, fileName)
               val id = PsiViewerDebugPanel.getTitle(nodeName, PsiViewerDebugSettings.getInstance().watchMode)
               val content = runnerLayoutUi.createContent(id, psiViewerPanel, id, null, null)
               runnerLayoutUi.addContent(content)
               runnerLayoutUi.selectAndFocus(content, true, true)
             }
-            if (PsiViewerDebugSettings.getInstance().showDialogFromDebugAction || AppMode.isRemoteDevHost()) showDialog() else showDebugTab()
+            if (PsiViewerDebugSettings.getInstance().showDialogFromDebugAction) showDialog() else showDebugTab()
           }
         } catch (e: EvaluateException) {
           XDebuggerManagerImpl.getNotificationGroup().createNotification(

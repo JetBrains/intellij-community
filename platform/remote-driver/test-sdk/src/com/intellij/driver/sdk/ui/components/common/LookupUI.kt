@@ -14,15 +14,34 @@ interface LookupManager {
   fun getActiveLookup(): Lookup
 }
 
-@Remote("com.intellij.codeInsight.lookup.Lookup")
+@Remote(
+  serviceInterface = "com.intellij.codeInsight.lookup.Lookup",
+  value = "com.intellij.codeInsight.lookup.impl.LookupImpl")
 interface Lookup {
   fun getItems(): List<LookupElementRef>
+  fun isCalculating(): Boolean
+  fun setCurrentItem(item: LookupElementRef)
+  fun setLookupFocusDegree(lookupFocusDegree: LookupFocusDegree)
+  fun refreshUi(mayCheckReused: Boolean, onExplicitAction: Boolean)
+}
+
+@Remote("com.intellij.codeInsight.lookup.LookupFocusDegree")
+interface LookupFocusDegree {
+  fun valueOf(name: String): LookupFocusDegree
+}
+
+@Remote("com.intellij.codeInsight.lookup.LookupElementPresentation")
+interface LookupElementPresentation {
+  fun getItemText(): String?
+  fun getTailText(): String?
+  fun getTypeText(): String?
 }
 
 //
 @Remote("com.intellij.codeInsight.lookup.LookupElement")
 interface LookupElementRef {
   fun getPsiElement(): PsiElement?
+  fun renderElement(presentation: LookupElementPresentation)
   //fun getObject(): SimpleColoredComponent
 }
 

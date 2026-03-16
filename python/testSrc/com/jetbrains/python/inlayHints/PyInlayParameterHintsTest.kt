@@ -42,7 +42,7 @@ class PyInlayParameterHintsTest : PyTestCase() {
           
       c = Clazz(<hint text="a:"/>1, <hint text="b:"/>2, <hint text="c:"/>3)
     """.trimIndent(),
-    PythonInlayParameterHintsProvider.showForClassConstructorCalls)
+                      PythonInlayParameterHintsProvider.Helper.showForClassConstructorCalls)
   }
 
   fun testHintsShownOnlyForLiterals() {
@@ -53,8 +53,8 @@ class PyInlayParameterHintsTest : PyTestCase() {
       x = "variable"
       foo(<hint text="a:"/>"literal", x)
     """.trimIndent(),
-    PythonInlayParameterHintsProvider.showForNonLiteralArguments,
-    enabled = false)
+                      PythonInlayParameterHintsProvider.Helper.showForNonLiteralArguments,
+                      enabled = false)
   }
 
   fun testHintsForNonKeywordArguments() {
@@ -159,8 +159,8 @@ class PyInlayParameterHintsTest : PyTestCase() {
 
       foo(a, <hint text="b:"/>[1, 2], <hint text="c:"/>(3, 4), <hint text="d:"/>{"5": 5, "6": 6})
     """.trimIndent(),
-    PythonInlayParameterHintsProvider.showForNonLiteralArguments,
-    enabled = false)
+                      PythonInlayParameterHintsProvider.Helper.showForNonLiteralArguments,
+                      enabled = false)
   }
 
   private fun doTest(text: String) {

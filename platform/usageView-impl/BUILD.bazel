@@ -9,7 +9,7 @@ jvm_library(
   deps = [
     "//libraries/fastutil",
     "//libraries/jackson/jackson",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/code-style-api:codeStyle",
     "//platform/lang-core",
     "//platform/statistics",

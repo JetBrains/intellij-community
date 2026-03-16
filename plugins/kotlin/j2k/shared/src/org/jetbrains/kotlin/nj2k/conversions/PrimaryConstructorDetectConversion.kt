@@ -6,8 +6,22 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.declarationList
 import org.jetbrains.kotlin.nj2k.mutate
-import org.jetbrains.kotlin.nj2k.tree.*
-import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
+import org.jetbrains.kotlin.nj2k.tree.JKClass
+import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.CLASS
+import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.ENUM
+import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.RECORD
+import org.jetbrains.kotlin.nj2k.tree.JKConstructor
+import org.jetbrains.kotlin.nj2k.tree.JKDelegationConstructorCall
+import org.jetbrains.kotlin.nj2k.tree.JKField
+import org.jetbrains.kotlin.nj2k.tree.JKInitDeclaration
+import org.jetbrains.kotlin.nj2k.tree.JKKtInitDeclaration
+import org.jetbrains.kotlin.nj2k.tree.JKKtPrimaryConstructor
+import org.jetbrains.kotlin.nj2k.tree.JKThisExpression
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.clearFormatting
+import org.jetbrains.kotlin.nj2k.tree.forEachModifier
+import org.jetbrains.kotlin.nj2k.tree.withCommentsFrom
+import org.jetbrains.kotlin.nj2k.tree.withFormattingFrom
 
 class PrimaryConstructorDetectConversion(context: ConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

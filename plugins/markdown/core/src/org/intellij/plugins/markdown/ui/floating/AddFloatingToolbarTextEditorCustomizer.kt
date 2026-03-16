@@ -9,7 +9,7 @@ import kotlinx.coroutines.coroutineScope
 import org.intellij.plugins.markdown.editor.isMarkdownScratchFile
 import org.intellij.plugins.markdown.lang.hasMarkdownType
 
-private class AddFloatingToolbarTextEditorCustomizer: TextEditorCustomizer {
+internal class AddFloatingToolbarTextEditorCustomizer: TextEditorCustomizer {
   override suspend fun execute(textEditor: TextEditor) {
     if (shouldAcceptEditor(textEditor) && !AdvancedSettings.getBoolean("markdown.hide.floating.toolbar")) {
       coroutineScope {

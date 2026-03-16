@@ -3,7 +3,14 @@ package com.intellij.codeInsight.lookup.impl
 
 import com.intellij.codeInsight.hint.EditorHintListener
 import com.intellij.codeInsight.hint.HintManager
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupArranger
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.lookup.LookupEx
+import com.intellij.codeInsight.lookup.LookupListener
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.client.ClientKind

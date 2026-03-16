@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
- import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity

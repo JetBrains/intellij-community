@@ -1,0 +1,53 @@
+### auto-generated section `build intellij.lambda.sampleTests` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_lambda-sampleTests",
+  x_context_parameters = True
+)
+
+jvm_library(
+  name = "lambda-sampleTests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+  ]
+)
+
+jvm_library(
+  name = "lambda-sampleTests_test_lib",
+  module_name = "intellij.lambda.sampleTests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_lambda-sampleTests",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//tools/intellij.lambda.testFramework:lambda-testFramework",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/ide-core-impl",
+    "//libraries/junit5",
+    "//platform/remoteDev-util",
+    "//platform/remoteDev-util:remoteDev-util_test_lib",
+    "//tools/intellij.tools.ide.starter:ide-starter",
+    "//tools/intellij.tools.ide.starter.junit5:ide-starter-junit5",
+    "//tools/intellij.tools.ide.starter.junit5:ide-starter-junit5_test_lib",
+    "//tools/intellij.tools.ide.starter.driver:ide-starter-driver",
+    "//tools/intellij.tools.ide.starter.build.server:ide-starter-build-server",
+  ],
+  runtime_deps = [":lambda-sampleTests"]
+)
+### auto-generated section `build intellij.lambda.sampleTests` end
+
+### auto-generated section `test intellij.lambda.sampleTests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "lambda-sampleTests_test",
+  runtime_deps = [":lambda-sampleTests_test_lib"]
+)
+### auto-generated section `test intellij.lambda.sampleTests` end

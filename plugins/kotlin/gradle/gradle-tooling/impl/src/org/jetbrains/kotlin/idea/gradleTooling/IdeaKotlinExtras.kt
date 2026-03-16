@@ -4,7 +4,12 @@ package org.jetbrains.kotlin.idea.gradleTooling
 import org.jetbrains.kotlin.gradle.idea.proto.Extras
 import org.jetbrains.kotlin.gradle.idea.proto.toByteArray
 import org.jetbrains.kotlin.idea.gradleTooling.serialization.ideaKotlinSerializationContextOrNull
-import org.jetbrains.kotlin.tooling.core.*
+import org.jetbrains.kotlin.tooling.core.Extras
+import org.jetbrains.kotlin.tooling.core.MutableExtras
+import org.jetbrains.kotlin.tooling.core.extrasKeyOf
+import org.jetbrains.kotlin.tooling.core.mutableExtrasOf
+import org.jetbrains.kotlin.tooling.core.toMutableExtras
+import org.jetbrains.kotlin.tooling.core.withValue
 import java.io.Serializable
 
 /**

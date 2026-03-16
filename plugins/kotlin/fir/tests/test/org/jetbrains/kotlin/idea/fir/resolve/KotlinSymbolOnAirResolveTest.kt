@@ -3,11 +3,11 @@ package org.jetbrains.kotlin.idea.fir.resolve
 
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.test.util.invalidateCaches
 
 class KotlinSymbolOnAirResolveTest: KotlinLightCodeInsightFixtureTestCase() {
 

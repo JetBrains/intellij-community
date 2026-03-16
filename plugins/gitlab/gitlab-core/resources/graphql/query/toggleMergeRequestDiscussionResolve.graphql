@@ -1,7 +1,0 @@
-mutation($discussionId: DiscussionID!, $resolved: Boolean!) {
-  discussionToggleResolve(input: {id: $discussionId, resolve: $resolved}) {
-    discussion {
-      ...discussion
-    }
-  }
-}

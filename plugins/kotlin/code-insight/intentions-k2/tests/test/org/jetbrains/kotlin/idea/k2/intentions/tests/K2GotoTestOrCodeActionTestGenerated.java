@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.intentions.tests;
 
@@ -53,6 +53,11 @@ public class K2GotoTestOrCodeActionTestGenerated extends AbstractK2GotoTestOrCod
     @TestMetadata("fromKotlinClassToTest.main.kt")
     public void testFromKotlinClassToTest() throws Exception {
         runTest("../../../idea/tests/testData/navigation/gotoTestOrCode/fromKotlinClassToTest.main.kt");
+    }
+
+    @TestMetadata("fromKotlinEnumEntryToTest.main.kt")
+    public void testFromKotlinEnumEntryToTest() throws Exception {
+        runTest("../../../idea/tests/testData/navigation/gotoTestOrCode/fromKotlinEnumEntryToTest.main.kt");
     }
 
     @TestMetadata("fromKotlinFile2ToTest.main.kt")

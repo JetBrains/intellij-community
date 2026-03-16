@@ -24,7 +24,6 @@ jvm_library(
     "//platform/lvcs-api:lvcs",
     "//platform/projectModel-api:projectModel",
     "//platform/testRunner",
-    "//platform/xdebugger-api:debugger",
     "//platform/platform-impl:ide-impl",
     "@lib//:tc_service_messages",
     "//platform/platform-impl/concurrency",
@@ -34,6 +33,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
+    "//platform/execution",
   ],
   exports = [
     "//platform/testRunner",
@@ -77,6 +77,7 @@ jvm_library(
     "//platform/diff-api:diff",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/execution",
   ],
   exports = [
     "//platform/testRunner",

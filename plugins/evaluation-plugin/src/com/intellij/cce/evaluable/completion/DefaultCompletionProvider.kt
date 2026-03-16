@@ -19,11 +19,18 @@ import com.intellij.completion.ml.util.prefix
 import com.intellij.lang.Language
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 
 class DefaultCompletionProvider : SuggestionsProvider {
   override val name: String = "DEFAULT"
 
-  override fun getSuggestions(expectedText: String, editor: Editor, language: Language, comparator: (String, String) -> Boolean): Lookup = readActionInSmartMode(editor.project!!) {
+  override fun getSuggestions(
+    project: Project,
+    expectedText: String,
+    editor: Editor,
+    language: Language,
+    comparator: (String, String) -> Boolean,
+  ): Lookup = readActionInSmartMode(editor.project!!) {
     val start = System.currentTimeMillis()
     val isNew = LookupManager.getActiveLookup(editor) == null
     val activeLookup = LookupManager.getActiveLookup(editor) ?: invokeCompletion(editor)

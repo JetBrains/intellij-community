@@ -1,9 +1,24 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
-import com.intellij.psi.*
+import com.intellij.psi.LambdaUtil
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiAnnotationMemberValue
+import com.intellij.psi.PsiArrayInitializerMemberValue
+import com.intellij.psi.PsiType
 import com.intellij.psi.util.InheritanceUtil
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotated
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UAnonymousClass
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UDeclarationsExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.getParameterForArgument
 
 fun ULambdaExpression.getReturnType(): PsiType? {
   val lambdaType = getLambdaType()

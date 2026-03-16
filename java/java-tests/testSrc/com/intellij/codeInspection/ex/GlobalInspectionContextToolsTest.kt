@@ -4,7 +4,12 @@ package com.intellij.codeInspection.ex
 import com.intellij.JavaTestUtil
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInsight.JavaCodeInsightTestCase
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool
+import com.intellij.codeInspection.GlobalInspectionContext
+import com.intellij.codeInspection.HTMLComposer
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.lang.GlobalInspectionContextExtension
 import com.intellij.codeInspection.lang.HTMLComposerExtension
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory
@@ -19,7 +24,9 @@ import com.intellij.testFramework.disableAllTools
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import java.util.concurrent.atomic.AtomicBoolean
 
 class GlobalInspectionContextToolsTest : JavaCodeInsightTestCase() {

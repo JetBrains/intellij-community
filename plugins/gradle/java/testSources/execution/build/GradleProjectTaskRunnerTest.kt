@@ -12,7 +12,11 @@ import com.intellij.task.ProjectTaskRunner
 import com.intellij.task.TaskRunnerResults
 import com.intellij.task.impl.ModuleBuildTaskImpl
 import com.intellij.util.asDisposable
-import kotlinx.coroutines.*
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.junit.jupiter.api.Assertions
@@ -32,7 +36,7 @@ class GradleProjectTaskRunnerTest : GradleProjectTaskRunnerTestCase() {
     delegatedBuild: Boolean, delegatedRun: Boolean,
     shouldBuild: Boolean, shouldRun: Boolean,
   ) {
-    testEmptyProject(gradleVersion) {
+    testJavaProject(gradleVersion) {
       Disposer.newDisposable().use { testDisposable ->
         val configurationType = ApplicationConfigurationType.getInstance()
         setupGradleDelegationMode(delegatedBuild, delegatedRun, testDisposable)
@@ -47,11 +51,11 @@ class GradleProjectTaskRunnerTest : GradleProjectTaskRunnerTestCase() {
     gradleVersion: GradleVersion,
     delegatedBuild: Boolean, delegatedRun: Boolean,
   ) {
-    testEmptyProject(gradleVersion) {
+    testJavaProject(gradleVersion) {
       Disposer.newDisposable().use { testDisposable ->
         val configurationType = JavaScratchConfigurationType.getInstance()
         setupGradleDelegationMode(delegatedBuild, delegatedRun, testDisposable)
-        assertGradleProjectTaskRunnerCanRun(configurationType, shouldBuild = false, shouldRun = false)
+        assertGradleProjectTaskRunnerCanRun(configurationType, expectedShouldBuild = false, expectedShouldRun = false)
       }
     }
   }

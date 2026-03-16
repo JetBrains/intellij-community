@@ -2,7 +2,11 @@
 package com.intellij.pycharm.community.ide.impl.promotion
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FeaturePromoBundle
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeatureListItem
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeaturePage
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoPages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.promo.djangoPromoFeatureList

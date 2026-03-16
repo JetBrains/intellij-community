@@ -6,7 +6,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * Defines the implementation of a custom structure view or file structure popup component.

@@ -7,16 +7,22 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.concurrency.annotations.*;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.messages.MessageBus;
-import kotlin.Pair;
 import kotlin.coroutines.CoroutineContext;
-import kotlin.coroutines.EmptyCoroutineContext;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -145,7 +151,7 @@ public interface Application extends ComponentManager {
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
-   * @throws E re-frown from ThrowableComputable
+   * @throws E re-thrown from ThrowableComputable
    * @see CoroutinesKt#readAction
    * @see CoroutinesKt#readActionBlocking
    */
@@ -154,7 +160,7 @@ public interface Application extends ComponentManager {
   <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E;
 
   /**
-   * Runs the specified write action. Must be called from EDT. The action is executed
+   * Runs the specified write action. The action is executed
    * immediately if no read actions are currently running, or blocked until all read actions complete.
    * <p>
    * See also {@link WriteAction#run} for a more lambda-friendly version.
@@ -166,7 +172,7 @@ public interface Application extends ComponentManager {
   void runWriteAction(@NotNull Runnable action);
 
   /**
-   * Runs the specified computation in a write-action. Must be called from EDT.
+   * Runs the specified computation in a write-action.
    * The action is executed immediately if no read actions or write actions are currently running,
    * or blocked until all read actions and write actions complete.
    * <p>
@@ -181,7 +187,7 @@ public interface Application extends ComponentManager {
   <T> T runWriteAction(@NotNull Computable<T> computation);
 
   /**
-   * Runs the specified computation in a write-action. Must be called from EDT.
+   * Runs the specified computation in a write-action.
    * The action is executed immediately if no read actions or write actions are currently running,
    * or blocked until all read actions and write actions complete.
    * <p>
@@ -189,7 +195,7 @@ public interface Application extends ComponentManager {
    *
    * @param computation the computation to run
    * @return the result returned by the computation.
-   * @throws E re-frown from ThrowableComputable
+   * @throws E re-thrown from ThrowableComputable
    * @see CoroutinesKt#edtWriteAction
    */
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
@@ -217,7 +223,7 @@ public interface Application extends ComponentManager {
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
-   * @throws E re-frown from ThrowableComputable
+   * @throws E re-thrown from ThrowableComputable
    */
   @ApiStatus.Experimental
   default <T, E extends Throwable> T runWriteIntentReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
@@ -670,14 +676,6 @@ public interface Application extends ComponentManager {
     return isDisposed();
   }
 
-  /** @deprecated use {@link #runReadAction(Runnable)} instead */
-  @Deprecated
-  @NotNull AccessToken acquireReadActionLock();
-
-  /** @deprecated use {@link #runWriteAction}, {@link WriteAction#run(ThrowableRunnable)}, or {@link WriteAction#compute} instead */
-  @Deprecated
-  @NotNull AccessToken acquireWriteActionLock(@NotNull Class<?> marker);
-
   /** @deprecated bad name, use {@link #isWriteIntentLockAcquired()} instead */
   @Deprecated
   @ApiStatus.Experimental
@@ -697,12 +695,6 @@ public interface Application extends ComponentManager {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  default Pair<CoroutineContext, AccessToken> getLockStateAsCoroutineContext(CoroutineContext context, boolean shared) {
-    return new Pair<>(EmptyCoroutineContext.INSTANCE, AccessToken.EMPTY_ACCESS_TOKEN);
-  }
-
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
   default boolean isParallelizedReadAction(CoroutineContext context) {
     return false;
   }
@@ -717,7 +709,7 @@ public interface Application extends ComponentManager {
   }
 
   @ApiStatus.Internal
-  default @NonNls @Nullable String isLockingProhibited() {
+  default @NonNls @Nullable String getLockProhibitedAdvice() {
     return null;
   }
 

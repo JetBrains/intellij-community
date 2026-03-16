@@ -25,7 +25,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-common",
     "@lib//:kotlinc-kotlin-scripting-jvm",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//plugins/kotlin/base/compiler-configuration",
     "//platform/util/progress",
     "//platform/workspace/storage",
@@ -63,6 +63,10 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//platform/lang-core",
+    "//platform/backend/observation",
+    "//platform/execution",
+    "//plugins/kotlin/preferences",
+    "//platform/util/zip",
   ]
 )
 
@@ -84,7 +88,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-common",
     "@lib//:kotlinc-kotlin-scripting-jvm",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:junit5",
     "//plugins/kotlin/base/compiler-configuration",
     "//platform/util/progress",
@@ -114,6 +118,7 @@ jvm_library(
     "//platform/collaboration-tools",
     "//platform/collaboration-tools:collaboration-tools_test_lib",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//platform/backend/workspace",
     "//plugins/kotlin/code-insight/utils",
     "//platform/workspace/jps",
@@ -130,6 +135,11 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test_lib",
+    "//platform/execution",
+    "//plugins/kotlin/preferences",
+    "//platform/util/zip",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.scripting` end

@@ -13,7 +13,7 @@ import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.*
+import java.util.EnumSet
 import kotlin.random.Random
 
 private fun sizeAwareIkvWriter(file: Path): IkvWriter {

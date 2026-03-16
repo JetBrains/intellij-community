@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/codeInsight/hints/types")
-public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotlinReferenceTypeHintsProviderTest {
+public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractK1KotlinReferenceTypeHintsProviderTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
@@ -28,6 +28,16 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
 
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    }
+
+    @TestMetadata("AnonymousAnyCollectionElement.kt")
+    public void testAnonymousAnyCollectionElement() throws Exception {
+        runTest("testData/codeInsight/hints/types/AnonymousAnyCollectionElement.kt");
+    }
+
+    @TestMetadata("AnonymousCollectionElement.kt")
+    public void testAnonymousCollectionElement() throws Exception {
+        runTest("testData/codeInsight/hints/types/AnonymousCollectionElement.kt");
     }
 
     @TestMetadata("AnonymousObject.kt")
@@ -58,6 +68,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
     @TestMetadata("ConstructorWithoutTypeParametersType.kt")
     public void testConstructorWithoutTypeParametersType() throws Exception {
         runTest("testData/codeInsight/hints/types/ConstructorWithoutTypeParametersType.kt");
+    }
+
+    @TestMetadata("ContextParameters.kt")
+    public void testContextParameters() throws Exception {
+        runTest("testData/codeInsight/hints/types/ContextParameters.kt");
     }
 
     @TestMetadata("DefinitelyNonNullTypes.kt")
@@ -155,6 +170,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/JavaNonNullableArray.kt");
     }
 
+    @TestMetadata("JavaTypeWithWarningLevelNullability.kt")
+    public void testJavaTypeWithWarningLevelNullability() throws Exception {
+        runTest("testData/codeInsight/hints/types/JavaTypeWithWarningLevelNullability.kt");
+    }
+
     @TestMetadata("LambdaReturnType.kt")
     public void testLambdaReturnType() throws Exception {
         runTest("testData/codeInsight/hints/types/LambdaReturnType.kt");
@@ -233,6 +253,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
     @TestMetadata("SuspendFunctionalType.kt")
     public void testSuspendFunctionalType() throws Exception {
         runTest("testData/codeInsight/hints/types/SuspendFunctionalType.kt");
+    }
+
+    @TestMetadata("TruncatedTypes.kt")
+    public void testTruncatedTypes() throws Exception {
+        runTest("testData/codeInsight/hints/types/TruncatedTypes.kt");
     }
 
     @TestMetadata("TypeInCompanion.kt")

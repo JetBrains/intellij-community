@@ -12,7 +12,15 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.workspaceModel.codegen.deft.meta.Obj
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.containingPackage
+import org.jetbrains.kotlin.descriptors.findClassAcrossModuleDependencies
+import org.jetbrains.kotlin.descriptors.hasBody
+import org.jetbrains.kotlin.descriptors.isFinalClass
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -44,7 +52,6 @@ internal fun ClassDescriptor.inheritors(
 ): List<ClassDescriptor> {
   val psiClass = javaPsiFacade.findClass(fqNameSafe.asString(), scope) ?: return emptyList()
   val inheritors = ClassInheritorsSearch.search(psiClass, scope, true, true, false)
-    .asIterable()
     .filterNot { it.qualifiedName == null }
     .sortedBy { it.qualifiedName } // Sorting is needed for consistency in case of regeneration
   return inheritors.map { it.getJavaClassDescriptor()!! }
@@ -134,4 +141,18 @@ private val standardTypes = setOf(Any::class.qualifiedName, CommonClassNames.JAV
 
 private fun Iterable<String>.withoutStandardTypes(): List<String> {
   return filterNot { standardTypes.contains(it) }
+}
+
+internal fun isEntityReference(type: KotlinType?): Boolean {
+  if (type == null) return false
+  val descriptor = type.constructor.declarationDescriptor
+  if (descriptor !is ClassDescriptor) return false
+  val fqName = descriptor.fqNameSafe
+  
+  if (fqName.isList || fqName.isSet) {
+    val genericType = type.arguments.first().type
+    return isEntityReference(genericType)
+  }
+  
+  return descriptor.isEntityInterface
 }

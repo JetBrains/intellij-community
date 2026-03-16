@@ -4,7 +4,7 @@ Tests the handling of "infer_variance" parameter for TypeVar.
 
 # Specification: https://peps.python.org/pep-0695/#auto-variance-for-typevar
 
-from typing import Final, Generic, Iterator, Sequence, TypeVar
+from typing import Final, Generic, Iterator, overload, Sequence, TypeVar
 from dataclasses import dataclass
 
 
@@ -19,10 +19,10 @@ S2 = TypeVar("S2", contravariant=True, infer_variance=True)  # E: cannot use con
 
 class ShouldBeCovariant1(Generic[T]):
     def __getitem__(self, index: int) -> T:
-        ...
+        raise NotImplementedError
 
     def __iter__(self) -> Iterator[T]:
-        ...
+        raise NotImplementedError
 
 
 vco1_1: ShouldBeCovariant1[float] = ShouldBeCovariant1[int]()  # OK
@@ -30,7 +30,17 @@ vco1_2: ShouldBeCovariant1[int] = ShouldBeCovariant1[float]()  # E
 
 
 class ShouldBeCovariant2(Sequence[T]):
-    pass
+    @overload
+    def __getitem__(self, index: int) -> T:
+        ...
+    @overload
+    def __getitem__(self, index: slice) -> Sequence[T]:
+        ...
+    def __getitem__(self, index: int | slice) -> T | Sequence[T]:
+        raise NotImplementedError
+
+    def __len__(self) -> int:
+        raise NotImplementedError
 
 
 vco2_1: ShouldBeCovariant2[float] = ShouldBeCovariant2[int]()  # OK
@@ -39,7 +49,7 @@ vco2_2: ShouldBeCovariant2[int] = ShouldBeCovariant2[float]()  # E
 
 class ShouldBeCovariant3(Generic[T]):
     def method1(self) -> "ShouldBeCovariant2[T]":
-        ...
+        raise NotImplementedError
 
 
 vco3_1: ShouldBeCovariant3[float] = ShouldBeCovariant3[int]()  # OK

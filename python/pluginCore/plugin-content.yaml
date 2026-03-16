@@ -22,6 +22,9 @@
 - name: lib/modules/intellij.python.community.helpersLocator.jar
   contentModules:
   - name: intellij.python.community.helpersLocator
+- name: lib/modules/intellij.python.community.impl.conda.jar
+  contentModules:
+  - name: intellij.python.community.impl.conda
 - name: lib/modules/intellij.python.community.impl.huggingFace.jar
   contentModules:
   - name: intellij.python.community.impl.huggingFace
@@ -33,12 +36,6 @@
   - name: jsr305
     files:
     - name: $MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3/jsr305-3.jar
-    reason: <- intellij.python.community.impl
-  - name: kaml
-    files:
-    - name: $MAVEN_REPOSITORY$/com/charleskorn/kaml/kaml-jvm/0/kaml-jvm-0.jar
-    - name: $MAVEN_REPOSITORY$/it/krzeminski/snakeyaml-engine-kmp-jvm/3/snakeyaml-engine-kmp-jvm-3.jar
-    - name: $MAVEN_REPOSITORY$/net/thauvin/erik/urlencoder/urlencoder-lib-jvm/1/urlencoder-lib-jvm-1.jar
     reason: <- intellij.python.community.impl
   - name: libthrift
     files:
@@ -66,9 +63,6 @@
 - name: lib/modules/intellij.python.community.impl.uv.common.jar
   contentModules:
   - name: intellij.python.community.impl.uv.common
-- name: lib/modules/intellij.python.community.impl.venv.jar
-  contentModules:
-  - name: intellij.python.community.impl.venv
 - name: lib/modules/intellij.python.community.interpreters.jar
   contentModules:
   - name: intellij.python.community.interpreters
@@ -99,6 +93,9 @@
 - name: lib/modules/intellij.python.copyright.jar
   contentModules:
   - name: intellij.python.copyright
+- name: lib/modules/intellij.python.externalIndex.jar
+  contentModules:
+  - name: intellij.python.externalIndex
 - name: lib/modules/intellij.python.featuresTrainer.jar
   contentModules:
   - name: intellij.python.featuresTrainer
@@ -132,18 +129,25 @@
 - name: lib/modules/intellij.python.parser.jar
   contentModules:
   - name: intellij.python.parser
-- name: lib/modules/intellij.python.processOutput.impl.jar
+- name: lib/modules/intellij.python.processOutput.backend.jar
   contentModules:
-  - name: intellij.python.processOutput.impl
-- name: lib/modules/intellij.python.processOutput.jar
+  - name: intellij.python.processOutput.backend
+- name: lib/modules/intellij.python.processOutput.common.jar
   contentModules:
-  - name: intellij.python.processOutput
+  - name: intellij.python.processOutput.common
+- name: lib/modules/intellij.python.processOutput.frontend.jar
+  contentModules:
+  - name: intellij.python.processOutput.frontend
 - name: lib/modules/intellij.python.psi.impl.jar
   contentModules:
   - name: intellij.python.psi.impl
 - name: lib/modules/intellij.python.psi.jar
   contentModules:
   - name: intellij.python.psi
+  library: jetbrains.kotlin.annotations.jvm
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-annotations-jvm/2/kotlin-annotations-jvm-2.jar
+  reason: <- intellij.python.psi
 - name: lib/modules/intellij.python.pydev.jar
   contentModules:
   - name: intellij.python.pydev
@@ -183,6 +187,9 @@
 - name: lib/modules/intellij.python.terminal.jar
   contentModules:
   - name: intellij.python.terminal
+- name: lib/modules/intellij.python.venv.jar
+  contentModules:
+  - name: intellij.python.venv
 - name: lib/python-ce.jar
   modules:
   - name: intellij.python.community.plugin

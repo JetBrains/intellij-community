@@ -8,7 +8,13 @@ import com.intellij.ide.actions.GotoClassPresentationUpdater.getActionTitlePlura
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.keymap.KeymapUtil
@@ -16,20 +22,19 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsActions
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.util.ui.JBInsets
 import java.awt.Color
 import java.awt.Insets
-import java.awt.Point
-import java.awt.event.MouseEvent
 import javax.swing.FocusManager
 import javax.swing.JComponent
 
 /**
- * Vcs quick popup action which is shown in the new toolbar and has two different presentations
+ * Vcs quick popup action that is shown in the new toolbar and has two different presentations
  * depending on vcs repo availability
  */
 open class VcsQuickActionsToolbarPopup : IconWithTextAction(), CustomComponentAction, DumbAware {
@@ -38,9 +43,10 @@ open class VcsQuickActionsToolbarPopup : IconWithTextAction(), CustomComponentAc
     presentation: Presentation,
     place: String,
   ) : ActionButtonWithText(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
-
     override fun getInactiveTextColor(): Color = foreground
+
     override fun getInsets(): Insets = JBInsets(0, 0, 0, 0)
+
     override fun updateToolTipText() {
       val shortcut = KeymapUtil.getShortcutText("Vcs.QuickListPopupAction")
       val classesTabName = java.lang.String.join("/", getActionTitlePluralized())
@@ -62,18 +68,18 @@ open class VcsQuickActionsToolbarPopup : IconWithTextAction(), CustomComponentAc
     }
   }
 
-
-  open fun getName(project: Project): String? {
-    return null
-  }
+  open fun getName(project: Project): String? = null
 
   protected fun updateVcs(project: Project?, e: AnActionEvent): Boolean {
-    if (project == null || e.place !== ActionPlaces.MAIN_TOOLBAR || getName(project) == null ||
-        !ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(getName(project))) {
-      e.presentation.isEnabledAndVisible = false
-      return false
+    if (project != null &&
+        e.place == ActionPlaces.MAIN_TOOLBAR &&
+        !isVcsUiSuppressed(project) &&
+        getName(project) != null &&
+        ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(getName(project))) {
+      return true
     }
-    return true
+    e.presentation.isEnabledAndVisible = false
+    return false
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
@@ -93,15 +99,17 @@ open class VcsQuickActionsToolbarPopup : IconWithTextAction(), CustomComponentAc
     val popup = JBPopupFactory.getInstance().createActionGroupPopup(
       VcsBundle.message("action.Vcs.Toolbar.QuickListPopupAction.text"),
       group, dataContext, JBPopupFactory.ActionSelectionAid.NUMBERING, true, null, -1,
-      { action: AnAction? -> true }, ActionPlaces.RUN_TOOLBAR_LEFT_SIDE)
+      { _: AnAction? -> true }, ActionPlaces.RUN_TOOLBAR_LEFT_SIDE)
     val component = e.inputEvent!!.component
     popup.showUnderneathOf(component)
   }
 
   override fun update(e: AnActionEvent) {
+    val project = e.project
     val presentation = e.presentation
-    if (e.project == null ||
-        e.place !== ActionPlaces.MAIN_TOOLBAR || ProjectLevelVcsManager.getInstance(e.project!!).hasActiveVcss()) {
+    if (project == null || isVcsUiSuppressed(project) ||
+        e.place != ActionPlaces.MAIN_TOOLBAR ||
+        ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) {
       presentation.isEnabledAndVisible = false
       return
     }
@@ -110,22 +118,10 @@ open class VcsQuickActionsToolbarPopup : IconWithTextAction(), CustomComponentAc
     presentation.text = ActionsBundle.message("action.Vcs.Toolbar.ShowMoreActions.text") + " "
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+}
 
-  companion object {
-    private fun showPopup(e: AnActionEvent, popup: ListPopup) {
-      val mouseEvent = e.inputEvent
-      if (mouseEvent is MouseEvent) {
-        val source = mouseEvent.getSource()
-        if (source is JComponent) {
-          val topLeftCorner = source.locationOnScreen
-          val bottomLeftCorner = Point(topLeftCorner.x, topLeftCorner.y + source.height)
-          popup.setLocation(bottomLeftCorner)
-          popup.show(source)
-        }
-      }
-    }
-  }
+private fun isVcsUiSuppressed(project: Project): Boolean {
+  @Suppress("DEPRECATION")
+  return ProjectFrameCapabilitiesService.getInstanceSync().has(project, ProjectFrameCapability.SUPPRESS_VCS_UI)
 }

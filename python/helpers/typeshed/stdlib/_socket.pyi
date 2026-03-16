@@ -3,7 +3,7 @@ from _typeshed import ReadableBuffer, WriteableBuffer
 from collections.abc import Iterable
 from socket import error as error, gaierror as gaierror, herror as herror, timeout as timeout
 from typing import Any, Final, SupportsIndex, overload
-from typing_extensions import CapsuleType, TypeAlias
+from typing_extensions import CapsuleType, TypeAlias, disjoint_base
 
 _CMSG: TypeAlias = tuple[int, int, bytes]
 _CMSGArg: TypeAlias = tuple[int, int, ReadableBuffer]
@@ -587,7 +587,7 @@ if sys.platform != "linux":
 
 has_ipv6: bool
 
-if sys.platform != "darwin" and sys.platform != "linux":
+if sys.platform != "darwin":
     BDADDR_ANY: Final = "00:00:00:00:00:00"
     BDADDR_LOCAL: Final = "00:00:00:FF:FF:FF"
 
@@ -660,16 +660,16 @@ if sys.platform == "darwin":
     PF_SYSTEM: Final[int]
     SYSPROTO_CONTROL: Final[int]
 
-if sys.platform != "darwin" and sys.platform != "linux":
+if sys.platform != "darwin":
     AF_BLUETOOTH: Final[int]
 
-if sys.platform != "win32" and sys.platform != "darwin" and sys.platform != "linux":
+if sys.platform != "win32" and sys.platform != "darwin":
     # Linux and some BSD support is explicit in the docs
     # Windows and macOS do not support in practice
     BTPROTO_HCI: Final[int]
     BTPROTO_L2CAP: Final[int]
     BTPROTO_SCO: Final[int]  # not in FreeBSD
-if sys.platform != "darwin" and sys.platform != "linux":
+if sys.platform != "darwin":
     BTPROTO_RFCOMM: Final[int]
 
 if sys.platform == "linux":
@@ -731,6 +731,7 @@ if sys.platform != "win32" and sys.platform != "darwin":
 
 # ===== Classes =====
 
+@disjoint_base
 class socket:
     @property
     def family(self) -> int: ...

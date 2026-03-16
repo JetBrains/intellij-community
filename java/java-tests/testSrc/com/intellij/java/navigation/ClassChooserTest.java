@@ -28,7 +28,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.indexing.FindSymbolParameters;
 
-import javax.swing.*;
+import javax.swing.JRootPane;
 import java.util.List;
 
 /**

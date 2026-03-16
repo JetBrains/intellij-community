@@ -7,7 +7,6 @@ import com.intellij.psi.PsiReference;
  * @author Dmitry Avdeev
  */
 public class XmlPathReferenceInspection extends XmlReferenceInspectionBase {
-
   @Override
   protected boolean needToCheckRef(PsiReference reference) {
     return XmlHighlightVisitor.isUrlReference(reference);

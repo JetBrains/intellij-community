@@ -6,7 +6,9 @@ import com.intellij.util.ui.RegionPainter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.RenderingHints;
 
 public enum RectanglePainter implements RegionPainter<Integer> {
   DRAW {

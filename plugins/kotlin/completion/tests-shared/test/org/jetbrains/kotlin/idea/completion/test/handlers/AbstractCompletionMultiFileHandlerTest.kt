@@ -84,7 +84,7 @@ abstract class AbstractCompletionMultiFileHandlerTest : KotlinFixtureCompletionB
                     error("Multiple items in completion")
                 }
 
-                CompletionHandlerTestBase.selectItem(myFixture, item, completionChar)
+                selectItem(item, completionChar)
             }
 
             myFixture.checkResultByFile("${getTestName(false)}.kt.after")

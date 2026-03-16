@@ -10,10 +10,19 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.SdkId
+import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.messages.MessageBus
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
-import org.jetbrains.kotlin.analysis.api.platform.modification.*
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinCodeFragmentContextModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalScriptModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceOutOfBlockModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventListener
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleOutOfBlockModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationEvent
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.KaEntityBasedModuleCreationData
@@ -35,16 +44,16 @@ internal annotation class InternalKaModuleConstructor
  * See [isItSafeToCacheModules] for notes on cache invalidation order. Also see KTIJ-33277.
  */
 @Service(Service.Level.PROJECT)
-internal class K2IDEProjectStructureProviderCache(
-    private val project: Project,
-) : Disposable {
+@ApiStatus.Internal
+class K2IDEProjectStructureProviderCache : Disposable {
+    private val project: Project
+    private val analysisMessageBus: MessageBus?
+
     private val libraryCache = ConcurrentHashMap<LibraryId, KaLibraryModuleImpl>()
     private val sdkCache = ConcurrentHashMap<SdkId, KaLibrarySdkModuleImpl>()
 
     private val productionSourceCache = ConcurrentHashMap<ModuleId, KaSourceModule>()
     private val testSourceCache = ConcurrentHashMap<ModuleId, KaSourceModule>()
-
-    private val analysisMessageBus: MessageBus = project.analysisMessageBus
 
     private val sdkAndLibrariesTracker = SimpleModificationTracker()
     private val sourcesTracker = SimpleModificationTracker()
@@ -52,15 +61,20 @@ internal class K2IDEProjectStructureProviderCache(
     /**
      * A tracker is incremented when corresponding modules are removed from [K2IDEProjectStructureProviderCache]
      */
-    fun getCacheSdkAndLibrariesTracker(): ModificationTracker = sdkAndLibrariesTracker
+    internal fun getCacheSdkAndLibrariesTracker(): ModificationTracker = sdkAndLibrariesTracker
 
     /**
      * A tracker is incremented when corresponding modules are removed from [K2IDEProjectStructureProviderCache]
      */
-    fun getCacheSourcesTracker(): ModificationTracker = sourcesTracker
+    internal fun getCacheSourcesTracker(): ModificationTracker = sourcesTracker
 
-    init {
-        analysisMessageBus.connect(this).apply {
+    /**
+     * [messageBus] may be null, it means there is no need to subscribe to invalidations. Used in Analyzer to reuse the cache between snapshots.
+     */
+    @NonInjectable
+    constructor(project: Project, messageBus: MessageBus?) {
+        this.project = project
+        messageBus?.connect(this)?.apply {
             subscribe(KotlinModificationEvent.TOPIC, KotlinModificationEventListener { event ->
                 when (event) {
                     KotlinGlobalModuleStateModificationEvent -> invalidateAllModuleCaches()
@@ -75,7 +89,10 @@ internal class K2IDEProjectStructureProviderCache(
                 }
             })
         }
+        analysisMessageBus = messageBus
     }
+
+    constructor(project: Project) : this(project, project.messageBus)
 
     /**
      * Invalidates the cache of the provided module and all modules that may depend on it.
@@ -114,26 +131,26 @@ internal class K2IDEProjectStructureProviderCache(
         sdkAndLibrariesTracker.incModificationCount()
     }
 
-    fun invalidateSourceModuleCaches() {
+    internal fun invalidateSourceModuleCaches() {
         productionSourceCache.clear()
         testSourceCache.clear()
         sourcesTracker.incModificationCount()
     }
 
     @OptIn(InternalKaModuleConstructor::class)
-    fun cachedKaLibraryModule(id: LibraryId): KaLibraryModuleImpl {
+    internal fun cachedKaLibraryModule(id: LibraryId): KaLibraryModuleImpl {
         if (!isItSafeToCacheModules()) return KaLibraryModuleImpl(id, project, creationData())
         return libraryCache.computeIfAbsent(id) { KaLibraryModuleImpl(id, project, creationData()) }
     }
 
     @OptIn(InternalKaModuleConstructor::class)
-    fun cachedKaSdkModule(id: SdkId): KaLibrarySdkModuleImpl {
+    internal fun cachedKaSdkModule(id: SdkId): KaLibrarySdkModuleImpl {
         if (!isItSafeToCacheModules()) return KaLibrarySdkModuleImpl(project, id, creationData())
         return sdkCache.computeIfAbsent(id) { KaLibrarySdkModuleImpl(project, id, creationData()) }
     }
 
     @OptIn(InternalKaModuleConstructor::class)
-    fun cachedKaSourceModule(id: ModuleId, kind: KaSourceModuleKind): KaSourceModule {
+    internal fun cachedKaSourceModule(id: ModuleId, kind: KaSourceModuleKind): KaSourceModule {
         if (!isItSafeToCacheModules()) return KaSourceModuleImpl(id, kind, project, creationData())
         val cache = moduleCacheForKind(kind)
         return cache.computeIfAbsent(id) { KaSourceModuleImpl(id, kind, project, creationData()) }
@@ -160,8 +177,8 @@ internal class K2IDEProjectStructureProviderCache(
      *
      * This function should only be used by `K2IDEProjectStructureProviderCache` and `K2IDEProjectStructureProvider`.
      */
-    fun isItSafeToCacheModules(): Boolean {
-        return !analysisMessageBus.hasUndeliveredEvents(KotlinModificationEvent.TOPIC)
+    internal fun isItSafeToCacheModules(): Boolean {
+        return analysisMessageBus == null || !analysisMessageBus.hasUndeliveredEvents(KotlinModificationEvent.TOPIC)
     }
 
     private fun moduleCacheForKind(kind: KaSourceModuleKind): ConcurrentHashMap<ModuleId, KaSourceModule> {

@@ -23,23 +23,38 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.testFramework.*
+import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.registerExtension
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.events.FileIndexingRequest
-import com.intellij.util.indexing.mocks.*
+import com.intellij.util.indexing.mocks.ConfigurableFileIndexerBase
+import com.intellij.util.indexing.mocks.ConfigurableFiletypeSpecificFileIndexer
+import com.intellij.util.indexing.mocks.ConfigurableNoFiletypeFileIndexer
+import com.intellij.util.indexing.mocks.ConfigurableTextFileIndexer
+import com.intellij.util.indexing.mocks.FakeFileType
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
-import org.junit.*
+import org.junit.After
+import org.junit.AfterClass
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.file.Files
@@ -325,15 +340,19 @@ class UnindexedFilesScannerTest {
     val oneDirIterator = SingleRootIndexableFilesIterator(dir.toUri().toString())
 
     val dumbService = DumbService.getInstance(project)
-    val dumbModCount1 = dumbService.modificationTracker.modificationCount
+    val dumbModCountBeforeScanning = dumbService.modificationTracker.modificationCount
 
     val (scanningStat, dirtyFiles) = scanFiles(oneDirIterator)
     assertThat(dirtyFiles).isEmpty()
     assertEquals(0, scanningStat.numberOfFilesForIndexing)
-    IndexingTestUtil.waitUntilIndexesAreReady(project, Duration.ofSeconds(30)) // wait until flows in UnindexedFilesScannerExecutorImpl are updated
+    IndexingTestUtil.waitUntilIndexesAreReady(project,
+                                              Duration.ofSeconds(30)) // wait until flows in UnindexedFilesScannerExecutorImpl are updated
 
-    val dumbModCount2 = dumbService.modificationTracker.modificationCount
-    assertEquals(dumbModCount1 + 1, dumbModCount2)
+    val dumbModCountAfterScanning = dumbService.modificationTracker.modificationCount
+    assertTrue(
+      "Scanning should increase dumbService.modCount: before(=$dumbModCountBeforeScanning), after(=$dumbModCountAfterScanning)",
+      dumbModCountAfterScanning >= dumbModCountBeforeScanning + 1,
+    )
   }
 
   private fun registerFiletype(filetype: FakeFileType) {

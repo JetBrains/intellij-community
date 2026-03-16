@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory1
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
+@K1Deprecation
 class ReassignmentActionFactory(val factory: DiagnosticFactory1<*, DeclarationDescriptor>) : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val propertyDescriptor = factory.cast(diagnostic).a
@@ -25,6 +27,7 @@ class ReassignmentActionFactory(val factory: DiagnosticFactory1<*, DeclarationDe
     }
 }
 
+@K1Deprecation
 object DelegatedPropertyValFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val element = Errors.DELEGATE_SPECIAL_FUNCTION_MISSING.cast(diagnostic).psiElement

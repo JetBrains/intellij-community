@@ -4,7 +4,13 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "envTests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/statistics",
+    "//platform/core-ui",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+  ]
 )
 
 jvm_library(
@@ -26,7 +32,8 @@ jvm_library(
     "//platform/statistics/uploader",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
-  ]
+  ],
+  runtime_deps = [":envTests"]
 )
 ### auto-generated section `build intellij.platform.statistics.envTests` end
 

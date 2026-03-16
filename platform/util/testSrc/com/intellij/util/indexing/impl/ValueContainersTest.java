@@ -15,7 +15,11 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;

@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.gradleJava
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationImportHandler
-import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
 class KotlinSerializationGradleImportHandler : GradleProjectImportHandler {

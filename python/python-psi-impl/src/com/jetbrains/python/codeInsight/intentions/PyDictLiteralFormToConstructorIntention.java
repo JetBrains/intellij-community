@@ -8,13 +8,20 @@ import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyDictLiteralExpression;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyKeyValueExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * User: catherine
- *
+ * <p>
  * Intention to convert dict literal expression to dict constructor if the keys are all string constants on a literal dict.
  * For instance,
  * {} -> dict
@@ -65,14 +72,16 @@ public final class PyDictLiteralFormToConstructorIntention extends PsiUpdateModC
           stringBuilder.append(((PyStringLiteralExpression)key).getStringValue());
           stringBuilder.append("=");
           stringBuilder.append(value.getText());
-          if (i != size-1)
+          if (i != size - 1) {
             stringBuilder.append(", ");
+          }
         }
       }
     }
     stringBuilder.append(")");
     PyCallExpression callExpression = (PyCallExpression)elementGenerator.createFromText(LanguageLevel.forElement(dictExpression),
-                                                     PyExpressionStatement.class, stringBuilder.toString()).getExpression();
+                                                                                        PyExpressionStatement.class,
+                                                                                        stringBuilder.toString()).getExpression();
     dictExpression.replace(callExpression);
   }
 }

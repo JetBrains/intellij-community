@@ -2,19 +2,12 @@
 package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.checkNonNegative
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 
 @Deprecated("Use UnscaledGaps instead")
 @ApiStatus.ScheduledForRemoval
 data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val right: Int = 0) {
-  companion object {
-    @Deprecated("Use UnscaledGaps instead", level = DeprecationLevel.HIDDEN)
-    @ApiStatus.ScheduledForRemoval
-    @JvmField
-    val EMPTY: Gaps = Gaps(0, 0, 0, 0)
-  }
 
   init {
     checkNonNegative("top", top)
@@ -36,12 +29,6 @@ data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val ri
     get() = top + bottom
 }
 
-
-@Deprecated("Use UnscaledGaps instead", replaceWith = ReplaceWith("UnscaledGaps(top, left, bottom, right)"), level = DeprecationLevel.HIDDEN)
-@ApiStatus.ScheduledForRemoval
-fun JBGaps(top: Int = 0, left: Int = 0, bottom: Int = 0, right: Int = 0): Gaps {
-  return Gaps(JBUIScale.scale(top), JBUIScale.scale(left), JBUIScale.scale(bottom), JBUIScale.scale(right))
-}
 
 @ApiStatus.Internal
 @Deprecated("Use UnscaledGaps", replaceWith = ReplaceWith("UnscaledGaps()"))

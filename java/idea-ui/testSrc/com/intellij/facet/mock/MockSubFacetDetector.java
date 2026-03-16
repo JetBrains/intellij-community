@@ -6,9 +6,9 @@ import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetType;
 import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.framework.detection.FileContentPattern;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
@@ -43,7 +43,7 @@ public final class MockSubFacetDetector extends FacetBasedFrameworkDetector<Face
   @NotNull
   @Override
   public FileType getFileType() {
-    return StdFileTypes.XML;
+    return XmlFileType.INSTANCE;
   }
 
   @Override

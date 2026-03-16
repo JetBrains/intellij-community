@@ -23,6 +23,7 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/maven",
     "//plugins/maven",
+    "//platform/core-api:core",
   ]
 )
 ### auto-generated section `build intellij.kotlin.compilerPlugins.allopen.maven` end

@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.stubs.PyDecoratorListStub;
 import org.jetbrains.annotations.NotNull;
 
-public class PyDecoratorListImpl extends PyBaseElementImpl<PyDecoratorListStub> implements PyDecoratorList{
+public class PyDecoratorListImpl extends PyBaseElementImpl<PyDecoratorListStub> implements PyDecoratorList {
 
   public PyDecoratorListImpl(ASTNode astNode) {
     super(astNode);

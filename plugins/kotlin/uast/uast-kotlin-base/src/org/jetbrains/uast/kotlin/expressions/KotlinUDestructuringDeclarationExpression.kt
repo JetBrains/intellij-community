@@ -4,6 +4,7 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.UElement
 
 @ApiStatus.Internal
@@ -12,5 +13,5 @@ class KotlinUDestructuringDeclarationExpression(
     psiAnchor: PsiElement,
 ) : KotlinUDeclarationsExpression(null, givenParent, psiAnchor) {
 
-    val tempVarAssignment get() = declarations.first()
+    val tempVarAssignment: UDeclaration get() = declarations.first()
 }

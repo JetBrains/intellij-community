@@ -3,7 +3,8 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.codeInsight.multiverse.*;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextHighlightingUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -35,9 +36,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 /**
  * Document markup manipulation methods during the highlighting, in the background thread under read action.
@@ -278,7 +282,7 @@ public final class BackgroundUpdateHighlightersUtil {
       highlighter = salvagedHighlighter;
       markup.changeAttributesInBatch(highlighter, changeAttributes);
     }
-    info.setHighlighter(highlighter);
+
     range2markerCache.put(finalInfoRange, highlighter);
 
     if (LOG.isDebugEnabled()) {
@@ -301,6 +305,15 @@ public final class BackgroundUpdateHighlightersUtil {
                   " (set " + (infoAttributes.equals(afterSet) ? "successfully" : "not successfully") + ")");
       }
     }
+  }
+
+  @ApiStatus.Internal
+  public static void associateInfoAndHighlighter(@NotNull HighlightInfo info, @NotNull RangeHighlighterEx highlighter) {
+    if (info.getHighlighter() == null) {
+      info.setHighlighter(highlighter);
+    }
+    assert info.getHighlighter() == highlighter;
+    highlighter.setErrorStripeTooltip(info);
   }
 
   static void changeAttributes(@NotNull RangeHighlighterEx highlighter,
@@ -327,7 +340,7 @@ public final class BackgroundUpdateHighlightersUtil {
       highlighter.setErrorStripeMarkColor(infoErrorStripeColor);
     }
 
-    highlighter.setErrorStripeTooltip(info);
+    associateInfoAndHighlighter(info, highlighter);
     GutterMark renderer = info.getGutterIconRenderer();
     highlighter.setGutterIconRenderer((GutterIconRenderer)renderer);
 

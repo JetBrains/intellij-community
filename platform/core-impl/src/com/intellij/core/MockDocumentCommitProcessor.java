@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DocumentCommitProcessor;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import org.jetbrains.annotations.NotNull;
 
 final class MockDocumentCommitProcessor implements DocumentCommitProcessor {
@@ -16,7 +16,7 @@ final class MockDocumentCommitProcessor implements DocumentCommitProcessor {
 
   @Override
   public void commitAsynchronously(@NotNull Project project,
-                                   @NotNull PsiDocumentManagerBase documentManager,
+                                   @NotNull PsiDocumentManagerEx documentManager,
                                    @NotNull Document document,
                                    @NotNull Object reason,
                                    @NotNull ModalityState modality) {

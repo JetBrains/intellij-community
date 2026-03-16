@@ -5,11 +5,11 @@ package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
-import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.FieldVisibilityProvider
 import com.intellij.debugger.engine.JVMNameUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
+import com.intellij.debugger.impl.instanceOf
 import com.intellij.debugger.settings.NodeRendererSettings
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.intellij.debugger.ui.tree.DebuggerTreeNode
@@ -20,7 +20,14 @@ import com.intellij.debugger.ui.tree.render.ClassRenderer
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.sun.jdi.*
+import com.sun.jdi.ArrayType
+import com.sun.jdi.Field
+import com.sun.jdi.Method
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.Type
+import com.sun.jdi.Value
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.idea.debugger.base.util.isLateinitVariableGetter
 import org.jetbrains.kotlin.idea.debugger.base.util.isSimpleGetter
 import org.jetbrains.kotlin.idea.debugger.base.util.safeFields
@@ -32,7 +39,6 @@ import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSourcesAsync
 import org.jetbrains.kotlin.idea.debugger.core.render.GetterDescriptor
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import kotlin.metadata.ExperimentalContextReceivers
 import kotlin.metadata.KmProperty
 import kotlin.metadata.isNotDefault
@@ -228,7 +234,7 @@ class KotlinClassRenderer : ClassRenderer() {
             "java.util.Map.Entry",
         )
 
-        return typesWithGoodDefaultRenderers.any { superType -> DebuggerUtils.instanceOf(this, superType) }
+        return typesWithGoodDefaultRenderers.any(this::instanceOf)
     }
 
     private fun Field.isInstanceFieldOfType(type: Type) =

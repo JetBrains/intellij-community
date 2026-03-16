@@ -8,10 +8,12 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class GitBranchesSearcher {
   private static final Logger LOG = Logger.getInstance(GitBranchesSearcher.class);
   private final GitBranch myLocal;

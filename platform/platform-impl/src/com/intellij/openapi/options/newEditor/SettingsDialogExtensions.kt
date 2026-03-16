@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil.getActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.project.DumbAwareAction
@@ -22,40 +22,52 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.components.JBLayeredPane
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.actionButton
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
-import com.jetbrains.rd.util.concurrentMapOf
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import javax.swing.*
+import java.util.concurrent.ConcurrentHashMap
+import javax.swing.Action
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLayeredPane
+import javax.swing.JPanel
 import kotlin.coroutines.EmptyCoroutineContext
 
 private const val PANEL_MAX_WIDTH = 1000
 private const val SEARCH_MAX_WIDTH = 400
-private const val PANEL_NARROW_WIDTH = 600
+private const val PANEL_NARROW_WIDTH = 850
 
 
 internal fun SettingsDialog.createEditorToolbar(actions: List<Action>): DialogPanel? {
-  val actionGroup = getActionGroup("Back", "Forward");
+  val actionGroup = getActionGroup("Back", "Forward")
   val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SETTINGS_HISTORY, actionGroup!!, true)
   val settingsEditor = editor as? SettingsEditor ?: return null
   settingsEditor.search.preferredSize = JBUI.size(SEARCH_MAX_WIDTH, settingsEditor.search.preferredSize.height)
   settingsEditor.search.maximumSize = JBUI.size(SEARCH_MAX_WIDTH, settingsEditor.search.maximumSize.height)
-  val forceShowSidebar = AtomicBooleanProperty(false)
+  val showSidebar = AtomicProperty(ShowSidebar.DEFAULT)
 
   val editorToolbar = panel {
     row {
       val action = object : DumbAwareAction({ ActionsBundle.message("action.SettingsEditor.ToggleSidebar.text") },
                                             AllIcons.General.Menu) {
         override fun actionPerformed(e: AnActionEvent) {
-          forceShowSidebar.set(!forceShowSidebar.get())
+          showSidebar.set(if (settingsEditor.isSidebarVisible) ShowSidebar.HIDE else ShowSidebar.SHOW)
           repaint()
         }
       }
-      val sidebarActionButton: Cell<ActionButton> = actionButton(action)
+      val sidebarActionButton: Cell<ActionButton> = actionButton(action).visible(true)
       sidebarActionButton.customize(UnscaledGaps(left = 8, right = 8))
 
       rootPane.addComponentListener(object : ComponentAdapter() {
@@ -63,23 +75,32 @@ internal fun SettingsDialog.createEditorToolbar(actions: List<Action>): DialogPa
           if (e == null)
             return
           if (rootPane.width < PANEL_NARROW_WIDTH) {
-            sidebarActionButton.component.isVisible = true
-            settingsEditor.isSidebarVisible = forceShowSidebar.get()
+            settingsEditor.isSidebarVisible = when (showSidebar.get()) {
+              ShowSidebar.SHOW -> true
+              ShowSidebar.HIDE -> false
+              ShowSidebar.DEFAULT -> false
+            }
           }
           else {
-            sidebarActionButton.component.isVisible = false
-            settingsEditor.isSidebarVisible = true
+            settingsEditor.isSidebarVisible = when (showSidebar.get()) {
+              ShowSidebar.SHOW -> true
+              ShowSidebar.HIDE -> false
+              ShowSidebar.DEFAULT -> true
+            }
           }
         }
       })
-      forceShowSidebar.afterChange {
-        if (forceShowSidebar.get()) {
-          sidebarActionButton.component.background = JBUI.CurrentTheme.ActionButton.pressedBackground()
-          settingsEditor.isSidebarVisible = true
-        }
-        else {
-          sidebarActionButton.component.background = null
-          settingsEditor.isSidebarVisible = rootPane.width >= PANEL_NARROW_WIDTH
+      showSidebar.afterChange {
+        when (showSidebar.get()) {
+          ShowSidebar.SHOW -> {
+            sidebarActionButton.component.background = null
+            settingsEditor.isSidebarVisible = true
+          }
+          ShowSidebar.HIDE -> {
+            sidebarActionButton.component.background = JBUI.CurrentTheme.ActionButton.pressedBackground()
+            settingsEditor.isSidebarVisible = false
+          }
+          ShowSidebar.DEFAULT -> {}
         }
       }
       cell(toolbar.component)
@@ -105,6 +126,12 @@ internal fun SettingsDialog.createEditorToolbar(actions: List<Action>): DialogPa
     }
   }
 
+}
+
+private enum class ShowSidebar {
+  SHOW,
+  HIDE,
+  DEFAULT;
 }
 
 internal fun SettingsEditor.paneWithCorner(panel: JPanel, helpButton: JButton): JComponent {
@@ -155,7 +182,7 @@ internal class ResetConfigurableHandler(
   coroutineScope: CoroutineScope,
   disposable: Disposable,
 ) {
-  private val jobs = concurrentMapOf<String, Job>()
+  private val jobs = ConcurrentHashMap<String, Job>()
   private val properties = PropertiesComponent.getInstance(project)
   private val myCoroutineScope: CoroutineScope = coroutineScope.childScope("ResetConfigurableHandler", EmptyCoroutineContext, true)
 

@@ -1,3 +1,0 @@
-version = "3.0.*"
-upstream_repository = "https://github.com/ianare/exif-py"
-obsolete_since = "3.1.0" # Released on 2025-04-25

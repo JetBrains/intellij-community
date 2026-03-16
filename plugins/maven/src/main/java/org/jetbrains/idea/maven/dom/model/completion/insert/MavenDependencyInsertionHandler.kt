@@ -41,8 +41,6 @@ open class MavenDependencyInsertionHandler : InsertHandler<LookupElement?> {
       return
     }
     setDependency(context, obj, contextFile, domCoordinates)
-
-    logMavenDependencyInsertion(context, item, obj)
   }
 
 

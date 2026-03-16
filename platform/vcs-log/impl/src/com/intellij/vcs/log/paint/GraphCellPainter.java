@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Graphics2D;
 import java.util.Collection;
 
 import static com.intellij.vcs.log.VcsLogHighlighter.VcsCommitStyle;

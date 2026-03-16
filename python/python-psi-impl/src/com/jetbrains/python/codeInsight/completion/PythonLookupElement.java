@@ -10,12 +10,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * TODO: Add description
  */
-public class PythonLookupElement extends LookupElement implements Comparable<LookupElement>{
+public class PythonLookupElement extends LookupElement implements Comparable<LookupElement> {
 
   protected final String myLookupString;
   protected final String myTypeText;
@@ -100,6 +100,5 @@ public class PythonLookupElement extends LookupElement implements Comparable<Loo
   public int compareTo(final LookupElement o) {
     return myLookupString.compareTo(o.getLookupString());
   }
-
 }
 

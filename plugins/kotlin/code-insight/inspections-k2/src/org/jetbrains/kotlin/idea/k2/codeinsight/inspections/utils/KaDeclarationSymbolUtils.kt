@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
  * In named functions it is the name of the function.
  * For an anonymous lambda argument it is the name of the function it is passed to.
  */
-fun KaDeclarationSymbol.getThisLabelName(): String? {
+internal fun KaDeclarationSymbol.getThisLabelName(): String? {
     // For named symbols, return the name
     if (this is KaNamedSymbol) {
         val name = this.name
@@ -40,7 +40,7 @@ fun KaDeclarationSymbol.getThisLabelName(): String? {
 /**
  * Returns the `this` expression that can be used to refer to the given declaration symbol.
  */
-fun KaDeclarationSymbol.getThisWithLabel(): String {
+internal fun KaDeclarationSymbol.getThisWithLabel(): String {
     val labelName = getThisLabelName()
     return if (labelName == null || labelName.isEmpty()) "this" else "this@$labelName"
 }

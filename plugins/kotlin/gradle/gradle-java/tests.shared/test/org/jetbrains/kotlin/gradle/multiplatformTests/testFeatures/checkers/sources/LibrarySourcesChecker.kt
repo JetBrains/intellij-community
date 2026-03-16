@@ -4,11 +4,10 @@ package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.sou
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractTestChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.findMostSpecificExistingFileOrNewDefault
-import kotlin.collections.component2
 
 data class LibrarySourcesConfiguration(
     var classifier: String? = null

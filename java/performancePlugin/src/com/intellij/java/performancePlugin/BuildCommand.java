@@ -2,7 +2,11 @@
 package com.intellij.java.performancePlugin;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompilationStatusListener;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;

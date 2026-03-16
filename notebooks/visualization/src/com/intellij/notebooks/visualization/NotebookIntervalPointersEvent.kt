@@ -1,12 +1,12 @@
 package com.intellij.notebooks.visualization
 
 /**
- * passed to [NotebookIntervalPointerFactory.ChangeListener] in next cases:
- * * Underlying document is changed. (in such case cellLinesEvent != null)
+ * Passed to [NotebookIntervalPointerFactory.ChangeListener] in next cases:
+ * * Underlying document is changed. (in such cases cellLinesEvent != null)
  * * Someone explicitly swapped two pointers or invalidated them by calling [NotebookIntervalPointerFactory.modifyPointers]
  * * one of upper changes was reverted or redone.
  *
- * Changes represented as list of trivial changes. [Change]
+ * Changes represented as a list of trivial changes. [Change]
  * Intervals which was just moved are not mentioned in changes. For example, when inserting code before them.
  */
 data class NotebookIntervalPointersEvent(val isInBulkUpdate: Boolean,val changes: List<Change>) {
@@ -15,17 +15,17 @@ data class NotebookIntervalPointersEvent(val isInBulkUpdate: Boolean,val changes
   data class PointerSnapshot(val pointer: NotebookIntervalPointer, val interval: NotebookCellLines.Interval)
 
   /**
-   * any change contains enough information to be inverted. It simplifies undo/redo actions.
+   * Any change contains enough information to be inverted. It simplifies undo/redo actions.
    */
   sealed interface Change
 
   data class OnInserted(val subsequentPointers: List<PointerSnapshot>) : Change {
-    val ordinals = subsequentPointers.first().interval.ordinal..subsequentPointers.last().interval.ordinal
+    val ordinals: IntRange = subsequentPointers.first().interval.ordinal..subsequentPointers.last().interval.ordinal
   }
 
-  /* snapshots contains intervals before removal */
+  /* Snapshots contain intervals before removal */
   data class OnRemoved(val subsequentPointers: List<PointerSnapshot>) : Change {
-    val ordinals = subsequentPointers.first().interval.ordinal..subsequentPointers.last().interval.ordinal
+    val ordinals: IntRange = subsequentPointers.first().interval.ordinal..subsequentPointers.last().interval.ordinal
   }
 
   data class OnEdited(val pointer: NotebookIntervalPointer,
@@ -35,7 +35,7 @@ data class NotebookIntervalPointersEvent(val isInBulkUpdate: Boolean,val changes
       get() = intervalAfter.ordinal
   }
 
-  /* snapshots contains intervals after swap */
+  /* Snapshots contain intervals after swap */
   data class OnSwapped(val first: PointerSnapshot, val second: PointerSnapshot) : Change {
     val firstOrdinal: Int
       get() = first.interval.ordinal

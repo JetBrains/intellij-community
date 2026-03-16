@@ -3,11 +3,30 @@ package com.intellij.testFramework.junit5.fixture
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.junit5.fixture.EelForFixturesProvider.Companion.getEelForParametrizedTestProvider
-import kotlinx.coroutines.*
+import com.intellij.testFramework.junit5.impl.TypedStoreKey
+import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.get
+import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.remove
+import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.set
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.TestInstance
-import org.junit.jupiter.api.extension.*
+import org.junit.jupiter.api.extension.AfterAllCallback
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeAllCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.api.extension.InvocationInterceptor
+import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import org.junit.platform.commons.support.HierarchyTraversalMode
 import org.junit.platform.commons.support.ReflectionSupport
 import java.lang.reflect.Constructor
@@ -22,6 +41,9 @@ internal class TestFixtureExtension : BeforeAllCallback,
                                       AfterEachCallback,
                                       AfterAllCallback,
                                       InvocationInterceptor {
+  private companion object {
+    val exceptionsKey = TypedStoreKey.createKey<Throwable>()
+  }
 
   override fun beforeAll(context: ExtensionContext) {
     before(context, static = true)
@@ -67,9 +89,20 @@ internal class TestFixtureExtension : BeforeAllCallback,
 
   private fun before(context: ExtensionContext, static: Boolean, eelApi: EelApi? = null, instance: Any? = null) {
     val testClass: Class<*> = context.testClass.getOrNull() ?: return
+    if (static && !context.enclosingTestClasses.isEmpty()) {
+      // There can't be static fixtures in nested classes
+      return
+    }
+
+    TestLoggerFactory.onFixturesInitializationStarted(static)
+
+    val exceptionHandler = CoroutineExceptionHandler { _, exception ->
+      context[exceptionsKey] = exception
+      throw exception
+    }
 
     @OptIn(DelicateCoroutinesApi::class)
-    val testScope = GlobalScope.childScope(context.displayName)
+    val testScope = GlobalScope.childScope(context.displayName, exceptionHandler)
     val pendingFixtures = ArrayList<Deferred<*>>()
 
     val classToTestInstance = collectTestInstances(context)
@@ -90,6 +123,7 @@ internal class TestFixtureExtension : BeforeAllCallback,
 
     awaitFixtureInitialization(testScope, pendingFixtures)
     context.getStore(ExtensionContext.Namespace.GLOBAL).put("TestFixtureExtension_$static", testScope)
+    TestLoggerFactory.onFixturesInitializationFinished(static)
   }
 
   override fun afterEach(context: ExtensionContext) {
@@ -104,9 +138,22 @@ internal class TestFixtureExtension : BeforeAllCallback,
       after(context, static = false)
     }
     after(context, static = true)
+    // Throw unprocessed exceptions thrown by fixtures to break the test
+    val exception = context[exceptionsKey]
+    context.remove(exceptionsKey)
+    if (exception != null) {
+      throw exception
+    }
   }
 
   private fun after(context: ExtensionContext, static: Boolean) {
+    if (static && !context.enclosingTestClasses.isEmpty()) {
+      // There can't be static fixtures in nested classes
+      return
+    }
+
+    TestLoggerFactory.onFixturesDisposeStart(static)
+
     val testScope = context.getStore(ExtensionContext.Namespace.GLOBAL).get("TestFixtureExtension_$static") ?: return
     @Suppress("SSBasedInspection")
     runBlocking {

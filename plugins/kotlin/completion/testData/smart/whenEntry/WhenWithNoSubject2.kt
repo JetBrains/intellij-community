@@ -6,3 +6,5 @@ fun foo(s: String) {
 
 // EXIST: equals
 // ABSENT: else
+
+// IGNORE_K2

@@ -4,7 +4,11 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
@@ -99,13 +103,13 @@ public class VarTypeProcessor {
     if (exprentTypeBounds == null) return true;
 
     for (var entry : exprentTypeBounds.getMaxTypeExprents()) {
-      if (entry.type.getTypeFamily() != CodeConstants.TYPE_FAMILY_OBJECT) {
-        changeExprentType(entry.exprent, entry.type, false);
+      if (entry.type().getTypeFamily() != CodeConstants.TYPE_FAMILY_OBJECT) {
+        changeExprentType(entry.exprent(), entry.type(), false);
       }
     }
     boolean result = true;
     for (var entry : exprentTypeBounds.getMinTypeExprents()) {
-      result &= changeExprentType(entry.exprent, entry.type, true);
+      result &= changeExprentType(entry.exprent(), entry.type(), true);
     }
     return result;
   }

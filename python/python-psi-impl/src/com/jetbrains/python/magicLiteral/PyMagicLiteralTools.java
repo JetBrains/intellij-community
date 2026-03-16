@@ -30,7 +30,7 @@ public final class PyMagicLiteralTools {
    */
   public static boolean couldBeMagicLiteral(final @NotNull PsiElement element) {
     return (element instanceof StringLiteralExpression) && (element.getReferences().length == 0) &&
-           Arrays.stream(PyMagicLiteralExtensionPoint.EP_NAME.getExtensions()).anyMatch(o-> o.isEnabled(element));
+           Arrays.stream(PyMagicLiteralExtensionPoint.EP_NAME.getExtensions()).anyMatch(o -> o.isEnabled(element));
   }
 
   /**

@@ -2,10 +2,22 @@
 
 package org.jetbrains.kotlin.idea.core
 
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.descriptors.DescriptorVisibility
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilityUtils
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
-import org.jetbrains.kotlin.idea.caches.resolve.*
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.computeTypeInContext
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -17,7 +29,17 @@ import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.Call
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.LambdaArgument
+import org.jetbrains.kotlin.psi.ValueArgument
+import org.jetbrains.kotlin.psi.doNotAnalyze
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -44,6 +66,7 @@ import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 /**
  * See `ArgumentsToParametersMapper` class in the compiler.
  */
+@K1Deprecation
 fun Call.mapArgumentsToParameters(targetDescriptor: CallableDescriptor): Map<ValueArgument, ValueParameterDescriptor> {
     val parameters = targetDescriptor.valueParameters
     if (parameters.isEmpty()) return emptyMap()
@@ -85,6 +108,7 @@ fun Call.mapArgumentsToParameters(targetDescriptor: CallableDescriptor): Map<Val
     return map
 }
 
+@K1Deprecation
 fun ImplicitReceiver.asExpression(resolutionScope: LexicalScope, psiFactory: KtPsiFactory): KtExpression? {
     val expressionFactory = resolutionScope.getImplicitReceiversWithInstanceToExpression()
         .entries
@@ -93,6 +117,7 @@ fun ImplicitReceiver.asExpression(resolutionScope: LexicalScope, psiFactory: KtP
     return expressionFactory.createExpression(psiFactory)
 }
 
+@K1Deprecation
 fun KtImportDirective.targetDescriptors(resolutionFacade: ResolutionFacade = this.getResolutionFacade()): Collection<DeclarationDescriptor> {
     // For codeFragments imports are created in dummy file
     if (this.containingKtFile.doNotAnalyze != null) return emptyList()
@@ -100,6 +125,7 @@ fun KtImportDirective.targetDescriptors(resolutionFacade: ResolutionFacade = thi
     return nameExpression.mainReference.resolveToDescriptors(resolutionFacade.analyze(nameExpression))
 }
 
+@K1Deprecation
 fun Call.resolveCandidates(
     bindingContext: BindingContext,
     resolutionFacade: ResolutionFacade,
@@ -157,6 +183,7 @@ private fun expectedType(call: Call, bindingContext: BindingContext): KotlinType
     } ?: TypeUtils.NO_EXPECTED_TYPE
 }
 
+@K1Deprecation
 fun KtCallableDeclaration.canOmitDeclaredType(initializerOrBodyExpression: KtExpression, canChangeTypeToSubtype: Boolean): Boolean {
     val declaredType = (unsafeResolveToDescriptor() as? CallableDescriptor)?.returnType ?: return false
     val bindingContext = initializerOrBodyExpression.analyze()
@@ -166,19 +193,24 @@ fun KtCallableDeclaration.canOmitDeclaredType(initializerOrBodyExpression: KtExp
     return canChangeTypeToSubtype && expressionType.isSubtypeOf(declaredType)
 }
 
+@K1Deprecation
 fun FqName.quoteSegmentsIfNeeded(): String {
     return quoteIfNeeded().asString()
 }
 
+@K1Deprecation
 fun KtCallExpression.receiverValue(): ReceiverValue? {
     val resolvedCall = getResolvedCall(safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)) ?: return null
     return resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver
 }
 
+@K1Deprecation
 fun KtCallExpression.receiverType(): KotlinType? = receiverValue()?.type
 
+@K1Deprecation
 fun KtExpression.resolveType(context: BindingContext = this.analyze(BodyResolveMode.PARTIAL)): KotlinType? = context.getType(this)
 
+@K1Deprecation
 fun KtModifierKeywordToken.toVisibility(): DescriptorVisibility {
     return when (this) {
         KtTokens.PUBLIC_KEYWORD -> DescriptorVisibilities.PUBLIC

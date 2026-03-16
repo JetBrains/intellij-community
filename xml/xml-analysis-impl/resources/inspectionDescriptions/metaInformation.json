@@ -2,11 +2,11 @@
   "inspections": [
     {
       "id": "HtmlUnknownBooleanAttribute",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "CheckXmlFileWithXercesValidator",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "XmlUnusedNamespaceDeclaration",
@@ -26,15 +26,15 @@
     },
     {
       "id": "HtmlUnknownTarget",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "XmlWrongRootElement",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "HtmlUnknownAttribute",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "HtmlExtraClosingTag",
@@ -54,7 +54,7 @@
     },
     {
       "id": "XmlDeprecatedElement",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "XmlUnresolvedReference",
@@ -62,19 +62,19 @@
     },
     {
       "id": "HtmlUnknownTag",
-      "codeQualityCategory": "Code Style"
-    },
-    {
-      "id": "XmlHighlighting",
       "codeQualityCategory": "Reliability"
     },
     {
+      "id": "XmlHighlighting",
+      "codeQualityCategory": "Sanity"
+    },
+    {
       "id": "HtmlWrongAttributeValue",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "HtmlUnknownAnchorTarget",
-      "codeQualityCategory": "Security"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "XmlDuplicatedId",
@@ -94,7 +94,7 @@
     },
     {
       "id": "CheckValidXmlInScriptTagBody",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Sanity"
     }
   ]
 }

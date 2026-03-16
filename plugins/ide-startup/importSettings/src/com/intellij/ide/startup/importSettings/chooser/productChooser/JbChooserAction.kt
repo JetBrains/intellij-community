@@ -3,7 +3,15 @@ package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
-import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.ide.startup.importSettings.data.ExtActionsDataProvider
+import com.intellij.ide.startup.importSettings.data.ExternalProductService
+import com.intellij.ide.startup.importSettings.data.IconProductSize
+import com.intellij.ide.startup.importSettings.data.JBrActionsDataProvider
+import com.intellij.ide.startup.importSettings.data.JbService
+import com.intellij.ide.startup.importSettings.data.Product
+import com.intellij.ide.startup.importSettings.data.SettingsService
+import com.intellij.ide.startup.importSettings.data.SyncActionsDataProvider
+import com.intellij.ide.startup.importSettings.data.SyncService
 import com.intellij.ide.startup.importSettings.transfer.icon
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.ui.scale.JBUIScale

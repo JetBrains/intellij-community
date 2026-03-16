@@ -19,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Dimension
-import java.util.*
+import java.util.UUID
 import javax.swing.JPanel
 import kotlin.math.min
 
@@ -48,6 +48,7 @@ class FrontendScopeChooser(private val project: Project, private val preselected
 
   private val editScopesButton = FixedSizeButton(comboBox).apply {
     addActionListener { editScopes() }
+    accessibleContext.accessibleName = FindBundle.message("find.usages.edit.scopes.button.accessible.name")
   }
 
   init {
@@ -59,6 +60,7 @@ class FrontendScopeChooser(private val project: Project, private val preselected
         FindAndReplaceExecutor.getInstance().performScopeSelection(scopeId, project)
       }
     }
+    comboBox.accessibleContext.accessibleName = FindBundle.message("find.usages.scope.combobox.accessible.name")
 
     val cachedScopes = ScopesStateService.getInstance(project).getCachedScopeDescriptors()
     initItems(cachedScopes)

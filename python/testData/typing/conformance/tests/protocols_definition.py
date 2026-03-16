@@ -6,7 +6,7 @@ Tests the basic definition rules for protocols.
 
 from abc import abstractmethod
 from typing import Any, ClassVar, Iterable, NamedTuple, Protocol, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 class SupportsClose(Protocol):
@@ -196,7 +196,7 @@ class Concrete4_Good6(NamedTuple):
 
 @dataclass(frozen=False)
 class Concrete4_Good7:
-    val1: Sequence[float] = field(default_factory=lambda:[0])
+    val1: Sequence[float] = [0]
 
 
 class Concrete4_Bad1:
@@ -315,7 +315,7 @@ class Concrete6_Good2:
 
 @dataclass(frozen=False)
 class Concrete6_Good3:
-    val1: Sequence[float] = field(default_factory=lambda:[0])
+    val1: Sequence[float] = [0]
 
 
 class Concrete6_Bad1:
@@ -330,7 +330,7 @@ class Concrete6_Bad2(NamedTuple):
 
 @dataclass(frozen=True)
 class Concrete6_Bad3:
-    val1: Sequence[float] = field(default_factory=lambda:[0])
+    val1: Sequence[float] = [0]
 
 
 v6_good1: Template6 = Concrete6_Good1()  # OK

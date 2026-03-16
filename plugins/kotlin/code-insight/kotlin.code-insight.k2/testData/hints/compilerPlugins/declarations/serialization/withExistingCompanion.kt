@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializer
 @Serializable
 class WithExistingCompanionNoBraces {
     companion object/*<# { #>*/
-/*<# block [fun   serializer ( ) :   KSerializer < WithExistingCompanionNoBraces >]
+/*<# block [[fun   serializer ( ) :   KSerializer < WithExistingCompanionNoBraces >] <settings-icon>]
 } #>*/
 }
 
@@ -13,7 +13,7 @@ class WithExistingCompanionNoBraces {
 class WithExistingCompanionWithBraces {
     companion object {
 
-/*<# block [fun   serializer ( ) :   KSerializer < WithExistingCompanionWithBraces >] #>*/
+/*<# block [[fun   serializer ( ) :   KSerializer < WithExistingCompanionWithBraces >] <settings-icon>] #>*/
     }
 }
 
@@ -21,6 +21,6 @@ class WithExistingCompanionWithBraces {
 class WithExistingCompanionWithDeclarations {
     companion object {
         const val el = 1
-/*<# block [fun   serializer ( ) :   KSerializer < WithExistingCompanionWithDeclarations >] #>*/
+/*<# block [[fun   serializer ( ) :   KSerializer < WithExistingCompanionWithDeclarations >] <settings-icon>] #>*/
     }
 }

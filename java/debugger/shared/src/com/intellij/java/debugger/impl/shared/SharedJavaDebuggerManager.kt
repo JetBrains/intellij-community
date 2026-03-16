@@ -5,11 +5,11 @@ import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerManagerApi
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener
-import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
+import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
@@ -36,7 +36,7 @@ internal class SharedJavaDebuggerManager(private val project: Project, private v
         }
       }
     }
-    project.messageBus.connect(cs).subscribe(FrontendXDebuggerManagerListener.TOPIC, object : FrontendXDebuggerManagerListener {
+    project.messageBus.connect(cs).subscribe(XDebuggerManagerProxyListener.TOPIC, object : XDebuggerManagerProxyListener {
       override fun sessionStopped(session: XDebugSessionProxy) {
         synchronousExecutor.trySend {
           debugSessions.remove(session.id)?.close()

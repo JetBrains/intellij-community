@@ -1,6 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.bucketing
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.intellij.GroupBasedTestClassFilter
 import com.intellij.TestCaseLoader
 import com.intellij.TestCaseLoader.TEST_RUNNERS_COUNT
@@ -11,11 +13,15 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.PriorityQueue
+import java.util.TreeSet
 import java.util.function.BiFunction
 import kotlin.io.path.absolute
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createParentDirectories
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.outputStream
 import kotlin.io.path.useLines
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.ZERO
@@ -57,7 +63,42 @@ internal object TestsDurationBucketingUtils {
     }
 
     if (classesDurations.isEmpty()) return emptyList()
-    return getBucketFilter(classesDurations, TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX)
+    val filters = getBucketFilter(classesDurations, TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX)
+    dump(filter, classes, classesDurations, filters)
+    return filters
+  }
+
+  private fun dump(
+    filter: TestCaseLoader.TestClassesFilterArgs,
+    classes: Set<String>,
+    durations: Map<String, Int>,
+    filters: List<BucketFilter>,
+  ) {
+    try {
+      val dumpData = mapOf(
+        "filter" to filter,
+        "classes" to classes.sorted(),
+        "index" to TEST_RUNNER_INDEX,
+        "count" to TEST_RUNNERS_COUNT,
+        "durations" to durations.toSortedMap(),
+        "buckets" to filters,
+      )
+
+      val objectMapper = ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT)
+      val outputFile = Path.of(System.getProperty("java.io.tmpdir"))
+        .resolve("test-bucketing-dump-${System.currentTimeMillis()}.json")
+        .createParentDirectories()
+      outputFile.outputStream().buffered().use { objectMapper.writeValue(it, dumpData) }
+
+      println("Dumped bucketing data to: $outputFile")
+      if (TeamCityLogger.isUnderTC) {
+        println("##teamcity[publishArtifacts '${outputFile.absolutePathString()}']")
+      }
+    }
+    catch (e: Exception) {
+      System.err.println("Failed to dump bucketing data: ${e.message}")
+      e.printStackTrace()
+    }
   }
 
   /**
@@ -208,7 +249,14 @@ internal object TestsDurationBucketingUtils {
                 val split = line.split(',', limit = 3)
                 if (split.size == 2) {
                   val name = split[0]
-                  val duration = split[1].toInt()
+                  var duration = split[1].toInt()
+                  val previous = result[name]
+                  if (previous != null) {
+                    if (previous != duration) {
+                      System.err.println("Conflicting test duration for '$name': $previous vs $duration")
+                      duration = maxOf(previous, duration)
+                    }
+                  }
                   result[name] = duration
                 }
               }

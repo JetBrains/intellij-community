@@ -7,7 +7,13 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiDisjunctionType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTypesUtil
@@ -15,7 +21,17 @@ import com.intellij.uast.UastHintedVisitorAdapter.Companion.create
 import com.intellij.util.CommonProcessors
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle.message
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UCatchClause
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UThrowExpression
+import org.jetbrains.uast.UTryExpression
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.resolveToUElement
+import org.jetbrains.uast.resolveToUElementOfType
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 

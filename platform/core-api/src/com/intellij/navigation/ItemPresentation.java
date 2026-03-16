@@ -4,7 +4,7 @@ package com.intellij.navigation;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * The presentation of an item in a tree, list or similar view.

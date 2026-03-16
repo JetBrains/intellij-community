@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from functools import cached_property, wraps
+from functools import cache, cached_property, wraps
 from typing import Callable, TypeVar
 from typing_extensions import ParamSpec, assert_type
 
@@ -95,4 +95,16 @@ class X:
 class Y(X):
     @cached_property
     def some(self) -> Child:  # safe override
+        return Child()
+
+
+class CachedParent:
+    @cache
+    def method(self) -> Parent:
+        return Parent()
+
+
+class CachedChild(CachedParent):
+    @cache
+    def method(self) -> Child:
         return Child()

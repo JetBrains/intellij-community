@@ -5,7 +5,11 @@ import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.CtrlMouseData
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyHandler2.Companion.gotoDeclaration
-import com.intellij.codeInsight.navigation.impl.*
+import com.intellij.codeInsight.navigation.impl.GTDUActionData
+import com.intellij.codeInsight.navigation.impl.GTDUActionResult
+import com.intellij.codeInsight.navigation.impl.fromGTDProviders
+import com.intellij.codeInsight.navigation.impl.gotoDeclarationOrUsages
+import com.intellij.codeInsight.navigation.impl.toGTDUActionData
 import com.intellij.find.FindUsagesSettings
 import com.intellij.find.actions.ShowUsagesAction.showUsages
 import com.intellij.find.actions.TargetVariant
@@ -23,6 +27,7 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
@@ -73,10 +78,12 @@ class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: 
 
     val offset = editor.caretModel.offset
     try {
+      PsiUtilCore.ensureValid(psiFile)
       val actionResult: GTDUActionResult? = underModalProgress(
         project,
         CodeInsightBundle.message("progress.title.resolving.reference")
       ) {
+        PsiUtilCore.ensureValid(psiFile)
         gotoDeclarationOrUsages(project, editor, psiFile, offset)?.result()
       }
       when (actionResult) {

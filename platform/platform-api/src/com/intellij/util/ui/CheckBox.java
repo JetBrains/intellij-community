@@ -7,7 +7,7 @@ import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
 import java.awt.event.ItemEvent;
 
 public class CheckBox extends JCheckBox {

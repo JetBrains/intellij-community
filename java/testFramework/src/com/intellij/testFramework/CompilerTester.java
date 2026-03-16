@@ -1,18 +1,23 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.compiler.CompilerTests;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.wsl.WslPath;
+import com.intellij.java.testFramework.backend.CompilerTestUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IComponentStoreKt;
@@ -42,23 +47,32 @@ import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.cmdline.LogSetup;
 import org.junit.Assert;
 
-import javax.swing.*;
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import static com.intellij.configurationStore.StoreUtilKt.getPersistentStateComponentStorageLocation;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+@SuppressWarnings("UseOptimizedEelFunctions")
 public final class CompilerTester {
   private static final Logger LOG = Logger.getInstance(CompilerTester.class);
 
@@ -233,7 +247,7 @@ public final class CompilerTester {
 
     // tests run in awt
     while (!semaphore.waitFor(100)) {
-      if (SwingUtilities.isEventDispatchThread()) {
+      if (EDT.isCurrentThreadEdt()) {
         //noinspection TestOnlyProblems
         PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
       }
@@ -269,12 +283,12 @@ public final class CompilerTester {
   }
 
   public static void printBuildLog() {
-    File logDirectory = BuildManager.getBuildLogDirectory();
-    TestLoggerFactory.publishArtifactIfTestFails(logDirectory.toPath(), "build-log");
+    var logDirectory = BuildManager.getBuildLogDirectory();
+    TestLoggerFactory.publishArtifactIfTestFails(logDirectory, "build-log");
   }
 
   public static void enableDebugLogging()  {
-    Path logDirectory = BuildManager.getBuildLogDirectory().toPath();
+    var logDirectory = BuildManager.getBuildLogDirectory();
     try {
       NioFiles.deleteRecursively(logDirectory);
       Files.createDirectories(logDirectory);

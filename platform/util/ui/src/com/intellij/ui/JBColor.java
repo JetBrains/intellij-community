@@ -16,8 +16,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.UIManager;
+import java.awt.Color;
+import java.awt.PaintContext;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.color.ColorSpace;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
@@ -323,6 +326,7 @@ public class JBColor extends Color implements PresentableColor, ComparableColor 
 
   @Override
   public boolean equals(Object obj) {
+    if (this == obj) return true;
     final Color c = getColor();
     return c == this ? super.equals(obj) : c.equals(obj);
   }

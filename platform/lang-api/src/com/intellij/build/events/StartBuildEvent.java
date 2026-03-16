@@ -17,20 +17,30 @@ package com.intellij.build.events;
 
 import com.intellij.build.BuildDescriptor;
 import com.intellij.build.BuildViewSettingsProvider;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.build.eventBuilders.StartBuildEventBuilder;
+import com.intellij.build.events.BuildEventsNls.Message;
+import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.CheckReturnValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.NonExtendable
 public interface StartBuildEvent extends StartEvent {
 
   @NotNull BuildDescriptor getBuildDescriptor();
 
-  @ApiStatus.Experimental
+  @Experimental
   default @Nullable BuildViewSettingsProvider getBuildViewSettings() {
     return null;
+  }
+
+  @CheckReturnValue
+  static @NotNull StartBuildEventBuilder builder(
+    @NotNull @Message String message,
+    @NotNull BuildDescriptor buildDescriptor
+  ) {
+    return BuildEvents.getInstance().startBuild(message, buildDescriptor);
   }
 }

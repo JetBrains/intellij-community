@@ -1,0 +1,22 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="execution.filters.with.hyperlinks.allow.overlapping"
+                 description="Enable rendering of overlapping execution filters with hyperlinks."
+                 defaultValue="true"
+                 restartRequired="false"/>
+  </extensions>
+
+</idea-plugin>

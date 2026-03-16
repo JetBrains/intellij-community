@@ -12,9 +12,79 @@ com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 a:com.intellij.codeInsight.AutoPopupController
 - f:scheduleAutoPopup(com.intellij.openapi.editor.Editor):V
 - f:scheduleAutoPopup(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.Condition):V
+f:com.intellij.codeInsight.CodeInsightSettings
+- com.intellij.openapi.components.PersistentStateComponent
+- java.lang.Cloneable
+- ADD_IMPORTS_ON_PASTE:I
+- ADD_MEMBER_IMPORTS_ON_THE_FLY:Z
+- ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY:Z
+- sf:ALL:I
+- sf:ASK:I
+- AUTOCOMPLETE_ON_CODE_COMPLETION:Z
+- AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION:Z
+- AUTOINSERT_PAIR_BRACKET:Z
+- AUTOINSERT_PAIR_QUOTE:Z
+- AUTO_POPUP_COMPLETION_LOOKUP:Z
+- AUTO_POPUP_JAVADOC_INFO:Z
+- AUTO_POPUP_PARAMETER_INFO:Z
+- CLOSE_COMMENT_ON_ENTER:Z
+- COMPLETION_CASE_SENSITIVE:I
+- ENABLE_SECOND_REFORMAT:Z
+- EXCLUDED_PACKAGES:java.lang.String[]
+- sf:FIRST_LETTER:I
+- HIGHLIGHT_BRACES:Z
+- HIGHLIGHT_IDENTIFIER_UNDER_CARET:Z
+- HIGHLIGHT_SCOPE:Z
+- sf:INDENT_BLOCK:I
+- sf:INDENT_EACH_LINE:I
+- INDENT_TO_CARET_ON_PASTE:Z
+- INSERT_BRACE_ON_ENTER:Z
+- INSERT_SCRIPTLET_END_ON_ENTER:Z
+- JAVADOC_GENERATE_CLOSING_TAG:Z
+- JAVADOC_INFO_DELAY:I
+- sf:JAVADOC_INFO_DELAY_RANGE:com.intellij.ide.ui.UINumericRange
+- JAVADOC_STUB_ON_ENTER:Z
+- JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY:Z
+- sf:NO:I
+- sf:NONE:I
+- sf:NO_REFORMAT:I
+- OPTIMIZE_IMPORTS_ON_THE_FLY:Z
+- PARAMETER_INFO_DELAY:I
+- sf:PARAMETER_INFO_DELAY_RANGE:com.intellij.ide.ui.UINumericRange
+- sf:REFORMAT_BLOCK:I
+- REFORMAT_BLOCK_ON_RBRACE:Z
+- REFORMAT_ON_PASTE:I
+- SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS:Z
+- SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO:Z
+- SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION:Z
+- SMART_END_ACTION:Z
+- SMART_INDENT_ON_ENTER:Z
+- SURROUND_SELECTION_ON_QUOTE_TYPED:Z
+- TAB_EXITS_BRACKETS_AND_QUOTES:Z
+- USE_ACCESSORS_IN_EQUALS_HASHCODE:Z
+- USE_INSTANCEOF_ON_EQUALS_PARAMETER:Z
+- sf:YES:I
+- <init>():V
+- addPropertyChangeListener(java.beans.PropertyChangeListener,com.intellij.openapi.Disposable):V
+- clone():com.intellij.codeInsight.CodeInsightSettings
+- equals(java.lang.Object):Z
+- getBackspaceMode():com.intellij.codeInsight.editorActions.SmartBackspaceMode
+- getCompletionCaseSensitive():I
+- s:getInstance():com.intellij.codeInsight.CodeInsightSettings
+- getState():org.jdom.Element
+- isSelectAutopopupSuggestionsByChars():Z
+- loadState(org.jdom.Element):V
+- noStateLoaded():V
+- s:runWithTemporarySettings(com.intellij.util.ThrowableConvertor):java.lang.Object
+- setBackspaceMode(com.intellij.codeInsight.editorActions.SmartBackspaceMode):V
+- setCompletionCaseSensitive(I):V
+- setSelectAutopopupSuggestionsByChars(Z):V
+- writeExternal(org.jdom.Element):V
 com.intellij.codeInsight.TargetElementEvaluatorEx
 - com.intellij.codeInsight.TargetElementEvaluator
 - a:isIdentifierPart(com.intellij.psi.PsiFile,java.lang.CharSequence,I):Z
+c:com.intellij.codeInsight.completion.BaseCompletionService
+- defaultSorter(com.intellij.codeInsight.completion.BaseCompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionSorter
 com.intellij.codeInsight.completion.CompletionLookupArranger
 - sf:PREFIX_CHANGES:com.intellij.openapi.util.Key
 - sf:WEIGHING_CONTEXT:com.intellij.openapi.util.Key
@@ -22,6 +92,13 @@ com.intellij.codeInsight.completion.CompletionLookupArranger
 - a:addElement(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.completion.CompletionSorter,com.intellij.codeInsight.completion.PrefixMatcher,com.intellij.codeInsight.lookup.LookupElementPresentation):V
 - a:arrangeItems():com.intellij.openapi.util.Pair
 - a:itemMatcher(com.intellij.codeInsight.lookup.LookupElement):com.intellij.codeInsight.completion.PrefixMatcher
+com.intellij.codeInsight.completion.CopyFileUpdateTask
+- a:ensureUpdatedAndGetNewOffsets():com.intellij.codeInsight.completion.OffsetsInFile
+f:com.intellij.codeInsight.completion.OffsetsInFile
+- f:replaceInCopy(com.intellij.psi.PsiFile,I,I,java.lang.String):com.intellij.codeInsight.completion.CopyFileUpdateTask
+c:com.intellij.codeInsight.completion.impl.CamelHumpMatcher
+- matchingDegree(java.lang.String,java.util.List):I
+- matchingFragments(java.lang.String):java.util.List
 c:com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 - sf:AUTOREPARSE_DELAY_DEFAULT:I
 com.intellij.codeInsight.daemon.ReferenceImporter
@@ -53,6 +130,7 @@ Fc:com.intellij.codeInsight.daemon.impl.HighlightInfo
 - f:getStartOffset():I
 - f:getText():java.lang.String
 - f:getTextAttributes(com.intellij.psi.PsiElement,com.intellij.openapi.editor.colors.EditorColorsScheme):com.intellij.openapi.editor.markup.TextAttributes
+- getType():com.intellij.codeInsight.daemon.impl.HighlightInfoType
 - f:hasHint():Z
 - f:isAfterEndOfLine():Z
 - f:registerFix(com.intellij.codeInsight.intention.IntentionAction,java.util.List,java.lang.String,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.daemon.HighlightDisplayKey):V
@@ -141,6 +219,10 @@ com.intellij.codeInsight.daemon.impl.IntentionActionFilter
 - sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - accept(com.intellij.codeInsight.intention.IntentionAction,com.intellij.psi.PsiFile):Z
 - accept(com.intellij.codeInsight.intention.IntentionAction,com.intellij.psi.PsiFile,I):Z
+f:com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName
+- com.intellij.codeInspection.ProblemDescriptorBase
+- <init>(com.intellij.codeInspection.ProblemDescriptorBase,java.lang.String):V
+- getReportingToolShortName():java.lang.String
 com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
 - com.intellij.codeInsight.intention.IntentionActionWithOptions
 - belongsToMyFamily(com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption):Z
@@ -150,6 +232,12 @@ com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - registerErrorQuickFix(com.intellij.psi.PsiErrorElement,com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder):V
+Fa:com.intellij.codeInsight.lookup.Classifier
+- s:empty():com.intellij.codeInsight.lookup.Classifier
+c:com.intellij.codeInsight.lookup.EqTailType
+- com.intellij.codeInsight.ModNavigatorTailType
+- p:isSpaceAroundAssignmentOperators(com.intellij.psi.PsiFile,I):Z
+- processTail(com.intellij.openapi.editor.ModNavigator,I):I
 com.intellij.codeInsight.template.CaretAutoMoveController
 - sf:KEY:com.intellij.openapi.util.Key
 - s:forbidCaretMovementInsideIfNeeded(com.intellij.openapi.editor.Editor,java.lang.Runnable):V
@@ -167,6 +255,11 @@ com.intellij.codeInsight.template.TemplateEditingListener
 com.intellij.codeInsight.template.TemplateManagerListener
 - java.util.EventListener
 - a:templateStarted(com.intellij.codeInsight.template.impl.TemplateState):V
+com.intellij.codeInsight.template.impl.ModCommandAwareTemplateOptionalProcessor
+- com.intellij.codeInsight.template.impl.TemplateOptionalProcessor
+- a:processText(com.intellij.codeInsight.template.Template,com.intellij.openapi.editor.ModNavigator,com.intellij.openapi.editor.RangeMarker):V
+- processText(com.intellij.openapi.project.Project,com.intellij.codeInsight.template.Template,com.intellij.openapi.editor.Document,com.intellij.openapi.editor.RangeMarker,com.intellij.openapi.editor.Editor):V
+c:com.intellij.codeInsight.template.impl.TemplateImpl
 com.intellij.codeInsight.template.impl.TemplateOptionalProcessor
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -178,6 +271,9 @@ com.intellij.codeInsight.template.impl.TemplateOptionalProcessor
 com.intellij.codeInsight.template.impl.TemplatePreprocessor
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:preprocessTemplate(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I,java.lang.String,java.lang.String):V
+com.intellij.codeInspection.AggregateResultsInspection
+a:com.intellij.codeInspection.InspectionManagerBase
+- createProblemDescriptor(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,java.lang.String,com.intellij.codeInspection.ProblemHighlightType,java.lang.String,Z,com.intellij.codeInspection.LocalQuickFix[]):com.intellij.codeInspection.ProblemDescriptor
 com.intellij.codeInspection.InspectionToolResultExporter
 - com.intellij.codeInspection.ProblemDescriptionsProcessor
 - a:addProblemElement(com.intellij.codeInspection.reference.RefEntity,Z,com.intellij.codeInspection.CommonProblemDescriptor[]):V

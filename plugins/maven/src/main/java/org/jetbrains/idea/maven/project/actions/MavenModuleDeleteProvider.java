@@ -33,7 +33,9 @@ public final class MavenModuleDeleteProvider extends ModuleDeleteProvider {
     }
 
     super.doDetachModules(project, modules, unloadedModules);
-
-    projectsManager.setIgnoredState(mavenProjectsToIgnore, true);
+    
+    if (!mavenProjectsToIgnore.isEmpty()) {
+      projectsManager.setIgnoredState(mavenProjectsToIgnore, true);
+    }
   }
 }

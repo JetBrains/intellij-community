@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.shared.actions
 
-import KotlinGradleScriptingBundle
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -16,6 +15,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiFile
 import com.intellij.ui.BrowserHyperlinkListener
+import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists

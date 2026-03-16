@@ -1,8 +1,11 @@
 package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Driver
-import com.intellij.driver.sdk.ui.*
-import com.intellij.driver.sdk.ui.remote.Component
+import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT
+import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.QueryBuilder
+import com.intellij.driver.sdk.ui.SearchContext
+import com.intellij.driver.sdk.ui.printableString
 import com.intellij.driver.sdk.ui.remote.RobotProvider
 import com.intellij.driver.sdk.ui.remote.SearchService
 import com.intellij.driver.sdk.waitFor

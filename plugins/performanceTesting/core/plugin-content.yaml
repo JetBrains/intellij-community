@@ -16,13 +16,15 @@
 - name: lib/modules/intellij.performanceTesting.frontend.jar
   contentModules:
   - name: intellij.performanceTesting.frontend
+- name: lib/modules/intellij.performanceTesting.vcs.jar
+  contentModules:
+  - name: intellij.performanceTesting.vcs
 - name: lib/performanceTesting.jar
   modules:
   - name: intellij.performanceTesting
   contentModules:
   - name: intellij.performanceTesting.remoteDriver
   - name: intellij.performanceTesting.remoteDriver.compose
-  - name: intellij.performanceTesting.vcs
   - name: intellij.tools.ide.starter.bus
   - name: intellij.driver.model
   - name: intellij.driver.impl

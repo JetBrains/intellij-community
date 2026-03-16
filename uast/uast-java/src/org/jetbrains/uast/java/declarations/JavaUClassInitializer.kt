@@ -5,7 +5,16 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiClassInitializer
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnchorOwner
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UClassInitializerEx
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UastEmptyExpression
+import org.jetbrains.uast.UastFacade
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
 @ApiStatus.Internal

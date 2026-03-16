@@ -3,7 +3,7 @@ from _typeshed import FileDescriptor
 from collections.abc import Callable, Sequence
 from types import TracebackType
 from typing import Any
-from typing_extensions import ParamSpec
+from typing_extensions import ParamSpec, disjoint_base
 
 from gevent._ffi.loop import _ErrorHandler
 from gevent._types import _Callback
@@ -20,7 +20,7 @@ if sys.platform != "win32":
     def recommended_backends() -> list[str | int]: ...
     def supported_backends() -> list[str | int]: ...
     def time() -> float: ...
-
+    @disjoint_base
     class loop:
         starting_timer_may_update_loop_time: bool
         error_handler: _ErrorHandler

@@ -9,7 +9,9 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
@@ -175,7 +177,7 @@ class RuleIntentionTest : BaseTestCase() {
     myFixture.doHighlighting()
     assertOrderedEquals(
       myFixture.availableIntentions.map { it.text }.subList(0, 3),
-      "'anymore' implies a negative phrase, condition, or question",
+      "The word 'anymore' implies a negative phrase, condition, or question",
       "don't believe",
       "Configure contraction settings"
     )

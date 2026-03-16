@@ -28,12 +28,14 @@ import org.jetbrains.annotations.NotNull;
 
 public final class PyKeywordArgumentManipulator extends AbstractElementManipulator<PyKeywordArgument> {
   @Override
-  public PyKeywordArgument handleContentChange(@NotNull PyKeywordArgument element, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
+  public PyKeywordArgument handleContentChange(@NotNull PyKeywordArgument element, @NotNull TextRange range, String newContent)
+    throws IncorrectOperationException {
     final ASTNode keywordNode = element.getKeywordNode();
     if (keywordNode != null && keywordNode.getPsi().getTextRangeInParent().equals(range)) {
       final LanguageLevel langLevel = LanguageLevel.forElement(element);
       final PyElementGenerator generator = PyElementGenerator.getInstance(element.getProject());
-      final PyCallExpression callExpression = (PyCallExpression) generator.createExpressionFromText(langLevel, "foo(" + newContent + "=None)");
+      final PyCallExpression callExpression =
+        (PyCallExpression)generator.createExpressionFromText(langLevel, "foo(" + newContent + "=None)");
       final PyKeywordArgument kwArg = callExpression.getArgumentList().getKeywordArgument(newContent);
       element.getKeywordNode().getPsi().replace(kwArg.getKeywordNode().getPsi());
       return element;

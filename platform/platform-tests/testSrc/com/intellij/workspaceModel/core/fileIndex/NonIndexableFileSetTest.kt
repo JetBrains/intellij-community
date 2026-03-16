@@ -22,7 +22,10 @@ import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -79,7 +82,7 @@ class NonIndexableFileSetTest {
       assertFalse(fileIndex.isIndexable(root))
       assertTrue(projectFileIndex.isInProjectOrExcluded(file))
       assertIteratedContent(projectModel.project, mustContain = listOf(root, file))
-      val fileSet = fileIndex.findFileSet(file, true, true, true, true, true, true)
+      val fileSet = fileIndex.findFileSet(file, true, true, true, true, true, true, true)
       assertNotNull(fileSet)
       assertEquals(WorkspaceFileKind.CONTENT_NON_INDEXABLE, fileSet!!.kind)
     }

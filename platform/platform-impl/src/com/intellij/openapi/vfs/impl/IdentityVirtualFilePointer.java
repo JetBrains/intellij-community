@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -17,9 +18,11 @@ public final class IdentityVirtualFilePointer extends VirtualFilePointerImpl imp
   private final VirtualFile myFile;
   private final String myUrl;
 
-  IdentityVirtualFilePointer(VirtualFile file, @NotNull String url, Map<String, IdentityVirtualFilePointer> urlToIdentity,
+  IdentityVirtualFilePointer(VirtualFile file,
+                             @NotNull String url,
+                             @NotNull Map<String, IdentityVirtualFilePointer> urlToIdentity,
                              @NotNull VirtualFilePointerManagerImpl virtualFilePointerManager,
-                             VirtualFilePointerListener listener) {
+                             @Nullable VirtualFilePointerListener listener) {
     super(listener);
     myVirtualFilePointerManager = virtualFilePointerManager;
     myUrlToIdentity = urlToIdentity;

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.testFramework.TestDataPath
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
 import org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceWithData
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -12,7 +13,6 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
 @TestRoot("idea/tests")

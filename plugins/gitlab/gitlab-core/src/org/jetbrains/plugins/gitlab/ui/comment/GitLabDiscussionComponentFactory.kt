@@ -13,14 +13,19 @@ import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
-import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
+import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTrackableItemViewModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.util.*
+import com.intellij.collaboration.ui.util.bindChildIn
+import com.intellij.collaboration.ui.util.bindEnabledIn
+import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
+import com.intellij.collaboration.ui.util.swingAction
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
@@ -30,6 +35,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel.NoteItem
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -38,11 +44,14 @@ import javax.swing.JComponent
 
 internal object GitLabDiscussionComponentFactory {
 
-  fun create(project: Project,
-             cs: CoroutineScope,
-             avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-             vm: GitLabMergeRequestDiscussionViewModel,
-             place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
+  fun create(
+    project: Project,
+    cs: CoroutineScope,
+    avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+    imageLoader: GitLabImageLoader,
+    vm: GitLabMergeRequestDiscussionViewModel,
+    place: GitLabStatistics.MergeRequestNoteActionPlace,
+  ): JComponent {
     val notesPanel = ComponentListPanelFactory.createVertical(cs, vm.notes) { item ->
       val itemCs = this
       when (item) {
@@ -54,39 +63,45 @@ internal object GitLabDiscussionComponentFactory {
                                       TimelineThreadCommentsPanel.UNFOLD_BUTTON_VERTICAL_GAP,
                                       0)
         }
-        is NoteItem.Note -> GitLabNoteComponentFactory.create(ComponentType.COMPACT, project, itemCs, avatarIconsProvider, item.vm, place)
+        is NoteItem.Note -> GitLabNoteComponentFactory.create(ComponentType.COMPACT, project, itemCs, avatarIconsProvider, imageLoader,
+                                                              item.vm, place)
       }
     }
 
-    return VerticalListPanel().apply {
-      name = "GitLab Discussion Panel ${vm.id}"
-      add(notesPanel)
+    return UiDataProvider.wrapComponent(
+      VerticalListPanel().apply {
+        name = "GitLab Discussion Panel ${vm.id}"
+        add(notesPanel)
 
-      cs.launchNow {
-        vm.replyVm.collectScoped { replyVm ->
-          if (replyVm == null) return@collectScoped
+        cs.launchNow {
+          vm.replyVm.collectScoped { replyVm ->
+            if (replyVm == null) return@collectScoped
 
-          bindChildIn(this, replyVm.newNoteVm) { newNoteVm ->
-            newNoteVm?.let {
-              createReplyField(ComponentType.COMPACT, project, this, vm, newNoteVm, avatarIconsProvider, place,
-                               swingAction("") { replyVm.stopWriting() })
-            } ?: createReplyActionsPanel(vm, replyVm, project, place).apply {
-              border = JBUI.Borders.empty(8, ComponentType.COMPACT.fullLeftShift)
+            bindChildIn(this, replyVm.newNoteVm) { newNoteVm ->
+              newNoteVm?.let {
+                createReplyField(ComponentType.COMPACT, project, this, vm, newNoteVm, avatarIconsProvider, place,
+                                 swingAction("") { replyVm.stopWriting() })
+              } ?: createReplyActionsPanel(vm, replyVm, project, place).apply {
+                border = JBUI.Borders.empty(8, ComponentType.COMPACT.fullLeftShift)
+              }
             }
           }
         }
-      }
-    }
+      }, { sink ->
+      sink[CodeReviewTrackableItemViewModel.TRACKABLE_ITEM_KEY] = vm
+      })
   }
 
-  fun createReplyField(componentType: ComponentType,
-                       project: Project,
-                       cs: CoroutineScope,
-                       vm: CodeReviewResolvableItemViewModel,
-                       editVm: NewGitLabNoteViewModel,
-                       iconsProvider: IconsProvider<GitLabUserDTO>,
-                       place: GitLabStatistics.MergeRequestNoteActionPlace,
-                       cancelAction: Action? = null): JComponent {
+  fun createReplyField(
+    componentType: ComponentType,
+    project: Project,
+    cs: CoroutineScope,
+    vm: CodeReviewResolvableItemViewModel,
+    editVm: NewGitLabNoteViewModel,
+    iconsProvider: IconsProvider<GitLabUserDTO>,
+    place: GitLabStatistics.MergeRequestNoteActionPlace,
+    cancelAction: Action? = null,
+  ): JComponent {
     val additionalActions = vm.canChangeResolvedState.mapScoped {
       listOf(createResolveAction(project, vm, place))
     }.stateIn(cs, SharingStarted.Eagerly, emptyList())
@@ -102,15 +117,15 @@ internal object GitLabDiscussionComponentFactory {
       additionalActions = additionalActions,
       cancelAction = MutableStateFlow(cancelAction),
       submitHint = editVm.submitActionHintIn(cs,
-                                         CollaborationToolsBundle.message("review.comments.reply.hint",
-                                                                          CommentInputActionsComponentFactory.submitShortcutText),
-                                         GitLabBundle.message("merge.request.details.action.draft.reply.hint",
-                                                              CommentInputActionsComponentFactory.submitShortcutText)
+                                             CollaborationToolsBundle.message("review.comments.reply.hint",
+                                                                              CommentInputActionsComponentFactory.submitShortcutText),
+                                             GitLabBundle.message("merge.request.details.action.draft.reply.hint",
+                                                                  CommentInputActionsComponentFactory.submitShortcutText)
       )
     )
     val icon = CommentTextFieldFactory.IconConfig.of(componentType, iconsProvider, editVm.currentUser)
 
-    return CodeReviewCommentTextFieldFactory.createIn(cs, editVm, actions, icon).let {
+    return GitLabCodeReviewCommentTextFieldFactory.createIn(cs, editVm, actions, icon).let {
       CollaborationToolsUIUtil
         .wrapWithLimitedSize(it, maxWidth = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH + componentType.contentLeftShift)
     }.apply {
@@ -118,10 +133,12 @@ internal object GitLabDiscussionComponentFactory {
     }
   }
 
-  private fun CoroutineScope.createReplyActionsPanel(vm: GitLabMergeRequestDiscussionViewModel,
-                                                     replyVm: GitLabDiscussionReplyViewModel,
-                                                     project: Project,
-                                                     place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
+  private fun CoroutineScope.createReplyActionsPanel(
+    vm: GitLabMergeRequestDiscussionViewModel,
+    replyVm: GitLabDiscussionReplyViewModel,
+    project: Project,
+    place: GitLabStatistics.MergeRequestNoteActionPlace,
+  ): JComponent {
     val cs = this
     val replyLink = ActionLink(CollaborationToolsBundle.message("review.comments.reply.action")) {
       replyVm.startWriting()
@@ -141,9 +158,11 @@ internal object GitLabDiscussionComponentFactory {
   }
 }
 
-private fun CoroutineScope.createResolveAction(project: Project,
-                                               resolveVm: CodeReviewResolvableItemViewModel,
-                                               place: GitLabStatistics.MergeRequestNoteActionPlace) =
+private fun CoroutineScope.createResolveAction(
+  project: Project,
+  resolveVm: CodeReviewResolvableItemViewModel,
+  place: GitLabStatistics.MergeRequestNoteActionPlace,
+) =
   swingAction(CollaborationToolsBundle.message("review.comments.resolve.action")) {
     resolveVm.changeResolvedState()
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.CHANGE_DISCUSSION_RESOLVE, place)

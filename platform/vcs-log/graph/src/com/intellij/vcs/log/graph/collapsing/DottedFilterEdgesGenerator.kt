@@ -20,7 +20,9 @@ import com.intellij.vcs.log.graph.api.EdgeFilter
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph.NodeFilter
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
-import com.intellij.vcs.log.graph.api.elements.GraphEdgeType.*
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType.DOTTED
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType.DOTTED_ARROW_DOWN
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType.DOTTED_ARROW_UP
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import kotlin.math.max
 import kotlin.math.min

@@ -11,7 +11,13 @@ import org.jetbrains.plugins.gradle.tooling.util.BooleanBiFunction;
 import org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * @author Vladislav.Soroka

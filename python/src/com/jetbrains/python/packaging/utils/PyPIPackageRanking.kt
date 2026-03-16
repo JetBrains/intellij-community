@@ -5,7 +5,11 @@ import com.google.common.io.Resources
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.jetbrains.python.packaging.PyPackageName
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus

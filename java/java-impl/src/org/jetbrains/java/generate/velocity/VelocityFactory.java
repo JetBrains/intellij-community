@@ -16,6 +16,7 @@
 package org.jetbrains.java.generate.velocity;
 
 import com.intellij.codeInsight.generation.VelocityIncludesClassLoader;
+import com.intellij.ide.fileTemplates.VelocityWrapper;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
@@ -45,6 +46,9 @@ public final class VelocityFactory {
    */
   private static VelocityEngine newVelocityEngine() {
     VelocityEngine velocity = new VelocityEngine();
+    velocity.setProperty(RuntimeConstants.UBERSPECT_CLASSNAME, VelocityWrapper.INTROSPECTION_SECURE_UBERSPECTOR);
+    velocity.setProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_PACKAGES, VelocityWrapper.INTROSPECTOR_RESTRICT_PACKAGES);
+    velocity.setProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_CLASSES, VelocityWrapper.INTROSPECTOR_RESTRICT_CLASSES);
     velocity.addProperty(RuntimeConstants.RESOURCE_LOADER, "includes");
     velocity.addProperty("includes.resource.loader.class", VelocityIncludesClassLoader.class.getName());
     velocity.addProperty(RuntimeConstants.VM_PERM_ALLOW_INLINE_REPLACE_GLOBAL, "true");

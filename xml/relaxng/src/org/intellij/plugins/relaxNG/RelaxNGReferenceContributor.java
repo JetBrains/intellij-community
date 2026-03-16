@@ -9,7 +9,9 @@ import com.intellij.xml.util.XmlUtil;
 import org.intellij.plugins.relaxNG.references.PrefixReferenceProvider;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.patterns.XmlPatterns.*;
+import static com.intellij.patterns.XmlPatterns.xmlAttribute;
+import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
+import static com.intellij.patterns.XmlPatterns.xmlTag;
 
 public class RelaxNGReferenceContributor extends PsiReferenceContributor {
   private static class Holder {

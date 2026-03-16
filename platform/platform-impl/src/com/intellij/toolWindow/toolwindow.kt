@@ -9,7 +9,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowEP
+import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ToolWindowType
+import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.icons.findIconByPath
@@ -17,7 +21,7 @@ import com.intellij.util.ui.EmptyIcon
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
-import java.util.*
+import java.util.MissingResourceException
 import java.util.function.Supplier
 import javax.swing.Icon
 

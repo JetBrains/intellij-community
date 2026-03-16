@@ -14,7 +14,9 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.util.PairProcessor;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Collection;
 
@@ -22,6 +24,9 @@ public final class TextOccurrencesUtil {
   private TextOccurrencesUtil() {
   }
 
+  /**
+   * @param results must be thread-safe
+   */
   public static void addTextOccurrences(@NotNull PsiElement element,
                                         @NotNull String stringToSearch,
                                         @NotNull GlobalSearchScope searchScope,
@@ -32,6 +37,7 @@ public final class TextOccurrencesUtil {
 
   /**
    * @param includeReferences usage with a reference at offset would be skipped iff {@code includeReferences == false}
+   * @param processor must be thread-safe
    */
   public static boolean processUsagesInStringsAndComments(@NotNull PsiElement element,
                                                           @NotNull SearchScope searchScope,
@@ -41,12 +47,21 @@ public final class TextOccurrencesUtil {
     return TextOccurrencesUtilBase.processUsagesInStringsAndComments(element, searchScope, stringToSearch, includeReferences, processor);
   }
 
+  /**
+   * @param results must be thread-safe
+   */
   public static void addUsagesInStringsAndComments(@NotNull PsiElement element,
                                                    @NotNull SearchScope searchScope,
                                                    @NotNull String stringToSearch,
                                                    @NotNull Collection<? super UsageInfo> results,
                                                    @NotNull UsageInfoFactory factory) {
-    TextOccurrencesUtilBase.addUsagesInStringsAndComments(element, searchScope, stringToSearch, results, factory);
+    TextOccurrencesUtilBase.processUsagesInStringsAndComments(element, searchScope, stringToSearch, false, (commentOrLiteral, textRange) -> {
+      UsageInfo usageInfo = factory.createUsageInfo(commentOrLiteral, textRange.getStartOffset(), textRange.getEndOffset());
+      if (usageInfo != null) {
+        results.add(usageInfo);
+      }
+      return true;
+    });
   }
 
   public static boolean isSearchTextOccurrencesEnabled(@NotNull PsiElement element) {
@@ -55,13 +70,16 @@ public final class TextOccurrencesUtil {
     return FindUsagesUtil.isSearchForTextOccurrencesAvailable(element, false, handler);
   }
 
+  /**
+   * @param results must be thread-safe
+   */
   public static void findNonCodeUsages(@NotNull PsiElement element,
                                        @NotNull SearchScope searchScope,
-                                       String stringToSearch,
+                                       @NotNull String stringToSearch,
                                        boolean searchInStringsAndComments,
                                        boolean searchInNonJavaFiles,
                                        String newQName,
-                                       Collection<? super UsageInfo> results) {
+                                       @NotNull Collection<? super UsageInfo> results) {
     if (searchInStringsAndComments || searchInNonJavaFiles) {
       UsageInfoFactory factory = createUsageInfoFactory(element, newQName);
 
@@ -69,14 +87,14 @@ public final class TextOccurrencesUtil {
         addUsagesInStringsAndComments(element, searchScope, stringToSearch, results, factory);
       }
 
-      if (searchInNonJavaFiles && searchScope instanceof GlobalSearchScope) {
-        addTextOccurrences(element, stringToSearch, (GlobalSearchScope)searchScope, results, factory);
+      if (searchInNonJavaFiles && searchScope instanceof GlobalSearchScope gss) {
+        addTextOccurrences(element, stringToSearch, gss, results, factory);
       }
     }
   }
 
-  private static UsageInfoFactory createUsageInfoFactory(final PsiElement element,
-                                                        final String newQName) {
+  @Contract(pure = true)
+  private static @NonNull UsageInfoFactory createUsageInfoFactory(final PsiElement element, final String newQName) {
     return (usage, startOffset, endOffset) -> {
       int start = usage.getTextRange().getStartOffset();
       return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element,

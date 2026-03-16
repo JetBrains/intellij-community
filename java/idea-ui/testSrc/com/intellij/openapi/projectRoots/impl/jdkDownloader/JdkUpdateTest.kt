@@ -19,8 +19,8 @@ import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.utils.coroutines.waitCoroutinesBlocking
 import com.intellij.util.SystemProperties
-import com.intellij.util.ui.UIUtil
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule
@@ -28,7 +28,7 @@ import org.junit.Test
 import java.awt.event.KeyEvent
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.Collections
 import javax.swing.JPanel
 
 @RunsInEdt
@@ -249,8 +249,8 @@ private fun doEventsWhile(iterations: Int = Int.MAX_VALUE / 2,
 
     ApplicationManager.getApplication().invokeAndWait {
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-      UIUtil.dispatchAllInvocationEvents()
     }
+    waitCoroutinesBlocking(service<JdkUpdaterNotifications>().getNotificationScope(), 1000)
 
     if (!condition()) return
     Thread.sleep(30)

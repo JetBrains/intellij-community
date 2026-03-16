@@ -20,7 +20,7 @@ jvm_library(
     "//platform/util",
     "//jps/jps-builders:build",
     "//jps/model-serialization",
-    "@lib//:plexus-utils",
+    "//libraries/plexus-utils",
     "//platform/util/jdom",
     "//libraries/hash4j",
   ]
@@ -40,7 +40,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//jps/jps-builders:build",
     "//jps/model-serialization",
-    "@lib//:plexus-utils",
+    "//libraries/plexus-utils",
     "//jps/model-serialization:model-serialization-tests_test_lib",
     "//platform/util/jdom",
     "//jps/jps-builders:build-tests_test_lib",

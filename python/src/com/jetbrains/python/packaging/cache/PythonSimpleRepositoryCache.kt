@@ -13,6 +13,7 @@ import com.jetbrains.python.packaging.repository.withBasicAuthorization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import javax.swing.text.MutableAttributeSet
 import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLEditorKit
@@ -41,15 +42,17 @@ internal class PythonSimpleRepositoryCache : PythonPackageCache<PyPackageReposit
         try {
           newCache[it] = loadFrom(it)
         }
-        catch (ex: Exception) {
+        catch (ex: IOException) {
           thisLogger().error("could not refresh repository ${it.repositoryUrl}")
           service.markInvalid(it.repositoryUrl!!)
+          throw ex
         }
       }
       cache = newCache
     }
   }
 
+  @Throws(IOException::class)
   private suspend fun loadFrom(repository: PyPackageRepository): Set<String> {
     return withContext(Dispatchers.IO) {
       val packages = mutableSetOf<String>()

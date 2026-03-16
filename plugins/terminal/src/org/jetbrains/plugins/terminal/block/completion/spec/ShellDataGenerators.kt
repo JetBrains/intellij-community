@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion.spec
 
-import com.intellij.terminal.completion.spec.*
+import com.intellij.terminal.completion.spec.ShellCommandSpec
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.completion.spec.ShellFileInfo
+import com.intellij.terminal.completion.spec.ShellRuntimeContext
+import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
+import com.intellij.terminal.completion.spec.ShellSuggestionType
 import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
@@ -23,7 +28,7 @@ object ShellDataGenerators {
    * This generator is caching the results based on the [typed prefix][com.intellij.terminal.completion.spec.ShellRuntimeContext.typedPrefix].
    *
    * Note that the suggestions are not filtered by the file prefix extracted from the [typed prefix][com.intellij.terminal.completion.spec.ShellRuntimeContext.typedPrefix].
-   * All the files from the base directory extracted from the typed prefix are returned as [ShellCompletionSuggestion]'s.
+   * All the files from the base directory extracted from the typed prefix are returned as [com.intellij.terminal.completion.spec.ShellCompletionSuggestion]'s.
    * All prefix matching logic is performed by the core completion logic.
    */
   fun fileSuggestionsGenerator(onlyDirectories: Boolean = false): ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> {
@@ -52,44 +57,53 @@ object ShellDataGenerators {
   ): List<ShellCompletionSuggestion> {
     val path = getParentPath(pathPrefix)
     val files: List<ShellFileInfo> = context.getChildFiles(path, onlyDirectories)
-    val prefixReplacementIndex = path.length + (if (isStartWithQuote(context.typedPrefix)) 1 else 0) + replacementIndexDelta
+    val prefixReplacementIndex = path.length + replacementIndexDelta
     val suggestions = files.flatMap {
       val type = if (it.type == ShellFileInfo.Type.DIRECTORY) ShellSuggestionType.FOLDER else ShellSuggestionType.FILE
       val name = it.name + if (type == ShellSuggestionType.FOLDER) File.separator else ""
-      val suggestion = ShellCompletionSuggestion(name, type = type, prefixReplacementIndex = prefixReplacementIndex)
+      val suggestion = ShellCompletionSuggestion(name) {
+        type(type)
+        prefixReplacementIndex(prefixReplacementIndex)
+      }
       if (type == ShellSuggestionType.FILE) {
         listOf(suggestion)
       }
       else {
-        // Directory suggestion has a trailing file separator, but suggestion without it is also valid.
-        // It is needed for the parser to consider it as a valid suggestion and not mark it as something unknown.
-        val hiddenSuggestion = ShellCompletionSuggestion(
-          name = it.name,
-          type = ShellSuggestionType.FOLDER,
-          prefixReplacementIndex = prefixReplacementIndex,
-          isHidden = true
-        )
+        // Directory suggestion has a trailing file separator, but the suggestion without it is also valid.
+        // It is necessary for the parser to consider it as a valid suggestion and not mark it as something unknown.
+        val hiddenSuggestion = ShellCompletionSuggestion(it.name) {
+          type(ShellSuggestionType.FOLDER)
+          prefixReplacementIndex(prefixReplacementIndex)
+          hidden()
+        }
         listOf(suggestion, hiddenSuggestion)
       }
     }
-    val adjustedPrefix = pathPrefix.removePrefix("\"").removeSuffix("'")
+    val adjustedPrefix = pathPrefix.removeSuffix("\"").removeSuffix("'")
     // If the base path is the same as the typed prefix, then add an empty suggestion.
     // Because the current typed prefix is already a valid value of the file argument.
-    // It is needed for the parser to consider current typed prefix as a valid file suggestion.
+    // It is necessary for the parser to consider the current typed prefix as a valid file suggestion.
     return if (path.isNotEmpty() && path == adjustedPrefix) {
-      val emptySuggestion = ShellCompletionSuggestion(name = "", prefixReplacementIndex = prefixReplacementIndex, isHidden = true)
+      val emptySuggestion = ShellCompletionSuggestion("") {
+        prefixReplacementIndex(prefixReplacementIndex)
+        hidden()
+      }
       suggestions + emptySuggestion
     }
     else suggestions
   }
 
   /**
-   * Provides the list of all available commands, functions, keywords and aliases available in the Shell.
+   * **Obsolete: supported only in the Experimental 2024 Terminal.**
+   * In the Reworked Terminal it will always return an empty list of command specs.
+   *
+   * Provides the list of all available commands, functions, keywords, and aliases available in the Shell.
    * Useful for the commands that accept the other shell command as an argument.
    * `sudo` command is the most popular example: it accepts the argument that is a separate shell command.
    *
    * This generator is caching the results.
    */
+  @ApiStatus.Obsolete
   fun availableCommandsGenerator(): ShellRuntimeDataGenerator<List<ShellCommandSpec>> {
     return ShellRuntimeDataGenerator(cacheKeyAndDebugName = "commands") { context ->
       if (context.isReworkedTerminal) return@ShellRuntimeDataGenerator emptyList()
@@ -119,7 +133,8 @@ object ShellDataGenerators {
    * <command>.<subcommand> <suffix>
    * For example, `git.checkout branches` (generates branch names for checkout command of Git).
    * Subcommands can be absent, but the main command should be present.
-   * @param [commandNames] hierarchy of the command names from main command name to subcommand. It describes what command generator belongs to.
+   * @param [commandNames] hierarchy of the command names from the main command name to subcommand.
+   * It describes what the command generator belongs to.
    * @param [suffix] any string describing the meaning of the generator.
    */
   fun createCacheKey(commandNames: List<String>, suffix: String): String {
@@ -141,28 +156,10 @@ object ShellDataGenerators {
       charArrayOf('\\', '/')
     }
     else charArrayOf('/')
-    // Remove possible quotes before and after
-    // TODO: quotes should not be handled there, typed prefix should already contain no quotes.
-    val adjustedPrefix = typedPrefix.removePrefix(DOUBLE_QUOTE).removeSuffix(DOUBLE_QUOTE)
-      .removePrefix(SINGLE_QUOTE).removeSuffix(SINGLE_QUOTE)
-    val lastSeparatorIndex = adjustedPrefix.lastIndexOfAny(pathSeparators)
+    val lastSeparatorIndex = typedPrefix.lastIndexOfAny(pathSeparators)
     return if (lastSeparatorIndex != -1) {
-      adjustedPrefix.substring(0, lastSeparatorIndex + 1)
+      typedPrefix.substring(0, lastSeparatorIndex + 1)
     }
     else ""
   }
-
-  /**
-   * Modern shells supports wrapping command arguments in single or double quotes.
-   * For example,
-   * 1. `ls "<dir_path>"`
-   * 2. `cat '<file_path>'`
-   * It is expected to skip the quote, because actually it is not part of the path.
-   * @see [com.intellij.terminal.completion.spec.ShellCompletionSuggestion.prefixReplacementIndex]
-   * @return true if [typedPrefix] starts with single or double quote, false otherwise
-   */
-  fun isStartWithQuote(typedPrefix: String): Boolean = typedPrefix.startsWith(DOUBLE_QUOTE) || typedPrefix.startsWith(SINGLE_QUOTE)
-
-  private const val SINGLE_QUOTE = "'"
-  private const val DOUBLE_QUOTE = "\""
 }

@@ -7,7 +7,7 @@ import java.text.DateFormat
 import java.text.ParseException
 import java.time.Instant
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.Date
 
 private val LOG = logger<Revision>()
 

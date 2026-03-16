@@ -3,14 +3,23 @@ package com.intellij.util;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.*;
-import com.intellij.ui.content.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.TabDescriptor;
+import com.intellij.ui.content.TabGroupId;
+import com.intellij.ui.content.TabbedContent;
 import com.intellij.ui.content.impl.TabbedContentImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;

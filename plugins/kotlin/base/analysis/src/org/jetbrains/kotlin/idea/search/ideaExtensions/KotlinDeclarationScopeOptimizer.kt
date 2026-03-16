@@ -6,7 +6,11 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifierListOwner
-import com.intellij.psi.search.*
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.PackageScope
+import com.intellij.psi.search.ProjectScope
+import com.intellij.psi.search.ScopeOptimizer
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics

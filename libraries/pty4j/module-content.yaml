@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.pty4j.jar
   modules:
   - name: intellij.libraries.pty4j
     libraries:

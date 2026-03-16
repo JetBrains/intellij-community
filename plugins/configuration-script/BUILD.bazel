@@ -22,6 +22,7 @@ jvm_library(
     "//platform/util",
     "//platform/util-ex",
     "//platform/analysis-impl",
+    "//platform/core-impl",
     "//json/backend",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
@@ -32,6 +33,7 @@ jvm_library(
     "//platform/service-container",
     "//libraries/snakeyaml-engine",
     "//platform/util/jdom",
+    "//platform/execution",
   ]
 )
 
@@ -51,6 +53,7 @@ jvm_library(
     "//platform/util-ex",
     "//platform/analysis-impl",
     "@lib//:assert_j",
+    "//platform/core-impl",
     "//json/backend",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
@@ -69,6 +72,7 @@ jvm_library(
     "//platform/service-container:service-container_test_lib",
     "//libraries/snakeyaml-engine",
     "//platform/util/jdom",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.configurationScript` end
@@ -86,7 +90,11 @@ jps_test(
 jvm_library(
   name = "configurationScript-test-java",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/execution",
+    "//platform/lang-impl",
+  ]
 )
 
 jvm_library(
@@ -100,12 +108,14 @@ jvm_library(
     "//java/execution/impl",
     "@lib//:kotlin-stdlib",
     "//platform/lang-core",
+    "//platform/execution",
     "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:assert_j",
     "//platform/lang-impl",
-  ]
+  ],
+  runtime_deps = [":configurationScript-test-java"]
 )
 ### auto-generated section `build intellij.configurationScript.test.java` end
 

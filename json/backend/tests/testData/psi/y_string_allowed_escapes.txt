@@ -1,0 +1,6 @@
+JsonFile: y_string_allowed_escapes.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"\"\\\/\b\f\n\r\t"')
+    PsiElement(])(']')

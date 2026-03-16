@@ -9,7 +9,12 @@ interface LspClient {
         params: Params,
     ): Result
 
-    fun <Params> notify(
+    fun <Params> notifyAsync(
+        notificationType: NotificationType<Params>,
+        params: Params,
+    )
+
+    suspend fun <Params> notify(
         notificationType: NotificationType<Params>,
         params: Params,
     )

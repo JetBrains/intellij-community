@@ -8,7 +8,7 @@ import com.intellij.openapi.options.colors.pages.AbstractBasicJavaColorSettingsP
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class JavaColorSettingsPageBase extends AbstractBasicJavaColorSettingsPage {
 

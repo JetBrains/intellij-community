@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
@@ -21,7 +22,10 @@ object CommunityRunTestsBuildTarget {
     runBlocking(Dispatchers.Default) {
       val context = createCompilationContext(
         projectHome = COMMUNITY_ROOT.communityRoot,
-        defaultOutputRoot = COMMUNITY_ROOT.communityRoot.resolve("out/tests")
+        defaultOutputRoot = COMMUNITY_ROOT.communityRoot.resolve("out/tests"),
+        options = BuildOptions().also {
+          it.useTestCompilationOutput = true
+        },
       )
       val options = TestingOptions()
       options.mainModule = options.mainModule ?: "intellij.idea.community.main"

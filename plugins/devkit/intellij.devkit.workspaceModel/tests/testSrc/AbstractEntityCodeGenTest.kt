@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -18,8 +18,15 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
   fun testSimpleCase() {
     doTest()
   }
-  
-  fun testKeepOld() {
+
+  /**
+   * Tests that code is formatted properly: codestyle, copyright is added, imports are optimized.
+   */
+  fun testFormat() {
+    doTest(formatCode = true)
+  }
+
+  fun testSimpleNonWsmExtension() {
     doTest()
   }
 
@@ -75,14 +82,6 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
     doTest(processAbstractTypes = true)
   }
 
-  fun testAddCopyrightComment() {
-    doTest(processAbstractTypes = true)
-  }
-
-  fun testImports() {
-    doTest()
-  }
-
   fun testOpenClassProperty() {
     doTest(processAbstractTypes = true)
   }
@@ -94,7 +93,7 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
   fun testPropertiesOrder() {
     doTest()
   }
-  
+
   fun testCompatibilityInvoke() {
     doTest()
   }
@@ -104,7 +103,7 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
   }
 
   fun testBothLinksAreChildren() {
-    doTestAndCheckErrorMessage("Both fields MainEntity#secondaryEntities and SecondaryEntity#mainEntity are marked as child. Probably @Parent annotation is missing from one of the properties.")
+    doTestAndCheckErrorMessage("Failed to generate code for secondaryEntities (MainEntity): Both fields MainEntity#secondaryEntities and SecondaryEntity#mainEntity are marked as child. Probably @Parent annotation is missing from one of the properties.")
   }
 
   fun testChildrenShouldBeNullable() {
@@ -120,17 +119,17 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
   }
 
   fun testInheritanceEntityAndSource() {
-    doTestAndCheckErrorMessage("com.intellij.workspaceModel.test.api.IllegalEntity extends WorkspaceEntity and EntitySource at the same time, which is prohibited.")
+    doTestAndCheckErrorMessage("Failed to collect metadata: com.intellij.workspaceModel.test.api.IllegalEntity should not extend WorkspaceEntity and EntitySource at the same time")
   }
 
   fun testInheritanceMultiple() {
-    doTestAndCheckErrorMessage("com.intellij.workspaceModel.test.api.MultipleInheritanceEntity extends multiple @Abstract entities, which is prohibited: AbstractEntity3, AnotherAbstractEntity.")
+    doTestAndCheckErrorMessage("Failed to collect metadata: com.intellij.workspaceModel.test.api.MultipleInheritanceEntity should not extend multiple @Abstract entities: AbstractEntity3, AnotherAbstractEntity")
   }
 
   fun testInheritanceNonAbstract() {
     doTestAndCheckErrorMessage("Failed to generate code for IllegalEntity: Class 'LegalEntity' cannot be extended")
   }
-  
+
   fun testVisibilityModifier() {
     doTest()
   }
@@ -143,14 +142,18 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
     assertEquals(expectedMessage, actualMessage)
   }
 
-  private fun doTest(processAbstractTypes: Boolean = false, explicitApiEnabled: Boolean = false, isTestModule: Boolean = false) {
-    generateAndCompare(
-      dirWithExpectedApiFiles = getExpectedDir(),
-      dirWithExpectedImplFiles = getExpectedDir().resolve("gen"),
-      processAbstractTypes = processAbstractTypes,
-      explicitApiEnabled = explicitApiEnabled,
-      isTestModule = isTestModule
-    )
+  private fun doTest(
+    processAbstractTypes: Boolean = false,
+    explicitApiEnabled: Boolean = false,
+    isTestModule: Boolean = false,
+    formatCode: Boolean = false,
+  ) {
+    generateAndCompare(dirWithExpectedApiFiles = getExpectedDir(),
+                       dirWithExpectedImplFiles = getExpectedDir().resolve("gen"),
+                       processAbstractTypes = processAbstractTypes,
+                       explicitApiEnabled = explicitApiEnabled,
+                       isTestModule = isTestModule,
+                       formatCode = formatCode)
   }
 
   private fun getExpectedDir(): Path {

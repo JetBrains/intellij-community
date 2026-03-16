@@ -6,9 +6,16 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.testFramework.loadDescriptorInTest
-import com.intellij.platform.testFramework.plugins.*
+import com.intellij.platform.testFramework.plugins.ContentModuleSpec
+import com.intellij.platform.testFramework.plugins.PluginPackagingConfig
+import com.intellij.platform.testFramework.plugins.buildDir
+import com.intellij.platform.testFramework.plugins.content
+import com.intellij.platform.testFramework.plugins.module
+import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -27,7 +34,9 @@ import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Path
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Collections
+import java.util.Enumeration
+import java.util.Locale
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.name
 import kotlin.test.assertEquals
@@ -39,6 +48,7 @@ class PluginDescriptorTest {
 
   init {
     Logger.setUnitTestMode() // due to warnInProduction use in IdeaPluginDescriptorImpl
+    PluginManagerCore.isUnitTestMode = true // FIXME git rid of this IJPL-220869
   }
 
   @RegisterExtension
@@ -216,7 +226,7 @@ class PluginDescriptorTest {
   fun `descriptor with a v2 content module with a slash in its name loads if module descriptor file has a dot instead of a slash`() {
     plugin("bar") {
       content {
-        module("bar/module", loadingRule = ModuleLoadingRule.REQUIRED) { packagePrefix = "bar.module" }
+        module("bar/module", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "bar.module" }
       }
     }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
       override val ContentModuleSpec.descriptorFilename: String get() = "bar.module.xml"
@@ -231,7 +241,7 @@ class PluginDescriptorTest {
   fun `descriptor with a v2 content module with a slash in its name does not load if module descriptor file is placed in a subdirectory`() {
     plugin("bar") {
       content {
-        module("bar/module", loadingRule = ModuleLoadingRule.REQUIRED) { packagePrefix = "bar.module" }
+        module("bar/module", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "bar.module" }
       }
     }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
       override val ContentModuleSpec.descriptorFilename: String get() = "bar/module.xml"
@@ -248,7 +258,7 @@ class PluginDescriptorTest {
   fun `descriptor with a v2 content module with multiple slashes in its name does not load`() {
     plugin("bar") {
       content {
-        module("bar/module/sub", loadingRule = ModuleLoadingRule.REQUIRED) { packagePrefix = "bar.module.sub" }
+        module("bar/module/sub", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "bar.module.sub" }
       }
     }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
       override val ContentModuleSpec.descriptorFilename: String get() = "bar.module.sub.xml"
@@ -265,7 +275,7 @@ class PluginDescriptorTest {
   fun `descriptor with a v2 content module with multiple slashes in its name loads from a subdirectory`() { // FIXME
     plugin("bar") {
       content {
-        module("bar/module/sub", loadingRule = ModuleLoadingRule.REQUIRED) { packagePrefix = "bar.module.sub" }
+        module("bar/module/sub", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "bar.module.sub" }
       }
     }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
       override val ContentModuleSpec.descriptorFilename: String get() = "bar/module.sub.xml"
@@ -356,9 +366,9 @@ class PluginDescriptorTest {
     plugin("bar") {
       resourceBundle = "resourceBundle"
       content {
-        module("bar.opt", loadingRule = ModuleLoadingRule.OPTIONAL) {}
-        module("bar.req", loadingRule = ModuleLoadingRule.REQUIRED) {}
-        module("bar.emb", loadingRule = ModuleLoadingRule.EMBEDDED) {}
+        module("bar.opt", loadingRule = ModuleLoadingRuleValue.OPTIONAL) {}
+        module("bar.req", loadingRule = ModuleLoadingRuleValue.REQUIRED) {}
+        module("bar.emb", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {}
       }
     }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
       override val ContentModuleSpec.packageToMainJar: Boolean get() = true
@@ -376,9 +386,9 @@ class PluginDescriptorTest {
     plugin("bar") {
       resourceBundle = "resourceBundle"
       content {
-        module("bar.opt", loadingRule = ModuleLoadingRule.OPTIONAL) { resourceBundle = "bar.opt" }
-        module("bar.req", loadingRule = ModuleLoadingRule.REQUIRED) { resourceBundle = "bar.req" }
-        module("bar.emb", loadingRule = ModuleLoadingRule.EMBEDDED) { resourceBundle = "bar.emb" }
+        module("bar.opt", loadingRule = ModuleLoadingRuleValue.OPTIONAL) { resourceBundle = "bar.opt" }
+        module("bar.req", loadingRule = ModuleLoadingRuleValue.REQUIRED) { resourceBundle = "bar.req" }
+        module("bar.emb", loadingRule = ModuleLoadingRuleValue.EMBEDDED) { resourceBundle = "bar.emb" }
       }
     }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
       override val ContentModuleSpec.packageToMainJar: Boolean get() = true
@@ -400,7 +410,7 @@ class PluginDescriptorTest {
     if (hostIds.isEmpty()) {
       logger<PluginDescriptorTest>().warn("No host OS plugin aliases")
     }
-    val productAliases = PluginMainDescriptor.productModeAliasesForCorePlugin()
+    val productAliases = productModeAliasesForCorePlugin()
     if (productAliases.isEmpty()) {
       logger<PluginDescriptorTest>().warn("No product mode plugin aliases")
     }
@@ -418,7 +428,7 @@ class PluginDescriptorTest {
     if (hostIds.isEmpty()) {
       logger<PluginDescriptorTest>().warn("No host arch plugin aliases")
     }
-    val productAliases = PluginMainDescriptor.productModeAliasesForCorePlugin()
+    val productAliases = productModeAliasesForCorePlugin()
     if (productAliases.isEmpty()) {
       logger<PluginDescriptorTest>().warn("No product mode plugin aliases")
     }
@@ -431,10 +441,10 @@ class PluginDescriptorTest {
   fun `content module's content modules are disregarded`() {
     plugin("bar") {
       content {
-        module("bar.module", loadingRule = ModuleLoadingRule.REQUIRED) {
+        module("bar.module", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
           packagePrefix = "bar.module"
           content {
-            module("bar.module.inner", loadingRule = ModuleLoadingRule.REQUIRED) {
+            module("bar.module.inner", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
               packagePrefix = "bar.module.inner"
             }
           }
@@ -459,13 +469,13 @@ class PluginDescriptorTest {
       namespace = "my.namespace"
       content {
         module("foo.internal") {
-          moduleVisibility = ModuleVisibility.INTERNAL
+          moduleVisibility = ModuleVisibilityValue.INTERNAL
         }
         module("foo.private") {
-          moduleVisibility = ModuleVisibility.PRIVATE
+          moduleVisibility = ModuleVisibilityValue.PRIVATE
         }
         module("foo.public") {
-          moduleVisibility = ModuleVisibility.PUBLIC
+          moduleVisibility = ModuleVisibilityValue.PUBLIC
         }
       }
     }.buildDir(pluginDirPath)
@@ -497,7 +507,7 @@ class PluginDescriptorTest {
   @Test
   fun `visibility is not allowed for plugin descriptor`() {
     plugin {
-      moduleVisibility = ModuleVisibility.PUBLIC
+      moduleVisibility = ModuleVisibilityValue.PUBLIC
     }.buildDir(pluginDirPath)
     val (_, errors) = runAndReturnWithLoggedErrors { loadDescriptorInTest(pluginDirPath) }
     assertThat(errors.joinToString { it.message ?: "" }).contains("visibility", "has no effect")

@@ -19,9 +19,9 @@ UFile (package = ) [public final class LambdaExpressionFunctionalInterfaceTypeKt
                         UIdentifier (Identifier (map)) [UIdentifier (Identifier (map))]
                         ULambdaExpression [{ var it: java.lang.Integer ->...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super java.lang.Integer, ? extends java.lang.String>
                             UParameter (name = it) [var it: java.lang.Integer]
-                            UBlockExpression [{...}] : java.lang.String
+                            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.String
                                 UReturnExpression [return it.toString()]
-                                    UQualifiedReferenceExpression [it.toString()] : java.lang.String
+                                    UQualifiedReferenceExpression [it.toString()] : @org.jetbrains.annotations.NotNull() java.lang.String
                                         USimpleNameReferenceExpression (identifier = it) [it] : java.lang.Integer
-                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : java.lang.String
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : @org.jetbrains.annotations.NotNull() java.lang.String
                                             UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]

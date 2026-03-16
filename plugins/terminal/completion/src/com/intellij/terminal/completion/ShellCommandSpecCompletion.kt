@@ -30,13 +30,14 @@ class ShellCommandSpecCompletion(
     if (arguments.isEmpty()) {
       return null  // no arguments, there should be at least one empty incomplete argument
     }
-    val commandSpec: ShellCommandSpec = commandSpecManager.getCommandSpec(command) ?: return null  // no spec for command
+
+    val executableName = getExecutableName(command)
+    val commandSpec: ShellCommandSpec = commandSpecManager.getCommandSpec(executableName) ?: return null  // no spec for command
 
     val completeArguments = arguments.subList(0, arguments.size - 1)
-    val lastArgument = arguments.last()
     val rootNode: ShellCommandNode = ShellCommandTreeBuilder.build(contextProvider, generatorsExecutor, commandSpecManager,
                                                                    command, commandSpec, completeArguments)
-    val context = contextProvider.getContext(lastArgument)
+    val context = contextProvider.getContext(listOf(command) + arguments)
     val suggestionsProvider = ShellCommandTreeSuggestionsProvider(context, generatorsExecutor)
     return computeSuggestions(suggestionsProvider, rootNode)
   }
@@ -48,5 +49,16 @@ class ShellCommandSpecCompletion(
     val allChildren = TreeTraversal.PRE_ORDER_DFS.traversal(root as ShellCommandTreeNode<*>) { node -> node.children }
     val lastNode = allChildren.last() ?: root
     return suggestionsProvider.getSuggestionsOfNext(lastNode).filter { !it.isHidden }
+  }
+
+  /**
+   * Transforms:
+   * 1. `/usr/bin/git` to `git`
+   * 2. `C:\Users\User\Programs\git.exe` to `git.exe`
+   */
+  private fun getExecutableName(command: String): String {
+    val exe1 = command.substringAfterLast('/')
+    val exe2 = command.substringAfterLast('\\')
+    return if (exe1.length < exe2.length) exe1 else exe2
   }
 }

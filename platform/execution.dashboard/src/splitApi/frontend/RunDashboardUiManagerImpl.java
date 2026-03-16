@@ -34,14 +34,20 @@ import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -283,6 +289,13 @@ public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
            || (IdeProductMode.isBackend() && isOldMonolithServiceViewEnabled())
            || ToolWindowId.DEBUG.equals(executor.getId())
            || (ToolWindowId.RUN.equals(executor.getId()) && isShowLuxedRunToolwindowInServicesView());
+  }
+
+  @Override
+  public void navigateToServiceOnRun(@NotNull RunContentDescriptorId descriptorId, Boolean focus) {
+    if (IdeProductMode.isFrontend()) return;
+    RunDashboardManagerImpl runDashboardManager = RunDashboardManagerImpl.getInstance(myProject);
+    runDashboardManager.navigateToServiceOnRun(descriptorId, focus);
   }
 
   @ApiStatus.Internal

@@ -23,7 +23,12 @@ import com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesTree
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserStringNode
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.allUnder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
@@ -141,7 +146,9 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
 
   private class StashInfoChangesBrowserNode(private val stash: StashObject) : ChangesBrowserNode<StashObject>(stash) {
     override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-      renderer.append(stash.data.subject)
+      renderer.appendTextWithIssueLinks(stash.data.subject, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      renderer.append(FontUtil.spaceAndThinSpace())
+      renderer.append(DateFormatUtil.formatDateTime(stash.data.authorTime), SimpleTextAttributes.GRAYED_ATTRIBUTES)
       renderer.toolTipText = VcsBundle.message("saved.patch.created.on.date.at.time.tooltip",
                                                stash.data.stash,
                                                DateFormatUtil.formatDate(stash.data.authorTime),

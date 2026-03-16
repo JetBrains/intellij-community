@@ -4,15 +4,24 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.io.*;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.PersistentBTreeEnumerator;
+import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.storage.AbstractStorage;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.data.index.PhmVcsLogStorageBackend;
 import com.intellij.vcs.log.data.index.VcsLogStorageBackend;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -29,7 +38,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -123,7 +137,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @Override
   public int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root) {
-    checkDisposed();
+    if (checkDisposed()) return NO_INDEX;
     try {
       return getOrPut(hash, root);
     }
@@ -135,7 +149,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @Override
   public @Nullable CommitId getCommitId(int commitIndex) {
-    checkDisposed();
+    if (checkDisposed()) return null;
     try {
       CommitId commitId = doGetCommitId(commitIndex);
       if (commitId == null) {
@@ -151,7 +165,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @Override
   public boolean containsCommit(@NotNull CommitId id) {
-    checkDisposed();
+    if (checkDisposed()) return false;
     if (myCommitIdEnumerator == null) {
       throw new IllegalStateException(STORAGE_CLOSED_MESSAGE);
     }
@@ -166,7 +180,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @Override
   public void iterateCommits(@NotNull Predicate<? super CommitId> consumer) {
-    checkDisposed();
+    if (checkDisposed()) return;
     if (myCommitIdEnumerator == null) {
       throw new IllegalStateException(STORAGE_CLOSED_MESSAGE);
     }
@@ -185,7 +199,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @Override
   public int getRefIndex(@NotNull VcsRef ref) {
-    checkDisposed();
+    if (checkDisposed()) return NO_INDEX;
     if (myRefsEnumerator == null) {
       throw new IllegalStateException(STORAGE_CLOSED_MESSAGE);
     }
@@ -200,7 +214,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @Override
   public @Nullable VcsRef getVcsRef(int refIndex) {
-    checkDisposed();
+    if (checkDisposed()) return null;
     if (myRefsEnumerator == null) {
       throw new IllegalStateException(STORAGE_CLOSED_MESSAGE);
     }
@@ -215,7 +229,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @Override
   public void flush() {
-    checkDisposed();
+    if (checkDisposed()) return;
     if (myCommitIdEnumerator == null) {
       throw new IllegalStateException(STORAGE_CLOSED_MESSAGE);
     }
@@ -235,8 +249,9 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     return myRefsStorageId;
   }
 
-  private void checkDisposed() {
-    if (myDisposed) throw new ProcessCanceledException();
+  private boolean checkDisposed() {
+    ProgressManager.checkCanceled();
+    return myDisposed;
   }
 
   @ApiStatus.Internal

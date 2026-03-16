@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.ide.AppLifecycleListener
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import org.jetbrains.plugins.terminal.TerminalNewUserTracker.Companion.clearNewUserValue
+import com.intellij.openapi.util.BuildNumber
+import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 
 internal class TerminalNewUserTracker : AppLifecycleListener {
   init {
@@ -21,28 +21,24 @@ internal class TerminalNewUserTracker : AppLifecycleListener {
   }
 
   override fun appStarted() {
+    val storage = TerminalUsageLocalStorage.getInstance()
     if (InitialConfigImportState.isNewUser()) {
-      // Remember to use it later, because the user may close the IDE several times before our use case is executed.
-      PropertiesComponent.getInstance().setValue(IS_NEW_USER_PROPERTY, true)
+      val moment = TerminalFirstIdeSessionMoment.Version(BuildNumber.currentVersion())
+      storage.recordFirstIdeSessionMoment(moment)
+    }
+    else if (storage.state.firstIdeSessionMoment == null) {
+      storage.recordFirstIdeSessionMoment(TerminalFirstIdeSessionMoment.BeforeTrackingStarted)
     }
   }
 
   companion object {
-    private const val IS_NEW_USER_PROPERTY = "terminal.is.new.user"
-
     /**
-     * True if a user launched the IDE after installation,
-     * without importing any settings and [clearNewUserValue] was not called yet.
-     *
-     * Can be true even on second and further launches of the IDE until [clearNewUserValue] is called.
+     * Returns true if a user started using the IDE in the current release.
      */
-    fun isNewUser(): Boolean {
-      return PropertiesComponent.getInstance().getBoolean(IS_NEW_USER_PROPERTY, false)
-    }
-
-    /** Clear the stored value if it is no more necessary. */
-    fun clearNewUserValue() {
-      PropertiesComponent.getInstance().setValue(IS_NEW_USER_PROPERTY, false)
+    fun isNewUserForRelease(): Boolean {
+      val moment = TerminalUsageLocalStorage.getInstance().state.firstIdeSessionMoment ?: return false
+      return moment is TerminalFirstIdeSessionMoment.Version
+             && moment.build.baselineVersion == BuildNumber.currentVersion().baselineVersion
     }
   }
 }

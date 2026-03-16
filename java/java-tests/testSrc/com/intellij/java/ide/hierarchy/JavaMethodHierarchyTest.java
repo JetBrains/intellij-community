@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ide.hierarchy;
 
 import com.intellij.JavaTestUtil;
@@ -36,6 +22,11 @@ public class JavaMethodHierarchyTest extends HierarchyViewTestBase {
     return LanguageLevel.JDK_1_8; // default methods are needed
   }
 
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return IdeaTestUtil.getMockJdk18();
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -47,47 +38,47 @@ public class JavaMethodHierarchyTest extends HierarchyViewTestBase {
     return "ide/hierarchy/method/" + getTestName(false);
   }
 
-  public void testNoHierarchy() throws Exception {
+  public void testNoHierarchy() {
     doTest("A", "foo", "A.java");
   }
 
-  public void testOnlyUp() throws Exception {
+  public void testOnlyUp() {
     doTest("Z", "m", "X.java");
   }
 
-  public void testOnlyDown() throws Exception {
+  public void testOnlyDown() {
     doTest("X", "m", "X.java");
   }
 
-  public void testOnlyDownHide() throws Exception {
+  public void testOnlyDownHide() {
     doTestHideIrrelevantClasses("foo.X", "m", "X.java");
   }
 
-  public void testUpAndDown() throws Exception {
+  public void testUpAndDown() {
     doTestHideIrrelevantClasses("Y", "foo", "X.java");
   }
 
-  public void testObjectMethod() throws Exception {
+  public void testObjectMethod() {
     doTest("Foo", "hashCode", "X.java");
   }
 
-  public void testInterfaceInheritance() throws Exception {
+  public void testInterfaceInheritance() {
     doTest("E", "bar", "X.java");
   }
 
-  public void testCyclicInheritance() throws Exception {
+  public void testCyclicInheritance() {
     doTest("D", "foo", "X.java");
   }
 
-  public void testExtendsImplementsChain() throws Exception {
+  public void testExtendsImplementsChain() {
     doTest("C", "foo", "X.java");
   }
 
-  public void testTwoParentsPreferClass() throws Exception {
+  public void testTwoParentsPreferClass() {
     doTest("C3", "m", "X.java");
   }
 
-  private void doTest(final String classFqn, final String methodName, final String... fileNames) throws Exception {
+  private void doTest(final String classFqn, final String methodName, final String... fileNames) {
     doHierarchyTest(() -> {
       final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(classFqn, ProjectScope.getProjectScope(getProject()));
       final PsiMethod method = psiClass.findMethodsByName(methodName, false) [0];
@@ -95,7 +86,7 @@ public class JavaMethodHierarchyTest extends HierarchyViewTestBase {
     }, JavaHierarchyUtil.getComparator(myProject), fileNames);
   }
 
-  private void doTestHideIrrelevantClasses(String classFqn, String methodName, String... fileNames) throws Exception {
+  private void doTestHideIrrelevantClasses(String classFqn, String methodName, String... fileNames) {
     HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(myProject).getState();
     assertNotNull(state);
     state.HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED = true;
@@ -105,10 +96,5 @@ public class JavaMethodHierarchyTest extends HierarchyViewTestBase {
     finally {
       state.HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED = false;
     }
-  }
-
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

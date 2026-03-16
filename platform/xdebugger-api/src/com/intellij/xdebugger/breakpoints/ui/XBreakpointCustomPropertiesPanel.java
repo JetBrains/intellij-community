@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class XBreakpointCustomPropertiesPanel<B extends XBreakpoint<?>> implements Disposable {
 

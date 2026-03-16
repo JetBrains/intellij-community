@@ -4,7 +4,7 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.openapi.keymap.KeymapUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.KeyStroke;
 import java.util.Objects;
 
 public class KeyboardModifierGestureShortcut extends Shortcut {

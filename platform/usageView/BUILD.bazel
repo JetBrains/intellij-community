@@ -30,6 +30,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/analysis-impl",
     "//platform/editor-ui-ex:editor-ex",
+    "//platform/projectModel-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.usageView` end

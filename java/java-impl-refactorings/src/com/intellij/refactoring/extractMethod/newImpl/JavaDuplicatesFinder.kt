@@ -2,7 +2,26 @@
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor
+import com.intellij.psi.PsiCall
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiDeclarationStatement
+import com.intellij.psi.PsiDiamondType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEmptyStatement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiExpressionStatement
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeElement
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.PsiTreeUtil
 
 /**

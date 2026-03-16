@@ -21,9 +21,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.AbstractReparseTestCase;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
+@PerformanceUnitTest
 public class JavaReparsePerformanceTest extends AbstractReparseTestCase {
   public void testChangingVeryDeepTreePerformance() {
     String call1 = "a('b').";

@@ -67,7 +67,7 @@ public final class PyInconsistentIndentationInspection extends PyInspection {
         final IElementType tokenType = lexer.getTokenType();
         if (tokenType == PyTokenTypes.STATEMENT_BREAK) {
           lexer.advance();
-          while(lexer.getTokenType() != null && lexer.getTokenType() != PyTokenTypes.LINE_BREAK) {
+          while (lexer.getTokenType() != null && lexer.getTokenType() != PyTokenTypes.LINE_BREAK) {
             lexer.advance();
           }
           if (lexer.getTokenType() == PyTokenTypes.LINE_BREAK) {
@@ -82,13 +82,15 @@ public final class PyInconsistentIndentationInspection extends PyInspection {
 
     private void validateIndent(final int tokenStart, String indent) {
       int lastLF = indent.lastIndexOf('\n');
-      String lastLineIndent = indent.substring(lastLF+1);
+      String lastLineIndent = indent.substring(lastLF + 1);
       int spaces = 0;
       int tabs = 0;
       final int length = lastLineIndent.length();
       for (int i = 0; i < length; i++) {
         final char c = lastLineIndent.charAt(i);
-        if (c == ' ') spaces++;
+        if (c == ' ') {
+          spaces++;
+        }
         else if (c == '\t') tabs++;
       }
       final int problemStart = tokenStart + lastLF + 1;

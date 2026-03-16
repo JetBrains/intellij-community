@@ -7,8 +7,9 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Graphics;
 
 /**
  * @author gregsh

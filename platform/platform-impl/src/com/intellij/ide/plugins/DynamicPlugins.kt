@@ -41,7 +41,6 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.components.ComponentManagerEx
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -78,12 +77,16 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.plugins.parser.impl.elements.ActionElement.ActionElementName
+import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement.ActionElementName
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.mac.touchbar.TouchbarSupport
-import com.intellij.util.*
+import com.intellij.util.CachedValuesManagerImpl
+import com.intellij.util.MemoryDumpHelper
+import com.intellij.util.ObjectUtils
+import com.intellij.util.ReflectionUtil
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.WeakList
 import com.intellij.util.messages.impl.DynamicPluginUnloaderCompatibilityLayer
@@ -98,7 +101,9 @@ import java.nio.channels.FileChannel
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Collections
+import java.util.Date
+import java.util.IdentityHashMap
 import java.util.function.Predicate
 import javax.swing.JComponent
 import javax.swing.ToolTipManager
@@ -438,6 +443,15 @@ object DynamicPlugins {
         return dependency.pluginId
       }
     }
+    for (dependencyId in descriptor.moduleDependencies.plugins) {
+      if (!pluginSet.isPluginEnabled(dependencyId) &&
+          context.none {
+            it.pluginId == dependencyId || dependencyId in it.pluginAliases || dependencyId in it.contentModules.flatMap { it.pluginAliases }
+          }) {
+        return dependencyId
+      }
+    }
+    // TODO check modules
     return null
   }
 
@@ -489,7 +503,7 @@ object DynamicPlugins {
     if (!containerDescriptor.components.isEmpty()) {
       return "Plugin '$pluginId' is not unload-safe because it declares components"
     }
-    if (containerDescriptor.services.any { it.overrides }) {
+    if (!Registry.`is`("ide.plugins.allow.dynamic.services.overrides", false) && containerDescriptor.services.any { it.overrides }) {
       return "Plugin '$pluginId' is not unload-safe because it overrides services"
     }
     return null
@@ -852,7 +866,7 @@ object DynamicPlugins {
   }
 
   internal fun notify(@NlsContexts.NotificationContent text: String, notificationType: NotificationType, vararg actions: AnAction) {
-    val notification = service<UpdateCheckerFacade>().getNotificationGroupForPluginUpdateResults().createNotification(text, notificationType)
+    val notification = UpdateCheckerFacade.getInstance().getNotificationGroupForPluginUpdateResults().createNotification(text, notificationType)
     for (action in actions) {
       notification.addAction(action)
     }
@@ -1091,7 +1105,7 @@ object DynamicPlugins {
         }
 
         DynamicPluginsUsagesCollector.logDescriptorLoad(pluginDescriptor)
-        PluginManagerCore.clearLoadingErrorsFor(pluginDescriptor.pluginId)
+        PluginManagerCore.clearPluginNonLoadReasonFor(pluginDescriptor.pluginId)
         LOG.info("Plugin ${pluginDescriptor.pluginId} loaded without restart in ${System.currentTimeMillis() - loadStartTime} ms")
       }
       finally {
@@ -1386,11 +1400,8 @@ private fun processPluginDependenciesOnPlugin(
   for (dependency in mainDescriptor.dependencies) {
     if (dependency.isOptional) {
       val subDescriptor = dependency.subDescriptor ?: continue
-      if (loadStateFilter != LoadStateFilter.ANY) {
-        val isModuleLoaded = subDescriptor.pluginClassLoader != null
-        if (isModuleLoaded != (loadStateFilter == LoadStateFilter.LOADED)) {
-          continue
-        }
+      if (loadStateFilter != LoadStateFilter.ANY && subDescriptor.isLoaded != (loadStateFilter == LoadStateFilter.LOADED)) {
+        continue
       }
       if (dependency.pluginId == dependencyTargetId && !processor(mainDescriptor, subDescriptor)) {
         return false

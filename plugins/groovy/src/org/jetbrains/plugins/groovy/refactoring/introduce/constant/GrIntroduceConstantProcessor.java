@@ -3,7 +3,12 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;

@@ -21,7 +21,11 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import java.io.FileNotFoundException;
-import java.net.*;
+import java.net.ConnectException;
+import java.net.MalformedURLException;
+import java.net.NoRouteToHostException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
 

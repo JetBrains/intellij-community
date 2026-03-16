@@ -12,7 +12,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
-import com.intellij.openapi.application.impl.InternalThreading;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,9 +24,13 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable;
+import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
@@ -34,7 +39,11 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.PotemkinProgress;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCloseHandler;
+import com.intellij.openapi.project.ProjectLocator;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
@@ -43,7 +52,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.AsyncFileListener;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.SafeWriteRequestor;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
@@ -52,7 +66,11 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener;
 import com.intellij.pom.core.impl.PomModelImpl;
-import com.intellij.psi.*;
+import com.intellij.psi.AbstractFileViewProvider;
+import com.intellij.psi.ExternalChangeActionUtil;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -60,28 +78,44 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.*;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.Processor;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.TransferredWriteActionService;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
-import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextPane;
+import javax.swing.ScrollPaneConstants;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class FileDocumentManagerImpl extends FileDocumentManagerBase implements SafeWriteRequestor {
@@ -172,7 +206,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   protected @NotNull DocumentEx createDocument(@NotNull CharSequence text, @NotNull VirtualFile file) {
     boolean acceptSlashR = file instanceof LightVirtualFile && StringUtil.indexOf(text, '\r') >= 0;
     boolean freeThreaded = Boolean.TRUE.equals(file.getUserData(AbstractFileViewProvider.FREE_THREADED));
-    DocumentImpl document = (DocumentImpl)((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(text, acceptSlashR, freeThreaded);
+    DocumentImpl document = (DocumentImpl)EditorFactory.getInstance().createDocument(text, acceptSlashR, freeThreaded);
     Project project = ProjectUtil.guessProjectForFile(file);
     int tabSize = project == null ? CodeStyle.getDefaultSettings().getTabSize(file.getFileType())  : CodeStyle.getFacade(project, document, file.getFileType()).getTabSize();
     // calculate and pass tab size here since it's the ony place we have access to CodeStyle.
@@ -182,6 +216,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   @TestOnly
+  @RequiresWriteLock
   public void dropAllUnsavedDocuments() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException("This method is only for test mode!");
@@ -233,7 +268,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       saveDocumentsOnEdt(isExplicit, filter);
     }
     else {
-      runWithBackgroundWriteActionAllowed(() -> doSave(null, isExplicit, filter));
+      doSave(null, isExplicit, filter);
     }
   }
 
@@ -256,15 +291,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     finally {
       myProgress.popState();
     }
-  }
-
-  @RequiresBackgroundThread
-  private static void runWithBackgroundWriteActionAllowed(Runnable runnable) {
-    ThreadContext.installThreadContext(
-      ThreadContext.currentThreadContext().plus(InternalThreading.RunInBackgroundWriteActionMarker.INSTANCE), true, () -> {
-        runnable.run();
-        return Unit.INSTANCE;
-      });
   }
 
   private void doSave(@Nullable PotemkinProgress myProgress, boolean isExplicit, @Nullable Predicate<? super Document> filter) {
@@ -318,14 +344,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       .beforeAnyDocumentSaving(document, explicit);
     if (!myUnsavedDocuments.contains(document)) return;
 
-    if (EDT.isCurrentThreadEdt()) {
-      saveDocumentInWriteSafeEnvironment(document, explicit);
-    }
-    else {
-      runWithBackgroundWriteActionAllowed(() -> {
-        saveDocumentInWriteSafeEnvironment(document, explicit);
-      });
-    }
+    saveDocumentInWriteSafeEnvironment(document, explicit);
   }
 
   private void saveDocumentInWriteSafeEnvironment(@NotNull Document document, boolean explicit) {
@@ -462,7 +481,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     });
   }
 
-  private static void updateModifiedProperty(@NotNull VirtualFile file) {
+  public static void updateModifiedProperty(@NotNull VirtualFile file) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
       for (FileEditor editor : fileEditorManager.getAllEditorList(file)) {
@@ -763,25 +782,23 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
       boolean[] isReloadable = {isReloadable(file, document, project)};
       if (isReloadable[0]) {
-        CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
-          ExternalChangeActionUtil.externalDocumentChangeAction(() -> {
-            if (!isBinaryWithoutDecompiler(file)) {
-              LoadTextUtil.clearCharsetAutoDetectionReason(file);
-              file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
-              file.setCharset(null, null, false);
-              boolean wasWritable = document.isWritable();
-              document.setReadOnly(false);
-              boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
-              isReloadable[0] = isReloadable(file, document, project);
-              if (isReloadable[0]) {
-                CharSequence reloaded = tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
-                ((DocumentEx)document).replaceText(reloaded, file.getModificationStamp());
-                setDocumentTooLarge(document, tooLarge);
+        // Special handling for files with decompiler - run decompilation in background with progress
+        if (isBinaryWithDecompiler(file)) {
+          reloadFromDiskWithDecompiler(document, project, file);
+        }
+        else {
+          CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
+            ExternalChangeActionUtil.externalDocumentChangeAction(() -> {
+              if (!isBinaryWithoutDecompiler(file)) {
+                setNewText(document, project, file, vFile -> {
+                  boolean tooLarge = FileUtilRt.isTooLarge(vFile.getLength());
+                  CharSequence reloaded = tooLarge ? LoadTextUtil.loadText(vFile, getPreviewCharCount(vFile)) : LoadTextUtil.loadText(vFile);
+                  return reloaded;
+                });
               }
-              document.setReadOnly(!wasWritable);
-            }
-          })
-        ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
+            })
+          ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
+        }
       }
       if (isReloadable[0]) {
         ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListenerBackgroundable.TOPIC)
@@ -799,6 +816,52 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       document.putUserData(FORCE_SAVE_DOCUMENT_KEY, null);
       return null;
     });
+  }
+
+  private static void setNewText(@NotNull Document document,
+                                 @Nullable Project project,
+                                 @NotNull VirtualFile file,
+                                 @NotNull Function<@NotNull VirtualFile, @NotNull CharSequence> loader) {
+    LoadTextUtil.clearCharsetAutoDetectionReason(file);
+    file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
+    file.setCharset(null, null, false);
+    boolean wasWritable = document.isWritable();
+    document.setReadOnly(false);
+    boolean[] isReloadable = {isReloadable(file, document, project)};
+    if (isReloadable[0]) {
+      boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
+      CharSequence reloaded = loader.apply(file);
+      ((DocumentEx)document).replaceText(reloaded, file.getModificationStamp());
+      setDocumentTooLarge(document, tooLarge);
+    }
+    document.setReadOnly(!wasWritable);
+  }
+
+  private void reloadFromDiskWithDecompiler(@NotNull Document document, @Nullable Project project, @NotNull VirtualFile file) {
+    CharSequence[] decompiledText = {null};
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    boolean finished = app.runWriteActionWithCancellableProgressInDispatchThread(
+      UIBundle.message("progress.decompiling.file", file.getName()),
+      project,
+      null,
+      indicator -> {
+        decompiledText[0] = LoadTextUtil.loadText(file);
+      }
+    );
+
+    if (!finished || decompiledText[0] == null) {
+      unbindFileFromDocument(file, document);
+      closeAllEditorsFor(file);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListenerBackgroundable.TOPIC)
+        .afterDocumentUnbound(file, document);
+      return;
+    }
+
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
+      ExternalChangeActionUtil.externalDocumentChangeAction(() -> {
+        setNewText(document, project, file, vFile -> decompiledText[0]);
+      })
+    ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
   }
 
   private static boolean isReloadable(@NotNull VirtualFile file, @NotNull Document document, @Nullable Project project) {
@@ -952,12 +1015,19 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   static final class MyPersistentFsConnectionListener implements PersistentFsConnectionListener {
     @Override
     public void connectionOpen() {
-      FileDocumentManagerImpl fileDocumentManager =
-        (FileDocumentManagerImpl)ApplicationManager.getApplication().getServiceIfCreated(FileDocumentManager.class);
-      if (fileDocumentManager != null) {
-        fileDocumentManager.clearDocumentCache();
+      FileDocumentManager fileDocumentManager = ApplicationManager.getApplication().getServiceIfCreated(FileDocumentManager.class);
+      if (fileDocumentManager instanceof FileDocumentManagerImpl impl) {
+        impl.clearDocumentCache();
       }
     }
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  @RequiresWriteLock
+  public void prepareForNextTest() {
+    dropAllUnsavedDocuments();
+    clearDocumentCache();
   }
 
   /**
@@ -1027,12 +1097,12 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
     @Override
     public void beforeAllDocumentsSaving() {
-      invokeOnEdt(() -> myMultiCaster.beforeAllDocumentsSaving());
+      ApplicationManager.getApplication().invokeAndWait(() -> myMultiCaster.beforeAllDocumentsSaving());
     }
 
     @Override
     public void beforeAnyDocumentSaving(@NotNull Document document, boolean explicit) {
-      invokeOnEdt(() -> myMultiCaster.beforeAnyDocumentSaving(document, explicit));
+      ApplicationManager.getApplication().invokeAndWait(() -> myMultiCaster.beforeAnyDocumentSaving(document, explicit));
     }
 
     @Override
@@ -1062,7 +1132,11 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
     @Override
     public void unsavedDocumentDropped(@NotNull Document document) {
-      invokeOnEdt(() -> myMultiCaster.unsavedDocumentDropped(document));
+      if (ApplicationManager.getApplication().isWriteAccessAllowed() && !EDT.isCurrentThreadEdt()) {
+        invokeOnEdt(() -> myMultiCaster.unsavedDocumentDropped(document));
+      } else {
+        ApplicationManager.getApplication().invokeAndWait(() -> myMultiCaster.unsavedDocumentDropped(document));
+      }
     }
 
     @Override
@@ -1077,7 +1151,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
     @Override
     public void afterDocumentSaved(@NotNull Document document) {
-      invokeOnEdt(() -> myMultiCaster.afterDocumentSaved(document));
+      ApplicationManager.getApplication().invokeAndWait(() -> myMultiCaster.afterDocumentSaved(document));
     }
   }
 }

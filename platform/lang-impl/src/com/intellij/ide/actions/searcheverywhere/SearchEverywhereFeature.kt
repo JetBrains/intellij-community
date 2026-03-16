@@ -3,36 +3,59 @@ package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
+import com.intellij.idea.AppMode
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.experiment.ab.impl.ABExperimentOption
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
 object SearchEverywhereFeature {
-  val isSplit: Boolean get() = Registry.`is`(registryKey, false)
+  private const val PLATFORM_KEY = "search.everywhere.new.enabled"
+  private const val CWM_CLIENT_KEY = "search.everywhere.new.cwm.client.enabled"
+
+  private const val RIDER_KEY = "search.everywhere.new.rider.enabled"
+  private const val IDEA_KEY = "search.everywhere.new.idea.enabled"
+  private const val PYCHARM_KEY = "search.everywhere.new.pycharm.enabled"
+  private const val CLION_KEY = "search.everywhere.new.clion.enabled"
+
+  private const val ALLOW_AB_KEY = "search.everywhere.new.allow.ab"
+
+  private val registryKey: String get() =
+    if (isGuest) CWM_CLIENT_KEY
+    else if (AppMode.isMonolith()) {
+      if (PlatformUtils.isRider()) RIDER_KEY
+      else if (PlatformUtils.isIntelliJ()) IDEA_KEY
+      else if (PlatformUtils.isPyCharm() && !PlatformUtils.isDataSpell()) PYCHARM_KEY
+      else if (PlatformUtils.isCLion()) CLION_KEY
+      else PLATFORM_KEY
+    }
+    else PLATFORM_KEY
+
+  var isSplit: Boolean
+    get() =
+      Registry.`is`(registryKey, false) ||
+      Registry.`is`(ALLOW_AB_KEY, false) && ABExperimentOption.SPLIT_SEARCH_EVERYWHERE.isEnabled()
+
+    set(value) {
+      Registry.get(registryKey).setValue(value)
+
+      // Ignore AB test since the Split SE was turned on/off explicitly
+      Registry.get(ALLOW_AB_KEY).setValue(false)
+    }
 
   private val isGuest: Boolean get() {
     val frontendType = FrontendApplicationInfo.getFrontendType()
     return (frontendType is FrontendType.Remote && frontendType.isGuest())
   }
 
-  val registryKey: String get() =
-    if (PlatformUtils.isRider()) "search.everywhere.new.rider.enabled"
-    else if (isGuest) "search.everywhere.new.cwm.client.enabled"
-    else "search.everywhere.new.enabled"
-
-  // Enable the first Search Everywhere implementation (`com.intellij.ide.actions.searcheverywhere`).
-  @get:TestOnly
-  val additionalRegistryToTurnOffSplitSEInTests: Map<String, String>
-    get() = mapOf("search.everywhere.new.enabled" to "false",
-                  "search.everywhere.new.rider.enabled" to "false",
-                  "search.everywhere.new.cwm.client.enabled" to "false")
-
-  // Enable the new Search Everywhere implementation (`com.intellij.platform.searchEverywhere`).
-  @get:TestOnly
-  val additionalRegistryToTurnOnSplitSEInTests: Map<String, String>
-    get() = mapOf("search.everywhere.new.enabled" to "true",
-                  "search.everywhere.new.rider.enabled" to "true",
-                  "search.everywhere.new.cwm.client.enabled" to "true")
+  val allRegistryKeys: List<String>
+  @TestOnly get() = listOf(PLATFORM_KEY,
+                           RIDER_KEY,
+                           IDEA_KEY,
+                           PYCHARM_KEY,
+                           CLION_KEY,
+                           CWM_CLIENT_KEY,
+                           ALLOW_AB_KEY)
 }

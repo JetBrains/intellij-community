@@ -6,7 +6,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyLambdaExpression;
+import com.jetbrains.python.psi.PyReturnStatement;
+import com.jetbrains.python.psi.PyYieldExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,7 +44,7 @@ public class PyReturnYieldAnnotatorVisitor extends PyElementVisitor {
 
       if (function.isAsync() && function.isAsyncAllowed()) {
         myHolder.newAnnotation(HighlightSeverity.ERROR,
-                                  PyPsiBundle.message("ANN.python.does.not.support.yield.from.inside.async.functions")).create();
+                               PyPsiBundle.message("ANN.python.does.not.support.yield.from.inside.async.functions")).create();
       }
     }
   }

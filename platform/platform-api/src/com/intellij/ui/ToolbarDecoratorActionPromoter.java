@@ -8,7 +8,7 @@ import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Comparator;
 import java.util.List;
 

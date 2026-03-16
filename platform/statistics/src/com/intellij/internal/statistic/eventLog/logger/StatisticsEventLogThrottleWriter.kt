@@ -1,8 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.logger
 
-import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService
 import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService.EventLogThresholdConfigOptionsListener
+import com.intellij.internal.statistic.eventLog.EventLogFile
+import com.intellij.internal.statistic.eventLog.EventLogFilesProvider
+import com.intellij.internal.statistic.eventLog.EventLogSystemEvents
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogWriter
 import com.intellij.internal.statistic.utils.EventRateThrottleResult
 import com.intellij.internal.statistic.utils.EventsIdentityWindowThrottle
 import com.intellij.internal.statistic.utils.EventsRateWindowThrottle

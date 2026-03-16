@@ -15,7 +15,17 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.execution.dashboard.BackendLuxedRunDashboardContentManager
 import com.intellij.platform.execution.dashboard.RunDashboardCoroutineScopeProvider
 import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl
-import com.intellij.platform.execution.dashboard.splitApi.*
+import com.intellij.platform.execution.dashboard.splitApi.NavigateToServiceEvent
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardConfigurationDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardConfigurationId
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardLuxedContentEvent
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceRpc
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardSettingsDto
+import com.intellij.platform.execution.dashboard.splitApi.ServiceCustomizationDto
+import com.intellij.platform.execution.dashboard.splitApi.ServiceStatusDto
+import com.intellij.platform.execution.dashboard.splitApi.findConfigurationValue
+import com.intellij.platform.execution.dashboard.splitApi.storeGlobally
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import kotlinx.coroutines.Dispatchers
@@ -97,6 +107,11 @@ internal class RunDashboardServiceRpcImpl : RunDashboardServiceRpc {
   override suspend fun getExcludedConfigurations(projectId: ProjectId): Flow<Set<String>> {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
     return RunDashboardManagerImpl.getInstance(project).excludedTypesDto
+  }
+
+  override suspend fun getNavigateToServiceEvents(projectId: ProjectId): Flow<NavigateToServiceEvent> {
+    val project = projectId.findProjectOrNull() ?: return emptyFlow()
+    return RunDashboardManagerImpl.getInstance(project).navigateToServiceEvents
   }
 
   override suspend fun setNewExcluded(projectId: ProjectId, configurationTypeId: String, newExcluded: Boolean) {

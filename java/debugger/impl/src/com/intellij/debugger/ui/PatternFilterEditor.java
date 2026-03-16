@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.classFilter.ClassFilterEditor;
 import com.intellij.util.IconUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class PatternFilterEditor extends ClassFilterEditor {
   public PatternFilterEditor(Project project) {

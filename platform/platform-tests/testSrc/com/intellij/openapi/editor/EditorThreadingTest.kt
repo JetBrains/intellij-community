@@ -1,15 +1,16 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor
 
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.*
+import com.intellij.testFramework.junit5.fixture.editorFixture
+import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.psiFileFixture
+import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import kotlinx.coroutines.Dispatchers
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.assertThrows
@@ -59,7 +60,6 @@ class EditorThreadingTest {
   }
 
   @TestFactory
-  @RegistryKey("editor.allow.raw.access.on.edt", "true")
   fun `access to editor is allowed under read lock with flag`() = runTest { action ->
     timeoutRunBlocking(context = Dispatchers.Default) {
       readAction {

@@ -15,12 +15,14 @@ import fleet.util.logging.KLoggers.logger
 
 private val logger by lazy { logger(ResolvedPluginLayer::class) }
 
-fun loadPluginModulesAndResources(moduleLayerLoader: FleetModuleLayerLoader,
-                                  resolvedLayers: Map<LayerSelector, ResolvedPluginLayer>,
-                                  sortedSelectors: List<LayerSelector>,
-                                  externalDependencies: Map<LayerSelector, List<FleetModuleLayer>>,
-                                  baseLayers: List<FleetModuleLayer>,
-                                  loadDockModuleLayer: (modulePath: Set<FleetModuleInfo>) -> FleetModuleLayer): Map<LayerSelector, PluginModulesAndResources> {
+suspend fun loadPluginModulesAndResources(
+  moduleLayerLoader: FleetModuleLayerLoader,
+  resolvedLayers: Map<LayerSelector, ResolvedPluginLayer>,
+  sortedSelectors: List<LayerSelector>,
+  externalDependencies: Map<LayerSelector, List<FleetModuleLayer>>,
+  baseLayers: List<FleetModuleLayer>,
+  loadDockModuleLayer: (modulePath: Set<FleetModuleInfo>) -> FleetModuleLayer,
+): Map<LayerSelector, PluginModulesAndResources> {
   val result = HashMap<LayerSelector, PluginModulesAndResources>(sortedSelectors.size)
   for (selector in sortedSelectors) {
     val resolvedLayer = resolvedLayers.get(selector) ?: continue

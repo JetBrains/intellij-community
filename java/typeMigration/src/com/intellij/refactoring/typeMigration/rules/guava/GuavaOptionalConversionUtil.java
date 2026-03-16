@@ -2,7 +2,12 @@
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.Matcher;

@@ -15,7 +15,10 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import org.jetbrains.annotations.Nls
-import javax.swing.SwingConstants.*
+import javax.swing.SwingConstants.BOTTOM
+import javax.swing.SwingConstants.LEFT
+import javax.swing.SwingConstants.RIGHT
+import javax.swing.SwingConstants.TOP
 
 private val TAB_PLACEMENTS = listOf(TOP, LEFT, BOTTOM, RIGHT, TABS_NONE)
 

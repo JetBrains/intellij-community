@@ -5,10 +5,12 @@ import com.intellij.grazie.text.TextContent.Exclusion;
 import com.intellij.grazie.text.TextContent.TextDomain;
 import com.intellij.grazie.text.TextContentBuilder;
 import com.intellij.grazie.text.TextExtractor;
+import com.intellij.grazie.utils.EscapeUtilsKt;
 import com.intellij.grazie.utils.HtmlUtilsKt;
 import com.intellij.grazie.utils.PsiUtilsKt;
 import com.intellij.grazie.utils.Text;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
+import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
 import com.intellij.lang.properties.spellchecker.MnemonicsTokenizer;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
@@ -43,17 +45,21 @@ final class PropertyTextExtractor extends TextExtractor {
         TextContent.joinWithWhitespace('\n', ContainerUtil.mapNotNull(roots, c ->
           TextContentBuilder.FromPsi.removingIndents(" \t#!").build(c, COMMENTS))));
     }
-    if (PsiUtilCore.getElementType(root) == PropertiesTokenTypes.VALUE_CHARACTERS && allowedDomains.contains(TextDomain.PLAIN_TEXT)) {
+    if (root instanceof PropertyValueImpl propertyValue && allowedDomains.contains(TextDomain.PLAIN_TEXT)) {
       TextContent content = TextContent.builder().build(root, TextDomain.PLAIN_TEXT);
       if (content != null) {
         content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(apostrophes, content), Exclusion::exclude));
         content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(continuationIndent, content), Exclusion::exclude));
         content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(trailingSlash, content), Exclusion::exclude));
+        content = EscapeUtilsKt.replaceBackslashEscapedWhitespace(content);
+        content = EscapeUtilsKt.replaceBackslashEscapedWhitespace(content, 'r');
         for (MnemonicsTokenizer tokenizer : MNEMONICS_EP_NAME.getExtensionList()) {
           if (tokenizer.hasMnemonics(content.toString())) {
+            Set<Character> ignoredChars = tokenizer.ignoredCharacters(propertyValue);
+            if (ignoredChars.isEmpty()) continue;
             Pattern ignoredCharactersPattern = Pattern.compile(
               "[" +
-              tokenizer.ignoredCharacters().stream()
+              ignoredChars.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining()) +
               "]"

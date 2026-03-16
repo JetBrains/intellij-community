@@ -20,8 +20,16 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ProcessingContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UPolyadicExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UVariable
 import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.findContaining
+import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.toUElementOfType
+import org.jetbrains.uast.tryResolve
 
 internal class UastReferenceByUsageAdapter(
   val expressionPattern: ElementPattern<out UElement>,

@@ -1,12 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetArtifactIndex.GradleSourceSetArtifactIndex;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.artifacts.*;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.UnionFileCollection;
@@ -14,21 +17,28 @@ import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetOutput;
 import org.gradle.api.tasks.compile.AbstractCompile;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.AbstractExternalDependency;
+import org.jetbrains.plugins.gradle.model.DefaultFileCollectionDependency;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
+import org.jetbrains.plugins.gradle.model.ExternalLibraryDependency;
+import org.jetbrains.plugins.gradle.model.ExternalMultiLibraryDependency;
+import org.jetbrains.plugins.gradle.model.ExternalProjectDependency;
 import org.jetbrains.plugins.gradle.model.FileCollectionDependency;
-import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Vladislav.Soroka

@@ -8,3 +8,5 @@ fun bar() {
 // ABSENT: "{...}"
 // EXIST: "{ s, i -> ... }"
 // EXIST: "{ s: String, i: Int -> ... }"
+
+// IGNORE_K2

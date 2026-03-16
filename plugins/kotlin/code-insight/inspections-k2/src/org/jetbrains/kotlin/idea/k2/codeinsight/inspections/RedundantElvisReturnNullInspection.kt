@@ -6,10 +6,10 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 
 internal class RedundantElvisReturnNullInspection : KotlinApplicableInspectionBase.Simple<KtBinaryExpression, Unit>() {
 
@@ -53,7 +52,7 @@ internal class RedundantElvisReturnNullInspection : KotlinApplicableInspectionBa
         // The binary expression must be in a form of `return <left expression> ?: return null`.
         val returnExpression = element.right as? KtReturnExpression ?: return false
         val returnedExpression = returnExpression.returnedExpression?.safeDeparenthesize() ?: return false
-        if (returnedExpression.elementType != KtStubElementTypes.NULL) return false
+        if (returnedExpression.elementType != KtNodeTypes.NULL) return false
 
         val isTargetOfReturn = element == element.getStrictParentOfType<KtReturnExpression>()?.returnedExpression?.safeDeparenthesize()
         return isTargetOfReturn && element.operationToken == KtTokens.ELVIS

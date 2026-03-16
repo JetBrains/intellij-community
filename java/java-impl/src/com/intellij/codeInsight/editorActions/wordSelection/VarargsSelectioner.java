@@ -3,7 +3,13 @@ package com.intellij.codeInsight.editorActions.wordSelection;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +17,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public final class VarargsSelectioner extends AbstractBasicBackBasicSelectioner {
+public final class VarargsSelectioner extends BasicSelectioner {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof PsiExpressionList;

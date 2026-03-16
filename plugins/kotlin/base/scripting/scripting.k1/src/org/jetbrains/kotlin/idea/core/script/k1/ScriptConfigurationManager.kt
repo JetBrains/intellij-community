@@ -22,6 +22,7 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.search.GlobalSearchScope
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
@@ -43,6 +44,7 @@ import java.nio.file.Path
 import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.makeFailureResult
 
+@K1Deprecation
 class ScriptConfigurationManager(val myProject: Project, val scope: CoroutineScope) : ScriptConfigurationsProvider(myProject), ScriptDependencyAware {
     private val notifier = ScriptChangesNotifier(project)
 

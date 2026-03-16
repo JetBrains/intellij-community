@@ -22,7 +22,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.createError
 import org.jetbrains.jsonProtocol.Request
 import java.io.IOException
-import java.util.*
+import java.util.Arrays
 import java.util.concurrent.CancellationException
 
 interface MessageProcessor {

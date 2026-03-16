@@ -3,9 +3,11 @@ package com.intellij.debugger.engine
 
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.containers.toArray
 import com.sun.jdi.event.EventSet
@@ -52,7 +54,7 @@ object DebuggerDiagnosticsUtil {
     val invocationWatching = process.myThreadBlockedMonitor.myInvocationWatching
     // Anyway, model problems can be detected only for threads the engine already worked with
     @Suppress("TestOnlyProblems")
-    val allThreads = process.virtualMachineProxy.evenDirtyAllThreads
+    val allThreads = VirtualMachineProxyImpl.getCurrent().evenDirtyAllThreads
 
     val allContexts = suspendManager.eventContextsAsItIs
 
@@ -104,10 +106,10 @@ object DebuggerDiagnosticsUtil {
             problems += "Thread $threadProxy is considered as running, but there are suspend-all contexts: $suspendAllContexts"
           }
           val suspendThreadContexts = allContexts.filter {
-            it.suspendPolicy == EventRequest.SUSPEND_EVENT_THREAD && it.eventThread == threadProxy
+            it.suspendPolicy == EventRequest.SUSPEND_EVENT_THREAD && it.eventThread == threadProxy && !it.isResumed
           }
           if (suspendThreadContexts.isNotEmpty()) {
-            problems += "Thread $threadProxy is considered as running, but there are suspend-thread contexts for it: $suspendAllContexts"
+            problems += "Thread $threadProxy is considered as running, but there are suspend-thread contexts for it: $suspendThreadContexts"
           }
         }
         else -> {}
@@ -149,6 +151,9 @@ object DebuggerDiagnosticsUtil {
 
     if (problems.isNotEmpty()) {
       process.logError("Found ${problems.size} problems", Attachment("Problems.txt", problems.joinToString(separator = "\n")))
+      for (problem in problems) {
+        thisLogger().warn(problem)
+      }
     }
   }
 
@@ -211,7 +216,7 @@ object DebuggerDiagnosticsUtil {
 
   @JvmStatic
   private fun createThreadsAttachment(process: DebugProcessImpl): Attachment {
-    val virtualMachine = process.virtualMachineProxy
+    val virtualMachine = VirtualMachineProxyImpl.getCurrent()
     val threads = virtualMachine.allThreads().joinToString(separator = "\n") {
       "(${noErr { getThreadState(it) }}) $it, model suspend counter = ${it.wholeSuspendModelNumber}, real suspend counter = ${it.suspendCount}"
     }

@@ -20,8 +20,11 @@ import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.GraphicsEnvironment;
+import java.awt.Toolkit;
 import java.awt.event.AWTEventListener;
 
 public final class TouchbarSupport {

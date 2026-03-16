@@ -37,7 +37,7 @@ import icons.SpellcheckerIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,7 +67,7 @@ public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction, Du
 
   @Override
   public @NotNull String getFamilyName() {
-    return SpellCheckerBundle.message("save.0.to.dictionary.fix", "");
+    return SpellCheckerBundle.message("save.to.dictionary.fix");
   }
 
   @Override
@@ -165,6 +165,6 @@ public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction, Du
   }
 
   public static String getFixName() {
-    return SpellCheckerBundle.message("save.0.to.dictionary.fix", "");
+    return SpellCheckerBundle.message("save.to.dictionary.fix");
   }
 }

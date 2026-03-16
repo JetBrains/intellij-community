@@ -5,9 +5,6 @@ import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
-import org.jetbrains.idea.maven.statistics.MavenDependencyInsertionCollector
-import org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion.MavenDependenciesGradleCompletionContributor.Companion.COMPLETION_DATA_KEY
-import org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion.MavenDependenciesGradleCompletionContributor.Companion.CompletionData
 import org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion.MavenDependenciesGradleCompletionContributor.Companion.GROUP_LABEL
 import org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion.MavenDependenciesGradleCompletionContributor.Companion.NAME_LABEL
 import org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion.MavenDependenciesGradleCompletionContributor.Companion.VERSION_LABEL
@@ -29,19 +26,6 @@ abstract class GradleMapStyleInsertHandler : InsertHandler<LookupElement> {
     val artifactInfo = item.`object` as? MavenRepositoryArtifactInfo ?: return
 
     doInsert(psiElement, parent, factory, artifactInfo, context)
-
-    val selectedLookupIndex = context.elements.indexOf(item)
-    val (completionPrefix, _, _) = item.getUserData(COMPLETION_DATA_KEY) ?: CompletionData("", "", '\'')
-
-    MavenDependencyInsertionCollector.logPackageAutoCompleted(
-      groupId = artifactInfo.groupId,
-      artifactId = artifactInfo.artifactId,
-      version = artifactInfo.version ?: "",
-      buildSystem = MavenDependencyInsertionCollector.BuildSystem.GRADLE,
-      dependencyDeclarationNotation = MavenDependencyInsertionCollector.DependencyDeclarationNotation.GRADLE_MAP_STYLE,
-      completionPrefixLength = completionPrefix.length,
-      selectedLookupIndex = selectedLookupIndex
-    )
   }
 
   abstract fun doInsert(psiElement: GrNamedArgument,

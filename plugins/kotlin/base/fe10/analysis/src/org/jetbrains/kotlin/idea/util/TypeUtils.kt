@@ -2,12 +2,25 @@
 @file:JvmName("TypeUtils")
 package org.jetbrains.kotlin.idea.util
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypeVisitor
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.PsiWildcardType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMapper
 import org.jetbrains.kotlin.builtins.replaceReturnType
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorNonRoot
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.SourceElement
+import org.jetbrains.kotlin.descriptors.Substitutable
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.FilteredAnnotations
 import org.jetbrains.kotlin.descriptors.impl.ClassDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.MutablePackageFragmentDescriptor
@@ -37,15 +50,41 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
-import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.AbbreviatedType
+import org.jetbrains.kotlin.types.IntersectionTypeConstructor
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.KotlinTypeFactory
+import org.jetbrains.kotlin.types.RawType
+import org.jetbrains.kotlin.types.SimpleType
+import org.jetbrains.kotlin.types.TypeConstructor
+import org.jetbrains.kotlin.types.TypeProjection
+import org.jetbrains.kotlin.types.TypeProjectionImpl
+import org.jetbrains.kotlin.types.TypeSubstitutor
+import org.jetbrains.kotlin.types.TypeUtils
+import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.types.asFlexibleType
 import org.jetbrains.kotlin.types.checker.TypeCheckingProcedure
+import org.jetbrains.kotlin.types.error.ErrorScopeKind
 import org.jetbrains.kotlin.types.error.ErrorType
 import org.jetbrains.kotlin.types.error.ErrorUtils
-import org.jetbrains.kotlin.types.error.ErrorScopeKind
-import org.jetbrains.kotlin.types.typeUtil.*
+import org.jetbrains.kotlin.types.isDefinitelyNotNullType
+import org.jetbrains.kotlin.types.isDynamic
+import org.jetbrains.kotlin.types.isError
+import org.jetbrains.kotlin.types.isFlexible
+import org.jetbrains.kotlin.types.replace
+import org.jetbrains.kotlin.types.toDefaultAttributes
+import org.jetbrains.kotlin.types.typeUtil.TypeNullability
+import org.jetbrains.kotlin.types.typeUtil.asTypeProjection
+import org.jetbrains.kotlin.types.typeUtil.builtIns
+import org.jetbrains.kotlin.types.typeUtil.immediateSupertypes
+import org.jetbrains.kotlin.types.typeUtil.nullability
+import org.jetbrains.kotlin.types.typeUtil.replaceArgumentsWithStarProjections
+import org.jetbrains.kotlin.types.typeUtil.substitute
+import org.jetbrains.kotlin.types.typeUtil.supertypes
+import org.jetbrains.kotlin.types.unwrapEnhancement
 import org.jetbrains.kotlin.utils.SmartSet
-import java.util.LinkedHashMap
 
+@K1Deprecation
 @JvmOverloads // For binary compatibility
 fun KotlinType.approximateFlexibleTypes(
     preferNotNull: Boolean = false,
@@ -57,6 +96,7 @@ fun KotlinType.approximateFlexibleTypes(
     return unwrapEnhancement().approximateNonDynamicFlexibleTypes(preferNotNull, preferStarForRaw, preferUpperBoundsForCollections)
 }
 
+@K1Deprecation
 fun KotlinType.withoutRedundantAnnotations(): KotlinType {
     var argumentsWasChanged = false
     val newArguments = arguments.map(fun(typeProjection: TypeProjection): TypeProjection {
@@ -84,6 +124,7 @@ fun KotlinType.withoutRedundantAnnotations(): KotlinType {
     )
 }
 
+@K1Deprecation
 val FqName.isRedundantJvmAnnotation: Boolean get() = this in NULLABILITY_ANNOTATIONS ||
         this in MUTABLE_ANNOTATIONS ||
         this in READ_ONLY_ANNOTATIONS
@@ -145,6 +186,7 @@ private fun KotlinType.approximateNonDynamicFlexibleTypes(
     )
 }
 
+@K1Deprecation
 fun KotlinType.isResolvableInScope(scope: LexicalScope?, checkTypeParameters: Boolean, allowIntersections: Boolean = false): Boolean {
     if (constructor is IntersectionTypeConstructor) {
         if (!allowIntersections) {
@@ -162,12 +204,14 @@ fun KotlinType.isResolvableInScope(scope: LexicalScope?, checkTypeParameters: Bo
     return scope != null && scope.findClassifier(descriptor.name, NoLookupLocation.FROM_IDE) == descriptor
 }
 
+@K1Deprecation
 fun KotlinType.approximateWithResolvableType(scope: LexicalScope?, checkTypeParameters: Boolean): KotlinType {
     if (isError || isResolvableInScope(scope, checkTypeParameters)) return this
     return supertypes().firstOrNull { it.isResolvableInScope(scope, checkTypeParameters) }
         ?: builtIns.anyType
 }
 
+@K1Deprecation
 fun KotlinType.anonymousObjectSuperTypeOrNull(): KotlinType? {
     val classDescriptor = constructor.declarationDescriptor
     if (classDescriptor != null && DescriptorUtils.isAnonymousObject(classDescriptor)) {
@@ -176,6 +220,7 @@ fun KotlinType.anonymousObjectSuperTypeOrNull(): KotlinType? {
     return null
 }
 
+@K1Deprecation
 fun KotlinType.getResolvableApproximations(
     scope: LexicalScope?,
     checkTypeParameters: Boolean,
@@ -247,6 +292,7 @@ private fun TypeProjection.fixTypeProjection(
     return type.replace(newArguments).asTypeProjection()
 }
 
+@K1Deprecation
 fun KotlinType.isAbstract(): Boolean {
     val modality = (constructor.declarationDescriptor as? ClassDescriptor)?.modality
     return modality == Modality.ABSTRACT || modality == Modality.SEALED
@@ -256,6 +302,7 @@ fun KotlinType.isAbstract(): Boolean {
  * NOTE: this is a very shaky implementation of [PsiType] to [KotlinType] conversion,
  * produced types are fakes and are usable only for code generation. Please be careful using this method.
  */
+@K1Deprecation
 @OptIn(FrontendInternals::class)
 fun PsiType.resolveToKotlinType(resolutionFacade: ResolutionFacade): KotlinType {
     if (this == PsiTypes.nullType()) {
@@ -318,10 +365,12 @@ private fun PsiType.collectTypeParameters(): List<PsiTypeParameter> {
 typealias KotlinTypeSubstitution = Map<TypeConstructor, TypeProjection>
 typealias MutableKotlinTypeSubstitution = LinkedHashMap<TypeConstructor, TypeProjection>
 
+@K1Deprecation
 fun <T: DeclarationDescriptorNonRoot> Substitutable<T>.substitute(substitution: KotlinTypeSubstitution): T {
     return substitute(substitution.toSubstitutor())
 }
 
+@K1Deprecation
 fun getTypeSubstitution(baseType: KotlinType, derivedType: KotlinType): MutableKotlinTypeSubstitution? {
     val substitutedType = TypeCheckingProcedure.findCorrespondingSupertype(derivedType, baseType) ?: return null
 
@@ -333,6 +382,8 @@ fun getTypeSubstitution(baseType: KotlinType, derivedType: KotlinType): MutableK
     return substitution
 }
 
+@K1Deprecation
 fun KotlinTypeSubstitution.toSubstitutor(): TypeSubstitutor = TypeSubstitutor.create(this)
 
+@K1Deprecation
 fun TypeSubstitutor?.orEmpty(): TypeSubstitutor = this ?: TypeSubstitutor.EMPTY

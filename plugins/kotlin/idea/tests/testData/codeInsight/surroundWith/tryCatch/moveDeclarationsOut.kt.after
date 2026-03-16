@@ -1,10 +1,11 @@
+// WITH_STDLIB
 fun foo() {
     val a: String
     val b = try {
         a = "aaa"
         "aaa"
     } catch (e: <selection>Exception</selection>) {
-        TODO("Not yet implemented")
+        throw e
     }
 
     a.charAt(1)

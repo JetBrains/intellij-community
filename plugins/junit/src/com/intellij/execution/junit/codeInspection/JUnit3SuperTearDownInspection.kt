@@ -12,7 +12,14 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.ig.junit.JUnitCommonClassNames
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.USuperExpression
+import org.jetbrains.uast.getContainingUClass
+import org.jetbrains.uast.getParentOfType
 import org.jetbrains.uast.util.isInFinallyBlock
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import org.jetbrains.uast.visitor.AbstractUastVisitor

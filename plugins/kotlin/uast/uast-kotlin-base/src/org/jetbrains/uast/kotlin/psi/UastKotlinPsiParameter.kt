@@ -2,13 +2,21 @@
 package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiParameterList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
-import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UastErrorType
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
+import org.jetbrains.uast.getParentOfType
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 
 /**
@@ -42,13 +50,9 @@ class UastKotlinPsiParameter internal constructor(
                     annotations.add(UastFakeLightNullabilityAnnotation(nullability, this))
                 }
             }
-            ktParameter.annotationEntries.mapTo(annotations) { entry ->
-                KtLightAnnotationForSourceEntry(
-                    name = entry.shortName?.identifier,
-                    lazyQualifiedName = { baseResolveService.qualifiedAnnotationName(entry) },
-                    kotlinOrigin = entry,
-                    parent = ktParameter,
-                )
+
+            ktParameter.annotationEntries.mapNotNullTo(annotations) { entry ->
+                baseResolveService.convertToPsiAnnotation(entry)
             }
 
             annotations.toTypedArray()

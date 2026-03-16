@@ -15,7 +15,7 @@ jvm_library(
   resources = [":eel-impl_resources"],
   deps = [
     "@lib//:jetbrains-annotations",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:kotlin-stdlib",
     "//platform/util/base",
     "//platform/extensions",

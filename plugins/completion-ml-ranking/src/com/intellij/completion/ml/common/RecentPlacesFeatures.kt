@@ -14,10 +14,15 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.FileViewProvider
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.PsiNamedElement
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.FixedHashMap
-import java.util.*
+import java.util.Collections
 import java.util.function.BooleanSupplier
 
 class RecentPlacesFeatures : ElementFeatureProvider {

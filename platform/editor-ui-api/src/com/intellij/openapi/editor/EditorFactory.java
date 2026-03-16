@@ -43,6 +43,30 @@ public abstract class EditorFactory {
   public abstract @NotNull Document createDocument(char @NotNull [] text);
 
   /**
+   * Creates an empty document.
+   *
+   * @param allowUpdatesWithoutWriteAction {@code true} if the document should allow updates without write action; by default, the global
+   *                                       <a href="https://plugins.jetbrains.com/docs/intellij/threading-model.html">read-write lock</a> is
+   *                                       used to protect the content of a document.
+   */
+  public abstract @NotNull Document createDocument(boolean allowUpdatesWithoutWriteAction);
+
+  /**
+   * Creates a document from the specified text specified as a char sequence.
+   *
+   * @param text                           the text to create the document for.
+   * @param acceptsSlashR                  {@code true} if the document should accept '\r' as a line separator; by default, content of the
+   *                                       document is supposed to use '\n' as a line separator, and it's checked at runtime.
+   * @param allowUpdatesWithoutWriteAction {@code true} if the document should allow updates without write action; by default, the global
+   *                                       <a href="https://plugins.jetbrains.com/docs/intellij/threading-model.html">read-write lock</a> is
+   *                                       used to protect the content of a document.
+   * @return the document instance.
+   */
+  public abstract @NotNull Document createDocument(@NotNull CharSequence text,
+                                                   boolean acceptsSlashR,
+                                                   boolean allowUpdatesWithoutWriteAction);
+
+  /**
    * Creates an editor for the specified document. Must be invoked in EDT.
    * <p>
    * The created editor must be disposed after use by calling {@link #releaseEditor(Editor)}.

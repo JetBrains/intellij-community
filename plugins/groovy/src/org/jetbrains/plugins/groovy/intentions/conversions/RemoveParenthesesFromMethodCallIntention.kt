@@ -7,8 +7,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import com.intellij.psi.TokenType
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
 import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention
+import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable

@@ -2,7 +2,12 @@
 package com.intellij.application.options.codeStyle.cache
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
@@ -24,7 +29,13 @@ import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.ArrayUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
@@ -214,9 +225,17 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
           }
         }
 
+        // we need to reduce the number of the "setting changed" event to the minimum, 
+        // because it initiates the editors re-layout due to gutters layout: CPP-47563, IDEA-58496, ... 
         if (currentResult !== currSettings) {
           currentResult = currSettings
           tracker.incModificationCount()
+          // The `tryGetSettings()` call pushes the `currentResult` into the cache 
+          // without auto-triggering the computation due to `computation.inActive == true` status.          
+          val cachedSettings = tryGetSettings()
+          if (currentResult !== cachedSettings) {
+            LOG.error("Cache corruption: check `isActive` protection inside the `getCurrentResult()`!");    
+          }
         }
         LOG.debug { "Computation ended for ${file.name}" }
       }

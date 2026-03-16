@@ -16,11 +16,15 @@ import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.psi.resolve.*
+import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
+import com.jetbrains.python.psi.resolve.fromModule
+import com.jetbrains.python.psi.resolve.fromSdk
+import com.jetbrains.python.psi.resolve.resolveModuleAt
+import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PySdkUtil
-import java.util.*
+import java.util.Collections
 
 
 interface ContextAnchor {
@@ -69,7 +73,7 @@ data class QNameResolveContext(
   /**
    * Use index, plain dirs with Py2 and so on. May resolve names unresolvable in other cases, but may return false results.
    */
-  val allowInaccurateResult: Boolean = false
+  val allowInaccurateResult: Boolean = false,
 )
 
 /**
@@ -142,12 +146,50 @@ fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stop
   if (lastElement != null && element is PyClass) {
     // Drill in class
 
-    //TODO: Support nested classes
+    // First try to find nested class
+    val nestedClass = element.findNestedClass(lastElement, true)
+    if (nestedClass != null) {
+      val newName = currentName.append(lastElement)
+      // If this is the last component, return the nested class
+      if (newName.componentCount == this.componentCount) {
+        return NameAndElement(newName, nestedClass)
+      }
+      // If there are more components, try to resolve them starting from the nested class
+      val remainingName = subQualifiedName(newName.componentCount, componentCount)
+
+      // Try to find a method in the nested class if this is the last component
+      if (remainingName.componentCount == 1) {
+        val method = nestedClass.findMethodByName(remainingName.lastComponent!!, true, context.evalContext)
+        if (method != null) {
+          return NameAndElement(this, method)
+        }
+      }
+
+      // Try to find next level nested class
+      val nextComponent = remainingName.firstComponent
+      if (nextComponent != null) {
+        val nextNestedClass = nestedClass.findNestedClass(nextComponent, true)
+        if (nextNestedClass != null) {
+          // If we found a nested class, continue resolving from it
+          val remainingAfterNext = remainingName.subQualifiedName(1, remainingName.componentCount)
+          if (remainingAfterNext.componentCount == 0) {
+            return NameAndElement(this, nextNestedClass)
+          }
+          if (remainingAfterNext.componentCount == 1) {
+            val method = nextNestedClass.findMethodByName(remainingAfterNext.lastComponent!!, true, context.evalContext)
+            if (method != null) {
+              return NameAndElement(this, method)
+            }
+          }
+        }
+      }
+    }
+
+    // If not a nested class or nested resolution failed, try to find method in current class
     val method = element.findMethodByName(lastElement, true, context.evalContext)
     if (method != null) {
       return NameAndElement(currentName.append(lastElement), method)
     }
-
   }
 
   if (element == null && this.firstComponent != null && context.allowInaccurateResult) {

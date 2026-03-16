@@ -5,7 +5,18 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.actionButton
+import com.intellij.ui.dsl.builder.actionsButton
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.labelTable
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.rows
+import com.intellij.ui.dsl.builder.tabbedPaneHeader
+import com.intellij.ui.dsl.builder.text
 import javax.swing.JLabel
 
 @Suppress("DialogTitleCapitalization")
@@ -54,7 +65,12 @@ fun demoComponents(): DialogPanel {
     }
 
     row("segmentedButton:") {
-      segmentedButton(listOf("Button 1", "Button 2", "Button Last")) { text = it }.apply {
+      segmentedButton(listOf("Button 1", "Button 2", "Button Last")) {
+        text = it
+        if (it == "Button Last") {
+          icon = AllIcons.General.Information
+        }
+      }.apply {
         selectedItem = "Button 2"
       }
     }
@@ -88,7 +104,8 @@ fun demoComponents(): DialogPanel {
     }
 
     row("contextHelp:") {
-      contextHelp("contextHelp description", "contextHelp title")
+      contextHelp("If the context help relates to a specific component, <b>Cell.contextHelp</b> must be used. " +
+                  "See API documentation for more details", "Context Help Title")
     }
 
     row("textField:") {
@@ -96,7 +113,7 @@ fun demoComponents(): DialogPanel {
     }
 
     row("passwordField:") {
-      passwordField().applyToComponent { text = "password" }
+      passwordField().text("password")
     }
 
     row("textFieldWithBrowseButton:") {

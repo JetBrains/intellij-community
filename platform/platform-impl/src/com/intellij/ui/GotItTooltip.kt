@@ -10,8 +10,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -74,6 +76,8 @@ class GotItTooltipService {
 class GotItTooltip @ApiStatus.Internal constructor(@NonNls val id: String,
                                                    private val gotItBuilder: GotItComponentBuilder,
                                                    parentDisposable: Disposable? = null) : ToolbarActionTracker<Balloon>() {
+  private val hasConstructorDisposable = parentDisposable != null
+
   private var timeout: Int = -1
   private var maxCount = 1
   private var onBalloonCreated: (Balloon) -> Unit = {}
@@ -312,19 +316,23 @@ class GotItTooltip @ApiStatus.Internal constructor(@NonNls val id: String,
       return
     }
 
+    if (component.isShowing && !component.bounds.isEmpty) {
+      showImpl(component, pointProvider)
+      return
+    }
+
+    if (!hasConstructorDisposable && ApplicationManager.getApplication().isInternal) {
+      logger<GotItTooltip>().error("GotItTooltip must be properly disposed, if the component is not shown")
+    }
+
     if (component.isShowing) {
-      if (!component.bounds.isEmpty) {
-        showImpl(component, pointProvider)
-      }
-      else {
-        component.addComponentListener(object : ComponentAdapter() {
-          override fun componentResized(event: ComponentEvent) {
-            if (!event.component.bounds.isEmpty) {
-              showImpl(event.component as JComponent, pointProvider)
-            }
+      component.addComponentListener(object : ComponentAdapter() {
+        override fun componentResized(event: ComponentEvent) {
+          if (!event.component.bounds.isEmpty) {
+            showImpl(event.component as JComponent, pointProvider)
           }
-        }.also { Disposer.register(this, Disposable { component.removeComponentListener(it) }) })
-      }
+        }
+      }.also { Disposer.register(this, Disposable { component.removeComponentListener(it) }) })
     }
     else {
       component.addAncestorListener(object : AncestorListenerAdapter() {
@@ -409,50 +417,54 @@ class GotItTooltip @ApiStatus.Internal constructor(@NonNls val id: String,
         }
       }
     }
-    val balloon = createBalloon().also {
-      val dispatcherDisposable = Disposer.newDisposable()
-      Disposer.register(this, dispatcherDisposable)
 
-      it.addListener(object : JBPopupListener {
-        override fun beforeShown(event: LightweightWindowEvent) {
-          GotItUsageCollector.instance.logOpen(id, savedCount("$PROPERTY_PREFIX.$id") + 1)
-        }
+    val balloon = createBalloon()
 
-        override fun onClosed(event: LightweightWindowEvent) {
-          HelpTooltip.setMasterPopupOpenCondition(tracker.component, null)
-          ClientProperty.put(tracker.component as JComponent, BALLOON_PROPERTY, null)
-          Disposer.dispose(dispatcherDisposable)
+    // It is fine to register on 'this' even with 'hasConstructorDisposable == false' as we will dispose 'dispatcherDisposable' ourselves.
+    // Thus removing 'this' from the Disposer tree if we were the only child.
+    val dispatcherDisposable = Disposer.newDisposable()
+    Disposer.register(this, dispatcherDisposable)
 
-          if (event.isOk) {
-            currentlyShown?.let { tooltip ->
-              Disposer.dispose(tooltip)
-              tooltip.nextToShow = null
-            }
-            currentlyShown = null
-
-            gotIt()
-          }
-          else {
-            pendingRefresh = true
-          }
-        }
-      })
-
-      IdeEventQueue.getInstance().addDispatcher(IdeEventQueue.EventDispatcher { e ->
-        if (e is KeyEvent && KeymapUtil.isEventForAction(e, GotItComponentBuilder.CLOSE_ACTION_NAME)) {
-          it.hide(true)
-          GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.EscapeShortcutPressed)
-          true
-        }
-        else false
-      }, dispatcherDisposable)
-
-      HelpTooltip.setMasterPopupOpenCondition(tracker.component) {
-        it.isDisposed
+    balloon.addListener(object : JBPopupListener {
+      override fun beforeShown(event: LightweightWindowEvent) {
+        GotItUsageCollector.instance.logOpen(id, savedCount("$PROPERTY_PREFIX.$id") + 1)
       }
 
-      onBalloonCreated(it)
+      override fun onClosed(event: LightweightWindowEvent) {
+        HelpTooltip.setMasterPopupOpenCondition(tracker.component, null)
+        ClientProperty.put(tracker.component as JComponent, BALLOON_PROPERTY, null)
+        Disposer.dispose(dispatcherDisposable)
+
+        if (event.isOk) {
+          currentlyShown?.let { tooltip ->
+            Disposer.dispose(tooltip)
+            tooltip.nextToShow = null
+          }
+          currentlyShown = null
+
+          gotIt()
+        }
+        else {
+          pendingRefresh = true
+        }
+      }
+    })
+
+    IdeEventQueue.getInstance().addDispatcher(IdeEventQueue.EventDispatcher { e ->
+      if (e is KeyEvent && KeymapUtil.isEventForAction(e, GotItComponentBuilder.CLOSE_ACTION_NAME)) {
+        balloon.hide(true)
+        GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.EscapeShortcutPressed)
+        true
+      }
+      else false
+    }, dispatcherDisposable)
+
+    HelpTooltip.setMasterPopupOpenCondition(tracker.component) {
+      balloon.isDisposed
     }
+
+    onBalloonCreated(balloon)
+
     this.balloon = balloon
     ClientProperty.put(component, BALLOON_PROPERTY, balloon)
 

@@ -24,7 +24,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -40,11 +48,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.jetbrains.python.psi.types.PyTypeTokenTypes.IDENTIFIER;
 import static com.jetbrains.python.psi.types.PyTypeTokenTypes.PARAMETER;
-import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.*;
+import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.many;
+import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.maybe;
+import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.token;
 
 public final class PyTypeParser {
   private static final ParseResult EMPTY_RESULT = new ParseResult(null, Collections.emptyMap(), Collections.emptyMap(),
@@ -162,7 +177,10 @@ public final class PyTypeParser {
    * @param context type evaluation context
    * @param fqnOnly if true, resolves names using only fully-qualified lookup (ignores local scope/imported aliases)
    */
-  public static @NotNull ParseResult parse(@NotNull PsiElement anchor, @NotNull String type, @NotNull TypeEvalContext context, boolean fqnOnly) {
+  public static @NotNull ParseResult parse(@NotNull PsiElement anchor,
+                                           @NotNull String type,
+                                           @NotNull TypeEvalContext context,
+                                           boolean fqnOnly) {
     PyPsiUtils.assertValid(anchor);
 
     final ForwardDeclaration<ParseResult, PyElementType> typeExpr = ForwardDeclaration.create();
@@ -427,12 +445,13 @@ public final class PyTypeParser {
       final Token<PyElementType> firstToken = tokens.get(0);
       final String firstText = firstToken.getText().toString();
       final TextRange firstRange = firstToken.getRange();
-      
+
       final List<RatedResolveResult> resolveResults;
       if (myFqnOnly) {
         // First, try to resolve from "typing" for unqualified names (e.g., Literal, Any)
         final var qNameContext = PyResolveImportUtil.fromFoothold(myAnchor);
-        final PsiElement typingMember = PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString("typing." + firstText), qNameContext);
+        final PsiElement typingMember =
+          PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString("typing." + firstText), qNameContext);
         if (typingMember != null) {
           resolveResults = Collections.singletonList(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, typingMember));
         }
@@ -527,7 +546,7 @@ public final class PyTypeParser {
       final String name = token.getText().toString();
       final TextRange range = token.getRange();
 
-      if (PyNames.UNKNOWN_TYPE.equals(name)) {
+      if (PyNames.ANY_TYPE.equals(name)) {
         return EMPTY_RESULT;
       }
       else if (PyNames.NONE.equals(name)) {

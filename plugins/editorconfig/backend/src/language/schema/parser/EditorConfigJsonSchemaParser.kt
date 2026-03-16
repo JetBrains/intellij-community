@@ -20,7 +20,15 @@ import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants.T
 import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants.TYPE
 import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants.UNION
 import org.editorconfig.language.schema.parser.handlers.EditorConfigDescriptorParseHandlerBase
-import org.editorconfig.language.schema.parser.handlers.impl.*
+import org.editorconfig.language.schema.parser.handlers.impl.EditorConfigConstantDescriptorParseHandler
+import org.editorconfig.language.schema.parser.handlers.impl.EditorConfigDeclarationDescriptorParseHandler
+import org.editorconfig.language.schema.parser.handlers.impl.EditorConfigListDescriptorParseHandler
+import org.editorconfig.language.schema.parser.handlers.impl.EditorConfigOptionDescriptorParseHandler
+import org.editorconfig.language.schema.parser.handlers.impl.EditorConfigPairDescriptorParseHandler
+import org.editorconfig.language.schema.parser.handlers.impl.EditorConfigQualifiedOptionKeyDescriptorParseHandler
+import org.editorconfig.language.schema.parser.handlers.impl.EditorConfigReferenceDescriptorParseHandler
+import org.editorconfig.language.schema.parser.handlers.impl.EditorConfigStandardTypeDescriptorParseHandler
+import org.editorconfig.language.schema.parser.handlers.impl.EditorConfigUnionDescriptorParseHandler
 
 class EditorConfigJsonSchemaParser(private val logger: Logger) {
   private val handlers: Map<String, EditorConfigDescriptorParseHandlerBase>

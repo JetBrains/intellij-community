@@ -5,27 +5,15 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JLabel;
+import javax.swing.JTree;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.tree.TreeCellRenderer;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Rectangle;
 
 public class LabelBasedRenderer extends JLabel {
-
-  public static final class List<E> extends LabelBasedRenderer implements ListCellRenderer<E> {
-    private static final Border EMPTY = JBUI.Borders.empty(1); // see DefaultListCellRenderer.getNoFocusBorder
-
-    @Override
-    public @NotNull Component getListCellRendererComponent(@NotNull JList<? extends E> list, @Nullable E value,
-                                                           int index, boolean selected, boolean focused) {
-      configure(list, value);
-      setForeground(RenderingUtil.getForeground(list, selected));
-      setBackground(RenderingUtil.getBackground(list, selected));
-      setBorder(EMPTY);
-      return this;
-    }
-  }
 
   public static class Tree extends LabelBasedRenderer implements TreeCellRenderer {
     private static final Border EMPTY = JBUI.Borders.emptyRight(3); // see DefaultTreeCellRenderer.getPreferredSize

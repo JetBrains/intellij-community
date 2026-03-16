@@ -38,6 +38,7 @@ jvm_library(
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/formatter",
     "//platform/code-style-api:codeStyle",
+    "//plugins/kotlin/base/code-insight",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.analysis.utils` end

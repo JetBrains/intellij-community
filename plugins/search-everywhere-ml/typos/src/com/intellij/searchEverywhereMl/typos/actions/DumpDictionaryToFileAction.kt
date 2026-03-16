@@ -14,7 +14,7 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.DocumentUtil
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-private class DumpDictionaryToFileAction : AnAction() {
+internal class DumpDictionaryToFileAction : AnAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = ActionsLanguageModel.getInstance()?.deferredDictionary?.isCompleted ?: false
   }

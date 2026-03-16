@@ -20,7 +20,6 @@ import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import java.util.Arrays;

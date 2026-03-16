@@ -2,7 +2,12 @@
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.changeSignature.JavaParameterInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;

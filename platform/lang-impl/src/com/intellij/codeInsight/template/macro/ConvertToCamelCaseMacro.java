@@ -8,10 +8,14 @@ import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.NameUtilCore;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -35,23 +39,15 @@ public class ConvertToCamelCaseMacro extends MacroBase {
 
   @VisibleForTesting
   public @NotNull Result convertString(@NotNull String text) {
-    final String[] strings = splitWords(text);
-    if (strings.length > 0) {
-      final StringBuilder buf = new StringBuilder();
-      buf.append(StringUtil.toLowerCase(strings[0]));
-      for (int i = 1; i < strings.length; i++) {
-        String string = strings[i];
-        if (Character.isLetterOrDigit(string.charAt(0))) {
-          buf.append(StringUtil.capitalize(StringUtil.toLowerCase(string)));
-        }
-      }
-      return new TextResult(buf.toString());
-    }
-    return new TextResult("");
+    String result = StreamEx.of(splitWords(text))
+      .mapFirstOrElse(StringUtil::toLowerCase, s ->
+        Character.isLetterOrDigit(s.charAt(0)) ? StringUtil.capitalize(StringUtil.toLowerCase(s)) : "")
+      .joining();
+    return new TextResult(result);
   }
 
-  protected String @NotNull [] splitWords(String text) {
-    return NameUtilCore.nameToWords(text);
+  protected List<@NotNull String> splitWords(String text) {
+    return NameUtilCore.nameToWordList(text);
   }
 
   public static final class ReplaceUnderscoresToCamelCaseMacro extends ConvertToCamelCaseMacro {
@@ -60,8 +56,8 @@ public class ConvertToCamelCaseMacro extends MacroBase {
     }
 
     @Override
-    protected String @NotNull [] splitWords(String text) {
-      return text.split("_");
+    protected List<@NotNull String> splitWords(String text) {
+      return Arrays.asList(text.split("_"));
     }
   }
 }

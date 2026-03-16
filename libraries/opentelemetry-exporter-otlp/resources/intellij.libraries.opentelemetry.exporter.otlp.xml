@@ -1,0 +1,8 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <!-- IJPL-233394: this module should depend on opentelemetry-exporter-otlp-common module -->
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.backend"/>
+    <!-- endregion -->
+  </dependencies>
+</idea-plugin>

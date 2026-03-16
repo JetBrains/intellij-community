@@ -15,7 +15,12 @@ import org.jetbrains.jps.incremental.artifacts.IncArtifactBuilder;
 import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactPathUtil;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.function.Predicate;

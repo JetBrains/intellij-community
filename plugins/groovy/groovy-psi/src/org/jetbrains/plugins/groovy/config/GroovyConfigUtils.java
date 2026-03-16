@@ -18,7 +18,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 public final class GroovyConfigUtils extends AbstractConfigUtils {

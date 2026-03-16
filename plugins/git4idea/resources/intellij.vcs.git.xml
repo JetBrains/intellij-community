@@ -1,5 +1,5 @@
 <!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
-<idea-plugin package="git4idea">
+<idea-plugin>
   <resource-bundle>messages.GitBundle</resource-bundle>
 
   <dependencies>
@@ -38,6 +38,10 @@
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction"/>
     <action id="Git.Squash.Commits" class="git4idea.rebase.log.squash.GitSquashLogAction"/>
     <action id="Git.Drop.Commits" class="git4idea.rebase.log.drop.GitDropLogAction"/>
+    <action id="Git.Show.WorkingTrees" class="git4idea.actions.workingTree.ShowWorkingTreesAction">
+      <add-to-group group-id="Vcs.Log.ToolWindow.TabActions.DropDown" relative-to-action="Vcs.ShowConsoleTab" anchor="after"/>
+    </action>
+    <action id="Git.CreateNewWorkingTree" class="git4idea.actions.workingTree.GitCreateWorkingTreeAction"/>
 
     <action id="Git.Drop.Selected.Changes" class="git4idea.rebase.log.changes.GitDropSelectedChangesAction">
       <add-to-group group-id="Vcs.RepositoryChangesBrowserMenu" relative-to-action="Vcs.ApplySelectedChanges" anchor="after"/>
@@ -53,6 +57,7 @@
       <mouse-shortcut keystroke="button1 doubleClick" keymap="$default"/>
       <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
     </action>
+    <group id="Git.Log.Branches.Toolbar.Actions"/>
     <action id="Git.Log.Branches.Navigate.Log.To.Selected.Branch"
             icon="AllIcons.General.Locate"
             use-shortcut-of="SelectIn"
@@ -98,6 +103,14 @@
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference ref="Vcs.ShowHistoryForBlock"/>
     </group>
+
+    <!-- Branches cleanup action -->
+    <action id="Git.Cleanup.Branches"
+            class="git4idea.ui.branch.cleanup.CleanupBranchesAction"
+            icon="AllIcons.Actions.ClearCash"
+            internal="true">
+      <add-to-group group-id="Vcs.Internal"/>
+    </action>
 
     <group id="Git.MainMenu.FileActions" class="git4idea.actions.GitFileActionGroup" popup="true">
       <reference ref="Git.FileActions"/>
@@ -149,6 +162,9 @@
       <action id="Git.Tag" class="git4idea.actions.GitTag"/>
       <action id="Git.Reset" class="git4idea.actions.GitResetHead"/>
       <separator/>
+      <reference ref="Git.CreateNewWorkingTree"/>
+      <reference ref="Git.Show.WorkingTrees"/>
+      <separator/>
       <reference ref="Vcs.Show.Log"/>
       <reference ref="Patch.MainMenu"/>
       <reference ref="Git.MainMenu.LocalChanges"/>
@@ -160,6 +176,7 @@
       <reference ref="Vcs.QuickListPopupAction"/>
       <separator/>
       <action id="Git.Revert.Abort" class="git4idea.actions.GitAbortOperationAction$Revert"/>
+      <action id="Git.CherryPick.Continue" class="git4idea.actions.GitCherryPickContinueAction"/>
       <action id="Git.CherryPick.Abort" class="git4idea.actions.GitAbortOperationAction$CherryPick"/>
 
       <add-to-group group-id="VcsGroups" relative-to-action="Vcs.MainMenu" anchor="after"/>
@@ -188,14 +205,18 @@
       <separator/>
       <reference ref="Git.Revert.Abort"/>
       <reference ref="Git.CherryPick.Abort"/>
+      <reference ref="Git.CherryPick.Continue"/>
     </group>
 
     <action id="git.update.force.pushed.branch" class="git4idea.actions.branch.GitForcePushedBranchUpdateAction" internal="true"/>
+
+    <action id="Git.FindMergedLocalBranches" class="git4idea.branch.FindMergedLocalBranchesAction" internal="true"/>
 
     <group id="Git.Ongoing.Rebase.Actions" popup="false">
       <reference ref="Git.Rebase.Abort"/>
       <reference ref="Git.Merge.Abort"/>
       <reference ref="Git.CherryPick.Abort"/>
+      <reference ref="Git.CherryPick.Continue"/>
       <reference ref="Git.Revert.Abort"/>
       <reference ref="Git.Rebase.Continue"/>
       <reference ref="Git.Rebase.Skip"/>
@@ -214,10 +235,15 @@
       <action class="git4idea.actions.branch.GitCheckoutFromInputAction"/>
     </group>
 
-    <group id="Git.Branch">
+    <group id="Git.Branch.Backend.Checkout">
       <action class="git4idea.actions.ref.GitCheckoutAction"/>
+      <action class="git4idea.actions.workingTree.GitOpenExistingWorkingTreeForLocalBranchAction"/>
       <action class="git4idea.actions.branch.GitCheckoutAsNewBranch"/>
       <action class="git4idea.actions.branch.GitCheckoutWithRebaseAction"/>
+      <add-to-group group-id="Git.Branch.Checkout" anchor="first"/>
+    </group>
+
+    <group id="Git.Branch.Backend">
       <separator/>
       <action id="Git.Ref.Compare.With"
               class="git4idea.actions.branch.GitCompareWithBranchAction"/>
@@ -227,16 +253,20 @@
       <action class="git4idea.actions.branch.GitRebaseBranchAction"/>
       <action class="git4idea.actions.ref.GitMergeRefAction"/>
       <separator/>
+      <reference ref="Git.CreateNewWorkingTree"/>
+      <separator/>
       <action class="git4idea.actions.branch.GitUpdateSelectedBranchAction"/>
       <action class="git4idea.actions.branch.GitPushBranchAction"/>
       <group id="Git.Branch.Tracked" class="git4idea.actions.branch.GitTrackedBranchActionGroup" popup="true"/>
       <action class="git4idea.actions.branch.GitPullBranchAction$WithRebase"/>
       <action class="git4idea.actions.branch.GitPullBranchAction$WithMerge"/>
       <separator/>
-      <group class="git4idea.actions.tag.GitPushTagsActionGroup"/>
+      <group id="Git.Push.Tags" class="git4idea.actions.tag.GitPushTagsActionGroup"/>
       <separator/>
       <action class="git4idea.actions.branch.GitRenameBranchAction" id="Git.Rename.Local.Branch"/>
       <action class="git4idea.actions.ref.GitDeleteRefAction"/>
+
+      <add-to-group group-id="Git.Branch.Placeholder"/>
     </group>
 
     <action class="git4idea.actions.tag.GitPushTagAction" id="Git.Tag.Push"/>
@@ -279,6 +309,8 @@
 
     <group id="Git.FileHistory.ContextMenu">
       <reference ref="Git.Revert.In.Log"/>
+      <reference ref="Git.Fixup.To.Commit"/>
+      <reference ref="Git.Squash.Into.Commit"/>
       <separator/>
       <reference ref="Git.CreateNewTag"/>
       <separator/>
@@ -304,6 +336,9 @@
       <reference ref="Git.Squash.Commits"/>
       <reference ref="Git.Interactive.Rebase"/>
       <reference ref="Git.PushUpToCommit"/>
+      <action id="Git.AddCommitToRemoteBranch"
+              class="git4idea.actions.addCommit.GitAddCommitToRemoteBranchAction"
+              internal="true"/>
       <separator/>
       <reference ref="Git.BranchOperationGroup"/>
       <action id="Git.CreateNewBranch.FromCommit"
@@ -315,7 +350,7 @@
     </group>
 
     <group id="Git.Log.Toolbar">
-      <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction"/>
+      <action id="Git.Log.HighlightCherryPickedCommits" class="git4idea.branch.HighlightCherryPickedCommitsAction"/>
       <add-to-group group-id="Vcs.Log.PresentationSettings" relative-to-action="Vcs.Log.HighlightersActionGroup" anchor="after"/>
     </group>
 
@@ -473,10 +508,10 @@
 
     <group id="Vcs.ToolbarWidget.CreateRepository" searchable="false">
       <group id="Vcs.ToolbarWidget.ShareProject" popup="true" searchable="false">
-        <reference ref="Start.Use.Vcs"/>
       </group>
       <reference ref="Git.Init"/>
       <separator/>
+      <reference ref="Start.Use.Vcs"/>
     </group>
 
     <action id="main.toolbar.git.MergeRebase" class="git4idea.ui.toolbar.GitMergeRebaseWidget">
@@ -489,6 +524,7 @@
       <reference ref="Git.Rebase.Continue"/>
       <reference ref="Git.Rebase.Abort"/>
       <reference ref="Git.Merge.Abort"/>
+      <reference ref="Git.CherryPick.Continue"/>
       <reference ref="Git.CherryPick.Abort"/>
       <reference ref="Git.Revert.Abort"/>
     </group>
@@ -512,18 +548,43 @@
 
     <action id="Git.Branches.Popup.Fetch"
             class="git4idea.ui.branch.GitBranchPopupFetchAction"/>
+
+    <action id="Git.WorkingTrees.Remove" class="git4idea.workingTrees.ui.RemoveWorkingTreeAction"
+            icon="AllIcons.General.Delete" use-shortcut-of="$Delete"/>
+    <action id="Git.WorkingTrees.Open" class="git4idea.workingTrees.ui.OpenWorkingTreeAction">
+      <mouse-shortcut keymap="$default" keystroke="button1 doubleClick"/>
+    </action>
+    <action id="Git.WorkingTrees.Refresh" class="git4idea.workingTrees.ui.RefreshWorkingTreesAction"
+            icon="AllIcons.General.Refresh" use-shortcut-of="Synchronize"/>
+
+    <group id="Git.WorkingTrees.ToolwindowGroup.Toolbar">
+      <reference ref="Git.CreateNewWorkingTree"/>
+      <reference ref="Git.WorkingTrees.Remove"/>
+      <reference ref="Git.WorkingTrees.Refresh"/>
+      <separator/>
+      <reference ref="ContextHelp"/>
+    </group>
+
+    <group id="Git.WorkingTrees.ToolwindowGroup.Popup" popup="true">
+      <reference ref="Git.WorkingTrees.Open"/>
+      <separator/>
+      <reference ref="Git.WorkingTrees.Remove"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <dependencySupport kind="vcs" coordinate="vcs:git" displayName="Git"/>
+
     <advancedSetting id="git.clone.recurse.submodules" default="true" groupKey="advanced.settings.git"/>
     <advancedSetting id="git.read.content.with" enumClass="git4idea.util.GitTextConvMode" default="FILTERS"
                      groupKey="advanced.settings.git"/>
     <advancedSetting id="git.use.push.force.with.lease" default="true" groupKey="advanced.settings.git"/>
     <advancedSetting id="git.update.incoming.outgoing.info" default="true" groupKey="advanced.settings.git"/>
+    <advancedSetting id="git.update.info.auto.open.enabled" default="true" bundle="messages.GitBundle" groupKey="advanced.settings.git"/>
     <advancedSetting id="git.commit.do.not.run.commit.hooks" default="false"  groupKey="advanced.settings.git"/>
     <advancedSetting id="git.use.schannel.on.windows" default="false" groupKey="advanced.settings.git" os="windows"/>
     <advancedSetting id="git.branch.cleanup.symbol" default="-" groupKey="advanced.settings.git"/>
-    <advancedSetting id="git.recent.projects.show.branch" enumClass="git4idea.repo.RecentProjectsShowBranchMode" default="DUPLICATE_NAMES"
+    <advancedSetting id="git.recent.projects.show.branch" enumClass="git4idea.repo.RecentProjectsShowBranchMode" default="ALWAYS"
                      bundle="messages.GitBundle" groupKey="advanced.settings.git"/>
 
     <registryKey key="git.blocking.read" defaultValue="true"
@@ -549,10 +610,10 @@
                               Otherwise only the affected files will be refreshed.
                               Affects only a subset of Git operations.
                               The option is needed to debug possible &quot;incomplete VFS refresh&quot; reports, if they appear."/>
-    <registryKey key="git.log.use.index.for.picked.commits.highlighting" defaultValue="true"
+    <registryKey key="git.log.use.index.for.find.picked.commits" defaultValue="true"
                  description="Find cherry-picked commits not only looking at patches using 'git cherry'
                               but also by matching commit author, author time and &quot;cherry picked from commit &lt;hash&gt;&quot; suffix."/>
-    <registryKey key="git.log.fast.picked.commits.highlighting" defaultValue="true"
+    <registryKey key="git.log.fast.find.picked.commits" defaultValue="true"
                  description="Find cherry-picked commits not looking at patches using 'git cherry'
                               but by matching commit author, author time and commit message. This allows to find commits that were cherry-picked with conflicts
                               and without adding &quot;cherry picked from commit &lt;hash&gt;&quot; suffix. Requires &quot;git.log.use.index.for.picked.commits.highlighting&quot; set to true."/>
@@ -597,7 +658,7 @@
                  description="Show toolwindow tab with stashes"/>
     <registryKey defaultValue="true" description="Use the new API for OS abstraction for projects in containers."
                  key="git.use.eel.for.container.projects"/>
-    <registryKey defaultValue="false" description="Use the new API for OS abstraction for WSL projects."
+    <registryKey defaultValue="true" description="Use the new API for OS abstraction for WSL projects."
                  key="git.use.eel.for.wsl.projects"/>
     <registryKey defaultValue="false" description="Use the new API for OS abstraction for local projects."
                  key="git.use.eel.for.local.projects"/>
@@ -612,6 +673,8 @@
                  When no changes are staged, stage and commit all changes in the project"/>
     <registryKey key="git.branches.panel.persist.tree.state" defaultValue="true"
                  description="Persist branches panel tree state between restarts"/>
+    <registryKey key="git.log.branches.use.async.tree.model" defaultValue="true"
+                 description="Use asynchronous branches dashboard tree model in Git Log. If disabled, use the synchronous model instead."/>
     <registryKey key="git.do.not.swap.merge.conflict.sides" defaultValue="false"
                  description="Do not inverse 'ours' and 'theirs' conflict sides during rebase"/>
     <registryKey key="git.recent.checkout.branches.reflog.entries.count" defaultValue="50"
@@ -628,10 +691,14 @@
                  description="Show actions for a tracked branch as a sub-popup in the local branch actions popup in Git branches popup."/>
     <registryKey key="git.drop.selected.changes.enabled" defaultValue="true"
                  description="Enables the 'Drop Selected Changes' action in Git log changes tree context menu."/>
-    <registryKey key="git.in.memory.commit.editing.operations.enabled" defaultValue="false"
+    <registryKey key="git.in.memory.commit.editing.operations.enabled" defaultValue="true"
                  description="Starts in-memory variants of interactive rebase operations in suitable scenarios, leading to better performance"/>
-    <registryKey key="git.in.memory.interactive.rebase.notify.errors" defaultValue="false"
+    <registryKey key="git.in.memory.interactive.rebase.debug.notify.errors" defaultValue="false"
                  description="Show notification when in-memory interactive rebase fails and fallbacks to the regular one"/>
+    <registryKey key="git.cherry.pick.use.git.sequencer" defaultValue="false"
+                 description="If enabled, Git will use a sequencer to cherry-pick multiple commits as a range (e.g., 'git cherry-pick A^..C') instead of applying each commit individually."/>
+    <registryKey key="git.commit.staged.saver.use.index.info" defaultValue="true"
+                 description="Uses an optimized approach to save and restore the index during changelist commits, improving performance"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
@@ -677,6 +744,7 @@
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500"/>
     <generalVcsSettingsExtension instance="git4idea.rebase.log.GitLogCommitEditingConfigurable"
                                  location="confirmations"/>
+    <vcs.updateOptionsDialogProvider implementation="git4idea.update.GitUpdateOptionsDialogProvider"/>
 
     <projectService serviceImplementation="git4idea.config.GitRebaseSettings"/>
     <projectService serviceImplementation="git4idea.config.GitMergeSettings"/>
@@ -689,7 +757,7 @@
                     serviceImplementation="git4idea.branch.GitBranchesUIHandlerImpl"/>
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
-    <applicationService serviceInterface="git4idea.commands.GitHttpAuthService"
+    <applicationService serviceInterface="git4idea.commands.GitHttpAuthService" open="true"
                         serviceImplementation="git4idea.commands.GitHttpAuthServiceImpl"/>
     <httpRequestHandler implementation="git4idea.commands.GitAskPassExternalProcessRest"/>
     <httpRequestHandler implementation="git4idea.rebase.GitRebaseEditorExternalProcessRest"/>
@@ -699,7 +767,7 @@
     <applicationService serviceInterface="git4idea.commands.Git"
                         serviceImplementation="git4idea.commands.GitImpl"/>
     <applicationService serviceImplementation="git4idea.config.GitExecutableManager"/>
-    <applicationService serviceImplementation="git4idea.DialogManager"/>
+    <applicationService serviceImplementation="git4idea.DialogManager" open="true"/>
     <applicationService serviceImplementation="git4idea.log.GitExternalLogTabsProperties"/>
 
     <applicationService serviceImplementation="git4idea.index.ui.GitStageUiApplicationSettings"/>
@@ -712,7 +780,7 @@
 
     <vcs.taskHandler implementation="git4idea.GitTaskHandler"/>
 
-    <logHighlighterFactory implementation="git4idea.branch.DeepComparator$Factory"/>
+    <logHighlighterFactory implementation="git4idea.branch.CherryPickedCommitsHighlighter$Factory"/>
 
     <ignoredFileContentProvider implementation="git4idea.ignore.GitIgnoredFileContentProvider"/>
     <openapi.vcs.changes.vcsPreservingExecutor implementation="git4idea.util.GitPreservingExecutor"/>
@@ -769,6 +837,10 @@
                  description="Show notification about modal commit deprecation if the version is specified"
                  restartRequired="false"/>
 
+    <registryKey key="git.log.provider.experimental.refs.collection" defaultValue="true"
+                 description="Reuse refs from GitRepository instead of relying on log command"
+                 restartRequired="false"/>
+
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
     <completion.contributor language="TEXT" implementationClass="git4idea.commit.GitCommitCompletionContributor"
                             order="first, before commitCompletion"/>
@@ -790,7 +862,6 @@
     <changesViewContent id="git.stage" tabName="Staging Area" className="git4idea.index.GitStageContentProvider"
                         predicateClassName="git4idea.index.GitStageContentVisibilityPredicate"
                         preloaderClassName="git4idea.index.GitStageContentPreloader"
-                        displayNameSupplierClassName="git4idea.index.GitStageDisplayNameSupplier"
                         isInCommitToolWindow="true"/>
     <vcs.changes.changesViewNodeAction implementation="git4idea.merge.GitChangesViewNodeAction"/>
 
@@ -829,9 +900,16 @@
     <postStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
     <backgroundPostStartupActivity implementation="git4idea.commit.signing.GpgAgentConfiguratorStartupActivity"/>
 
+    <changesViewContent id="git.working.trees" tabName="Working Trees" className="git4idea.workingTrees.ui.GitWorkingTreesContentProvider"
+                        predicateClassName="git4idea.workingTrees.ui.GitWorkingTreesContentVisibilityPredicate"
+                        preloaderClassName="git4idea.workingTrees.ui.GitWorkingTreesContentPreloader"
+                        isInCommitToolWindow="false"/>
+    <statistics.actionCustomPlaceAllowlist places="GitWorkingTreeToolWindowTabToolbar;GitWorkingTreeToolWindowTabEmptyList"/>
+    <backgroundPostStartupActivity implementation="git4idea.workingTrees.GitWorkingTreeStartupActivity"/>
+
     <projectService serviceInterface="git4idea.commands.GitCommandOutputPrinter"
                     serviceImplementation="git4idea.commands.GitCommandOutputConsolePrinter"/>
-    <projectService serviceInterface="git4idea.ui.branch.dashboard.BranchesDashboardFilteringLogic"
+    <projectService serviceInterface="git4idea.ui.branch.dashboard.BranchesDashboardFilteringLogic" open="true"
                     serviceImplementation="git4idea.ui.branch.dashboard.DefaultBranchDashboardFilteringLogic"/>
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFoldingImpl"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>
@@ -876,12 +954,14 @@
     <platform.rpc.backend.remoteApiProvider implementation="git4idea.remoteApi.GitApiProvider"/>
 
     <uiDataRule implementation="git4idea.actions.branch.GitBackendBranchesWidgetUiDataRule"/>
+
+    <vcs.commitSuccessNotificationActionProvider
+      implementation="git4idea.rebase.log.GitCommitSuccessNotificationRewordProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
     <gitRawAnnotationProvider implementation="git4idea.annotate.GitAnnotationProvider$DefaultGitAnnotationProvider"/>
-
-    <gitRepoIconProvider implementation="git4idea.ui.ColorManagerRepoIconProvider"/>
+    <gitFetchHandler implementation="git4idea.branch.GitBranchIncomingOutgoingManager$IncomingOutgoingRefreshFetchHandler"/>
   </extensions>
 
   <extensionPoints>
@@ -932,5 +1012,6 @@
               topic="git4idea.config.GitVcsSettings$GitVcsSettingsListener"/>
     <listener os="windows" class="git4idea.config.GitNewVersionCheckerStarter"
               topic="com.intellij.openapi.vcs.VcsMappingListener"/>
+
   </projectListeners>
 </idea-plugin>

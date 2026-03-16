@@ -3,8 +3,10 @@ from __future__ import annotations
 import sys
 import types
 from collections import UserDict
-from typing import Union
+from typing import Any, Literal, TypeVar, Union
 from typing_extensions import assert_type
+
+_T = TypeVar("_T")
 
 # test `types.SimpleNamespace`
 
@@ -58,3 +60,27 @@ class DCAtest:
     @foo.deleter
     def foo(self) -> None:
         self._value = None
+
+
+# check that NotImplemented is treated as an "Any"
+x: int = NotImplemented
+
+if sys.version_info >= (3, 10):
+    # test NotImplementedType usage
+    assert_type(NotImplemented, types.NotImplementedType)
+    assert_type(types.NotImplementedType(), types.NotImplementedType)
+    # test EllipsisType usage
+    assert_type(Ellipsis, types.EllipsisType)
+    assert_type(types.EllipsisType(), types.EllipsisType)
+    # test NoneType usage (disabled, passes with pyright, but mypy errors
+    # assert_type(None, types.NoneType)
+    # assert_type(types.NoneType(), types.NoneType)
+
+if sys.version_info >= (3, 11):
+    union_type = int | list[_T]
+
+    # ideally this would be `_SpecialForm` (Union)
+    assert_type(union_type | Literal[1], types.UnionType | Any)
+    # Both mypy and pyright special-case this operation,
+    # but in different ways, so we just check that no error is emitted:
+    _ = union_type[int]

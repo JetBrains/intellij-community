@@ -2,6 +2,7 @@
 package com.intellij.openapi.util
 
 import com.intellij.openapi.Disposable
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 
@@ -195,6 +196,7 @@ class RecursionManagerTest : TestCase() {
     })
   }
 
+  @PerformanceUnitTest
   fun testFullGraphPerformance() {
     val start = System.currentTimeMillis()
     val count = 20

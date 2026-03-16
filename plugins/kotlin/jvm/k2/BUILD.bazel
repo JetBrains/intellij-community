@@ -28,9 +28,9 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/util/coroutines",
     "//plugins/kotlin/base/util",
-    "//plugins/kotlin/idea",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/psi",
+    "//platform/execution",
     "//java/execution/impl",
     "//java/java-frontback-psi-api:frontback-psi",
     "//platform/vcs-impl",
@@ -46,6 +46,8 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//platform/util/jdom",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "//plugins/kotlin/base/scripting/scripting.scratch.definition",
   ]
 )
 ### auto-generated section `build intellij.kotlin.jvm` end

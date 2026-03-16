@@ -39,19 +39,29 @@ class PsiSourcedPolySymbolRequestResultProcessor(
         .filter { it.rangeInElement.containsOffset(offsetInElement) }
         .forEach { ref ->
           ProgressManager.checkCanceled()
-          val psiSourcedPolySymbols = ref.resolveReference().filterIsInstance<PsiSourcedPolySymbol>()
-          if (psiSourcedPolySymbols.isEmpty()) return@forEach
+
+          val psiSourcedPolySymbols = ref.resolveReference()
+            .filterIsInstance<PsiSourcedPolySymbol>()
+            .ifEmpty { return@forEach }
+
           val equivalentSymbol = if (targetSymbols.isEmpty()) {
             psiSourcedPolySymbols.find { it.isEquivalentTo(myTargetSymbol) }
           }
           else {
             targetSymbols.find { targetSymbol -> psiSourcedPolySymbols.any { it.isEquivalentTo(targetSymbol) } }
           }
-          if (equivalentSymbol == null) return@forEach
-          if (!consumer.process(
-              PsiSourcedPolySymbolReference(equivalentSymbol, targetElement, element, ref.rangeInElement))) {
+
+          equivalentSymbol ?: return@forEach
+
+          val equivalentSymbolReference = PsiSourcedPolySymbolReference(
+            symbol = equivalentSymbol,
+            sourceElement = targetElement,
+            host = element,
+            range = ref.rangeInElement,
+          )
+
+          if (!consumer.process(equivalentSymbolReference))
             return false
-          }
         }
     }
 

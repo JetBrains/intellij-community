@@ -15,7 +15,9 @@ import com.intellij.psi.PsiTarget
 import com.intellij.ui.SimpleTextAttributes
 import junit.framework.AssertionFailedError
 import junit.framework.ComparisonFailure
-import junit.framework.TestCase.*
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertNotNull
+import junit.framework.TestCase.assertTrue
 import javax.swing.Icon
 
 private const val MAX_DEPTH = 20
@@ -59,7 +61,7 @@ fun assertLogicalStructure(
         val presentation = it.presentation
         presentation.presentableText == pathPart || (presentation as? PresentationData)?.coloredText?.firstOrNull()?.text == pathPart
       } as? StructureViewTreeElement
-      assertNotNull("Can't find a child '$pathPart'", child)
+      assertNotNull("Can't find a child '$pathPart', available: ${targetStructureElement.children.map { it.presentation.presentableText }}", child)
       targetStructureElement = child!!
     }
     var actualRoot = createActualNode(targetStructureElement)
@@ -79,13 +81,9 @@ fun assertLogicalStructure(
     if (selectedElement != null) {
       val expectedSelectedPath = expectedRoot.getSelectedNodePath().let { it.subList(1, it.size) }
       val select = (structureView as StructureViewComponent).select(selectedElement, true)
-      val actualPaths = try {
-        val treePath = PlatformTestUtil.waitForPromise(select)
-        treePath!!.path.toList().let { it.subList(1, it.size) }
-      } catch (e: Throwable) {
-        e.printStackTrace()
-        throw e
-      }
+      val treePath = PlatformTestUtil.assertPromiseSucceeds(select) ?: throw AssertionError("No tree path found")
+      val actualPaths = treePath.path.toList().let { it.subList(1, it.size) }
+      if (actualPaths.isEmpty()) throw AssertionError("No selected node found")
       val nodePaths = nodePath?.split("/") ?: emptyList()
       for ((index, any) in actualPaths.withIndex()) {
         if (index < nodePaths.size) {

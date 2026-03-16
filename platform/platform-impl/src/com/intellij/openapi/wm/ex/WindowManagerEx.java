@@ -11,7 +11,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.Window;
 import java.awt.event.ComponentEvent;
 import java.util.List;
 

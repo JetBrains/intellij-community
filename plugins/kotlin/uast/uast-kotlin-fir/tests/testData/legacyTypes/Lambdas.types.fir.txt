@@ -8,7 +8,7 @@ UFile (package = ) [import java.util.stream.Stream...]
                 UBlockExpression [{...}] : int
                     UReturnExpression [return it.length]
                         UQualifiedReferenceExpression [it.length] : int
-                            USimpleNameReferenceExpression (identifier = it) [it] : java.lang.String
+                            USimpleNameReferenceExpression (identifier = it) [it] : @org.jetbrains.annotations.NotNull() java.lang.String
                             USimpleNameReferenceExpression (identifier = length) [length] : int
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] : java.util.stream.Stream<java.lang.String>

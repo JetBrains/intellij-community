@@ -5,17 +5,35 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.util.Key
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.ui.sanitizeLineSeparators
-import org.jetbrains.plugins.terminal.fus.*
+import org.jetbrains.plugins.terminal.fus.BatchLatencyReporter
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.fus.percentile
+import org.jetbrains.plugins.terminal.fus.secondLargest
+import org.jetbrains.plugins.terminal.fus.totalDuration
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
-import org.jetbrains.plugins.terminal.session.impl.*
+import org.jetbrains.plugins.terminal.session.impl.TerminalClearBufferEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkClickedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
+import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
+import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.view.impl.TerminalSendTextOptions
 import java.awt.event.KeyEvent
 import java.nio.charset.StandardCharsets
@@ -135,6 +153,16 @@ internal class TerminalInput(
   fun sendEnter() {
     val enterBytes = encodingManager.getCode(KeyEvent.VK_ENTER, 0)!!
     sendBytes(enterBytes)
+  }
+
+  fun sendLeft() {
+    val leftBytes = encodingManager.getCode(KeyEvent.VK_LEFT, 0)!!
+    sendBytes(leftBytes)
+  }
+
+  fun sendRight() {
+    val rightBytes = encodingManager.getCode(KeyEvent.VK_RIGHT, 0)!!
+    sendBytes(rightBytes)
   }
 
   private fun doSendBytes(data: ByteArray, eventTime: TimeMark?) {

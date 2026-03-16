@@ -24,6 +24,7 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.compose.ide.plugin.shared.COMPOSE_MODIFIER_CLASS_ID
 import com.intellij.compose.ide.plugin.shared.COMPOSE_MODIFIER_FQN
+import com.intellij.compose.ide.plugin.shared.COMPOSE_MODIFIER_NAME
 import com.intellij.compose.ide.plugin.shared.completion.ComposeModifierCompletionContributor
 import com.intellij.compose.ide.plugin.shared.completion.consumerCompletionResultFromRemainingContributor
 import com.intellij.openapi.progress.ProgressManager
@@ -37,7 +38,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
-import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -143,6 +145,16 @@ internal class K2ComposeModifierCompletionContributor : ComposeModifierCompletio
     }
   }
 
+  private fun isModifierPrefixMatch(
+    prefixMatcher: PrefixMatcher,
+    name: Name
+  ): Boolean {
+    // The user types part of `Modifier` we still want to show _all_ our results for Modifier extensions
+    if (COMPOSE_MODIFIER_NAME.asString().startsWith(prefixMatcher.prefix)) return true
+    // If the user types the name of some extension function on Modifier, we want to show it
+    return prefixMatcher.prefixMatches(name.asString())
+  }
+
   private fun KaSession.getExtensionFunctionsForModifier(
     nameExpression: KtSimpleNameExpression,
     originalPosition: PsiElement,
@@ -158,7 +170,7 @@ internal class K2ComposeModifierCompletionContributor : ComposeModifierCompletio
 
     return KtSymbolFromIndexProvider(file)
       .getExtensionCallableSymbolsByNameFilter(
-        { name -> prefixMatcher.prefixMatches(name.asString()) },
+        { name -> isModifierPrefixMatch(prefixMatcher, name) },
         listOf(receiverType),
       )
       .filter {

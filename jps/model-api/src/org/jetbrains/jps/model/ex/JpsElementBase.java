@@ -21,13 +21,6 @@ public abstract class JpsElementBase<Self extends JpsElementBase<Self>> implemen
     myParent = parent;
   }
 
-  /**
-   * @deprecated does nothing, all calls must be removed
-   */
-  @Deprecated(forRemoval = true)
-  protected void fireElementChanged() {
-  }
-
   @ApiStatus.Internal
   public static void setParent(@NotNull JpsElement element, @Nullable JpsElementBase<?> parent) {
     ((JpsElementBase<?>)element).setParent(parent);

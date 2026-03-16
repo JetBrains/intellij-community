@@ -26,7 +26,7 @@ import com.intellij.util.ui.IoErrorText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -35,8 +35,9 @@ import java.nio.file.Path;
 
 public class NewFolderAction extends FileChooserAction implements LightEditCompatible {
   @SuppressWarnings("unused")
-  private NewFolderAction() { }
+  NewFolderAction() { }
 
+  @SuppressWarnings("ActionPresentationInstantiatedInCtor")
   public NewFolderAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
     super(text, description, icon);
   }

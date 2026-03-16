@@ -1,8 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.codeVision
 
+import com.intellij.codeInsight.hints.codeVision.CodeVisionFusCollector.HISTOGRAM_BUCKETS
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId1
+import com.intellij.internal.statistic.eventLog.events.EventId3
+import com.intellij.internal.statistic.eventLog.events.FusHistogramBuilder
+import com.intellij.internal.statistic.eventLog.events.IntListEventField
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.lang.Language

@@ -9,7 +9,7 @@ import git4idea.repo.GitRepository
 import java.util.function.Supplier
 
 abstract class GitSingleBranchAction(dynamicText: Supplier<@NlsActions.ActionText String>) : GitSingleRefAction<GitBranch>(dynamicText) {
-  override val refClass = GitBranch::class
+  override val refClass = GitBranch::class.java
 
   constructor() : this(Presentation.NULL_STRING)
 

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteria;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 
 /**
  * @author Vladislav.Soroka

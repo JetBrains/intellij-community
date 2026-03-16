@@ -3,17 +3,24 @@ package com.intellij.codeInsight.hints.declarative.impl.util
 
 import com.intellij.codeInsight.hints.InlayDumpUtil
 import com.intellij.codeInsight.hints.InlayDumpUtil.InlayDumpPlacement
-import com.intellij.codeInsight.hints.declarative.*
-import com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationList
+import com.intellij.codeInsight.hints.declarative.AboveLineIndentedPosition
+import com.intellij.codeInsight.hints.declarative.HintColorKind
+import com.intellij.codeInsight.hints.declarative.HintFormat
+import com.intellij.codeInsight.hints.declarative.InlayPosition
+import com.intellij.codeInsight.hints.declarative.InlayTreeSink
+import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeIndentedBlockInlayRenderer
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRendererBase
-import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil.ExtractedHintInfo.*
+import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil.ExtractedHintInfo.ActiveOptionDiff
 import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil.ParserException
 import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil.extractHints
+import com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationList
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import org.jetbrains.annotations.ApiStatus
-import java.lang.Character.*
+import java.lang.Character.isJavaIdentifierPart
+import java.lang.Character.isJavaIdentifierStart
+import java.lang.Character.isWhitespace
 
 /**
  * Defines the hint dump format used for previews.

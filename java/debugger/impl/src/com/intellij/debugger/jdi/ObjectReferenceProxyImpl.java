@@ -7,7 +7,15 @@ package com.intellij.debugger.jdi;
 
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.Field;
+import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Type;
+import com.sun.jdi.VMDisconnectedException;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;

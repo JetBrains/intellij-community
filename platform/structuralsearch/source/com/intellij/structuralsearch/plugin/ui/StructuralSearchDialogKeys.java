@@ -12,6 +12,6 @@ public final class StructuralSearchDialogKeys {
   /**
    * @deprecated AI code generation for the structural search is not supported anymore.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final Key<Boolean> AI_SUPPORT_KEY = Key.create("ssr.ai.support");
 }

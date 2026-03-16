@@ -5,12 +5,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
-import org.hamcrest.CoreMatchers;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Tests for LombokBuilderCompletionContributor — verifies that a single special

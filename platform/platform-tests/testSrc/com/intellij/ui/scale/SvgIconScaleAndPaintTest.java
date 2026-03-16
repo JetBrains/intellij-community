@@ -11,7 +11,9 @@ import com.intellij.ui.scale.paint.ImageComparator.AASmootherComparator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.net.MalformedURLException;
 import java.nio.file.Path;

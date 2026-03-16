@@ -4,11 +4,14 @@ package com.intellij.platform.util.io.storages.appendonlylog;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.ContentTooBigException;
-import com.intellij.util.io.IOUtil;
 import com.intellij.platform.util.io.storages.StorageTestingUtils;
+import com.intellij.util.io.IOUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
@@ -17,13 +20,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 import static com.intellij.util.io.IOUtil.readString;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class AppendOnlyLogOverMMappedFileTest {

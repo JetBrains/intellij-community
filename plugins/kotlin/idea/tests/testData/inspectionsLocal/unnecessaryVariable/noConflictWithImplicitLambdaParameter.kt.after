@@ -1,0 +1,12 @@
+// WITH_STDLIB
+
+fun main() {
+    fun g(x: Long) = x
+    listOf(0L).map {
+        run {
+            g(it)
+        }
+    }
+}
+
+// IGNORE_K1

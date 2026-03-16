@@ -7,8 +7,10 @@ import com.intellij.codeInsight.hints.settings.showInlaySettings
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
+@K1Deprecation
 class ShowInlayHintsSettings(private val providerKey: SettingsKey<*>) : AnAction(KotlinBundle.message("action.hints.settings.text")) {
     override fun actionPerformed(e: AnActionEvent) {
         val file = e.getData(CommonDataKeys.PSI_FILE) ?: return

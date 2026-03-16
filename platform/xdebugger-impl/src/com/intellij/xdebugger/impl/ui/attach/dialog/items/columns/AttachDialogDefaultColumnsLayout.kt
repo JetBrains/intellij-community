@@ -4,7 +4,12 @@ package com.intellij.xdebugger.impl.ui.attach.dialog.items.columns
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElementsFilters
-import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.*
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.AttachTableCell
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.CommandLineCell
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.DebuggersCell
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.ExecutableCell
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.PidCell
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.UserCell
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogProcessNode
 
 internal class AttachDialogDefaultColumnsLayout : AttachDialogColumnsLayout() {

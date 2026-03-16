@@ -6,7 +6,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.MarkupIterator;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -16,7 +20,11 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.util.*;
+import com.intellij.util.BitUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Consumer;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +39,14 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   private volatile RangeHighlighter[] myCachedHighlighters;
   private final List<MarkupModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final RangeHighlighterTree myHighlighterTree;          // this tree holds regular highlighters with target = HighlighterTargetArea.EXACT_RANGE
-  private final RangeHighlighterTree myHighlighterTreeForLines;  // this tree holds line range highlighters with target = HighlighterTargetArea.LINES_IN_RANGE
+  /**
+   * this tree holds line range highlighters with {@link RangeHighlighter#getTargetArea()} = {@link HighlighterTargetArea#EXACT_RANGE}
+   */
+  private final RangeHighlighterTree myHighlighterTree;
+  /**
+   * this tree holds line range highlighters with {@link RangeHighlighter#getTargetArea()} = {@link HighlighterTargetArea#LINES_IN_RANGE}
+   */
+  private final RangeHighlighterTree myHighlighterTreeForLines;
 
   @ApiStatus.Internal
   protected MarkupModelImpl(@NotNull DocumentEx document) {
@@ -168,7 +182,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   @NotNull
-  RangeHighlighterTree treeFor(@NotNull RangeHighlighter highlighter) {
+  private RangeHighlighterTree treeFor(@NotNull RangeHighlighter highlighter) {
     return highlighter.getTargetArea() == HighlighterTargetArea.EXACT_RANGE ? myHighlighterTree : myHighlighterTreeForLines;
   }
 

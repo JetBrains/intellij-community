@@ -63,7 +63,7 @@ private class FindSettingsCoroutineScopeProvider(val coroutineScope: CoroutineSc
   }
 }
 
-private class FindSettingsInitializer : ApplicationInitializedListener {
+internal class FindSettingsInitializer : ApplicationInitializedListener {
   override suspend fun execute() {
     FindSettings.getInstance()
   }

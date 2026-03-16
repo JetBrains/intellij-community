@@ -1,0 +1,26 @@
+<html>
+<body>
+Reports calls to time-related functions that accept Long values in milliseconds/nanoseconds when Duration-based overloads are available.
+
+<p>Using Duration-based APIs provides better type safety and readability:</p>
+
+<ul>
+  <li>Coroutine functions like <code>delay()</code>, <code>withTimeout()</code>, <code>withTimeoutOrNull()</code></li>
+  <li>Flow operators like <code>debounce()</code>, <code>sample()</code></li>
+</ul>
+
+<p><b>Example:</b></p>
+<pre><code>
+// Before
+delay(1000)
+withTimeout(5000) { ... }
+
+// After
+delay(1000.milliseconds)
+withTimeout(5000.milliseconds) { ... }
+</code></pre>
+
+<!-- tooltip end -->
+<p>New in 2025.3</p>
+</body>
+</html>

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.withSafeCatch
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeLegacyItem
 import com.intellij.platform.searchEverywhere.providers.SeLog
+import com.intellij.platform.searchEverywhere.withUuidToReplace
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock

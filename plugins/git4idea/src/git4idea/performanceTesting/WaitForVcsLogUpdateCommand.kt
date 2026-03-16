@@ -14,7 +14,7 @@ import kotlinx.coroutines.withContext
  * @see com.intellij.vcs.log.impl.VcsLogManager.isLogUpToDate
  * @see com.intellij.vcs.log.impl.VcsLogManager.scheduleUpdate
  */
-class WaitForVcsLogUpdateCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+internal class WaitForVcsLogUpdateCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
     const val NAME = "waitForVcsLogUpdate"
     const val PREFIX = CMD_PREFIX + NAME

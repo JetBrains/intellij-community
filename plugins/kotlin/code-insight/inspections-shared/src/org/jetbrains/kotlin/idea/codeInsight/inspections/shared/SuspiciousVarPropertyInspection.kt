@@ -17,7 +17,11 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableM
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.isBackingFieldRequired
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.propertyVisitor
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 
 internal class SuspiciousVarPropertyInspection : KotlinApplicableInspectionBase<KtProperty, Unit>() {

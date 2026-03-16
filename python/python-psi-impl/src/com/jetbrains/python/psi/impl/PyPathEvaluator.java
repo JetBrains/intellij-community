@@ -19,7 +19,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +44,7 @@ public class PyPathEvaluator extends PyEvaluator {
     }
     VirtualFile vFile = expr.getContainingFile().getVirtualFile();
     Object result = new PyPathEvaluator(vFile == null ? null : vFile.getPath()).evaluate(expr);
-    return result instanceof String ? (String) result : null;
+    return result instanceof String ? (String)result : null;
   }
 
   @Override
@@ -57,7 +61,7 @@ public class PyPathEvaluator extends PyEvaluator {
     }
     if (expression.isCalleeText(PyNames.DIRNAME) && args.length == 1) {
       Object argValue = evaluate(args[0]);
-      return argValue instanceof String ? Paths.get((String) argValue).getParent().toFile().getPath() : null;
+      return argValue instanceof String ? Paths.get((String)argValue).getParent().toFile().getPath() : null;
     }
     else if (expression.isCalleeText(PyNames.JOIN) && args.length >= 1) {
       return evaluatePathInJoin(args, args.length);

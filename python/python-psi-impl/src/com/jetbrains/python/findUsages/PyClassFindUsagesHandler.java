@@ -32,5 +32,4 @@ public class PyClassFindUsagesHandler extends PyFindUsagesHandler {
   protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
     return true;
   }
-
 }

@@ -16,14 +16,22 @@ import com.intellij.ui.components.JBSlider
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.FlowLayout
 import java.awt.MouseInfo
 import java.awt.Point
-import javax.swing.*
+import javax.swing.BorderFactory
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.SwingConstants
 
 fun <T> showFontSizePopup(
   parentComponent: Component,

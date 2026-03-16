@@ -7,7 +7,27 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiModificationTracker
 import com.siyeh.ig.callMatcher.CallMatcher
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UIfExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UPolyadicExpression
+import org.jetbrains.uast.UPrefixExpression
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UResolvable
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.UastPrefixOperator
+import org.jetbrains.uast.getContainingUFile
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.isPsiAncestor
+import org.jetbrains.uast.resolveToUElement
+import org.jetbrains.uast.skipParenthesizedExprDown
+import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 class LoggingUtil {

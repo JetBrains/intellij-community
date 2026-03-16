@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -25,7 +26,13 @@ import org.jetbrains.jps.cache.model.OutputLoadResult;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -91,9 +98,7 @@ public final class JpsCompilationOutputLoader implements JpsOutputLoader<List<Ou
       myContext.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.extracting.downloaded.results"));
       List<Future<?>> futureList = ContainerUtil.map(outputLoadResults, loadResult ->
         EXECUTOR_SERVICE.submit(new UnzipOutputTask(result, loadResult, myContext)));
-      for (Future<?> future : futureList) {
-        future.get();
-      }
+      ConcurrencyUtil.getAll(futureList);
       myTmpFolderToModuleName = result;
       LOG.info("Unzip compilation output took: " + (System.currentTimeMillis() - start));
       return LoaderStatus.COMPLETE;

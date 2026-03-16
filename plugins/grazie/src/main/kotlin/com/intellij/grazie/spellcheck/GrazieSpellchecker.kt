@@ -14,31 +14,31 @@ import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassLoaderUtil.computeWithClassLoader
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.spellchecker.dictionary.Dictionary
-import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.*
-import com.intellij.spellchecker.grazie.SpellcheckerLifecycle
+import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Absent
+import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Alien
+import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present
 import com.intellij.util.io.computeDetached
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.job
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.spelling.SpellingCheckRule
 import java.nio.file.Files
 import java.util.concurrent.Callable
-
-internal class GrazieSpellcheckerLifecycle : SpellcheckerLifecycle {
-  override suspend fun preload(project: Project) {
-    serviceAsync<GrazieCheckers>()
-  }
-}
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
@@ -52,7 +52,7 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
   }
 
   private fun filterCheckers(word: String): Set<SpellerTool> {
-    val checkers = this.checkers
+    val checkers = heavyInit()
     if (checkers.isEmpty()) {
       return emptySet()
     }
@@ -72,12 +72,13 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
       return synchronized(speller) {
         computeWithClassLoader<Boolean, Throwable>(GraziePlugin.classLoader) {
           val sentence = tool.getRawAnalyzedSentence(word)
+          // First token is always sentence start
           if (sentence.nonWhitespaceTokenCount <= 2) return@computeWithClassLoader !speller.isMisspelled(word)
           if (speller.match(sentence).isEmpty()) {
             if (!speller.isMisspelled(word)) true
             else {
               // if the speller does not return matches, but the word is still misspelled (not in the dictionary),
-              // then this word was ignored by the rule (e.g. alien word), and we cannot be sure about its correctness
+              // then this word was ignored by the rule (e.g., alien word), and we cannot be sure about its correctness
               // let's try adding a small change to a word to see if it's alien
               val mutated = word + word.last() + word.last()
               if (speller.match(tool.getRawAnalyzedSentence(mutated)).isEmpty()) null else true
@@ -102,7 +103,7 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
   }
 
   @Volatile
-  private var checkers: Collection<SpellerTool> = heavyInit()
+  private var checkers: Set<SpellerTool>? = null
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private val configurationScope = coroutineScope.childScope("ConfigurationChanged", Dispatchers.Default.limitedParallelism(1))
@@ -113,13 +114,14 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
     connection.subscribe(CONFIG_STATE_TOPIC, this)
   }
 
-  // getService() enables cancellable code to be canceled even when init of service is a long operation
   @OptIn(DelicateCoroutinesApi::class)
-  private fun heavyInit(): Collection<SpellerTool> {
-    val set = LinkedHashSet<SpellerTool>()
-    for (lang in GrazieConfig.get().availableLanguages) {
-      if (lang.isEnglish()) continue
+  private fun heavyInit(): Set<SpellerTool> {
+    val checkers = this.checkers
+    if (!checkers.isNullOrEmpty()) return checkers
 
+    val langs = GrazieConfig.get().availableLanguages.filterNot { it.isEnglish() }
+    val set = LinkedHashSet<SpellerTool>()
+    for (lang in langs) {
       val tool = runBlockingCancellable {
         computeDetached {
           LangTool.getTool(lang, TextStyleDomain.Other)
@@ -128,17 +130,19 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
       tool.allSpellingCheckRules.firstOrNull()
         ?.let { set.add(SpellerTool(tool, lang, it)) }
     }
-
+    this.checkers = set
     return set
   }
 
   override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
+    if (prevState.availableLanguages == newState.availableLanguages) return
+    checkers = null
     configurationScope.launch {
-      checkers = heavyInit()
+      heavyInit()
     }
   }
 
-  fun hasSpellerTool(langs: List<Lang>): Boolean = langs.any { lang -> checkers.any { it.lang == lang } }
+  fun hasSpellerTool(langs: List<Lang>): Boolean = langs.any { lang -> checkers?.any { it.lang == lang } ?: false }
 
   fun lookup(word: String): Dictionary.LookupStatus {
     val myCheckers = filterCheckers(word)

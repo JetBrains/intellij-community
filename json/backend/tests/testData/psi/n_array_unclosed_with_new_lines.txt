@@ -1,0 +1,15 @@
+JsonFile: n_array_unclosed_with_new_lines.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
+    PsiWhiteSpace('\n')
+    PsiElement(,)(',')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
+    PsiErrorElement:',' or ']' expected
+      <empty list>

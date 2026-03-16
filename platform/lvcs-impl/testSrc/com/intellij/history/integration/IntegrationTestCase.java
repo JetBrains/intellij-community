@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration;
 
-import com.intellij.history.core.*;
+import com.intellij.history.core.HistoryPathFilter;
+import com.intellij.history.core.LocalHistoryFacade;
+import com.intellij.history.core.LocalHistoryFacadeKt;
+import com.intellij.history.core.LocalHistoryTestCase;
+import com.intellij.history.core.Paths;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
@@ -17,7 +21,11 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.lvcs.impl.RevisionId;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;

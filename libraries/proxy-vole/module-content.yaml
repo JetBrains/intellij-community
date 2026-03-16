@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.proxy.vole.jar
   modules:
   - name: intellij.libraries.proxy.vole
   library: proxy-vole

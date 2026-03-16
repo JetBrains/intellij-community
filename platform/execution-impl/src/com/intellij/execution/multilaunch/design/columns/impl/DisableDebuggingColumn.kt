@@ -1,16 +1,21 @@
 package com.intellij.execution.multilaunch.design.columns.impl
 
 import com.intellij.execution.ExecutionBundle
-import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.util.ui.AbstractTableCellEditor
-import com.intellij.util.ui.UIUtil
 import com.intellij.execution.multilaunch.design.ExecutableRow
 import com.intellij.execution.multilaunch.design.columns.ExecutableTableColumn
 import com.intellij.execution.multilaunch.design.tooltips.TooltipProvider
 import com.intellij.execution.multilaunch.design.tooltips.TooltipProvidersContainer
-import java.awt.*
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.util.ui.AbstractTableCellEditor
+import com.intellij.util.ui.UIUtil
+import java.awt.BorderLayout
+import java.awt.Component
 import java.awt.event.ItemEvent
-import javax.swing.*
+import javax.swing.JCheckBox
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTable
+import javax.swing.SwingConstants
 import javax.swing.table.DefaultTableCellRenderer
 
 class DisableDebuggingColumn : ExecutableTableColumn<Boolean>("") {

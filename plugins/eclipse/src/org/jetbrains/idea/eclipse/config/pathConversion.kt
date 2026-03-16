@@ -16,10 +16,10 @@ import com.intellij.openapi.vfs.ex.http.HttpFileSystem
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
-import com.intellij.platform.workspace.jps.entities.LibraryRoot
 import com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
-import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
+import com.intellij.platform.workspace.jps.entities.LibraryRoot
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.toPath
@@ -165,7 +165,7 @@ internal fun convertRelativePathToUrl(path: String,
                                       contentRootEntity: ContentRootEntityBuilder,
                                       pathResolver: ModuleRelativePathResolver,
                                       virtualUrlManager: VirtualFileUrlManager): VirtualFileUrl {
-  if (!File(path).exists()) {
+  if (path.isEmpty() || !File(path).exists()) {
     if (path.startsWith("/")) {
       //relative to other project
       val moduleName = EPathCommonUtil.getRelativeModuleName(path)

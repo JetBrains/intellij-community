@@ -3,12 +3,17 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.options.CustomComponentExtension;
+import com.intellij.codeInspection.options.LocMessage;
+import com.intellij.codeInspection.options.OptCustom;
 import com.intellij.codeInspection.options.OptDropdown;
 import com.intellij.codeInspection.options.OptMultiSelector;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.PlainMessage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.testFramework.junit5.TestApplication;
@@ -23,11 +28,28 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import java.util.List;
 
-import static com.intellij.codeInspection.options.OptPane.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.dropdown;
+import static com.intellij.codeInspection.options.OptPane.expandableString;
+import static com.intellij.codeInspection.options.OptPane.group;
+import static com.intellij.codeInspection.options.OptPane.horizontalStack;
+import static com.intellij.codeInspection.options.OptPane.multiSelector;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.separator;
+import static com.intellij.codeInspection.options.OptPane.string;
+import static com.intellij.codeInspection.options.OptPane.tab;
+import static com.intellij.codeInspection.options.OptPane.tabs;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
 public class UiDslOptPaneRendererTest {
@@ -331,5 +353,76 @@ public class UiDslOptPaneRendererTest {
     assertEquals("String", list.getSelectedValuesList().get(0).getText());
     assertEquals("Double", list.getSelectedValuesList().get(1).getText());
     assertEquals(inspection.chosen, list.getSelectedValuesList());
+  }
+
+  @Test
+  public void testCustomControlWithLabel() {
+    CustomComponentExtension.EP_NAME.getPoint().registerExtension(
+      new CustomComponentExtensionWithSwingRenderer<String>("labeled") {
+        @Override
+        public @NotNull String serializeData(String s) {
+          return s;
+        }
+
+        @Override
+        public String deserializeData(@NotNull String data) {
+          return data;
+        }
+
+        @Override
+        public @NotNull JComponent render(String data, @NotNull OptionController controller, @NotNull Project project) {
+          return new JComboBox<>();
+        }
+      }, myDisposable);
+
+    final String expectedLabel = "MyLabel";
+    var inspection = new LocalInspectionTool() {
+      @Override
+      public @NotNull OptPane getOptionsPane() {
+        return pane(new OptCustom("labeled", "bindId", new PlainMessage(expectedLabel)));
+      }
+    };
+
+    final JComponent component = render(inspection);
+
+    final JLabel label = UIUtil.findComponentOfType(component, JLabel.class);
+    assertNotNull(label);
+    assertEquals(expectedLabel, label.getText());
+  }
+
+  @Test
+  public void testCustomControlWithController() {
+    CustomComponentExtension.EP_NAME.getPoint().registerExtension(
+      new CustomComponentExtensionWithSwingRenderer<String>("controlled") {
+        @Override
+        public @NotNull String serializeData(String s) {
+          return s;
+        }
+
+        @Override
+        public String deserializeData(@NotNull String data) {
+          return data;
+        }
+
+        @Override
+        public @NotNull JComponent render(String data, @NotNull OptionController controller, @NotNull Project project) {
+          return new JLabel("val:" + controller.getOption(data));
+        }
+      }, myDisposable);
+
+    var inspection = new LocalInspectionTool() {
+      public static final String myOption = "initial";
+
+      @Override
+      public @NotNull OptPane getOptionsPane() {
+        return pane(new OptCustom("controlled", "myOption", LocMessage.empty()));
+      }
+    };
+
+    final JComponent component = render(inspection);
+
+    final JLabel label = UIUtil.findComponentOfType(component, JLabel.class);
+    assertNotNull(label);
+    assertEquals("val:" + inspection.myOption, label.getText());
   }
 }

@@ -7,7 +7,11 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.ui.ScreenUtil
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.*
+import com.jetbrains.rd.util.reactive.IOptProperty
+import com.jetbrains.rd.util.reactive.IProperty
+import com.jetbrains.rd.util.reactive.OptProperty
+import com.jetbrains.rd.util.reactive.Property
+import com.jetbrains.rd.util.reactive.adviseNotNull
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Point

@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.settingsSync.jba" allow-bundled-update="true">
+<idea-plugin allow-bundled-update="true">
   <name>Backup and Sync</name>
   <id>com.intellij.settingsSync</id>
   <category>IDE Settings</category>
@@ -12,10 +12,9 @@
     <module name="intellij.settingsSync.core"/>
     <plugin id="com.intellij.marketplace"/>
   </dependencies>
-  <!--suppress PluginXmlValidity -->
+
   <content namespace="jetbrains">
-    <!-- The implicit main module of the plugin depends on internal modules (intellij.settingsSync.core), so it's required to set the namespace for it
-         todo: extract elements and dependencies to an explicit content module (see IJPL-212351) -->
+    <module name="intellij.settingsSync.performanceTesting"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">

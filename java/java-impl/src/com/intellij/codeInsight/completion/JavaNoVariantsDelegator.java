@@ -11,12 +11,28 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiJavaCodeReferenceCodeFragment;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,7 +43,11 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.codeInsight.completion.JavaCompletionContributor.UNEXPECTED_REFERENCE_AFTER_DOT;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
@@ -35,6 +55,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 public final class JavaNoVariantsDelegator extends CompletionContributor implements DumbAware {
   @Override
   public void fillCompletionVariants(final @NotNull CompletionParameters parameters, final @NotNull CompletionResultSet result) {
+    if (ModCompletionItemProvider.modCommandCompletionEnabled()) return;
     ResultTracker tracker = new ResultTracker(result) {
       @Override
       public void consume(CompletionResult plainResult) {

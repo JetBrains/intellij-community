@@ -24,7 +24,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @NeedsCloud
 public class TranslateTest extends BaseTestCase {
-  private static final String INTENTION_TEXT = GrazieBundle.message("intention.translate.text");
+  private static String getIntentionText() {
+    return GrazieBundle.message("intention.translate.text");
+  }
 
   private void mockTranslation() {
     Map<String, String> translations = Map.of(
@@ -79,7 +81,7 @@ public class TranslateTest extends BaseTestCase {
   public void testFragmentUnderCaret() {
     mockTranslation();
     translateIntoGerman();
-    checkIntention("a.md", INTENTION_TEXT,
+    checkIntention("a.md", getIntentionText(),
       "<caret>A library is a collection of compiled code that you can add to your project.\n\nAnother sentence.",
       "Eine Bibliothek ist eine Sammlung kompilierter Code, die Sie an Ihr Projekt hinzufügen können.\n\nAnother sentence.");
   }
@@ -88,7 +90,7 @@ public class TranslateTest extends BaseTestCase {
   public void testSelection() {
     mockTranslation();
     translateIntoGerman();
-    checkIntention("a.md", INTENTION_TEXT,
+    checkIntention("a.md", getIntentionText(),
       "Before. <caret><selection>A library is a collection of compiled code that you can add to your project.\n\nAnother line.</selection> After.",
       "Before. Eine Bibliothek ist eine Sammlung kompilierter Code, die Sie an Ihr Projekt hinzufügen können.\n\nEine weitere Zeile. After.");
   }
@@ -104,14 +106,14 @@ public class TranslateTest extends BaseTestCase {
           .toList(),
         "Deutsch"
       ));
-    checkIntention("a.md", INTENTION_TEXT, "receive", "bekommen");
+    checkIntention("a.md", getIntentionText(), "<selection>receive</selection>", "bekommen");
   }
 
   @Test
   public void testSingleLineSelectionInMultiLineComment() {
     mockTranslation();
     translateIntoGerman();
-    checkIntention("a.java", INTENTION_TEXT,
+    checkIntention("a.java", getIntentionText(),
       """
         /**
           * <selection><caret>This is the first sentence. This is the second sentence.</selection>
@@ -130,7 +132,7 @@ public class TranslateTest extends BaseTestCase {
   public void testProcessFragmentsWithInjections() {
     mockTranslation();
     translateIntoGerman();
-    checkIntention("a.properties", INTENTION_TEXT,
+    checkIntention("a.properties", getIntentionText(),
       "<selection>prop1=A library is a collection of compiled code that you can add to your project.\n" +
       "prop2=Something {0} unknown</selection>",
       "<selection>prop1=Eine Bibliothek ist eine Sammlung kompilierter Code, die Sie an Ihr Projekt hinzufügen können.\n" +
@@ -141,8 +143,18 @@ public class TranslateTest extends BaseTestCase {
   public void testRealServerTranslation() {
     translateIntoGerman();
     myFixture.configureByText("a.txt", "<selection>I see this.</selection>");
-    myFixture.launchAction(findSingleIntention(INTENTION_TEXT));
+    myFixture.launchAction(findSingleIntention(getIntentionText()));
     String result = myFixture.getEditor().getDocument().getText();
     assertTrue(result.toLowerCase(Locale.ROOT).contains("ich"), result);
+  }
+
+  @Test
+  public void testNoTranslationForNonNaturalText() {
+    checkIntentionIsAbsent("test.yaml", getIntentionText(), """
+      rec<caret>eive:
+        id: 123
+        topic: K
+        message: Hello World
+      """);
   }
 }

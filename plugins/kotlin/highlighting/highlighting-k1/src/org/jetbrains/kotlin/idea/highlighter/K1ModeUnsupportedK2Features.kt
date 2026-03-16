@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticWithParameters1
 import org.jetbrains.kotlin.diagnostics.rendering.DiagnosticParameterRenderer
 import org.jetbrains.kotlin.diagnostics.rendering.RenderingContext
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.KotlinBaseFe10HighlightingBundle
-import java.util.*
+import java.util.EnumSet
 
 internal val UNSUPPORTED_K2_BETA_FEATURES: EnumSet<LanguageFeature> = EnumSet.of(
     LanguageFeature.MultiDollarInterpolation,

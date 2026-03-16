@@ -6,7 +6,11 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.indexing.ID;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +19,11 @@ import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 @Internal
 public abstract class StubForwardIndexExternalizer<StubKeySerializationState>

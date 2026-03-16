@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;

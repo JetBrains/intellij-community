@@ -245,6 +245,11 @@ public class FirLegacyUastResolveEverythingTestGenerated extends AbstractFirLega
         runTest("../../uast-kotlin/tests/testData/NonTrivialIdentifiers.kt");
     }
 
+    @TestMetadata("ObjectExpressionMultipleInterfaces.kt")
+    public void testObjectExpressionMultipleInterfaces() throws Exception {
+        runTest("../../uast-kotlin/tests/testData/ObjectExpressionMultipleInterfaces.kt");
+    }
+
     @TestMetadata("ParameterPropertyWithAnnotation.kt")
     public void testParameterPropertyWithAnnotation() throws Exception {
         runTest("../../uast-kotlin/tests/testData/ParameterPropertyWithAnnotation.kt");

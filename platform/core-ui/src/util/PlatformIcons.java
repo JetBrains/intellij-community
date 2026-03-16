@@ -4,7 +4,7 @@ package com.intellij.util;
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.IconManager;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public interface PlatformIcons {
   Icon PUBLIC_ICON = AllIcons.Nodes.C_public;

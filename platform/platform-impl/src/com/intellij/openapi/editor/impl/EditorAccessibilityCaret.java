@@ -10,7 +10,8 @@ import javax.swing.event.ChangeListener;
 import javax.swing.text.Caret;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Graphics;
+import java.awt.Point;
 
 /**
  * {@linkplain DefaultCaret} does a lot of work we don't want (listening for focus events etc).

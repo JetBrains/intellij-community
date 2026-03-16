@@ -1,6 +1,8 @@
 from collections.abc import Iterator, Sequence
 from typing import Any, overload
+from typing_extensions import disjoint_base
 
+@disjoint_base
 class ResultRow:
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     column_names: tuple[str, ...]

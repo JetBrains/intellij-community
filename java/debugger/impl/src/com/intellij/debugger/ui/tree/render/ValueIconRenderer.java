@@ -6,7 +6,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public interface ValueIconRenderer {
   @Nullable

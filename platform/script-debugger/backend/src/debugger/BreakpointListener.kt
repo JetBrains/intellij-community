@@ -2,7 +2,7 @@
 package org.jetbrains.debugger
 
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 @ApiStatus.NonExtendable
 interface BreakpointListener : EventListener {

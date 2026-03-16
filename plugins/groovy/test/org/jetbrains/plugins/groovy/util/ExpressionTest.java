@@ -10,7 +10,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-import static com.intellij.testFramework.UsefulTestCase.*;
+import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
+import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
+import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
 
 public interface ExpressionTest extends ResolveTest, TypingTest {
 

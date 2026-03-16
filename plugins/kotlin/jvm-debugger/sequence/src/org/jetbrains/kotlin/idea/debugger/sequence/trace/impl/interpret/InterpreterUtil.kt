@@ -6,7 +6,9 @@ import com.intellij.debugger.streams.core.trace.ArrayReference
 import com.intellij.debugger.streams.core.trace.TraceElement
 import com.intellij.debugger.streams.core.trace.Value
 import com.intellij.debugger.streams.core.trace.impl.interpret.ex.UnexpectedValueException
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 object InterpreterUtil {
 
     fun extractMap(value: Value): MapRepresentation {

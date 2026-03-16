@@ -21,7 +21,7 @@ import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.BooleanProperty;
 import com.intellij.util.config.ToggleBooleanProperty;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class ToggleModelAction extends ToggleBooleanProperty.Disablable {
   public ToggleModelAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon, AbstractProperty.AbstractPropertyContainer properties,

@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider
@@ -37,8 +38,23 @@ import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
+import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
+import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
+import org.jetbrains.kotlin.psi.psiUtil.siblings
 
 object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
     private val REFACTORING_NAME = KotlinBundle.message("name.introduce.import.alias")
@@ -61,15 +77,16 @@ object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
                 scopes.add(file.scopeContext(element).compositeScope())
                 var receiverExpression = element.getReceiverExpression()
                 while (receiverExpression != null) {
+                    val resolveToSymbol = ((receiverExpression as? KtQualifiedExpression)?.selectorExpression
+                        ?: receiverExpression).mainReference?.resolveToSymbol()
                     scopes.addIfNotNull(
-                        (((receiverExpression as? KtQualifiedExpression)?.selectorExpression
-                            ?: receiverExpression).mainReference?.resolveToSymbol() as? KaNamedClassSymbol)?.combinedDeclaredMemberScope
+                        (resolveToSymbol as? KaNamedClassSymbol)?.combinedDeclaredMemberScope ?: (resolveToSymbol as? KaPackageSymbol)?.packageScope
                     )
                     receiverExpression = (receiverExpression as? KtQualifiedExpression)?.receiverExpression
                 }
 
                 scopes.asCompositeScope().declarations.filter { symbol ->
-                    fqName.shortName() == (symbol as? KaNamedSymbol)?.name ||
+                    fqName == (symbol as? KaNamedSymbol)?.importableFqName ||
                             (symbol as? KaNamedClassSymbol)?.companionObject?.name == fqName.shortName() && fqName.parent().shortName() == symbol.name
                 }
                     .mapNotNull { it.psi as? KtNamedDeclaration ?: it.psi as? PsiMember }

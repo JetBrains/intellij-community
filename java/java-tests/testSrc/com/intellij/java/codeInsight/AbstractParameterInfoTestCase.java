@@ -12,8 +12,8 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.testFramework.AutoPopupParameterInfoTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -58,7 +58,7 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
   public static void waitForParameterInfo() {
     // effective there is a chain of 5 nonBlockingRead actions
     for (int i = 0; i < 5; i++) {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     }
   }
@@ -121,7 +121,7 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
     while (ParameterHintsPresentationManager.getInstance().isAnimationInProgress(editor)) {
       if (System.currentTimeMillis() > deadline) fail("Too long waiting for animation to finish");
       LockSupport.parkNanos(10_000_000);
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
   }
 

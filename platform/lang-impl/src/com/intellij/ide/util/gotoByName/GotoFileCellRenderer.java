@@ -22,8 +22,8 @@ import com.intellij.util.ui.FilePathSplittingPolicy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JList;
+import java.awt.Color;
 import java.io.File;
 
 public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSystemItem> {

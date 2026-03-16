@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
@@ -19,13 +20,40 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.AWTAccessor;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.ContainerListener;
+import java.awt.event.FocusListener;
+import java.awt.event.HierarchyBoundsListener;
+import java.awt.event.HierarchyListener;
+import java.awt.event.InputMethodListener;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
 import java.beans.PropertyChangeListener;
 import java.util.function.Consumer;
 
@@ -263,7 +291,7 @@ public final class GuiUtils {
    * removes all children and parent references, listeners from {@code container} to avoid possible memory leaks
    */
   public static void removePotentiallyLeakingReferences(@NotNull Container container) {
-    assert SwingUtilities.isEventDispatchThread();
+    assert EDT.isCurrentThreadEdt();
     AWTAccessor.getComponentAccessor().setParent(container, null);
     container.removeAll();
     for (ComponentListener c : container.getComponentListeners()) container.removeComponentListener(c);

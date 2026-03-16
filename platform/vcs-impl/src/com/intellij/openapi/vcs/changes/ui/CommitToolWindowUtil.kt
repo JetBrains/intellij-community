@@ -5,6 +5,7 @@ import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffEditorTabFilesUtil.forceOpenInNewWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.changes.EditorTabDiffPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowType
@@ -17,7 +18,7 @@ internal object CommitToolWindowUtil {
 
 
   @JvmStatic
-  fun openDiff(sourceTwId: String, diffPreview: TreeHandlerEditorDiffPreview, requestFocus: Boolean): Boolean {
+  fun openDiff(sourceTwId: String, diffPreview: EditorTabDiffPreview, requestFocus: Boolean): Boolean {
     if (!diffPreview.hasContent()) return false
 
     val project = diffPreview.project

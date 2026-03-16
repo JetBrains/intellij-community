@@ -39,7 +39,7 @@ abstract class ExternalJavaConfigurationTest: HeavyPlatformTestCase() {
   override fun tearDown() {
     try {
       runWriteActionAndWait {
-        ProjectJdkTable.getInstance().apply {
+        ProjectJdkTable.getInstance(project).apply {
           allJdks.forEach { removeJdk(it) }
         }
       }

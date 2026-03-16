@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Editor;
@@ -28,7 +29,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.DirtyUI;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.Gray;
+import com.intellij.ui.RelativeFont;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
@@ -42,9 +47,17 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -276,7 +289,9 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
   protected void navigateToCrumb(Crumb crumb, boolean withSelection) {
     if (crumb instanceof NavigatableCrumb navigatableCrumb) {
       myUserCaretChange = false;
-      navigatableCrumb.navigate(myEditor, withSelection);
+      WriteIntentReadAction.run(() -> {
+        navigatableCrumb.navigate(myEditor, withSelection);
+      });
     }
   }
 

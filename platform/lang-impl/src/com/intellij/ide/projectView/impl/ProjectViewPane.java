@@ -9,34 +9,30 @@ import com.intellij.ide.impl.ProjectPaneSelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.canBeSelected.CanBeSelectedInProjectPaneProvider;
 import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
-import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
-import java.awt.*;
+import java.awt.Font;
 
 import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled;
-import static java.awt.EventQueue.isDispatchThread;
 
 public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
   public static final @NonNls String ID = "ProjectPane";
@@ -90,7 +86,7 @@ public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
    * @return {@code true} if 'Project View' have more than one top-level module node or have top-level module group nodes
    */
   private boolean hasSeveralTopLevelModuleNodes() {
-    if (!isDispatchThread()) return true; // do not check nodes during building
+    if (!EDT.isCurrentThreadEdt()) return true; // do not check nodes during building
     // TODO: have to rewrite this logic without using walking in a tree
     TreeModel treeModel = myTree.getModel();
     Object root = treeModel.getRoot();
@@ -158,20 +154,7 @@ public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
   }
 
   public static boolean canBeSelectedInProjectView(@NotNull Project project, @NotNull VirtualFile file) {
-    final VirtualFile archiveFile;
-
-    if(file.getFileSystem() instanceof ArchiveFileSystem)
-      archiveFile = ((ArchiveFileSystem)file.getFileSystem()).getLocalByEntry(file);
-    else
-      archiveFile = null;
-
-    ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    final VirtualFile baseDir = project.getBaseDir();
-    return (archiveFile != null && index.getContentRootForFile(archiveFile, false) != null) ||
-           index.getContentRootForFile(file, false) != null ||
-           index.isInLibrary(file) ||
-           (baseDir != null && VfsUtilCore.isAncestor(baseDir, file, false)) ||
-           (ScratchUtil.isScratch(file) && ProjectView.getInstance(project).isShowScratchesAndConsoles(ID));
+    return CanBeSelectedInProjectPaneProvider.canBeSelected(project, file);
   }
 
   @Override

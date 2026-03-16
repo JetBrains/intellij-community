@@ -60,7 +60,7 @@ class JBNavigateCommandTest : NavigationTestBase() {
   }
 
   @Test
-  fun pathOpenProject(): Unit = runBlocking {
+  fun pathOpenProject(): Unit = runBlocking(Dispatchers.Default) {
     val projectManager = ProjectManagerEx.getInstanceEx()
     val prevProjects = projectManager.openProjects.toHashSet()
 

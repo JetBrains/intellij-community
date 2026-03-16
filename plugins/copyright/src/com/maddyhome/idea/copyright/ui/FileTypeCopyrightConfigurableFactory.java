@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.xml.util.JspFileTypeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public final class FileTypeCopyrightConfigurableFactory {
@@ -23,8 +24,7 @@ public final class FileTypeCopyrightConfigurableFactory {
                                       CopyrightBundle.message("radio.location.in.file.before.imports"),
                                       CopyrightBundle.message("radio.location.in.file.before.class"));
     }
-    if (fileType.equals(XmlFileType.INSTANCE) ||
-        fileType.equals(HtmlFileType.INSTANCE) || fileType.equals(StdFileTypes.JSP) || fileType.equals(StdFileTypes.JSPX)) {
+    if (fileType.equals(XmlFileType.INSTANCE) || fileType.equals(HtmlFileType.INSTANCE) || JspFileTypeUtil.isJspOrJspX(fileType)) {
       return new TemplateCommentPanel(fileType, parentPanel, project,
                                       CopyrightBundle.message("radio.location.in.file.before.doctype"),
                                       CopyrightBundle.message("radio.location.in.file.before.root.tag"));

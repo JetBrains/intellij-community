@@ -5,9 +5,11 @@ package org.jetbrains.kotlin.idea.highlighter
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 
+@K1Deprecation
 abstract class KotlinHighlightingVisitorExtension {
     abstract fun highlightDeclaration(elementToHighlight: PsiElement, descriptor: DeclarationDescriptor): HighlightInfoType?
 

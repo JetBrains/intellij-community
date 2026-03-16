@@ -4,7 +4,7 @@ package com.intellij.application.options
 import com.intellij.java.frontback.impl.JavaFrontbackBundle
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.psi.codeStyle.ImportsLayoutSettings
+import com.intellij.psi.codeStyle.JavaImportsLayoutSettings
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.columns
@@ -65,7 +65,7 @@ open class CodeStyleImportsBaseUI(private val packages: JComponent, private val 
 
   open fun Panel.fillCustomOptions() {}
 
-  open fun reset(settings: ImportsLayoutSettings) {
+  open fun reset(settings: JavaImportsLayoutSettings) {
     cbUseFQClassNames.setSelected(settings.isUseFqClassNames())
     cbUseSingleClassImports.setSelected(settings.isUseSingleClassImports())
     cbInsertInnerClassImports.setSelected(settings.isInsertInnerClassImports())
@@ -73,7 +73,7 @@ open class CodeStyleImportsBaseUI(private val packages: JComponent, private val 
     namesCountField.text = settings.getNamesCountToUseImportOnDemand().toString()
   }
 
-  fun apply(settings: ImportsLayoutSettings) {
+  fun apply(settings: JavaImportsLayoutSettings) {
     settings.setUseFqClassNames(cbUseFQClassNames.isSelected)
     settings.setUseSingleClassImports(cbUseSingleClassImports.isSelected)
     settings.setInsertInnerClassImports(cbInsertInnerClassImports.isSelected)
@@ -87,7 +87,7 @@ open class CodeStyleImportsBaseUI(private val packages: JComponent, private val 
     }
   }
 
-  fun isModified(settings: ImportsLayoutSettings): Boolean {
+  fun isModified(settings: JavaImportsLayoutSettings): Boolean {
     return cbUseSingleClassImports.isSelected != settings.isUseSingleClassImports()
            || cbUseFQClassNames.isSelected != settings.isUseFqClassNames()
            || cbInsertInnerClassImports.isSelected != settings.isInsertInnerClassImports()

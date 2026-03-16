@@ -5,7 +5,14 @@ import com.google.common.collect.Sets;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUiKind;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionResult;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
@@ -32,7 +39,11 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import kotlin.Unit;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction;
 import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
@@ -42,14 +53,20 @@ import org.jetbrains.plugins.terminal.classic.ClassicTerminalTabCloseListener;
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
+@SuppressWarnings("DeprecatedIsStillUsed")
 @Service(Service.Level.PROJECT)
 public final class TerminalToolWindowManager implements Disposable {
   private static final Key<TerminalWidget> TERMINAL_WIDGET_KEY = new Key<>("TerminalWidget");
@@ -134,11 +151,6 @@ public final class TerminalToolWindowManager implements Disposable {
   //------------ Classic Terminal tab creation API methods start ------------------------------------
 
   /** Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider} */
-  public @NotNull TerminalWidget createNewSession() {
-    return createNewSession(null, myTerminalRunner, TerminalEngine.CLASSIC, null, true, true);
-  }
-
-  /** Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider} */
   public void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner) {
     createNewSession(null, terminalRunner, TerminalEngine.CLASSIC, null, true, true);
   }
@@ -149,33 +161,16 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   @ApiStatus.Experimental
-  public void createNewSession(@Nullable AbstractTerminalRunner<?> terminalRunner,
-                               @Nullable TerminalTabState tabState,
-                               @Nullable ContentManager contentManager) {
+  public @NotNull TerminalWidget createNewSession(@Nullable AbstractTerminalRunner<?> terminalRunner,
+                                                  @Nullable TerminalTabState tabState,
+                                                  @Nullable ContentManager contentManager) {
     var runner = terminalRunner != null ? terminalRunner : myTerminalRunner;
-    createNewSession(contentManager, runner, TerminalEngine.CLASSIC, tabState, true, true);
-  }
-
-  /** Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider} */
-  public @NotNull TerminalWidget createShellWidget(@Nullable String workingDirectory,
-                                                   @Nullable @Nls String tabName,
-                                                   boolean requestFocus,
-                                                   boolean deferSessionStartUntilUiShown) {
-    return createNewSession(workingDirectory, tabName, null, requestFocus, deferSessionStartUntilUiShown);
+    return createNewSession(contentManager, runner, TerminalEngine.CLASSIC, tabState, true, true);
   }
 
   /** Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider} */
   public @NotNull Content newTab(@NotNull ToolWindow toolWindow, @Nullable TerminalWidget terminalWidget) {
     return createNewTab(null, terminalWidget, myTerminalRunner, TerminalEngine.CLASSIC, null, true, true);
-  }
-
-  /** Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider} */
-  public void openTerminalIn(@Nullable VirtualFile fileToOpen) {
-    TerminalTabState state = new TerminalTabState();
-    if (fileToOpen != null) {
-      state.myWorkingDirectory = fileToOpen.getPath();
-    }
-    createNewSession(null, myTerminalRunner, TerminalEngine.CLASSIC, state, true, true);
   }
 
   //------------ Classic Terminal tab creation API methods end --------------------------------------
@@ -618,7 +613,75 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   /**
-   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
+   * Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider}
+   *
+   * @deprecated please use the Reworked Terminal API instead: {@link com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager}
+   * For example:
+   * <pre>{@code
+   * TerminalToolWindowTabsManager.getInstance(project)
+   *   .createTabBuilder()
+   *   .workingDirectory(workingDirectory)
+   *   .tabName(tabName)
+   *   .createTab()
+   * }</pre>
+   */
+  @Deprecated
+  public @NotNull TerminalWidget createNewSession() {
+    return createNewSession(null, myTerminalRunner, TerminalEngine.CLASSIC, null, true, true);
+  }
+
+  /**
+   * Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider}
+   *
+   * @deprecated please use the Reworked Terminal API instead: {@link com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager}
+   * For example:
+   * <pre>{@code
+   * TerminalToolWindowTabsManager.getInstance(project)
+   *   .createTabBuilder()
+   *   .workingDirectory(workingDirectory)
+   *   .tabName(tabName)
+   *   .createTab()
+   * }</pre>
+   */
+  @Deprecated
+  public @NotNull TerminalWidget createShellWidget(@Nullable String workingDirectory,
+                                                   @Nullable @Nls String tabName,
+                                                   boolean requestFocus,
+                                                   boolean deferSessionStartUntilUiShown) {
+    return createNewSession(workingDirectory, tabName, null, requestFocus, deferSessionStartUntilUiShown);
+  }
+
+  /**
+   * Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider}
+   *
+   * @deprecated please use the Reworked Terminal API instead: {@link com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager}
+   * For example:
+   * <pre>{@code
+   * TerminalToolWindowTabsManager.getInstance(project)
+   *   .createTabBuilder()
+   *   .workingDirectory(fileToOpen.path)
+   *   .createTab()
+   * }</pre>
+   */
+  @Deprecated
+  public void openTerminalIn(@Nullable VirtualFile fileToOpen) {
+    TerminalTabState state = new TerminalTabState();
+    if (fileToOpen != null) {
+      state.myWorkingDirectory = fileToOpen.getPath();
+    }
+    createNewSession(null, myTerminalRunner, TerminalEngine.CLASSIC, state, true, true);
+  }
+
+  /**
+   * @deprecated please use the Reworked Terminal API instead: {@link com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager}
+   * For example:
+   * <pre>{@code
+   * TerminalToolWindowTabsManager.getInstance(project)
+   *   .createTabBuilder()
+   *   .workingDirectory(workingDirectory)
+   *   .tabName(tabName)
+   *   .createTab()
+   * }</pre>
    */
   @Deprecated(forRemoval = true)
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory, @Nullable @Nls String tabName) {
@@ -626,7 +689,15 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   /**
-   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
+   * @deprecated please use the Reworked Terminal API instead: {@link com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager}
+   * For example:
+   * <pre>{@code
+   * TerminalToolWindowTabsManager.getInstance(project)
+   *   .createTabBuilder()
+   *   .workingDirectory(workingDirectory)
+   *   .tabName(tabName)
+   *   .createTab()
+   * }</pre>
    */
   @Deprecated(forRemoval = true)
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory,
@@ -636,7 +707,15 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   /**
-   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
+   * @deprecated please use the Reworked Terminal API instead: {@link com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager}
+   * For example:
+   * <pre>{@code
+   * TerminalToolWindowTabsManager.getInstance(project)
+   *   .createTabBuilder()
+   *   .workingDirectory(workingDirectory)
+   *   .tabName(tabName)
+   *   .createTab()
+   * }</pre>
    */
   @Deprecated(forRemoval = true)
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory,

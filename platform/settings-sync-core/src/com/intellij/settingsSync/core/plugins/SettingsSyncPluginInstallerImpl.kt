@@ -75,7 +75,7 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
     if (settingsChanged) {
       SettingsSyncEvents.getInstance().fireCategoriesChanged()
     }
-    if (pluginsRequiredRestart.size > 0) {
+    if (pluginsRequiredRestart.isNotEmpty()) {
       SettingsSyncEvents.getInstance().fireRestartRequired(RestartForPluginInstall(pluginsRequiredRestart))
     }
   }

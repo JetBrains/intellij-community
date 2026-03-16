@@ -6,19 +6,35 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.Functions;
+import com.intellij.util.PairFunction;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.util.Conditions.not;
-import static com.intellij.util.containers.JBIterable.Split.*;
+import static com.intellij.util.containers.JBIterable.Split.AFTER;
+import static com.intellij.util.containers.JBIterable.Split.AROUND;
+import static com.intellij.util.containers.JBIterable.Split.BEFORE;
+import static com.intellij.util.containers.JBIterable.Split.GROUP;
+import static com.intellij.util.containers.JBIterable.Split.OFF;
 
 /**
  * @author gregsh

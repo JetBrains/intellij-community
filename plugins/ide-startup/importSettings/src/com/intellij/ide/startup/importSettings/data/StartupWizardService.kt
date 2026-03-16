@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
@@ -15,7 +15,7 @@ interface StartupWizardService {
   companion object {
     fun getInstance(): StartupWizardService? {
       val service =
-        if (useMockDataForStartupWizard) WizardServiceTest()
+        if (SettingsService.useMockDataForStartupWizard) WizardServiceTest()
         else service<StartupWizardService>()
       return if (service.isActive) service else null
     }
@@ -48,11 +48,11 @@ interface StartupWizardService {
 }
 
 class DisabledStartupWizardPages : StartupWizardService {
-  override val isActive = false
-  override val shouldClose = Signal<Unit>()
-  override fun getKeymapService() = error("Startup wizard is disabled.")
-  override fun getThemeService() = error("Startup wizard is disabled.")
-  override fun getPluginService() = error("Startup wizard is disabled.")
+  override val isActive: Boolean = false
+  override val shouldClose: Signal<Unit> = Signal()
+  override fun getKeymapService(): Nothing = error("Startup wizard is disabled.")
+  override fun getThemeService(): Nothing = error("Startup wizard is disabled.")
+  override fun getPluginService(): Nothing = error("Startup wizard is disabled.")
   override fun onEnter() {}
   override fun onCancel() {}
   override fun onExit() {}
@@ -63,6 +63,7 @@ interface ThemeService {
     Dark(ImportSettingsBundle.message("theme.page.dark"), true),
     Light(ImportSettingsBundle.message("theme.page.light"),false)
   }
+
   companion object {
     private val themes = listOf(Theme.Dark, Theme.Light)
   }
@@ -84,7 +85,7 @@ data class WizardScheme(
   val name: @Nls String,
   val icon: Icon,
   val backgroundColor: Color
-  )
+)
 
 interface PluginService {
   val plugins: List<WizardPlugin>
@@ -116,7 +117,6 @@ data class Shortcut(
   val id: String,
   val name: @Nls String
 )
-
 
 interface WizardKeymap {
   val id: String

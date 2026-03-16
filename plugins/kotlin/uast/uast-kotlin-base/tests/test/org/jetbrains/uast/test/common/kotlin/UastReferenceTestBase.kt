@@ -6,13 +6,24 @@ import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.util.Disposer
 import com.intellij.patterns.uast.callExpression
 import com.intellij.patterns.uast.injectionHostUExpression
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiReferenceBase
+import com.intellij.psi.PsiReferenceContributor
+import com.intellij.psi.PsiReferenceRegistrar
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP
+import com.intellij.psi.registerUastReferenceProvider
+import com.intellij.psi.uastInjectionHostReferenceProvider
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UPolyadicExpression
+import org.jetbrains.uast.evaluateString
+import org.jetbrains.uast.toUElementOfType
 import kotlin.test.fail
 
 interface UastReferenceTestBase {

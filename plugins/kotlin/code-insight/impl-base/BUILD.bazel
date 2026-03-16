@@ -74,6 +74,7 @@ jvm_library(
     "//platform/core-ui",
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/project-configuration",
     "//libraries/fastutil",
   ]
 )

@@ -1,8 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.zombie
 
 import com.intellij.testFramework.LightPlatformTestCase
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.DataInput
 import java.io.DataOutput
 import kotlin.coroutines.EmptyCoroutineContext
@@ -55,6 +59,5 @@ internal class GraveImplTest : LightPlatformTestCase() {
     override fun spellLevel(): Int = 0
     override fun exhumeZombie(grave: DataInput): TestZombie = TestZombie(grave.readInt())
     override fun buryZombie(grave: DataOutput, zombie: TestZombie) = grave.writeInt(zombie.value)
-    override fun isDeepBury(): Boolean = false
   }
 }

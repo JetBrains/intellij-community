@@ -4,13 +4,22 @@ package org.jetbrains.kotlin.idea.test
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.daemon.impl.EditorTracker
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.lookup.LookupFocusDegree
+import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
@@ -38,8 +47,15 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
-import com.intellij.testFramework.*
+import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import com.intellij.testFramework.registerServiceInstance
+import com.intellij.testFramework.runInEdtAndGet
+import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.testFramework.unregisterService
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.ApiVersion
@@ -48,12 +64,9 @@ import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_ADDITIONAL
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.facet.hasKotlinFacet
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.coroutineContext
-import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.kotlinxCoroutines
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -68,7 +81,6 @@ import org.jetbrains.kotlin.idea.facet.removeKotlinFacet
 import org.jetbrains.kotlin.idea.formatter.KotlinLanguageCodeStyleSettingsProvider
 import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.inspections.UnusedSymbolInspection
 import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.API_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.COMPILER_ARGUMENTS_DIRECTIVE
@@ -114,14 +126,6 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
     override fun setUp() {
         super.setUp()
         enableKotlinOfficialCodeStyle(project)
-
-        if (pluginMode == KotlinPluginMode.K1) {
-            // We do it here to avoid possible initialization problems
-            // UnusedSymbolInspection() calls IDEA UnusedDeclarationInspection() in static initializer,
-            // which in turn registers some extensions provoking "modifications aren't allowed during highlighting"
-            // when done lazily
-            UnusedSymbolInspection()
-        }
 
         VfsRootAccess.allowRootAccess(myFixture.testRootDisposable, KotlinRoot.DIR.path)
 
@@ -241,7 +245,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
     protected fun getProjectDescriptorFromFileDirective(): LightProjectDescriptor {
         val file = mainFile()
         if (!file.exists()) {
-            return KotlinLightProjectDescriptor.INSTANCE
+            return getDefaultProjectDescriptor()
         }
 
         try {
@@ -311,7 +315,10 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                     KotlinProjectDescriptorWithFacet.KOTLIN_STABLE_WITH_MULTIPLATFORM
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_COROUTINES") ->
-                    KotlinWithJdkAndRuntimeLightProjectDescriptor(listOf(kotlinxCoroutines, coroutineContext), emptyList())
+                    KotlinWithJdkAndRuntimeLightProjectDescriptor(
+                        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance().libraryFiles +
+                                listOf(TestKotlinArtifacts.kotlinxCoroutines, TestKotlinArtifacts.coroutineContext), emptyList()
+                    )
 
                 else -> getDefaultProjectDescriptor()
             }
@@ -338,6 +345,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
     }
 
     protected open fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor = KotlinLightProjectDescriptor.INSTANCE
+
     protected fun performNotWriteEditorAction(actionId: String): Boolean {
         val dataContext = (myFixture.editor as EditorEx).dataContext
 
@@ -365,6 +373,27 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
     fun JavaCodeInsightTestFixture.checkResultByFile(file: File) {
         val relativePath = file.toRelativeString(testDataDirectory)
         checkResultByFile(relativePath)
+    }
+
+    /**
+     * Types the characters of [s] into [myFixture].
+     * The purpose is to allow overriding to allow analysis on EDT from the analysis API.
+     */
+    protected open fun type(s: String) {
+        myFixture.type(s)
+    }
+
+    fun selectItem(item: LookupElement?, completionChar: Char) {
+        val lookup = (myFixture.lookup as LookupImpl)
+        if (lookup.currentItem != item) { // do not touch selection if not changed - important for char filter tests
+            lookup.currentItem = item
+        }
+        lookup.lookupFocusDegree = LookupFocusDegree.FOCUSED
+        if (LookupEvent.isSpecialCompletionChar(completionChar)) {
+            lookup.finishLookup(completionChar)
+        } else {
+            type(completionChar.toString())
+        }
     }
 }
 
@@ -483,10 +512,21 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
             val compilerSettings = facetSettings.compilerSettings ?: CompilerSettings().also {
                 facetSettings.compilerSettings = it
             }
-            compilerSettings.additionalArguments = options
+
+            val expandedOptions =
+                // it is allowed to use KOTLIN_BUNDLE path macros in test data in the same way as project import does
+                // TEST_* path macros work for tests only
+                if (options.contains($$"$KOTLIN_BUNDLED$") || options.contains($$"$TEST_")) {
+                    val pathMacroManager = PathMacroManager.getInstance(project)
+                    pathMacroManager.expandPath(options)
+                } else {
+                    options
+                }
+
+            compilerSettings.additionalArguments = expandedOptions
             facetSettings.updateMergedArguments()
 
-            KotlinCompilerSettings.getInstance(project).update { this.additionalArguments = options }
+            KotlinCompilerSettings.getInstance(project).update { this.additionalArguments = expandedOptions }
         }
 
         return true
@@ -496,7 +536,6 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
 }
 
 fun configureRegistryAndRun(project: Project, fileText: String, body: () -> Unit) {
-    KotlinHighlightingSuspender.getInstance(project) // register Registry listener, otherwise registry changes wouldn't be picked up by ElementAnnotator
     val registers = InTextDirectivesUtils.findListWithPrefixes(fileText, "// REGISTRY:")
         .map { it.split(' ') }
         .map { Registry.get(it.first()) to it.last() }

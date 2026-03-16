@@ -2,6 +2,7 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.EmptyRunnable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,10 +16,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * This class implements the global delayed queue which is used by
  * {@link AppScheduledExecutorService} and {@link BoundedScheduledExecutorService}.
  * It starts the background thread which polls the queue for tasks ready to run and sends them to the appropriate executor.
- * The {@link #shutdown(SchedulingWrapper.MyScheduledFutureTask)} must be called before disposal.
+ * The {@link #shutdown} must be called before disposal.
  */
 @ApiStatus.Internal
-public final class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask<?>> {
+final class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask<?>> {
   private static final Logger LOG = Logger.getInstance(AppDelayQueue.class);
   private final TransferThread transferThread = new TransferThread();
   private final AtomicReference<Throwable> shutdownTrace = new AtomicReference<>();
@@ -30,16 +31,38 @@ public final class AppDelayQueue extends DelayQueue<SchedulingWrapper.MySchedule
     transferThread.start();
   }
 
-  void shutdown(@NotNull SchedulingWrapper.MyScheduledFutureTask<Void> poisonPill) {
+  void shutdown(@NotNull SchedulingWrapper schedulingWrapper) {
+    myPoisonPill = schedulingWrapper.new MyScheduledFutureTask<Void>(EmptyRunnable.getInstance(), null, 0) {
+      @Override
+      public void executeMeInBackendExecutor() {
+        set(null);
+        throw new ShutdownException();
+      }
+
+      @Override
+      public boolean cancel(boolean mayInterruptIfRunning) {
+        return false;
+      }
+
+      @Override
+      public String toString() {
+        return "poison pill";
+      }
+    };
+
     Throwable throwable = shutdownTrace.getAndSet(new Throwable());
     if (throwable != null) {
       throw new IllegalStateException("Already shutdown", throwable);
     }
-    myPoisonPill = poisonPill;
-    super.offer(poisonPill);
+    super.offer(myPoisonPill);
+  }
+
+  private static class ShutdownException extends RuntimeException {
+
   }
 
   boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
+    assert Thread.currentThread() != transferThread;
     if (shutdownTrace.get() == null) {
       throw new IllegalStateException("must call shutdown before");
     }
@@ -79,28 +102,31 @@ public final class AppDelayQueue extends DelayQueue<SchedulingWrapper.MySchedule
     @Override
     public void run() {
       while (true) {
+        SchedulingWrapper.MyScheduledFutureTask<?> task;
         try {
-          SchedulingWrapper.MyScheduledFutureTask<?> task = take();
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("Took "+BoundedTaskExecutor.info(task));
-          }
-          try {
-            if (!task.executeMeInBackendExecutor()) {
-              break;
-            }
-          }
-          catch (Throwable e) {
-            try {
-              LOG.error("Error executing "+task, e);
-            }
-            catch (Throwable ignored) {
-              // do not let it stop the thread
-            }
-          }
+          task = take();
         }
         catch (InterruptedException e) {
           if (shutdownTrace.get() == null) {
             LOG.error(e);
+          }
+          break;
+        }
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Took "+BoundedTaskExecutor.info(task));
+        }
+        try {
+          task.executeMeInBackendExecutor();
+        }
+        catch (ShutdownException e) {
+          break;
+        }
+        catch (Throwable e) {
+          try {
+            LOG.error("Error executing "+task, e);
+          }
+          catch (Throwable ignored) {
+            // do not let it stop the thread
           }
         }
       }

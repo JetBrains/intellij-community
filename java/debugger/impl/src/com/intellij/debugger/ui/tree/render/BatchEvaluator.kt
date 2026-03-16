@@ -2,8 +2,12 @@
 package com.intellij.debugger.ui.tree.render
 
 import com.intellij.debugger.JavaDebuggerBundle
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl.Companion.assertIsManagerThread
+import com.intellij.debugger.engine.DebuggerUtils
+import com.intellij.debugger.engine.PossiblySyncCommand
+import com.intellij.debugger.engine.SuspendContext
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -19,7 +23,11 @@ import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.rt.debugger.BatchEvaluatorServer
 import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin
 import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin.Companion.computeWithOrigin
-import com.sun.jdi.*
+import com.sun.jdi.ArrayType
+import com.sun.jdi.ObjectCollectedException
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.StringReference
+import com.sun.jdi.Value
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.io.IOException

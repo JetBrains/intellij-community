@@ -1,6 +1,10 @@
 package com.intellij.cce.evaluable.docGeneration
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.DocumentationProperties
+import com.intellij.cce.core.Language
+import com.intellij.cce.core.Lookup
+import com.intellij.cce.core.Session
+import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.evaluable.common.getEditorSafe
 import com.intellij.cce.evaluation.SuggestionsProvider
 import com.intellij.cce.interpreter.FeatureInvoker
@@ -35,7 +39,7 @@ class DocGenerationInvoker(private val project: Project,
                ?: throw IllegalStateException("Can't find language \"${language.ideaLanguageId}\"")
     val provider = SuggestionsProvider.find(project, suggestionsProviderName)
                    ?: throw IllegalStateException("Can't find suggestions provider \"${suggestionsProviderName}\"")
-    return provider.getSuggestions(expectedLine, editor, lang, this::comparator)
+    return provider.getSuggestions(project, expectedLine, editor, lang, this::comparator)
   }
 
 

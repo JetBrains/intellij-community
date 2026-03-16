@@ -9,9 +9,9 @@ import com.jetbrains.python.psi.stubs.PyTupleParameterStub;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Implementation does nothing but marking the element type. 
+ * Implementation does nothing but marking the element type.
  */
-public class PyTupleParameterStubImpl extends StubBase<PyTupleParameter>  implements PyTupleParameterStub {
+public class PyTupleParameterStubImpl extends StubBase<PyTupleParameter> implements PyTupleParameterStub {
   private final @Nullable String myDefaultValueText;
 
   protected PyTupleParameterStubImpl(@Nullable String defaultValueText, StubElement parent) {

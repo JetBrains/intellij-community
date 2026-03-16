@@ -20,18 +20,27 @@ import com.intellij.util.ui.AsyncProcessIcon
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrNull
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
-import com.jetbrains.python.sdk.add.v2.*
+import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
+import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.PYTHON
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.UV
+import com.jetbrains.python.sdk.add.v2.ToolValidator
+import com.jetbrains.python.sdk.add.v2.ValidatedPath
+import com.jetbrains.python.sdk.add.v2.ValidatedPathField
+import com.jetbrains.python.sdk.add.v2.VenvAlreadyExistsError
+import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState
+import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
+import com.jetbrains.python.sdk.add.v2.validatablePathField
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
-import com.jetbrains.python.sdk.uv.impl.setUvExecutable
+import com.jetbrains.python.sdk.uv.impl.setUvExecutableLocal
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.util.ShowingMessageErrorSync
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import io.github.z4kn4fein.semver.Version
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +50,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
-import java.nio.file.Paths
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 
@@ -53,8 +61,10 @@ import kotlin.io.path.readText
  *               will navigate to the generic Python existing environment selector instead of the
  *               UV-specific selector if a .venv directory already exists.
  */
-internal fun PythonMutableTargetAddInterpreterModel<PathHolder.Eel>.uvCreator(module: Module?): EnvironmentCreatorUv<PathHolder.Eel> =
-  EnvironmentCreatorUv(this, module, ShowingMessageErrorSync)
+internal fun PythonMutableTargetAddInterpreterModel<PathHolder.Eel>.uvCreator(module: Module?): EnvironmentCreatorUv<PathHolder.Eel> {
+  val errorSink = module?.project?.let { ShowingMessageErrorSync.withProject(it) } ?: ShowingMessageErrorSync
+  return EnvironmentCreatorUv(this, module, errorSink)
+}
 
 internal class EnvironmentCreatorUv<P : PathHolder>(
   model: PythonMutableTargetAddInterpreterModel<P>,
@@ -66,16 +76,33 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
   private val executableFlow = MutableStateFlow(model.uvViewModel.uvExecutable.get())
   private val pythonVersion: ObservableMutableProperty<Version?> = propertyGraph.property(null)
   private lateinit var versionComboBox: ComboBox<Version?>
+  private lateinit var venvPathField: ValidatedPathField<Unit, P, ValidatedPath.Folder<P>>
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.uvViewModel.uvExecutable
   override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
-    savePathForEelOnly(pathHolder) { path -> setUvExecutable(path) }
+    savePathForEelOnly(pathHolder) { path -> setUvExecutableLocal(path) }
   }
 
+  private val venvAlreadyExistsError = propertyGraph.property<VenvAlreadyExistsError<P>?>(null)
   private val loading = AtomicBooleanProperty(false)
 
   init {
     model.uvViewModel.uvExecutable.afterChange {
       executableFlow.value = it
+    }
+
+    venvAlreadyExistsError.afterChange {
+      if (it == null) {
+        venvExistenceValidationState.set(VenvExistenceValidationState.Invisible)
+      }
+      else {
+        val venvName = model.fileSystem.getVenvName(it.detectedSelectableInterpreter.homePath)
+                       ?: VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME
+        venvExistenceValidationState.set(VenvExistenceValidationState.Error(venvName))
+      }
+    }
+
+    propertyGraph.dependsOn(venvAlreadyExistsError, model.uvViewModel.uvVenvPath, deleteWhenChildModified = false) {
+      model.uvViewModel.uvVenvPath.get()?.validationResult?.errorOrNull as? VenvAlreadyExistsError<P>
     }
   }
 
@@ -104,6 +131,17 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
         installAction = createInstallFix(errorSink)
       )
 
+      // TODO PY-87712 Add banner if the venv does exist at the specified location
+      venvPathField = validatablePathField(
+        fileSystem = model.fileSystem,
+        pathValidator = model.uvViewModel.uvVenvValidator,
+        validationRequestor = validationRequestor,
+        labelText = message("sdk.create.custom.location"),
+        missingExecutableText = null,
+        isFileSelectionMode = false,
+        venvExistenceValidationState = venvExistenceValidationState,
+      )
+
       row("") {
         venvExistenceValidationAlert(validationRequestor) {
           onVenvSelectExisting()
@@ -114,21 +152,13 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
 
   override fun onShown(scope: CoroutineScope) {
     executablePath.initialize(scope)
+    venvPathField.initialize(scope)
     model
       .projectPathFlows
       .projectPathWithDefault
       .combine(executableFlow) { projectPath, executable -> projectPath to executable }
       .onEach { (projectPath, executable) ->
-        val venvPath = projectPath.resolve(".venv")
-
-        withContext(Dispatchers.IO) {
-          venvExistenceValidationState.set(
-            if (venvPath.exists())
-              VenvExistenceValidationState.Error(Paths.get(".venv"))
-            else
-              VenvExistenceValidationState.Invisible
-          )
-        }
+        model.uvViewModel.uvVenvValidator.autodetectFolder()
 
         versionComboBox.removeAllItems()
         versionComboBox.addItem(null)
@@ -145,14 +175,15 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
 
           val pythonVersions = withContext(Dispatchers.IO) {
             val versionRequest = if (pyProjectTomlPath.exists()) {
-              PyProjectToml.parse(pyProjectTomlPath.readText()).getOrNull()?.project?.requiresPython
+              PyProjectToml.parse(pyProjectTomlPath.readText()).project?.requiresPython
             }
             else {
               null
             }
 
-            val cli = createUvCli((executable.pathHolder as PathHolder.Eel).path).getOr { return@withContext emptyList() }
-            val uvLowLevel = createUvLowLevel(Path.of(""), cli)
+            val cli = createUvCli(executable.pathHolder, model.fileSystem).getOr { return@withContext emptyList() }
+            val cwd = Path.of("")
+            val uvLowLevel = createUvLowLevel(cwd, cli, model.fileSystem, null)
             uvLowLevel.listSupportedPythonVersions(versionRequest)
               .getOr { return@withContext emptyList() }
           }
@@ -180,12 +211,15 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
     }
   }
 
-  override suspend fun setupEnvSdk(
-    moduleBasePath: Path,
-    baseSdks: List<Sdk>,
-    basePythonBinaryPath: P?,
-    installPackages: Boolean,
-  ): PyResult<Sdk> {
-    return setupNewUvSdkAndEnv(moduleBasePath, baseSdks, pythonVersion.get())
+  override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk> {
+    val uv = toolExecutable.get()?.pathHolder!!
+    return setupNewUvSdkAndEnv(
+      uvExecutable = uv,
+      workingDir = moduleBasePath,
+      venvPath = model.uvViewModel.uvVenvPath.get()?.pathHolder,
+      fileSystem = model.fileSystem,
+      version = pythonVersion.get(),
+      errorSink = errorSink
+    )
   }
 }

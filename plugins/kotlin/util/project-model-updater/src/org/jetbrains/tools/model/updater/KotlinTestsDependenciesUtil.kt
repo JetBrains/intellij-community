@@ -11,7 +11,13 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.readBytes
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 import kotlin.jvm.optionals.getOrNull
 
 object KotlinTestsDependenciesUtil {
@@ -87,6 +93,13 @@ object KotlinTestsDependenciesUtil {
 
     private val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build()
 
+    /**
+     * TODO: IJI-3408 remove duplicated code
+     * @see com.intellij.testFramework.common.bazel.BazelTestDependencyHttpFileDownloader
+     * it was agreed to leave it ‘as is’ for a while,
+     * until a more elegant solution for working with bazel labels in project-model-updater is found
+     * and so as not to add dependencies on com.intellij.testFramework.common
+     */
     data class DownloadFile(
         val fileName: String,
         val url: String,

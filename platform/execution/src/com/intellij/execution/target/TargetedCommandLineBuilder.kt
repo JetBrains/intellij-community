@@ -81,6 +81,11 @@ class TargetedCommandLineBuilder(val request: TargetEnvironmentRequest) : UserDa
     this.parameters.addAll(index, parameters)
   }
 
+  fun setParameters(parameters: List<TargetValue<out String?>>) {
+    this.parameters.clear()
+    this.parameters.addAll(parameters)
+  }
+
   fun addEnvironmentVariable(name: String, value: TargetValue<String>?) {
     if (value != null) {
       environment[name] = value
@@ -100,6 +105,11 @@ class TargetedCommandLineBuilder(val request: TargetEnvironmentRequest) : UserDa
 
   fun getEnvironmentVariable(name: String): TargetValue<String>? {
     return environment[name]
+  }
+
+  fun setEnvironmentVariables(envs: Map<String, TargetValue<String>>) {
+    environment.clear()
+    environment.putAll(envs)
   }
 
   fun addFileToDeleteOnTermination(file: File) {

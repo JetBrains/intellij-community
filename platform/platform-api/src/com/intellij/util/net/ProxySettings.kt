@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net
 
 import com.intellij.openapi.application.ApplicationManager
@@ -30,6 +30,5 @@ fun interface ProxyConfigurationProvider {
   fun getProxyConfiguration(): ProxyConfiguration
 }
 
-fun ProxySettings.asConfigurationProvider(): ProxyConfigurationProvider {
-  return this as? ProxyConfigurationProvider ?: ProxyConfigurationProvider(this::getProxyConfiguration)
-}
+@Deprecated("Pointless; use `ProxySettings.getProxyConfiguration` directly", level = DeprecationLevel.ERROR)
+fun ProxySettings.asConfigurationProvider(): ProxyConfigurationProvider = ProxyConfigurationProvider(this::getProxyConfiguration)

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -35,16 +35,27 @@ import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * An entry in an inspection profile describes either a local or a global inspection.
@@ -364,6 +375,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
 
   /**
    * DO NOT OVERRIDE this method.
+   * It does not have any effect on local inspections that are registered via plugin.xml.
+   * <p>
+   * Specify <code>enabledByDefault="true/false"</code> in your inspection registration tag instead.
    *
    * @see InspectionEP#enabledByDefault
    */

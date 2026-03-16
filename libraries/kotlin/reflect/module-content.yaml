@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.kotlin.reflect.jar
   modules:
   - name: intellij.libraries.kotlin.reflect
   library: kotlin-reflect

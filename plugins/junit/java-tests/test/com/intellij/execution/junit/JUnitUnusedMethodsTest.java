@@ -1,21 +1,27 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil;
+import com.intellij.junit.testFramework.JUnitLibrary;
+import com.intellij.junit.testFramework.JUnitProjectDescriptor;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class JUnitUnusedMethodsTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.addClass("package org.junit; public @interface Test {}");
-    myFixture.addClass("package org.junit.runners; public class Parameterized { public @interface Parameters {} public @interface Parameter {}}");
-    myFixture.addClass("package org.junit.runner; public @interface RunWith {Class value();}");
-    JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture);
     myFixture.enableInspections(new UnusedDeclarationInspection(true));
   }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return new JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUnitLibrary.JUNIT4, JUnitLibrary.JUNIT5);
+  }
+
 
   public void testRecognizeNestedAbstractClass() {
     myFixture.configureByText("ExampleTest.java", """
@@ -64,6 +70,22 @@ public class JUnitUnusedMethodsTest extends LightJavaCodeInsightFixtureTestCase 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.EnumSource(value = Foo.class, names = {"AAA", "BBB"})
         void valid() {}
+      }
+      """);
+    myFixture.testHighlighting(true, false, false);
+  }
+
+  public void testBeforeSuiteIsImplicitUsage() {
+    myFixture.configureByText("MySuite.java", """
+      import org.junit.platform.suite.api.*;
+      
+      @Suite
+      public class MySuite {
+        @BeforeSuite
+        public static void beforeSuite() {}
+      
+        @AfterSuite
+        public static void afterSuite() {}
       }
       """);
     myFixture.testHighlighting(true, false, false);

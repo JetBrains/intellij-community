@@ -12,7 +12,12 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleKotlinScriptConfigurationInputs
 import org.jetbrains.kotlin.gradle.scripting.shared.LastModifiedFiles
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.*
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRoot
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootData
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleScriptInfo
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.Legacy
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 
@@ -38,7 +43,7 @@ abstract class AbstractGradleBuildRootsLocatorTest : TestCase() {
         )
     }
 
-    private inner class MyRootsLocator(project: Project, coroutineScope: CoroutineScope) : GradleBuildRootsLocator(project, coroutineScope) {
+    private inner class MyRootsLocator(project: Project, coroutineScope: CoroutineScope) : GradleBuildRootsLocator(project) {
         override fun getScriptFirstSeenTs(path: String): Long = scripts[path]?.introductionTs ?: 0
         override fun getScriptInfo(localPath: String): GradleScriptInfo? = scripts[localPath]?.info
 

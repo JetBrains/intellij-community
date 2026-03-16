@@ -5,10 +5,10 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.NlsContexts
-import javax.swing.SwingUtilities
+import com.intellij.util.ui.EDT
 
 fun <T> ProgressManager.runUnderProgress(@NlsContexts.DialogTitle title: String, code: () -> T): T =
-  if (SwingUtilities.isEventDispatchThread()) {
+  if (EDT.isCurrentThreadEdt()) {
     run(object : Task.WithResult<T, Exception>(null, title, false) {
       override fun compute(indicator: ProgressIndicator) = code()
     })

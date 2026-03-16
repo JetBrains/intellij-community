@@ -7,7 +7,7 @@ import com.intellij.openapi.fileTypes.OSFileIdeAssociation;
 import com.intellij.xml.XmlCoreBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class XmlFileType extends XmlLikeFileType implements DomSupportEnabled, OSFileIdeAssociation {
   public static final XmlFileType INSTANCE = new XmlFileType();
@@ -42,5 +42,10 @@ public final class XmlFileType extends XmlLikeFileType implements DomSupportEnab
   @Override
   public @NotNull ExtensionMode getExtensionMode() {
     return ExtensionMode.Selected;
+  }
+
+  @Override
+  public boolean isCharsetHardcoded() {
+    return true;
   }
 }

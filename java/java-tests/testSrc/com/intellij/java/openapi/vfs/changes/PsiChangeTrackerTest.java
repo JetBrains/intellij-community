@@ -22,7 +22,12 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.PsiChangeTracker;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiFilter;
 import com.intellij.testFramework.JavaProjectTestCase;
 

@@ -15,7 +15,11 @@
  */
 package org.jetbrains.jps.devkit.model;
 
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsGlobal;
+import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
@@ -25,7 +29,9 @@ import org.jetbrains.jps.model.serialization.JpsProjectData;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 public class JpsPluginProjectSerializationTest {
   @Test

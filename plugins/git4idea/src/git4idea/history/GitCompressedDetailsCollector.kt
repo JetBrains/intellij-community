@@ -7,7 +7,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import git4idea.log.GitCompressedDetails
-import it.unimi.dsi.fastutil.ints.*
+import it.unimi.dsi.fastutil.ints.Int2IntMap
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 
 internal class GitCompressedDetailsCollector(project: Project, root: VirtualFile, pathsEncoder: VcsLogIndexer.PathsEncoder) :
   GitDetailsCollector<GitCompressedRecord, GitCompressedDetails>(project, root, CompressedRecordBuilder(root, pathsEncoder)) {

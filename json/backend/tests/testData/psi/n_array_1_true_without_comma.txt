@@ -1,0 +1,11 @@
+JsonFile: n_array_1_true_without_comma.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
+    PsiErrorElement:',' or ']' expected, got 'true'
+      <empty list>
+    PsiWhiteSpace(' ')
+    JsonBooleanLiteral
+      PsiElement(true)('true')
+    PsiElement(])(']')

@@ -3,7 +3,11 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -18,8 +22,9 @@ import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPopupMenu;
+import java.awt.AWTEvent;
 import java.awt.event.MouseEvent;
 import java.util.function.Function;
 
@@ -34,11 +39,11 @@ final class BidiContentNotificationProvider implements EditorNotificationProvide
     }
 
     return fileEditor -> {
-      if (!(fileEditor instanceof TextEditor)) {
+      if (!(fileEditor instanceof TextEditor te)) {
         return null;
       }
 
-      Editor editor = ((TextEditor)fileEditor).getEditor();
+      Editor editor = te.getEditor();
       if (!Boolean.TRUE.equals(editor.getUserData(EditorImpl.CONTAINS_BIDI_TEXT)) ||
           Boolean.TRUE.equals(editor.getUserData(DISABLE_NOTIFICATION))) {
         return null;

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
@@ -22,7 +23,7 @@ public class AutoStaticImportCompletionTest extends NormalCompletionTestCase {
   @Override
   public void tearDown() throws Exception {
     try {
-      JavaProjectCodeInsightSettings.getSettings(getProject()).includedAutoStaticNames.clear();
+      clear();
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -30,6 +31,10 @@ public class AutoStaticImportCompletionTest extends NormalCompletionTestCase {
     finally {
       super.tearDown();
     }
+  }
+
+  private void clear() {
+    JavaProjectCodeInsightSettings.getSettings(getProject()).includedAutoStaticNames.clear();
   }
 
   @NotNull
@@ -44,33 +49,104 @@ public class AutoStaticImportCompletionTest extends NormalCompletionTestCase {
   }
 
   public void testSimpleStaticAutoImport() {
-    addStaticAutoImport("java.util.Arrays");
-    configure();
-    LookupElement[] elements = myFixture.getLookupElements();
-    if (elements != null) {
+    try {
+      addStaticAutoImport("java.util.Arrays");
+      configure();
+      LookupElement[] elements = myFixture.getLookupElements();
+      if (elements != null) {
+        LookupElement element = ContainerUtil.find(elements, e ->
+          e.getLookupString().equals("sort") &&
+          e.getPsiElement() instanceof PsiMethod method &&
+          method.getContainingClass().getQualifiedName().equals("java.util.Arrays"));
+        assertNotNull(element);
+        selectItem(element);
+      }
+      checkResult();
+    }
+    finally {
+      clear();
+    }
+  }
+
+  public void testExcludeAutoImport() {
+    try {
+      addStaticAutoImport("java.util.Arrays");
+      addStaticAutoImport("-java.util.Arrays.sort");
+      configure();
+      LookupElement[] elements = myFixture.getLookupElements();
+      assertNotNull(elements);
       LookupElement element = ContainerUtil.find(elements, e ->
         e.getLookupString().equals("sort") &&
         e.getPsiElement() instanceof PsiMethod method &&
         method.getContainingClass().getQualifiedName().equals("java.util.Arrays"));
+      assertNull(element);
+    }
+    finally {
+      clear();
+    }
+  }
+
+  public void testFullAutoImportEnum() {
+    try {
+      addStaticAutoImport("java.time.temporal.ChronoField");
+      configure();
+      LookupElement[] elements = myFixture.getLookupElements();
+      assertNotNull(elements);
+      LookupElement element = ContainerUtil.find(elements, e ->
+        e.getLookupString().equals("values") &&
+        e.getPsiElement() instanceof PsiMethod method &&
+        method.getContainingClass().getQualifiedName().equals("java.time.temporal.ChronoField"));
       assertNotNull(element);
       selectItem(element);
+      checkResult();
     }
-    checkResult();
+    finally {
+      clear();
+    }
+  }
+
+  public void testAutoImportEnumWithExclusion() {
+    try {
+      addStaticAutoImport("java.time.temporal.ChronoField");
+      addStaticAutoImport("-java.time.temporal.ChronoField.values");
+      configure();
+      LookupElement[] elements = myFixture.getLookupElements();
+      assertNotNull(elements);
+      LookupElement element = ContainerUtil.find(elements, e ->
+        e.getLookupString().equals("values") &&
+        e.getPsiElement() instanceof PsiMethod method &&
+        method.getContainingClass().getQualifiedName().equals("java.time.temporal.ChronoField"));
+      assertNull(element);
+      element = ContainerUtil.find(elements, e ->
+        e.getLookupString().equals("NANO_OF_SECOND") &&
+        e.getPsiElement() instanceof PsiField psiField &&
+        psiField.getContainingClass().getQualifiedName().equals("java.time.temporal.ChronoField"));
+      selectItem(element);
+      checkResult();
+    }
+    finally {
+      clear();
+    }
   }
 
   public void testSimpleMethodStaticAutoImport() {
-    addStaticAutoImport("java.util.Arrays.sort");
-    configure();
-    LookupElement[] elements = myFixture.getLookupElements();
-    if (elements != null) {
-      LookupElement element = ContainerUtil.find(elements, e ->
-        e.getLookupString().equals("sort") &&
-        e.getPsiElement() instanceof PsiMethod method &&
-        method.getContainingClass().getQualifiedName().equals("java.util.Arrays"));
-      assertNotNull(element);
-      selectItem(element);
+    try {
+      addStaticAutoImport("java.util.Arrays.sort");
+      configure();
+      LookupElement[] elements = myFixture.getLookupElements();
+      if (elements != null) {
+        LookupElement element = ContainerUtil.find(elements, e ->
+          e.getLookupString().equals("sort") &&
+          e.getPsiElement() instanceof PsiMethod method &&
+          method.getContainingClass().getQualifiedName().equals("java.util.Arrays"));
+        assertNotNull(element);
+        selectItem(element);
+      }
+      checkResult();
     }
-    checkResult();
+    finally {
+      clear();
+    }
   }
 
   public void testSimpleMethodStaticAutoImportOnDemand() {
@@ -94,20 +170,26 @@ public class AutoStaticImportCompletionTest extends NormalCompletionTestCase {
       checkResult();
     }
     finally {
+      clear();
       onDemand.removeEntryAt(onDemandLength);
     }
   }
 
   public void testSimpleMethodStaticAutoImportNotFound() {
-    addStaticAutoImport("java.util.Arrays.binarySearch");
-    configure();
-    LookupElement[] elements = myFixture.getLookupElements();
-    if (elements != null) {
-      LookupElement element = ContainerUtil.find(elements, e ->
-        e.getLookupString().equals("sort") &&
-        e.getPsiElement() instanceof PsiMethod method &&
-        method.getContainingClass().getQualifiedName().equals("java.util.Arrays"));
-      assertNull(element);
+    try {
+      addStaticAutoImport("java.util.Arrays.binarySearch");
+      configure();
+      LookupElement[] elements = myFixture.getLookupElements();
+      if (elements != null) {
+        LookupElement element = ContainerUtil.find(elements, e ->
+          e.getLookupString().equals("sort") &&
+          e.getPsiElement() instanceof PsiMethod method &&
+          method.getContainingClass().getQualifiedName().equals("java.util.Arrays"));
+        assertNull(element);
+      }
+    }
+    finally {
+      clear();
     }
   }
 
@@ -132,47 +214,58 @@ public class AutoStaticImportCompletionTest extends NormalCompletionTestCase {
       checkResult();
     }
     finally {
+      clear();
       onDemand.removeEntryAt(onDemandLength);
     }
   }
 
   @NeedsIndex.Full
   public void testSimpleStaticAutoImportWithConflict() {
-    addStaticAutoImport("java.util.Arrays");
-    myFixture.addClass("""
-                         package org.example;
-                         public final class AAA {
-                           public static <T> List<T> sort(T[] args){
-                             return null;
+    try {
+      addStaticAutoImport("java.util.Arrays");
+      myFixture.addClass("""
+                           package org.example;
+                           public final class AAA {
+                             public static <T> List<T> sort(T[] args){
+                               return null;
+                             }
                            }
-                         }
-                         """);
-    configure();
-    LookupElement[] elements = myFixture.getLookupElements();
-    if (elements != null) {
-      LookupElement element = ContainerUtil.find(elements, e ->
-        e.getLookupString().equals("sort") &&
-        e.getPsiElement() instanceof PsiMethod method &&
-        method.getContainingClass().getQualifiedName().equals("java.util.Arrays"));
-      assertNotNull(element);
-      selectItem(element);
+                           """);
+      configure();
+      LookupElement[] elements = myFixture.getLookupElements();
+      if (elements != null) {
+        LookupElement element = ContainerUtil.find(elements, e ->
+          e.getLookupString().equals("sort") &&
+          e.getPsiElement() instanceof PsiMethod method &&
+          method.getContainingClass().getQualifiedName().equals("java.util.Arrays"));
+        assertNotNull(element);
+        selectItem(element);
+      }
+      checkResult();
     }
-    checkResult();
+    finally {
+      clear();
+    }
   }
 
   public void testSimpleStaticAutoImportWithAlreadyImported() {
-    addStaticAutoImport("java.util.Arrays");
-    configure();
-    LookupElement[] elements = myFixture.getLookupElements();
-    if (elements != null) {
-      LookupElement element = ContainerUtil.find(elements, e ->
-        e.getLookupString().equals("sort") &&
-        e.getPsiElement() instanceof PsiMethod method &&
-        method.getContainingClass().getQualifiedName().equals("java.util.Arrays"));
-      assertNotNull(element);
-      selectItem(element);
+    try {
+      addStaticAutoImport("java.util.Arrays");
+      configure();
+      LookupElement[] elements = myFixture.getLookupElements();
+      if (elements != null) {
+        LookupElement element = ContainerUtil.find(elements, e ->
+          e.getLookupString().equals("sort") &&
+          e.getPsiElement() instanceof PsiMethod method &&
+          method.getContainingClass().getQualifiedName().equals("java.util.Arrays"));
+        assertNotNull(element);
+        selectItem(element);
+      }
+      checkResult();
     }
-    checkResult();
+    finally {
+      clear();
+    }
   }
 
   public void testNoAutoImport() {
@@ -189,30 +282,40 @@ public class AutoStaticImportCompletionTest extends NormalCompletionTestCase {
 
   @NeedsIndex.Full
   public void testChainedAutoStaticImport() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> {
-      addStaticAutoImport("java.util.stream.Collectors");
-      configureByTestName();
-      selectItem(ContainerUtil.find(myItems, it -> it.getLookupString().contains("toList")));
-      checkResult();
-    });
+    try {
+      IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> {
+        addStaticAutoImport("java.util.stream.Collectors");
+        configureByTestName();
+        selectItem(ContainerUtil.find(myItems, it -> it.getLookupString().contains("toList")));
+        checkResult();
+      });
+    }
+    finally {
+      clear();
+    }
   }
 
   @NeedsIndex.Full
   public void testChainedAutoStaticImportWithConflict() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> {
-      addStaticAutoImport("java.util.stream.Collectors");
-      myFixture.addClass("""
-                           package org.example;
-                           public final class AAA {
-                             public static <T> List<T> toList(){
-                               return null;
+    try {
+      IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> {
+        addStaticAutoImport("java.util.stream.Collectors");
+        myFixture.addClass("""
+                             package org.example;
+                             public final class AAA {
+                               public static <T> List<T> toList(){
+                                 return null;
+                               }
                              }
-                           }
-                           """);
-      configureByTestName();
-      selectItem(ContainerUtil.find(myItems, it -> it.getLookupString().contains("toList")));
-      checkResult();
-    });
+                             """);
+        configureByTestName();
+        selectItem(ContainerUtil.find(myItems, it -> it.getLookupString().contains("toList")));
+        checkResult();
+      });
+    }
+    finally {
+      clear();
+    }
   }
 
   public void testNoSimpleStaticAutoImport() {
@@ -229,22 +332,27 @@ public class AutoStaticImportCompletionTest extends NormalCompletionTestCase {
 
   @NeedsIndex.Full
   public void testWithPackageConflicts() {
-    addStaticAutoImport("java.util.Objects");
-    myFixture.addClass("""
-                         package requireNonNull;
-                         public final class Dummy {}
-                         """);
-    configure();
-    LookupElement[] elements = myFixture.getLookupElements();
-    if (elements != null) {
-      LookupElement element = ContainerUtil.find(elements, e ->
-        e.getLookupString().equals("requireNonNull") &&
-        e.getPsiElement() instanceof PsiMethod method &&
-        method.getContainingClass().getQualifiedName().equals("java.util.Objects"));
-      assertNotNull(element);
-      selectItem(element);
+    try {
+      addStaticAutoImport("java.util.Objects");
+      myFixture.addClass("""
+                           package requireNonNull;
+                           public final class Dummy {}
+                           """);
+      configure();
+      LookupElement[] elements = myFixture.getLookupElements();
+      if (elements != null) {
+        LookupElement element = ContainerUtil.find(elements, e ->
+          e.getLookupString().equals("requireNonNull") &&
+          e.getPsiElement() instanceof PsiMethod method &&
+          method.getContainingClass().getQualifiedName().equals("java.util.Objects"));
+        assertNotNull(element);
+        selectItem(element);
+      }
+      checkResult();
     }
-    checkResult();
+    finally {
+      clear();
+    }
   }
 
   @NeedsIndex.Full
@@ -273,95 +381,116 @@ public class AutoStaticImportCompletionTest extends NormalCompletionTestCase {
       checkResult();
     }
     finally {
+      clear();
       onDemand.removeEntryAt(onDemandLength);
     }
   }
 
   @NeedsIndex.Full
   public void testWithMemberConflicts() {
-    addStaticAutoImport("a.Objects");
-    myFixture.addClass("""
-                         package a;
-                         public final class Objects {
-                           public static <T> T requireNonNull(T obj) {}
-                         }
-                         """);
-    configure();
-    LookupElement[] elements = myFixture.getLookupElements();
-    if (elements != null) {
-      LookupElement element = ContainerUtil.find(elements, e ->
-        e.getLookupString().equals("requireNonNull") &&
-        e.getPsiElement() instanceof PsiMethod method &&
-        method.getContainingClass().getQualifiedName().equals("a.Objects"));
-      assertNotNull(element);
-      selectItem(element);
+    try {
+      addStaticAutoImport("a.Objects");
+      myFixture.addClass("""
+                           package a;
+                           public final class Objects {
+                             public static <T> T requireNonNull(T obj) {}
+                           }
+                           """);
+      configure();
+      LookupElement[] elements = myFixture.getLookupElements();
+      if (elements != null) {
+        LookupElement element = ContainerUtil.find(elements, e ->
+          e.getLookupString().equals("requireNonNull") &&
+          e.getPsiElement() instanceof PsiMethod method &&
+          method.getContainingClass().getQualifiedName().equals("a.Objects"));
+        assertNotNull(element);
+        selectItem(element);
+      }
+      checkResult();
     }
-    checkResult();
+    finally {
+      clear();
+    }
   }
 
   @NeedsIndex.Full
   public void testDefaultPackage() {
-    addStaticAutoImport("Foo.bar");
-    myFixture.addClass("""
-                         public final class Foo {
-                           public static void bar() {}
-                         }
-                         """);
-    configure();
-    LookupElement[] elements = myFixture.getLookupElements();
-    if (elements != null) {
-      LookupElement element = ContainerUtil.find(elements, e ->
-        e.getLookupString().equals("bar") &&
-        e.getPsiElement() instanceof PsiMethod method &&
-        method.getContainingClass().getQualifiedName().equals("Foo"));
-      assertNotNull(element);
-      selectItem(element);
+    try {
+      addStaticAutoImport("Foo.bar");
+      myFixture.addClass("""
+                           public final class Foo {
+                             public static void bar() {}
+                           }
+                           """);
+      configure();
+      LookupElement[] elements = myFixture.getLookupElements();
+      if (elements != null) {
+        LookupElement element = ContainerUtil.find(elements, e ->
+          e.getLookupString().equals("bar") &&
+          e.getPsiElement() instanceof PsiMethod method &&
+          method.getContainingClass().getQualifiedName().equals("Foo"));
+        assertNotNull(element);
+        selectItem(element);
+      }
+      checkResult();
     }
-    checkResult();
+    finally {
+      clear();
+    }
   }
 
   @NeedsIndex.Full
   public void testDefaultPackageFromNonDefaultPackage() {
-    addStaticAutoImport("Foo.bar");
-    myFixture.addClass("""
-                         public final class Foo {
-                           public static void bar() {}
-                         }
-                         """);
-    configure();
-    LookupElement[] elements = myFixture.getLookupElements();
-    if (elements != null) {
-      LookupElement element = ContainerUtil.find(elements, e ->
-        e.getLookupString().equals("bar") &&
-        e.getPsiElement() instanceof PsiMethod method &&
-        method.getContainingClass().getQualifiedName().equals("Foo"));
-      assertNull(element);
+    try {
+      addStaticAutoImport("Foo.bar");
+      myFixture.addClass("""
+                           public final class Foo {
+                             public static void bar() {}
+                           }
+                           """);
+      configure();
+      LookupElement[] elements = myFixture.getLookupElements();
+      if (elements != null) {
+        LookupElement element = ContainerUtil.find(elements, e ->
+          e.getLookupString().equals("bar") &&
+          e.getPsiElement() instanceof PsiMethod method &&
+          method.getContainingClass().getQualifiedName().equals("Foo"));
+        assertNull(element);
+      }
+    }
+    finally {
+      clear();
     }
   }
 
   @NeedsIndex.Full
   public void testShowPackage() {
-    addStaticAutoImport("org.example.Foo.bar");
-    myFixture.addClass("""
-                         package org.example;
-                         public final class Foo {
-                           public static void bar() {}
-                         }
-                         """);
-    configure();
-    LookupElement[] elements = myFixture.getLookupElements();
-    if (elements != null) {
-      LookupElement element = ContainerUtil.find(elements, e ->
-        e.getLookupString().equals("bar") &&
-        e.getPsiElement() instanceof PsiMethod method &&
-        method.getContainingClass().getQualifiedName().equals("org.example.Foo"));
-      assertNotNull(element);
-      LookupElementPresentation presentation = new LookupElementPresentation();
-      element.renderElement(presentation);
-      assertTrue(presentation.getTailText().contains("org.example"));
-      selectItem(element);
+    try {
+      addStaticAutoImport("org.example.Foo.bar");
+      myFixture.addClass("""
+                           package org.example;
+                           public final class Foo {
+                             public static void bar() {}
+                           }
+                           """);
+      configure();
+      LookupElement[] elements = myFixture.getLookupElements();
+      if (elements != null) {
+        LookupElement element = ContainerUtil.find(elements, e ->
+          e.getLookupString().equals("bar") &&
+          e.getPsiElement() instanceof PsiMethod method &&
+          method.getContainingClass().getQualifiedName().equals("org.example.Foo"));
+        assertNotNull(element);
+        LookupElementPresentation presentation = new LookupElementPresentation();
+        element.renderElement(presentation);
+        assertTrue(presentation.getTailText().contains("org.example"));
+        selectItem(element);
+      }
+      checkResult();
     }
-    checkResult();
+    finally {
+      clear();
+    }
   }
 
   private void addStaticAutoImport(@NotNull String name) {

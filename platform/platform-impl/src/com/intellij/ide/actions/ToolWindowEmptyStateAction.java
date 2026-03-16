@@ -14,7 +14,7 @@ import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 @ApiStatus.Internal
 public abstract class ToolWindowEmptyStateAction extends ActivateToolWindowAction {

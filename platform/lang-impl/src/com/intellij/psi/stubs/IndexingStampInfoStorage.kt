@@ -8,9 +8,10 @@ import com.intellij.util.BitUtil
 import com.intellij.util.indexing.impl.perFileVersion.AutoRefreshingOnVfsCloseRef
 import com.intellij.util.indexing.impl.perFileVersion.IntFileAttribute
 import com.intellij.util.io.DataInputOutputUtil
+import java.io.Closeable
 import java.io.IOException
 
-internal sealed interface IndexingStampInfoStorage {
+internal sealed interface IndexingStampInfoStorage : Closeable {
   companion object {
     @JvmStatic
     fun create(id: String, version: Int): IndexingStampInfoStorage {
@@ -26,7 +27,7 @@ internal sealed interface IndexingStampInfoStorage {
 
 
 internal class IndexingStampInfoStorageOverFastAttributes(private val attribute: FileAttribute) : IndexingStampInfoStorage {
-  private val attributeAccessor = AutoRefreshingOnVfsCloseRef{ fsRecordsImpl->
+  private val attributeAccessor = AutoRefreshingOnVfsCloseRef { fsRecordsImpl ->
     FastFileAttributes.int4FileAttributes(
       fsRecordsImpl,
       attribute.id,
@@ -56,6 +57,8 @@ internal class IndexingStampInfoStorageOverFastAttributes(private val attribute:
       attributeAccessor.write(fileId, i, int4[i])
     }
   }
+
+  override fun close() = attributeAccessor.closeAndUnsafelyUnmap()
 }
 
 internal class IndexingStampStorageOverRegularAttributes(private val attribute: FileAttribute) : IndexingStampInfoStorage {
@@ -114,4 +117,6 @@ internal class IndexingStampStorageOverRegularAttributes(private val attribute: 
       StubUpdatingIndex.LOG.error(e)
     }
   }
+
+  override fun close() = Unit
 }

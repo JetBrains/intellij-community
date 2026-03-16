@@ -18,26 +18,51 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Represents a set of changes in a branch compared to some other branch via three-dot-diff (via merge base)
- * Changes can be queried by commit via [changesByCommits] or as a cumulative set [changes]
- * Changes in [changes] are changes between merge base and head
- * Changes in [changesByCommits] are changes between individual adjacent commits
- *
- * Actual parsed changes are stored in [patchesByChange]
  */
 @ApiStatus.Experimental
 interface GitBranchComparisonResult {
+  /**
+   * SHA hash of the tip of the "left" side of the comparison
+   *
+   * Typically, the tip of the branch where a review is merged
+   */
   val baseSha: String
+
+  /**
+   * The most recent common ancestor of the "left" and "right" sides of the comparison
+   * https://git-scm.com/docs/git-merge-base
+   */
   val mergeBaseSha: String
+
+  /**
+   * SHA hash of the tip of the "right" side of the comparison
+   *
+   * Typically, the tip of the reviewed branch
+   */
   val headSha: String
 
+  /**
+   * The list of "cumulative" changes between [baseSha] and [headSha] via [mergeBaseSha]
+   * In essense - changes between [mergeBaseSha] and [headSha]
+   */
   val changes: List<RefComparisonChange>
 
   /**
-   * Ordered list of commits where the last commit is the commit with [headSha]
+   * Ordered list of commits in the "right" branch where the last commit is the commit with [headSha]
    */
   val commits: List<GitCommitShaWithPatches>
+
+  /**
+   * Changes between each commit in [commits] and it's first parent
+   */
   val changesByCommits: Map<String, List<RefComparisonChange>>
 
+  /**
+   * A container for parsed changes for both [changes] and [changesByCommits]
+   *
+   * A parsed change is represented by the [GitTextFilePatchWithHistory] which holds the parsed diff data of the file change and
+   * a reference to the whole history of file changes in the "right" (code review) branch
+   */
   val patchesByChange: Map<RefComparisonChange, GitTextFilePatchWithHistory>
 
   companion object {

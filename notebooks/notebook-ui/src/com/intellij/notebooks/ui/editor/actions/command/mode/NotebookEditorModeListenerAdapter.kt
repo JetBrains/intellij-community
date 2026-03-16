@@ -11,10 +11,12 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.util.Key
 import com.intellij.ui.Gray
 
 class NotebookEditorModeListenerAdapter private constructor(private val editor: Editor) : NotebookEditorModeListener, CaretListener, Disposable.Default {
   private var currentEditorMode: NotebookEditorMode? = null
+  private var isInitializing = true
 
   override fun onModeChange(editor: Editor, mode: NotebookEditorMode) {
     val modeWasChanged = currentEditorMode != mode
@@ -74,12 +76,15 @@ class NotebookEditorModeListenerAdapter private constructor(private val editor: 
     NotebookEditorMode.COMMAND -> false
   }
 
-  private fun handleCarets(mode: NotebookEditorMode) = when (mode) {
-    NotebookEditorMode.EDIT -> {
+  private fun handleCarets(mode: NotebookEditorMode) {
+    if (isInitializing) return
+    if (mode == NotebookEditorMode.EDIT) {
       // selection of multiple cells leads to multiple invisible carets, remove them
       editor.caretModel.removeSecondaryCarets()
+      restoreSavedCaretPositions()
     }
-    NotebookEditorMode.COMMAND -> {
+    else {
+      saveCaretPositions()
       // text selection shouldn't be visible in command mode
       for (caret in editor.caretModel.allCarets) {
         caret.removeSelection()
@@ -87,8 +92,25 @@ class NotebookEditorModeListenerAdapter private constructor(private val editor: 
     }
   }
 
+  private fun saveCaretPositions() {
+    val caretTracker = NotebookCellCaretTracker.getInstance() ?: return
+    val caretPositions = caretTracker.saveCaretPositions(editor)
+    if (caretPositions != null) {
+      editor.putUserData(SAVED_CARET_POSITIONS_KEY, caretPositions)
+    }
+  }
+
+  private fun restoreSavedCaretPositions() {
+    val savedPositions = editor.getUserData(SAVED_CARET_POSITIONS_KEY)
+    editor.putUserData(SAVED_CARET_POSITIONS_KEY, null)
+    if (savedPositions.isNullOrEmpty()) return
+    val caretTracker = NotebookCellCaretTracker.getInstance() ?: return
+    caretTracker.restoreCaretPositions(editor, savedPositions)
+  }
+
   companion object {
     private val INVISIBLE_CARET = CaretVisualAttributes(Gray.TRANSPARENT, CaretVisualAttributes.Weight.NORMAL)
+    private val SAVED_CARET_POSITIONS_KEY = Key.create<List<NotebookCellCaretTracker.CellCaretPosition>>("NOTEBOOK_SAVED_CARET_POSITIONS")
 
     fun setupForEditor(editor: Editor) {
       val listener = NotebookEditorModeListenerAdapter(editor)
@@ -97,6 +119,7 @@ class NotebookEditorModeListenerAdapter private constructor(private val editor: 
       val connection = editor.project?.messageBus?.connect(listener)
       connection?.subscribe(NOTEBOOK_EDITOR_MODE, listener)
       listener.onModeChange(editor, editor.currentMode)
+      listener.isInitializing = false
     }
   }
 }

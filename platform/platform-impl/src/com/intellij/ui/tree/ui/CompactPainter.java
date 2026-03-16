@@ -7,7 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
 
 @ApiStatus.Internal
 public final class CompactPainter implements Control.Painter {

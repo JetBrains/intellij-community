@@ -6,7 +6,14 @@ import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraphNode;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class VarVersionsGraph {
   public final VBStyleCollection<VarVersionNode, VarVersion> nodes = new VBStyleCollection<>();

@@ -25,6 +25,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//java/openapi:java",
     "//platform/projectModel-api:projectModel",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/refactoring",
     "//platform/usageView-impl",
     "//plugins/properties:properties-backend",
@@ -39,6 +40,7 @@ jvm_library(
     "//java/jsp-openapi:jsp",
     "//plugins/properties/properties-psi-api:psi",
     "//plugins/properties/properties-psi-impl:backend-psi",
+    "//java/java-backend:backend",
     "//jvm/jvm-analysis-api:analysis",
     "//libraries/stream",
     "//platform/core-ui",
@@ -51,7 +53,8 @@ jvm_library(
   exports = [
     "//plugins/properties:properties-backend",
     "//java/java-impl:impl",
-  ]
+  ],
+  runtime_deps = ["//platform/backend"]
 )
 
 jvm_library(
@@ -73,6 +76,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//java/openapi:java",
     "//platform/projectModel-api:projectModel",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/refactoring",
     "//platform/usageView-impl",
     "//plugins/properties:properties-backend",
@@ -87,6 +91,7 @@ jvm_library(
     "//plugins/grazie/src:core",
     "//plugins/grazie",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/usageView",
@@ -95,6 +100,7 @@ jvm_library(
     "//java/testFramework",
     "//plugins/properties/properties-psi-api:psi",
     "//plugins/properties/properties-psi-impl:backend-psi",
+    "//java/java-backend:backend",
     "//jvm/jvm-analysis-api:analysis",
     "//libraries/stream",
     "//platform/core-ui",
@@ -109,6 +115,7 @@ jvm_library(
   exports = [
     "//plugins/properties:properties-backend",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.i18n` end

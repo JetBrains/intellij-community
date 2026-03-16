@@ -17,6 +17,7 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugProcessStarter
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.XSessionStartedResult
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
@@ -38,8 +39,10 @@ open class DebuggableProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 }
 
 @ApiStatus.Internal
-inline fun startSession(environment: ExecutionEnvironment, crossinline starter: (session: XDebugSession) -> XDebugProcess): XDebugSession {
-  return XDebuggerManager.getInstance(environment.project).startSession(environment, xDebugProcessStarter(starter))
+inline fun startSession(environment: ExecutionEnvironment, crossinline starter: (session: XDebugSession) -> XDebugProcess): XSessionStartedResult {
+  return XDebuggerManager.getInstance(environment.project).newSessionBuilder(xDebugProcessStarter(starter))
+    .environment(environment)
+    .startSession()
 }
 
 @ApiStatus.Internal

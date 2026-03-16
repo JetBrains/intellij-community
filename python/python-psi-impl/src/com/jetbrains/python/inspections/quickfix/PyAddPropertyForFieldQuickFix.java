@@ -8,7 +8,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.Property;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,10 +45,11 @@ public class PyAddPropertyForFieldQuickFix extends PsiUpdateModCommandQuickFix {
           final String name = target.getName();
           if (name == null) return;
           String propertyName = StringUtil.trimStart(name, "_");
-          final Map<String,Property> properties = containingClass.getProperties();
+          final Map<String, Property> properties = containingClass.getProperties();
           final PyElementGenerator generator = PyElementGenerator.getInstance(project);
           if (!properties.containsKey(propertyName)) {
-            final PyFunction property = generator.createProperty(LanguageLevel.forElement(containingClass), propertyName, name, AccessDirection.READ);
+            final PyFunction property =
+              generator.createProperty(LanguageLevel.forElement(containingClass), propertyName, name, AccessDirection.READ);
             PyPsiRefactoringUtil.addElementToStatementList(property, containingClass.getStatementList(), false);
           }
           final PyExpression qualifier = ((PyReferenceExpression)element).getQualifier();

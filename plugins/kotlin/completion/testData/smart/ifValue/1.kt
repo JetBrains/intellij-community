@@ -8,3 +8,5 @@ fun bar(b: Boolean, s: String, c: Char){
 // EXIST: s
 // EXIST: c
 // ABSENT: b
+
+// IGNORE_K2

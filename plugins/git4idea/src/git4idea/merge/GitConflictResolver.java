@@ -34,7 +34,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 import static com.intellij.openapi.util.NlsContexts.NotificationContent;
 import static com.intellij.openapi.util.NlsContexts.NotificationTitle;
@@ -62,7 +66,7 @@ public class GitConflictResolver {
     public Params() {
       myMergeDialogCustomizer = new MergeDialogCustomizer() {
         @Override
-        public @NotNull String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+        public @NotNull @NlsContexts.Label String getMultipleFileMergeDescription(@NotNull Collection<? extends @NotNull VirtualFile> files) {
           return myMergeDescription;
         }
       };
@@ -71,7 +75,7 @@ public class GitConflictResolver {
     public Params(Project project) {
       myMergeDialogCustomizer = new GitDefaultMergeDialogCustomizer(project) {
         @Override
-        public @NotNull @NlsContexts.Label String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+        public @NotNull @NlsContexts.Label String getMultipleFileMergeDescription(@NotNull Collection<? extends @NotNull VirtualFile> files) {
           if (!StringUtil.isEmpty(myMergeDescription)) {
             return myMergeDescription;
           }

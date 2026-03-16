@@ -16,7 +16,7 @@ interface ProjectIdManager {
 }
 
 @State(name = "ProjectId", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))], reportStatistic = false)
-private class ProjectIdManagerImpl : SerializablePersistentStateComponent<ProjectIdManagerImpl.State>(State()), ProjectIdManager {
+internal class ProjectIdManagerImpl : SerializablePersistentStateComponent<ProjectIdManagerImpl.State>(State()), ProjectIdManager {
   override var id: @NonNls String?
     get() = state.id
     set(value) {

@@ -47,7 +47,7 @@ class GitExecutableFileTester {
       long currentLastModificationDate = 0L;
 
       try {
-        currentLastModificationDate = executable.getModificationTime(); executable.getModificationTime();
+        currentLastModificationDate = executable.getModificationTime();
         if (result == null || result.getFileLastModifiedTimestamp() != currentLastModificationDate) {
           result = new TestResult(testOrAbort(project, executable), currentLastModificationDate);
           myTestMap.put(executable, result);
@@ -163,8 +163,8 @@ class GitExecutableFileTester {
     }
 
     LOG.debug("Acquiring git version for " + executable);
-    GitLineHandler handler = new GitLineHandler(null,
-                                                workingDirectory.toFile(),
+    GitLineHandler handler = new GitLineHandler(project,
+                                                workingDirectory,
                                                 executable,
                                                 GitCommand.VERSION,
                                                 Collections.emptyList());

@@ -7,6 +7,7 @@ import git4idea.GitReference
 import git4idea.GitStandardLocalBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitTag
+import git4idea.GitWorkingTree
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -17,6 +18,7 @@ interface GitRepositoryState {
   val localBranches: Set<GitStandardLocalBranch>
   val remoteBranches: Set<GitStandardRemoteBranch>
   val tags: Set<GitTag>
+  val workingTrees: Collection<GitWorkingTree>
   val recentBranches: List<GitStandardLocalBranch>
   val operationState: GitOperationState
 

@@ -19,7 +19,7 @@ import java.util.List;
 
 public class EditCustomFieldAction extends XDebuggerTreeActionBase {
   @Override
-  protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
+  protected void perform(@NotNull XValueNodeImpl node, @NotNull String nodeName, @NotNull AnActionEvent e) {
     ValueDescriptorImpl descriptor = JvmDebuggerUtils.getDescriptorFromNode(node, e);
     if (descriptor == null) return;
     EnumerationChildrenRenderer enumerationChildrenRenderer = getParentEnumerationRenderer(descriptor);

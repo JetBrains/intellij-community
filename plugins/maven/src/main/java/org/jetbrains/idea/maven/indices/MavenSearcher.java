@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
 
-import java.util.*;
+import java.util.List;
 
 public abstract class MavenSearcher<RESULT_TYPE extends MavenArtifactSearchResult> {
 

@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
-import java.util.*
+import java.util.ArrayDeque
 
 //NOTE: this is an approximation that may contain more module infos than the exact solution
 @K1ModeProjectStructureApi

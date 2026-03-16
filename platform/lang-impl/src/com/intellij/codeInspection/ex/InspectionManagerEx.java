@@ -7,7 +7,11 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.InspectionManagerBase;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.application.ApplicationManager;

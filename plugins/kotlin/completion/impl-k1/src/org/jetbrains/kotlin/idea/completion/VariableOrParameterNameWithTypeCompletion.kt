@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.NameUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -29,8 +30,9 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.utils.collectDescriptorsFiltered
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isError
-import java.util.*
+import java.util.Locale
 
+@K1Deprecation
 class VariableOrParameterNameWithTypeCompletion(
     private val collector: LookupElementsCollector,
     private val lookupElementFactory: BasicLookupElementFactory,
@@ -43,7 +45,7 @@ class VariableOrParameterNameWithTypeCompletion(
 
     init {
         val prefix = prefixMatcher.prefix
-        val prefixWords = NameUtil.splitNameIntoWords(prefix)
+        val prefixWords = NameUtil.splitNameIntoWordList(prefix)
 
         // prefixes to use to generate parameter names from class names
         val nameSuggestionPrefixes = if (prefix.isEmpty() || prefix[0].isUpperCase())

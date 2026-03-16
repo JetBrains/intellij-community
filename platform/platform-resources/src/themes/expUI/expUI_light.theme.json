@@ -861,6 +861,11 @@
     },
 
     "WelcomeScreen.Details.background": "Gray14",
+    "WelcomeScreen.Frame.DisclosureButton": {
+      "defaultBackground": "Gray13",
+      "hoverOverlay": "#0000000D",
+      "pressedOverlay": "#00000017"
+    },
 
     "TipOfTheDay": {
       "Image.borderColor": "Gray12"

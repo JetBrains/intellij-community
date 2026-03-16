@@ -3,12 +3,16 @@
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import java.util.function.Consumer;
+
+import static com.intellij.ide.todo.TodoImplementationChooserKt.shouldUseSplitTodo;
+import static com.intellij.ide.todo.rpc.TodoHelperKt.fileMatchesFilter;
 
 @ApiStatus.Internal
 public final class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
@@ -27,8 +31,21 @@ public final class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
   protected void collectFiles(@NotNull Consumer<? super @NotNull PsiFile> consumer) {
     CurrentFileTodosTreeStructure treeStructure = (CurrentFileTodosTreeStructure)getTodoTreeStructure();
     PsiFile psiFile = treeStructure.getFile();
-    if (psiFile != null && treeStructure.accept(psiFile)) {
-      consumer.accept(psiFile);
+
+    if (psiFile != null) {
+      if (shouldUseSplitTodo()) {
+        VirtualFile virtualFile = psiFile.getVirtualFile();
+        if (virtualFile != null) {
+          TodoFilter filter = treeStructure.getTodoFilter();
+          if (fileMatchesFilter(getProject(), virtualFile, filter)) {
+            consumer.accept(psiFile);
+          }
+        }
+      } else {
+        if (treeStructure.accept(psiFile)) {
+          consumer.accept(psiFile);
+        }
+      }
     }
   }
 

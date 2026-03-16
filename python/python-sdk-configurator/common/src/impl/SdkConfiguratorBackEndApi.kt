@@ -17,10 +17,6 @@ interface SdkConfiguratorBackEndApi : RemoteApi<Unit> {
    */
   suspend fun configureSdkForModules(projectId: ProjectId, onlyModules: Set<ModuleName>)
 
-  /**
-   * Ask user about modules, then call [configureSdkForModules]
-   */
-  suspend fun configureAskingUser(projectId: ProjectId)
 }
 
 

@@ -2,7 +2,13 @@
 package com.intellij.platform.testFramework.assertion.moduleAssertion
 
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.ModuleDependency
+import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
+import com.intellij.platform.workspace.jps.entities.SdkDependency
 import org.junit.jupiter.api.Assertions
 
 object DependencyAssertions {

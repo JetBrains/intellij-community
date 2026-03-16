@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Transparency Examples</title>
+<style type="text/css">
+body {
+font-family: Verdana, Arial;
+}
+img {
+opacity:0.4;
+}
+img:hover {
+opacity:1.0;
+}
+.box_white, .box_black {
+font-size: 14px;
+font-weight: bold;
+text-align: center;
+padding: 10px;
+display: inline-block;
+width: 100px;
+}
+.box_white {
+background-color: white;
+border: 2px solid black;
+color: black;
+}
+.box_black {
+background-color: black;
+border: 2px solid white;
+color: white;
+}
+.box_0 {
+opacity: 1.0;
+}
+.box_25 {
+opacity: 0.75;
+}
+.box_50 {
+opacity: 0.5;
+}
+.box_75 {
+opacity: 0.25;
+}
+.box_100 {
+opacity: 0;
+}
+</style>
+</head>
+<body>
+
+<h1>Image Transparency</h1>
+Hover over an image to make it fully opaque.<br>
+<img src="http://www.w3schools.com/css/klematis.jpg" width="150" height="113" alt="klematis" />
+<img src="http://www.w3schools.com/css/klematis2.jpg" width="150" height="113" alt="klematis" />
+
+<h1>Block Transparency</h1>
+<span class="box_white box_0">White 0%</span> <span class="box_white box_25">White 25%</span> <span class="box_white box_50">White 50%</span> <span class="box_white box_75">White 75%</span> <span class="box_white box_100">White 100%</span>
+<br>
+<span class="box_black box_0">Black 0%</span> <span class="box_black box_25">Black 25%</span> <span class="box_black box_50">Black 50%</span> <span class="box_black box_75">Black 75%</span> <span class="box_black box_100">Black 100%</span>
+
+</body>
+</html>

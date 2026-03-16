@@ -2,7 +2,13 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.openapi.editor.actions.FlipCommaIntention;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NotNull;

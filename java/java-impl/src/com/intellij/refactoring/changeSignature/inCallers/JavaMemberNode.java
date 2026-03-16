@@ -4,7 +4,11 @@ package com.intellij.refactoring.changeSignature.inCallers;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
@@ -23,11 +27,11 @@ public abstract class JavaMemberNode<M extends PsiMember> extends MemberNodeBase
   }
 
   @Override
-  protected void customizeRendererText(ColoredTreeCellRenderer renderer) {
+  protected void customizeRendererText(@NotNull ColoredTreeCellRenderer renderer) {
     customizeRendererText(renderer, getMember(), isEnabled());
   }
 
-  public static <M extends PsiMember> void customizeRendererText(ColoredTreeCellRenderer renderer, M member, boolean enabled) {
+  public static void customizeRendererText(@NotNull ColoredTreeCellRenderer renderer, @NotNull PsiMember member, boolean enabled) {
     final @NlsSafe StringBuilder buffer = new StringBuilder(128);
     final PsiClass containingClass = member.getContainingClass();
     if (containingClass != null) {

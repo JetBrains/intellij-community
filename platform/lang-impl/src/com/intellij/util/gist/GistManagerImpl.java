@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.PsiFile;
@@ -23,7 +23,11 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.List;
 import java.util.Map;
@@ -40,7 +44,7 @@ public final class GistManagerImpl extends GistManager {
   private static final String GIST_REINDEX_COUNT_PROPERTY_NAME = "file.gist.reindex.count";
   private static final Key<AtomicInteger> GIST_INVALIDATION_COUNT_KEY = Key.create("virtual.file.gist.invalidation.count");
 
-  private static final Map<String, VirtualFileGist<?>> ourGists = CollectionFactory.createConcurrentWeakValueMap();
+  private final Map<String, VirtualFileGist<?>> myGists = CollectionFactory.createConcurrentWeakValueMap();
 
   private final AtomicInteger myReindexCount = new AtomicInteger(
     PropertiesComponent.getInstance().getInt(GIST_REINDEX_COUNT_PROPERTY_NAME, 0)
@@ -51,7 +55,7 @@ public final class GistManagerImpl extends GistManager {
 
   private final GistStorage gistStorage;
 
-  static final class MyBulkFileListener implements BulkFileListener {
+  static final class MyBulkFileListener implements BulkFileListenerBackgroundable {
     @Override
     public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
       if (ContainerUtil.exists(events, MyBulkFileListener::shouldDropCache)) {
@@ -98,12 +102,12 @@ public final class GistManagerImpl extends GistManager {
                                                                   int version,
                                                                   @NotNull DataExternalizer<Data> externalizer,
                                                                   @NotNull VirtualFileGist.GistCalculator<Data> calcData) {
-    if (ourGists.get(id) != null) {
+    if (myGists.get(id) != null) {
       throw new IllegalArgumentException("Gist '" + id + "' is already registered");
     }
 
     //noinspection unchecked
-    return (VirtualFileGist<Data>)ourGists.computeIfAbsent(
+    return (VirtualFileGist<Data>)myGists.computeIfAbsent(
       id,
       __ -> new VirtualFileGistOverGistStorage<>(gistStorage.newGist(id, version, externalizer), calcData)
     );

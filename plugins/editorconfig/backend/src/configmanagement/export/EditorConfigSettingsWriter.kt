@@ -1,7 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.export
 
-import com.intellij.application.options.codeStyle.properties.*
+import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor
+import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper
+import com.intellij.application.options.codeStyle.properties.LanguageCodeStylePropertyMapper
+import com.intellij.application.options.codeStyle.properties.StringAccessor
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
@@ -18,7 +23,7 @@ import java.io.IOException
 import java.io.OutputStream
 import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.EnumSet
 
 class EditorConfigSettingsWriter(private val myProject: Project?,
                                  out: OutputStream,

@@ -2,18 +2,54 @@
 package com.intellij.codeInspection.restriction;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.*;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiAnnotationOwner;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UAnnotation;
+import org.jetbrains.uast.UAnnotationMethod;
+import org.jetbrains.uast.UArrayAccessExpression;
+import org.jetbrains.uast.UBinaryExpression;
+import org.jetbrains.uast.UBlockExpression;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UField;
+import org.jetbrains.uast.ULambdaExpression;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UNamedExpression;
+import org.jetbrains.uast.UPolyadicExpression;
+import org.jetbrains.uast.UQualifiedReferenceExpression;
+import org.jetbrains.uast.UReferenceExpression;
+import org.jetbrains.uast.UResolvable;
+import org.jetbrains.uast.UReturnExpression;
+import org.jetbrains.uast.USwitchClauseExpression;
+import org.jetbrains.uast.USwitchExpression;
+import org.jetbrains.uast.UVariable;
+import org.jetbrains.uast.UastBinaryOperator;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UastUtils;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -188,10 +224,11 @@ public final class AnnotationContext {
     return result;
   }
 
+  private static final Set<String> ACCESSORS_NAMES = Set.of("KtUltraLightMethodForSourceDeclaration", "SymbolLightAccessorMethod");
   private static @Nullable PsiModifierListOwner getKotlinProperty(@NotNull PsiModifierListOwner owner) {
     if (!(owner instanceof PsiMethod method)) return null;
     // Looks ugly but without this check, owner.getNavigationElement() may load PSI or even call decompiler
-    if (!owner.getClass().getSimpleName().equals("KtUltraLightMethodForSourceDeclaration")) return null;
+    if (!ACCESSORS_NAMES.contains(owner.getClass().getSimpleName())) return null;
     String name = method.getName();
     boolean maybeGetter = (name.startsWith("get") || name.startsWith("is")) && method.getParameterList().isEmpty();
     boolean maybeSetter = name.startsWith("set") && method.getParameterList().getParametersCount() == 1;

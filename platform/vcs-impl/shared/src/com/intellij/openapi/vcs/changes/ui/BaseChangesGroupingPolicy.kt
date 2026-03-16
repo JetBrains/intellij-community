@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilderKeys.IS_CACHING_ROOT
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 
 abstract class BaseChangesGroupingPolicy : ChangesGroupingPolicy {
   protected var nextPolicy: ChangesGroupingPolicy? = null
@@ -11,6 +12,7 @@ abstract class BaseChangesGroupingPolicy : ChangesGroupingPolicy {
     nextPolicy = policy
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Prefer using [VcsImplUtil.findValidParentAccurately]",
               ReplaceWith("VcsImplUtil.findValidParentAccurately(nodePath.filePath)",
                           "com.intellij.vcsUtil.VcsImplUtil"))

@@ -1,0 +1,2 @@
+# These are data-only timezone info files.
+tzdata\.zoneinfo.*

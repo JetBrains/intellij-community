@@ -19,7 +19,8 @@ import kotlin.io.path.exists
  * Typically, IntelliJ project have no more than one [GradleBuildRoot].
  */
 sealed class GradleBuildRoot(
-    private val lastModifiedFiles: LastModifiedFiles
+    private val lastModifiedFiles: LastModifiedFiles,
+    open val externalProjectPath: String,
 ) {
     enum class ImportingStatus {
         importing, updatingCaches, updated
@@ -27,12 +28,10 @@ sealed class GradleBuildRoot(
 
     val importing = AtomicReference(ImportingStatus.updated)
 
-    abstract val pathPrefix: String
-
     abstract val projectRoots: Collection<String>
 
     val dir: VirtualFile?
-        get() = LocalFileSystem.getInstance().findFileByPath(pathPrefix)
+        get() = LocalFileSystem.getInstance().findFileByPath(externalProjectPath)
 
     fun saveLastModifiedFiles() {
         scriptingDebugLog { "LasModifiedFiles saved: $lastModifiedFiles" }
@@ -53,10 +52,10 @@ sealed class GradleBuildRoot(
 
 sealed class WithoutScriptModels(
     settings: GradleProjectSettings,
-    lastModifiedFiles: LastModifiedFiles
-) : GradleBuildRoot(lastModifiedFiles) {
-    final override val pathPrefix = settings.externalProjectPath!!
-    final override val projectRoots = settings.modules.takeIf { it.isNotEmpty() } ?: listOf(pathPrefix)
+    lastModifiedFiles: LastModifiedFiles,
+    externalBuildProjectPath: String,
+) : GradleBuildRoot(lastModifiedFiles, externalBuildProjectPath) {
+    final override val projectRoots = settings.modules.takeIf { it.isNotEmpty() } ?: listOf(externalBuildProjectPath)
 }
 
 /**
@@ -64,26 +63,26 @@ sealed class WithoutScriptModels(
  */
 class Legacy(
     settings: GradleProjectSettings,
-    lastModifiedFiles: LastModifiedFiles = settings.loadLastModifiedFiles() ?: LastModifiedFiles()
-) : WithoutScriptModels(settings, lastModifiedFiles)
+    lastModifiedFiles: LastModifiedFiles = settings.loadLastModifiedFiles() ?: LastModifiedFiles(),
+) : WithoutScriptModels(settings, lastModifiedFiles, settings.externalProjectPath)
 
 /**
  * Linked but not yet imported Gradle build.
  */
 class New(
     settings: GradleProjectSettings,
-    lastModifiedFiles: LastModifiedFiles = settings.loadLastModifiedFiles() ?: LastModifiedFiles()
-) : WithoutScriptModels(settings, lastModifiedFiles)
+    lastModifiedFiles: LastModifiedFiles = settings.loadLastModifiedFiles() ?: LastModifiedFiles(),
+) : WithoutScriptModels(settings, lastModifiedFiles, settings.externalProjectPath)
 
 /**
  * Imported Gradle build.
  * Each imported build have info about all of it's Kotlin Build Scripts.
  */
 class Imported(
-    override val pathPrefix: String,
+    override val externalProjectPath: String,
     val data: GradleBuildRootData,
     lastModifiedFiles: LastModifiedFiles
-) : GradleBuildRoot(lastModifiedFiles) {
+) : GradleBuildRoot(lastModifiedFiles, externalProjectPath) {
     override val projectRoots: Collection<String>
         get() = data.projectRoots
 

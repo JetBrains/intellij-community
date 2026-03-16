@@ -82,10 +82,6 @@
       <add-to-group group-id="VcsGeneral.KeymapGroup"/>
     </group>
 
-    <action id="ChangesView.GroupBy.Repository" class="com.intellij.dvcs.actions.SetRepositoryChangesGroupingAction">
-      <add-to-group group-id="ChangesView.GroupBy"/>
-    </action>
-
     <action id="CheckIgnoredAndNotExcludedDirectories" class="com.intellij.dvcs.ignore.CheckIgnoredToExcludeAction"/>
   </actions>
 
@@ -110,5 +106,7 @@
     <openapi.vcs.history.actions.GetVersionAction.ExtensionProvider
       implementation="com.intellij.dvcs.ui.CompareBranchesDiffPanel$GetVersionActionProvider"/>
     <vcs.impl.backend.treeNodeConverter implementation="com.intellij.dvcs.repo.rhizome.RepositoryNodeToEntityConverter"/>
+
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.dvcs.DvcsRemoteApiProvider"/>
   </extensions>
 </idea-plugin>

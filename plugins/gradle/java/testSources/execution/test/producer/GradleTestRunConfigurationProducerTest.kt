@@ -9,7 +9,11 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiMethod
 import junit.framework.TestCase
-import org.jetbrains.plugins.gradle.execution.test.runner.*
+import org.jetbrains.plugins.gradle.execution.test.runner.AllInDirectoryGradleConfigurationProducer
+import org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer
+import org.jetbrains.plugins.gradle.execution.test.runner.PatternGradleConfigurationProducer
+import org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer
+import org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.settings.TestRunner

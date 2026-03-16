@@ -3,15 +3,32 @@ package org.jetbrains.uast.test.java.generate
 
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiBinaryExpression
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDeclarationStatement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiPolyadicExpression
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.util.parentOfType
 import junit.framework.TestCase
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULocalVariable
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.UastCallKind
 import org.jetbrains.uast.generate.UParameterInfo
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin
 import org.jetbrains.uast.generate.refreshed
 import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.test.java.AbstractJavaUastLightTest
+import org.jetbrains.uast.toUElementOfType
 
 class JavaUastGenerationTest : AbstractJavaUastLightTest() {
 

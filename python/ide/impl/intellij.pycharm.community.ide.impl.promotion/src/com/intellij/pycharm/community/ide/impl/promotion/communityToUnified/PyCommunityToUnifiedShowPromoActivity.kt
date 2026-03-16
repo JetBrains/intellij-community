@@ -31,16 +31,14 @@ class PyCommunityToUnifiedShowPromoActivity : ProjectActivity {
     if (update == null) return
 
     if (promoService.shouldShowTooltip()) {
-      showTooltip(project)
+      Helper.showTooltip(project)
     }
     else if (promoService.shouldShowModal()) {
-      showModalPromo(project)
+      Helper.showModalPromo(project)
     }
   }
 
-  companion object {
-    val LOG: Logger = logger<PyCommunityToUnifiedShowPromoActivity>()
-
+  object Helper {
     suspend fun showTooltip(project: Project) {
       withContext(Dispatchers.EDT) {
         PyCommunityToUnifiedTooltip.showTooltip(project)
@@ -54,12 +52,14 @@ class PyCommunityToUnifiedShowPromoActivity : ProjectActivity {
         val result = PyCommunityToUnifiedPromoDialog(project).showAndGet()
         val duration = System.currentTimeMillis() - started
         if (!result) {
-          PyCommunityUnifiedPromoFusCollector.PromoModalClosed.log(PyCommunityUnifiedPromoFusCollector.PromoModalCloseReason.DISMISSED, duration)
+          PyCommunityUnifiedPromoFusCollector.PromoModalClosed.log(PyCommunityUnifiedPromoFusCollector.PromoModalCloseReason.DISMISSED,
+                                                                   duration)
           service<PyCommunityToUnifiedPromoService>().onRemindMeLaterClicked()
           PyCharmCommunityToUnifiedScheduleService.getInstance().scheduleFallbackModal()
         }
         else {
-          PyCommunityUnifiedPromoFusCollector.PromoModalClosed.log(PyCommunityUnifiedPromoFusCollector.PromoModalCloseReason.UPDATE_NOW, duration)
+          PyCommunityUnifiedPromoFusCollector.PromoModalClosed.log(PyCommunityUnifiedPromoFusCollector.PromoModalCloseReason.UPDATE_NOW,
+                                                                   duration)
           launchUpdateDialog(project)
         }
       }
@@ -91,19 +91,27 @@ class PyCommunityToUnifiedShowPromoActivity : ProjectActivity {
           if (UpdateSettings.getInstance().ignoredBuildNumbers.contains(buildNum)) {
             LOG.info("Update declined for: $buildNum")
             promoService.setUpdateDeclined()
-            PyCommunityUnifiedPromoFusCollector.UpdateDialogClosed.log(PyCommunityUnifiedPromoFusCollector.UpdateDialogCloseReason.IGNORE, duration)
+            PyCommunityUnifiedPromoFusCollector.UpdateDialogClosed.log(PyCommunityUnifiedPromoFusCollector.UpdateDialogCloseReason.IGNORE,
+                                                                       duration)
           }
           else {
             LOG.info("Remind me later clicked for: $buildNum")
             promoService.onRemindMeLaterClicked()
             PyCharmCommunityToUnifiedScheduleService.getInstance().scheduleFallbackModal()
-            PyCommunityUnifiedPromoFusCollector.UpdateDialogClosed.log(PyCommunityUnifiedPromoFusCollector.UpdateDialogCloseReason.REMIND_LATER, duration)
+            PyCommunityUnifiedPromoFusCollector.UpdateDialogClosed.log(PyCommunityUnifiedPromoFusCollector.UpdateDialogCloseReason.REMIND_LATER,
+                                                                       duration)
           }
         }
         else {
-          PyCommunityUnifiedPromoFusCollector.UpdateDialogClosed.log(PyCommunityUnifiedPromoFusCollector.UpdateDialogCloseReason.UPDATE_NOW, duration)
+          PyCommunityUnifiedPromoFusCollector.UpdateDialogClosed.log(PyCommunityUnifiedPromoFusCollector.UpdateDialogCloseReason.UPDATE_NOW,
+                                                                     duration)
         }
       }
     }
+  }
+
+  companion object {
+    val LOG: Logger = logger<PyCommunityToUnifiedShowPromoActivity>()
+
   }
 }

@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class ShGenerateForLoop extends ShBaseGenerateAction {
+public final class ShGenerateForLoop extends ShBaseGenerateAction {
   @Override
   protected @NotNull CodeInsightActionHandler getHandler() {
     return this;

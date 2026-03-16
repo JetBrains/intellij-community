@@ -3,7 +3,6 @@ package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.java.refactoring.LightRefactoringTestCase;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiClass;
@@ -11,6 +10,7 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.inline.InlineToAnonymousClassHandler;
 import com.intellij.refactoring.inline.InlineToAnonymousClassProcessor;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
+public class InlineToAnonymousClassTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {

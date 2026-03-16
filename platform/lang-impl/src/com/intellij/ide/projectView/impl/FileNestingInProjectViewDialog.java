@@ -14,16 +14,30 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ElementProducer;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.UI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.*;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 public final class FileNestingInProjectViewDialog extends DialogWrapper {
   private static final Comparator<NestingRule> RULE_COMPARATOR =

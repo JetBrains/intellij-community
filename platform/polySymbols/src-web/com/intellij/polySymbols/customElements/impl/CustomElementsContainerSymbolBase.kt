@@ -3,7 +3,7 @@ package com.intellij.polySymbols.customElements.impl
 
 import com.intellij.model.Pointer
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
@@ -31,12 +31,12 @@ abstract class CustomElementsContainerSymbolBase<Container : CustomElementsContr
       .toList()
 
   override fun getSymbols(
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     params: PolySymbolListSymbolsQueryParams,
     stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
     rootScope
-      .getSymbols(contribution, this.origin, qualifiedKind, params)
+      .getSymbols(contribution, this.origin, kind, params)
       .toList()
 
   override fun getCodeCompletions(
@@ -49,7 +49,7 @@ abstract class CustomElementsContainerSymbolBase<Container : CustomElementsContr
       .toList()
 
   protected abstract fun getConstructor():
-    (String, Container, CustomElementsJsonOrigin, CustomElementsManifestScopeBase) -> CustomElementsContainerSymbolBase<out Container>
+      (String, Container, CustomElementsJsonOrigin, CustomElementsManifestScopeBase) -> CustomElementsContainerSymbolBase<out Container>
 
   override fun createPointer(): Pointer<out CustomElementsContainerSymbolBase<out Container>> {
     val rootScopePtr = rootScope.createPointer()

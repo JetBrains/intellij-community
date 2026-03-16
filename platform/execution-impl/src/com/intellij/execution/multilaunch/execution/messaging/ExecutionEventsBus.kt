@@ -1,5 +1,7 @@
 package com.intellij.execution.multilaunch.execution.messaging
 
+import com.intellij.execution.multilaunch.MultiLaunchConfiguration
+import com.intellij.execution.multilaunch.execution.executables.Executable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -7,8 +9,6 @@ import com.intellij.openapi.rd.createNestedDisposable
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.intellij.execution.multilaunch.MultiLaunchConfiguration
-import com.intellij.execution.multilaunch.execution.executables.Executable
 
 @Service(Service.Level.PROJECT)
 class ExecutionEventsBus(private val project: Project) {

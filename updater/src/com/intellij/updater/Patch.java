@@ -1,17 +1,29 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
-import java.io.*;
-import java.nio.file.Files;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
-import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 
-import static com.intellij.updater.Runner.*;
+import static com.intellij.updater.Runner.LOG;
+import static com.intellij.updater.Runner.isCaseSensitiveFs;
 
 public class Patch {
   private static final int CREATE_ACTION_KEY = 1;
@@ -319,14 +331,6 @@ public class Patch {
     catch (Throwable t) {
       LOG.log(Level.SEVERE, "apply failed", t);
       return new PatchFileCreator.ApplicationResult(false, appliedActions, t);
-    }
-
-    try {
-      // on macOS, we need to update the bundle timestamp to reset Info.plist caches
-      Files.setLastModifiedTime(toDir.toPath(), FileTime.from(Instant.now()));
-    }
-    catch (IOException e) {
-      LOG.log(Level.WARNING, "setLastModified: " + toDir, e);
     }
 
     return new PatchFileCreator.ApplicationResult(true, appliedActions);

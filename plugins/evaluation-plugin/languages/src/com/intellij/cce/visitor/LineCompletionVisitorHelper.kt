@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.visitor
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.CodeLine
+import com.intellij.cce.core.CodeToken
+import com.intellij.cce.core.CodeTokenWithPsi
+import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.util.CompletionGolfTextUtil.isValuableString
 import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.lang.ASTNode

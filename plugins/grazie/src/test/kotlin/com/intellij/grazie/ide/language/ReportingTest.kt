@@ -14,7 +14,11 @@ import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.ide.TextProblemSeverities
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
-import com.intellij.grazie.text.*
+import com.intellij.grazie.text.Rule
+import com.intellij.grazie.text.TextChecker
+import com.intellij.grazie.text.TextContent
+import com.intellij.grazie.text.TextExtractor
+import com.intellij.grazie.text.TextProblem
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -24,7 +28,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.text.StringOperation
-import java.util.*
+import java.util.Locale
 
 class ReportingTest : BasePlatformTestCase() {
 
@@ -40,7 +44,7 @@ class ReportingTest : BasePlatformTestCase() {
     val highlightings = myFixture.doHighlighting().filter { it.inspectionToolId == inspection.id }
     val info = assertOneElement(highlightings)
     assertEquals(TextProblemSeverities.GRAMMAR_ERROR_ATTRIBUTES, info.type.attributesKey)
-    val message = "Use a instead of 'an' if the following word doesn't start with a vowel sound, e.g. 'a sentence', 'a university'."
+    val message = "Use 'a' instead of 'an' if the following word doesn't start with a vowel sound, e.g. 'a sentence', 'a university'."
     assertEquals(info.description, message)
     assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*" + Regex.escape(message) + ".*Powered by LanguageTool.*")))
   }
@@ -48,7 +52,7 @@ class ReportingTest : BasePlatformTestCase() {
   fun `test tooltip and description texts in commit annotator`() {
     configureCommit(myFixture, "I have an new apple here.")
     val info = assertOneElement(myFixture.doHighlighting().filter { it.description.contains("vowel") })
-    val message = "Use a instead of 'an' if the following word doesn't start with a vowel sound, e.g. 'a sentence', 'a university'."
+    val message = "Use 'a' instead of 'an' if the following word doesn't start with a vowel sound, e.g. 'a sentence', 'a university'."
     assertEquals(info.description, message)
     assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*" + Regex.escape(message) + ".*Powered by LanguageTool.*")))
   }
@@ -141,6 +145,7 @@ class ReportingTest : BasePlatformTestCase() {
       "mock intention and fix", // if a custom fix overrides an intention, it's raised in the list
       "Ignore 'S' in this sentence", // then the built-in general context action
       "Configure rule 'something'…",
+      "Accept all writing suggestions…",
       "Enable Cloud mode for deeper checks",
       "mock intention", // normal intentions are at the bottom
     )

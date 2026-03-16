@@ -3,7 +3,11 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.TestOnly
-import java.io.*
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.OutputStream
 import java.nio.file.Path
 import java.util.function.Supplier
 import kotlin.time.Duration

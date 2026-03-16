@@ -1,8 +1,30 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.AlternativeSdkRootsProvider;
+import com.intellij.execution.EnvFilesOptions;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.InputRedirectAware;
+import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.JavaRunConfigurationBase;
+import com.intellij.execution.JavaRunConfigurationExtensionManager;
+import com.intellij.execution.ProgramRunnerUtil;
+import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.ShortenCommandLine;
+import com.intellij.execution.SingleClassConfiguration;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.JavaCommandLineState;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.execution.configurations.RefactoringListenerProvider;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.statistics.FusAwareRunConfiguration;
 import com.intellij.execution.junit.RefactoringListeners;
@@ -31,6 +53,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.searches.ImplicitClassSearch;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -42,7 +65,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static com.intellij.execution.util.EnvFilesUtilKt.checkEnvFiles;
 
@@ -111,6 +138,14 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
 
   @Override
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
+    if (element instanceof PsiNamedElement namedElement) {
+      // do not react on unrelated refactorings
+      String elementName = namedElement.getName();
+      String mainClassName = getMainClassName();
+      if (elementName == null || mainClassName == null || !mainClassName.contains(elementName)) {
+        return null;
+      }
+    }
     final RefactoringElementListener listener = RefactoringListeners.
       getClassOrPackageListener(element, new RefactoringListeners.SingleClassConfigurationAccessor(this));
     return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);

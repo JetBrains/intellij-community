@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighting
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
@@ -12,7 +12,15 @@ import com.intellij.find.FindManager
 import com.intellij.find.impl.FindManagerImpl
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiImportStaticReferenceElement
+import com.intellij.psi.PsiImportStaticStatement
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.SyntheticElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
@@ -23,14 +31,37 @@ import com.siyeh.ig.psiutils.SerializationUtils
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.*
-import org.jetbrains.kotlin.analysis.api.resolution.*
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.importableFqName
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
+import org.jetbrains.kotlin.asJava.toPsiParameters
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
@@ -45,7 +76,13 @@ import org.jetbrains.kotlin.idea.base.psi.mustHaveNonEmptyPrimaryConstructor
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindClassUsagesHandler
 import org.jetbrains.kotlin.idea.base.util.projectScope
-import org.jetbrains.kotlin.idea.codeinsight.utils.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES
+import org.jetbrains.kotlin.idea.codeinsight.utils.ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES_IN_JAVA
+import org.jetbrains.kotlin.idea.codeinsight.utils.canBeReferenceToBuiltInEnumFunction
+import org.jetbrains.kotlin.idea.codeinsight.utils.isFinalizeMethod
+import org.jetbrains.kotlin.idea.codeinsight.utils.isInheritable
+import org.jetbrains.kotlin.idea.codeinsight.utils.isReferenceToBuiltInEnumFunction
+import org.jetbrains.kotlin.idea.codeinsight.utils.isSynthesizedFunction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isCheapEnoughToSearchUsages
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExplicitlyIgnoredByName
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -59,8 +96,57 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtScript
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtTypeElement
+import org.jetbrains.kotlin.psi.KtTypeParameter
+import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.KtValueArgumentName
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
+import org.jetbrains.kotlin.psi.psiUtil.isAncestor
+import org.jetbrains.kotlin.psi.psiUtil.isPrivateNestedClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
+import org.jetbrains.kotlin.psi.simpleNameExpressionRecursiveVisitor
 import org.jetbrains.kotlin.resolve.DataClassResolver
 
 object K2UnusedSymbolUtil {
@@ -805,17 +891,22 @@ object K2UnusedSymbolUtil {
                 LightClassUtil.getLightClassMethod(declaration as KtFunction)
             }
             is KtSecondaryConstructor -> LightClassUtil.getLightClassMethod(declaration as KtFunction)
-            is KtProperty, is KtParameter -> {
-                if (declaration is KtParameter) {
-                    val ownerFunction = declaration.ownerFunction
-                    if (ownerFunction is KtNamedFunction && KotlinMainFunctionDetector.getInstance().isMain(ownerFunction)) {
+            is KtParameter -> {
+                val ownerFunction = declaration.ownerFunction
+                if (ownerFunction is KtNamedFunction) {
+                    if (KotlinMainFunctionDetector.getInstance().isMain(ownerFunction)) {
                         // @JvmStatic main() must have parameters
                         return ownerFunction.findAnnotation(JvmStandardClassIds.Annotations.JvmStatic) != null
                     }
-                    if (!declaration.hasValOrVar()) return false
+
+                    if ( declaration.toPsiParameters()
+                    .any { isJavaEntryPoint.isEntryPoint(it) }) {
+                        return true
+                    }
                 }
+                if (!declaration.hasValOrVar()) return false
                 // we may handle only annotation parameters so far
-                if (declaration is KtParameter && isAnnotationParameter(declaration)) {
+                if (isAnnotationParameter(declaration)) {
                     val lightAnnotationMethods = LightClassUtil.getLightClassPropertyMethods(declaration).toList()
                     for (javaParameterPsi in lightAnnotationMethods) {
                         if (isJavaEntryPoint.isEntryPoint(javaParameterPsi)) {
@@ -823,25 +914,31 @@ object K2UnusedSymbolUtil {
                         }
                     }
                 }
-                if (declaration is KtProperty) {
-                    val javaFieldPsi = LightClassUtil.getLightClassBackingField(declaration)
-                    if (javaFieldPsi != null && isJavaEntryPoint.isEntryPoint(javaFieldPsi)) {
+                // can't rely on a light element, check annotation ourselves
+                val entryPointsManager = EntryPointsManager.getInstance(declaration.project) as EntryPointsManagerBase
+                return checkAnnotatedUsingPatterns(
+                    declaration,
+                    entryPointsManager.additionalAnnotations + entryPointsManager.ADDITIONAL_ANNOTATIONS
+                )
+            }
+            is KtProperty -> {
+                val javaFieldPsi = LightClassUtil.getLightClassBackingField(declaration)
+                if (javaFieldPsi != null && isJavaEntryPoint.isEntryPoint(javaFieldPsi)) {
+                    return true
+                }
+
+                // `@get:` or `@set:` behaves like an accessor method with annotation
+                val getterOrSetterSiteTargetAnnotationPresent = declaration.annotationEntries.any {
+                    val target = it.useSiteTarget?.getAnnotationUseSiteTarget()
+                    target == AnnotationUseSiteTarget.PROPERTY_GETTER || target == AnnotationUseSiteTarget.PROPERTY_SETTER
+                }
+                if (getterOrSetterSiteTargetAnnotationPresent) {
+                    val psiMethods = LightClassUtil.getLightClassPropertyMethods(declaration)
+                    if (psiMethods.any { isJavaEntryPoint.isEntryPoint(it) }) {
                         return true
                     }
-
-                    // `@get:` or `@set:` behaves like an accessor method with annotation
-                    val getterOrSetterSiteTargetAnnotationPresent = declaration.annotationEntries.any {
-                        val target = it.useSiteTarget?.getAnnotationUseSiteTarget()
-                        target == AnnotationUseSiteTarget.PROPERTY_GETTER || target == AnnotationUseSiteTarget.PROPERTY_SETTER
-                    }
-                    if (getterOrSetterSiteTargetAnnotationPresent) {
-                        val psiMethods = LightClassUtil.getLightClassPropertyMethods(declaration)
-                        if (psiMethods.any { isJavaEntryPoint.isEntryPoint(it) }) {
-                            return true
-                        }
-                    }
-
                 }
+
                 // can't rely on a light element, check annotation ourselves
                 val entryPointsManager = EntryPointsManager.getInstance(declaration.project) as EntryPointsManagerBase
                 return checkAnnotatedUsingPatterns(

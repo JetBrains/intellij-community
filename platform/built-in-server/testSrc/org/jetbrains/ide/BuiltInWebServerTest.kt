@@ -12,7 +12,11 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.useProject
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.write
 import io.netty.handler.codec.http.HttpHeaderNames

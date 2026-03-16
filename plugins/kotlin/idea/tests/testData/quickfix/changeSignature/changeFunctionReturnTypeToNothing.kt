@@ -1,4 +1,4 @@
-// "Change return type of enclosing function 'Test.foo' to 'Nothing'" "true"
+// "Specify 'Nothing' return type for enclosing function 'Test.foo'" "true"
 // WITH_STDLIB
 
 class Test {

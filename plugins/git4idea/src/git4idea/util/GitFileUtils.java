@@ -10,11 +10,15 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitBinaryHandler;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersion;
 import git4idea.index.GitIndexUtil;
@@ -25,7 +29,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.ArrayUtil.EMPTY_BYTE_ARRAY;
 import static git4idea.config.GitVersionSpecialty.CAT_FILE_SUPPORTS_FILTERS;
@@ -264,6 +273,7 @@ public final class GitFileUtils {
    * @return the content of file if file is found
    * @throws VcsException if there is a problem with running git
    */
+  @RequiresBackgroundThread
   public static byte @NotNull [] getFileContent(@Nullable Project project,
                                                 @NotNull VirtualFile root,
                                                 @NotNull @NonNls String revisionOrBranch,
@@ -295,6 +305,36 @@ public final class GitFileUtils {
     // '-p' is not needed with '--batch' parameter
     if (addp) {
       h.addParameters("-p");
+    }
+  }
+
+  /**
+   * @param project    the project
+   * @param root       a vcs root
+   * @param toAdd      added/modified files to commit
+   * @param toRemove   removed files to commit
+   * @param exceptions a list of exceptions to update
+   */
+  public static void stageForCommit(@NotNull Project project,
+                                    @NotNull VirtualFile root,
+                                    @NotNull Collection<? extends FilePath> toAdd,
+                                    @NotNull Collection<? extends FilePath> toRemove,
+                                    @NotNull List<? super VcsException> exceptions) {
+    if (!toRemove.isEmpty()) {
+      try {
+        deletePaths(project, root, toRemove, "--ignore-unmatch", "--cached", "-r");
+      }
+      catch (VcsException ex) {
+        exceptions.add(ex);
+      }
+    }
+    if (!toAdd.isEmpty()) {
+      try {
+        addPathsForce(project, root, toAdd);
+      }
+      catch (VcsException ex) {
+        exceptions.add(ex);
+      }
     }
   }
 }

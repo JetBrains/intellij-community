@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
@@ -29,35 +30,44 @@ public abstract class JsonSchemaSpellcheckerClient {
   protected abstract @Nullable String getValue();
 
   public boolean matchesNameFromSchema() {
-    final VirtualFile file = PsiUtilCore.getVirtualFile(getElement());
-    if (file == null) return false;
+    PsiElement element = getElement();
+    return CachedValuesManager.getProjectPsiDependentCache(element, this::matchesNameFromSchema);
+  }
 
-    Project project = getElement().getProject();
-    final JsonSchemaService service = JsonSchemaService.Impl.get(project);
-    if (!service.isApplicableToFile(file)) return false;
-    final JsonSchemaObject rootSchema = service.getSchemaObject(getElement().getContainingFile());
-    if (rootSchema == null) return false;
-    if (isXIntellijInjection(service, rootSchema)) return true;
+  private boolean matchesNameFromSchema(PsiElement element) {
+    VirtualFile file = PsiUtilCore.getVirtualFile(element);
+    if (file == null) return false;
 
     String value = getValue();
     if (StringUtil.isEmpty(value)) return false;
 
-    JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(getElement(), rootSchema);
+    Project project = element.getProject();
+    JsonSchemaService service = JsonSchemaService.Impl.get(project);
+    if (!service.isApplicableToFile(file)) return false;
+    JsonSchemaObject rootSchema = service.getSchemaObject(element.getContainingFile());
+    if (rootSchema == null) return false;
+    if (isXIntellijInjection(service, rootSchema)) return true;
+
+    JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(element, rootSchema);
     if (walker == null) return false;
-    final PsiElement checkable = walker.findElementToCheck(getElement());
+    PsiElement checkable = walker.findElementToCheck(element);
     if (checkable == null) return false;
-    final ThreeState isName = walker.isName(checkable);
-    final JsonPointerPosition position = walker.findPosition(checkable, isName == ThreeState.NO);
+    ThreeState isName = walker.isName(checkable);
+    JsonPointerPosition position = walker.findPosition(checkable, isName == ThreeState.NO);
     if (position == null || position.isEmpty() && isName == ThreeState.NO) return false;
 
-    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, rootSchema, position, walker.createValueAdapter(checkable)).resolve();
+    Collection<JsonSchemaObject> schemas =
+      new JsonSchemaResolver(project, rootSchema, position, walker.createValueAdapter(checkable)).resolve();
     if (schemas.isEmpty()) return false;
 
-    return schemas.stream().anyMatch(s -> {
+    return ContainerUtil.exists(schemas, s -> {
       if (s.getPropertyByName(value) != null || s.getMatchingPatternPropertySchema(value) != null) {
         return true;
       }
-      return ContainerUtil.notNullize(s.getEnum()).stream().anyMatch(e -> e instanceof String && StringUtil.unquoteString((String)e).equals(value));
+      return ContainerUtil.exists(
+        ContainerUtil.notNullize(s.getEnum()),
+        e -> e instanceof String && StringUtil.unquoteString((String)e).equals(value)
+      );
     });
   }
 

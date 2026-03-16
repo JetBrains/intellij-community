@@ -16,11 +16,18 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
+import com.intellij.util.text.matching.MatchedFragment;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.StringJoiner;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -140,9 +147,9 @@ public final class MethodTags {
     private void highlightLast(@NotNull LookupElementPresentation presentation, int start) {
       List<LookupElementPresentation.TextFragment> fragments = presentation.getTailFragments();
       LookupElementPresentation.TextFragment lastFragment = fragments.getLast();
-      Iterable<TextRange> ranges = LookupCellRenderer.getMatchingFragments(myPrefix, lastFragment.text);
+      List<MatchedFragment> ranges = LookupCellRenderer.getMatchingFragmentList(myPrefix, lastFragment.text);
       if (ranges != null) {
-        for (TextRange nextHighlightedRange : ranges) {
+        for (MatchedFragment nextHighlightedRange : ranges) {
           presentation.decorateTailItemTextRange(
             new TextRange(start + nextHighlightedRange.getStartOffset(), start + nextHighlightedRange.getEndOffset()),
             LookupElementPresentation.LookupItemDecoration.HIGHLIGHT_MATCHED);
@@ -196,17 +203,17 @@ public final class MethodTags {
     if (referenceName == null) {
       return Collections.emptySet();
     }
-    String[] strings = NameUtilCore.nameToWords(referenceName);
-    if (strings.length == 0) {
+    List<@NotNull String> strings = NameUtilCore.nameToWordList(referenceName);
+    if (strings.isEmpty()) {
       return Collections.emptySet();
     }
-    Tag[] canBeFirst = getTags(strings[0]);
+    Tag[] canBeFirst = getTags(strings.getFirst());
     Set<Tag> result = new HashSet<>();
     for (Tag firstPart : canBeFirst) {
       StringJoiner joiner = new StringJoiner("");
       joiner.add(firstPart.name);
-      for (int i = 1; i < strings.length; i++) {
-        String string = strings[i];
+      for (int i = 1; i < strings.size(); i++) {
+        String string = strings.get(i);
         joiner.add(string);
       }
       result.add(new Tag(joiner.toString(), firstPart.matcher));

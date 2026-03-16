@@ -1,12 +1,21 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.rw
 
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.lightEdit.LightEdit
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.AsyncExecutionService
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ReadAndWriteScope
+import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ReadResult
+import com.intellij.openapi.application.ReadWriteActionSupport
+import com.intellij.openapi.application.ThreadingSupport
 import com.intellij.openapi.application.impl.AsyncExecutionServiceImpl
 import com.intellij.openapi.application.impl.InternalThreading
+import com.intellij.openapi.application.useBackgroundWriteAction
+import com.intellij.openapi.application.useTrueSuspensionForWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -92,7 +101,12 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
             executeWriteActionOnEdt(stamp, readResult.action)
           }
           else {
-            executeWriteActionOnBackgroundWithAtomicCheck(lock, stamp, readResult.action)
+            try {
+              InternalThreading.incrementBackgroundWriteActionCount()
+              executeWriteActionOnBackgroundWithAtomicCheck(lock, stamp, readResult.action)
+            } finally {
+              InternalThreading.decrementBackgroundWriteActionCount()
+            }
           }
           if (writeResult !== retryMarker) {
             @Suppress("UNCHECKED_CAST")
@@ -119,7 +133,7 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
 
   private suspend fun <T> executeWriteActionOnBackgroundWithAtomicCheck(lock: ThreadingSupport, originalStamp: Long, action: () -> T): /*T or retryMarker */ Any? {
     val dispatcher = backgroundWriteActionDispatcher
-    val ref = withContext(dispatcher + InternalThreading.RunInBackgroundWriteActionMarker) {
+    val ref = withContext(dispatcher) {
       executeWriteActionWithPossibleRetry {
         lock.runWriteActionWithCheckInWriteIntent(
           {
@@ -146,7 +160,7 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
 
   override suspend fun <T> runWriteAction(action: () -> T): T {
     val context = if (useBackgroundWriteAction) {
-      backgroundWriteActionDispatcher + InternalThreading.RunInBackgroundWriteActionMarker
+      backgroundWriteActionDispatcher
     }
     else {
       Dispatchers.EDT

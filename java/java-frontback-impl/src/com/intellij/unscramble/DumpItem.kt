@@ -7,10 +7,11 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.threadDumpParser.ThreadOperation
 import com.intellij.threadDumpParser.ThreadState
 import com.intellij.ui.SimpleTextAttributes
+import com.sun.jdi.ObjectReference
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
-import java.util.*
+import java.util.Objects
 import javax.swing.Icon
 
 @ApiStatus.Internal
@@ -36,6 +37,26 @@ interface DumpItem {
    * @see toDumpItems
    */
   val awaitingDumpItems: Set<DumpItem>
+
+  /**
+   * Unique identifier of the dump item.
+   */
+  val id: Long
+
+  /**
+   * Unique identifier of the parent dump item.
+   */
+  val parentId: Long?
+
+  /**
+   * True if the given dump item can be a parent to some other dump item.
+   */
+  val isContainer: Boolean
+
+  /**
+   * May be used in the UI to hide some items from the dump.
+   */
+  val canBeHidden: Boolean
 
   companion object {
     @JvmField
@@ -107,19 +128,48 @@ class CompoundDumpItem<T : DumpItem>(
 }
 
 @ApiStatus.Internal
-fun List<ThreadState>.toDumpItems(): List<MergeableDumpItem> {
-  val statesToItems = associateWith(::JavaThreadDumpItem)
+fun toDumpItems(threadStates: List<ThreadState>): List<MergeableDumpItem> =
+  toDumpItems(threadStates, emptyList(), emptyList(), emptyList())
+
+@ApiStatus.Internal
+fun toDumpItems(threadStates: List<ThreadState>, threadContainerNames: List<String>, threadContainerRefs: List<ObjectReference>, parentContainerOrdinals: List<Int>): List<MergeableDumpItem> {
+  val dumpItems = threadStates.map(::JavaThreadDumpItem)
+
+  val statesToItems = threadStates.zip(dumpItems).toMap()
 
   for ((threadState, dumpItem) in statesToItems) {
     val awaitingItems = threadState.awaitingThreads.mapNotNull { statesToItems[it] }.toSet()
     dumpItem.setAwaitingItems(awaitingItems)
   }
 
-  return statesToItems.values.toList()
+  val threadContainers = threadContainerNames.withIndex().map { (index, name) ->
+    val id = threadContainerRefs[index].uniqueID()
+    val parentOrdinal = parentContainerOrdinals[index]
+    if (parentOrdinal == -1) {
+      JavaVirtualThreadContainerItem(name, id, null)
+    } else {
+      val parentId = threadContainerRefs[parentOrdinal].uniqueID()
+      JavaVirtualThreadContainerItem(name, id, parentId)
+    }
+  }
+
+  return dumpItems + threadContainers
 }
 
 private class JavaThreadDumpItem(private val threadState: ThreadState) : MergeableDumpItem {
   override val name: String = threadState.name
+
+  override val isContainer: Boolean
+    get() = false
+
+  override val id: Long
+    get() = threadState.uniqueId
+
+  override val parentId: Long?
+    get() = threadState.threadContainerUniqueId
+
+  override val canBeHidden: Boolean
+    get() = threadState.isVirtual
 
   override val stateDesc: String
     get() {
@@ -226,6 +276,7 @@ private class JavaThreadDumpItem(private val threadState: ThreadState) : Mergeab
       if (threadState.awaitingThreads != otherThreadState.awaitingThreads) return false
       if (threadState.deadlockedThreads != otherThreadState.deadlockedThreads) return false
       if (this.comparableStackTrace != other.comparableStackTrace) return false
+      if (this.item.parentId != other.item.parentId) return false
       return true
     }
 
@@ -239,8 +290,58 @@ private class JavaThreadDumpItem(private val threadState: ThreadState) : Mergeab
         threadState.extraState,
         threadState.awaitingThreads,
         threadState.deadlockedThreads,
-        comparableStackTrace
+        comparableStackTrace,
+        parentId
       )
+    }
+  }
+}
+
+private class JavaVirtualThreadContainerItem(private val containerName: String, override val id: Long, override val parentId: Long?) : MergeableDumpItem {
+  override val name: @NlsSafe String
+    get() = formatThreadContainerName(containerName)
+
+  override val isContainer: Boolean
+    get() = true
+
+  override val canBeHidden: Boolean
+    get() = true
+
+  override val stateDesc: @NlsSafe String
+    get() = "" // todo we can add threadsCount to the state
+
+  override val attributes: SimpleTextAttributes
+    get() = SimpleTextAttributes.REGULAR_ATTRIBUTES
+
+  override val stackTrace: @NlsSafe String
+    get() = ""
+  override val interestLevel: Int
+    get() = 100 // todo dependent on the number of children, for now kept on top
+  override val icon: Icon
+    get() = IconsCache.getIconWithVirtualOverlay(AllIcons.Debugger.ThreadGroup)
+  override val iconToolTip: @Nls String
+    get() = JavaFrontbackBundle.message("dump.item.java.thread.icon.tooltip.container")
+  override val isDeadLocked: Boolean
+    get() = false
+  override val awaitingDumpItems: Set<DumpItem>
+    get() = emptySet()
+
+  override val mergeableToken: MergeableToken = object : MergeableToken {
+    override fun equals(other: Any?) = super.equals(other)
+    override fun hashCode() = super.hashCode()
+    override val item = this@JavaVirtualThreadContainerItem
+  }
+
+  companion object {
+    // see jdk.internal.vm.ThreadContainers.RootContainer.name
+    const val ROOT = "<root>"
+    const val VIRTUAL_THREADS_ROOT_CONTAINER = "Root Container of Virtual Threads"
+    const val JUC_PACKAGE = "java.util.concurrent"
+
+    fun formatThreadContainerName(name: String) = when {
+      name == ROOT -> VIRTUAL_THREADS_ROOT_CONTAINER
+      name.startsWith(JUC_PACKAGE) -> name.removePrefix(JUC_PACKAGE)
+      else -> name
     }
   }
 }
@@ -270,6 +371,16 @@ class InfoDumpItem(private val title: @Nls String, private val details: @NlsSafe
     get() = false
   override val awaitingDumpItems: Set<DumpItem>
     get() = emptySet()
+  override val isContainer: Boolean
+    get() = false
 
+  override val canBeHidden: Boolean
+    get() = false
+
+  override val id: Long
+    get() = this.hashCode().toLong()
+
+  override val parentId: Long?
+    get() = null
 }
 

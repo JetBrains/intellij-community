@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions
 
 import com.intellij.CommonBundle
@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.changes.ChangeListData
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import git4idea.DialogManager
-import git4idea.GitApplyChangesNotification
 import git4idea.GitActivity
 import git4idea.GitNotificationIdsHolder.Companion.CHERRY_PICK_ABORT_FAILED
 import git4idea.GitNotificationIdsHolder.Companion.CHERRY_PICK_ABORT_SUCCESS
@@ -23,6 +22,7 @@ import git4idea.GitNotificationIdsHolder.Companion.MERGE_ABORT_SUCCESS
 import git4idea.GitNotificationIdsHolder.Companion.REVERT_ABORT_FAILED
 import git4idea.GitNotificationIdsHolder.Companion.REVERT_ABORT_SUCCESS
 import git4idea.GitUtil
+import git4idea.applyChanges.GitApplyChangesNotification
 import git4idea.changes.GitChangeUtils
 import git4idea.commands.Git
 import git4idea.commands.GitCommand

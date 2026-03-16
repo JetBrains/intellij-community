@@ -3,7 +3,13 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.codeInsight.template.*
+import com.intellij.codeInsight.template.Expression
+import com.intellij.codeInsight.template.ExpressionContext
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateBuilderImpl
+import com.intellij.codeInsight.template.TemplateEditingAdapter
+import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.codeInsight.template.TextResult
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project

@@ -7,9 +7,9 @@ import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
+import org.jetbrains.kotlin.test.util.invalidateCaches
 
 @TestDataPath("/inspections/applicationServiceAsStaticFinalFieldOrProperty")
 class KtFirApplicationServiceAsStaticFinalFieldOrPropertyInspectionTest : ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase(), ExpectedPluginModeProvider {

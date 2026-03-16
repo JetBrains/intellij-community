@@ -30,7 +30,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.*;
+import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlatformPlugin;
+import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfo;
+import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoByDescriptor;
+import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoById;
 
 @ApiStatus.Internal
 public final class RegistryApplicationUsagesCollector extends ApplicationUsagesCollector {

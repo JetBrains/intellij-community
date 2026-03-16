@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.java.ide.customization.training` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "training_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "training",
+  module_name = "intellij.java.ide.customization.training",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":training_resources"],
+  deps = [
+    "//java/java-features-trainer:featuresTrainer",
+    "//platform/util:util-ui",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+  ]
+)
+### auto-generated section `build intellij.java.ide.customization.training` end

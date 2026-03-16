@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
@@ -25,6 +26,7 @@ import static org.junit.Assert.assertNotNull;
 public class LocalFileSystemStressTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDir = new TempDirectory();
 
+  @PerformanceUnitTest
   @Test
   public void getPathForVeryDeepFileMustNotFailWithStackOverflowError_Performance() throws IOException {
     VirtualFile tmpRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");

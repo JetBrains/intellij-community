@@ -4,8 +4,14 @@ package org.jetbrains.jps.javac;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.tools.*;
-import java.io.*;
+import javax.tools.JavaFileManager;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.CharBuffer;

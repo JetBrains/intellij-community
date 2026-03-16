@@ -5,7 +5,9 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.documentation.render.DocRenderItemUpdater
 import com.intellij.codeInspection.incorrectFormatting.FormattingChanges
 import com.intellij.codeInspection.incorrectFormatting.detectFormattingChanges
-import com.intellij.formatting.visualLayer.VisualFormattingLayerElement.*
+import com.intellij.formatting.visualLayer.VisualFormattingLayerElement.BlockInlay
+import com.intellij.formatting.visualLayer.VisualFormattingLayerElement.Folding
+import com.intellij.formatting.visualLayer.VisualFormattingLayerElement.InlineInlay
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Document

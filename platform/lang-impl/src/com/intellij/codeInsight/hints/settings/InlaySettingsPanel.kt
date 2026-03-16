@@ -1,10 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
-import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.ChangeListener
+import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.codeInsight.hints.InlayGroup
+import com.intellij.codeInsight.hints.InlayHintsSettings
+import com.intellij.codeInsight.hints.ParameterHintsPassFactory
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.codeInsight.hints.settings.language.createEditor
 import com.intellij.internal.inspector.PropertyBean
@@ -23,7 +27,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.*
+import com.intellij.ui.CheckboxTree
+import com.intellij.ui.CheckedTreeNode
+import com.intellij.ui.JBSplitter
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.TreeSpeedSearch
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
@@ -218,9 +227,10 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
         if (item.description != null) {
           addDescription(item.description)
         }
-        if (item.component !is JPanel || item.component.componentCount > 0) {
-          item.component.border = JBUI.Borders.empty()
-          rightPanel.add(item.component)
+        val component = item.component
+        if (component !is JPanel || component.componentCount > 0) {
+          component.border = JBUI.Borders.empty()
+          rightPanel.add(component)
         }
         if (treeNode.isLeaf) {
           addPreview(item.getCasePreview(null) ?: item.previewText, item, null, treeNode)

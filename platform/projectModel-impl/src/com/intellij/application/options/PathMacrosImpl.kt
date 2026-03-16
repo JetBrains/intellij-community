@@ -5,7 +5,12 @@ package com.intellij.application.options
 
 import com.intellij.openapi.application.PathMacroContributor
 import com.intellij.openapi.application.PathMacros
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ExpandMacroToPathMap
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.ModificationTracker
@@ -15,7 +20,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader.PathVariablesSerializer
 import org.jetbrains.jps.model.serialization.PathMacroUtil
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicLong
 
 @ApiStatus.Internal

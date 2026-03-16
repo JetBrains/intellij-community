@@ -7,6 +7,7 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.impl.ProjectUtil.getRootFrameForWindow
 import com.intellij.idea.AppMode
+import com.intellij.idea.WellKnownCommands
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
@@ -26,18 +27,50 @@ import com.intellij.util.lang.ByteBufferCleaner
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.StartupUiUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import sun.awt.image.SunWritableRaster
-import java.awt.*
-import java.awt.event.*
+import java.awt.AWTEvent
+import java.awt.AlphaComposite
+import java.awt.Color
+import java.awt.Point
+import java.awt.Toolkit
+import java.awt.Window
+import java.awt.event.AWTEventListener
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 import java.awt.geom.RoundRectangle2D
-import java.awt.image.*
+import java.awt.image.BufferedImage
+import java.awt.image.ColorModel
+import java.awt.image.DataBufferInt
+import java.awt.image.DirectColorModel
+import java.awt.image.Raster
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
-import java.nio.file.*
-import java.util.*
+import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption
+import java.nio.file.StandardOpenOption
+import java.util.EnumSet
 import java.util.concurrent.atomic.AtomicReference
 
 @Volatile
@@ -74,7 +107,7 @@ fun scheduleShowSplashIfNeeded(
   }
 }
 
-private fun isRealRemoteDevHost(args: List<String>): Boolean = AppMode.isRemoteDevHost() && args.firstOrNull() != AppMode.SPLIT_MODE_COMMAND
+private fun isRealRemoteDevHost(args: List<String>): Boolean = AppMode.isRemoteDevHost() && args.firstOrNull() != WellKnownCommands.SPLIT_MODE
 
 private fun showSplashIfNeeded(scope: CoroutineScope, initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>) {
   val oldJob = splashJob.get()

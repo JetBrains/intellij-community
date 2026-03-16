@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":rhino_resources"],
-  exports = ["@lib//:rhino"],
-  runtime_deps = ["@lib//:rhino"]
+  exports = ["@lib//:libraries-rhino-rhino"],
+  runtime_deps = ["@lib//:libraries-rhino-rhino"]
 )
 ### auto-generated section `build intellij.libraries.rhino` end

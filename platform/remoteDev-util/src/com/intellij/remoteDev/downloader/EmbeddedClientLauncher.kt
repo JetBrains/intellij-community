@@ -6,6 +6,8 @@ import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CustomConfigMigrationOption
@@ -13,6 +15,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
@@ -31,9 +34,17 @@ import com.intellij.util.system.OS
 import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import java.io.File
 import java.nio.file.Path
-import java.util.*
-import kotlin.io.path.*
+import java.util.Collections
+import kotlin.io.path.Path
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.name
+import kotlin.io.path.pathString
+import kotlin.io.path.readLines
+import kotlin.io.path.writeLines
 
 @ApiStatus.Internal
 class EmbeddedClientLauncher private constructor(private val moduleRepository: RuntimeModuleRepository, 
@@ -87,7 +98,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
   }
 
   fun launch(url: String, extraArguments: List<String>, lifetime: Lifetime, errorReporter: EmbeddedClientErrorReporter): Lifetime {
-    val launcherData = createLauncherViaIdeExecutable() ?: findOldJetBrainsClientLauncher()
+    val launcherData = findCustomClientLauncher() ?: createLauncherViaIdeExecutable() ?: findOldJetBrainsClientLauncher()
     if (launcherData != null) {
       LOG.debug("Start embedded client using launcher")
       val workingDirectory = Path(PathManager.getHomePath())
@@ -99,6 +110,15 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
         extraArguments,
         lifetime
       )
+    }
+    if (PlatformUtils.isGateway() && (AppMode.isRunningFromDevBuild() || PluginManagerCore.isRunningFromSources())) {
+      val applicationClasspath = System.getProperty("java.class.path").split(File.pathSeparator)
+      if (applicationClasspath.any { path -> Path.of(path).any { it.pathString == "bazel-out" }}) {
+        error("""
+          |Starting embedded client from Gateway when the project is compiled by Bazel isn't supported for now (IJPL-222205).
+          |Set the registry option 'monorepo.devkit.use.bazel.compile' to 'false' as a workaround.
+        """.trimMargin())
+      }
     }
 
     val processLifetimeDef = lifetime.createNested()
@@ -158,12 +178,22 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     return JetBrainsClientLauncherData(executable, listOf(executable.pathString))
   }
   
+  private fun findCustomClientLauncher(): JetBrainsClientLauncherData? {
+    if (OS.CURRENT == OS.Windows && Registry.`is`("rdct.embedded.client.prefer.jetrains_client64.exe")) {
+      //prefer a special launcher for JetBrains Client if it exists to ensure that the special 'remote' icon will be used for the application
+      return PathManager.findBinFile("jetbrains_client64.exe")?.let {
+        JetBrainsClientLauncherData(it, listOf(it.pathString))
+      }
+    }
+    return null
+  }
+
   private fun findOldJetBrainsClientLauncher(): JetBrainsClientLauncherData? {
     return when (OS.CURRENT) {
       OS.macOS -> {
-        return null
+        null
       }
-      OS.Windows -> PathManager.findBinFile("jetbrains_client64.exe")?.let { 
+      OS.Windows -> PathManager.findBinFile("jetbrains_client64.exe")?.let {
         JetBrainsClientLauncherData(it, listOf(it.pathString))
       }
       else -> PathManager.findBinFile("jetbrains_client.sh")?.let {
@@ -209,12 +239,29 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "jna.noclasspath", 
       "idea.is.internal",
       "intellij.test.jars.location",
-      PathManager.PROPERTY_HOME_PATH,
       "skiko.library.path"
     )
     propertiesToPass.forEach { 
       vmParametersList.defineProperty(it, System.getProperty(it))
     }
+
+    /* if this is Gateway staring from source code in 'dev build' mode, we need to pass the path to the actual source directory;
+       otherwise, JetBrains Client won't detect that it's running from sources and won't be able to start */
+    val ideHomePath =
+      if (PlatformUtils.isGateway() && AppMode.isRunningFromDevBuild()) findRunningFromSourcesHomeDir().pathString
+      else System.getProperty(PathManager.PROPERTY_HOME_PATH)
+    vmParametersList.defineProperty(PathManager.PROPERTY_HOME_PATH, ideHomePath)
+  }
+
+  private fun findRunningFromSourcesHomeDir(): Path {
+    var currentHome: Path? = PathManager.getHomeDir()
+    while (currentHome != null) {
+      if (currentHome.resolve(Project.DIRECTORY_STORE_FOLDER).exists()) {
+        return currentHome
+      }
+      currentHome = currentHome.parent
+    }
+    error("Cannot find home directory for running from sources upwards from ${PathManager.getHomeDir()}")
   }
 
   private fun addVmOptions(vmParametersList: ParametersList, moduleRepositoryPath: Path) {

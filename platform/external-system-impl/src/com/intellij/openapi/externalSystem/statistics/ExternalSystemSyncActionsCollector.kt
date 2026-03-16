@@ -5,11 +5,14 @@ import com.intellij.featureStatistics.fusCollectors.EventsRateThrottle
 import com.intellij.featureStatistics.fusCollectors.ThrowableDescription
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EnumEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
 import com.intellij.internal.statistic.eventLog.events.EventFields.DurationMs
 import com.intellij.internal.statistic.eventLog.events.EventFields.Int
+import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.internal.statistic.utils.platformPlugin
@@ -32,19 +35,19 @@ enum class Phase { GRADLE_CALL, PROJECT_RESOLVERS, DATA_SERVICES, WORKSPACE_MODE
 object ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  val GROUP = EventLogGroup("build.gradle.import", 10)
+  val GROUP: EventLogGroup = EventLogGroup("build.gradle.import", 10)
 
   private val activityIdField = EventFields.Long("ide_activity_id")
-  private val importPhaseField = EventFields.Enum<Phase>("phase")
+  val importPhaseField: EnumEventField<Phase> = EventFields.Enum<Phase>("phase")
 
-  val syncStartedEvent = GROUP.registerEvent("gradle.sync.started", activityIdField)
+  val syncStartedEvent: EventId1<Long> = GROUP.registerEvent("gradle.sync.started", activityIdField)
 
   private val isParallelModelFetch = Boolean("parallel_model_fetch")
   private val isSyncSuccessful = Boolean("sync_successful")
   private val isFirstSyncWithIdeCaches = Boolean("first_sync_with_ide_caches")
 
-  val syncFinishedEvent = GROUP.registerVarargEvent("gradle.sync.finished", activityIdField, DurationMs,
-                                                    isParallelModelFetch, isSyncSuccessful, isFirstSyncWithIdeCaches)
+  val syncFinishedEvent: VarargEventId = GROUP.registerVarargEvent("gradle.sync.finished", activityIdField, DurationMs,
+                                                                   isParallelModelFetch, isSyncSuccessful, isFirstSyncWithIdeCaches)
   private val phaseStartedEvent = GROUP.registerEvent("phase.started", activityIdField, importPhaseField)
 
 
@@ -62,11 +65,11 @@ object ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
                                                      EventFields.PluginInfo,
                                                      tooManyErrorsField)
 
-  val phaseFinishedEvent = GROUP.registerVarargEvent("phase.finished",
-                                                     activityIdField,
-                                                     importPhaseField,
-                                                     DurationMs,
-                                                     errorCountField)
+  val phaseFinishedEvent: VarargEventId = GROUP.registerVarargEvent("phase.finished",
+                                                                    activityIdField,
+                                                                    importPhaseField,
+                                                                    DurationMs,
+                                                                    errorCountField)
 
   private val ourErrorsRateThrottle = EventsRateThrottle(100, 5L * 60 * 1000) // 100 errors per 5 minutes
 
@@ -115,11 +118,12 @@ object ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  fun logPhaseStarted(project: Project?, activityId: Long, phase: Phase) = phaseStartedEvent.log(project, activityId, phase)
+  fun logPhaseStarted(project: Project?, activityId: Long, phase: Phase): Unit =
+    phaseStartedEvent.log(project, activityId, phase)
 
   @JvmStatic
   @JvmOverloads
-  fun logPhaseFinished(project: Project?, activityId: Long, phase: Phase, durationMs: Long, errorCount: Int = 0) =
+  fun logPhaseFinished(project: Project?, activityId: Long, phase: Phase, durationMs: Long, errorCount: Int = 0): Unit =
     phaseFinishedEvent.log(project, activityIdField.with(activityId), importPhaseField.with(phase), DurationMs.with(durationMs),
                            EventPair(errorCountField, errorCount))
 

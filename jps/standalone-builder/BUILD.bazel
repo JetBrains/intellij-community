@@ -15,7 +15,7 @@ jvm_library(
     "//libraries/cli-parser",
     "//jps/model-serialization",
     "@community//build:build-javac-rt",
-    "@lib//:protobuf",
+    "//libraries/protobuf",
   ]
 )
 ### auto-generated section `build intellij.tools.jps.build.standalone` end

@@ -4,4 +4,4 @@ val x = 1.apply {
 
 // K1_TYPE: this -> <html>Int</html>
 
-// K2_TYPE: this -> Int
+// K2_TYPE: this -> <b>Int</b>

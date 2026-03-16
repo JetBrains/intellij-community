@@ -1,21 +1,43 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency
 
-import com.intellij.concurrency.*
+import com.intellij.concurrency.IntelliJContextElement
+import com.intellij.concurrency.TestElement
+import com.intellij.concurrency.TestElementKey
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.blockingContextScope
+import com.intellij.openapi.progress.currentThreadCoroutineScope
+import com.intellij.openapi.progress.timeoutWaitUp
+import com.intellij.openapi.progress.withCurrentThreadCoroutineScope
+import com.intellij.openapi.progress.withCurrentThreadCoroutineScopeBlocking
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.asCompletableFuture
-import org.junit.jupiter.api.Assertions.*
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.atomic.AtomicBoolean
@@ -302,5 +324,69 @@ class CurrentThreadCoroutineScopeTest {
         }
       }
     }
+  }
+
+  @OptIn(InternalCoroutinesApi::class)
+  @Test
+  fun `overwritten checkpoint inside blockingContextScope is not propagated`(): Unit = timeoutRunBlocking {
+    val flag = AtomicBoolean(false)
+    val job = blockingContextScope {
+      installThreadContext(currentThreadContext() + E1(), true) {
+        withCurrentThreadCoroutineScopeBlocking {
+          application.invokeLater {
+            currentThreadCoroutineScope().launch {
+              // If the checkpoint used is the one of withCurrentThreadCoroutineScopeBlocking,
+              // it may already have completed and the assertion below will never run.
+              flag.set(true)
+              assertNull(coroutineContext[E1])
+            }
+          }
+        }.second
+      }
+    }
+    assertTrue(flag.get()) { "The coroutine launched in currentThreadCoroutineScope() should have started" }
+    // must manually propagate exceptions from the checkpoint's supervisor
+    job.getCancellationException().cause?.let { throw it }
+  }
+
+  @Test
+  fun `checkpoint is propagated to structured children`() = timeoutRunBlocking {
+    val flag = AtomicBoolean(false)
+    val (_, job) = withCurrentThreadCoroutineScope {
+      @Suppress("ForbiddenInSuspectContextMethod")
+      application.invokeAndWait {
+        currentThreadCoroutineScope().launch {
+          flag.set(true)
+        }
+      }
+    }
+    job.join()
+    assertTrue(flag.get())
+  }
+
+  @OptIn(InternalCoroutinesApi::class)
+  @Test
+  fun `withCurrentThreadCoroutineScopeBlocking does not leak blockingContextScope to coroutines`(): Unit = timeoutRunBlocking {
+    val blockingContextScopeEnded = Semaphore(1)
+    val executeOnPooledThreadEnded = Semaphore(1)
+    val job = blockingContextScope {
+      withCurrentThreadCoroutineScopeBlocking {
+        currentThreadCoroutineScope().launch {
+          assertErrorLogged<IllegalStateException> {
+            currentThreadCoroutineScope()
+          }
+          application.executeOnPooledThread {
+            assertNull(Cancellation.currentJob())
+            blockingContextScopeEnded.timeoutWaitUp()
+            // happens strictly outside `blockingContextScope`
+            executeOnPooledThreadEnded.up()
+          }
+        }
+      }.second
+    }
+    // must manually propagate exceptions from the checkpoint's supervisor
+    job.getCancellationException().cause?.let { throw it }
+    blockingContextScopeEnded.up()
+    executeOnPooledThreadEnded.timeoutWaitUp()
   }
 }

@@ -4,8 +4,29 @@ package com.jetbrains.python.sdk.configuration
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.python.common.tools.ToolId
+import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.sdk.baseDir
+import com.jetbrains.python.venvReader.VirtualEnvReader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
+
+suspend fun Module.findPythonVirtualEnvironments(): List<PythonBinary> {
+  val venvsInModule = this.baseDir?.let {
+    withContext(Dispatchers.IO) {
+      VirtualEnvReader().findVenvsInDir(it.toNioPath())
+    }
+  } ?: emptyList()
+
+  return venvsInModule
+}
+
 
 /**
  * Used on directory opening with an attempt to configure suitable Python interpreter
@@ -18,6 +39,7 @@ import org.jetbrains.annotations.CheckReturnValue
 interface PyProjectSdkConfigurationExtension {
   companion object {
     private val EP_NAME: ExtensionPointName<PyProjectSdkConfigurationExtension> = ExtensionPointName.create("Pythonid.projectSdkConfigurationExtension")
+    private val CONCURRENCY_LIMIT = Semaphore(permits = 5)
 
     /**
      * EPs associated by tool id
@@ -28,9 +50,23 @@ interface PyProjectSdkConfigurationExtension {
      * We return all configurators in a sorted order. The order is determined by extensions order, but existing environments have a
      * higher priority. That means we first have all existing envs, and only after SDK creators that extensions can manage.
      */
-    suspend fun findAllSortedForModule(module: Module): List<CreateSdkInfoWithTool> = EP_NAME.extensionsIfPointIsRegistered
-      .mapNotNull { e -> e.checkEnvironmentAndPrepareSdkCreator(module)?.let { CreateSdkInfoWithTool(it, e.toolId) } }
-      .sortedBy { it.createSdkInfo }
+    suspend fun findAllSortedForModule(module: Module, venvsInModule: List<PythonBinary>): List<CreateSdkInfoWithTool> {
+      return EP_NAME.extensionsIfPointIsRegistered
+        .concurrentMapNotNull { e -> e.checkEnvironmentAndPrepareSdkCreator(module, venvsInModule)?.let { CreateSdkInfoWithTool(it, e.toolId) } }
+        .sortedBy { it.createSdkInfo }
+    }
+
+    suspend fun findAllSortedForModule(module: Module): List<CreateSdkInfoWithTool> {
+      return findAllSortedForModule(module, module.findPythonVirtualEnvironments())
+    }
+
+    private suspend fun <A, B> Iterable<A>.concurrentMapNotNull(f: suspend (A) -> B?): List<B> = coroutineScope {
+      map {
+        async {
+          CONCURRENCY_LIMIT.withPermit { f(it) }
+        }
+      }.awaitAll().filterNotNull()
+    }
   }
 
   val toolId: ToolId
@@ -59,7 +95,7 @@ interface PyProjectSdkConfigurationExtension {
    * @return descriptor to create/register a suitable SDK, or null if this extension cannot configure the project
    */
   @CheckReturnValue
-  suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo?
+  suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo?
 
   /**
    * Returns this extension as a [PyProjectTomlConfigurationExtension] when a tool supports configuring with

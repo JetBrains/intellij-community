@@ -10,12 +10,14 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.impl.VcsLogContentUtil.getToolWindow
 import com.intellij.vcs.log.impl.VcsLogContentUtil.openLogTab
@@ -36,16 +38,22 @@ internal class VcsLogTabsManager(
   private var toolWindowListenerInstalled = false
   private var isDisposed: Boolean = false
 
+  @RequiresEdt
   fun createTabs() {
     val savedTabs = uiProperties.tabs
     if (savedTabs.isEmpty()) return
 
-    val editorTabs = savedTabs.filterValues { it === VcsLogTabLocation.EDITOR }.keys
-    val toolWindowTabs = savedTabs.filterValues { it === VcsLogTabLocation.TOOL_WINDOW }.keys
-
-    if (savedTabs.any { it.value === VcsLogTabLocation.STANDALONE }) {
-      LOG.warn("Reopening standalone tabs is not supported")
+    val editorTabs = mutableListOf<String>()
+    val toolWindowTabs = mutableListOf<String>()
+    for ((id, location) in savedTabs) {
+      when (location) {
+        VcsLogTabLocation.EDITOR -> editorTabs.add(id)
+        VcsLogTabLocation.TOOL_WINDOW -> toolWindowTabs.add(id)
+        else -> LOG.warn("Reopening standalone tabs is not supported")
+      }
     }
+    closeTabsWithoutFilters(editorTabs)
+    closeTabsWithoutFilters(toolWindowTabs)
 
     if (editorTabs.isNotEmpty()) {
       invokeLater(ModalityState.nonModal()) {
@@ -77,14 +85,38 @@ internal class VcsLogTabsManager(
     }
   }
 
+  private fun closeTabsWithoutFilters(tabs: MutableList<String>) {
+    val shouldRestoreWithoutFilters = Registry.`is`("vcs.log.tabs.restore.without.filters", false)
+    if (shouldRestoreWithoutFilters) return
+
+    val iter = tabs.iterator()
+    // restore one tab without filters for better UX (don't make the user create a new empty tab themselves)
+    var oneTabPreserved = false
+    while (iter.hasNext()) {
+      val tabId = iter.next()
+      if (uiProperties.checkTabHasFilters(tabId)) {
+        continue
+      }
+      else if (!oneTabPreserved) {
+        oneTabPreserved = true
+      }
+      else {
+        iter.remove()
+        uiProperties.removeTab(tabId)
+      }
+    }
+  }
+
   override fun dispose() {
     isDisposed = true
   }
 
+  @RequiresEdt
   fun toolWindowShown(toolWindow: ToolWindow) {
     futureToolWindow.complete(toolWindow)
   }
 
+  @RequiresEdt
   fun openAnotherLogTab(filters: VcsLogFilterCollection, location: VcsLogTabLocation): MainVcsLogUi {
     require(!isDisposed) { "Already disposed" }
     val tabId = logManager.generateNewLogId()

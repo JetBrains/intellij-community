@@ -15,7 +15,13 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.DefaultCellEditor
+import javax.swing.JCheckBox
+import javax.swing.JPanel
+import javax.swing.JTable
+import javax.swing.KeyStroke
+import javax.swing.ListSelectionModel
 import javax.swing.table.AbstractTableModel
 import kotlin.math.max
 import kotlin.math.min

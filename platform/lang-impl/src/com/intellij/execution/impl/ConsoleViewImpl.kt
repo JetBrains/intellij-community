@@ -7,14 +7,22 @@ import com.google.common.base.CharMatcher
 import com.intellij.codeInsight.folding.impl.FoldingUtil
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase
+import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.currentOrNull
 import com.intellij.codeWithMe.ClientId.Companion.isCurrentlyUnderLocalId
+import com.intellij.codeWithMe.ClientId.Companion.withExplicitClientId
 import com.intellij.execution.ConsoleFolding
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.actions.ClearConsoleAction
 import com.intellij.execution.actions.ConsoleActionsPostProcessor
 import com.intellij.execution.actions.EOFAction
-import com.intellij.execution.filters.*
+import com.intellij.execution.filters.BrowserHyperlinkInfo
+import com.intellij.execution.filters.CompositeFilter
+import com.intellij.execution.filters.Filter
+import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.execution.filters.HyperlinkInfoBase
+import com.intellij.execution.filters.HyperlinkWithPopupMenuInfo
+import com.intellij.execution.filters.InputFilter
 import com.intellij.execution.impl.ConsoleState.NotStartedStated
 import com.intellij.execution.impl.ConsoleViewImpl.Companion.CONSOLE_VIEW_IN_EDITOR_VIEW
 import com.intellij.execution.process.ProcessHandler
@@ -28,15 +36,38 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionGroupWrapper
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.command.undo.UndoUtil
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.ClientEditorManager.Companion.getClientEditor
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.ScrollType
+import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.actionSystem.TypedAction
@@ -77,7 +108,12 @@ import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.*
+import com.intellij.util.Alarm
+import com.intellij.util.ArrayUtil
+import com.intellij.util.DocumentUtil
+import com.intellij.util.ObjectUtils
+import com.intellij.util.SmartList
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -95,7 +131,11 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
 import java.io.IOException
-import java.util.concurrent.*
+import java.util.concurrent.CancellationException
+import java.util.concurrent.CopyOnWriteArraySet
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 import javax.swing.JComponent
@@ -504,7 +544,9 @@ open class ConsoleViewImpl protected constructor(
         }
         catch (_: TimeoutException) {
         }
-        EDT.dispatchAllInvocationEvents()
+        TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+          EDT.dispatchAllInvocationEvents()
+        }
       }
     }
     catch (e: InterruptedException) {
@@ -611,14 +653,19 @@ open class ConsoleViewImpl protected constructor(
   open fun flushDeferredText() {
     ThreadingAssertions.assertEventDispatchThread()
     if (isDisposed) return
-    val editor = editor as EditorEx?
-    val shouldStickToEnd = !myCancelStickToEnd && isStickingToEnd(
-      editor!!)
+
+    val editor = editor as EditorEx
+    withExplicitClientId(ClientId.localId) {
+      flushDeferredTextImpl(editor)
+    }
+  }
+
+  private fun flushDeferredTextImpl(editor: EditorEx) {
+    val shouldStickToEnd = !myCancelStickToEnd && isStickingToEnd(editor)
     myCancelStickToEnd = false // Cancel only needs to last for one update. Next time, isStickingToEnd() will be false.
 
     var deferredTokens: List<TokenBuffer.TokenInfo>
-    val document: Document = editor!!.document
-
+    val document: Document = editor.document
     synchronized(LOCK) {
       if (myOutputPaused) return
       deferredTokens = myDeferredBuffer.drain()
@@ -1082,7 +1129,7 @@ open class ConsoleViewImpl protected constructor(
     return extensions.filter { it.shouldFoldLine(project, lineText) }
   }
 
-  private class ClearThisConsoleAction(private val myConsoleView: ConsoleView) : ClearConsoleAction() {
+  internal class ClearThisConsoleAction(private val myConsoleView: ConsoleView) : ClearConsoleAction() {
     override fun update(e: AnActionEvent) {
       val enabled = myConsoleView.contentSize > 0
       e.presentation.isEnabled = enabled

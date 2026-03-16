@@ -1,10 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiImportModuleStatement;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiJavaModuleReference;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.PsiPackageAccessibilityStatement;
 import com.intellij.psi.impl.PsiJavaModuleModificationTracker;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiImportStatementStub;
@@ -20,6 +29,7 @@ import java.lang.ref.SoftReference;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 import static com.intellij.reference.SoftReference.dereference;
@@ -121,6 +131,13 @@ public class PsiImportModuleStatementImpl extends PsiImportStatementBaseImpl imp
   @Override
   public boolean isOnDemand() {
     return true;
+  }
+
+  @Override
+  public boolean isReplaceEquivalent(PsiImportStatementBase other) {
+    if (this == other) return true;
+    if (!(other instanceof PsiImportModuleStatementImpl)) return false;
+    return Objects.equals(getReferenceName(), ((PsiImportModuleStatementImpl)other).getReferenceName());
   }
 
   @Override

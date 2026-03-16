@@ -1,0 +1,78 @@
+### skip generation section `test kotlin.jvm-debugger.testFramework`
+
+### auto-generated section `build kotlin.jvm-debugger.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "testFramework_test_lib",
+  module_name = "kotlin.jvm-debugger.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:junit4",
+    "@lib//:jb-jdi",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//aether-dependency-resolver",
+    "//aether-dependency-resolver:aether-dependency-resolver_test_lib",
+    "//java/debugger/openapi:java-debugger",
+    "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
+    "//java/debugger/shared",
+    "//java/execution/openapi:java-execution",
+    "//java/execution/impl",
+    "//java/idea-ui:ui",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/jvm-debugger/base/util",
+    "//plugins/kotlin/jvm-debugger/core",
+    "//plugins/kotlin/jvm-debugger/coroutines",
+    "//plugins/kotlin/jvm-debugger/eval4j",
+    "//plugins/kotlin/jvm-debugger/eval4j:eval4j_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//libraries/asm",
+    "//libraries/guava",
+    "//libraries/kotlin/reflect",
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//platform/xdebugger-impl/shared",
+    "//platform/xdebugger-impl/ui",
+    "//platform/xdebugger-impl/ui:ui_test_lib",
+    "//platform/xdebugger-testFramework:debugger-testFramework",
+    "//platform/execution",
+    "//platform/external-system-api:externalSystem",
+    "//platform/platform-util-io:ide-util-io",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/script-debugger/debugger-ui:scriptDebugger-ui",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/jvm-debugger/evaluation",
+  ],
+  runtime_deps = [":testFramework"]
+)
+### auto-generated section `build kotlin.jvm-debugger.testFramework` end

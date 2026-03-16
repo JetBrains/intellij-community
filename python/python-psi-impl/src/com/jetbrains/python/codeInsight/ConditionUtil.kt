@@ -13,7 +13,14 @@ import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.parents
 import com.intellij.util.IncorrectOperationException
 import com.jetbrains.python.PyTokenTypes
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyAssignmentExpression
+import com.jetbrains.python.psi.PyBinaryExpression
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyParenthesizedExpression
+import com.jetbrains.python.psi.PyPrefixExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
 
 /**
@@ -126,7 +133,8 @@ private fun getInvertedConditionExpression(
   level: LanguageLevel,
   generator: PyElementGenerator,
   expression: PyExpression,
-  isTopLevelExpression: Boolean): PyExpression {
+  isTopLevelExpression: Boolean,
+): PyExpression {
   if (expression is PyParenthesizedExpression) {
     return getInvertedConditionExpression(
       project, file, level, generator, expression.containedExpression!!, isTopLevelExpression)
@@ -271,7 +279,8 @@ private fun requiresParentheses(element: PsiElement): Boolean {
 }
 
 private fun createOrExpression(
-  level: LanguageLevel, generator: PyElementGenerator, expressions: Iterable<PyExpression>, isTopLevelExpression: Boolean): PyExpression {
+  level: LanguageLevel, generator: PyElementGenerator, expressions: Iterable<PyExpression>, isTopLevelExpression: Boolean,
+): PyExpression {
   val result = StringBuilder()
 
   val requiresParentheses = !isTopLevelExpression && expressions.count() > 1

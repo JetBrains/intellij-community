@@ -6,8 +6,8 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.junit.Assert

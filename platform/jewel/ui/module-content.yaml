@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.platform.jewel.ui.jar
   modules:
   - name: intellij.platform.jewel.ui
     libraries:

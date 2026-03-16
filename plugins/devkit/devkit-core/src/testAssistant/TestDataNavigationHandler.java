@@ -16,9 +16,18 @@ import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
-import javax.swing.*;
+import javax.swing.JList;
+import javax.swing.ListSelectionModel;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -37,7 +46,8 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
   static @NotNull List<TestDataFile> getFileNames(PsiMethod method, boolean collectByExistingFiles) {
     List<TestDataFile> fileNames = null;
     String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
-    if (testDataPath != null) {
+    if (testDataPath != null
+        && method.getName().length() > 4) {
       fileNames = new TestDataReferenceCollector(testDataPath, method.getName().substring(4)).collectTestDataReferences(method, collectByExistingFiles);
     }
 
@@ -54,7 +64,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
                               Project project) {
     if (testDataFiles.isEmpty()) return;
     if (testDataFiles.size() == 1) {
-      TestDataUtil.openOrAskToCreateFile(project, testDataFiles.get(0));
+      TestDataUtil.openOrAskToCreateFile(project, testDataFiles.getFirst());
       return;
     }
     else if (testDataFiles.size() == 2) {

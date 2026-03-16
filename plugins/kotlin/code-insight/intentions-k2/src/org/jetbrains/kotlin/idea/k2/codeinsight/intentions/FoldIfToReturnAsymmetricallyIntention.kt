@@ -10,7 +10,11 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.k2.refactoring.util.BranchedFoldingUtils
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 
 class FoldIfToReturnAsymmetricallyIntention : KotlinApplicableModCommandAction.Simple<KtIfExpression>(KtIfExpression::class) {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.if.expression.with.return")

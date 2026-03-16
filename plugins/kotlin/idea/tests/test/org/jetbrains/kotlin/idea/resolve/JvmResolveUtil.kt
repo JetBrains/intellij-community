@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.resolve
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.idea.TestsCompiletimeError
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.cli.jvm.compiler.CliBindingTrace
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
@@ -11,6 +10,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.NoScopeRecordCliBindingTrace
 import org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.container.ComponentProvider
+import org.jetbrains.kotlin.idea.TestsCompiletimeError
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
 import org.jetbrains.kotlin.psi.KtFile
@@ -28,6 +28,7 @@ object JvmResolveUtil {
         files: Collection<KtFile> = emptyList(),
         targetEnvironment: TargetEnvironment = CompilerEnvironment
     ): ComponentProvider =
+        @Suppress("DEPRECATION_ERROR")
         TopDownAnalyzerFacadeForJVM.createContainer(
             environment.project, files, NoScopeRecordCliBindingTrace(environment.project),
             environment.configuration, { PackagePartProvider.Empty }, ::FileBasedDeclarationProviderFactory,
@@ -85,6 +86,7 @@ object JvmResolveUtil {
         trace: BindingTrace = CliBindingTrace(project),
         klibList: List<KotlinLibrary> = emptyList()
     ): AnalysisResult {
+        @Suppress("DEPRECATION_ERROR")
         return TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(
             project, files, trace, configuration, packagePartProviderFactory,
             klibList = klibList

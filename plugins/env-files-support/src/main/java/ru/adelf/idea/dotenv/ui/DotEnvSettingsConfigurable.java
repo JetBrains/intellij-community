@@ -7,7 +7,12 @@ import org.jetbrains.annotations.Nullable;
 import ru.adelf.idea.dotenv.DotEnvBundle;
 import ru.adelf.idea.dotenv.DotEnvSettings;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.border.Border;
 
 public class DotEnvSettingsConfigurable implements Configurable {

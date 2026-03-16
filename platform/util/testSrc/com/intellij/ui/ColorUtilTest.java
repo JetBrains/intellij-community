@@ -17,9 +17,12 @@ package com.intellij.ui;
 
 import junit.framework.TestCase;
 
-import java.awt.*;
+import java.awt.Color;
 
-import static com.intellij.ui.ColorUtil.*;
+import static com.intellij.ui.ColorUtil.alphaBlending;
+import static com.intellij.ui.ColorUtil.fromHex;
+import static com.intellij.ui.ColorUtil.mix;
+import static com.intellij.ui.ColorUtil.withAlpha;
 import static java.util.Arrays.asList;
 
 public class ColorUtilTest extends TestCase {

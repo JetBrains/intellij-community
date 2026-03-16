@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.types.TypeUtils
 
+@K1Deprecation
 class HasPlatformTypeInspection(
     @JvmField var publicAPIOnly: Boolean = true,
     @JvmField var reportPlatformArguments: Boolean = false

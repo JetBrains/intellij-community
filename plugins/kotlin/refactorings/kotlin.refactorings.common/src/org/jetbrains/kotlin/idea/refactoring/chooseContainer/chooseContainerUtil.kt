@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.chooseContainer
 
 import com.intellij.codeInsight.navigation.PsiTargetNavigator
@@ -16,19 +16,33 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.file.PsiPackageBase
 import com.intellij.psi.impl.light.LightElement
+import com.intellij.util.ui.UiReadExecutor
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.collapseSpaces
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotation
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtClassBody
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtModifierList
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
-import java.util.*
+import java.util.Collections
 import javax.swing.Icon
 
 fun <T> chooseContainerElementIfNecessary(
@@ -39,7 +53,24 @@ fun <T> chooseContainerElementIfNecessary(
     selection: T? = null,
     toPsi: (T) -> PsiElement,
     onSelect: (T) -> Unit
-): Unit = chooseContainerElementIfNecessaryImpl(containers, editor, title, highlightSelection, selection, toPsi, onSelect)
+) {
+    when {
+        containers.isEmpty() -> return
+        containers.size == 1 -> onSelect(containers.first())
+        else -> {
+            val psiElements = containers.map(toPsi)
+            choosePsiContainerElement(
+                psiElements,
+                editor,
+                title,
+                highlightSelection,
+                selection?.let(toPsi),
+                psi2Container = { containers[psiElements.indexOf(it)] },
+                onSelect = onSelect
+            )
+        }
+    }
+}
 
 fun <T : PsiElement> chooseContainerElementIfNecessary(
     containers: List<T>,
@@ -48,63 +79,17 @@ fun <T : PsiElement> chooseContainerElementIfNecessary(
     highlightSelection: Boolean,
     selection: T? = null,
     onSelect: (T) -> Unit
-): Unit = chooseContainerElementIfNecessaryImpl(containers, editor, title, highlightSelection, selection, null, onSelect)
-
-private fun <T> chooseContainerElementIfNecessaryImpl(
-    containers: List<T>,
-    editor: Editor,
-    @NlsContexts.PopupTitle title: String,
-    highlightSelection: Boolean,
-    selection: T? = null,
-    toPsi: ((T) -> PsiElement)?,
-    onSelect: (T) -> Unit
 ) {
-    when {
-        containers.isEmpty() -> return
-        containers.size == 1 -> onSelect(containers.first())
-        toPsi != null -> chooseContainerElement(containers, editor, title, highlightSelection, toPsi, onSelect)
-        else -> {
-            @Suppress("UNCHECKED_CAST")
-            chooseContainerElement(containers as List<PsiElement>, editor, title, highlightSelection, selection as PsiElement?, onSelect = onSelect as (PsiElement)->Unit)
-        }
-    }
-}
-
-private fun <T> chooseContainerElement(
-    containers: List<T>,
-    editor: Editor,
-    @NlsContexts.PopupTitle title: String,
-    highlightSelection: Boolean,
-    toPsi: (T) -> PsiElement,
-    onSelect: (T) -> Unit
-) {
-    val psiElements = containers.map(toPsi)
-    choosePsiContainerElement(
-        elements = psiElements,
-        editor = editor,
-        title = title,
-        highlightSelection = highlightSelection,
-        psi2Container = { containers[psiElements.indexOf(it)] },
+    chooseContainerElementIfNecessary(
+        containers,
+        editor,
+        title,
+        highlightSelection,
+        selection,
+        toPsi = { it },
         onSelect = onSelect
     )
 }
-
-private fun <T : PsiElement> chooseContainerElement(
-    elements: List<T>,
-    editor: Editor,
-    @NlsContexts.PopupTitle title: String,
-    highlightSelection: Boolean,
-    selection: T? = null,
-    onSelect: (T) -> Unit
-): Unit = choosePsiContainerElement(
-    elements = elements,
-    editor = editor,
-    title = title,
-    highlightSelection = highlightSelection,
-    selection = selection,
-    psi2Container = { it },
-    onSelect = onSelect,
-)
 
 private fun <T, E : PsiElement> choosePsiContainerElement(
     elements: List<E>,
@@ -143,15 +128,19 @@ private fun <T : PsiElement> getPsiElementPopup(
 ): JBPopup {
     val project = elements.firstOrNull()?.project ?: throw IllegalArgumentException("Can't create popup because no elements are provided")
     val highlighter = if (highlightSelection) SelectionAwareScopeHighlighter(editor) else null
-    return PsiTargetNavigator(elements)
+    val disposable = Disposer.newDisposable()
+    val executor = UiReadExecutor.conflatedUiReadExecutor(editor.component, disposable, "highlighter in Kotlin refactoring")
+    val popup = PsiTargetNavigator(elements)
         .presentationProvider(presentationProvider)
         .selection(selection)
         .builderConsumer { builder ->
             builder
                 .setItemSelectedCallback { presentation ->
-                    highlighter?.dropHighlight()
-                    val psiElement = (presentation?.item as? SmartPsiElementPointer<*>)?.element ?: return@setItemSelectedCallback
-                    highlighter?.highlight(psiElement)
+                    executor.executeWithReadAccess {
+                        highlighter?.dropHighlight()
+                        val psiElement = (presentation?.item as? SmartPsiElementPointer<*>)?.element ?: return@executeWithReadAccess
+                        highlighter?.highlight(psiElement)
+                    }
                 }
                 .setItemChosenCallback {
                     @Suppress("UNCHECKED_CAST")
@@ -165,6 +154,8 @@ private fun <T : PsiElement> getPsiElementPopup(
                 })
         }
         .createPopup(project, title)
+    Disposer.register(popup, disposable)
+    return popup
 }
 
 fun popupPresentationProvider(): TargetPresentationProvider<PsiElement> = object : PsiTargetPresentationRenderer<PsiElement>() {
@@ -189,9 +180,16 @@ fun popupPresentationProvider(): TargetPresentationProvider<PsiElement> = object
         is KtNamedFunction -> {
             val list = mutableListOf<String>()
             for (child in allChildren) {
-                if (child is PsiComment) continue
-                if (child is KtBlockExpression) break
-                list.add(child.text)
+                when (child) {
+                    is PsiComment -> continue
+                    is KtBlockExpression -> break
+                    is KtModifierList -> {
+                        list.add(child.allChildren
+                            .filterNot { it is KtAnnotationEntry || it is KtAnnotation || it is PsiWhiteSpace }
+                            .joinToString(" ") { it.text })
+                    }
+                    else -> list.add(child.text)
+                }
             }
             StringUtil.shortenTextWithEllipsis(list.joinToString(separator = "").trim(), 53, 0)
         }

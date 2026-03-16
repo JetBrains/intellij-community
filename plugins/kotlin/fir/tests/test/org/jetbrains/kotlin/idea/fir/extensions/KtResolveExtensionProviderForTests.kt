@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.extensions
 
 import com.intellij.openapi.roots.OrderEnumerator
@@ -9,9 +9,13 @@ import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.KaSpiExtensionPoint
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.analysis.api.resolve.extensions.*
+import org.jetbrains.kotlin.analysis.api.resolve.extensions.KaResolveExtension
+import org.jetbrains.kotlin.analysis.api.resolve.extensions.KaResolveExtensionFile
+import org.jetbrains.kotlin.analysis.api.resolve.extensions.KaResolveExtensionNavigationTargetsProvider
+import org.jetbrains.kotlin.analysis.api.resolve.extensions.KaResolveExtensionProvider
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
@@ -23,6 +27,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 @OptIn(KaExperimentalApi::class)
 class KtResolveExtensionProviderForTests : KaResolveExtensionProvider() {
+    @KaSpiExtensionPoint
     override fun provideExtensionsFor(module: KaModule): List<KaResolveExtension> {
         return when (module) {
             is KaSourceModule -> {
@@ -51,10 +56,12 @@ private class ExtensionForTests(private val xmlFile: XmlFile) : KaResolveExtensi
         } else emptyList()
     }
 
+    @KaSpiExtensionPoint
     override fun getContainedPackages(): Set<FqName> {
         return setOfNotNull(packageName)
     }
 
+    @KaSpiExtensionPoint
     override fun getKtFiles(): List<KaResolveExtensionFile> {
         return files
     }
@@ -70,6 +77,7 @@ private class ExtensionFileForTest(private val rootTag: XmlTag, private val pack
         rootTag.findSubTags("class").mapTo(mutableSetOf()) { Name.identifier(it.getAttributeValue("name")!!) }
     }
 
+    @KaSpiExtensionPoint
     override fun buildFileText(): String = buildString {
         appendLine("package $packageName")
         appendLine()
@@ -97,6 +105,7 @@ private class ExtensionFileForTest(private val rootTag: XmlTag, private val pack
         }
     }
 
+    @KaSpiExtensionPoint
     override fun createNavigationTargetsProvider(): KaResolveExtensionNavigationTargetsProvider {
         return object : KaResolveExtensionNavigationTargetsProvider() {
             override fun KaSession.getNavigationTargets(element: KtElement): Collection<PsiElement> =
@@ -130,18 +139,22 @@ private class ExtensionFileForTest(private val rootTag: XmlTag, private val pack
         }
     }
 
+    @KaSpiExtensionPoint
     override fun getFileName(): String {
         return "file.kt"
     }
 
+    @KaSpiExtensionPoint
     override fun getFilePackageName(): FqName {
         return packageName
     }
 
+    @KaSpiExtensionPoint
     override fun getTopLevelCallableNames(): Set<Name> {
         return functionNames
     }
 
+    @KaSpiExtensionPoint
     override fun getTopLevelClassifierNames(): Set<Name> {
         return classNames
     }

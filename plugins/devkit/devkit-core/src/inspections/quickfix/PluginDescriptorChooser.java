@@ -34,7 +34,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extensions;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;

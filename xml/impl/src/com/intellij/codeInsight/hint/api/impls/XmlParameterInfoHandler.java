@@ -24,10 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Comparator;
 
-/**
- * @author Maxim.Mossienko
- */
-public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlElementDescriptor> {
+public final class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlElementDescriptor> {
   private static final Comparator<XmlAttributeDescriptor> COMPARATOR = Comparator.comparing(PsiMetaData::getName);
 
   public static XmlAttributeDescriptor[] getSortedDescriptors(final XmlElementDescriptor p) {

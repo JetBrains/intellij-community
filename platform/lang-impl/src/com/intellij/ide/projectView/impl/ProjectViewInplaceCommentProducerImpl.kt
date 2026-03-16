@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.tree.project.ProjectFileNode
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 
@@ -86,14 +87,19 @@ internal fun appendIndexabilityInfo(node: ProjectViewNode<*>, appender: InplaceC
   if (WorkspaceFileIndex.getInstance(project).isIndexable(file)) {
     appender.append(" I", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
   }
-  else appender.append(" NI", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+  else if (WorkspaceFileIndex.getInstance(project).isInWorkspace(file)) {
+    appender.append(" NI", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+  }
+  else {
+    appender.append(" E", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+  }
 }
 
 internal class ProjectViewIndexableInfoListener : RegistryValueListener {
   override fun afterValueChanged(value: RegistryValue) {
     if (value.key == "project.view.show.file.indexability") {
       for (project in ProjectManager.getInstance().openProjects) {
-        ProjectView.getInstance(project)?.currentProjectViewPane?.updateFromRoot(true)
+        ProjectView.getInstance(project)?.currentProjectViewPane?.updateFromRoot(true, ProjectViewUpdateCause.DEBUG_INDEXABILITY)
       }
     }
   }
@@ -106,11 +112,9 @@ internal fun appendVfsInfo(node: ProjectViewNode<*>, appender: InplaceCommentApp
     return
   }
   node.project?.service<ProjectViewVfsInfoUpdater>() // start automatic update
-  var count = 0
-  visitChildrenInVfsRecursively(file) {
-    count++
-    count < showCachedChildrenLimit
-  }
+  var count = visitChildrenInVfsRecursively(file)
+    .take(showCachedChildrenLimit)
+    .count()
   count-- // don't count the directory itself
   val countString = if (count <= showCachedChildrenLimit) count.toString() else "$count+"
   appender.append(" $countString VFS ${if (count == 1) "file" else "files"}", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)

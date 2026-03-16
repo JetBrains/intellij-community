@@ -7,5 +7,3 @@ class Utils {
         fun foo(x: Int) = x
     }
 }
-
-// IGNORE_K2

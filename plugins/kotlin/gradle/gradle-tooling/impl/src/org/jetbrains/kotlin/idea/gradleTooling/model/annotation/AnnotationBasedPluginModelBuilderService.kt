@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling.model.annotation
 
+import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder
@@ -59,19 +60,21 @@ abstract class AnnotationBasedPluginModelBuilderService<T : AnnotationBasedPlugi
     override fun canBuild(modelName: String?): Boolean = modelName == modelClass.name
 
     override fun buildAll(modelName: String?, project: Project): Any {
-        val plugin: Plugin<*>? =  project.findPlugin(gradlePluginNames)
-        val extension: Any? = project.extensions.findByName(extensionName)
+        return GradleOpenTelemetry.callWithSpan("kotlin_import_daemon_annotation_${extensionName}_buildAll") {
+            val plugin: Plugin<*>? = project.findPlugin(gradlePluginNames)
+            val extension: Any? = project.extensions.findByName(extensionName)
 
-        val annotations = mutableListOf<String>()
-        val presets = mutableListOf<String>()
+            val annotations = mutableListOf<String>()
+            val presets = mutableListOf<String>()
 
-        if (plugin != null && extension != null) {
-            annotations += extension.getList("myAnnotations")
-            presets += extension.getList("myPresets")
-            return createModel(annotations, presets, extension)
+            if (plugin != null && extension != null) {
+                annotations += extension.getList("myAnnotations")
+                presets += extension.getList("myPresets")
+                createModel(annotations, presets, extension)
+            } else {
+                createModel(emptyList(), emptyList(), null)
+            }
         }
-
-        return createModel(emptyList(), emptyList(), null)
     }
 
     private fun Project.findPlugin(names: List<String>): Plugin<*>? {

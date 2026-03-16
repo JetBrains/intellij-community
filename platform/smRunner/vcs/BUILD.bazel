@@ -20,16 +20,18 @@ jvm_library(
     "//platform/execution-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/smRunner",
+    "@lib//:kotlin-stdlib",
     "//platform/vcs-api:vcs",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/vcs-impl",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/ide-core-impl",
     "//platform/util/progress",
     "//platform/lang-impl",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.platform.smRunner.vcs` end

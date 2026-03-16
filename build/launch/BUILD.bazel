@@ -15,7 +15,7 @@ jvm_library(
   resources = [":launch_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/runtime/product",
     "//platform/util",
     "//jps/model-api:model",
@@ -32,7 +32,7 @@ jvm_library(
   associates = [":launch"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/runtime/product",
     "//platform/util",
     "//jps/model-api:model",

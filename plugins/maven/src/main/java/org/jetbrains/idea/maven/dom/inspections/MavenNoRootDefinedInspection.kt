@@ -45,7 +45,7 @@ class MavenNoRootDefinedInspection : BasicDomElementsInspection<MavenDomProjectM
       val rootElement = model.rootElement ?: return null
       val psiToShowError = model.rootTag?.children?.takeWhile { it !is XmlTag && it !is XmlText } ?: return null
 
-      if (rootMavenProject.file.parent.toNioPath().resolve(".mvn").isDirectory()) return null;
+      if (rootMavenProject.file.parent.toNioPath().resolve(".mvn").isDirectory()) return null
       if (rootElement.modelVersion.stringValue == MODEL_VERSION_4_0_0) return null
       if (model.rootTag?.getAttributeValue("root")?.toBoolean() == true) {
         return null

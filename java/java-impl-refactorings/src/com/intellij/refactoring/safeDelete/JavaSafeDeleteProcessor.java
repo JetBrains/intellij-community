@@ -21,11 +21,55 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionListStatement;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiRecordHeader;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.FindSuperElementsHelper;
+import com.intellij.psi.impl.light.LightDefaultConstructor;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -34,20 +78,36 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.JavaPsiRecordUtil;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ContractConverter;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.inCallers.AbstractJavaMemberCallerChooser;
 import com.intellij.refactoring.move.moveClassesOrPackages.ModuleInfoUsageDetector;
-import com.intellij.refactoring.safeDelete.usageInfo.*;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteAnnotation;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteFieldWriteReference;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteMemberCalleeUsageInfo;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteOverrideAnnotation;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteOverridingMethodUsageInfo;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteParameterCallHierarchyUsageInfo;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDeleteUsageInfo;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceUsageInfo;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteUsageInfo;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.usages.*;
+import com.intellij.usages.UsageInfoToUsageConverter;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JavaPsiConstructorUtil;
@@ -58,7 +118,16 @@ import com.siyeh.ig.style.LambdaCanBeReplacedWithAnonymousInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
@@ -131,6 +200,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
                                                                         @Nullable Module module,
                                                                         @NotNull Collection<? extends PsiElement> allElementsToDelete) {
     Project project = element.getProject();
+    if (element instanceof SyntheticElement && !(element instanceof LightDefaultConstructor)) return null;
     if (element instanceof PsiPackage aPackage && module != null) {
       PsiDirectory[] directories = aPackage.getDirectories(module.getModuleScope());
       if (directories.length == 0) return null;
@@ -144,6 +214,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     if (element instanceof PsiMethod method) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         return Collections.singletonList(element);
+      }
+      if (method.isDefaultConstructor()) {
+        return Collections.singletonList(method.getContainingClass());
       }
       PsiMethod[] methods = SuperMethodWarningUtil.checkSuperMethods(method, allElementsToDelete);
       if (methods.length == 0) return null;
@@ -356,7 +429,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   @Override
   public UsageInfo @Nullable [] preprocessUsages(@NotNull Project project, UsageInfo @NotNull [] usages) {
-    List<UsageInfo> result = new ArrayList<>();
+    List<UsageInfo> result = Collections.synchronizedList(new ArrayList<>());
     List<UsageInfo> overridingMethods = new ArrayList<>();
     List<SafeDeleteParameterCallHierarchyUsageInfo> delegatingParams = new ArrayList<>();
     List<SafeDeleteMemberCalleeUsageInfo> calleesSafeToDelete = new ArrayList<>();

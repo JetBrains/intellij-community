@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
@@ -54,12 +55,14 @@ internal fun randomClassName(): String {
     return strings.joinToString(".")
 }
 
+@K1Deprecation
 inline fun randomAction(probability: Float, body: () -> Unit) {
     if (Random.nextFloat() <= probability) {
         body()
     }
 }
 
+@K1Deprecation
 inline fun <T> randomFunctor(probability: Float, `then`: () -> T, otherwise: () -> T): T {
     return if (Random.nextFloat() <= probability) {
         then()
@@ -68,6 +71,7 @@ inline fun <T> randomFunctor(probability: Float, `then`: () -> T, otherwise: () 
     }
 }
 
+@K1Deprecation
 inline fun randomActionFiftyFifty(body: () -> Unit) {
     if (Random.nextBoolean()) body()
 }

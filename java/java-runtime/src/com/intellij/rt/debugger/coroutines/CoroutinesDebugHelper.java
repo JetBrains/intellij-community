@@ -5,7 +5,14 @@ import com.intellij.rt.debugger.JsonUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class CoroutinesDebugHelper {
 
@@ -268,6 +275,64 @@ public final class CoroutinesDebugHelper {
       }
     }
     return jobToCapturedParent;
+  }
+
+  /**
+   * Returns an Object array containing coroutine job hierarchy information, or {@code null} if something went wrong
+   * or job corresponding to some coroutine does not exist.
+   * <ol>
+   *   <li> {@code String[]} - string representations of the {@code kotlinx.coroutines.Job Job} extracted
+   *     from each coroutine's context, in the same order as the input array.</li>
+   *   <li> {@code Object[]} - the actual {@code kotlinx.coroutines.Job Job} objects corresponding to each coroutine.</li>
+   *   <li> {@code int[]} - for each job, the index of its nearest ancestor job that is also present
+   *     in this dump, or -1 if no such parent exists.</li>
+   * </ol>
+   */
+  public static Object[] getCoroutineJobHierarchyInfo(Object ... debugCoroutineInfos) throws ReflectiveOperationException {
+    if (debugCoroutineInfos.length == 0) return new String[]{};
+    ClassLoader loader = debugCoroutineInfos[0].getClass().getClassLoader();
+    Class<?> debugCoroutineInfoClass = Class.forName(DEBUG_COROUTINE_INFO_FQN, false, loader);
+    Class<?> coroutineContext = Class.forName(COROUTINE_CONTEXT_FQN, false, loader);
+    Class<?> coroutineContextKey = Class.forName(COROUTINE_CONTEXT_KEY_FQN, false, loader);
+    Class<?> coroutineJobClass = Class.forName(COROUTINE_JOB_FQN, false, loader);
+    Object coroutineJobKey = coroutineJobClass.getField("Key").get(null); // Job.Key
+    Method coroutineContextGet = coroutineContext.getMethod("get", coroutineContextKey);
+    Method getParentJob = coroutineJobClass.getMethod("getParent");
+    Method getContext = debugCoroutineInfoClass.getMethod("getContext");
+
+    String[] jobNames = new String[debugCoroutineInfos.length];
+    Object[] jobObjects = new Object[debugCoroutineInfos.length];
+    int[] parentIndexes = new int[debugCoroutineInfos.length];
+    Arrays.fill(parentIndexes, -1);
+
+    for (int i = 0; i < debugCoroutineInfos.length; i++) {
+      Object info = debugCoroutineInfos[i];
+      Object context = invoke(info, getContext);
+      Object job = invoke(context, coroutineContextGet, coroutineJobKey);
+      // job corresponding to the coroutine should not be null, coroutines should be dumped again, fast return
+      if (job == null) return null;
+      jobNames[i] = job.toString();
+      jobObjects[i] = job;
+    }
+    // we use this set of coroutine jobs to only save parent jobs which correspond to some coroutine in the dump
+    Map<Object, Integer> jobToIndex = new HashMap<>();
+    for (int i = 0; i < jobObjects.length; i++) {
+      Object obj = jobObjects[i];
+      jobToIndex.put(obj, i);
+    }
+
+    for (int i = 0; i < debugCoroutineInfos.length; i++) {
+      Object job = jobObjects[i];
+      Object parent = invoke(job, getParentJob);
+      while (parent != null) {
+        if (jobToIndex.containsKey(parent)) {
+          parentIndexes[i] = jobToIndex.get(parent);
+          break;
+        }
+        parent = invoke(parent, getParentJob);
+      }
+    }
+    return new Object[]{jobNames, jobObjects, parentIndexes};
   }
 
   private static Object getField(Object object, String fieldName) throws ReflectiveOperationException {

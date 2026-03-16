@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge;
 
 import com.intellij.CommonBundle;
@@ -24,7 +24,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JComponent;
 import java.awt.event.ActionEvent;
 import java.util.Arrays;
 import java.util.List;
@@ -56,7 +58,11 @@ public final class MergeUtil {
     if (message != null) return message;
 
     return DiffBundle.message(switch (result) {
-      case CANCEL -> "button.merge.resolve.cancel";
+      case CANCEL -> {
+        if (!IterativeResolveSupport.hasIterativeData(request)) yield "button.merge.resolve.cancel";
+
+        yield "button.merge.resolve.save";
+      }
       case LEFT -> "button.merge.resolve.accept.left";
       case RIGHT -> "button.merge.resolve.accept.right";
       case RESOLVED -> "button.merge.resolve.apply";
@@ -123,6 +129,8 @@ public final class MergeUtil {
   public static boolean showExitWithoutApplyingChangesDialog(@NotNull JComponent component,
                                                              @NotNull MergeRequest request,
                                                              @NotNull MergeContext context) {
+    if (IterativeResolveSupport.hasIterativeData(request)) return true;
+
     Couple<@Nls String> customMessage = DiffUtil.getUserData(request, context, DiffUserDataKeysEx.MERGE_CANCEL_MESSAGE);
     if (customMessage != null) {
       String title = customMessage.first;
@@ -148,6 +156,9 @@ public final class MergeUtil {
   }
 
   public static boolean shouldRestoreOriginalContentOnCancel(@NotNull MergeRequest request) {
+    if (IterativeResolveSupport.hasIterativeData(request)) {
+      return false;
+    }
     MergeCallback callback = MergeCallback.getCallback(request);
     if (callback.checkIsValid()) {
       return true;

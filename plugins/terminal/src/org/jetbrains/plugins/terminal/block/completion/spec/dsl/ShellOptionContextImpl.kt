@@ -12,14 +12,38 @@ internal class ShellOptionContextImpl(
   names: List<String>,
   private val parentCommandNames: List<String>
 ) : ShellSuggestionContextBase(names), ShellOptionContext {
-  override var isPersistent: Boolean = false
-  override var isRequired: Boolean = false
-  override var separator: String? = null
-  override var repeatTimes: Int = 1
-  override var exclusiveOn: List<String> = emptyList()
-  override var dependsOn: List<String> = emptyList()
+  private var isPersistent: Boolean = false
+  private var isRequired: Boolean = false
+  private var separator: String? = null
+  private var repeatTimes: Int = 1
+  private var exclusiveOn: List<String> = emptyList()
+  private var dependsOn: List<String> = emptyList()
 
   private val arguments: MutableList<ShellArgumentSpec> = mutableListOf()
+
+  override fun persistent() {
+    isPersistent = true
+  }
+
+  override fun required() {
+    isRequired = true
+  }
+
+  override fun separator(separator: String) {
+    this.separator = separator
+  }
+
+  override fun repeatTimes(times: Int) {
+    repeatTimes = times
+  }
+
+  override fun exclusiveOn(on: List<String>) {
+    exclusiveOn = on
+  }
+
+  override fun dependsOn(on: List<String>) {
+    dependsOn = on
+  }
 
   override fun argument(content: ShellArgumentContext.() -> Unit) {
     val context = ShellArgumentContextImpl(parentCommandNames + names.first(), argNumber = arguments.size + 1)

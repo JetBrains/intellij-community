@@ -21,7 +21,9 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.theoryinpractice.testng.TestngBundle;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JTextField;
 import javax.swing.table.TableCellEditor;
 import java.util.ArrayList;
 import java.util.HashMap;

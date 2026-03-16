@@ -13,7 +13,7 @@ import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Point;
 
 /**
  * @author Konstantin Bulenkov

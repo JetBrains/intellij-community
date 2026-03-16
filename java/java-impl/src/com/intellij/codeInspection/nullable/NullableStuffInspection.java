@@ -11,6 +11,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -20,11 +21,17 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.impl.search.JavaNullMethodArgumentUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.*;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageSearcher;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
@@ -48,8 +55,19 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
       checkbox("REPORT_NULLABILITY_ANNOTATION_ON_LOCALS", JavaBundle.message("inspection.nullable.problems.nullability.on.locals")),
       checkbox("REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS", JavaBundle.message(
         "inspection.nullable.problems.notnull.to.nullable.assignment.conflicts")),
+      checkbox("REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER", JavaBundle.message(
+        "inspection.nullable.problems.redundant.nullability.inside.container")),
       JavaInspectionControls.button(JavaInspectionButtons.ButtonKind.NULLABILITY_ANNOTATIONS)
     );
+  }
+
+  @Override
+  public @Nullable @Nls String getStaticDescription() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return "";
+    } else {
+      return null;
+    }
   }
 
   @Override

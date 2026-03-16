@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.plugin.freeze
 
-import com.intellij.diagnostic.*
+import com.intellij.diagnostic.FreezeNotifier
+import com.intellij.diagnostic.IdeErrorsDialog
+import com.intellij.diagnostic.LogMessage
+import com.intellij.diagnostic.MessagePool
+import com.intellij.diagnostic.ThreadDump
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.isVendorJetBrains
@@ -17,7 +21,7 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 import java.util.function.Function
 import javax.swing.JComponent
 

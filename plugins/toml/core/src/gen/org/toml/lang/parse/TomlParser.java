@@ -168,6 +168,7 @@ public class TomlParser implements PsiParser, LightPsiParser {
   // BARE_KEY
   //   | <<remap 'BARE_KEY_OR_NUMBER' 'BARE_KEY'>>
   //   | <<remap 'BARE_KEY_OR_DATE' 'BARE_KEY'>>
+  //   | <<remap 'BARE_KEY_OR_BOOLEAN' 'BARE_KEY'>>
   static boolean BareKey(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "BareKey")) return false;
     boolean r;
@@ -175,6 +176,19 @@ public class TomlParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, BARE_KEY);
     if (!r) r = remap(b, l + 1, BARE_KEY_OR_NUMBER, BARE_KEY);
     if (!r) r = remap(b, l + 1, BARE_KEY_OR_DATE, BARE_KEY);
+    if (!r) r = remap(b, l + 1, BARE_KEY_OR_BOOLEAN, BARE_KEY);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // <<remap 'BARE_KEY_OR_BOOLEAN' 'BOOLEAN'>> | BOOLEAN
+  static boolean Boolean(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "Boolean")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = remap(b, l + 1, BARE_KEY_OR_BOOLEAN, BOOLEAN);
+    if (!r) r = consumeToken(b, BOOLEAN);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -228,7 +242,7 @@ public class TomlParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // !<<atNewLine (BARE_KEY | BARE_KEY_OR_NUMBER | BARE_KEY_OR_DATE | BASIC_STRING | LITERAL_STRING | '[')>>
+  // !<<atNewLine (BARE_KEY | BARE_KEY_OR_NUMBER | BARE_KEY_OR_DATE | BARE_KEY_OR_BOOLEAN | BASIC_STRING | LITERAL_STRING | '[')>>
   static boolean FileForm_recover(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "FileForm_recover")) return false;
     boolean r;
@@ -238,13 +252,14 @@ public class TomlParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // BARE_KEY | BARE_KEY_OR_NUMBER | BARE_KEY_OR_DATE | BASIC_STRING | LITERAL_STRING | '['
+  // BARE_KEY | BARE_KEY_OR_NUMBER | BARE_KEY_OR_DATE | BARE_KEY_OR_BOOLEAN | BASIC_STRING | LITERAL_STRING | '['
   private static boolean FileForm_recover_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "FileForm_recover_0_0")) return false;
     boolean r;
     r = consumeToken(b, BARE_KEY);
     if (!r) r = consumeToken(b, BARE_KEY_OR_NUMBER);
     if (!r) r = consumeToken(b, BARE_KEY_OR_DATE);
+    if (!r) r = consumeToken(b, BARE_KEY_OR_BOOLEAN);
     if (!r) r = consumeToken(b, BASIC_STRING);
     if (!r) r = consumeToken(b, LITERAL_STRING);
     if (!r) r = consumeToken(b, L_BRACKET);
@@ -373,7 +388,7 @@ public class TomlParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // Number | Date | BOOLEAN
+  // Number | Date | Boolean
   //   | BASIC_STRING | LITERAL_STRING
   //   | MULTILINE_BASIC_STRING | MULTILINE_LITERAL_STRING
   public static boolean Literal(PsiBuilder b, int l) {
@@ -382,7 +397,7 @@ public class TomlParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, LITERAL, "<literal>");
     r = Number(b, l + 1);
     if (!r) r = Date(b, l + 1);
-    if (!r) r = consumeToken(b, BOOLEAN);
+    if (!r) r = Boolean(b, l + 1);
     if (!r) r = consumeToken(b, BASIC_STRING);
     if (!r) r = consumeToken(b, LITERAL_STRING);
     if (!r) r = consumeToken(b, MULTILINE_BASIC_STRING);
@@ -465,7 +480,7 @@ public class TomlParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // BARE_KEY_OR_NUMBER | NUMBER | BARE_KEY_OR_DATE | DATE_TIME
-  //                       | BOOLEAN
+  //                       | BARE_KEY_OR_BOOLEAN | BOOLEAN
   //                       | BASIC_STRING | LITERAL_STRING
   //                       | MULTILINE_BASIC_STRING | MULTILINE_LITERAL_STRING
   //                       | '[' | '{'
@@ -476,6 +491,7 @@ public class TomlParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, NUMBER);
     if (!r) r = consumeToken(b, BARE_KEY_OR_DATE);
     if (!r) r = consumeToken(b, DATE_TIME);
+    if (!r) r = consumeToken(b, BARE_KEY_OR_BOOLEAN);
     if (!r) r = consumeToken(b, BOOLEAN);
     if (!r) r = consumeToken(b, BASIC_STRING);
     if (!r) r = consumeToken(b, LITERAL_STRING);

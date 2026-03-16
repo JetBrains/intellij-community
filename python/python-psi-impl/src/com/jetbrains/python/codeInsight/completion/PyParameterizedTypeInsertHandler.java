@@ -34,7 +34,8 @@ public class PyParameterizedTypeInsertHandler extends ParenthesesInsertHandler<L
   }
 
   private static boolean isParameterizableType(@NotNull PsiElement element, @NotNull TypeEvalContext typeEvalContext) {
-    return element instanceof PyQualifiedNameOwner qnOwner && PyTypingTypeProvider.GENERIC_CLASSES.contains(qnOwner.getQualifiedName()) ||
+    return element instanceof PyQualifiedNameOwner qnOwner &&
+           PyTypingTypeProvider.GENERIC_CLASSES.contains(qnOwner.getQualifiedName()) ||
            element instanceof PyClass pyClass && new PyTypingTypeProvider().getGenericType(pyClass, typeEvalContext) != null;
   }
 }

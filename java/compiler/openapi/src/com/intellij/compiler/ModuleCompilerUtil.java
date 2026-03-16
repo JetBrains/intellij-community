@@ -3,18 +3,32 @@ package com.intellij.compiler;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.RootModelProvider;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.util.Chunk;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.graph.*;
+import com.intellij.util.graph.CachingSemiGraph;
+import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.GraphAlgorithms;
+import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class ModuleCompilerUtil {
   private ModuleCompilerUtil() { }

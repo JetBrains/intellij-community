@@ -52,6 +52,11 @@ sealed interface GitLabGid : GitLabId {
   override fun guessGid(app: String): String = gid
 }
 
+sealed interface GitLabBothId : GitLabRestId, GitLabGid {
+  override val restId: String
+  override val gid: String
+}
+
 data class GitLabRestIdData(override val restId: String,
                             private val gidDomain: String? = null) : GitLabRestId {
   override val gid: String? = null
@@ -69,6 +74,6 @@ data class GitLabGidData(override val gid: String) : GitLabGid {
 data class GitLabBothIdData(
   override val restId: String,
   override val gid: String
-) : GitLabRestId, GitLabGid {
+) : GitLabBothId {
   override fun toString(): String = gid
 }

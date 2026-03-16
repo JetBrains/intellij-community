@@ -27,13 +27,6 @@ public class CheckTypesResult {
     return minTypeExprents;
   }
 
-  static class ExprentTypePair {
-    public final Exprent exprent;
-    public final VarType type;
-
-    ExprentTypePair(Exprent exprent, VarType type) {
-      this.exprent = exprent;
-      this.type = type;
-    }
+  record ExprentTypePair(Exprent exprent, VarType type) {
   }
 }

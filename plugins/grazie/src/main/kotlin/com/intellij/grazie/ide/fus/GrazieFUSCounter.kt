@@ -11,7 +11,6 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.project.Project
-import java.time.Duration
 
 private val actionInfo = listOf("rule.settings:canceled",
                                 "rule.settings:unmodified",

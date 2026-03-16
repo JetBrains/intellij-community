@@ -19,8 +19,9 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
-import java.util.Set;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 public abstract class RelatedToHtmlFilesContributor {
   public static final ExtensionPointName<RelatedToHtmlFilesContributor> EP_NAME =

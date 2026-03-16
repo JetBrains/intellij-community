@@ -27,7 +27,7 @@ import org.jetbrains.idea.maven.dom.model.*
 import org.jetbrains.idea.maven.utils.MavenLog
 import javax.swing.Icon
 
-private class MavenDomGutterAnnotator : Annotator, DumbAware {
+internal class MavenDomGutterAnnotator : Annotator, DumbAware {
   override fun annotate(psiElement: PsiElement, holder: AnnotationHolder) {
     if (psiElement is XmlTag) {
       log { "MavenDomGutterAnnotator.annotate ${psiElement.name}" }

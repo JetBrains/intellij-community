@@ -2,13 +2,26 @@
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.JavaUiBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ExportableOrderEntry;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleSourceOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -36,7 +49,18 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.AnActionButtonUpdater;
+import com.intellij.ui.BooleanTableCellRenderer;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.EnumComboBoxModel;
+import com.intellij.ui.OrderPanelListener;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
@@ -49,19 +73,38 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultCellEditor;
+import javax.swing.Icon;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
+import javax.swing.TransferHandler;
 import javax.swing.border.Border;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private static final Logger LOG = Logger.getInstance(ClasspathPanelImpl.class);
@@ -136,12 +179,12 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     SpeedSearchBase<JBTable> search = new SpeedSearchBase<>(myEntryTable, null) {
       @Override
       public int getSelectedIndex() {
-        return myEntryTable.getSelectedRow();
+        return getSelectedRow();
       }
 
       @Override
       protected int getElementCount() {
-        return myModel.getRowCount();
+        return getRowCount();
       }
 
       @Override
@@ -156,7 +199,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
       @Override
       public void selectElement(Object element, String selectedText) {
-        final int count = myModel.getRowCount();
+        final int count = getRowCount();
         for (int row = 0; row < count; row++) {
           if (element.equals(myModel.getItem(row))) {
             final int viewRow = myEntryTable.convertRowIndexToView(row);
@@ -291,7 +334,17 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
   private @Nullable ClasspathTableItem<?> getSelectedItem() {
     if (myEntryTable.getSelectedRowCount() != 1) return null;
-    return getItemAt(myEntryTable.getSelectedRow());
+    return getItemAt(getSelectedRow());
+  }
+
+  @Override
+  public int getRowCount() {
+    return myModel.getRowCount();
+  }
+
+  @Override
+  public int getSelectedRow() {
+    return myEntryTable.getSelectedRow();
   }
 
   private void setFixedColumnWidth(final int columnIndex, String sampleText) {
@@ -500,13 +553,13 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
   @Override
-  public void addItems(List<? extends ClasspathTableItem<?>> toAdd) {
-    for (ClasspathTableItem<?> item : toAdd) {
-      myModel.addRow(item);
-    }
+  public void addItems(List<? extends ClasspathTableItem<?>> toAdd, int atIndex) {
+    int index = atIndex == -1 ? getRowCount() : atIndex;
     IntList toSelect = new IntArrayList();
-    for (int i = myModel.getRowCount() - toAdd.size(); i < myModel.getRowCount(); i++) {
-      toSelect.add(myEntryTable.convertRowIndexToView(i));
+    for (ClasspathTableItem<?> item : toAdd) {
+      myModel.insertRow(index, item);
+      toSelect.add(index);
+      index++;
     }
     TableUtil.selectRows(myEntryTable, toSelect.toIntArray());
     TableUtil.scrollSelectionToVisible(myEntryTable);
@@ -580,7 +633,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       myEntryTable.getCellEditor().stopCellEditing();
     }
     final ListSelectionModel selectionModel = myEntryTable.getSelectionModel();
-    for (int row = increment < 0 ? 0 : myModel.getRowCount() - 1; increment < 0 ? row < myModel.getRowCount() : row >= 0; row +=
+    for (int row = increment < 0 ? 0 : getRowCount() - 1; increment < 0 ? row < getRowCount() : row >= 0; row +=
       increment < 0 ? +1 : -1) {
       if (selectionModel.isSelectedIndex(row)) {
         final int newRow = moveRow(row, increment);
@@ -594,7 +647,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
   public void selectOrderEntry(@NotNull OrderEntry entry) {
-    for (int row = 0; row < myModel.getRowCount(); row++) {
+    for (int row = 0; row < getRowCount(); row++) {
       final OrderEntry orderEntry = getItemAt(row).getEntry();
       if (orderEntry != null && entry.getPresentableName().equals(orderEntry.getPresentableName())) {
         if (orderEntry instanceof ExportableOrderEntry && entry instanceof ExportableOrderEntry &&
@@ -609,7 +662,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
   private int moveRow(final int row, final int increment) {
-    int newIndex = Math.abs(row + increment) % myModel.getRowCount();
+    int newIndex = Math.abs(row + increment) % getRowCount();
     myModel.exchangeRows(row, newIndex);
     return newIndex;
   }
@@ -634,7 +687,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     myModel.init();
     myModel.fireTableDataChanged();
     IntList newSelection = new IntArrayList();
-    for (int i = 0; i < myModel.getRowCount(); i++) {
+    for (int i = 0; i < getRowCount(); i++) {
       if (oldSelection.contains(getItemAt(i))) {
         newSelection.add(i);
       }
@@ -725,7 +778,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
     @Override
     protected RelativePoint getPointToShowResults() {
-      Rectangle rect = myEntryTable.getCellRect(myEntryTable.getSelectedRow(), 1, false);
+      Rectangle rect = myEntryTable.getCellRect(getSelectedRow(), 1, false);
       Point location = rect.getLocation();
       location.y += rect.height;
       return new RelativePoint(myEntryTable, location);

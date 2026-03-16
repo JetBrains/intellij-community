@@ -2,9 +2,24 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.LambdaUtil
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFunctionalExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.util.PsiSuperMethodUtil
-import com.intellij.refactoring.changeSignature.*
+import com.intellij.refactoring.changeSignature.ChangeInfo
+import com.intellij.refactoring.changeSignature.JavaChangeInfo
+import com.intellij.refactoring.changeSignature.JavaChangeInfoConverter
+import com.intellij.refactoring.changeSignature.JavaChangeInfoConverters
+import com.intellij.refactoring.changeSignature.JavaChangeInfoImpl
+import com.intellij.refactoring.changeSignature.JavaParameterInfo
+import com.intellij.refactoring.changeSignature.OverriderUsageInfo
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl
 import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -18,11 +33,17 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.types.Variance
 
 fun fromJavaChangeInfo(changeInfo: ChangeInfo, usageInfo: UsageInfo, beforeMethodChange: Boolean): KotlinChangeInfoBase? {

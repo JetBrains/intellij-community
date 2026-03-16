@@ -6,10 +6,8 @@ import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.FailureResult
 import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.events.SuccessResult
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.io.copyRecursively
@@ -21,7 +19,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Properties
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
@@ -30,30 +28,14 @@ import kotlin.io.path.listDirectoryEntries
 
 class RealMavenExecutionTest : MavenExecutionTest() {
   private val myEvents: MutableList<BuildEvent> = CopyOnWriteArrayList()
-  private lateinit var myDisposable: Disposable
 
   override fun setUp() {
     super.setUp()
-    myDisposable = Disposer.newDisposable(testRootDisposable)
     project.service<ExternalSystemRunConfigurationViewManager>().addListener(object : BuildProgressListener {
       override fun onEvent(buildId: Any, event: BuildEvent) {
         myEvents.add(event)
       }
     }, myDisposable)
-  }
-
-  override fun tearDown() {
-    try {
-      if (::myDisposable.isInitialized) {
-        Disposer.dispose(myDisposable)
-      }
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
   }
 
   @Test
@@ -74,13 +56,16 @@ class RealMavenExecutionTest : MavenExecutionTest() {
   @Test
   fun testProjectWithVmOptionsWithoutVMOptions() = runBlocking {
     useProject("mavenProjectWithVmOptionsInEnforcer")
+    importProjectAsync()
     val executionInfo = execute(MavenRunnerParameters(true, projectPath.toCanonicalPath(), null as String?, mutableListOf("compile"), emptyList()))
     assertExecFailed()
   }
 
   @Test
   fun testProjectWithVmOptionsWithVMOptions() = runBlocking {
+    assumeVersionAtLeast("3.6.3")
     useProject("mavenProjectWithVmOptionsInEnforcer")
+    importProjectAsync()
     val executionInfo = execute(
       MavenRunnerParameters(true,
                             projectPath.toCanonicalPath(), null as String?,
@@ -97,6 +82,7 @@ class RealMavenExecutionTest : MavenExecutionTest() {
   @Test
   fun testProjectWithMavenWrapper() = runBlocking {
     useProject("mavenWithWrapper")
+    importProjectAsync()
     MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.mavenHomeType = MavenWrapper
     val executionInfo = execute(
       MavenRunnerParameters(true,

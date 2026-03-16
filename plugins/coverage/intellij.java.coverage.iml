@@ -118,5 +118,6 @@
     <orderEntry type="module" module-name="intellij.platform.coverage.agent" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" />
   </component>
 </module>

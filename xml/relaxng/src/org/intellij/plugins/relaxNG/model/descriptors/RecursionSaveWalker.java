@@ -16,7 +16,11 @@
 package org.intellij.plugins.relaxNG.model.descriptors;
 
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.kohsuke.rngom.digested.*;
+import org.kohsuke.rngom.digested.DGrammarPattern;
+import org.kohsuke.rngom.digested.DPattern;
+import org.kohsuke.rngom.digested.DPatternWalker;
+import org.kohsuke.rngom.digested.DRefPattern;
+import org.kohsuke.rngom.digested.DUnaryPattern;
 
 import java.util.Set;
 

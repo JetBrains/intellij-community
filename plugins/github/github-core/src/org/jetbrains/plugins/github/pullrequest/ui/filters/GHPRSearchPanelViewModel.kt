@@ -14,7 +14,10 @@ import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
-import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListQuickFilter.*
+import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListQuickFilter.AssignedToYou
+import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListQuickFilter.Open
+import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListQuickFilter.ReviewRequests
+import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListQuickFilter.YourPullRequests
 
 @ApiStatus.Experimental
 class GHPRSearchPanelViewModel internal constructor(

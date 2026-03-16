@@ -6,7 +6,13 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyDictLiteralExpression;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyKeywordArgument;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -66,13 +72,14 @@ public final class PyDictConstructorToLiteralFormIntention extends PsiUpdateModC
         stringBuilder.append(((PyKeywordArgument)argument).getKeyword());
         stringBuilder.append("' : ");
         stringBuilder.append(((PyKeywordArgument)argument).getValueExpression().getText());
-        if (i != size-1)
+        if (i != size - 1) {
           stringBuilder.append(",");
+        }
       }
-
     }
-    PyDictLiteralExpression dict = (PyDictLiteralExpression)elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpressionStatement.class,
-                                                                                            "{" + stringBuilder + "}").getExpression();
+    PyDictLiteralExpression dict =
+      (PyDictLiteralExpression)elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpressionStatement.class,
+                                                               "{" + stringBuilder + "}").getExpression();
     expression.replace(dict);
   }
 }

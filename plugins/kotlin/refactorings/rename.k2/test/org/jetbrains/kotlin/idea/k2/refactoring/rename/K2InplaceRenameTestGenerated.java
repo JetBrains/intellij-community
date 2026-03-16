@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.rename;
 
@@ -285,16 +285,6 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassFromCompanionObject.kt");
     }
 
-    @TestMetadata("HidingClassFromReceiver.kt")
-    public void testHidingClassFromReceiver() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassFromReceiver.kt");
-    }
-
-    @TestMetadata("HidingClassFromReceiver1.kt")
-    public void testHidingClassFromReceiver1() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassFromReceiver1.kt");
-    }
-
     @TestMetadata("HidingClassFromSuper.kt")
     public void testHidingClassFromSuper() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassFromSuper.kt");
@@ -358,16 +348,6 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("HidingExternalClass.kt")
     public void testHidingExternalClass() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingExternalClass.kt");
-    }
-
-    @TestMetadata("HidingFunctionFromReceiver.kt")
-    public void testHidingFunctionFromReceiver() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingFunctionFromReceiver.kt");
-    }
-
-    @TestMetadata("HidingFunctionFromReceiver1.kt")
-    public void testHidingFunctionFromReceiver1() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingFunctionFromReceiver1.kt");
     }
 
     @TestMetadata("HidingLocalByParameter.kt")
@@ -463,16 +443,6 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("HidingPropertyByTopLevel1.kt")
     public void testHidingPropertyByTopLevel1() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingPropertyByTopLevel1.kt");
-    }
-
-    @TestMetadata("HidingPropertyFromReceiver.kt")
-    public void testHidingPropertyFromReceiver() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingPropertyFromReceiver.kt");
-    }
-
-    @TestMetadata("HidingPropertyFromReceiver1.kt")
-    public void testHidingPropertyFromReceiver1() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingPropertyFromReceiver1.kt");
     }
 
     @TestMetadata("HidingTopLevelClass.kt")
@@ -698,6 +668,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("RedundantOverride.kt")
     public void testRedundantOverride() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/RedundantOverride.kt");
+    }
+
+    @TestMetadata("RenameFromJava.java")
+    public void testRenameFromJava() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/RenameFromJava.java");
     }
 
     @TestMetadata("SameNameFunctionByImplicitReceiver.kt")

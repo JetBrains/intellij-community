@@ -2,8 +2,12 @@
 
 package com.intellij.microservices.url.references
 
-import com.intellij.microservices.url.*
+import com.intellij.microservices.url.FrameworkUrlPathSpecification
+import com.intellij.microservices.url.HTTP_METHODS
+import com.intellij.microservices.url.PlaceholderSplitEscaper
+import com.intellij.microservices.url.UrlConversionConstants
 import com.intellij.microservices.url.UrlPath.PathSegment
+import com.intellij.microservices.url.UrlSpecialSegmentMarker
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PartiallyKnownString

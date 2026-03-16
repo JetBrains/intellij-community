@@ -37,6 +37,7 @@ jvm_library(
     "//plugins/kotlin/base/statistics",
     "//plugins/kotlin/base/project-structure",
     "//platform/statistics",
+    "//java/java-impl:impl",
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.api` end

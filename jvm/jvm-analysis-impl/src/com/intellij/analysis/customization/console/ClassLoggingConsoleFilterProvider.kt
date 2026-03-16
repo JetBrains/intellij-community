@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.customization.console
 
 import com.intellij.execution.filters.ConsoleFilterProvider
@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.search.GlobalSearchScope
 
-const val SLF4J_MAVEN = "org.slf4j:slf4j-api"
+const val SLF4J_MAVEN: String = "org.slf4j:slf4j-api"
 private const val LOG4J_MAVEN = "org.apache.logging.log4j:log4j-api"
 private const val COMMON_LOGGING_MAVEN = "commons-logging:commons-logging"
 private val LOG_MAVEN = setOf(SLF4J_MAVEN, LOG4J_MAVEN, COMMON_LOGGING_MAVEN)

@@ -13,7 +13,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.enteredTextSatisfies
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle

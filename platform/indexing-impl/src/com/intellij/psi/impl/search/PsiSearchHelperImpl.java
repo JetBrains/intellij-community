@@ -6,6 +6,7 @@ import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.concurrency.AsyncFuture;
 import com.intellij.concurrency.AsyncUtil;
+import com.intellij.concurrency.ConcurrencyUtils;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.find.ngrams.TrigramIndex;
@@ -20,25 +21,57 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.IntRef;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.indexing.BinaryFileSourceProvider;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
+import com.intellij.psi.search.FileRankerMlService;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.PsiSearchRequest;
+import com.intellij.psi.search.PsiSearchScopeUtil;
+import com.intellij.psi.search.QuerySearchRequest;
+import com.intellij.psi.search.RequestResultProcessor;
+import com.intellij.psi.search.ScopeOptimizer;
+import com.intellij.psi.search.SearchRequestCollector;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.SearchSession;
+import com.intellij.psi.search.TextOccurenceProcessor;
+import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.search.UseScopeEnlarger;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
@@ -56,13 +89,29 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -157,7 +206,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
                                          @NotNull SearchScope searchScope,
                                          @NotNull String text,
-                                         short searchContext,
+                                         @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
                                          boolean caseSensitive) {
     return processElementsWithWord(processor, searchScope, text, searchContext, caseSensitive, shouldProcessInjectedPsi(searchScope));
   }
@@ -166,7 +215,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
                                          @NotNull SearchScope searchScope,
                                          @NotNull String text,
-                                         short searchContext,
+                                         @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
                                          boolean caseSensitive,
                                          boolean processInjectedPsi) {
     EnumSet<Options> options = makeOptions(caseSensitive, processInjectedPsi);
@@ -191,7 +240,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public @NotNull AsyncFuture<Boolean> processElementsWithWordAsync(@NotNull TextOccurenceProcessor processor,
                                                                     @NotNull SearchScope searchScope,
                                                                     @NotNull String text,
-                                                                    short searchContext,
+                                                                    @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
                                                                     boolean caseSensitively) {
     boolean result = processElementsWithWord(processor, searchScope, text, searchContext, caseSensitively,
                                              shouldProcessInjectedPsi(searchScope));
@@ -203,9 +252,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return AsyncUtil.wrapBoolean(processRequests(collector, processor));
   }
 
+  /**
+   * @param processor must be thread-safe
+   */
   public boolean processElementsWithWord(@NotNull SearchScope searchScope,
                                          @NotNull String text,
-                                         short searchContext,
+                                         @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
                                          @NotNull EnumSet<Options> options,
                                          @Nullable String containerName,
                                          @NotNull SearchSession session,
@@ -215,9 +267,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                   offsetsInScope, processor));
   }
 
+  /**
+   * @param processor must be thread-safe
+   */
   boolean bulkProcessElementsWithWord(@NotNull SearchScope searchScope,
                                       @NotNull String text,
-                                      short searchContext,
+                                      @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
                                       @NotNull EnumSet<Options> options,
                                       @Nullable String containerName,
                                       @NotNull SearchSession session,
@@ -225,14 +280,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (text.isEmpty()) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
-    ProgressIndicator progress = getOrCreateIndicator();
     if (searchScope instanceof GlobalSearchScope) {
-      StringSearcher searcher = new StringSearcher(text, options.contains(Options.CASE_SENSITIVE_SEARCH), true,
-                                                   searchContext == UsageSearchContext.IN_STRINGS,
-                                                   options.contains(Options.PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE));
+      return ConcurrencyUtils.runWithIndicatorOrContextCancellation((__) -> {
+        ProgressIndicator progress = getOrCreateIndicator();
+        StringSearcher searcher = new StringSearcher(text, options.contains(Options.CASE_SENSITIVE_SEARCH), true,
+                                                     searchContext == UsageSearchContext.IN_STRINGS,
+                                                     options.contains(Options.PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE));
 
-      return processElementsWithTextInGlobalScope((GlobalSearchScope)searchScope, searcher, searchContext,
-                                                  options.contains(Options.CASE_SENSITIVE_SEARCH), containerName, session, progress, processor);
+        return processElementsWithTextInGlobalScope((GlobalSearchScope)searchScope, searcher, searchContext,
+                                                    options.contains(Options.CASE_SENSITIVE_SEARCH), containerName, session, progress, processor);
+      });
     }
     LocalSearchScope scope = (LocalSearchScope)searchScope;
     PsiElement[] scopeElements = scope.getScope();
@@ -263,7 +320,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return processor.toString();
       }
     };
-    return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(scopeElements), progress, localProcessor);
+    return JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(Arrays.asList(scopeElements), localProcessor);
   }
 
   private @Nullable("null means we did not find common container files") Set<VirtualFile> intersectionWithContainerNameFiles(@NotNull GlobalSearchScope commonScope,
@@ -343,7 +400,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return currentFilesCount < maxFilesToProcess && accumulatedFileSizeToProcess < maxFilesSizeToProcess;
       }
     };
-    TextIndexQuery query = TextIndexQuery.fromWord(name, true, null);
+    TextIndexQuery query = TextIndexQuery.fromWord(name, true, TextIndexQuery.NO_SEARCH_CONTEXT);
     boolean cheap = processFilesContainingAllKeys(myManager.getProject(), scope, processor, query);
 
     if (!cheap) {
@@ -355,7 +412,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private boolean processElementsWithTextInGlobalScope(@NotNull GlobalSearchScope scope,
                                                        @NotNull StringSearcher searcher,
-                                                       short searchContext,
+                                                       @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
                                                        boolean caseSensitively,
                                                        @Nullable String containerName,
                                                        @NotNull SearchSession session,
@@ -389,7 +446,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private @NotNull List<List<VirtualFile>> computePriorities(@NotNull GlobalSearchScope scope,
                                                              @NotNull StringSearcher searcher,
-                                                             short searchContext,
+                                                             @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
                                                              boolean caseSensitively,
                                                              @Nullable String containerName,
                                                              @NotNull SearchSession session) {
@@ -675,7 +732,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private void getFilesWithText(@NotNull GlobalSearchScope scope,
-                                short searchContext,
+                                @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
                                 boolean caseSensitively,
                                 @NotNull String text,
                                 @NotNull Collection<? super VirtualFile> result) {
@@ -683,7 +740,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   public boolean processCandidateFilesForText(@NotNull GlobalSearchScope scope,
-                                              short searchContext,
+                                              @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
                                               boolean caseSensitively,
                                               boolean useOnlyWordHashToSearch,
                                               @NotNull String text,
@@ -694,7 +751,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @Override
   public boolean processCandidateFilesForText(@NotNull GlobalSearchScope scope,
-                                              short searchContext,
+                                              @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
                                               boolean caseSensitively,
                                               @NotNull String text,
                                               @NotNull Processor<? super VirtualFile> processor) {
@@ -738,7 +795,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     });
     PsiFile[] files = myDumbService.runReadActionInSmartMode(() -> CacheManager.getInstance(myManager.getProject())
       .getFilesWithWord(wordToSearch, UsageSearchContext.IN_PLAIN_TEXT, theSearchScope, true));
-
+    if (files.length == 0) {
+      return true;
+    }
     StringSearcher searcher = new StringSearcher(qName, true, true, false);
 
     progress.pushState();
@@ -749,10 +808,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       SearchScope useScope = originalElement == null ? null : myDumbService.runReadActionInSmartMode(() -> getUseScope(originalElement));
 
       int patternLength = qName.length();
-      for (int i = 0; i < files.length; i++) {
-        ProgressManager.checkCanceled();
-        PsiFile psiFile = files[i];
-        if (psiFile instanceof PsiBinaryFile) continue;
+      AtomicInteger i = new AtomicInteger();
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(files), progress, psiFile -> {
+        if (psiFile instanceof PsiBinaryFile) {
+          return true;
+        }
 
         CharSequence text = ReadAction.compute(() -> psiFile.getViewProvider().getContents());
 
@@ -768,9 +828,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
           return true;
         });
-        if (stopped.get()) break;
-        progress.setFraction((double)(i + 1) / files.length);
-      }
+        if (stopped.get()) {
+          return false;
+        }
+        progress.setFraction((double)(i.incrementAndGet()) / files.length);
+        return true;
+      });
     }
     finally {
       progress.popState();
@@ -821,40 +884,42 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     Map<SearchRequestCollector, Processor<? super PsiReference>> collectors = new HashMap<>();
     collectors.put(collector, processor);
 
-    ProgressIndicator progress = getOrCreateIndicator();
-    if (appendCollectorsFromQueryRequests(progress, collectors) == QueryRequestsRunResult.STOPPED) {
-      return false;
-    }
-    do {
-      Map<TextIndexQuery, Collection<RequestWithProcessor>> globals = new HashMap<>();
-      List<Computable<Boolean>> customs = new ArrayList<>();
-      Set<RequestWithProcessor> locals = new LinkedHashSet<>();
-      Map<RequestWithProcessor, Processor<? super CandidateFileInfo>> localProcessors = new HashMap<>();
-      distributePrimitives(collectors, locals, globals, customs, localProcessors);
-      if (!processGlobalRequestsOptimized(globals, progress, localProcessors)) {
+    return ConcurrencyUtils.runWithIndicatorOrContextCancellation((__) -> {
+      ProgressIndicator progress = getOrCreateIndicator();
+      if (appendCollectorsFromQueryRequests(progress, collectors) == QueryRequestsRunResult.STOPPED) {
         return false;
       }
-      for (RequestWithProcessor local : locals) {
-        progress.checkCanceled();
-        if (!processSingleRequest(local.request, local.refProcessor)) {
+      do {
+        Map<TextIndexQuery, Collection<RequestWithProcessor>> globals = new HashMap<>();
+        List<Computable<Boolean>> customs = new ArrayList<>();
+        Set<RequestWithProcessor> locals = new LinkedHashSet<>();
+        Map<RequestWithProcessor, Processor<? super CandidateFileInfo>> localProcessors = new HashMap<>();
+        distributePrimitives(collectors, locals, globals, customs, localProcessors);
+        if (!processGlobalRequestsOptimized(globals, progress, localProcessors)) {
           return false;
         }
-      }
-      for (Computable<Boolean> custom : customs) {
-        progress.checkCanceled();
-        if (!custom.compute()) {
+        for (RequestWithProcessor local : locals) {
+          progress.checkCanceled();
+          if (!processSingleRequest(local.request, local.refProcessor)) {
+            return false;
+          }
+        }
+        for (Computable<Boolean> custom : customs) {
+          progress.checkCanceled();
+          if (!custom.compute()) {
+            return false;
+          }
+        }
+        QueryRequestsRunResult result = appendCollectorsFromQueryRequests(progress, collectors);
+        if (result == QueryRequestsRunResult.STOPPED) {
           return false;
         }
+        else if (result == QueryRequestsRunResult.UNCHANGED) {
+          return true;
+        }
       }
-      QueryRequestsRunResult result = appendCollectorsFromQueryRequests(progress, collectors);
-      if (result == QueryRequestsRunResult.STOPPED) {
-        return false;
-      }
-      else if (result == QueryRequestsRunResult.UNCHANGED) {
-        return true;
-      }
-    }
-    while (true);
+      while (true);
+    });
   }
 
   private static @NotNull ProgressIndicator getOrCreateIndicator() {
@@ -1004,7 +1069,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                         @NotNull Map<VirtualFile, Collection<T>> restCandidateFiles,
                                                                         @Nullable FileRankerMlService fileRankerMlService,
                                                                         @NotNull List<String> queryNames,
-                                                                        @NotNull List<VirtualFile> queryFiles) {
+                                                                        @NotNull List<? extends VirtualFile> queryFiles) {
 
     if (fileRankerMlService != null) {
       // Inform fileRankerMlService about this session, but discard the order, as it is not used.
@@ -1035,7 +1100,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                          @NotNull Map<VirtualFile, Collection<T>> restCandidateFiles,
                                                                          @Nullable FileRankerMlService fileRankerService,
                                                                          @NotNull List<String> queryNames,
-                                                                         @NotNull List<VirtualFile> queryFiles) {
+                                                                         @NotNull List<? extends VirtualFile> queryFiles) {
     Map<VirtualFile, Collection<T>> allFiles = new HashMap<>(totalSize);
     allFiles.putAll(targetFiles);
     allFiles.putAll(nearDirectoryFiles);
@@ -1055,7 +1120,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private <T> boolean processCandidates(@NotNull Map<T, Processor<? super CandidateFileInfo>> localProcessors,
                                         @NotNull Map<VirtualFile, Collection<T>> candidateFiles,
-                                        @NotNull List<VirtualFile> orderedFiles,
+                                        @NotNull List<? extends VirtualFile> orderedFiles,
                                         @NotNull ProgressIndicator progress,
                                         int totalSize,
                                         int alreadyProcessedFiles) {
@@ -1206,7 +1271,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     };
   }
 
-  private static @NotNull Condition<Integer> matchContextCondition(short searchContext) {
+  private static @NotNull Condition<Integer> matchContextCondition(
+    @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext
+  ) {
     return context -> (context & searchContext) != 0;
   }
 
@@ -1231,7 +1298,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           registerRequest(locals, primitive, processor);
         }
         else {
-          TextIndexQuery key = TextIndexQuery.fromWord(primitive.word, primitive.caseSensitive, null);
+          TextIndexQuery key = TextIndexQuery.fromWord(primitive.word, primitive.caseSensitive, TextIndexQuery.NO_SEARCH_CONTEXT);
           registerRequest(globals.computeIfAbsent(key, __ -> new SmartList<>()), primitive, processor);
         }
       }
@@ -1372,19 +1439,22 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     private final @NotNull Set<? extends Integer> myTrigrams;
 
     /** {@link UsageSearchContext search context} as a bitmask (makes sense only for IdIndex lookup) */
-    private final @Nullable Short myContext;
+    @MagicConstant(flagsFromClass = UsageSearchContext.class)
+    private final short myContext;
+    @MagicConstant(flagsFromClass = UsageSearchContext.class)
+    private static final short NO_SEARCH_CONTEXT = -1;
 
     /** true == 'use IdIndex only' -- which is the default option anyway */
     private final boolean myUseOnlyWordHashToSearch;
 
     private TextIndexQuery(@NotNull Set<? extends IdIndexEntry> idIndexEntries,
                            @NotNull Set<? extends Integer> trigrams,
-                           @Nullable Short context,
+                           @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
                            boolean useOnlyWordHashToSearch,
                            @NotNull Collection<String> initialWords) {
       myIdIndexEntries = idIndexEntries;
       myTrigrams = trigrams;
-      myContext = context;
+      myContext = searchContext;
       myUseOnlyWordHashToSearch = useOnlyWordHashToSearch;
       myInitialWords = initialWords;
     }
@@ -1414,7 +1484,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
 
     public @NotNull List<AllKeysQuery<?, ?>> toFileBasedIndexQueries() {
-      Condition<Integer> contextCondition = myContext == null ? null : matchContextCondition(myContext);
+      Condition<Integer> contextCondition = myContext == NO_SEARCH_CONTEXT ? null : matchContextCondition(myContext);
 
       var idIndexQuery = new AllKeysQuery<>(IdIndex.NAME, myIdIndexEntries, contextCondition);
 
@@ -1435,18 +1505,20 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     private static @NotNull TextIndexQuery fromWord(@NotNull String word,
                                                     boolean caseSensitively,
                                                     boolean useOnlyWordHashToSearch,
-                                                    @Nullable Short context) {
-      return fromWords(Collections.singleton(word), caseSensitively, useOnlyWordHashToSearch, context);
+                                                    @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext
+    ) {
+      return fromWords(Collections.singleton(word), caseSensitively, useOnlyWordHashToSearch, searchContext);
     }
 
-    public static @NotNull TextIndexQuery fromWord(@NotNull String word, boolean caseSensitively, @Nullable Short context) {
-      return fromWord(word, caseSensitively, false, context);
+    static @NotNull TextIndexQuery fromWord(@NotNull String word, boolean caseSensitively,
+                                            @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext) {
+      return fromWord(word, caseSensitively, false, searchContext);
     }
 
     public static @NotNull TextIndexQuery fromWords(@NotNull Collection<String> words,
                                                     boolean caseSensitively,
                                                     boolean useOnlyWordHashToSearch,
-                                                    @Nullable Short context) {
+                                                    @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext) {
       Set<IdIndexEntry> keys = CollectionFactory.createSmallMemoryFootprintSet(ContainerUtil.flatMap(words, w -> getWordEntries(w, caseSensitively)));
       IntSet trigrams;
       if (!useOnlyWordHashToSearch) {
@@ -1459,7 +1531,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         trigrams = IntSets.EMPTY_SET;
       }
 
-      return new TextIndexQuery(keys, trigrams, context, useOnlyWordHashToSearch, words);
+      return new TextIndexQuery(keys, trigrams, searchContext, useOnlyWordHashToSearch, words);
     }
 
     private static @Unmodifiable @NotNull List<IdIndexEntry> getWordEntries(@NotNull String name, boolean caseSensitively) {

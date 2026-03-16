@@ -25,11 +25,11 @@
     },
     {
       "id": "ReassignedToPlainText",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Unspecified"
     },
     {
       "id": "LossyEncoding",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "RedundantSuppression",
@@ -41,7 +41,7 @@
     },
     {
       "id": "EmptyDirectory",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "NonAsciiCharacters",
@@ -49,7 +49,7 @@
     },
     {
       "id": "IgnoreFileDuplicateEntry",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "InconsistentLineSeparators",
@@ -65,7 +65,7 @@
     },
     {
       "id": "Annotator",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Sanity"
     }
   ]
 }

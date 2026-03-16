@@ -1,6 +1,7 @@
 package com.michaelbaranov.microba.calendar.ui.basic;
 
-import javax.swing.*;
+import javax.swing.AbstractListModel;
+import javax.swing.ComboBoxModel;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Calendar;

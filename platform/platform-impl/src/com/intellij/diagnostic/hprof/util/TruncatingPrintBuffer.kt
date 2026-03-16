@@ -17,7 +17,8 @@ package com.intellij.diagnostic.hprof.util
 
 import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
-import java.util.*
+import java.util.LinkedList
+import java.util.Queue
 
 @ApiStatus.Internal
 class TruncatingPrintBuffer(

@@ -17,9 +17,9 @@
 package com.intellij.completion.ml.tracker
 
 import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
-import com.intellij.openapi.project.Project
 import com.intellij.completion.ml.personalization.UserFactorDescriptions
 import com.intellij.completion.ml.personalization.UserFactorStorage
+import com.intellij.openapi.project.Project
 import java.util.concurrent.TimeUnit
 
 /**

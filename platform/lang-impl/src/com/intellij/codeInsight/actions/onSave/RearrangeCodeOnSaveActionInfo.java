@@ -22,8 +22,10 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JList;
+import java.awt.Component;
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;

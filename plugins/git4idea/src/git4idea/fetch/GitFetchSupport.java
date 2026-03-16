@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +15,7 @@ import java.util.Collection;
 /**
  * High-level API to execute the {@code git fetch} command.
  */
+@ApiStatus.NonExtendable
 public interface GitFetchSupport {
 
   /**
@@ -54,6 +56,7 @@ public interface GitFetchSupport {
    * Fetches all targets defined in {@code fetchSpec}
    */
   @NotNull
+  @ApiStatus.Internal
   GitFetchResult fetch(@NotNull Collection<GitFetchSpec> fetchSpec);
 
   /**

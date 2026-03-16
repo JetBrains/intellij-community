@@ -7,7 +7,7 @@ from decimal import Decimal
 from fractions import Fraction
 from typing import TypedDict, Union
 from typing_extensions import assert_type
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import _ANY, ANY, AsyncMock, MagicMock, Mock, patch
 
 case = unittest.TestCase()
 
@@ -226,3 +226,30 @@ with patch.object(Decimal, "exp", new=42) as obj_explicit_new_enter:
 
 with patch.object(Decimal, "exp", new_callable=lambda: 42) as obj_explicit_new_callable_enter:
     assert_type(obj_explicit_new_callable_enter, int)
+
+
+###
+# Tests for mock.ANY
+###
+
+
+assert_type(ANY, _ANY)  # Make sure ANY has runtime type
+
+
+# Regression tests. See https://github.com/python/typeshed/issues/14701
+class TD(TypedDict):
+    x: str
+    y: float
+
+
+td: TD = {"x": "1", "y": ANY}
+
+
+def test_as_param(x: str) -> None: ...
+
+
+test_as_param(ANY)
+
+
+def test_as_return_value(x: int) -> TD:
+    return {"x": str(x), "y": ANY}

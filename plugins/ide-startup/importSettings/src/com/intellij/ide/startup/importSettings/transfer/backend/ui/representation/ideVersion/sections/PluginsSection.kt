@@ -3,7 +3,10 @@ package com.intellij.ide.startup.importSettings.ui.representation.ideVersion.sec
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.startup.importSettings.models.*
+import com.intellij.ide.startup.importSettings.models.BuiltInFeature
+import com.intellij.ide.startup.importSettings.models.FeatureInfo
+import com.intellij.ide.startup.importSettings.models.PluginFeature
+import com.intellij.ide.startup.importSettings.models.SettingsPreferencesKind
 import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.Wrapper

@@ -2,7 +2,12 @@
 package com.jetbrains.python.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateEditorBase
-import com.intellij.ide.util.gotoByName.*
+import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider
+import com.intellij.ide.util.gotoByName.ChooseByNameModel
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup
+import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent
+import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider
+import com.intellij.ide.util.gotoByName.GotoClassModel2
 import com.intellij.navigation.ChooseByNameContributor
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.actionSystem.AnActionEvent

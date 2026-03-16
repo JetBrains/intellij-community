@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -9,9 +9,16 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -44,18 +51,43 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.InputMethodEvent;
+import java.awt.event.InputMethodListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.im.InputMethodRequests;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.text.CharacterIterator;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
@@ -160,12 +192,16 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     myComponent.addKeyListener(new KeyAdapter() {
       @Override
       public void keyTyped(KeyEvent e) {
-        processKeyEvent(e);
+        WriteIntentReadAction.run(() -> {
+          processKeyEvent(e);
+        });
       }
 
       @Override
       public void keyPressed(KeyEvent e) {
-        processKeyEvent(e);
+        WriteIntentReadAction.run(() -> {
+          processKeyEvent(e);
+        });
       }
     });
 
@@ -190,9 +226,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       public void actionPerformed(@NotNull AnActionEvent e) {
         String prefix = getEnteredPrefix();
         if (prefix == null) return;
-        String[] strings = NameUtilCore.splitNameIntoWords(prefix);
-        if (strings.length == 0) return; // "__" has no words
-        String last = strings[strings.length - 1];
+        List<@NotNull String> strings = NameUtilCore.splitNameIntoWordList(prefix);
+        if (strings.isEmpty()) return; // "__" has no words
+        String last = strings.getLast();
         int i = prefix.lastIndexOf(last);
         mySearchPopup.mySearchField.setText(prefix.substring(0, i).trim());
       }
@@ -515,7 +551,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
     if (mySearchPopup == null && e.getID() == InputMethodEvent.INPUT_METHOD_TEXT_CHANGED) {
       var text = e.getText();
-      if (text != null && text.current() != CharacterIterator.DONE) {
+      if (text != null && text.first() != CharacterIterator.DONE) {
         showPopup();
       }
     }
@@ -718,9 +754,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     public void processInputMethodEvent(InputMethodEvent e) {
       mySearchField.processInputMethodEvent(e);
       if (e.isConsumed()) {
-        updateLastPattern();
-        String s = mySearchField.getText();
-        updateSelection(findElement(s), s);
+        WriteIntentReadAction.run(() -> {
+          updateLastPattern();
+          String s = mySearchField.getText();
+          updateSelection(findElement(s), s);
+        });
       }
     }
 

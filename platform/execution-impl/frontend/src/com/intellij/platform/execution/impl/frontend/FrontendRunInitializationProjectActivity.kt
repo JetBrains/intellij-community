@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
 
-private class FrontendRunInitializationProjectActivity : ProjectActivity {
+internal class FrontendRunInitializationProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     // initialize the run manager to start listening for backend state
     FrontendRunContentService.getInstance(project)

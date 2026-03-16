@@ -1,0 +1,21 @@
+<html>
+<body>
+Reports two-call chains on the <code>Flow</code> type from <code>kotlinx.coroutines</code> library
+which are replaceable by a single call.
+<p>It can help you to avoid redundant code execution.</p>
+<p>The quick-fix replaces the call chain with a single call.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  fun main() {
+      flowOf("1", "2", "Oh").map { it.toIntOrNull() }.filterNotNull()
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun main() {
+      flowOf("1", "2", "Oh").mapNotNull { it.toIntOrNull() }
+  }
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

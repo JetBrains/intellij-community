@@ -55,7 +55,13 @@
 package org.jdom.xpath;
 
 
-import org.jdom.*;
+import org.jdom.Attribute;
+import org.jdom.CDATA;
+import org.jdom.Element;
+import org.jdom.IllegalNameException;
+import org.jdom.JDOMException;
+import org.jdom.Namespace;
+import org.jdom.Text;
 import org.jdom.xpath.jaxen.JDOMXPath;
 
 import java.io.InvalidObjectException;

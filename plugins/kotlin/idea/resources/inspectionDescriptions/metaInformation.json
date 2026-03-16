@@ -2,7 +2,7 @@
   "inspections": [
     {
       "id": "UnusedDataClassCopyResult",
-      "codeQualityCategory": "Performance"
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

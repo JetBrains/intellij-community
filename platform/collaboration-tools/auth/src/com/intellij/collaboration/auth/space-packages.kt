@@ -4,7 +4,12 @@ package com.intellij.collaboration.auth
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.util.io.await
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.net.MalformedURLException
 import java.net.URI

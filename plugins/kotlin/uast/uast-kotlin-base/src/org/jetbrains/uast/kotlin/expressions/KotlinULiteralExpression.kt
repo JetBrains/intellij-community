@@ -8,8 +8,12 @@ import com.intellij.psi.PsiTypes
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.psi.KtConstantExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.internal.KotlinFakeUElement
+import org.jetbrains.uast.wrapULiteral
 
 @ApiStatus.Internal
 class KotlinULiteralExpression(

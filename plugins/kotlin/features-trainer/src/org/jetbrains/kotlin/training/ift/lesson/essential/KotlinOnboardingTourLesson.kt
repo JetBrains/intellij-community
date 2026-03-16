@@ -9,8 +9,14 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.training.ift.KotlinLessonsBundle
-import training.dsl.*
+import training.dsl.LearningBalloonConfig
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.defaultRestoreDelay
+import training.dsl.parseLessonSample
+import training.dsl.triggerOnEditorText
 import training.util.isToStringContains
 
 class KotlinOnboardingTourLesson : OnboardingTourLessonBase(ideaOnboardingLessonId) {

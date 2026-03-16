@@ -1,9 +1,20 @@
 package com.intellij.cce.java.visitor
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.CodeFragmentWithPsi
+import com.intellij.cce.core.CodeTokenWithPsi
+import com.intellij.cce.core.Language
+import com.intellij.cce.core.SimpleTokenProperties
+import com.intellij.cce.core.SymbolLocation
+import com.intellij.cce.core.TypeProperty
 import com.intellij.cce.visitor.EvaluationVisitor
 import com.intellij.cce.visitor.exceptions.PsiConverterException
-import com.intellij.psi.*
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMethod
 
 class JavaCompletionContextEvaluationVisitor: EvaluationVisitor, JavaRecursiveElementVisitor() {
   private var codeFragment: CodeFragment? = null

@@ -8,4 +8,5 @@ object SeItemDataKeys {
   const val IS_SEMANTIC: String = "SeItemDataKeys.IsSemantic"
   const val PSI_LANGUAGE_ID: String = "SeItemDataKeys.PsiLanguage"
   const val REPORTABLE_PROVIDER_ID: String = "SeItemDataKeys.ReportableProviderId"
+  const val IS_COMMAND: String = "SeItemDataKeys.IsCommand"
 }

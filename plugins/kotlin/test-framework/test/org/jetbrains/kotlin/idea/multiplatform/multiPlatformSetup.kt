@@ -8,7 +8,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import org.jetbrains.kotlin.checkers.utils.clearFileFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemFacade
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemSourceSet
@@ -17,7 +16,12 @@ import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmJsLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmWasiLibraryKind
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
+import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM1
+import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.konan.target.KonanTarget
@@ -34,11 +38,21 @@ import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
 import org.jetbrains.kotlin.platform.wasm.isWasmJs
 import org.jetbrains.kotlin.platform.wasm.isWasmWasi
-import org.jetbrains.kotlin.projectModel.*
+import org.jetbrains.kotlin.projectModel.FullJdk
+import org.jetbrains.kotlin.projectModel.KotlinSdk
+import org.jetbrains.kotlin.projectModel.MockJdk
+import org.jetbrains.kotlin.projectModel.ProjectResolveMode
+import org.jetbrains.kotlin.projectModel.ProjectResolveModel
+import org.jetbrains.kotlin.projectModel.ProjectStructureParser
+import org.jetbrains.kotlin.projectModel.ResolveDependency
+import org.jetbrains.kotlin.projectModel.ResolveLibrary
+import org.jetbrains.kotlin.projectModel.ResolveModule
+import org.jetbrains.kotlin.projectModel.ResolveSdk
 import org.jetbrains.kotlin.test.TestJdkKind
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.kotlin.utils.closure
 import java.io.File
+import java.util.regex.Pattern
 
 // allows to configure a test mpp project
 // testRoot is supposed to contain several directories which contain module sources roots
@@ -406,3 +420,14 @@ private object StdlibDependency : Dependency()
 private object FullJdkDependency : Dependency()
 private object CoroutinesDependency : Dependency()
 private object KotlinTestDependency : Dependency()
+
+private const val INDIVIDUAL_DIAGNOSTIC = """(\w+;)?(\w+:)?(\w+)(\{[\w;]+})?(?:\(((?:".*?")(?:,\s*".*?")*)\))?"""
+
+val rangeStartOrEndPattern = Pattern.compile("(<!$INDIVIDUAL_DIAGNOSTIC(,\\s*$INDIVIDUAL_DIAGNOSTIC)*!>)|(<!>)")
+fun clearFileFromDiagnosticMarkup(file: File) {
+    val text = file.readText()
+    val cleanText = clearTextFromDiagnosticMarkup(text)
+    file.writeText(cleanText)
+}
+
+fun clearTextFromDiagnosticMarkup(text: String): String = rangeStartOrEndPattern.matcher(text).replaceAll("")

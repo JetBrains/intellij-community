@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
@@ -19,10 +19,16 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JVMElementFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.testIntegration.createTest.CreateTestAction;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +47,10 @@ public abstract class JavaTestFramework implements JvmTestFramework {
 
   @Override
   public boolean isLibraryAttached(@NotNull Module module) {
-    GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     Project project = module.getProject();
+    Module moduleToCheck = CreateTestAction.suggestModuleForTests(project, module);
+
+    GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleToCheck, true);
     return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
       for (String markerClassFQName : getMarkerClassFQNames()) {
         if (JavaPsiFacade.getInstance(project).findClass(markerClassFQName, scope) != null) return true;
@@ -198,6 +206,30 @@ public abstract class JavaTestFramework implements JvmTestFramework {
   }
 
   @Override
+  public @Nullable PsiElement findBeforeSuiteMethod(@NotNull PsiElement clazz) {
+    if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
+      return findBeforeSuiteMethod((PsiClass)clazz);
+    }
+    return null;
+  }
+
+  @Override
+  public @Nullable PsiElement findAfterSuiteMethod(@NotNull PsiElement clazz) {
+    if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
+      return findAfterSuiteMethod((PsiClass)clazz);
+    }
+    return null;
+  }
+
+  protected @Nullable PsiElement findBeforeSuiteMethod(@NotNull PsiClass clazz) {
+    return null;
+  }
+
+  protected @Nullable PsiElement findAfterSuiteMethod(@NotNull PsiClass clazz) {
+    return null;
+  }
+
+  @Override
   public PsiElement findOrCreateSetUpMethod(@NotNull PsiElement clazz) throws IncorrectOperationException {
     if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
       return findOrCreateSetUpMethod((PsiClass)clazz);
@@ -250,14 +282,17 @@ public abstract class JavaTestFramework implements JvmTestFramework {
   }
 
   public Promise<Void> setupLibrary(Module module) {
+    Project project = module.getProject();
+    Module targetModule = CreateTestAction.suggestModuleForTests(project, module);
+
     ExternalLibraryDescriptor descriptor = getFrameworkLibraryDescriptor();
     if (descriptor != null) {
-      return JavaProjectModelModificationService.getInstance(module.getProject()).addDependency(module, descriptor, DependencyScope.TEST);
+      return JavaProjectModelModificationService.getInstance(project).addDependency(targetModule, descriptor, DependencyScope.TEST);
     }
     else {
       String path = getLibraryPath();
       if (path != null) {
-        OrderEntryFix.addJarsToRoots(Collections.singletonList(path), null, module, null);
+        OrderEntryFix.addJarsToRoots(Collections.singletonList(path), null, targetModule, null);
         return Promises.resolvedPromise(null);
       }
     }
@@ -288,5 +323,4 @@ public abstract class JavaTestFramework implements JvmTestFramework {
   public boolean isTestMethod(PsiElement element) {
     return isTestMethod(element, true);
   }
-
 }

@@ -9,8 +9,18 @@ import com.intellij.platform.util.coroutines.childScope
 import git4idea.remote.hosting.HostedGitRepositoriesManager
 import git4idea.remote.hosting.HostedGitRepositoryMapping
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModel.Error
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.launch
 
 abstract class RepositoryAndAccountSelectorViewModelBase<M : HostedGitRepositoryMapping, A : ServerAccount>(
   parentCs: CoroutineScope,

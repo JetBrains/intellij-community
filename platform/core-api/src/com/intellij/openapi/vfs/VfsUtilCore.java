@@ -5,7 +5,11 @@ import com.intellij.core.CoreBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -19,13 +23,28 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DistinctRootsCollection;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Various utility methods for working with {@link VirtualFile}.
@@ -292,6 +311,14 @@ public class VfsUtilCore {
     return !Comparing.equal(result.skipToParent, root);
   }
 
+  /**
+   * Consider using methods that honor excluded directories: {@link com.intellij.openapi.roots.FileIndex#iterateContent} or {@link com.intellij.openapi.roots.FileIndex#iterateContentUnderDirectory}
+   * This method will recursively iterate over all files on disk under the specified root directory which may load too many files into
+   * VFS and lead to freezes (see IJPL-2189).
+   * <p>
+   * Alternatively, use this method but pass a cache-avoiding file instead {@link com.intellij.openapi.vfs.newvfs.NewVirtualFile#asCacheAvoiding}.
+   * This way files won't be loaded into VFS.
+   */
   @SuppressWarnings("UnsafeVfsRecursion")
   public static @NotNull VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
                                                                             @NotNull VirtualFileVisitor<?> visitor) throws VirtualFileVisitor.VisitorException {
@@ -341,6 +368,14 @@ public class VfsUtilCore {
     }
   }
 
+  /**
+   * Consider using methods that honor excluded directories: {@link com.intellij.openapi.roots.FileIndex#iterateContent} or {@link com.intellij.openapi.roots.FileIndex#iterateContentUnderDirectory}
+   * This method will recursively iterate over all files on disk under the specified root directory which may load too many files into
+   * VFS and lead to freezes (see IJPL-2189).
+   * <p>
+   * Alternatively, use this method but pass a cache-avoiding file instead {@link com.intellij.openapi.vfs.newvfs.NewVirtualFile#asCacheAvoiding}.
+   * This way files won't be loaded into VFS.
+   */
   public static @NotNull <E extends Exception> VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
                                                                                                   @NotNull VirtualFileVisitor<?> visitor,
                                                                                                   @NotNull Class<E> eClass) throws E {

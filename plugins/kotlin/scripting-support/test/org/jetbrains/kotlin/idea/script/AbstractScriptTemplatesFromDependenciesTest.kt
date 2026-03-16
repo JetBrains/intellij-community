@@ -21,7 +21,11 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptTemplatesFromDependenciesProvider
 import org.jetbrains.kotlin.idea.core.script.shared.definition.ScriptDefinitionMarkerFileType
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.addDependency
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.projectLibrary
 import org.junit.runner.RunWith

@@ -5,7 +5,10 @@ package org.jetbrains.uast.test.common.kotlin
 import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UComment
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UFile
 import org.jetbrains.uast.kotlin.internal.KotlinUElementWithComments
 import org.jetbrains.uast.test.common.kotlin.UastTestSuffix.TXT
 import org.jetbrains.uast.visitor.UastVisitor

@@ -3,14 +3,37 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiEllipsisType
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeVisitor
+import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.impl.source.PsiClassReferenceType
-import org.jetbrains.kotlin.j2k.ast.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.j2k.ast.ArrayType
+import org.jetbrains.kotlin.j2k.ast.ClassType
+import org.jetbrains.kotlin.j2k.ast.ErrorType
+import org.jetbrains.kotlin.j2k.ast.Identifier
+import org.jetbrains.kotlin.j2k.ast.InProjectionType
+import org.jetbrains.kotlin.j2k.ast.Mutability
+import org.jetbrains.kotlin.j2k.ast.NullType
+import org.jetbrains.kotlin.j2k.ast.OutProjectionType
+import org.jetbrains.kotlin.j2k.ast.PrimitiveType
+import org.jetbrains.kotlin.j2k.ast.ReferenceElement
+import org.jetbrains.kotlin.j2k.ast.StarProjectionType
+import org.jetbrains.kotlin.j2k.ast.Type
+import org.jetbrains.kotlin.j2k.ast.UnitType
+import org.jetbrains.kotlin.j2k.ast.VarArgType
+import org.jetbrains.kotlin.j2k.ast.assignNoPrototype
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 
 private val PRIMITIVE_TYPES_NAMES = JvmPrimitiveType.values().map { it.javaKeywordName }
 
+@K1Deprecation
 class TypeVisitor(
         private val converter: Converter,
         private val topLevelType: PsiType,

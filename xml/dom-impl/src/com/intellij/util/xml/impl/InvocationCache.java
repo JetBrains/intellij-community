@@ -21,7 +21,11 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.AnnotatedElement;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomElementVisitor;
+import com.intellij.util.xml.JavaMethod;
+import com.intellij.util.xml.JavaMethodSignature;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;

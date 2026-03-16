@@ -33,11 +33,6 @@ jvm_library(
   module_name = "intellij.editorconfig.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    "//plugins/editorconfig:editorconfig-plugin",
-    "//plugins/editorconfig/common",
-    "//plugins/editorconfig/frontend",
-    "//plugins/editorconfig/backend",
-  ]
+  runtime_deps = [":editorconfig-plugin-main"]
 )
 ### auto-generated section `build intellij.editorconfig.plugin.main` end

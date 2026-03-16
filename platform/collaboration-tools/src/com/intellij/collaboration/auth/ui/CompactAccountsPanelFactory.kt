@@ -18,7 +18,12 @@ import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.awaitCancellation
 import java.awt.Component
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.ListCellRenderer
+import javax.swing.ListModel
+import javax.swing.ListSelectionModel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 

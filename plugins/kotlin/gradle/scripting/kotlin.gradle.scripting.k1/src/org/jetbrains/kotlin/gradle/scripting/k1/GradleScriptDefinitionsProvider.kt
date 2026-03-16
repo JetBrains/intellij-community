@@ -2,12 +2,15 @@
 
 package org.jetbrains.kotlin.gradle.scripting.k1
 
-import KotlinGradleScriptingBundle
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.gradle.scripting.k1.roots.GradleBuildRootsLocatorImpl
+import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.ErrorGradleScriptDefinition
-import org.jetbrains.kotlin.gradle.scripting.shared.GradleDefinitionsParams
+import org.jetbrains.kotlin.gradle.scripting.shared.definition.GradleDefinitionsParams
+import org.jetbrains.kotlin.gradle.scripting.shared.definition.loadGradleDefinitions
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.WithoutScriptModels
@@ -24,6 +27,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.concurrent.ConcurrentHashMap
 
+@K1Deprecation
 class GradleScriptDefinitionsContributor(private val project: Project) : ScriptDefinitionsSource {
     companion object {
         fun getInstance(project: Project): GradleScriptDefinitionsContributor? =
@@ -123,7 +127,7 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
             return emptyList()
         }
 
-        return org.jetbrains.kotlin.gradle.scripting.shared.loadGradleDefinitions(
+        return loadGradleDefinitions(
             GradleDefinitionsParams(
                 workingDir = root.workingDir,
                 gradleHome = root.gradleHome,
@@ -167,8 +171,9 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
             }
             if (definitionsByRoots.isEmpty()) { // can be empty in case when import wasn't done from IDE start up,
                 // otherwise KotlinDslSyncListener should run reloadIfNeeded for valid roots
-                for (it in GradleBuildRootsLocator.getInstance(project).getAllRoots()) {
-                    val workingDir = it.pathPrefix
+                val roots = (GradleBuildRootsLocator.getInstance(project) as? GradleBuildRootsLocatorImpl)?.getAllRoots() ?: emptyList()
+                for (it in roots) {
+                    val workingDir = it.externalProjectPath
                     val (gradleHome, javaHome) = when (it) {
                         is Imported -> {
                             it.data.gradleHome to it.data.javaHome

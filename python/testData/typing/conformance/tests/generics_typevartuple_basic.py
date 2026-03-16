@@ -14,7 +14,7 @@ class Array1(Generic[*Ts]):
 
 
 def func1(*args: *Ts) -> tuple[*Ts]:
-    ...
+    raise NotImplementedError
 
 
 Shape = TypeVarTuple("Shape")
@@ -73,7 +73,7 @@ Ts3 = TypeVarTuple("Ts3", bound=int)  # E
 
 
 def func2(arg1: tuple[*Ts], arg2: tuple[*Ts]) -> tuple[*Ts]:
-    ...
+    raise NotImplementedError
 
 
 # > We do not allow this; type unions may not appear within the tuple.
@@ -91,7 +91,7 @@ func2((0, 0), (0,))  # E
 
 
 def multiply(x: Array[*Shape], y: Array[*Shape]) -> Array[*Shape]:
-    ...
+    raise NotImplementedError
 
 
 def func3(x: Array[Height], y: Array[Width], z: Array[Height, Width]):

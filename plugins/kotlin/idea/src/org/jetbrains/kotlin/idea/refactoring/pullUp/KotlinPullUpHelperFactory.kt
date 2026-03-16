@@ -4,11 +4,17 @@ package org.jetbrains.kotlin.idea.refactoring.pullUp
 
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.memberPullUp.JavaPullUpHelper
 import com.intellij.refactoring.memberPullUp.PullUpData
 import com.intellij.refactoring.memberPullUp.PullUpHelper
 import com.intellij.refactoring.memberPullUp.PullUpHelperFactory
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.ClassKind
@@ -19,6 +25,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
+@K1Deprecation
 class KotlinPullUpHelperFactory : PullUpHelperFactory {
     private fun PullUpData.toKotlinPullUpData(): KotlinPullUpData? {
         val sourceClass = sourceClass.unwrapped as? KtClassOrObject ?: return null
@@ -41,6 +48,7 @@ class KotlinPullUpHelperFactory : PullUpHelperFactory {
     }
 }
 
+@K1Deprecation
 class JavaToKotlinPullUpHelperFactory : PullUpHelperFactory {
     private fun createJavaToKotlinPullUpHelper(data: PullUpData): PullUpHelper<*>? {
         if (!data.sourceClass.isInheritor(data.targetClass, true)) return null

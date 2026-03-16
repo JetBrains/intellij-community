@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.parameterInfo
 import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -20,7 +21,15 @@ import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.name.SpecialNames
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.KtUnaryExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -31,6 +40,7 @@ import org.jetbrains.kotlin.types.typeUtil.immediateSupertypes
 import org.jetbrains.kotlin.types.typeUtil.isEnum
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
+@K1Deprecation
 fun providePropertyTypeHint(elem: PsiElement, inlayInfoOption: InlayInfoOption): List<InlayInfoDetails> {
     (elem as? KtCallableDeclaration)?.let { property ->
         property.nameIdentifier?.let { ident ->
@@ -40,6 +50,7 @@ fun providePropertyTypeHint(elem: PsiElement, inlayInfoOption: InlayInfoOption):
     return emptyList()
 }
 
+@K1Deprecation
 fun provideTypeHint(element: KtCallableDeclaration, offset: Int, inlayInfoOption: InlayInfoOption): InlayInfoDetails? {
     var type: KotlinType = SpecifyTypeExplicitlyIntention.getTypeForDeclaration(element).unwrap()
     if (type.containsError()) return null

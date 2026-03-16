@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.textmate.plist
 
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 

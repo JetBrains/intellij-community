@@ -1,7 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiVariable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log

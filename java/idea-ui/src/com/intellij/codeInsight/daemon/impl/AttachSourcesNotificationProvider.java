@@ -4,9 +4,11 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.CommonBundle;
 import com.intellij.codeEditor.JavaEditorFileSwapper;
 import com.intellij.codeInsight.AttachSourcesProvider;
+import com.intellij.codeInsight.AttachSourcesProviderFilter;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -55,12 +57,18 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -68,7 +76,8 @@ import java.util.function.Function;
 /**
  * @author Dmitry Avdeev
  */
-final class AttachSourcesNotificationProvider implements EditorNotificationProvider {
+@VisibleForTesting
+public final class AttachSourcesNotificationProvider implements EditorNotificationProvider {
 
   private static final ExtensionPointName<AttachSourcesProvider> EXTENSION_POINT_NAME =
     new ExtensionPointName<>("com.intellij.attachSourcesProvider");
@@ -170,7 +179,7 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
 
         throw new RuntimeException(JavaUiBundle.message("can.t.find.library.for.0", file.getName()));
       })
-      .expireWith(project)
+      .expireWith(JavaPluginDisposable.getInstance(project))
       .expireWhen(() -> !file.isValid())
       .coalesceBy(file, project)
       .finishOnUiThread(ModalityState.current(), uiThreadAction)
@@ -194,6 +203,9 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
 
     boolean hasNonLightAction = false;
     for (AttachSourcesProvider provider : EXTENSION_POINT_NAME.getExtensionList()) {
+      if (!AttachSourcesProviderFilter.isProviderApplicable(provider, libraries, classFile)) {
+        continue;
+      }
       for (AttachSourcesProvider.AttachSourcesAction action : provider.getActions(libraries, classFile)) {
         if (hasNonLightAction) {
           if (action instanceof AttachSourcesProvider.LightAttachSourcesAction) {

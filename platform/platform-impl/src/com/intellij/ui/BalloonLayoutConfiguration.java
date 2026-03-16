@@ -4,7 +4,6 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.impl.NotificationsManagerImpl;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
@@ -12,8 +11,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.UIManager;
+import java.awt.Dimension;
 
 /**
  * @author Alexander Lobas
@@ -53,25 +52,12 @@ public final class BalloonLayoutConfiguration {
   private static final int RawStyleWidth;
 
   static {
-    int width;
-
-    if (SystemInfo.isMac) {
-      width = 360;
-      RawStyleWidth = 240;
-    }
-    else if (SystemInfo.isLinux) {
-      width = 410;
-      RawStyleWidth = 270;
-    }
-    else {
-      width = 330;
-      RawStyleWidth = 205;
-    }
-
-    width += AllIcons.Ide.Shadow.Left.getIconWidth();
-    width += AllIcons.Ide.Shadow.Right.getIconWidth();
+    int width = 360;
+    width += JBUI.unscale(AllIcons.Ide.Shadow.Left.getIconWidth());
+    width += JBUI.unscale(AllIcons.Ide.Shadow.Right.getIconWidth());
 
     RawWidth = width;
+    RawStyleWidth = 240;
   }
 
   public static int FixedWidth() {

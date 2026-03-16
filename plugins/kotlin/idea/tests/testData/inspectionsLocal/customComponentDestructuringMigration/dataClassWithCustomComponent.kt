@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
+
+data class Person(val name: String, val age: Int) {
+    operator fun component3(): String = name + age
+}
+
+fun test() {
+    val (name<caret>, age, rendered) = Person("John", 30)
+}

@@ -3,7 +3,14 @@ package com.intellij.internal.statistic.eventLog.connection;
 
 import com.intellij.internal.statistic.config.EventLogOptions;
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType;
-import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
+import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
+import com.intellij.internal.statistic.eventLog.EventLogFile;
+import com.intellij.internal.statistic.eventLog.EventLogSendConfig;
+import com.intellij.internal.statistic.eventLog.LogEventRecord;
+import com.intellij.internal.statistic.eventLog.LogEventRecordRequest;
+import com.intellij.internal.statistic.eventLog.LogEventSerializer;
+import com.intellij.internal.statistic.eventLog.MachineId;
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.eventLog.connection.metadata.StatsConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpRequests;

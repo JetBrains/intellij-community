@@ -7,16 +7,33 @@ import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.Consumer
-import com.intellij.vcs.log.*
-import com.intellij.vcs.log.data.*
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.TimedVcsCommit
+import com.intellij.vcs.log.VcsFullCommitDetails
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.log.data.DataGetter
+import com.intellij.vcs.log.data.EmptyIndex
+import com.intellij.vcs.log.data.RootRefsModel
+import com.intellij.vcs.log.data.TopCommitsCache
+import com.intellij.vcs.log.data.VcsLogGraphDataFactory
+import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.graph.VisibleGraph
-import com.intellij.vcs.log.impl.*
+import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcs.log.impl.TestVcsLogProvider
 import com.intellij.vcs.log.impl.TestVcsLogProvider.BRANCH_TYPE
 import com.intellij.vcs.log.impl.TestVcsLogProvider.DEFAULT_USER
+import com.intellij.vcs.log.impl.TimedVcsCommitImpl
+import com.intellij.vcs.log.impl.VcsCommitMetadataImpl
+import com.intellij.vcs.log.impl.VcsRefImpl
 import com.intellij.vcs.log.util.VcsLogUtil.FULL_HASH_LENGTH
+import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import org.junit.Rule
 import org.junit.Test
@@ -273,8 +290,9 @@ class VcsLogFiltererTest {
 
       val commits = graphsByRoots.values.map { it.commits }.flatten()
 
-      val refs = hashMap.storagesByRoot.mapValues { (_, storage) -> CompressedRefs(HashSet(storage.refs.values), hashMap) }
-      val dataPack = DataPack.build(commits, refs, providers, hashMap, true)
+      val refs =
+        hashMap.storagesByRoot.mapValues { (_, storage) -> RootRefsModel.create(HashSet(storage.refs.values), hashMap) }
+      val dataPack = VcsLogGraphDataFactory.buildData(commits, refs, providers, hashMap, true)
 
       val detailsCache = TopCommitsCache(hashMap)
       val details = graphsByRoots.map { (root, singleGraph) ->
@@ -358,7 +376,7 @@ class VcsLogFiltererTest {
     }
 
     operator fun GraphCommit<VcsLogCommitStorageIndex>.plus(name: String): GraphCommit<VcsLogCommitStorageIndex> {
-      data[this] = CommitMetaData(VcsUserImpl(name, "$name@example.com"))
+      data[this] = CommitMetaData(VcsUserUtil.createUser(name, "$name@example.com"))
       return this
     }
 

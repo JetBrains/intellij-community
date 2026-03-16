@@ -9,7 +9,7 @@ import com.intellij.openapi.options.ConfigurableSchemeExporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;

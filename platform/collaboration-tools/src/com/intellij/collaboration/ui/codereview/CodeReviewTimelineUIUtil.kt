@@ -10,7 +10,7 @@ import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Date
 import javax.swing.JComponent
 import javax.swing.border.Border
 

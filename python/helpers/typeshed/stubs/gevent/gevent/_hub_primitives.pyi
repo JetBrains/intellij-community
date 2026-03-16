@@ -2,7 +2,7 @@ from _typeshed import FileDescriptor
 from collections.abc import Callable, Collection, Iterable
 from types import TracebackType
 from typing import Any, Generic, Protocol, TypeVar, overload, type_check_only
-from typing_extensions import Self, TypeVarTuple, Unpack
+from typing_extensions import Self, TypeVarTuple, Unpack, disjoint_base
 
 from gevent._greenlet_primitives import SwitchOutGreenletWithLoop
 from gevent._types import _Loop, _Watcher
@@ -32,6 +32,7 @@ class WaitOperationsGreenlet(SwitchOutGreenletWithLoop):
     ) -> None: ...
     def cancel_wait(self, watcher: _Watcher, error: type[BaseException] | BaseException, close_watcher: bool = False) -> None: ...
 
+@disjoint_base
 class _WaitIterator(Generic[_T]):
     def __init__(self, objects: Collection[_T], hub: Hub, timeout: float, count: None | int) -> None: ...
     def __enter__(self) -> Self: ...

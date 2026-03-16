@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints;
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.AccessToken;
@@ -85,6 +86,7 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
     if (element == null || editor.isDisposed()) return null;
     try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
       ParameterHintsPass pass = new ParameterHintsPass(element, editor, filter, true);
+      pass.setContext(CodeInsightContextUtil.getCodeInsightContext(element));
       pass.doCollectInformation(new ProgressIndicatorBase());
       return pass;
     }

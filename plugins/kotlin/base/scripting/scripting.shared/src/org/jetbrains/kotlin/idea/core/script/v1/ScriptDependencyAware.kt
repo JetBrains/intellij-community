@@ -17,7 +17,7 @@ interface ScriptDependencyAware {
     fun getScriptDependenciesClassFilesScope(virtualFile: VirtualFile): GlobalSearchScope
     fun getScriptDependenciesClassFiles(virtualFile: VirtualFile): Collection<VirtualFile>
 
-    fun getScriptSdk(virtualFile: VirtualFile): Sdk?
+    fun getScriptSdk(virtualFile: VirtualFile): Sdk? = null
 
     fun getScriptDependingOn(dependencies: Collection<String>): VirtualFile? = null
     fun updateScriptDefinitionReferences(): Unit = Unit
@@ -31,7 +31,6 @@ interface ScriptDependencyAware {
             override fun getAllScriptDependenciesSourcesScope(): GlobalSearchScope = GlobalSearchScope.EMPTY_SCOPE
             override fun getScriptDependenciesClassFilesScope(virtualFile: VirtualFile): GlobalSearchScope = GlobalSearchScope.EMPTY_SCOPE
             override fun getScriptDependenciesClassFiles(virtualFile: VirtualFile): Collection<VirtualFile> = listOf()
-            override fun getScriptSdk(virtualFile: VirtualFile): Sdk? = null
             override fun getScriptDependingOn(dependencies: Collection<String>): VirtualFile? = null
         }
     }

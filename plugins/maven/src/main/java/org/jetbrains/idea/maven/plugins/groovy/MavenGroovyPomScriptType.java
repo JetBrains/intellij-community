@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyRunnableScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;

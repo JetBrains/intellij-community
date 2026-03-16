@@ -10,7 +10,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.ui.tree.TreeUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 internal class TodoPanelCoroutineHelper(private val panel: TodoPanel) : Disposable {
   private val scope = CoroutineScope(SupervisorJob())

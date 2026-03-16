@@ -15,7 +15,30 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiCaseLabelElementList;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -29,6 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -81,8 +105,14 @@ public final class AddOnDemandStaticImportAction extends PsiUpdateModCommandActi
       final PsiElement qualifier = call.getMethodExpression().getQualifier();
       if (qualifier == null) return null;
       qualifier.delete();
-      final PsiMethod method = call.resolveMethod();
-      if (method != null && method.getContainingClass() != psiClass)  return null;
+      JavaResolveResult[] results = call.multiResolve(false);
+      if (Arrays.stream(results)
+        .map(ResolveResult::getElement)
+        .anyMatch(psiElement ->
+                    psiElement instanceof PsiMethod psiMethod &&
+                    psiMethod.getContainingClass() != psiClass)) {
+        return null;
+      }
     }
     else {
       PsiElement refNameElement = parentRef.getReferenceNameElement();

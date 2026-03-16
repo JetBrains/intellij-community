@@ -26,7 +26,9 @@ fun modifyCompilerArgumentsForPlugin(
     setup: CompilerPluginSetup?,
     compilerPluginId: String,
     pluginName: String
-) = modifyCompilerArgumentsForPluginWithFacetSettings(facet.configuration.settings, setup, compilerPluginId, pluginName)
+) {
+    modifyCompilerArgumentsForPluginWithFacetSettings(facet.configuration.settings, setup, compilerPluginId, pluginName)
+}
 
 fun modifyCompilerArgumentsForPluginWithFacetSettings(
     facetSettings: IKotlinFacetSettings,

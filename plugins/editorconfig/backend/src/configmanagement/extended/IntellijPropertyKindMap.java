@@ -14,7 +14,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.editorconfig.configmanagement.extended.EditorConfigPropertyKind.*;
+import static org.editorconfig.configmanagement.extended.EditorConfigPropertyKind.COMMON;
+import static org.editorconfig.configmanagement.extended.EditorConfigPropertyKind.EDITOR_CONFIG_STANDARD;
+import static org.editorconfig.configmanagement.extended.EditorConfigPropertyKind.GENERIC;
+import static org.editorconfig.configmanagement.extended.EditorConfigPropertyKind.LANGUAGE;
 
 public final class IntellijPropertyKindMap {
   private static final Map<String, EditorConfigPropertyKind> PROPERTY_KIND_MAP = new HashMap<>();

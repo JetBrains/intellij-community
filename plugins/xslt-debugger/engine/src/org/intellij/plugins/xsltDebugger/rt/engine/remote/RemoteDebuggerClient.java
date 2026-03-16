@@ -16,7 +16,12 @@
 
 package org.intellij.plugins.xsltDebugger.rt.engine.remote;
 
-import org.intellij.plugins.xsltDebugger.rt.engine.*;
+import org.intellij.plugins.xsltDebugger.rt.engine.Breakpoint;
+import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManager;
+import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
+import org.intellij.plugins.xsltDebugger.rt.engine.DebuggerStoppedException;
+import org.intellij.plugins.xsltDebugger.rt.engine.OutputEventQueue;
+import org.intellij.plugins.xsltDebugger.rt.engine.Value;
 
 import java.io.EOFException;
 import java.io.File;

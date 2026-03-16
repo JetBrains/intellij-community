@@ -18,7 +18,7 @@ class PyProjectTypeValidationRule : CustomValidationRule() {
     /**
      * [com.intellij.platform.DirectoryProjectGenerator] for default (empty, base) project type isn't registered in EP, hence hardcoded
      */
-    const val EMPTY_PROJECT_TYPE_ID = "com.intellij.pycharm.community.ide.impl.newProject.steps.PythonBaseProjectGenerator"
+    const val EMPTY_PROJECT_TYPE_ID: String = "com.intellij.pycharm.community.ide.impl.newProject.steps.PythonBaseProjectGenerator"
   }
 
   override fun getRuleId(): String = "python_new_project_type"

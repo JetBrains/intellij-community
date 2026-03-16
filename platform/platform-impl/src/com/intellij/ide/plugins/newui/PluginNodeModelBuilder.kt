@@ -2,6 +2,9 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.marketplace.ModuleDependency
+import com.intellij.ide.plugins.marketplace.PluginContentModule
+import com.intellij.ide.plugins.marketplace.PluginModule
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
@@ -167,6 +170,21 @@ class PluginNodeModelBuilder(private val pluginId: PluginId) : PluginUiModelBuil
   
   override fun setTags(tags: List<String>?): PluginUiModelBuilder {
     pluginNode.tags = tags
+    return this
+  }
+
+  override fun setContentModules(contentModules: List<PluginContentModule>): PluginUiModelBuilder {
+    pluginNode.contentModules = contentModules
+    return this
+  }
+
+  override fun setModules(modules: List<PluginModule>): PluginUiModelBuilder {
+    pluginNode.modules = modules
+    return this
+  }
+
+  override fun setMainModuleDependencies(mainModuleDependencies: List<ModuleDependency>): PluginUiModelBuilder {
+    pluginNode.moduleDependencies = mainModuleDependencies
     return this
   }
 

@@ -14,14 +14,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.BaseMaplet;
+import org.jetbrains.jps.dependency.ComparableTypeExternalizer;
+import org.jetbrains.jps.dependency.Enumerator;
+import org.jetbrains.jps.dependency.Externalizer;
+import org.jetbrains.jps.dependency.Maplet;
+import org.jetbrains.jps.dependency.MapletFactory;
+import org.jetbrains.jps.dependency.MultiMaplet;
+import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.impl.CachingMaplet;
 import org.jetbrains.jps.dependency.impl.CachingMultiMaplet;
 import org.jetbrains.jps.dependency.impl.GraphDataInputImpl;
 import org.jetbrains.jps.dependency.impl.GraphDataOutputImpl;
 import org.jetbrains.jps.util.Iterators;
 
-import java.io.*;
+import java.io.Closeable;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -75,7 +86,7 @@ public final class PersistentMapletFactory implements MapletFactory, Closeable {
   }
 
   @Override
-  public <K, V> MultiMaplet<K, V> createSetMultiMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
+  public <K, V> MultiMaplet<K, V> createSetMultiMaplet(String storageName, ComparableTypeExternalizer<K> keyExternalizer, ComparableTypeExternalizer<V> valueExternalizer) {
     PersistentMultiMaplet<K, V, Set<V>> maplet = new PersistentMultiMaplet<>(
       getMapFile(storageName), new GraphKeyDescriptor<>(keyExternalizer, myEnumerator, null), new GraphDataExternalizer<>(valueExternalizer, myEnumerator, myDataInterner), HashSet::new
     );
@@ -85,7 +96,7 @@ public final class PersistentMapletFactory implements MapletFactory, Closeable {
   }
 
   @Override
-  public <K, V> Maplet<K, V> createMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
+  public <K, V> Maplet<K, V> createMaplet(String storageName, ComparableTypeExternalizer<K> keyExternalizer, ComparableTypeExternalizer<V> valueExternalizer) {
     Maplet<K, V> container = new CachingMaplet<>(
       new PersistentMaplet<>(getMapFile(storageName), new GraphKeyDescriptor<>(keyExternalizer, myEnumerator, null), new GraphDataExternalizer<>(valueExternalizer, myEnumerator, myDataInterner)),
       myCacheSize

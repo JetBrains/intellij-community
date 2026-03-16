@@ -12,15 +12,16 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.SizedIcon;
 import com.intellij.util.SlowOperations;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<?>>{
   public static final DefaultLookupItemRenderer INSTANCE = new DefaultLookupItemRenderer();
 
   @Override
-  public void renderElement(LookupItem<?> item, LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupItem<?> item, @NotNull LookupElementPresentation presentation) {
     presentation.setIcon(getRawIcon(item));
 
     presentation.setItemText(getName(item));

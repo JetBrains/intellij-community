@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
-import com.amazon.ion.IonType;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState;
@@ -12,13 +11,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
-import gnu.trove.TObjectHash;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import org.apache.commons.lang3.StringUtils;
-import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
-import com.google.common.collect.Multimap;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
@@ -31,12 +24,16 @@ import org.jetbrains.plugins.gradle.service.execution.SystemPropertiesAdjuster;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver;
-import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction;
 import org.jetbrains.plugins.gradle.tooling.TargetJavaVersionWatcher;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -44,12 +41,13 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleAtLeast;
 
 /**
  * @author Vladislav.Soroka
@@ -61,8 +59,7 @@ public abstract class AbstractModelBuilderTest {
 
   @Rule public TestName name = new TestName();
   @Rule public VersionMatcherRule versionMatcherRule = new VersionMatcherRule();
-  @Rule public TargetJavaVersionWatcher myTargetJavaVersionWatcher =
-    new TargetJavaVersionWatcher(new ModelBuilderTestJavaVersionRestriction());
+  @Rule public TargetJavaVersionWatcher myTargetJavaVersionWatcher = new TargetJavaVersionWatcher();
 
   @ClassRule public static final ApplicationRule ourApplicationRule = new ApplicationRule();
 
@@ -152,7 +149,7 @@ public abstract class AbstractModelBuilderTest {
       .addProjectImportModelProviders(modelProviders);
 
     Path targetPathMapperInitScript = GradleInitScriptUtil.createTargetPathMapperInitScript();
-    Path mainInitScript = GradleInitScriptUtil.createMainInitScript(false, getToolingExtensionClasses());
+    Path mainInitScript = GradleInitScriptUtil.createMainInitScript(false, Collections.emptySet());
     ExternalSystemExecutionSettings executionSettings = new GradleExecutionSettings()
       .withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, targetPathMapperInitScript.toString())
       .withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, mainInitScript.toString())
@@ -203,27 +200,5 @@ public abstract class AbstractModelBuilderTest {
     String daemonJavaVersion = JavaSdk.getInstance().getVersionString(gradleJvmHomePath);
     JavaVersion javaVersion = JavaVersion.tryParse(daemonJavaVersion);
     return javaVersion.isAtLeast(17);
-  }
-
-  @NotNull
-  public static Set<Class<?>> getToolingExtensionClasses() {
-    return ContainerUtil.newHashSet(
-      IonType.class,  // ion-java jar
-      Multimap.class, // guava.jar
-      Object2ObjectMap.class, // fastutil
-      ShortTypeHandling.class, // groovy
-      StringUtils.class, // apache-commons.jar
-      TObjectHash.class //trove4j.jar
-    );
-  }
-
-  private static final class ModelBuilderTestJavaVersionRestriction implements JavaVersionRestriction {
-    @Override
-    public boolean isRestricted(@NotNull GradleVersion gradleVersion, @NotNull JavaVersion source) {
-      if (isGradleAtLeast(gradleVersion, "8.10") && source.feature < 17) {
-        return true;
-      }
-      return false;
-    }
   }
 }

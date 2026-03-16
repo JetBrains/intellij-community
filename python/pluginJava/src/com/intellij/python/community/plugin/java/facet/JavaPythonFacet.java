@@ -31,10 +31,6 @@ public class JavaPythonFacet extends LibraryContributingFacet<JavaPythonFacetCon
     PythonFacetUtil.removeLibrary(getModule());
   }
 
-  public static String getFacetLibraryName(final String sdkName) {
-    return sdkName + PYTHON_FACET_LIBRARY_NAME_SUFFIX;
-  }
-
   @Override
   public void initFacet() {
     updateLibrary();

@@ -5,9 +5,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
+import com.intellij.util.text.matching.MatchedFragment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
 * @author Konstantin Bulenkov
@@ -42,14 +46,15 @@ public class SpeedSearchComparator {
   }
 
   public @Nullable Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
-    return obtainMatcher(pattern).matchingFragments(text);
+    List<@NotNull MatchedFragment> fragments = obtainMatcher(pattern).match(text);
+    return fragments != null ? ContainerUtil.map(fragments, f -> TextRange.create(f.getStartOffset(), f.getEndOffset())) : null;
   }
 
   private MinusculeMatcher obtainMatcher(@NotNull String pattern) {
     if (myRecentSearchText == null || !myRecentSearchText.equals(pattern)) {
       myRecentSearchText = pattern;
       if (myShouldMatchCamelCase) {
-        pattern = StringUtil.join(NameUtilCore.nameToWords(pattern), "*");
+        pattern = StringUtil.join(NameUtilCore.nameToWordList(pattern), "*");
       }
       if (!myShouldMatchFromTheBeginning && !pattern.startsWith("*")) {
         pattern = "*" + pattern;

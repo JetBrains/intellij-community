@@ -118,6 +118,20 @@ internal class ComposePreviewBusyPanel(private val project: Project) : JBPanelWi
     repaint()
   }
 
+  fun displayMissingLocals(e: ComposeLocalContextException) {
+    removeAll()
+
+    emptyText.clear()
+    emptyText.appendLine(AllIcons.Ide.FatalErrorRead, e.cause!!.message ?: DevkitComposeBundle.message("compose.preview.insufficient.local.context"),
+                         StatusText.DEFAULT_ATTRIBUTES, null)
+    emptyText.appendLine(DevkitComposeBundle.message("compose.preview.insufficient.local.hint"))
+
+    addRefreshHintText(emptyText, project)
+
+    revalidate()
+    repaint()
+  }
+
   fun setContent(content: JComponent) {
     removeAll()
 

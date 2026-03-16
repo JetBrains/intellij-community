@@ -4,8 +4,8 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.openapi.actionSystem.Shortcut;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.LayoutManager;
 
 @ApiStatus.Internal
 public class ShortcutPanel<T extends Shortcut> extends JPanel {

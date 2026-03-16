@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.jvm.k1.scratch.actions.RunScratchAction
 import org.jetbrains.kotlin.idea.jvm.k1.scratch.actions.RunScratchFromHereAction
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
@@ -18,7 +19,7 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileAutoRunner.Compan
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ScratchCompilationSupport
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.findScratchFileEditorWithPreview
 
-class ScratchFileAutoRunnerK1(private val project: Project) : ScratchFileAutoRunner, Disposable {
+private class ScratchFileAutoRunnerK1(private val project: Project) : ScratchFileAutoRunner, Disposable {
     private val myAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
 
     override fun documentChanged(event: DocumentEvent) {
@@ -59,6 +60,7 @@ class ScratchFileAutoRunnerK1(private val project: Project) : ScratchFileAutoRun
     }
 }
 
+@K1Deprecation
 fun getScratchFile(file: VirtualFile, project: Project): ScratchFile? {
     val editor = FileEditorManager.getInstance(project).getSelectedEditor(file) as? TextEditor
     return editor?.findScratchFileEditorWithPreview()?.scratchFile

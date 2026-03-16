@@ -6,7 +6,7 @@ import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 public final class NSColor {
   public static @Nullable Color getHighlightColor() {

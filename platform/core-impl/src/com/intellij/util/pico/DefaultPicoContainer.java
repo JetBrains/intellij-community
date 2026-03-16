@@ -4,10 +4,17 @@ package com.intellij.util.pico;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @ApiStatus.Internal
@@ -25,7 +32,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     this(null);
   }
 
-  public final @NotNull Collection<ComponentAdapter> getComponentAdapters() {
+  public final @NotNull @Unmodifiable Collection<ComponentAdapter> getComponentAdapters() {
     return componentAdapters.getImmutableSet();
   }
 
@@ -38,11 +45,6 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     return adapter;
   }
 
-  public final void release() {
-    componentKeyToAdapter.clear();
-    componentAdapters.clear();
-  }
-
   private @Nullable ComponentAdapter getFromCache(@NotNull Object componentKey) {
     ComponentAdapter adapter = componentKeyToAdapter.get(componentKey);
     if (adapter != null) {
@@ -51,19 +53,19 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     return componentKey instanceof Class ? componentKeyToAdapter.get(((Class<?>)componentKey).getName()) : null;
   }
 
-  public final @Nullable ComponentAdapter getComponentAdapterOfType(@NotNull Class<?> componentType) {
+  final @Nullable ComponentAdapter getComponentAdapterOfType(@NotNull Class<?> componentType, @Nullable Object excludeKey) {
     // See http://jira.codehaus.org/secure/ViewIssue.jspa?key=PICO-115
     ComponentAdapter adapterByKey = getComponentAdapter(componentType);
-    if (adapterByKey != null) {
+    if (adapterByKey != null && (excludeKey == null || !excludeKey.equals(adapterByKey.getComponentKey()))) {
       return adapterByKey;
     }
 
-    List<ComponentAdapter> found = getComponentAdaptersOfType(componentType);
+    List<ComponentAdapter> found = getComponentAdaptersOfType(componentType, excludeKey);
+    if (found.isEmpty()) {
+      return parent == null ? null : parent.getComponentAdapterOfType(componentType, excludeKey);
+    }
     if (found.size() == 1) {
       return found.get(0);
-    }
-    if (found.isEmpty()) {
-      return parent == null ? null : parent.getComponentAdapterOfType(componentType);
     }
 
     Class<?>[] foundClasses = new Class[found.size()];
@@ -73,7 +75,8 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     throw new AmbiguousComponentResolutionException(componentType, foundClasses);
   }
 
-  public final @NotNull List<ComponentAdapter> getComponentAdaptersOfType(@NotNull Class<?> componentType) {
+  private @NotNull @Unmodifiable List<ComponentAdapter> getComponentAdaptersOfType(@NotNull Class<?> componentType,
+                                                                                   @Nullable Object excludeKey) {
     if (componentType == String.class) {
       return Collections.emptyList();
     }
@@ -87,7 +90,8 @@ public class DefaultPicoContainer implements MutablePicoContainer {
 
     for (ComponentAdapter adapter : componentKeyToAdapter.values()) {
       // exclude services
-      if (adapter.getComponentKey() instanceof String) {
+      Object componentKey = adapter.getComponentKey();
+      if (componentKey instanceof String || excludeKey != null && excludeKey.equals(componentKey)) {
         continue;
       }
 
@@ -99,7 +103,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     return result;
   }
 
-  public final ComponentAdapter registerComponent(@NotNull ComponentAdapter componentAdapter) {
+  private @NotNull ComponentAdapter registerComponent(@NotNull ComponentAdapter componentAdapter) {
     if (componentKeyToAdapter.putIfAbsent(componentAdapter.getComponentKey(), componentAdapter) != null) {
       @NotNull String message = "Key " + componentAdapter.getComponentKey() + " duplicated";
       throw new PicoException(message);
@@ -140,7 +144,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
 
   @Override
   public final @Nullable Object getComponentInstanceOfType(@NotNull Class<?> componentType) {
-    ComponentAdapter componentAdapter = getComponentAdapterOfType(componentType);
+    ComponentAdapter componentAdapter = getComponentAdapterOfType(componentType, null);
     return componentAdapter == null ? null : getInstance(componentAdapter);
   }
 
@@ -165,19 +169,15 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     return registerComponent(new CachingConstructorInjectionComponentAdapter(this, componentKey, componentImplementation));
   }
 
-  public final DefaultPicoContainer getParent() {
-    return parent;
-  }
-
   /**
    * A linked hash set that's copied on write operations.
    */
   private static final class LinkedHashSetWrapper<T> {
     private final Object lock = new Object();
-    private volatile Set<T> immutableSet;
-    private LinkedHashSet<T> synchronizedSet = new LinkedHashSet<>();
+    private volatile @Unmodifiable Set<T> immutableSet;
+    private Set<T> synchronizedSet = new LinkedHashSet<>();
 
-    public void add(@NotNull T element) {
+    void add(@NotNull T element) {
       synchronized (lock) {
         if (!synchronizedSet.contains(element)) {
           copySyncSetIfExposedAsImmutable().add(element);
@@ -185,7 +185,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
       }
     }
 
-    private LinkedHashSet<T> copySyncSetIfExposedAsImmutable() {
+    private Set<T> copySyncSetIfExposedAsImmutable() {
       if (immutableSet != null) {
         immutableSet = null;
         synchronizedSet = new LinkedHashSet<>(synchronizedSet);
@@ -193,22 +193,13 @@ public class DefaultPicoContainer implements MutablePicoContainer {
       return synchronizedSet;
     }
 
-    public void remove(@Nullable T element) {
+    void remove(@Nullable T element) {
       synchronized (lock) {
         copySyncSetIfExposedAsImmutable().remove(element);
       }
     }
 
-    public void clear() {
-      synchronized (lock) {
-        if (immutableSet != null) {
-          immutableSet = null;
-        }
-        synchronizedSet = new LinkedHashSet<>();
-      }
-    }
-
-    public @NotNull Set<T> getImmutableSet() {
+    @NotNull @Unmodifiable Set<T> getImmutableSet() {
       Set<T> result = immutableSet;
       if (result == null) {
         synchronized (lock) {
@@ -232,8 +223,8 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   static final class InstanceComponentAdapter implements ComponentAdapter {
-    private final Object componentKey;
-    private final Object componentInstance;
+    private final @NotNull Object componentKey;
+    private final @NotNull Object componentInstance;
 
     InstanceComponentAdapter(@NotNull Object componentKey, @NotNull Object componentInstance) {
       this.componentKey = componentKey;
@@ -241,17 +232,17 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     }
 
     @Override
-    public Object getComponentInstance() {
+    public @NotNull Object getComponentInstance() {
       return componentInstance;
     }
 
     @Override
-    public Object getComponentKey() {
+    public @NotNull Object getComponentKey() {
       return componentKey;
     }
 
     @Override
-    public Class<?> getComponentImplementation() {
+    public @NotNull Class<?> getComponentImplementation() {
       return componentInstance.getClass();
     }
 

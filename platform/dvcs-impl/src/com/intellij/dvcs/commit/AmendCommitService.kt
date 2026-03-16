@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
 import com.intellij.vcs.commit.AmendCommitAware
-import com.intellij.vcs.commit.EditedCommitDetailsImpl
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogObjectsFactory
@@ -72,7 +71,7 @@ private fun AsyncPromise<EditedCommitDetails>.setCommit(hash: Hash, commit: VcsF
     setError(message)
   }
   else {
-    setResult(EditedCommitDetailsImpl(currentUser, commit))
+    setResult(EditedCommitDetails.create(currentUser, commit))
   }
 }
 

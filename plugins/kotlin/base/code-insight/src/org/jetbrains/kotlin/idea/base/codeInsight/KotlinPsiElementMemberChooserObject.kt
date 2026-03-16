@@ -1,12 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
-import com.intellij.codeInsight.generation.*
+import com.intellij.codeInsight.generation.ClassMemberWithElement
+import com.intellij.codeInsight.generation.MemberChooserObject
+import com.intellij.codeInsight.generation.PsiDocCommentOwnerMemberChooserObject
+import com.intellij.codeInsight.generation.PsiElementMemberChooserObject
+import com.intellij.codeInsight.generation.PsiFieldMember
+import com.intellij.codeInsight.generation.PsiMethodMember
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -22,7 +31,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import javax.swing.Icon
 

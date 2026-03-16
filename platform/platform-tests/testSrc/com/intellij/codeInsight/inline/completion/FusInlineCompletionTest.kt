@@ -5,6 +5,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEvent.DirectCa
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent.DocumentChange
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipTextElement
+import com.intellij.codeInsight.inline.completion.exception.InlineCompletionTestExceptions
 import com.intellij.codeInsight.inline.completion.impl.GradualMultiSuggestInlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.InsertedStateEvents
@@ -213,7 +214,7 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
           emit(InlineCompletionGrayTextElement("2"))
           emit(InlineCompletionGrayTextElement("3"))
           withContext(Dispatchers.EDT) { }
-          throw IllegalStateException("expected error")
+          throw InlineCompletionTestExceptions.createExpectedTestException("expected error")
         }
         variant {
           emit(InlineCompletionGrayTextElement("4"))

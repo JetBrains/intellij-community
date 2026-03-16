@@ -18,11 +18,13 @@ jvm_library(
     "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
+    "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/code-style-impl:codeStyle-impl",
     "@lib//:kotlin-stdlib",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.toml.core` end

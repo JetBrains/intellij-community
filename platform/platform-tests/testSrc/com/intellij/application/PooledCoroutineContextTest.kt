@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application
 
+import com.intellij.openapi.diagnostic.UnhandledException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -10,6 +11,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.core.IsInstanceOf
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -21,7 +24,7 @@ class PooledCoroutineContextTest : LightPlatformTestCase() {
   @Test
   fun `log error`() {
     val exception = RuntimeException()
-    assertTrue(exception === loggedErrorsAfterThrowingFromGlobalScope(exception))
+    assertThat("Unhandled exception has wrong type", loggedErrorsAfterThrowingFromGlobalScope(exception), IsInstanceOf(UnhandledException::class.java))
   }
 
   @Test

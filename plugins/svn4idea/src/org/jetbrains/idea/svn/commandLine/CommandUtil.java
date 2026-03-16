@@ -14,7 +14,11 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.status.StatusType;
 
-import javax.xml.bind.*;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.ValidationEvent;
+import javax.xml.bind.ValidationEventHandler;
 import java.io.File;
 import java.io.StringReader;
 import java.time.ZoneOffset;

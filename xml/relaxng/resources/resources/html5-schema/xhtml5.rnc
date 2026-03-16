@@ -1,3 +1,12 @@
 default namespace = "http://www.w3.org/1999/xhtml"
+
+include "html5/xhtml5.rnc"
+
+include "html5/common-ext.rnc"
+include "html5/embed-ext.rnc"
+include "html5/core-scripting-ext.rnc"
+include "html5/rdfa.rnc"
+
+include "html5/legacy.rnc"
+
 include "xhtml5-svg-mathml.rnc"
-include "html5/xhtml5full-xhtml-rdfa.rnc"

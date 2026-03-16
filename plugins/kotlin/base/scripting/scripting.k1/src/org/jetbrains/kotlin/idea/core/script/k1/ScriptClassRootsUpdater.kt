@@ -4,7 +4,13 @@ package org.jetbrains.kotlin.idea.core.script.k1
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
@@ -28,6 +34,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.ScriptClassRootsBuilder
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.ScriptClassRootsCache
@@ -44,6 +51,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
+@K1Deprecation
 val LOG = logger<ScriptClassRootsUpdater>()
 
 /**
@@ -59,6 +67,7 @@ val LOG = logger<ScriptClassRootsUpdater>()
  * This will start indexing.
  * Also analysis cache will be cleared and changed opened script files will be reanalyzed.
  */
+@K1Deprecation
 abstract class ScriptClassRootsUpdater(
     val project: Project,
     val scope: CoroutineScope

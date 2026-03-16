@@ -407,15 +407,14 @@ class PythonDebuggerVariablesViewTest : PyEnvTestCase() {
       }
 
       @Throws(PyDebuggerException::class, InterruptedException::class)
-      fun checkVariableValue(frameVariables: List<PyDebugValue?>?, expected: String?, name: String?) {
-        val value = findDebugValueByName(frameVariables!!, name!!)
-        loadVariable(value)
+      fun checkVariableValue(frameVariables: List<PyDebugValue>?, expected: String, name: String) {
+        val value = computeValueAsync(frameVariables, name)
         synchronized(this) {
-          while (value!!.value!!.isEmpty() || value!!.value!!.isBlank()) {
-            (this as Object).wait(1000)
+          while (value.isNullOrBlank()) {
+            Thread.sleep(1000)
           }
         }
-        Assert.assertEquals(expected, value!!.value)
+        Assert.assertEquals(expected, value)
       }
     })
   }

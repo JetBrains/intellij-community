@@ -12,9 +12,19 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Processor
 import com.intellij.util.indexing.StorageException
-import com.intellij.util.io.*
+import com.intellij.util.io.DataExternalizer
+import com.intellij.util.io.EnumeratorIntegerDescriptor
+import com.intellij.util.io.EnumeratorStringDescriptor
+import com.intellij.util.io.IOUtil
+import com.intellij.util.io.KeyDescriptor
+import com.intellij.util.io.PersistentHashMap
+import com.intellij.util.io.StorageLockContext
 import com.intellij.util.io.storage.AbstractStorage
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogTextFilter
+import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.log.VcsUserRegistry
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.history.EdgeData
@@ -188,7 +198,9 @@ internal class PhmVcsLogStorageBackend(
         if (details.author != details.committer) {
           committers.put(commitId, users.getUserId(details.committer))
         }
-        messages.put(commitId, details.fullMessage)
+        synchronized(messages) {
+          messages.put(commitId, details.fullMessage)
+        }
       }
 
       private fun force() {
@@ -199,7 +211,9 @@ internal class PhmVcsLogStorageBackend(
           trigrams.flush()
           users.flush()
           paths.flush()
-          messages.force()
+          synchronized(messages) {
+            messages.force()
+          }
         }
         catch (e: IOException) {
           errorHandler.handleError(VcsLogErrorHandler.Source.Index, e)
@@ -217,8 +231,10 @@ internal class PhmVcsLogStorageBackend(
 
   override fun markCorrupted() {
     try {
-      messages.markCorrupted()
-      messages.force()
+      synchronized(messages) {
+        messages.markCorrupted()
+        messages.force()
+      }
     }
     catch (t: Throwable) {
       LOG.warn(t)

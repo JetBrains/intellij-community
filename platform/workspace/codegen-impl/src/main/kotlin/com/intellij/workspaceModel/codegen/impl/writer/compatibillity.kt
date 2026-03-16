@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.codegen.impl.writer
 
 import com.intellij.workspaceModel.codegen.deft.meta.*
-import com.intellij.workspaceModel.codegen.impl.CodeGeneratorVersionCalculator
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 import com.intellij.workspaceModel.codegen.impl.writer.fields.additionalAnnotations
 import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
@@ -53,13 +52,13 @@ fun ObjClass<*>.generateCompatibilityCompanion(): String =
       if (mandatoryFields.isNotEmpty()) {
         line("operator fun invoke(")
         mandatoryFields.forEach { field ->
-          line(" ".repeat(this.indentSize) + "${field.name}: ${field.valueType.javaType},")
+          line("${field.name}: ${field.valueType.javaType},")
         }
-        line(" ".repeat(this.indentSize) + "init: (Builder$builderGeneric.() -> Unit)? = null,")
+        line("init: (Builder$builderGeneric.() -> Unit)? = null,")
         line("): Builder$builderGeneric = ${javaFullName}Type.compatibilityInvoke(${mandatoryFields.joinToString(", ") { it.name }}, init)")
       }
       else {
-        line("$generatedCodeVisibilityModifier operator fun invoke(init: (Builder$builderGeneric.() -> Unit)? = null): Builder$builderGeneric = = ${javaFullName}Type.compatibilityInvoke(init)")
+        line("${generatedCodeVisibilityModifier}operator fun invoke(init: (Builder$builderGeneric.() -> Unit)? = null): Builder$builderGeneric = = ${javaFullName}Type.compatibilityInvoke(init)")
       }
     }
   }
@@ -74,9 +73,9 @@ fun LinesBuilder.compatibilityInvoke(
   if (mandatoryFields.isNotEmpty()) {
     line("fun compatibilityInvoke(")
     mandatoryFields.forEach { field ->
-      line(" ".repeat(this.indentSize) + "${field.name}: ${field.valueType.javaType},")
+      line("${field.name}: ${field.valueType.javaType},")
     }
-    line(" ".repeat(this.indentSize) + "init: ($builderSymbol.() -> Unit)? = null,")
+    line("init: ($builderSymbol.() -> Unit)? = null,")
     section("): $builderSymbol") {
       line("val builder = builder() as $builderSymbol")
       list(mandatoryFields) {
@@ -95,7 +94,7 @@ fun LinesBuilder.compatibilityInvoke(
     }
   }
   else {
-    section("$generatedCodeVisibilityModifier fun compatibilityInvoke(init: ($builderSymbol.() -> Unit)? = null): $builderSymbol") {
+    section("${generatedCodeVisibilityModifier}fun compatibilityInvoke(init: ($builderSymbol.() -> Unit)? = null): $builderSymbol") {
       line("val builder = builder() as $builderSymbol")
       line("init?.invoke(builder)")
       line("return builder")
@@ -109,7 +108,7 @@ fun ObjClass<*>.compatibilityModifyCode(linesBuilder: LinesBuilder) {
     if (additionalAnnotations.isNotEmpty()) {
       line(additionalAnnotations)
     }
-    line("$generatedCodeVisibilityModifier fun ${MutableEntityStorage}.modify$name(")
+    line("${generatedCodeVisibilityModifier}fun ${MutableEntityStorage}.modify$name(")
     line("  entity: $name,")
     line("  modification: $compatibleJavaBuilderName.() -> Unit,")
     line("): $name {")
@@ -127,7 +126,7 @@ fun ExtProperty<*, *>.compatibilityExtensionWsCode(linesBuilder: LinesBuilder) {
   }
   linesBuilder.line(DEPRECATION)
   val propertyType = valueType.compatibilityJavaBuilderTypeWithGeneric
-  linesBuilder.sectionNoBrackets("$parentAnnotation$generatedCodeVisibilityModifier var ${receiver.compatibleJavaBuilderName}$generic.$name: $propertyType") {
+  linesBuilder.sectionNoBrackets("$parentAnnotation${generatedCodeVisibilityModifier}var ${receiver.compatibleJavaBuilderName}$generic.$name: $propertyType") {
     line("get() = (this as ${receiver.defaultJavaBuilderName}$generic).$name as $propertyType")
     section("set(value)") {
       line("(this as ${receiver.defaultJavaBuilderName}$generic).$name = value")

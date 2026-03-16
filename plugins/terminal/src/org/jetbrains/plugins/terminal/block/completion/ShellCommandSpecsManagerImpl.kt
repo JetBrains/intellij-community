@@ -27,6 +27,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.json.ShellJsonComman
 import org.jetbrains.plugins.terminal.block.completion.spec.json.ShellJsonCommandSpecsUtil.loadAndParseJson
 import org.jetbrains.terminal.completion.ShellCommand
 import java.time.Duration
+import java.util.Locale
 
 /**
  * Manages the [ShellCommandSpec]'s provided by [ShellCommandSpecsProvider]'s.
@@ -61,20 +62,20 @@ class ShellCommandSpecsManagerImpl(coroutineScope: CoroutineScope) : ShellComman
 
   /**
    * Cache for all **Light** json-based and code based specs with resolved conflicts.
-   * Key is the name of the command.
+   * Key is a lowercase name of the command.
    */
   private val lightSpecsCache: Cache<String, ShellCommandSpec> = Caffeine.newBuilder()
     .expireAfterAccess(Duration.ofMinutes(5))
     .scheduler(Scheduler.systemScheduler())
     .build()
 
-  /** Cache for json-based **Light** command spec providers. Key is the name of the command */
+  /** Cache for json-based **Light** command spec providers. Key is a lowercase name of the command */
   private val jsonBasedSpecProviders: Cache<String, ShellJsonCommandSpecsProvider> = Caffeine.newBuilder()
     .expireAfterAccess(Duration.ofMinutes(5))
     .scheduler(Scheduler.systemScheduler())
     .build()
 
-  /** Cache for loaded [ShellJsonBasedCommandSpec]'s. Key is the name of the command. */
+  /** Cache for loaded [ShellJsonBasedCommandSpec]'s. Key is a lowercase name of the command. */
   private val fullSpecsCache: Cache<String, ShellJsonBasedCommandSpec> = Caffeine.newBuilder()
     .maximumSize(10)
     .expireAfterAccess(Duration.ofMinutes(5))
@@ -97,7 +98,7 @@ class ShellCommandSpecsManagerImpl(coroutineScope: CoroutineScope) : ShellComman
    * @return the full spec for provided [commandName] if any.
    */
   override suspend fun getCommandSpec(commandName: String): ShellCommandSpec? {
-    val spec = getLightCommandSpec(commandName) ?: return null
+    val spec = getLightCommandSpec(transformCommandName(commandName)) ?: return null
     return getFullCommandSpec(spec)
   }
 
@@ -134,12 +135,12 @@ class ShellCommandSpecsManagerImpl(coroutineScope: CoroutineScope) : ShellComman
    */
   fun getLightCommandSpec(commandName: String): ShellCommandSpec? {
     loadCommandSpecsIfNeeded()
-    return lightSpecsCache.getIfPresent(commandName)
+    return lightSpecsCache.getIfPresent(transformCommandName(commandName))
   }
 
   private fun getJsonCommandSpecProvider(commandName: String): ShellJsonCommandSpecsProvider? {
     loadCommandSpecsIfNeeded()
-    return jsonBasedSpecProviders.getIfPresent(commandName)
+    return jsonBasedSpecProviders.getIfPresent(transformCommandName(commandName))
   }
 
   private fun loadCommandSpecsIfNeeded() {
@@ -157,11 +158,11 @@ class ShellCommandSpecsManagerImpl(coroutineScope: CoroutineScope) : ShellComman
         specs.first()
       }
 
-      lightSpecsCache.put(name, specData.spec)
+      lightSpecsCache.put(transformCommandName(name), specData.spec)
 
       val jsonSpecData = specs.find { it.spec is ShellJsonBasedCommandSpec }
       if (jsonSpecData != null) {
-        jsonBasedSpecProviders.put(name, jsonSpecData.provider as ShellJsonCommandSpecsProvider)
+        jsonBasedSpecProviders.put(transformCommandName(name), jsonSpecData.provider as ShellJsonCommandSpecsProvider)
       }
     }
   }
@@ -190,13 +191,6 @@ class ShellCommandSpecsManagerImpl(coroutineScope: CoroutineScope) : ShellComman
 
   private fun resolveSpecsConflict(specs: Collection<ShellCommandSpecData>): ShellCommandSpecData {
     assert(specs.size > 1)
-    val replaceSpecs = specs.filter { it.conflictStrategy == ShellCommandSpecConflictStrategy.REPLACE }
-    if (replaceSpecs.isNotEmpty()) {
-      if (replaceSpecs.size > 1) {
-        LOG.warn(conflictMessage(ShellCommandSpecConflictStrategy.REPLACE, specs))
-      }
-      return replaceSpecs.first()
-    }
 
     val baseSpecs = specs.filter { it.conflictStrategy == ShellCommandSpecConflictStrategy.DEFAULT }
     if (baseSpecs.size > 1) {
@@ -204,16 +198,24 @@ class ShellCommandSpecsManagerImpl(coroutineScope: CoroutineScope) : ShellComman
     }
     val baseSpecData = baseSpecs.firstOrNull()
 
+    val replaceSpecs = specs.filter { it.conflictStrategy == ShellCommandSpecConflictStrategy.REPLACE }
+    if (replaceSpecs.size > 1) {
+      LOG.warn(conflictMessage(ShellCommandSpecConflictStrategy.REPLACE, specs))
+    }
+    val replacingSpecData = replaceSpecs.firstOrNull()
+
+    val effectiveBaseSpecData = replacingSpecData ?: baseSpecData
+
     val overrideSpecs = specs.filter { it.conflictStrategy == ShellCommandSpecConflictStrategy.OVERRIDE }
-    return if (overrideSpecs.size == 1 && baseSpecData == null) {
-      overrideSpecs.single()  // Single overriding spec overrides nothing, so return it.
+    return if (overrideSpecs.size == 1 && effectiveBaseSpecData == null) {
+      overrideSpecs.single()  // A single overriding spec overrides nothing, so return it.
     }
     else if (overrideSpecs.isNotEmpty()) {
-      val mergedSpec = ShellMergedCommandSpec(baseSpecData?.spec, overrideSpecs.map { it.spec })
-      val provider = baseSpecData?.provider ?: overrideSpecs.first().provider
+      val mergedSpec = ShellMergedCommandSpec(effectiveBaseSpecData?.spec, overrideSpecs.map { it.spec })
+      val provider = effectiveBaseSpecData?.provider ?: overrideSpecs.first().provider
       ShellCommandSpecData(mergedSpec, ShellCommandSpecConflictStrategy.OVERRIDE, provider)
     }
-    else baseSpecData!!  // If there are no overriding specs, then base spec should be present.
+    else effectiveBaseSpecData!!  // If there are no overriding specs, then base spec should be present.
   }
 
   private fun conflictMessage(strategy: ShellCommandSpecConflictStrategy, specs: Collection<ShellCommandSpecData>): String {
@@ -256,6 +258,10 @@ class ShellCommandSpecsManagerImpl(coroutineScope: CoroutineScope) : ShellComman
   private fun getSpecPath(provider: ShellJsonCommandSpecsProvider, specRef: String): String {
     val basePath = provider.commandSpecsPath.let { if (it.isEmpty() || it.endsWith("/")) it else "$it/" }
     return "$basePath$specRef.json"
+  }
+
+  private fun transformCommandName(name: String): String {
+    return name.lowercase(Locale.ENGLISH)
   }
 
   private data class ShellCommandSpecData(

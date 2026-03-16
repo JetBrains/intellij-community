@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.uast.uast-kotlin-idea-base` start
+### auto-generated section `build intellij.kotlin.uast.idea.base` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "uast-kotlin-idea-base",
-  module_name = "kotlin.uast.uast-kotlin-idea-base",
+  name = "kotlin-uast-idea-base",
+  module_name = "intellij.kotlin.uast.idea.base",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
@@ -14,16 +14,15 @@ jvm_library(
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/analysis",
-    "//plugins/kotlin/uast/uast-kotlin-base",
+    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base",
     "//platform/util-ex",
     "//platform/util",
     "//platform/core-impl",
     "//platform/projectModel-api:projectModel",
     "//uast/uast-common:uast",
-    "//plugins/kotlin/uast/uast-kotlin",
     "//plugins/kotlin/base/code-insight",
     "//uast/uast-common-ide:ide",
   ],
   runtime_deps = ["//plugins/kotlin/gradle/gradle"]
 )
-### auto-generated section `build kotlin.uast.uast-kotlin-idea-base` end
+### auto-generated section `build intellij.kotlin.uast.idea.base` end

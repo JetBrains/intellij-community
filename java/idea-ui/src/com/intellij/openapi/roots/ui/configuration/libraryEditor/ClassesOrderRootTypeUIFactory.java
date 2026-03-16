@@ -13,7 +13,9 @@ import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
 
 /**
  * @author anna

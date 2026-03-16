@@ -7,7 +7,11 @@ import com.intellij.psi.PsiTypes
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.groovy.GroovyBundle
-import org.jetbrains.plugins.groovy.ext.ginq.ast.*
+import org.jetbrains.plugins.groovy.ext.ginq.ast.GinqExpression
+import org.jetbrains.plugins.groovy.ext.ginq.ast.GinqOrderByFragment
+import org.jetbrains.plugins.groovy.ext.ginq.ast.GinqWindowFragment
+import org.jetbrains.plugins.groovy.ext.ginq.ast.ParsingError
+import org.jetbrains.plugins.groovy.ext.ginq.ast.getStoredGinq
 import org.jetbrains.plugins.groovy.ext.ginq.types.inferDataSourceComponentType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor

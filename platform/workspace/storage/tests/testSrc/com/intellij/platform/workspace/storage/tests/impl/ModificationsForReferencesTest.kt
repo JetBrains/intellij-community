@@ -2,7 +2,11 @@
 package com.intellij.platform.workspace.storage.tests.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
-import com.intellij.platform.workspace.storage.impl.*
+import com.intellij.platform.workspace.storage.impl.MutableRefsTable
+import com.intellij.platform.workspace.storage.impl.RefsTable
+import com.intellij.platform.workspace.storage.impl.asChild
+import com.intellij.platform.workspace.storage.impl.asParent
+import com.intellij.platform.workspace.storage.impl.createEntityId
 import com.intellij.platform.workspace.storage.instrumentation.Modification
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentEntity

@@ -26,7 +26,13 @@ import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.context.VariableContext;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.PrefixedName;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
+import org.intellij.lang.xpath.psi.XPathType;
+import org.intellij.lang.xpath.psi.XPathVariable;
+import org.intellij.lang.xpath.psi.XPathVariableDeclaration;
+import org.intellij.lang.xpath.psi.XPathVariableHolder;
+import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

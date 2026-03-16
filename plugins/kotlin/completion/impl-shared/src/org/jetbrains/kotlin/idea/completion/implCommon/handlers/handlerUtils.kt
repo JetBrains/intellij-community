@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.completion.handlers
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext
-import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement

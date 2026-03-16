@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -23,24 +24,37 @@ import org.jetbrains.kotlin.idea.util.psi.patternMatching.UnifierParameter
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.match
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtClassBody
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
+import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isFlexible
-import java.util.*
+import java.util.Collections
 
+@K1Deprecation
 fun ExtractionGeneratorConfiguration.getSignaturePreview() = Generator.getSignaturePreview(this)
 
+@K1Deprecation
 fun KotlinType.isSpecial(): Boolean {
     val classDescriptor = this.constructor.declarationDescriptor as? ClassDescriptor ?: return false
     return classDescriptor.name.isSpecial || DescriptorUtils.isLocal(classDescriptor)
 }
 
+@K1Deprecation
 fun createNameCounterpartMap(from: KtElement, to: KtElement): Map<KtSimpleNameExpression, KtSimpleNameExpression> {
     return from.collectDescendantsOfType<KtSimpleNameExpression>().zip(to.collectDescendantsOfType<KtSimpleNameExpression>()).toMap()
 }
 
+@K1Deprecation
 fun ExtractableCodeDescriptor.findDuplicates(): List<DuplicateInfo<KotlinType>> {
     val unifierParameters = parameters.map { UnifierParameter(it.originalDescriptor, it.parameterType) }
     val unifier = KotlinPsiUnifier(unifierParameters, true)
@@ -129,6 +143,7 @@ private object Generator: ExtractFunctionGenerator<KotlinType, ExtractionResult>
     }
 }
 
+@K1Deprecation
 fun ExtractionGeneratorConfiguration.generateDeclaration(
     declarationToReplace: KtNamedDeclaration? = null
 ): ExtractionResult {

@@ -36,11 +36,15 @@ import java.lang.reflect.Array
 import java.lang.reflect.Modifier
 import kotlin.Any
 import kotlin.ByteArray
+import kotlin.IllegalArgumentException
+import kotlin.IllegalStateException
 import kotlin.Int
 import kotlin.Long
 import kotlin.LongArray
 import kotlin.String
 import kotlin.arrayOf
+import kotlin.code
+import kotlin.text.replace
 import kotlin.toRawBits
 
 class HProfBuilder(dos: DataOutputStream, val classNameMapping: ((Class<*>) -> String?)) {
@@ -117,8 +121,8 @@ class HProfBuilder(dos: DataOutputStream, val classNameMapping: ((Class<*>) -> S
                              if (ste.isNativeMethod) -1 else ste.lineNumber)
     }
     val stackTraceSerialNumber = nextStackTraceSerialNumberID()
-    writer.writeStackTrace(stackTraceSerialNumber, thread.id, stackFrameIds)
-    return stackTraceSerialNumber
+    writer.writeStackTrace(stackTraceSerialNumber, thread.threadId(), stackFrameIds)
+    return thread.threadId().toInt()
   }
 
   fun addObject(o: Any?): Long {

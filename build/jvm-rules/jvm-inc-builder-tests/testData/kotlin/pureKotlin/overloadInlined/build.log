@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  DummyKt.class
+  META-INF/kotlin_pureKotlin_overloadInlined-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/overloadInlined/a/dummy.kt
+End of files
+------------------------------------------
+Exit code: OK

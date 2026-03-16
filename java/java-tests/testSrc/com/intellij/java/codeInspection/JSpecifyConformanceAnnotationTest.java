@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -31,6 +32,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,7 +42,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -221,11 +231,10 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
     }
 
     @Override
-    protected void reportProblem(@NotNull ProblemsHolder holder,
-                                 @NotNull PsiElement anchor,
-                                 LocalQuickFix @NotNull [] fixes,
-                                 @NotNull String messageKey, Object... args) {
-      switch (messageKey) {
+    protected void reportProblem(@NotNull ProblemsHolder holder, @NotNull PsiElement anchor, @NotNull LocalQuickFix @NotNull [] fixes,
+                                 @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String descriptionKey, @NotNull Object @NotNull[] descriptionArgs,
+                                 @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String tooltipKey, @NotNull Object @NotNull[] tooltipArgs) {
+      switch (descriptionKey) {
         case "inspection.nullable.problems.primitive.type.annotation",
              "inspection.nullable.problems.at.throws",
              "inspection.nullable.problems.at.type.parameter",

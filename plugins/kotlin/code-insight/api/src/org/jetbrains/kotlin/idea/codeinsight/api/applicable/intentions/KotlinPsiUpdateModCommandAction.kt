@@ -4,12 +4,15 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.modcommand.*
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModNothing
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiBasedModCommandAction
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.ContextProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.getElementContext
 import org.jetbrains.kotlin.psi.KtElement
@@ -92,13 +95,10 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
     ) : KotlinPsiUpdateModCommandAction<E, C>(null, elementClass),
         ContextProvider<E, C> {
 
-        @OptIn(KaAllowAnalysisOnEdt::class)
         final override fun getElementContext(
             actionContext: ActionContext,
             element: E,
-        ): C? = allowAnalysisOnEdt { // TODO: remove this workaround when IJPL-193738 is fixed.
-            getElementContext(element)
-        }
+        ): C? = getElementContext(element)
     }
 
     abstract class Contextless<E : KtElement>(

@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.rd.framework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "framework_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "framework",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":framework_resources"],
+  exports = ["@lib//:libraries-rd-framework-rd-framework"],
+  runtime_deps = ["@lib//:libraries-rd-framework-rd-framework"]
+)
+### auto-generated section `build intellij.libraries.rd.framework` end

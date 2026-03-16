@@ -6,8 +6,9 @@ import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 
 import java.util.List;
 
-import static com.intellij.psi.codeStyle.arrangement.AbstractRearrangerTest.*;
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Grouping.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Grouping.DEPENDENT_METHODS;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Grouping.GETTERS_AND_SETTERS;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Grouping.OVERRIDDEN_METHODS;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BREADTH_FIRST;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.DEPTH_FIRST;

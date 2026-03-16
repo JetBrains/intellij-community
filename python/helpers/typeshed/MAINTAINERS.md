@@ -88,3 +88,12 @@ When rejecting a PR for a change for a future Python version, use a message
 like:
 
     Thanks for contributing! Unfortunately, [as outlined in our CONTRIBUTING document](https://github.com/python/typeshed/blob/main/CONTRIBUTING.md#standard-library-stubs) we only accept pull requests to the standard library for future Python versions after the first beta version has been released. This is in part to prevent churn in the stubs, and in part because the testing infrastructure for the future version is not yet in place. Please feel free to open a new PR when the first beta version has been released. Alternatively, if this PR is still relevant, you can leave a comment here to reopen it.
+
+### Closing requests for third-party stubs
+
+We don't keep requests for third-party library stubs open. Close those
+requests as "not planned" with an explanation like this:
+
+    We gladly accept type stub contributions for third-party libraries that are published on PyPI in typeshed. To contribute a new library, please follow the steps outlined in [CONTRIBUTING.md](/python/typeshed/blob/main/CONTRIBUTING.md). The `create_baseline_stubs.py` script can be useful to create an initial version, suitable for inclusion in typeshed.
+
+    That said, we don't keep requests for third-party library stubs open, unless there are issues that need to be addressed before a PR can be opened. Therefore, I'm closing this issue.

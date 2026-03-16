@@ -72,7 +72,10 @@ internal class ComboBoxWithBrowseButtonEditor<T, P : PathHolder>(
         cell(component)
           .customize(UnscaledGaps(0))
           .resizableColumn()
-          .applyToComponent { border = BorderFactory.createEmptyBorder() }
+          .applyToComponent {
+            border = BorderFactory.createEmptyBorder()
+            minimumSize = JBUI.emptySize()
+          }
 
         iconLabel = cell(JLabel(AllIcons.General.OpenDisk))
           .customize(UnscaledGaps(0))

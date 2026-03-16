@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector
-import java.util.*
+import java.util.EnumSet
 
 public class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
   private val group = EventLogGroup("java.language", 6)

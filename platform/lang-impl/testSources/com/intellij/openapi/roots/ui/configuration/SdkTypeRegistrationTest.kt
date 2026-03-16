@@ -3,7 +3,12 @@ package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.AdditionalDataConfigurable
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.SdkAdditionalData
+import com.intellij.openapi.projectRoots.SdkModel
+import com.intellij.openapi.projectRoots.SdkModificator
+import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.UnknownSdkType
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.HeavyPlatformTestCase

@@ -1,0 +1,8 @@
+<!--
+  This file contains extensions, actions, services, etc. without v2 dependencies,
+  so it can be included in Analyzer dependencies where V2 is not yet supported.
+
+  All new extensions, actions, services, extension points, etc. should be added to this file.
+-->
+<idea-plugin>
+</idea-plugin>

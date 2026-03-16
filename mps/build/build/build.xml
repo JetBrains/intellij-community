@@ -1,0 +1,116 @@
+<project name="MPS platform build script" default="build">
+
+  <property name="platform.root" location="${basedir}/../../.."/>
+  <property name="target.root" value="${platform.root}/out/mps"/>
+  <property name="target.dist" value="${target.root}/dist.all"/>
+  <property name="target.artifacts" value="${target.root}/artifacts"/>
+
+  <condition property="is.windows">
+    <os family="windows"/>
+  </condition>
+  <condition property="script.suffix" value=".cmd">
+    <os family="windows" />
+  </condition>
+  <property name="script.suffix" value=".sh" />
+
+  <macrodef name="apply.patch">
+    <attribute name="file"/>
+    <sequential>
+      <echo message="Applying @{file}"/>
+      <exec executable="git" dir="${platform.root}" failonerror="true">
+        <arg value="apply"/>
+        <!-- Remove this argument to apply patches directly in the master repository (mostly for testing purposes) -->
+        <arg value="-p2"/>
+        <arg value="&#45;-ignore-space-change"/>
+        <arg value="@{file}"/>
+      </exec>
+    </sequential>
+  </macrodef>
+
+  <!-- Build the IJ platform for MPS without custom patches (re-runnable) -->
+  <target name="build" depends="ij-platform,repackage"/>
+
+  <!-- Code changes required for MPS not yet integrated into the codebase -->
+  <target name="patch" description="Apply MPS patches to IDEA Community sources">
+    <apply.patch file="${basedir}/patches/Custom_project_settings_store_folder_name_and__project_file_extension_for_MPS_.patch"/>
+    <apply.patch file="${basedir}/patches/DisableCoursesAndTextSearch.patch"/>
+    <apply.patch file="${basedir}/patches/DisableSlowOperationsInEAP.patch"/>
+    <apply.patch file="${basedir}/patches/IJPL-156181.patch"/>
+    <apply.patch file="${basedir}/patches/jps.patch"/>
+    <apply.patch file="${basedir}/patches/MPS-36060.patch"/>
+    <apply.patch file="${basedir}/patches/MPS-38229.patch"/>
+    <apply.patch file="${basedir}/patches/MPS-38534-WelcomeScreenPromotions_for251.patch"/>
+    <apply.patch file="${basedir}/patches/WindowsDistribution.patch"/>
+  </target>
+
+  <!-- Raw JPS build of modules and plugins required by MPS -->
+  <target name="ij-platform" description="Compile and package the raw IJ platform">
+    <exec failonerror="true" executable="${platform.root}/platform/jps-bootstrap/jps-bootstrap${script.suffix}">
+      <arg value="${platform.root}"/>
+      <arg value="intellij.mps.build"/>
+      <arg value="org.jetbrains.intellij.build.mps.MPSBuilder"/>
+      <arg value="${platform.root}"/>
+    </exec>
+    <jar destfile="${target.root}/dist.all/lib/jps/jps-build-test.jar" duplicate="preserve">
+      <fileset dir="${target.root}/classes/test/intellij.platform.jps.build.tests" />
+    </jar>
+  </target>
+
+  <!-- Post-compile customizations required for final platform artifacts used by MPS -->
+  <target name="repackage" depends="repackage-app-jar,repackage-java-plugin,extract-plugin-xml,extract-win-exe"/>
+
+  <!--In java-impl.jar, we remove META-INF contents for Idea not to try loading plugins from it (see MPS-30538) -->
+  <target name="repackage-java-plugin" description="Remove IDEA specific descriptors">
+    <jar destfile="${target.dist}/plugins/java/lib/stripped.jar">
+      <zipfileset src="${target.dist}/plugins/java/lib/java-impl.jar" excludes="META-INF/**" />
+      <fileset dir="${basedir}/manifests/java-impl.jar" includes="META-INF/**"/>
+    </jar>
+    <move file="${target.dist}/plugins/java/lib/stripped.jar" tofile="${target.dist}/plugins/java/lib/java-impl.jar"/>
+  </target>
+
+  <!-- Remove IdeaApplicationInfo.xml and IdeaPlugin.xml. These will be provided during MPS build later -->
+  <target name="repackage-app-jar" description="Remove IDEA specific descriptors">
+    <jar destfile="${target.dist}/lib/stripped.jar" zip64Mode="as-needed">
+      <zipfileset src="${target.dist}/lib/app.jar" excludes="idea/IdeaApplicationInfo.xml,META-INF/IdeaPlugin.xml" />
+    </jar>
+    <move file="${target.dist}/lib/stripped.jar" tofile="${target.dist}/lib/app.jar"/>
+  </target>
+
+  <!-- Build contains exe files with proper MPS icons -->
+  <target name="extract-win-exe" description="Extract customized Windows executables">
+    <unzip src="${target.artifacts}/platform.win.zip" dest="${target.artifacts}/" overwrite="true">
+      <patternset>
+        <include name="bin/mps64.exe"/>
+      </patternset>
+      <mapper type="flatten"/>
+    </unzip>
+    <move file="${target.artifacts}/mps64.exe" tofile="${target.dist}/build/resources/mps-win-64.exe"/>
+
+    <unzip src="${target.artifacts}/platform-aarch64.win.zip" dest="${target.artifacts}/" overwrite="true">
+      <patternset>
+        <include name="bin/mps64.exe"/>
+      </patternset>
+      <mapper type="flatten"/>
+    </unzip>
+    <move file="${target.artifacts}/mps64.exe" tofile="${target.dist}/build/resources/mps-win-aarch64.exe"/>
+  </target>
+
+  <!-- plugin.xml built by JPS contains all needed embedded module descriptors. Extract them for MPS build to later include them in MPSPlugin.xml -->
+  <!-- Skip this step during Windows local builds -->
+  <target name="extract-plugin-xml" description="Extract embedded module descriptors for future use in MPS builds" unless="is.windows">
+    <unzip src="${target.dist}/lib/mps-resources.zip" dest="${target.dist}/lib/" overwrite="true">
+      <patternset>
+        <include name="META-INF/plugin.xml"/>
+      </patternset>
+      <mapper type="flatten"/>
+    </unzip>
+    <!-- Extract all <content> ... </content> snippets-->
+    <exec failonerror="true" executable="bash" dir="${target.dist}/lib/">
+      <arg value="-c"/>
+      <arg value="awk '/&lt;content[^&gt;]*&gt;/ { in_block=1 } in_block { block = block $0 ORS } /&lt;\/content&gt;/ { in_block=0; print block &gt;&gt; &quot;module-descriptors.xml&quot;; block=&quot;&quot; }' plugin.xml"/>
+    </exec>
+    <delete file="${target.dist}/lib/mps-resources.zip"/>
+    <delete file="${target.dist}/lib/plugin.xml"/>
+  </target>
+
+</project>

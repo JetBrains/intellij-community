@@ -8,7 +8,7 @@ import com.intellij.ui.TableUtil
 import com.intellij.util.ArrayUtil
 import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView
-import java.util.*
+import java.util.Arrays
 
 //Copy-paste of com.intellij.ui.TableToolbarDecorator.MoveRunnable with some changes. Added support for selection of items that were moved for more than one row.
 internal class MoveTableItemRunnable internal constructor(val delta: Int, val table: GitRebaseCommitsTableView) : AnActionButtonRunnable {

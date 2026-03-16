@@ -10,7 +10,11 @@ import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtArrayAccessExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
 abstract class AbstractK2BindToTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
 

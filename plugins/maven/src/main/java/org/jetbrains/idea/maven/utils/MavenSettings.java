@@ -11,10 +11,14 @@ import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerConfigurable;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.indices.MavenRepositoriesConfigurable;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.MavenGeneralConfigurable;
+import org.jetbrains.idea.maven.project.MavenIgnoredFilesConfigurable;
+import org.jetbrains.idea.maven.project.MavenImportingConfigurable;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
+import org.jetbrains.idea.maven.project.MavenTestRunningConfigurable;
 import org.jetbrains.idea.maven.wizards.archetype.MavenCatalogsConfigurable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.List;
 

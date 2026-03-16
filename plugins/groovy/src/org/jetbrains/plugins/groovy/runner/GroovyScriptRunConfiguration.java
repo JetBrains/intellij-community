@@ -1,8 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.runner;
 
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.CantRunException;
+import com.intellij.execution.CommonJavaRunConfigurationParameters;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExternalizablePath;
+import com.intellij.execution.JavaRunConfigurationBase;
+import com.intellij.execution.ShortenCommandLine;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.JavaCommandLineState;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.execution.configurations.RefactoringListenerProvider;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
@@ -46,7 +60,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyRunnerPsiUtil;
 import org.jetbrains.plugins.groovy.runner.util.CommonProgramRunConfigurationParametersDelegate;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static com.intellij.execution.util.ProgramParametersUtil.configureConfiguration;
 
@@ -56,7 +74,7 @@ public final class GroovyScriptRunConfiguration extends JavaRunConfigurationBase
   private String vmParams;
   private String workDir;
   private boolean isDebugEnabled;
-  private boolean isAddClasspathToTheRunner;
+  private boolean isAddClasspathToTheRunner = true;
   private @Nullable String scriptParams;
   private @Nullable String scriptPath;
   private final Map<String, String> envs = new LinkedHashMap<>();
@@ -64,6 +82,7 @@ public final class GroovyScriptRunConfiguration extends JavaRunConfigurationBase
 
   private boolean myAlternativeJrePathEnabled;
   private @Nullable String myAlternativeJrePath;
+  private @Nullable ShortenCommandLine shortenClasspathMode;
 
   public GroovyScriptRunConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
     super(name, new JavaRunConfigurationModule(project, true), factory);
@@ -135,6 +154,12 @@ public final class GroovyScriptRunConfiguration extends JavaRunConfigurationBase
     }
     isDebugEnabled = Boolean.parseBoolean(JDOMExternalizer.readString(element, "debug"));
     isAddClasspathToTheRunner = Boolean.parseBoolean(JDOMExternalizer.readString(element, "addClasspath"));
+
+    String shortenClasspath = JDOMExternalizer.readString(element, "shortenClasspath");
+    if (shortenClasspath != null) {
+      shortenClasspathMode = ShortenCommandLine.valueOf(shortenClasspath);
+    }
+
     envs.clear();
     JDOMExternalizer.readMap(element, envs, null, "env");
 
@@ -152,6 +177,9 @@ public final class GroovyScriptRunConfiguration extends JavaRunConfigurationBase
     JdomKt.addOptionTag(element, "debug", Boolean.toString(isDebugEnabled), "setting");
     if (isAddClasspathToTheRunner) {
       JdomKt.addOptionTag(element, "addClasspath", Boolean.toString(true), "setting");
+    }
+    if (shortenClasspathMode != null) {
+        JDOMExternalizer.write(element, "shortenClasspath", shortenClasspathMode.name());
     }
     JDOMExternalizer.writeMap(element, envs, null, "env");
 
@@ -208,6 +236,9 @@ public final class GroovyScriptRunConfiguration extends JavaRunConfigurationBase
       module == null ? JavaParametersUtil.createProjectJdk(getProject(), jrePath)
                      : JavaParametersUtil.createModuleJdk(module, !tests, jrePath)
     );
+    if (shortenClasspathMode != null) {
+      params.setShortenCommandLine(shortenClasspathMode);
+    }
     configureConfiguration(params, new CommonProgramRunConfigurationParametersDelegate(this) {
       @Override
       public @Nullable String getProgramParameters() {
@@ -260,11 +291,13 @@ public final class GroovyScriptRunConfiguration extends JavaRunConfigurationBase
 
   @Override
   public @Nullable ShortenCommandLine getShortenCommandLine() {
-    return null;
+    return shortenClasspathMode;
   }
 
   @Override
-  public void setShortenCommandLine(@Nullable ShortenCommandLine mode) { }
+  public void setShortenCommandLine(@Nullable ShortenCommandLine mode) {
+    shortenClasspathMode = mode;
+  }
 
   private static @Nullable String getPathByElement(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();

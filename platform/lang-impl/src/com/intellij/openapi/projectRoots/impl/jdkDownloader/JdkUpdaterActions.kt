@@ -13,6 +13,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.time.Duration.Companion.milliseconds
@@ -34,6 +36,7 @@ class JdkUpdaterNotifications(private val coroutineScope: CoroutineScope) {
   private var pendingActionsCopy = listOf<JdkUpdateNotification.JdkUpdateSuggestionAction>()
 
   private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val notificationScope: CoroutineScope = coroutineScope.childScope("JdkUpdateNotification")
 
   init {
     coroutineScope.launch {
@@ -84,6 +87,7 @@ class JdkUpdaterNotifications(private val coroutineScope: CoroutineScope) {
           scheduleUpdate()
         },
         showVendorVersion = showVendorVersion,
+        scope = notificationScope,
       )
 
       val currentNotification = pendingNotifications.get(jdk)
@@ -100,9 +104,11 @@ class JdkUpdaterNotifications(private val coroutineScope: CoroutineScope) {
   }
 
   fun getActions() : List<JdkUpdateNotification.JdkUpdateSuggestionAction> = pendingActionsCopy
+
+  @TestOnly fun getNotificationScope(): CoroutineScope = notificationScope
 }
 
-private class JdkSettingsActionRegistryActionProvider : SettingsEntryPointAction.ActionProvider {
+internal class JdkSettingsActionRegistryActionProvider : SettingsEntryPointAction.ActionProvider {
   override fun getUpdateActions(context: DataContext): List<JdkUpdateNotification.JdkUpdateSuggestionAction> {
     return serviceIfCreated<JdkUpdaterNotifications>()?.getActions() ?: emptyList()
   }

@@ -17,13 +17,19 @@ import org.jetbrains.kotlin.j2k.ProgressPortionReporter
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
-import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing.MemberKey.*
+import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing.MemberKey.FieldKey
+import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing.MemberKey.LightMethodKey
+import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing.MemberKey.PhysicalMethodKey
 import org.jetbrains.kotlin.nj2k.fqNameWithoutCompanions
 import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.tree.JKDeclaration
 import org.jetbrains.kotlin.nj2k.types.typeFqName
 import org.jetbrains.kotlin.nj2k.types.typeFqNamePossiblyMappedToKotlin
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 
 class NewExternalCodeProcessing(

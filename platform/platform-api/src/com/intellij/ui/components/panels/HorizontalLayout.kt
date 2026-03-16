@@ -4,7 +4,11 @@ package com.intellij.ui.components.panels
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBValue
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.*
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.Insets
+import java.awt.LayoutManager2
 import javax.swing.SwingConstants
 import kotlin.math.abs
 

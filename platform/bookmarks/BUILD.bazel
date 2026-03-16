@@ -19,6 +19,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
     "//platform/core-api:core",
+    "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/kernel/shared:kernel",
     "//libraries/kotlinx/serialization/core",
@@ -34,6 +35,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
     "//platform/editor-ui-ex:editor-ex",
+    "//platform/execution",
   ],
   exports = ["//platform/favoritesTreeView"]
 )

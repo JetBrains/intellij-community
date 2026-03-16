@@ -4,4 +4,4 @@ val x = if (flag) {
 
 // K1_TYPE: if (flag2) 13 else 7 -> <html>Int</html>
 
-// K2_TYPE: if (flag2) 13 else 7 -> Int
+// K2_TYPE: if (flag2) 13 else 7 -> <b>Int</b>

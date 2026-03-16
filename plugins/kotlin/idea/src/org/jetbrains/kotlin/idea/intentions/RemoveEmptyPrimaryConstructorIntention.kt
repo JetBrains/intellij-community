@@ -4,17 +4,20 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.isRedundant
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 
+@K1Deprecation
 @Suppress("DEPRECATION")
 class RemoveEmptyPrimaryConstructorInspection : IntentionBasedInspection<KtPrimaryConstructor>(
     RemoveEmptyPrimaryConstructorIntention::class
 ), CleanupLocalInspectionTool
 
+@K1Deprecation
 class RemoveEmptyPrimaryConstructorIntention : SelfTargetingOffsetIndependentIntention<KtPrimaryConstructor>(
     KtPrimaryConstructor::class.java,
     KotlinBundle.messagePointer("remove.empty.primary.constructor")

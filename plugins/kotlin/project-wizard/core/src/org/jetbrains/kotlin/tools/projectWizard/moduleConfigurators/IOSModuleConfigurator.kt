@@ -4,11 +4,19 @@ package org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators
 
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.core.*
+import org.jetbrains.kotlin.tools.projectWizard.core.ListBuilder
+import org.jetbrains.kotlin.tools.projectWizard.core.Reader
+import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
+import org.jetbrains.kotlin.tools.projectWizard.core.Writer
+import org.jetbrains.kotlin.tools.projectWizard.core.asPath
+import org.jetbrains.kotlin.tools.projectWizard.core.buildList
+import org.jetbrains.kotlin.tools.projectWizard.core.compute
+import org.jetbrains.kotlin.tools.projectWizard.core.div
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.ModuleConfiguratorProperty
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.GradlePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModulesToIrConversionData
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleKind
 import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplate
 import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplateDescriptor
 import java.nio.file.Path

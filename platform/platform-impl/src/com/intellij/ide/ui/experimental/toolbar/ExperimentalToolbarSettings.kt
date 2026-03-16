@@ -1,15 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.experimental.toolbar
 
-import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.ide.ui.ExperimentalToolbarSettingsState
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.ui.ExperimentalUI

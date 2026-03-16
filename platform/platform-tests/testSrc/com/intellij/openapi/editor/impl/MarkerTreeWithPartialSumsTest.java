@@ -4,7 +4,13 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.text.StringUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.function.IntSupplier;
 
 public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {

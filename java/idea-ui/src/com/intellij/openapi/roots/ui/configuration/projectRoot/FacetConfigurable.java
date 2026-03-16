@@ -16,7 +16,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.util.Map;
 
 public class FacetConfigurable extends ProjectStructureElementConfigurable<Facet> {

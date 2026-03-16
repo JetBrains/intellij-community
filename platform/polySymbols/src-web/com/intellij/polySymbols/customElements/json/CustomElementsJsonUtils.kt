@@ -5,15 +5,24 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.PolySymbolQualifiedName
-import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.polySymbols.customElements.CustomElementsManifestScopeBase
 import com.intellij.polySymbols.customElements.CustomElementsSymbol
-import com.intellij.polySymbols.customElements.impl.*
+import com.intellij.polySymbols.customElements.impl.CustomElementsAttributeSymbol
+import com.intellij.polySymbols.customElements.impl.CustomElementsClassOrMixinDeclarationAdapter
+import com.intellij.polySymbols.customElements.impl.CustomElementsCssCustomPropertySymbol
+import com.intellij.polySymbols.customElements.impl.CustomElementsCssPartSymbol
+import com.intellij.polySymbols.customElements.impl.CustomElementsCustomElementExportSymbol
+import com.intellij.polySymbols.customElements.impl.CustomElementsEventSymbol
+import com.intellij.polySymbols.customElements.impl.CustomElementsJavaScriptModuleSymbol
+import com.intellij.polySymbols.customElements.impl.CustomElementsJavaScriptPackageSymbol
+import com.intellij.polySymbols.customElements.impl.CustomElementsMemberSymbol
+import com.intellij.polySymbols.customElements.impl.CustomElementsSlotSymbol
 import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
 import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.patterns.PolySymbolPatternFactory
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 
 fun Reference.createPattern(origin: CustomElementsJsonOrigin): PolySymbolPattern? =
   createQueryPathList(origin)?.let { PolySymbolPatternFactory.createSingleSymbolReferencePattern(it) }

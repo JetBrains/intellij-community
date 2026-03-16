@@ -23,7 +23,11 @@ import java.util.List;
 import java.util.Objects;
 
 import static java.util.Objects.requireNonNullElse;
-import static org.jetbrains.idea.maven.config.MavenConfigSettings.*;
+import static org.jetbrains.idea.maven.config.MavenConfigSettings.ERRORS;
+import static org.jetbrains.idea.maven.config.MavenConfigSettings.NON_RECURSIVE;
+import static org.jetbrains.idea.maven.config.MavenConfigSettings.OFFLINE;
+import static org.jetbrains.idea.maven.config.MavenConfigSettings.THREADS;
+import static org.jetbrains.idea.maven.config.MavenConfigSettings.UPDATE_SNAPSHOTS;
 import static org.jetbrains.idea.maven.project.MavenHomeKt.resolveMavenHomeType;
 
 public class MavenGeneralSettings implements Cloneable {
@@ -442,6 +446,7 @@ public class MavenGeneralSettings implements Cloneable {
 
     MavenProjectsManager instance = myProject != null ? MavenProjectsManager.getInstance(myProject) : null;
     if (instance == null) return null;
+    if (!instance.isInitialized()) return null;
 
     var files = MavenUtil.collectFiles(instance.getRootProjects());
     if (files.isEmpty()) {

@@ -32,6 +32,11 @@ public interface XDebugSessionListener extends EventListener {
 
   default void settingsChanged() {
   }
+
+  @ApiStatus.Internal
+  default void settingsChangedFromFrontend() {
+    settingsChanged();
+  }
   
   default void breakpointsMuted(boolean muted) {
   }

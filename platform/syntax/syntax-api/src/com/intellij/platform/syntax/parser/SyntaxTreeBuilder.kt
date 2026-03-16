@@ -158,28 +158,10 @@ interface SyntaxTreeBuilder {
   fun setDebugMode(dbgMode: Boolean)
 
   /**
-   *
    * Sets the comment tokens of the builder to the provided [tokens] set.
-   *
-   * @deprecated Please avoid using this method because the original comment set is not preserved.
-   *   Instead, install the comment set during the builder initialization.
-   *   If you need to enforce comment tokens for the builder temporarily, use [enforceCommentTokensInside].
+   * Should be called before starting parsing, otherwise the result is undefined.
    */
-  @Deprecated("""
-   Please avoid using this method because the original comment set is not preserved.
-   Instead, install the comment set during the builder initialization.
-   If you need to enforce comment tokens for the builder temporarily, use [enforceCommentTokensInside]. 
-  """)
   fun enforceCommentTokens(tokens: SyntaxElementTypeSet)
-
-  /**
-   * Executes the given [body] with comment [tokens] enforced during the body run.
-   * It's guaranteed that [body] is executed right away, exactly once.
-   *
-   * @param tokens the set of comment tokens
-   * @param body   the body to execute
-   */
-  fun <T> enforceCommentTokensInside(tokens: SyntaxElementTypeSet, body: () -> T): T
 
   /**
    * @return latest left done node for context dependent parsing.

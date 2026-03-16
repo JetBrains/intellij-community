@@ -8,3 +8,5 @@ fun foo(list: List<String>, intList: MutableList<Int>, stringList: MutableList<S
 // EXIST: stringList
 // EXIST: arrayList
 // ABSENT: p
+
+// IGNORE_K2

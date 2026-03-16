@@ -13,12 +13,12 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 @Experimental
 @ApiStatus.Internal
 interface PyTypeHintProvider {
-  fun parseTypeHint(typeHint: PyExpression, alias: PyQualifiedNameOwner?, resolved: PsiElement, context: TypeEvalContext): Ref<PyType>?
+  fun parseTypeHint(typeHint: PyExpression, alias: PyQualifiedNameOwner?, resolved: PsiElement, context: TypeEvalContext): Ref<PyType?>?
 
   companion object {
     private val EP_NAME: ExtensionPointName<PyTypeHintProvider> = ExtensionPointName.create("Pythonid.typeHintProvider");
 
-    fun parseTypeHint(typeHint: PyExpression, alias: PyQualifiedNameOwner?, resolved: PsiElement, context: TypeEvalContext): Ref<PyType>? {
+    fun parseTypeHint(typeHint: PyExpression, alias: PyQualifiedNameOwner?, resolved: PsiElement, context: TypeEvalContext): Ref<PyType?>? {
       return EP_NAME.extensionList.firstNotNullOfOrNull { it.parseTypeHint(typeHint, alias, resolved, context) }
     }
   }

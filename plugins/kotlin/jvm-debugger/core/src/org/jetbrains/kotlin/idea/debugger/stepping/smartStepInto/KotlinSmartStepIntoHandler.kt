@@ -7,11 +7,17 @@ import com.intellij.debugger.actions.JvmSmartStepIntoErrorReporter
 import com.intellij.debugger.actions.JvmSmartStepIntoHandler
 import com.intellij.debugger.actions.JvmSmartStepIntoHandler.SmartStepIntoDetectionStatus
 import com.intellij.debugger.actions.SmartStepTarget
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.ContextUtil
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.MethodFilter
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.impl.DexDebugFacility
 import com.intellij.debugger.jdi.MethodBytecodeUtil
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.statistics.DebuggerStatistics
 import com.intellij.debugger.statistics.Engine
 import com.intellij.openapi.application.readAction
@@ -167,7 +173,8 @@ suspend fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(
         DebuggerStatistics.logSmartStepIntoTargetsDetection(debugProcess.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.SUCCESS)
         return this
     }
-    if (DexDebugFacility.isDex(debugProcess)) {
+    val vm = VirtualMachineProxyImpl.getCurrent().virtualMachine
+    if (DexDebugFacility.isDex(vm)) {
         return DexBytecodeInspector.EP.extensionList.firstOrNull()?.filterAlreadyExecutedTargets(this, context)
             ?: this
     }

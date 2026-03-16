@@ -19,6 +19,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-core",
+    "//platform/core-impl",
     "//platform/projectModel-api:projectModel",
     "//xml/xml-psi-api:psi",
     "//plugins/xpath",
@@ -36,6 +37,7 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.xslt.debugger` end

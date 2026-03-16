@@ -6,7 +6,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.ValueArgument
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UastCallKind
+import org.jetbrains.uast.UastEmptyExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.convertOpt
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
 @ApiStatus.Internal
@@ -54,7 +63,7 @@ class KotlinUVarargExpression(
     override val returnType: PsiType?
         get() = null
 
-    override fun resolve() = null
+    override fun resolve(): Nothing? = null
 
     override val receiver: UExpression?
         get() = null

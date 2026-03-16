@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.java.psi.impl;
 
 import com.intellij.openapi.module.Module;
@@ -16,8 +16,7 @@ import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-
-public final class PyJavaImportResolver implements PyImportResolver {
+final class PyJavaImportResolver implements PyImportResolver {
   @Override
   public @Nullable PsiElement resolveImportReference(@NotNull QualifiedName name, @NotNull PyQualifiedNameResolveContext context, boolean withRoots) {
     String fqn = name.toString();

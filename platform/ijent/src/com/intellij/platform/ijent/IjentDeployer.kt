@@ -4,11 +4,11 @@
 package com.intellij.platform.ijent
 
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.ijent.spi.IjentDeployingStrategy
-import com.intellij.platform.ijent.spi.createIjentSession
+import com.intellij.platform.eel.EelPlatform
 
 interface IjentSession<T : IjentApi> {
   val isRunning: Boolean
+  val platform: EelPlatform
   val remotePathToBinary: String  // TODO Use IjentPath.Absolute.
 
   suspend fun updateLogLevel()
@@ -21,15 +21,3 @@ interface IjentSession<T : IjentApi> {
     INFO, DEBUG, TRACE
   }
 }
-
-suspend fun <T : IjentApi> IjentDeployingStrategy.createIjentSession(): IjentSession<T> =
-  try {
-    val targetPlatform = getTargetPlatform()
-    val remotePathToBinary = copyFile(IjentExecFileProvider.getInstance().getIjentBinary(targetPlatform))
-    val mediator = createProcess(remotePathToBinary)
-
-    createIjentSession<T>(getConnectionStrategy(), remotePathToBinary, targetPlatform, mediator)
-  }
-  finally {
-    close()
-  }

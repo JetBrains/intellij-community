@@ -14,21 +14,15 @@ import com.intellij.platform.ml.logs.MLSessionComponentRegister
 import com.intellij.platform.ml.logs.schema.EventPair
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.internal.statistic.eventLog.EventLogGroup as IJEventLogGroup
-import com.intellij.internal.statistic.eventLog.events.BooleanEventField as IJBooleanEventField
 import com.intellij.internal.statistic.eventLog.events.ClassEventField as IJClassEventField
-import com.intellij.internal.statistic.eventLog.events.DoubleEventField as IJDoubleEventField
 import com.intellij.internal.statistic.eventLog.events.EnumEventField as IJEnumEventField
 import com.intellij.internal.statistic.eventLog.events.EventField as IJEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields as IJEventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair as IJEventPair
-import com.intellij.internal.statistic.eventLog.events.FloatEventField as IJFloatEventField1
-import com.intellij.internal.statistic.eventLog.events.IntEventField as IJIntEventField
-import com.intellij.internal.statistic.eventLog.events.LongEventField as IJLongEventField
 import com.intellij.internal.statistic.eventLog.events.ObjectDescription as IJObjectDescription
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData as IJObjectEventData
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField as IJObjectEventField
 import com.intellij.internal.statistic.eventLog.events.ObjectListEventField as IJObjectListEventField
-import com.intellij.internal.statistic.eventLog.events.StringEventField as IJStringEventField
 import com.intellij.platform.ml.impl.logs.CustomEventField as MLCustomEventField
 import com.intellij.platform.ml.impl.logs.LanguageEventField as MLLanguageEventField
 import com.intellij.platform.ml.impl.logs.VersionEventField as MLVersionEventField
@@ -74,14 +68,14 @@ private fun <L> createConverter(mlEventField: MLEventField<L>): IJEventPairConve
     mlEventField.descriptionProvider,
     mlEventField.objectDescription
   ) as IJEventPairConverter<L, *>
-  is MLBooleanEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJBooleanEventField(n, d()) } as IJEventPairConverter<L, *>
-  is MLIntEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJIntEventField(n, d()) } as IJEventPairConverter<L, *>
-  is MLLongEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJLongEventField(n, d()) } as IJEventPairConverter<L, *>
-  is MLFloatEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJFloatEventField1(n, d()) } as IJEventPairConverter<L, *>
+  is MLBooleanEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJEventFields.Boolean(n, d()) } as IJEventPairConverter<L, *>
+  is MLIntEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJEventFields.Int(n, d()) } as IJEventPairConverter<L, *>
+  is MLLongEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJEventFields.Long(n, d()) } as IJEventPairConverter<L, *>
+  is MLFloatEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJEventFields.Float(n, d()) } as IJEventPairConverter<L, *>
   is MLEnumEventField<*> -> mlEventField.toIJConverter() as IJEventPairConverter<L, *>
   is MLClassEventField -> ConverterOfClass(mlEventField) as IJEventPairConverter<L, *>
   is MLObjectListEventField -> ConvertObjectList(mlEventField) as IJEventPairConverter<L, *>
-  is MLDoubleEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJDoubleEventField(n, d()) } as IJEventPairConverter<L, *>
+  is MLDoubleEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJEventFields.Double(n, d()) } as IJEventPairConverter<L, *>
   is MLVersionEventField -> ConverterOfVersion(mlEventField) as IJEventPairConverter<L, *>
   is MLLanguageEventField -> ConverterOfLanguage(mlEventField) as IJEventPairConverter<L, *>
   is MLStringEventField -> ConverterOfString(mlEventField) as IJEventPairConverter<L, *>
@@ -112,7 +106,7 @@ private class ConverterOfCustom<T>(mlEventField: MLCustomEventField<T>) : IJEven
 }
 
 private class ConverterOfString(mlEventField: MLStringEventField) : IJEventPairConverter<String, String?> {
-  override val ijEventField: IJEventField<String?> = IJStringEventField.ValidatedByAllowedValues(
+  override val ijEventField: IJEventField<String?> = IJEventFields.String(
     mlEventField.name,
     allowedValues = mlEventField.possibleValues,
     description = mlEventField.descriptionProvider()

@@ -5,7 +5,7 @@ from configparser import RawConfigParser
 from re import Pattern
 from threading import Thread
 from typing import IO, Any, Final, Literal, SupportsIndex, TypedDict, overload, type_check_only
-from typing_extensions import Required, TypeAlias
+from typing_extensions import Required, TypeAlias, disjoint_base
 
 from . import Filter, Filterer, Formatter, Handler, Logger, _FilterType, _FormatStyle, _Level
 
@@ -97,14 +97,23 @@ class ConvertingList(list[Any], ConvertingMixin):  # undocumented
     @overload
     def __getitem__(self, key: SupportsIndex) -> Any: ...
     @overload
-    def __getitem__(self, key: slice) -> Any: ...
+    def __getitem__(self, key: slice[SupportsIndex | None]) -> Any: ...
     def pop(self, idx: SupportsIndex = -1) -> Any: ...
 
-class ConvertingTuple(tuple[Any, ...], ConvertingMixin):  # undocumented
-    @overload
-    def __getitem__(self, key: SupportsIndex) -> Any: ...
-    @overload
-    def __getitem__(self, key: slice) -> Any: ...
+if sys.version_info >= (3, 12):
+    class ConvertingTuple(tuple[Any, ...], ConvertingMixin):  # undocumented
+        @overload
+        def __getitem__(self, key: SupportsIndex) -> Any: ...
+        @overload
+        def __getitem__(self, key: slice[SupportsIndex | None]) -> Any: ...
+
+else:
+    @disjoint_base
+    class ConvertingTuple(tuple[Any, ...], ConvertingMixin):  # undocumented
+        @overload
+        def __getitem__(self, key: SupportsIndex) -> Any: ...
+        @overload
+        def __getitem__(self, key: slice[SupportsIndex | None]) -> Any: ...
 
 class BaseConfigurator:
     CONVERT_PATTERN: Pattern[str]

@@ -23,8 +23,7 @@ public class RenameViewDescriptor implements UsageViewDescriptor{
   private final @Nls String myCodeReferencesText;
   private final PsiElement[] myElements;
 
-  public RenameViewDescriptor(LinkedHashMap<PsiElement, String> renamesMap) {
-
+  public RenameViewDescriptor(@NotNull LinkedHashMap<PsiElement, String> renamesMap) {
     myElements = PsiUtilCore.toPsiElementArray(renamesMap.keySet());
 
     Set<String> processedElementsHeaders = new HashSet<>();

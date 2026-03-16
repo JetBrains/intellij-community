@@ -1,0 +1,24 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_inlineFunctionsCircularDependency-a.kotlin_module
+  test/AKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/inlineFunctionsCircularDependency/a/a.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_inlineFunctionsCircularDependency-a.kotlin_module
+  test/BKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/inlineFunctionsCircularDependency/a/b.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_inlineFunctionsCircularDependency-a.kotlin_module
+  test/AKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/inlineFunctionsCircularDependency/a/a.kt
+End of files
+------------------------------------------
+Exit code: OK

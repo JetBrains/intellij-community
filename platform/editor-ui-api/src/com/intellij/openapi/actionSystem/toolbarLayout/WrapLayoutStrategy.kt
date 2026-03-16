@@ -4,7 +4,11 @@ package com.intellij.openapi.actionSystem.toolbarLayout
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import java.awt.*
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.Insets
+import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 import kotlin.math.max

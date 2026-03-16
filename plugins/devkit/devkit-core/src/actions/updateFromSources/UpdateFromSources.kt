@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalPathApi::class)
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
+import com.intellij.execution.ShortenCommandLine
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
@@ -43,8 +44,18 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.jps.cmdline.ClasspathBootstrap
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
-import kotlin.io.path.*
+import java.util.Collections
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyToRecursively
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.inputStream
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.notExists
+import kotlin.io.path.writeText
 
 private val LOG = Logger.getInstance("org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesKt")
 
@@ -348,7 +359,7 @@ private fun createScriptJavaParameters(
   val moduleManager = ModuleManager.getInstance(project)
   val ultimate = moduleManager.findModuleByName("intellij.idea.ultimate.main") != null
   val params = JavaParameters()
-  params.isUseClasspathJar = true
+  params.setShortenCommandLine(ShortenCommandLine.MANIFEST)
   params.setDefaultCharset(project)
   params.jdk = sdk
 

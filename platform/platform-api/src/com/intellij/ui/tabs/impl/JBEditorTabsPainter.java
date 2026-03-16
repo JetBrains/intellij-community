@@ -5,14 +5,18 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 
 /**
  * @deprecated left for API compatibility
  * @author Konstantin Bulenkov
  */
 @Deprecated(forRemoval = true)
+@ApiStatus.Internal
 public abstract class JBEditorTabsPainter {
   protected Color myDefaultTabColor;
   protected final JBEditorTabs myTabs;

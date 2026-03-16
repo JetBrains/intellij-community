@@ -10,25 +10,25 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.xdebugger.SplitDebuggerMode;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.impl.proxy.MonolithBreakpointManagerKt;
+import com.intellij.xdebugger.impl.proxy.MonolithBreakpointProxyKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
-import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.useFeLineBreakpointProxy;
-
 @ApiStatus.Internal
 public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState>
   implements XLineBreakpoint<P> {
 
-  // TODO IJPL-185322 move to some external manager
+  // for monolith compatibility only
   private final XBreakpointVisualRepresentation myVisualRepresentation;
 
   private final XLineBreakpointType<P> myType;
@@ -39,11 +39,16 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
                              final @Nullable P properties, LineBreakpointState state) {
     super(type, breakpointManager, properties, state);
     myType = type;
-    myVisualRepresentation = new XBreakpointVisualRepresentation(getCoroutineScope(), asProxy(this), !useFeLineBreakpointProxy(),
-                                                                 new XBreakpointManagerProxy.Monolith(breakpointManager));
+    myVisualRepresentation = new XBreakpointVisualRepresentation(getCoroutineScope(),
+                                                                 MonolithBreakpointProxyKt.asProxy(this),
+                                                                 !SplitDebuggerMode.isSplitDebugger(),
+                                                                 MonolithBreakpointManagerKt.asProxy(breakpointManager));
   }
 
-  // TODO IJPL-185322 migrate to backend -> frontend rpc flow notification
+  /**
+   * @deprecated The platform handles Breakpoint UI update on the frontend
+   */
+  @Deprecated
   public void updateUI() {
     myVisualRepresentation.updateUI();
   }
@@ -128,7 +133,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   public void resetSourcePosition(long requestId) {
     mySourcePosition = null;
-    if (getBreakpointManager().getRequestCounter().setRequestCompleted(requestId)) {
+    if (getBreakpointManager().getRequestCounter().setRequestCompleted(getBreakpointId(), requestId)) {
       fireBreakpointChanged();
     }
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.pico;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +12,11 @@ import org.picocontainer.PicoContainer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Set;
 
 /**
  * @deprecated Use {@link com.intellij.openapi.components.ComponentManager#instantiateClassWithConstructorInjection}
@@ -22,8 +27,8 @@ import java.util.*;
 final class CachingConstructorInjectionComponentAdapter implements ComponentAdapter {
   private static final ThreadLocal<Set<Class<?>>> ourGuard = new ThreadLocal<>();
   private final PicoContainer container;
-  private final Object key;
-  private final Class<?> componentImplementation;
+  private final @NotNull Object key;
+  private final @NotNull Class<?> componentImplementation;
   private Object myInstance;
 
   CachingConstructorInjectionComponentAdapter(@NotNull PicoContainer container,
@@ -35,12 +40,12 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
   }
 
   @Override
-  public Object getComponentKey() {
+  public @NotNull Object getComponentKey() {
     return key;
   }
 
   @Override
-  public Class<?> getComponentImplementation() {
+  public @NotNull Class<?> getComponentImplementation() {
     return componentImplementation;
   }
 
@@ -50,7 +55,7 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
   }
 
   @Override
-  public Object getComponentInstance() {
+  public @NotNull Object getComponentInstance() {
     Object instance = myInstance;
     if (instance == null) {
       instance = instantiateGuarded(this, container, getComponentImplementation());
@@ -59,9 +64,9 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
     return instance;
   }
 
-  public static @NotNull Object instantiateGuarded(@Nullable CachingConstructorInjectionComponentAdapter adapter,
-                                                   @NotNull PicoContainer container,
-                                                   @NotNull Class<?> componentImplementation) {
+  private static @NotNull Object instantiateGuarded(@Nullable CachingConstructorInjectionComponentAdapter adapter,
+                                                    @NotNull PicoContainer container,
+                                                    @NotNull Class<?> componentImplementation) {
     Set<Class<?>> currentStack = ourGuard.get();
     if (currentStack == null) {
       currentStack = Collections.newSetFromMap(new IdentityHashMap<>(1));
@@ -91,7 +96,7 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
       return container.getComponentAdapter(expectedType);
     }
 
-    ComponentAdapter result = getTargetAdapter(container, expectedType, excludeAdapter.getComponentKey());
+    ComponentAdapter result = container.getComponentAdapterOfType(expectedType, excludeAdapter.getComponentKey());
     return result == null ? null : expectedType.isAssignableFrom(result.getComponentImplementation()) ? result : null;
   }
 
@@ -142,8 +147,7 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
 
   private static @NotNull Constructor<?> getGreediestSatisfiableConstructor(@Nullable ComponentAdapter adapter,
                                                                             @NotNull DefaultPicoContainer container,
-                                                                            @NotNull Class<?> componentImplementation) throws
-                                                                                                                       PicoIntrospectionException {
+                                                                            @NotNull Class<?> componentImplementation) throws PicoIntrospectionException {
     Set<Constructor<?>> conflicts = new HashSet<>();
     Set<Class<?>[]> unsatisfiableDependencyTypes = new HashSet<>();
     // filter out all constructors that will definitely not match
@@ -198,10 +202,11 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
     }
 
     if (greediestConstructor == null && !unsatisfiableDependencyTypes.isEmpty()) {
-      throw new PicoIntrospectionException(componentImplementation.getName() + " has unsatisfied dependency: " + unsatisfiedDependencyType
-                                           + " among unsatisfiable dependencies: " +
-                                           unsatisfiableDependencyTypes + " where " + container
-                                           + " was the leaf container being asked for dependencies.");
+      throw new PicoIntrospectionException(
+        componentImplementation.getName() + " has unsatisfied dependency: " + unsatisfiedDependencyType
+        + " among unsatisfiable dependencies: ("
+        + StringUtil.join(unsatisfiableDependencyTypes, a->Arrays.toString(a),", ")
+        + ") where " + container + " was the leaf container being asked for dependencies.");
     }
     if (greediestConstructor == null) {
       // be nice to the user, show all constructors that were filtered out
@@ -220,36 +225,5 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
       }
     }
     return false;
-  }
-
-  private static ComponentAdapter getTargetAdapter(@NotNull DefaultPicoContainer container,
-                                                   Class<?> expectedType,
-                                                   @NotNull Object excludeKey) {
-    ComponentAdapter byKey = container.getComponentAdapter(expectedType);
-    if (byKey != null && !excludeKey.equals(byKey.getComponentKey())) {
-      return byKey;
-    }
-
-    List<ComponentAdapter> found = container.getComponentAdaptersOfType(expectedType);
-    ComponentAdapter exclude = null;
-    for (ComponentAdapter work : found) {
-      if (work.getComponentKey().equals(excludeKey)) {
-        exclude = work;
-      }
-    }
-    found.remove(exclude);
-    if (found.isEmpty()) {
-      return container.getParent() == null ? null : container.getParent().getComponentAdapterOfType(expectedType);
-    }
-    else if (found.size() == 1) {
-      return found.get(0);
-    }
-    else {
-      Class<?>[] foundClasses = new Class[found.size()];
-      for (int i = 0; i < foundClasses.length; i++) {
-        foundClasses[i] = found.get(i).getComponentImplementation();
-      }
-      throw new AmbiguousComponentResolutionException(expectedType, foundClasses);
-    }
   }
 }

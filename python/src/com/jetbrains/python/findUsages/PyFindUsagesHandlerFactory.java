@@ -1,7 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.findUsages;
 
-import com.intellij.find.findUsages.*;
+import com.intellij.find.findUsages.AbstractFindUsagesDialog;
+import com.intellij.find.findUsages.CommonFindUsagesDialog;
+import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesHandlerBase;
+import com.intellij.find.findUsages.FindUsagesHandlerFactory;
+import com.intellij.find.findUsages.FindUsagesHandlerUi;
+import com.intellij.find.findUsages.FindUsagesHelper;
+import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;

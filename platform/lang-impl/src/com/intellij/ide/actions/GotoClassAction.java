@@ -6,7 +6,14 @@ import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributo
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.navigation.ChooseByNameRegistry;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -15,7 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.InputEvent;
 
 public final class GotoClassAction extends SearchEverywhereBaseAction implements DumbAware {

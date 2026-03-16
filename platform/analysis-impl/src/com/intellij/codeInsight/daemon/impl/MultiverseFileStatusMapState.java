@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -73,5 +74,19 @@ final class MultiverseFileStatusMapState implements FileStatusMapState {
     }
 
     return CodeInsightContextManager.getInstance(myProject).getPreferredContext(file);
+  }
+
+  @Override
+  public boolean allDirtyScopesAreNullFor(@NotNull List<? extends Document> documents) {
+    return documents.stream()
+      .map(d -> myDocumentToStatusMap.get(d))
+      .filter(m -> m != null)
+      .flatMap(m -> m.values().stream())
+      .allMatch(status -> !status.isDefensivelyMarkedForAnyPass() && status.isWolfPassFinished() && status.allDirtyScopesAreNull());
+  }
+
+  @Override
+  public String toString() {
+    return myDocumentToStatusMap.toString();
   }
 }

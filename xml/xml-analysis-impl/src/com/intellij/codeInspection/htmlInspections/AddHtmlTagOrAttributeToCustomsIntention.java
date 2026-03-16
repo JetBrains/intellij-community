@@ -14,10 +14,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Maxim.Mossienko
- */
-public class AddHtmlTagOrAttributeToCustomsIntention implements LocalQuickFix {
+public final class AddHtmlTagOrAttributeToCustomsIntention implements LocalQuickFix {
   private final String myName;
   private final @IntentionName String myText;
   private final Key<InspectionProfileEntry> myInspectionKey;

@@ -14,7 +14,19 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinBaseCodeInsightBundle
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotated
+import org.jetbrains.kotlin.psi.KtAnnotatedExpression
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFileAnnotationList
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.replaceFileAnnotationList
 
 class KotlinSuppressIntentionAction(
@@ -27,9 +39,9 @@ class KotlinSuppressIntentionAction(
     @FileModifier.SafeFieldForPreview
     private val project = suppressAt.project
 
-    override fun getFamilyName() = KotlinBaseCodeInsightBundle.message("intention.suppress.family")
+    override fun getFamilyName(): String = KotlinBaseCodeInsightBundle.message("intention.suppress.family")
 
-    override fun getText() = KotlinBaseCodeInsightBundle.message("intention.suppress.text", suppressionKey, kind.kind, kind.name ?: "")
+    override fun getText(): String = KotlinBaseCodeInsightBundle.message("intention.suppress.text", suppressionKey, kind.kind, kind.name ?: "")
 
     override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
         if (isLambdaParameter(element)) {
@@ -127,6 +139,10 @@ class KotlinSuppressIntentionAction(
         assert(suppressAt !is KtDeclaration) { "Declarations should have been checked for above" }
 
         val placeholderText = "PLACEHOLDER_ID"
+        val psiFactory = KtPsiFactory(project)
+        val parent = suppressAt.parent
+        val isExpressionBody = parent is KtNamedFunction && parent.bodyExpression == suppressAt
+
         val annotatedExpression = KtPsiFactory(project).createExpression(suppressAnnotationText(id) + "\n" + placeholderText)
 
         val copy = suppressAt.copy()!!
@@ -136,6 +152,10 @@ class KotlinSuppressIntentionAction(
         assert(toReplace.text == placeholderText)
         val result = toReplace.replace(copy)!!
 
+        // Add newline for expression-body functions if needed
+        if (isExpressionBody) {
+            afterReplace.parent.addBefore(psiFactory.createNewLine(), afterReplace)
+        }
         caretBox.positionCaretInCopy(result)
     }
 

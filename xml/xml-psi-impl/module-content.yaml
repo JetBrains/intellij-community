@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.xml.psi.impl.jar
   modules:
   - name: intellij.xml.psi.impl
   library: xml-resolver

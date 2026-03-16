@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor.fonts;
 
 import com.intellij.ide.DataManager;
@@ -18,7 +18,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 @ApiStatus.Internal
 public abstract class AppFontConfigurable implements SearchableConfigurable, Configurable.NoMargin, NoScroll {
@@ -60,7 +60,9 @@ public abstract class AppFontConfigurable implements SearchableConfigurable, Con
 
   @Override
   public void reset() {
-    getStoredPreferences().copyTo(getUIFontPreferences());
+    final var storedPreferences = getStoredPreferences();
+    getFontPanel().getOptionsPanel().fireSchemeReset(storedPreferences);
+    storedPreferences.copyTo(getUIFontPreferences());
     getFontPanel().getOptionsPanel().updateOnChangedFont();
   }
 

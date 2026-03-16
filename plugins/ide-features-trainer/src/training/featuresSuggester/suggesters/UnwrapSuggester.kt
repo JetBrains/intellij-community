@@ -3,7 +3,11 @@ package training.featuresSuggester.suggesters
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
-import training.featuresSuggester.*
+import training.featuresSuggester.FeatureSuggesterBundle
+import training.featuresSuggester.NoSuggestion
+import training.featuresSuggester.SuggesterSupport
+import training.featuresSuggester.Suggestion
+import training.featuresSuggester.TextFragment
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.BeforeEditorTextRemovedAction
 

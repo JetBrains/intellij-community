@@ -10,7 +10,12 @@ resourcegroup(
 jvm_library(
   name = "maven-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/vcs-api:vcs",
+    "//platform/util/progress",
+    "//plugins/repository-search/common",
+  ]
 )
 
 jvm_library(
@@ -27,6 +32,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
+    "//xml/xml-analysis-api:analysis",
     "//platform/execution-impl",
     "//platform/external-system-impl:externalSystem-impl",
     "//jps/model-api:model",
@@ -39,7 +45,6 @@ jvm_library(
     "//java/testFramework",
     "//platform/workspace/storage",
     "//plugins/repository-search",
-    "//plugins/repository-search:repository-search_test_lib",
     "@lib//:assert_j",
     "//platform/external-system-api/dependency-updater",
     "//platform/external-system-impl:externalSystem-tests_test_lib",
@@ -63,11 +68,12 @@ jvm_library(
     "//plugins/maven/jps-plugin:jps_test_lib",
     "//plugins/maven/maven3-server-common:server-m3-common",
     "//platform/util/jdom",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/external-system-api/testFramework",
     "//platform/backend/workspace",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//platform/backend/observation",
     "//platform/backend/observation:observation_test_lib",
     "//libraries/hash4j",
@@ -79,7 +85,13 @@ jvm_library(
     "//libraries/hamcrest",
     "//platform/testFramework/eelJava",
     "//platform/eel-provider",
-  ]
+    "//xml/xml-psi-impl:psi-impl",
+    "//xml/xml-ui-common:ui-common",
+    "//platform/execution",
+    "//plugins/repository-search/common",
+    "//plugins/repository-search/common:common_test_lib",
+  ],
+  runtime_deps = [":maven-tests"]
 )
 ### auto-generated section `build intellij.maven.tests` end
 

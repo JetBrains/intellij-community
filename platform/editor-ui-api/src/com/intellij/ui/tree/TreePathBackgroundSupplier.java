@@ -4,8 +4,8 @@ package com.intellij.ui.tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Color;
 import javax.swing.tree.TreePath;
+import java.awt.Color;
 
 public interface TreePathBackgroundSupplier {
   /**

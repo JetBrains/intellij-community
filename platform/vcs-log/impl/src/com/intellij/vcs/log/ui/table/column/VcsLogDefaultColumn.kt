@@ -24,14 +24,20 @@ import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
 import com.intellij.vcs.log.ui.render.GraphCommitCell
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer
 import com.intellij.vcs.log.ui.render.RootCell
-import com.intellij.vcs.log.ui.table.*
+import com.intellij.vcs.log.ui.table.GraphTableModel
+import com.intellij.vcs.log.ui.table.NewUiRootCellRenderer
+import com.intellij.vcs.log.ui.table.RootCellRenderer
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable
+import com.intellij.vcs.log.ui.table.VcsLogStringCellRenderer
+import com.intellij.vcs.log.ui.table.VcsLogTableIndex
+import com.intellij.vcs.log.ui.table.getKnownCommitId
 import com.intellij.vcs.log.ui.table.links.CommitLinksResolveListener
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.Locale
 import javax.swing.table.TableCellRenderer
 
 internal fun getDefaultDynamicColumns() = listOf<VcsLogDefaultColumn<*>>(Author, Hash, Date)

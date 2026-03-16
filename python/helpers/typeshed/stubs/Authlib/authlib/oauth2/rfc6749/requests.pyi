@@ -1,5 +1,6 @@
 from _typeshed import Incomplete
 from collections.abc import Mapping
+from typing import overload
 from typing_extensions import deprecated
 
 from authlib.oauth2.rfc6749 import ClientMixin
@@ -40,7 +41,11 @@ class OAuth2Request(OAuth2Payload):
     authorization_code: Incomplete | None
     refresh_token: Incomplete | None
     credential: Incomplete | None
-    def __init__(self, method: str, uri: str, headers: Mapping[str, str] | None = None) -> None: ...
+    @overload
+    def __init__(self, method: str, uri: str, body: None = None, headers: Mapping[str, str] | None = None) -> None: ...
+    @overload
+    @deprecated("The `body` parameter in OAuth2Request is deprecated. Use the payload system instead.")
+    def __init__(self, method: str, uri: str, body, headers: Mapping[str, str] | None = None) -> None: ...
     @property
     def args(self) -> dict[str, str | None]: ...
     @property
@@ -69,6 +74,9 @@ class OAuth2Request(OAuth2Payload):
     @property
     @deprecated("'request.state' is deprecated in favor of 'request.payload.state'")
     def state(self) -> str | None: ...
+    @property
+    @deprecated("'request.body' is deprecated. Use the payload system instead.")
+    def body(self): ...
 
 class JsonPayload:
     @property

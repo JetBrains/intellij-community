@@ -29,8 +29,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Cursor;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
@@ -173,7 +174,13 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
 
     if (tipComponent != null) {
       myTable.getExpandableItemsHandler().setEnabled(false);
-      IdeTooltip tooltip = new IdeTooltip(myTable, point, new Wrapper(tipComponent)).setPreferredPosition(Balloon.Position.below);
+      IdeTooltip tooltip = new IdeTooltip(myTable, point, new Wrapper(tipComponent)) {
+        @Override
+        public boolean canBeDismissedOnTimeout() {
+          return false;
+        }
+      };
+      tooltip.setPreferredPosition(Balloon.Position.below);
       IdeTooltipManager.getInstance().show(tooltip, now);
       return true;
     }

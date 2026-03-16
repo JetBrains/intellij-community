@@ -1,13 +1,26 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
-import com.intellij.ide.IdeEventQueue
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.EdtImmediate
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.UiImmediate
+import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.UiWithModelAccessImmediate
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.backgroundWriteAction
+import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.LeakHunter
+import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -16,10 +29,28 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import io.kotest.assertions.withClue
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -128,11 +159,13 @@ class EdtCoroutineDispatcherTest {
   @UiThreadDispatcherTest
   fun `switch to EDT under read lock fails with ISE`(dispatcher: CoroutineContext): Unit = timeoutRunBlocking {
     readAction {
-      assertThrows<IllegalStateException> {
-        runBlockingMaybeCancellable {
-          launch(Dispatchers.Default) {
-            withContext(dispatcher) {
-              fail<Nothing>()
+      assertThrows<TestLoggerFactory.TestLoggerAssertionError> {
+        assertErrorLogged<IllegalStateException> {
+          runBlockingMaybeCancellable {
+            launch(Dispatchers.Default) {
+              withContext(dispatcher) {
+                fail<Nothing>()
+              }
             }
           }
         }
@@ -383,8 +416,8 @@ class EdtCoroutineDispatcherTest {
         }
       }
       finally {
-        assertThat(application.isReadAccessAllowed).isEqualTo(!useNonBlockingFlushQueue)
-        assertThat(application.isWriteIntentLockAcquired).isEqualTo(!useNonBlockingFlushQueue)
+        assertThat(application.isReadAccessAllowed).isFalse
+        assertThat(application.isWriteIntentLockAcquired).isFalse
         assertThat(application.isWriteAccessAllowed).isFalse
       }
     }
@@ -506,31 +539,7 @@ class EdtCoroutineDispatcherTest {
   }
 
   @Test
-  fun `exception messages in preventive locking for Dispatchers UI`(): Unit = timeoutRunBlocking {
-    withContext(Dispatchers.UI) {
-      IdeEventQueue.getInstance().threadingSupport.runPreventiveWriteIntentReadAction {
-        val error = assertErrorLogged<RuntimeException> {
-          ThreadingAssertions.assertReadAccess()
-        }
-        assertThat(error.message)
-          .contains("read access")
-          .contains("Dispatchers.UI")
-          .doesNotContain("Dispatchers.Main")
-
-        val error2 = assertErrorLogged<RuntimeException> {
-          ThreadingAssertions.assertWriteIntentReadAccess()
-        }
-        assertThat(error2.message)
-          .contains("write-intent access")
-          .contains("Dispatchers.UI")
-          .doesNotContain("Dispatchers.Main")
-      }
-    }
-  }
-
-  @Test
   fun `UI coroutine can be executed earlier then EDT coroutine`(): Unit = timeoutRunBlocking {
-    Assumptions.assumeTrue { useNonBlockingFlushQueue }
     val uiExecuted = AtomicBoolean()
     val edtExecuted = AtomicBoolean()
     backgroundWriteAction {

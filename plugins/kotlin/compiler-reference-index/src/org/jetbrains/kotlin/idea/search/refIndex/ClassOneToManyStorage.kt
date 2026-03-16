@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.containers.generateRecursiveSequence
 import com.intellij.util.io.EnumeratorStringDescriptor
+import com.intellij.util.io.PersistentHashMap
 import com.intellij.util.io.PersistentMapBuilder
 import com.intellij.util.io.externalizer.StringCollectionExternalizer
 import org.jetbrains.kotlin.name.FqName
@@ -14,23 +14,25 @@ import kotlin.io.path.deleteIfExists
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
-@IntellijInternalApi
-class ClassOneToManyStorage(storagePath: Path) {
+open class ClassOneToManyStorage(storagePath: Path, clean: Boolean = true) {
     init {
-        val storageName = storagePath.name
-        storagePath.parent.listDirectoryEntries("$storageName*").ifNotEmpty {
-            forEach { it.deleteIfExists() }
-            LOG.warn("'$storageName' was deleted")
+        if (clean) {
+            val storageName = storagePath.name
+            storagePath.parent.listDirectoryEntries("$storageName*").ifNotEmpty {
+                forEach { it.deleteIfExists() }
+                LOG.warn("'$storageName' was deleted")
+            }
         }
     }
 
-    private val storage = PersistentMapBuilder.newBuilder(
-      storagePath,
-      EnumeratorStringDescriptor.INSTANCE,
-      externalizer,
+    protected val storage: PersistentHashMap<String?, Collection<String>?> = PersistentMapBuilder.newBuilder(
+        storagePath,
+        EnumeratorStringDescriptor.INSTANCE,
+        externalizer,
     ).build()
 
     fun closeAndClean(): Unit = storage.closeAndClean()
+    fun close(): Unit = storage.close()
 
     fun put(key: String, values: Collection<String>) {
         storage.put(key, values)
@@ -42,7 +44,7 @@ class ClassOneToManyStorage(storagePath: Path) {
         if (!deep) return values
 
         return generateRecursiveSequence(values) {
-          storage[it]?.asSequence() ?: emptySequence()
+            storage[it]?.asSequence() ?: emptySequence()
         }
     }
 

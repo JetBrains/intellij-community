@@ -10,7 +10,7 @@ import com.intellij.openapi.util.NlsContexts.ConfigurableName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public final class LiveTemplatesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   static final String ID = "editing.templates";

@@ -12,10 +12,10 @@ import com.intellij.platform.syntax.parser.ProductionResult
 import com.intellij.platform.syntax.parser.prepareProduction
 import com.intellij.pom.java.LanguageLevel
 
-internal class JavaDocCommentParser : LazyParser {
+internal class JavaDocCommentParser(private val isMarkdown: Boolean) : LazyParser {
   override fun parse(parsingContext: LazyParsingContext): ProductionResult {
     val syntaxTreeBuilder = parsingContext.syntaxTreeBuilder
-    parseFragment(syntaxTreeBuilder, JavaDocSyntaxElementType.DOC_COMMENT, false) {
+    parseFragment(syntaxTreeBuilder, if (isMarkdown) JavaDocSyntaxElementType.DOC_MARKDOWN_COMMENT else JavaDocSyntaxElementType.DOC_COMMENT, false) {
       JavaDocParser(syntaxTreeBuilder, languageLevel).parseDocCommentText()
     }
     return prepareProduction(syntaxTreeBuilder)

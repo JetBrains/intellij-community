@@ -2,8 +2,8 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.notification.NotificationGroup
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -17,6 +17,9 @@ import org.jetbrains.annotations.ApiStatus
 interface UpdateCheckerFacade {
   companion object {
     const val MACHINE_ID_DISABLED_PROPERTY: String = "machine.id.disabled"
+
+    @JvmStatic
+    fun getInstance(): UpdateCheckerFacade = service()
   }
 
   val disabledToUpdate: Set<PluginId>
@@ -33,7 +36,9 @@ interface UpdateCheckerFacade {
 
   fun loadProductData(indicator: ProgressIndicator?): Product?
 
-  fun updateDescriptorsForInstalledPlugins(state: InstalledPluginsState)
+  @IntellijInternalApi
+  fun updateDescriptorsForInstalledPlugins()
+
   /**
    * When [buildNumber] is null, returns new versions of plugins compatible with the current IDE version,
    * otherwise, returns versions compatible with the specified build.
@@ -41,12 +46,22 @@ interface UpdateCheckerFacade {
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   @IntellijInternalApi
-  @ApiStatus.Internal
-  @Deprecated("Use [getPluginUpdates] instead", ReplaceWith("getPluginUpdates(pluginId, buildNumber, indicator)"))
-  fun getInternalPluginUpdates(
-    buildNumber: BuildNumber? = null,
+  fun getPluginUpdates(
+    plugins: Collection<PluginId>,
     indicator: ProgressIndicator? = null,
-    updateablePluginsMap: MutableMap<PluginId, IdeaPluginDescriptor?>? = null,
+    buildNumber: BuildNumber? = null,
+  ): InternalPluginResults
+
+  /**
+   * When [buildNumber] is null, returns new versions of plugins compatible with the current IDE version,
+   * otherwise, returns versions compatible with the specified build.
+   */
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
+  @IntellijInternalApi
+  fun checkInstalledPluginUpdates(
+    indicator: ProgressIndicator? = null,
+    buildNumber: BuildNumber? = null,
   ): InternalPluginResults
 
   fun saveDisabledToUpdatePlugins()

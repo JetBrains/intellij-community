@@ -22,6 +22,9 @@ class BalloonUiComponent(data: ComponentData) : UiComponent(data) {
   val content: UiComponent = x { byClass("LimitedWidthEditorPane") }
   val contentText: String get() = content.getAllTexts().asString()
 
+  val htmlContent: UiComponent = x { byClass("LimitedWidthJBHtmlPane") }
+  val htmlContentText: String get() = htmlContent.getAllTexts().asString()
+
   val primaryButton: JButtonUiComponent = button { byClass("JButton") }
 
   val secondaryButton: UiComponent = x { byClass("ActionLink") }

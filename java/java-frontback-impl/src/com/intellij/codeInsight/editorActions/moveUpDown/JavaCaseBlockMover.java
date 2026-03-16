@@ -4,9 +4,9 @@ package com.intellij.codeInsight.editorActions.moveUpDown;
 import com.intellij.codeInsight.CodeInsightFrontbackUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.AbstractBasicJavaFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiSwitchLabelStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
@@ -20,7 +20,7 @@ public final class JavaCaseBlockMover extends LineMover {
 
   @Override
   public boolean checkAvailable(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
-    if (!(file instanceof PsiJavaFile)) return false;
+    if (!(file instanceof AbstractBasicJavaFile)) return false;
     if (!super.checkAvailable(editor, file, info, down)) return false;
 
     final Document document = editor.getDocument();

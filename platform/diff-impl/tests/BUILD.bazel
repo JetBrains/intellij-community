@@ -10,7 +10,17 @@ resourcegroup(
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/core-api:core",
+    "//platform/diff-api:diff",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/core-impl",
+    "//platform/core-ui",
+  ]
 )
 
 jvm_library(
@@ -37,7 +47,8 @@ jvm_library(
     "//platform/core-ui",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.platform.diff.tests` end
 

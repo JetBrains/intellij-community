@@ -23,7 +23,7 @@ from functools import cache
 from optparse import Values
 from os import PathLike
 from re import Pattern
-from typing import IO, Any, AnyStr, BinaryIO, Generic, Literal, NamedTuple, TextIO, TypeVar, overload
+from typing import IO, Any, AnyStr, BinaryIO, Final, Generic, Literal, NamedTuple, TextIO, TypeVar, overload
 from typing_extensions import Self, TypeAlias
 from urllib.parse import _QueryType, _QuoteVia
 from xml.etree import ElementTree as ET
@@ -42,16 +42,16 @@ class NO_DEFAULT: ...
 
 def IDENTITY(x: _T) -> _T: ...
 
-ENGLISH_MONTH_NAMES: Sequence[str]
-MONTH_NAMES: Mapping[str, Sequence[str]]
-TIMEZONE_NAMES: Mapping[str, str]
-ACCENT_CHARS: Mapping[str, str]
-DATE_FORMATS: Sequence[str]
-DATE_FORMATS_DAY_FIRST: Sequence[str]
-DATE_FORMATS_MONTH_FIRST: Sequence[str]
-PACKED_CODES_RE: str
-JSON_LD_RE: str
-NUMBER_RE: str
+ENGLISH_MONTH_NAMES: Final[Sequence[str]]
+MONTH_NAMES: Final[Mapping[str, Sequence[str]]]
+TIMEZONE_NAMES: Final[Mapping[str, str]]
+ACCENT_CHARS: Final[Mapping[str, str]]
+DATE_FORMATS: Final[Sequence[str]]
+DATE_FORMATS_DAY_FIRST: Final[Sequence[str]]
+DATE_FORMATS_MONTH_FIRST: Final[Sequence[str]]
+PACKED_CODES_RE: Final[str]
+JSON_LD_RE: Final[str]
+NUMBER_RE: Final[str]
 
 @cache
 def preferredencoding() -> str: ...
@@ -274,7 +274,7 @@ def extract_timezone(date_str: str, default: Any = None) -> tuple[timedelta, str
 def parse_iso8601(date_str: str, delimiter: str = "T", timezone: type[NO_DEFAULT] | Any | None = None) -> int: ...
 def date_formats(day_first: bool = True) -> list[str]: ...
 def unified_strdate(date_str: str, day_first: bool = True) -> str: ...
-def unified_timestamp(date_str: str, day_first: bool = True) -> int: ...
+def unified_timestamp(date_str: str, day_first: bool = True, tz_offset: float = 0) -> int: ...
 def determine_ext(url: str, default_ext: str = "unknown_video") -> str: ...
 def subtitles_filename(filename: str, sub_lang: str, sub_format: str, expected_real_ext: str | None = None) -> str: ...
 def datetime_from_str(date_str: str, precision: str = "auto", format: str = "%Y%m%d") -> datetime: ...
@@ -452,22 +452,22 @@ def filter_dict(dct: Mapping[_K, _V], cndn: Callable[[_K, _V], bool] = ...) -> d
 def merge_dicts(*dicts: Mapping[Hashable, Any]) -> dict[Hashable, Any]: ...
 def encode_compat_str(string: str, encoding: str = ..., errors: str = "strict") -> str: ...
 
-US_RATINGS: Mapping[str, int]
-TV_PARENTAL_GUIDELINES: Mapping[str, int]
+US_RATINGS: Final[Mapping[str, int]]
+TV_PARENTAL_GUIDELINES: Final[Mapping[str, int]]
 
 def parse_age_limit(s: int) -> int | None: ...
 def strip_jsonp(code: str) -> str: ...
 def js_to_json(code: str, vars: Mapping[str, Any] = {}, *, strict: bool = False) -> str: ...
 def qualities(quality_ids: Sequence[int]) -> Callable[[int], int]: ...
 
-POSTPROCESS_WHEN: tuple[str, ...]
-DEFAULT_OUTTMPL: Mapping[str, str]
-OUTTMPL_TYPES: Mapping[str, str | None]
-STR_FORMAT_RE_TMPL: str
-STR_FORMAT_TYPES: str
+POSTPROCESS_WHEN: Final[tuple[str, ...]]
+DEFAULT_OUTTMPL: Final[Mapping[str, str]]
+OUTTMPL_TYPES: Final[Mapping[str, str | None]]
+STR_FORMAT_RE_TMPL: Final[str]
+STR_FORMAT_TYPES: Final[str]
 
 def limit_length(s: str, length: int) -> str: ...
-def version_tuple(v: str) -> tuple[int, ...]: ...
+def version_tuple(v: str, *, lenient: bool = False) -> tuple[int, ...]: ...
 def is_outdated_version(version: str, limit: str, assume_new: bool = True) -> bool: ...
 def ytdl_is_updateable() -> bool: ...
 def args_to_str(args: str | Collection[str]) -> str: ...
@@ -487,7 +487,7 @@ def urlhandle_detect_ext(url_handle: Response, default: str | type[NO_DEFAULT] =
 def encode_data_uri(data: ReadableBuffer, mime_type: str) -> str: ...
 def age_restricted(content_limit: int | None, age_limit: int | None) -> bool: ...
 
-BOMS: Collection[tuple[bytes, str]]
+BOMS: Final[Collection[tuple[bytes, str]]]
 
 def is_html(first_bytes: bytes) -> bool: ...
 def determine_protocol(info_dict: _InfoDict) -> str: ...
@@ -551,10 +551,10 @@ def write_xattr(path: FileDescriptorOrPath, key: str, value: str) -> None: ...
 def random_birthday(year_field: Hashable, month_field: Hashable, day_field: Hashable) -> dict[Hashable, str]: ...
 def find_available_port(interface: str = "") -> Any | None: ...
 
-DOT_URL_LINK_TEMPLATE: str
-DOT_WEBLOC_LINK_TEMPLATE: str
-DOT_DESKTOP_LINK_TEMPLATE: str
-LINK_TEMPLATES: Mapping[str, str]
+DOT_URL_LINK_TEMPLATE: Final[str]
+DOT_WEBLOC_LINK_TEMPLATE: Final[str]
+DOT_DESKTOP_LINK_TEMPLATE: Final[str]
+LINK_TEMPLATES: Final[Mapping[str, str]]
 
 def iri_to_uri(iri: str) -> str: ...
 def to_high_limit_path(path: PathLike[AnyStr]) -> str: ...
@@ -620,8 +620,8 @@ class Namespace(types.SimpleNamespace):
     @property
     def items_(self) -> dict[str, Any]: ...
 
-MEDIA_EXTENSIONS: Namespace
-KNOWN_EXTENSIONS: tuple[str, ...]
+MEDIA_EXTENSIONS: Final[Namespace]
+KNOWN_EXTENSIONS: Final[tuple[str, ...]]
 
 class _UnsafeExtensionError(Exception):
     ALLOWED_EXTENSIONS: frozenset[str]

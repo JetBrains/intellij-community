@@ -1,7 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
-import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.declarative.CollapseState
+import com.intellij.codeInsight.hints.declarative.CollapsiblePresentationTreeBuilder
+import com.intellij.codeInsight.hints.declarative.HintFormat
+import com.intellij.codeInsight.hints.declarative.InlayProviderPassInfo
+import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
+import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationEntry
 import com.intellij.codeInsight.hints.declarative.impl.views.TextInlayPresentationEntry

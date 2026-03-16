@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.PathManager
@@ -68,7 +68,7 @@ object CorruptionMarker {
 
   @JvmStatic
   fun dropIndexes() {
-    FileBasedIndexImpl.LOG.info("Indexes are dropped")
+    FileBasedIndexImpl.LOG.info("Dropping indexes...")
     val indexRoot = PathManager.getIndexRoot()
 
     //FIXME RC: this method of resetting the indexes works badly with mmapped storages for IndexingFlag, PersistentSubIndexerRetriever,
@@ -90,6 +90,7 @@ object CorruptionMarker {
       indexRoot.directoryStreamIfExists { dirStream ->
         dirStream.forEach {
           if (!filesToBeIgnored.contains(it.fileName.toString())) {
+            FileBasedIndexImpl.LOG.debug("\tremoving: $it")
             @Suppress("UsagesOfObsoleteApi")
             FileUtil.deleteWithRenaming(it.toFile())
           }
@@ -103,6 +104,7 @@ object CorruptionMarker {
     if (SystemProperties.getBooleanProperty("idea.index.clear.diagnostic.on.invalidation", true)) {
       IndexDiagnosticDumper.clearDiagnostic()
     }
+    FileBasedIndexImpl.LOG.info("Indexes are dropped")
 
     // serialization manager is initialized before and use removed index root so we need to reinitialize it
     SerializationManagerEx.getInstanceEx().reinitializeNameStorage()

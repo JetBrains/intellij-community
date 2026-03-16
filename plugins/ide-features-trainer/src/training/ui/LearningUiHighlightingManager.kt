@@ -11,11 +11,20 @@ import com.intellij.ui.JBColor
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TimerUtil
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.GradientPaint
+import java.awt.Graphics2D
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.geom.Path2D
 import java.awt.geom.RoundRectangle2D
-import java.util.*
-import javax.swing.*
+import java.util.Date
+import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.JTree
+import javax.swing.RootPaneContainer
+import javax.swing.SwingUtilities
 import javax.swing.tree.TreePath
 import kotlin.math.absoluteValue
 

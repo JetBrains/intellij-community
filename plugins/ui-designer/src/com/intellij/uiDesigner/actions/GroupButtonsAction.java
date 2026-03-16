@@ -11,7 +11,8 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.JButton;
 import java.util.ArrayList;
 import java.util.List;
 

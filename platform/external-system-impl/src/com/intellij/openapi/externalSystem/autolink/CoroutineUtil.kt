@@ -3,7 +3,11 @@ package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext

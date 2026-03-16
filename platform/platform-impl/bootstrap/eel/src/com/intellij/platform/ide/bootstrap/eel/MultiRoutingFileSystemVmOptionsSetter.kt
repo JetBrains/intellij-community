@@ -1,16 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap.eel
 
 import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.wsl.WslIjentAvailabilityService
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
-import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
-import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.lang.management.ManagementFactory
@@ -22,7 +19,6 @@ object MultiRoutingFileSystemVmOptionsSetter {
   fun ensureInVmOptionsImpl(
     isEnabled: Boolean,
     forceProductionOptions: Boolean,
-    isEnabledByDefault: Boolean = isMultiRoutingFileSystemEnabledForProduct(ApplicationNamesInfo.getInstance().scriptName),
     getOptionByPrefix: (String) -> List<String>,
   ): Collection<Pair<String, String?>> {
     val changedOptions = mutableListOf<Pair<String, String?>>()
@@ -71,21 +67,6 @@ object MultiRoutingFileSystemVmOptionsSetter {
       }
       else if (forceDefaultFs && actualValue != "true") {
         changedOptions += prefix to "true"
-      }
-    }
-
-    run {
-      val prefix = "-D$IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY="
-      val valueToSet = when (val actualValue = getOptionByPrefix(prefix).firstOrNull()?.toBooleanStrictOrNull()) {
-        null ->
-          if (isEnabled != isEnabledByDefault && changedOptions.isNotEmpty()) isEnabled
-          else null
-        true, false ->
-          if (isEnabled != actualValue) isEnabled
-          else null
-      }
-      if (valueToSet != null) {
-        changedOptions += prefix to valueToSet.toString()
       }
     }
 

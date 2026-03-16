@@ -5,7 +5,12 @@ package com.intellij.platform.lvcs.impl
 
 import com.intellij.history.ActivityId
 import com.intellij.history.core.Paths
-import com.intellij.history.core.changes.*
+import com.intellij.history.core.changes.ChangeSet
+import com.intellij.history.core.changes.ContentChange
+import com.intellij.history.core.changes.CreateEntryChange
+import com.intellij.history.core.changes.DeleteChange
+import com.intellij.history.core.changes.MoveChange
+import com.intellij.history.core.changes.RenameChange
 import com.intellij.history.integration.CommonActivity
 import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.openapi.util.NlsContexts

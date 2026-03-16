@@ -6,7 +6,12 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.annotationByFqName
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKBodyStub
+import org.jetbrains.kotlin.nj2k.tree.JKClass
+import org.jetbrains.kotlin.nj2k.tree.JKMethod
+import org.jetbrains.kotlin.nj2k.tree.JKOtherModifierElement
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier
 
 private const val FUNCTIONAL_INTERFACE = "java.lang.FunctionalInterface"
 

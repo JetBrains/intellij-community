@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.libraries.kotlinx.coroutines.debug` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "debug_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "debug",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":debug_resources"],
+  exports = ["@lib//:kotlinx-coroutines-debug"],
+  runtime_deps = [
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:kotlinx-coroutines-debug",
+  ]
+)
+### auto-generated section `build intellij.libraries.kotlinx.coroutines.debug` end

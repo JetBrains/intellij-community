@@ -15,7 +15,14 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.xml.events.DomEvent;
-import com.intellij.util.xml.impl.*;
+import com.intellij.util.xml.impl.CollectionChildDescriptionImpl;
+import com.intellij.util.xml.impl.DomApplicationComponent;
+import com.intellij.util.xml.impl.DomFileElementImpl;
+import com.intellij.util.xml.impl.DomManagerImpl;
+import com.intellij.util.xml.impl.DomTestCase;
+import com.intellij.util.xml.impl.FixedChildDescriptionImpl;
+import com.intellij.util.xml.impl.MockDomFileDescription;
+import com.intellij.util.xml.impl.StaticGenericInfo;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
@@ -23,7 +30,11 @@ import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.ParameterizedType;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class DomBasicsTest extends DomTestCase {
   @Override

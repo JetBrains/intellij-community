@@ -20,7 +20,8 @@ import com.intellij.ui.ColoredListCellRenderer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JList;
 
 @ApiStatus.Internal
 public class ItemWrapperListRenderer extends ColoredListCellRenderer {

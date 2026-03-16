@@ -31,7 +31,14 @@ import org.assertj.swing.core.MouseButton
 import org.assertj.swing.data.TableCell
 import org.assertj.swing.fixture.JCheckBoxFixture
 import org.assertj.swing.fixture.JTableFixture
-import training.dsl.*
+import training.dsl.LearningBalloonConfig
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
+import training.dsl.TaskContext
+import training.dsl.TaskRuntimeContext
+import training.dsl.TaskTestContext
+import training.dsl.dropMnemonic
+import training.dsl.gotItStep
 import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.clickChangeElement
 import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog

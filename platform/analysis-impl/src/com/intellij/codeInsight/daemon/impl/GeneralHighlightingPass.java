@@ -8,6 +8,7 @@ import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -26,7 +27,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -36,7 +41,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiPredicate;
@@ -156,7 +165,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
         }
         if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
           List<? extends Class<? extends HighlightVisitor>> liveVisitorClasses = ContainerUtil.map(filteredVisitors, v -> v.getClass());
-          BiPredicate<? super Object, ? super PsiFile> keepToolIdPredicate = (toolId, __) -> !HighlightInfoUpdaterImpl.isHighlightVisitorToolId(toolId) || liveVisitorClasses.contains(toolId);
+          BiPredicate<? super Object, ? super PsiFile> keepToolIdPredicate = (toolId, __) -> !HighlightInfoUpdaterImpl.isHighlightVisitorToolId(toolId) || toolId instanceof Class && liveVisitorClasses.contains(toolId);
           impl.removeHighlightsForObsoleteTools(getHighlightingSession(), List.of(), keepToolIdPredicate);
         }
         boolean success;
@@ -172,12 +181,12 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
               }
               if (!newInfos.isEmpty()) {
                 int size = newInfos.size(); // size == 1 most of the time
+                //noinspection ForLoopReplaceableByForEach
                 for (int i = 0; i < size; i++) {
-                  myHighlights.add(newInfos.get(i));
                   final HighlightInfo info = newInfos.get(i);
+                  myHighlights.add(info);
                   if (info.getSeverity() == HighlightSeverity.ERROR) {
                     myHasErrorSeverity = true;
-                    break;
                   }
                 }
               }
@@ -197,7 +206,8 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
           }
         }
         else {
-          cancelAndRestartDaemonLater(progress, myProject, "GHP.collectHighlights() == false");
+          boolean writeActionPending = ApplicationManagerEx.getApplicationEx().isWriteActionPending();
+          cancelAndRestartDaemonLater(progress, myProject, "GHP.collectHighlights() == false (writeActionPending="+writeActionPending+")");
         }
       };
       if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
@@ -215,8 +225,8 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
     });
     if (LOG.isTraceEnabled()) {
       List<HighlightInfo> errors = ContainerUtil.filter(myHighlights, h -> h.getSeverity() == HighlightSeverity.ERROR);
-      LOG.trace("GHP finished: myHasErrorElement=" + myHasErrorElement + "; highlights:" + myHighlights.size() + "; errors:" + errors.size() + ": " +
-                StringUtil.join(errors, "\n"));
+      LOG.trace("GHP finished: progress=" + progress+ " myHasErrorElement=" + myHasErrorElement + "; highlights:" + myHighlights.size() + "; errors:" + errors.size() + ": " +
+                StringUtil.join(ContainerUtil.getFirstItems(errors, 20), "\n"));
     }
   }
 
@@ -253,7 +263,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
       runnable.run();
       return true;
     }
-    return annotatorRunner.runAnnotatorsAsync(elements1, elements2, runnable, resultSink);
+    return annotatorRunner.runAnnotatorsAsync(getDocument(), elements1, elements2, runnable, resultSink);
   }
 
   @ApiStatus.Internal
@@ -268,22 +278,14 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
   private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress, @NotNull Project project, @NotNull String reason) throws ProcessCanceledException {
     RESTART_REQUESTS.incrementAndGet();
     progress.cancel();
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      RESTART_REQUESTS.decrementAndGet();
+    int delay = ApplicationManager.getApplication().isUnitTestMode() ? 0 : RESTART_DAEMON_RANDOM.nextInt(100);
+    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+      RESTART_REQUESTS.set(0);
       if (!project.isDisposed()) {
         DaemonCodeAnalyzerEx.getInstanceEx(project).restart(reason);
       }
-    }
-    else {
-      int delay = RESTART_DAEMON_RANDOM.nextInt(100);
-      EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
-        RESTART_REQUESTS.decrementAndGet();
-        if (!project.isDisposed()) {
-          DaemonCodeAnalyzerEx.getInstanceEx(project).restart(reason);
-        }
-      }, delay, TimeUnit.MILLISECONDS);
-    }
-    throw new ProcessCanceledException();
+    }, delay, TimeUnit.MILLISECONDS);
+    progress.checkCanceled();
   }
 
   private boolean forceHighlightParents() {

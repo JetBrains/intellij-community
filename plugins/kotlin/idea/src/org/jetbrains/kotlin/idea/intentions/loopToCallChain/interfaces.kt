@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.cfg.pseudocode.Pseudocode
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 /**
  * An abstraction for generating a chained call that knows about receiver expression and handles proper formatting
  */
+@K1Deprecation
 interface ChainedCallGenerator {
     val receiver: KtExpression
     val reformat: Boolean
@@ -29,6 +31,7 @@ interface ChainedCallGenerator {
 /**
  * Base interface for recognized transformations of the sequence. Should always be either [SequenceTransformation] or [ResultTransformation]
  */
+@K1Deprecation
 interface Transformation {
     val loop: KtForExpression
 
@@ -52,6 +55,7 @@ interface Transformation {
 /**
  * Represents a transformation of input sequence into another sequence
  */
+@K1Deprecation
 interface SequenceTransformation : Transformation {
     override fun mergeWithPrevious(previousTransformation: SequenceTransformation, reformat: Boolean): SequenceTransformation? = null
 
@@ -61,6 +65,7 @@ interface SequenceTransformation : Transformation {
 /**
  * Represents a final transformation of sequence which produces the result of the whole loop (for example, assigning a found value into a variable).
  */
+@K1Deprecation
 interface ResultTransformation : Transformation {
     override fun mergeWithPrevious(previousTransformation: SequenceTransformation, reformat: Boolean): ResultTransformation? = null
 
@@ -81,6 +86,7 @@ interface ResultTransformation : Transformation {
 /**
  * Represents a state when matching a part of the loop against known transformations
  */
+@K1Deprecation
 data class MatchingState(
     val outerLoop: KtForExpression,
     val innerLoop: KtForExpression,
@@ -98,6 +104,7 @@ data class MatchingState(
     val incrementExpressions: Collection<KtUnaryExpression> = emptyList()
 )
 
+@K1Deprecation
 interface TransformationMatcher {
     fun match(state: MatchingState): TransformationMatch?
 
@@ -121,6 +128,7 @@ interface TransformationMatcher {
         get() = false
 }
 
+@K1Deprecation
 sealed class TransformationMatch(val sequenceTransformations: List<SequenceTransformation>) {
     abstract val allTransformations: List<Transformation>
 
@@ -151,6 +159,7 @@ sealed class TransformationMatch(val sequenceTransformations: List<SequenceTrans
 /**
  * Helper class for holding and updating PsiChildRange to be used for [CommentSaver.restore] call
  */
+@K1Deprecation
 class CommentSavingRangeHolder(range: PsiChildRange) {
     var range = range
         private set

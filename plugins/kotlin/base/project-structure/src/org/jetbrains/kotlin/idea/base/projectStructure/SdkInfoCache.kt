@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.util.*
+import java.util.ArrayDeque
 
 /**
  * Maintains and caches mapping ModuleInfo -> SdkInfo *form its dependencies*

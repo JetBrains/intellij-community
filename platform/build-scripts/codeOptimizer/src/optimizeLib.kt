@@ -20,7 +20,7 @@ internal data class OptimizeLibraryContext(@JvmField val tempDir: Path, @JvmFiel
 
 private data class LibDescriptor(@JvmField val id: String, @JvmField val version: String, @JvmField val jbVersion: Int)
 
-private val fastUtil = LibDescriptor(id = "fastutil", version = "8.5.16", jbVersion = 1)
+private val fastUtil = LibDescriptor(id = "fastutil", version = "8.5.18", jbVersion = 1)
 
 @Suppress("unused")
 internal object FastutilInstall {

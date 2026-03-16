@@ -7,7 +7,12 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.mock.MockDocument;
 import com.intellij.mock.MockPsiFile;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AppUIExecutor;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -43,10 +48,23 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiLargeBinaryFile;
+import com.intellij.psi.PsiLargeTextFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.serviceContainer.AlreadyDisposedException;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.LeakHunter;
+import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.LoggedErrorProcessor;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TestTimeOut;
@@ -61,14 +79,23 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.junit.Assume;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -113,27 +140,28 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertSame(document, FileDocumentManager.getInstance().getDocument(vFile));
   }
 
-  private static LightVirtualFile createFile() {
+  private static @NotNull LightVirtualFile createFile() {
     return new LightVirtualFile("foo.txt");
   }
 
   public void testDocumentGced() throws IOException {
     VirtualFile vFile = createTempVirtualFile("x.txt", null, "abc", StandardCharsets.UTF_8);
     PsiDocumentManagerImpl documentManager = getPsiDocumentManager();
-    long id = System.identityHashCode(documentManager.getDocument(findFile(vFile)));
+
+    long myDocId = System.identityHashCode(documentManager.getDocument(findFile(vFile)));
 
     documentManager.commitAllDocuments();
     UIUtil.dispatchAllInvocationEvents();
     assertEmpty(documentManager.getUncommittedDocuments());
 
-    LeakHunter.checkLeak(documentManager, DocumentImpl.class, doc -> id == System.identityHashCode(doc));
+    LeakHunter.checkLeak(documentManager, DocumentImpl.class, doc -> myDocId == System.identityHashCode(doc));
     LeakHunter.checkLeak(documentManager, PsiFileImpl.class, psiFile -> vFile.equals(psiFile.getVirtualFile()));
 
     GCWatcher.tracking(documentManager.getCachedDocument(findFile(vFile))).ensureCollected();
     assertNull(documentManager.getCachedDocument(findFile(vFile)));
 
     Document newDoc = documentManager.getDocument(findFile(vFile));
-    assertTrue(id != System.identityHashCode(newDoc));
+    assertTrue(myDocId != System.identityHashCode(newDoc));
   }
 
   private PsiFile findFile(@NotNull VirtualFile vFile) {
@@ -1093,7 +1121,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
           List<PsiFile> psiFiles = createTempFiles(N);
           for (PsiFile psiFile : psiFiles) {
             psiDocumentManager.addRunOnCommit(psiFile.getFileDocument(), d -> {
-              System.out.println("addrunoncommit "+d);
+              LOG.debug("addrunoncommit "+d);
               addRunOnCommitEntered.incrementAndGet();
               try {
                 allowToCommit.await();
@@ -1102,7 +1130,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
                 throw new RuntimeException(e);
               }
               committed.incrementAndGet();
-              System.out.println("committed "+d);
+              LOG.debug("committed "+d);
             });
           }
           psiFiles.clear();
@@ -1112,7 +1140,8 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
               while (addRunOnCommitEntered.get() == 0) {
                 Thread.onSpinWait();
               }
-              GCWatcher.tracking(Arrays.asList(ReadAction.compute(()->getPsiDocumentManager().getUncommittedDocuments()))).ensureCollected();
+              GCWatcher.tracking(Arrays.asList(ReadAction.compute(()->getPsiDocumentManager().getUncommittedDocuments())))
+                .ensureCollectedWithinTimeout(5_000); // wait for document commit queue
               assertEquals(0, committed.get());
             }
             finally {
@@ -1120,7 +1149,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
             }
           });
           while (!future.isDone()) {
-            PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+            PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
           }
           future.get();
         }
@@ -1141,9 +1170,6 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
         if (message.contains("Too many uncommitted documents")) {
           return Action.NONE;
         }
-        if (t instanceof AlreadyDisposedException) {
-          return Action.NONE;
-        }
         error.compareAndSet(null, t);
         return super.processError(category, message, details, t);
       }
@@ -1158,12 +1184,30 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
           for (int i=0;i<N;i++) {
             modifyAndSaveDocument(virtualFile);
 
-            // no dispatching here, to ensure the doc is not committed but stored in some queue in DCT
-            GCWatcher.tracking(FileDocumentManager.getInstance().getDocument(virtualFile)).ensureCollected();
+            try {
+              // no dispatching here, to ensure the doc is not committed but stored in some queue in DCT
+              // TODO: ^^ DCT uses async WA now (document.async.commit.with.coroutines=true),
+              //  so it is probably already working on the document in the background.
+              GCWatcher.tracking(FileDocumentManager.getInstance().getDocument(virtualFile))
+                .ensureCollectedWithinTimeout(5*60*1000); // wait for document commit queue
 
-            while (!psiDocumentManager.isCommitted(FileDocumentManager.getInstance().getDocument(virtualFile))) {
-              UIUtil.dispatchAllInvocationEvents();
-              GCWatcher.tracking(FileDocumentManager.getInstance().getDocument(virtualFile)).ensureCollected();
+              while (!psiDocumentManager.isCommitted(FileDocumentManager.getInstance().getDocument(virtualFile))) {
+                PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+                GCWatcher.tracking(FileDocumentManager.getInstance().getDocument(virtualFile))
+                  .ensureCollectedWithinTimeout(5*60*1000); // wait for document commit queue
+              }
+            }
+            catch (IllegalStateException e) {
+              int docHash = System.identityHashCode(FileDocumentManager.getInstance().getDocument(virtualFile));
+              LeakHunter.processLeaks(LeakHunter.allRoots(), DocumentImpl.class, d -> System.identityHashCode(d) == docHash, null, (leaked, backLink)->{
+                System.err.println(LeakHunter.getLeakedObjectDetails(leaked, backLink, true));
+                System.err.println(";-----");
+                ThreadUtil.printThreadDump();
+                System.err.println(";;-----");
+
+                return false;
+              });
+              throw e;
             }
           }
         }

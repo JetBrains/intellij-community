@@ -9,11 +9,29 @@ import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.collaboration.api.dto.GraphQLPagedResponseDataDTO
 import com.intellij.diff.util.Side
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post.GQLQuery
-import org.jetbrains.plugins.github.api.data.*
+import org.jetbrains.plugins.github.api.data.GHBranchProtectionRule
+import org.jetbrains.plugins.github.api.data.GHComment
+import org.jetbrains.plugins.github.api.data.GHPullRequestMetrics
+import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
+import org.jetbrains.plugins.github.api.data.GHReaction
+import org.jetbrains.plugins.github.api.data.GHReactionContent
+import org.jetbrains.plugins.github.api.data.GHRepository
+import org.jetbrains.plugins.github.api.data.GHRepositoryPullRequestTemplate
+import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.commit.GHCommitStatusRollupContextDTO
 import org.jetbrains.plugins.github.api.data.commit.GHCommitStatusRollupShortDTO
 import org.jetbrains.plugins.github.api.data.graphql.query.GHGQLSearchQueryResponse
-import org.jetbrains.plugins.github.api.data.pullrequest.*
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestChangedFile
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommit
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeabilityData
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReviewDTO
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchType
@@ -193,6 +211,15 @@ object GHGQLRequests {
         withOperation(GithubApiRequestOperation.GraphQLRemoveReactionFromComment)
         withOperationName("remove reaction")
       }
+  }
+
+  object Ref {
+    fun delete(server: GithubServerPath, refId: String): GQLQuery<Unit> =
+      GQLQuery.Parsed(
+        server.toGraphQLUrl(), GHGQLQueries.deleteRef,
+        mapOf("refId" to refId),
+        Unit::class.java
+      )
   }
 
   object PullRequest {
@@ -580,7 +607,7 @@ object GHGQLRequests {
 
       fun addThread(
         server: GithubServerPath, reviewId: String,
-        body: String, line: Int, side: Side, startLine: Int, fileName: String,
+        body: String, line: Int, side: Side, startLine: Int, startSide: Side, fileName: String,
       ): GQLQuery<GHPullRequestReviewThread> {
         val params = mutableMapOf("pullRequestReviewId" to reviewId,
                                   "path" to fileName,
@@ -588,7 +615,7 @@ object GHGQLRequests {
                                   "line" to line,
                                   "body" to body)
         if (startLine != line) {
-          params["startSide"] = side.name
+          params["startSide"] = startSide.name
           params["startLine"] = startLine
         }
 

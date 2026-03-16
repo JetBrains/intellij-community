@@ -11,7 +11,9 @@ import org.junit.Test
 import java.nio.ByteBuffer
 import java.nio.channels.ClosedChannelException
 import java.nio.channels.NonWritableChannelException
-import java.nio.file.StandardOpenOption.*
+import java.nio.file.StandardOpenOption.CREATE
+import java.nio.file.StandardOpenOption.READ
+import java.nio.file.StandardOpenOption.WRITE
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit.MINUTES
 import java.util.concurrent.TimeUnit.SECONDS

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class JavaFxPreloaderArtifactType extends ArtifactType {
   public static JavaFxPreloaderArtifactType getInstance() {

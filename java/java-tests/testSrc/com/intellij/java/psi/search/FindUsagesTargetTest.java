@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.search;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -47,6 +47,18 @@ public class FindUsagesTargetTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(((PsiMethod)element).isConstructor());
     assertEquals("Xyz", ((PsiMethod)element).getName());
   }
+  
+  public void testDefaultConstructor() {
+    myFixture.configureByText("OneLeggedDog.java", """
+      public class OneLeggedDog {
+        static void main(){
+          OneLeggedDog dog = new <caret>OneLeggedDog();
+        }
+      }
+      """);
+    PsiElement element = getTargetElement();
+    assertTrue(element instanceof PsiMethod m && m.isConstructor() && "OneLeggedDog".equals(m.getName()));
+  }
 
   private PsiElement getTargetElement() {
     DataContext dataContext = ((EditorEx)myFixture.getEditor()).getDataContext();
@@ -55,7 +67,7 @@ public class FindUsagesTargetTest extends LightJavaCodeInsightFixtureTestCase {
     PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
 
     UsageTarget[] targets = UsageTargetUtil.findUsageTargets(editor, psiFile, psiElement);
-    assertTrue(targets.length > 0);
+    assertTrue("<caret> is ", targets.length > 0);
     assertTrue(targets[0] instanceof PsiElementUsageTarget);
     return ((PsiElementUsageTarget)targets[0]).getElement();
   }

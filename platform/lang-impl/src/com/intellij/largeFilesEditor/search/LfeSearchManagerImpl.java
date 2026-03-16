@@ -11,15 +11,24 @@ import com.intellij.find.impl.RegExHelpPopup;
 import com.intellij.largeFilesEditor.Utils;
 import com.intellij.largeFilesEditor.editor.LargeFileEditor;
 import com.intellij.largeFilesEditor.editor.Page;
-import com.intellij.largeFilesEditor.search.actions.*;
+import com.intellij.largeFilesEditor.search.actions.FindForwardBackwardAction;
+import com.intellij.largeFilesEditor.search.actions.LargeFileFindAllAction;
+import com.intellij.largeFilesEditor.search.actions.LargeFilePrevNextOccurrenceAction;
+import com.intellij.largeFilesEditor.search.actions.LargeFileStatusTextAction;
+import com.intellij.largeFilesEditor.search.actions.LargeFileToggleAction;
 import com.intellij.largeFilesEditor.search.searchResultsPanel.RangeSearch;
 import com.intellij.largeFilesEditor.search.searchResultsPanel.RangeSearchCallback;
 import com.intellij.largeFilesEditor.search.searchTask.CloseSearchTask;
 import com.intellij.largeFilesEditor.search.searchTask.FileDataProviderForSearch;
 import com.intellij.largeFilesEditor.search.searchTask.SearchTaskOptions;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ex.DefaultCustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
@@ -41,7 +50,8 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.ListModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.io.IOException;
@@ -114,7 +124,11 @@ public final class LfeSearchManagerImpl implements LfeSearchManager, CloseSearch
 
   @Override
   public void onSearchActionHandlerExecuted() {
-    largeFileEditor.getEditor().setHeaderComponent(mySearchReplaceComponent);
+    InternalUICustomization uiCustomization = InternalUICustomization.getInstance();
+    JComponent component =
+      uiCustomization == null ? mySearchReplaceComponent : uiCustomization.configureLfeSearchReplaceComponent(mySearchReplaceComponent);
+
+    largeFileEditor.getEditor().setHeaderComponent(component);
     mySearchReplaceComponent.requestFocusInTheSearchFieldAndSelectContent(largeFileEditor.getProject());
     mySearchReplaceComponent.getSearchTextComponent().selectAll();
   }

@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.settings
 
 import com.intellij.diff.tools.external.ExternalDiffSettings
-import com.intellij.diff.tools.external.ExternalDiffSettings.*
+import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalTool
+import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolConfiguration
+import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolGroup
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.ui.ComboBoxTableRenderer
@@ -128,7 +130,7 @@ internal class ExternalToolsTablePanel(private val models: ExternalToolsModels) 
                ?: DiffBundle.message("settings.external.diff.comboBox.value.unknown.filetype.text", value)
       }
 
-      override fun getTableCellRendererComponent(table: JTable, value: Any,
+      override fun getTableCellRendererComponent(table: JTable, @NlsSafe value: Any,
                                                  isSelected: Boolean, hasFocus: Boolean,
                                                  row: Int, column: Int): Component {
         if ((value as String) == ExternalToolConfiguration.DEFAULT_TOOL_NAME) {
@@ -140,7 +142,7 @@ internal class ExternalToolsTablePanel(private val models: ExternalToolsModels) 
         return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column)
       }
 
-      override fun getTableCellEditorComponent(table: JTable, value: Any, isSelected: Boolean, row: Int, column: Int): Component? {
+      override fun getTableCellEditorComponent(table: JTable, @NlsSafe value: Any, isSelected: Boolean, row: Int, column: Int): Component? {
         if ((value as String) == ExternalToolConfiguration.DEFAULT_TOOL_NAME) {
           return null
         }

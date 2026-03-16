@@ -5,13 +5,19 @@ import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.EditorThreading;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.LanguageLineWrapPositionStrategy;
+import com.intellij.openapi.editor.LineWrapPositionStrategy;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapEngine;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
@@ -26,8 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JScrollBar;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.util.List;
 
 /**
@@ -223,7 +230,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     try {
       myEventBeingProcessed = event;
       notifyListenersOnCacheUpdateStart(event);
-      int endOffsetUpperEstimate = getEndOffsetUpperEstimate(event);
+      int endOffsetUpperEstimate = SoftWrapHelper.getEndOffsetUpperEstimate(myEditor, myEditor.getDocument(), event);
       if (myVisibleAreaWidth == QUICK_DUMMY_WRAPPING) {
         doRecalculateSoftWrapsRoughly(event);
       }
@@ -288,15 +295,6 @@ public final class SoftWrapApplianceManager implements Dumpable {
       }
     }
     event.setActualEndOffset(offset);
-  }
-
-  private int getEndOffsetUpperEstimate(IncrementalCacheUpdateEvent event) {
-    int endOffsetUpperEstimate = EditorUtil.getNotFoldedLineEndOffset(myEditor, event.getMandatoryEndOffset());
-    int line = myEditor.getDocument().getLineNumber(endOffsetUpperEstimate);
-    if (line < myEditor.getDocument().getLineCount() - 1) {
-      endOffsetUpperEstimate = myEditor.getDocument().getLineStartOffset(line + 1);
-    }
-    return endOffsetUpperEstimate;
   }
 
   /**

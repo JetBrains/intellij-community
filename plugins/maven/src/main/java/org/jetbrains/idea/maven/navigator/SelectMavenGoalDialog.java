@@ -23,7 +23,7 @@ import org.jetbrains.idea.maven.navigator.structure.GoalNode;
 import org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 
-import javax.swing.*;
+import javax.swing.Action;
 
 public class SelectMavenGoalDialog extends SelectFromMavenProjectsDialog {
   private GoalNode myResult;

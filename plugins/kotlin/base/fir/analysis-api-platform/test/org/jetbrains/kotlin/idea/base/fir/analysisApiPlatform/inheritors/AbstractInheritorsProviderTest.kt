@@ -1,15 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.inheritors
 
 import com.google.gson.JsonObject
 import com.intellij.openapi.application.readAction
-import kotlinx.coroutines.runBlocking
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.projectStructureTest.*
+import org.jetbrains.kotlin.idea.test.projectStructureTest.AbstractProjectStructureTest
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectLibrary
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectModule
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectStructure
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectStructureParser
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtClass
 import kotlin.io.path.Path
@@ -34,7 +38,7 @@ abstract class AbstractInheritorsProviderTest : AbstractProjectStructureTest<Inh
         val targetClass = ktFile.findReferenceAt(getCaretPosition(ktFile))?.resolve() as? KtClass
             ?: error("Expected a `${KtClass::class.simpleName}` reference at the caret position.")
 
-        val actualInheritors = runBlocking {
+        val actualInheritors = runBlockingMaybeCancellable {
             readAction {
                 resolveInheritors(targetClass, kaModule).sortedBy { it.toString() }
             }

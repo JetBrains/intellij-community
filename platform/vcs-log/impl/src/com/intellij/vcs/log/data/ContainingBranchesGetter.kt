@@ -13,12 +13,17 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogProperties
+import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.branches
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
 import org.jetbrains.annotations.CalledInAny
-import java.awt.EventQueue
 import java.util.function.Predicate
 
 /**
@@ -38,7 +43,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
   init {
     taskExecutor = SequentialLimitedLifoExecutor(parentDisposable, 10, CachingTask::run)
     logData.addDataPackChangeListener {
-      val checksum = logData.dataPack.refsModel.branches.hashCode()
+      val checksum = logData.graphData.refsModel.branches.hashCode()
       if (currentBranchesChecksum != checksum) { // clear cache if branches set changed after refresh
         clearCache()
       }
@@ -68,17 +73,17 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
    * This task will be executed each time the calculating process completes.
    */
   fun addTaskCompletedListener(runnable: Runnable) {
-    LOG.assertTrue(EventQueue.isDispatchThread())
+    LOG.assertTrue(EDT.isCurrentThreadEdt())
     loadingFinishedListeners.add(runnable)
   }
 
   fun removeTaskCompletedListener(runnable: Runnable) {
-    LOG.assertTrue(EventQueue.isDispatchThread())
+    LOG.assertTrue(EDT.isCurrentThreadEdt())
     loadingFinishedListeners.remove(runnable)
   }
 
   private fun notifyListeners() {
-    LOG.assertTrue(EventQueue.isDispatchThread())
+    LOG.assertTrue(EDT.isCurrentThreadEdt())
     for (listener in loadingFinishedListeners) {
       listener.run()
     }
@@ -89,16 +94,16 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
    * if it is not available, starts calculating in the background and returns null.
    */
   fun requestContainingBranches(root: VirtualFile, hash: Hash): List<String>? {
-    LOG.assertTrue(EventQueue.isDispatchThread())
+    LOG.assertTrue(EDT.isCurrentThreadEdt())
     val refs = getContainingBranchesFromCache(root, hash)
     if (refs == null) {
-      taskExecutor.queue(CachingTask(createTask(root, hash, logData.dataPack), currentBranchesChecksum))
+      taskExecutor.queue(CachingTask(createTask(root, hash, logData.graphData), currentBranchesChecksum))
     }
     return refs
   }
 
   fun getContainingBranchesFromCache(root: VirtualFile, hash: Hash): List<String>? {
-    LOG.assertTrue(EventQueue.isDispatchThread())
+    LOG.assertTrue(EDT.isCurrentThreadEdt())
     return cache.getIfPresent(CommitId(hash, root))
   }
 
@@ -107,7 +112,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
     val cachedBranches = cache.getIfPresent(CommitId(hash, root))
     if (cachedBranches != null) return cachedBranches
 
-    val dataPack = logData.dataPack
+    val dataPack = logData.graphData
     val commitIndex = logData.getCommitIndex(hash, root)
     val pg = dataPack.permanentGraph
     if (pg is PermanentGraphImpl<Int>) {
@@ -127,15 +132,15 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
 
   @CalledInAny
   fun getContainingBranchesSynchronously(root: VirtualFile, hash: Hash): List<String> {
-    return getContainingBranchesSynchronously(logData.dataPack, root, hash)
+    return getContainingBranchesSynchronously(logData.graphData, root, hash)
   }
 
   @CalledInAny
-  private fun getContainingBranchesSynchronously(dataPack: DataPack, root: VirtualFile, hash: Hash): List<String> {
+  private fun getContainingBranchesSynchronously(dataPack: VcsLogGraphData, root: VirtualFile, hash: Hash): List<String> {
     return CachingTask(createTask(root, hash, dataPack), dataPack.refsModel.branches.hashCode()).run()
   }
 
-  private fun createTask(root: VirtualFile, hash: Hash, dataPack: DataPack): Task {
+  private fun createTask(root: VirtualFile, hash: Hash, dataPack: VcsLogGraphData): Task {
     val provider = logData.getLogProvider(root)
     return if (canUseGraphForComputation(provider)) {
       GraphTask(provider, root, hash, dataPack)
@@ -165,7 +170,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
                                                  root: VirtualFile, hash: Hash): List<String>
   }
 
-  private inner class GraphTask(provider: VcsLogProvider, root: VirtualFile, hash: Hash, dataPack: DataPack) :
+  private inner class GraphTask(provider: VcsLogProvider, root: VirtualFile, hash: Hash, dataPack: VcsLogGraphData) :
     Task(provider, root, hash) {
 
     private val graph = dataPack.permanentGraph

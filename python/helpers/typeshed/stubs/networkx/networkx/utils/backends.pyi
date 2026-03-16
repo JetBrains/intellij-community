@@ -52,7 +52,7 @@ class _dispatchable(Generic[_P, _R]):
     def __signature__(self): ...
     # Type system limitations doesn't allow us to define this as it truly should.
     # But specifying backend with backend_kwargs isn't a common usecase anyway
-    # and specifying backend as explicitely None is possible but not intended.
+    # and specifying backend as explicitly None is possible but not intended.
     # If this ever changes, update stubs/networkx/@tests/test_cases/check_dispatch_decorator.py
     @overload
     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R: ...

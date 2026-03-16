@@ -1,6 +1,7 @@
 <idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.k2.refactoring.move">
   <dependencies>
     <module name="intellij.kotlin.searching"/>
+    <module name="intellij.kotlin.base.externalSystem"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <refactoring.moveHandler

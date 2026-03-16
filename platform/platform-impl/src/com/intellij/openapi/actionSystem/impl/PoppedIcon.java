@@ -5,8 +5,10 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 
 import static com.intellij.util.ui.JBUI.CurrentTheme.ActionButton.hoverBackground;
 import static com.intellij.util.ui.JBUI.CurrentTheme.ActionButton.hoverBorder;

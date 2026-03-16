@@ -23,7 +23,11 @@ import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class RenameChooser {
   private static final @NonNls String CODE_OCCURRENCES = "rename.string.select.code.occurrences";

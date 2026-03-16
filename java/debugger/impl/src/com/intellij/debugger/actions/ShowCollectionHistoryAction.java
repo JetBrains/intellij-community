@@ -3,18 +3,17 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.ui.breakpoints.JavaCollectionBreakpointType;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -26,10 +25,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 @ApiStatus.Experimental
-public class ShowCollectionHistoryAction extends XFetchValueActionBase implements ActionRemoteBehaviorSpecification.Disabled {
+public class ShowCollectionHistoryAction extends XFetchValueActionBase {
+  @Override
+  public @NotNull ActionRemoteBehavior getBehavior() {
+    return ActionRemoteBehavior.Disabled;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (!Registry.is("debugger.collection.watchpoints.enabled")) {
+    if (!JavaCollectionBreakpointType.isEnabled()) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabledAndVisible(false);
       return;
@@ -46,9 +50,9 @@ public class ShowCollectionHistoryAction extends XFetchValueActionBase implement
   protected @NotNull ValueCollector createCollector(@NotNull AnActionEvent e) {
     XDebugSession session = e.getData(XDebugSession.DATA_KEY);
     XValueNodeImpl node = getNode(e);
-    return new ValueCollector(XDebuggerTree.getTree(e.getDataContext())) {
+    return new ValueCollector(e.getProject()) {
       @Override
-      public void handleInCollector(Project project, String value, XDebuggerTree tree) {
+      public void handleInCollector(Project project, String value) {
         if (session == null || node == null) {
           return;
         }
@@ -59,8 +63,7 @@ public class ShowCollectionHistoryAction extends XFetchValueActionBase implement
 
   @Override
   protected void handle(Project project,
-                        String value,
-                        XDebuggerTree tree) { }
+                        String value) { }
 
   private static XValueNodeImpl getNode(@NotNull AnActionEvent e) {
     List<XValueNodeImpl> selectedNodes = XDebuggerTreeActionBase.getSelectedNodes(e.getDataContext());

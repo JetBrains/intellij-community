@@ -19,7 +19,28 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableParameterListType;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyCollectionType;
+import com.jetbrains.python.psi.types.PyConcatenateType;
+import com.jetbrains.python.psi.types.PyIntersectionType;
+import com.jetbrains.python.psi.types.PyLiteralType;
+import com.jetbrains.python.psi.types.PyNarrowedType;
+import com.jetbrains.python.psi.types.PyNeverType;
+import com.jetbrains.python.psi.types.PyParamSpecType;
+import com.jetbrains.python.psi.types.PySelfType;
+import com.jetbrains.python.psi.types.PyTupleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeParameterType;
+import com.jetbrains.python.psi.types.PyTypeUtil;
+import com.jetbrains.python.psi.types.PyTypeVarType;
+import com.jetbrains.python.psi.types.PyTypeVisitorExt;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.PyUnsafeUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +61,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   protected int myDepth = 0;
   protected final @NotNull TypeEvalContext myTypeEvalContext;
   protected final EnumSet<Feature> myRenderingFeatures;
-  
+
   public enum Feature {
     /**
      * Render fully qualified names of all classes and type forms, e.g. {@code typing.Callable[[mod.MyClass], typing.Any]}.
@@ -115,8 +136,8 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   }
 
   public static final class TypeHint extends PyTypeRenderer {
-    private static final EnumSet<Feature> SUPPORTED_FEATURES = EnumSet.of(Feature.USE_FQN); 
-    
+    private static final EnumSet<Feature> SUPPORTED_FEATURES = EnumSet.of(Feature.USE_FQN);
+
     public TypeHint(@NotNull TypeEvalContext typeEvalContext, @NotNull EnumSet<Feature> features) {
       super(typeEvalContext, validateFeatures(features));
     }
@@ -197,6 +218,18 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       // There is no way to represent weak unions through type hints
       return visitUnknownType();
     }
+
+    @Override
+    public @NotNull HtmlChunk visitPyIntersectionType(@NotNull PyIntersectionType intersectionType) {
+      // There is no way to represent intersections through the standard type hints at the moment
+      return visitUnknownType();
+    }
+
+    @Override
+    public @NotNull HtmlChunk visitPySelfType(@NotNull PySelfType selfType) {
+      HtmlChunk selfTypeRender = className(isRenderingFqn() ? "typing.Self" : "Self"); //NON-NLS
+      return selfType.isDefinition() ? wrapInTypingType(selfTypeRender) : selfTypeRender;
+    }
   }
 
   protected boolean maxDepthExceeded() {
@@ -251,7 +284,9 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     HtmlBuilder result = new HtmlBuilder();
     boolean renderTypeArgumentList = !genericType.getElementTypes().isEmpty();
     String className = genericType.getName();
-    if (renderTypeArgumentList && !isGenericBuiltinsAvailable() && PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.containsKey(className)) {
+    if (renderTypeArgumentList &&
+        !isGenericBuiltinsAvailable() &&
+        PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.containsKey(className)) {
       className = PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.get(className);
       if (isRenderingFqn()) {
         className = PyTypingTypeProvider.TYPING + "." + className;
@@ -388,6 +423,11 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     return result.toFragment();
   }
 
+  @Override
+  public @NotNull HtmlChunk visitPyIntersectionType(@NotNull PyIntersectionType intersectionType) {
+    return renderList(ContainerUtil.map(intersectionType.getMembers(), this::render), " & ");
+  }
+
   private static @Nullable Pair<@NotNull List<PyLiteralType>, @NotNull List<PyType>> extractLiterals(@NotNull PyUnionType type) {
     final Collection<PyType> members = type.getMembers();
 
@@ -428,8 +468,14 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   }
 
   @Override
+  public HtmlChunk visitAnyType() {
+    return HtmlChunk.raw(isRenderingFqn() ? PyTypingTypeProvider.ANY : PyNames.ANY_TYPE); //NON-NLS
+  }
+
+  @Override
   public HtmlChunk visitUnknownType() {
-    return HtmlChunk.raw(isRenderingFqn() ? "typing.Any" : "Any"); //NON-NLS
+    // TODO: show "Unknown" instead of "typing.Any" when we convert to it
+    return visitAnyType();
   }
 
   @Override
@@ -463,6 +509,15 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     else if (param.isKeywordOnlySeparator()) {
       result.append(escaped(PyAstSingleStarParameter.TEXT));
     }
+    else if (param.isPositionalContainer() || param.isKeywordContainer()) {
+      PyType type = param.getArgumentType(myTypeEvalContext);
+      if (param.getName() != null) {
+        result.append(escaped(param.isPositionalContainer() ? "*" : "**"));
+        result.append(styled(param.getName(), PyHighlighter.PY_PARAMETER));
+        result.append(styled(": ", PyHighlighter.PY_OPERATION_SIGN));
+      }
+      result.append(render(type));
+    }
     else {
       PyType type = param.getType(myTypeEvalContext);
       // TODO remove that
@@ -486,7 +541,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       case ", " -> {
         yield styled(separator, PyHighlighter.PY_COMMA);
       }
-      case " | " -> {
+      case " | ", " & " -> {
         yield styled(separator, PyHighlighter.PY_OPERATION_SIGN);
       }
       default -> {
@@ -517,7 +572,11 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   @Override
   public @NotNull HtmlChunk visitPySelfType(@NotNull PySelfType selfType) {
     // Don't render Self as a type parameter
-    return className(selfType.getName());
+    HtmlBuilder builder = new HtmlBuilder();
+    builder.append(className(isRenderingFqn() ? "typing.Self" : "Self")); //NON-NLS
+    builder.append("@");
+    builder.append(render(selfType.getScopeClassType().toInstance()));
+    return selfType.isDefinition() ? wrapInTypingType(builder.toFragment()) : builder.toFragment();
   }
 
   @Override

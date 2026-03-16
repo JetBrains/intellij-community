@@ -2,6 +2,7 @@
 package com.intellij.util.lang
 
 import com.intellij.util.currentJavaVersionPlatformSpecific
+import org.jetbrains.annotations.ApiStatus
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
@@ -143,6 +144,7 @@ class JavaVersion private constructor(
       ReplaceWith("com.intellij.util.lang.CurrentJavaVersion.currentJavaVersion()"),
       level = DeprecationLevel.ERROR
     )
+    @ApiStatus.ScheduledForRemoval
     @JvmStatic
     fun current(): JavaVersion = currentJavaVersionPlatformSpecific()
 

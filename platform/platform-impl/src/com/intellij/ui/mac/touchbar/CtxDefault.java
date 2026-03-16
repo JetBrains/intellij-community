@@ -21,7 +21,7 @@ import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JFrame;
 import java.util.Map;
 
 final class CtxDefault {

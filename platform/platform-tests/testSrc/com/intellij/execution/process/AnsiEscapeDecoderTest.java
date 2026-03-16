@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
@@ -287,6 +288,7 @@ public class AnsiEscapeDecoderTest extends LightPlatformTestCase {
     };
   }
 
+  @PerformanceUnitTest
   public void testPerformance() {
     Process testProcess = createTestProcess();
 

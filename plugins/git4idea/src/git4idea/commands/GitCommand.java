@@ -96,6 +96,12 @@ public final class GitCommand {
   @ApiStatus.Internal
   public enum LockingPolicy {
     READ,
+    /**
+     * Commands with non-mandatory write side effects (e.g. git status) can be executed without locking the index
+     * by setting env variable "GIT_OPTIONAL_LOCKS=0" or passing "--no-optional-locks".
+     * </br>
+     * See the registry key "git.use.no.optional.locks"
+     */
     READ_OPTIONAL_LOCKING,
     WRITE
   }
@@ -147,6 +153,7 @@ public final class GitCommand {
     return myName;
   }
 
+  @ApiStatus.Internal
   public @NotNull LockingPolicy lockingPolicy() {
     return myLocking;
   }

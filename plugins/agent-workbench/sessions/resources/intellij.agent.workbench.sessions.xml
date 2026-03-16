@@ -1,0 +1,50 @@
+<idea-plugin>
+  <resource-bundle>messages.AgentSessionsBundle</resource-bundle>
+
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.agent.workbench.chat"/>
+    <module name="intellij.platform.compose"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.sessionProviderBridge"
+      interface="com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridge"
+      dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <toolWindow
+      id="agent.workbench.sessions"
+      anchor="right"
+      icon="AllIcons.Toolwindows.ToolWindowMessages"
+      canCloseContents="false"
+      factoryClass="com.intellij.agent.workbench.sessions.AgentSessionsToolWindowFactory"/>
+    <advancedSetting
+      id="agent.workbench.chat.open.in.dedicated.frame"
+      default="true"
+      bundle="messages.AgentSessionsBundle"
+      groupKey="advanced.settings.agent.workbench"/>
+    <projectFrameCapabilitiesProvider implementation="com.intellij.agent.workbench.sessions.AgentWorkbenchProjectFrameCapabilitiesProvider"/>
+    <toolWindowLayoutProfileProvider implementation="com.intellij.agent.workbench.sessions.AgentWorkbenchToolWindowLayoutProfileProvider"/>
+    <statusBarWidgetFactory
+      id="claude.quota"
+      implementation="com.intellij.agent.workbench.sessions.claude.ClaudeQuotaStatusBarWidgetFactory"/>
+  </extensions>
+
+  <actions resource-bundle="messages.AgentSessionsBundle">
+    <group id="AgentWorkbenchSessions.ToolWindow.GearActions">
+      <reference ref="OpenFile"/>
+      <separator/>
+      <action id="AgentWorkbenchSessions.ToggleDedicatedFrame" class="com.intellij.agent.workbench.sessions.AgentSessionsDedicatedFrameToggleAction"/>
+      <action id="AgentWorkbenchSessions.ToggleClaudeQuotaWidget" class="com.intellij.agent.workbench.sessions.AgentSessionsToggleClaudeQuotaWidgetAction"/>
+      <action id="AgentWorkbenchSessions.Refresh" class="com.intellij.agent.workbench.sessions.AgentSessionsRefreshAction"/>
+    </group>
+    <action
+      id="AgentWorkbenchSessions.ActivateWithProjectShortcut"
+      class="com.intellij.agent.workbench.sessions.AgentSessionsActivateWithProjectShortcutAction"
+      use-shortcut-of="ActivateProjectToolWindow"/>
+  </actions>
+</idea-plugin>

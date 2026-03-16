@@ -309,11 +309,8 @@
 
     "HelpTooltip": {
       "descriptionSizeDelta": {
-        "os.linux": -2,
+        "os.linux": -1,
         "os.mac": -1
-      },
-      "fontSizeDelta": {
-        "os.linux": -2
       },
       "mouseCursorOffset": {
         "os.mac": 17
@@ -374,7 +371,13 @@
 
     "MainMenu": {
       "background": "#3c3f41",
-      "foreground": "#bbbbbb"
+      "foreground": "#bbbbbb",
+      "Selection": {
+        "fullScreenArc": 8,
+        "outerInsets": "5,0,5,0",
+        "outerInsets.compact": "3,0,3,0",
+        "fullScreenOuterInsets": "2,0,2,0"
+      }
     },
 
     "Menu": {
@@ -790,7 +793,10 @@
     "TitlePane": {
       "background": "panel",
       "Button.preferredSize": "47,28",
-      "Button.preferredSize.compact": "44,32"
+      "Button.preferredSize.compact": "44,32",
+      "Dialog.Button.preferredWidth": "32",
+      "Dialog.Button.insets": "12,0,12,0",
+      "Dialog.Button.insets.compact": "8,0,8,0"
     },
 
     "activeCaption": "#434E60",
@@ -1074,7 +1080,11 @@
       "Projects.actions.background": "#3C5C86",
       "SidePanel.background": "#3C3F41"
     },
-
+    "WelcomeScreen.Frame.DisclosureButton": {
+      "defaultBackground": "Gray2",
+      "hoverOverlay": "#FFFFFF0D",
+      "pressedOverlay": "#FFFFFF1A"
+    },
     "RecentProject": {
       "Color1": {
         "MainToolbarGradientStart": "#654B40",

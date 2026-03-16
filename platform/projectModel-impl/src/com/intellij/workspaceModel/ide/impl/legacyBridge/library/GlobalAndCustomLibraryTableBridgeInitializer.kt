@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.backend.workspace.BridgeInitializer
-import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getEelMachine
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.storage.EntityChange
@@ -20,7 +20,7 @@ internal class GlobalAndCustomLibraryTableBridgeInitializer : BridgeInitializer 
   override fun initializeBridges(project: Project,
                                  changes: Map<Class<*>, List<EntityChange<*>>>,
                                  builder: MutableEntityStorage) = GlobalLibraryTableBridgeImpl.initializeLibraryBridgesTimeMs.addMeasuredTime {
-    val machine = project.getEelDescriptor().machine
+    val machine = project.getEelMachine()
     val entityStorage = GlobalWorkspaceModel.getInstance(machine).entityStorage
 
     @Suppress("UNCHECKED_CAST")

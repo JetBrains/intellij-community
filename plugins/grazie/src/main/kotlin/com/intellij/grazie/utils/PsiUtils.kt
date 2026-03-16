@@ -4,7 +4,14 @@ package com.intellij.grazie.utils
 import com.intellij.codeInspection.SuppressionUtil
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.psi.*
+import com.intellij.psi.ElementManipulators
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiCompiledElement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.tree.IElementType

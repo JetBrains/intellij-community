@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions.templates
 
+import com.intellij.devkit.core.icons.DevkitCoreIcons
 import com.intellij.ide.actions.CreateFileFromTemplateAction
 import com.intellij.ide.actions.CreateFileFromTemplateDialog
 import com.intellij.openapi.actionSystem.DataContext
@@ -11,7 +12,6 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.DevKitIcons
 import org.jetbrains.idea.devkit.actions.DevkitActionsUtil
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.util.DescriptorUtil
@@ -25,8 +25,8 @@ internal class NewPersistentStateAction : CreateFileFromTemplateAction() {
   override fun buildDialog(project: Project, directory: PsiDirectory, builder: CreateFileFromTemplateDialog.Builder) {
     builder
       .setTitle(DevKitBundle.message("dialog.title.new.devkit.state"))
-      .addKind(DevKitBundle.message("list.item.applications.state"), DevKitIcons.State, DEVKIT_APPLICATION_STATE_TEMPLATE)
-      .addKind(DevKitBundle.message("list.item.project.state"), DevKitIcons.ProjectState, DEVKIT_PROJECT_STATE_TEMPLATE)
+      .addKind(DevKitBundle.message("list.item.applications.state"), DevkitCoreIcons.State, DEVKIT_APPLICATION_STATE_TEMPLATE)
+      .addKind(DevKitBundle.message("list.item.project.state"), DevkitCoreIcons.ProjectState, DEVKIT_PROJECT_STATE_TEMPLATE)
       .setDefaultText("MySettingsService")
   }
 

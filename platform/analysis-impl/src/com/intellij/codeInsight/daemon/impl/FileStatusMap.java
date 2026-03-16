@@ -23,9 +23,14 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.CollectionFactory;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -140,13 +145,25 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
-  // used in plugins
+  /**
+   * @deprecated use {@link #markFileUpToDate(Document, CodeInsightContext, int, ProgressIndicator)} instead
+   */
+  @Deprecated
   public void markFileUpToDate(@NotNull Document document, int passId) {
     markFileUpToDate(document, CodeInsightContexts.anyContext(), passId, null);
   }
 
+  /**
+   * @param document document to mark up to date
+   * @param context the context in which the document is up to date. See {@link com.intellij.codeHighlighting.TextEditorHighlightingPass#getContext}
+   * @param passId the id of the pass that is marked up to date
+   * @param indicator the current indicator for debugging purposes
+   */
   @ApiStatus.Experimental
-  public void markFileUpToDate(@NotNull Document document, @NotNull CodeInsightContext context, int passId, ProgressIndicator indicator) {
+  public void markFileUpToDate(@NotNull Document document,
+                               @NotNull CodeInsightContext context,
+                               int passId,
+                               @Nullable ProgressIndicator indicator) {
     synchronized (myFileStatusMapState) {
       FileStatus status = myFileStatusMapState.getOrCreateStatus(document, context);
       status.setDefensivelyMarked(false, passId);
@@ -282,6 +299,22 @@ public final class FileStatusMap implements Disposable {
       FileStatus status = myFileStatusMapState.getStatusOrNull(document, context);
       return status != null && !status.isDefensivelyMarkedForAnyPass() && status.isWolfPassFinished() && status.allDirtyScopesAreNull();
     }
+  }
+
+  /**
+   * @return true when all registered statuses are clean
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public boolean allDirtyScopesAreNullFor(@NotNull List<? extends Document> documents) {
+    synchronized (myFileStatusMapState) {
+      return myFileStatusMapState.allDirtyScopesAreNullFor(documents);
+    }
+  }
+
+  @Override
+  public String toString() {
+    return myFileStatusMapState.toString();
   }
 
   public @NotNull String toString(@NotNull Document document) {

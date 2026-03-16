@@ -10,7 +10,11 @@ import com.intellij.util.Processor
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
 class DestructuringDeclarationReferenceSearcher(

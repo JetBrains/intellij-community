@@ -6,11 +6,19 @@ import com.intellij.collaboration.util.ResultUtil.processErrorAndGet
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.progress.reportProgress
-import org.jetbrains.plugins.github.api.*
-import org.jetbrains.plugins.github.api.data.*
+import org.jetbrains.plugins.github.api.GHGQLRequests
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.data.GHLabel
+import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
+import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.GithubIssueState
+import org.jetbrains.plugins.github.api.data.GithubPullRequestMergeMethod
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
+import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHNotFoundException
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
@@ -177,6 +185,16 @@ internal class GHPRDetailsServiceImpl(
       GHPRStatisticsCollector.logMergedEvent(project, GithubPullRequestMergeMethod.squash)
     }.processErrorAndGet { e ->
       LOG.info("Error occurred while squash-merging PR ${pullRequestId.number}", e)
+    }
+  }
+
+  override suspend fun deleteMergedBranch(pullRequestId: GHPRIdentifier, refId: String) {
+    runCatching {
+      requestExecutor.executeSuspend(
+        GHGQLRequests.Ref.delete(repository.serverPath, refId)
+      )
+    }.processErrorAndGet { e ->
+      LOG.info("Error occurred while deleting branch for PR ${pullRequestId.number}", e)
     }
   }
 

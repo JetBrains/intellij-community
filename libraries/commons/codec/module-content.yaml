@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.commons.codec.jar
   modules:
   - name: intellij.libraries.commons.codec
   library: commons-codec

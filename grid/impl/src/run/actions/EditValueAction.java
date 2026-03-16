@@ -2,7 +2,11 @@ package com.intellij.database.run.actions;
 
 import com.intellij.database.DataGridBundle;
 import com.intellij.database.DatabaseDataKeys;
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridModel;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtilCore;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.util.DataGridUIUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -14,13 +18,13 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.List;
 
 /**
  * @author Gregory.Shrago
  */
-public class EditValueAction extends AnAction implements DumbAware, GridAction {
+public class EditValueAction extends AnAction implements DumbAware, GridEditAction {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;

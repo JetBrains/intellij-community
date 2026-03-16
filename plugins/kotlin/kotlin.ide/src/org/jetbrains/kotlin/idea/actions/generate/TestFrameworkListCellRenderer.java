@@ -4,8 +4,9 @@ package org.jetbrains.kotlin.idea.actions.generate;
 
 import com.intellij.testIntegration.TestFramework;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JList;
+import java.awt.Component;
 
 public class TestFrameworkListCellRenderer extends DefaultListCellRenderer {
     @Override

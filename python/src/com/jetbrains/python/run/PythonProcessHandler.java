@@ -6,7 +6,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.KillableProcessHandler;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
@@ -14,10 +13,6 @@ import java.nio.charset.Charset;
 public class PythonProcessHandler extends KillableProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
 
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
-
-  public static boolean softKillOnWin() {
-    return Registry.is("kill.windows.processes.softly", false);
-  }
 
   public PythonProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);

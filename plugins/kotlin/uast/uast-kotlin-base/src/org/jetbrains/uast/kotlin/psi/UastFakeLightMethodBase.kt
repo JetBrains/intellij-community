@@ -3,7 +3,13 @@ package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiModifierList
+import com.intellij.psi.PsiParameterList
 import com.intellij.psi.impl.light.LightMethodBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability

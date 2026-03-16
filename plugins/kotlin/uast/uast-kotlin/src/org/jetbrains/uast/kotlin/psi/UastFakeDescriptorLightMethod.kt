@@ -2,7 +2,16 @@
 
 package org.jetbrains.uast.kotlin.psi
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiParameterList
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameterList
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.impl.light.LightModifierList
 import com.intellij.psi.impl.light.LightParameterListBuilder
 import com.intellij.psi.impl.light.LightReferenceListBuilder

@@ -15,7 +15,10 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester
 import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester.Action
-import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester.Action.*
+import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester.Action.Commit
+import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester.Action.PostponedFormatting
+import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester.Action.Save
+import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester.Action.SimpleAction
 import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester.Model
 import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester.RefKind
 import org.jetbrains.jetCheck.Generator

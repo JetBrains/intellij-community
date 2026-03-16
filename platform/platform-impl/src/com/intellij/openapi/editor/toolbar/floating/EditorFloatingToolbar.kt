@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.toolbar.floating
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
@@ -54,14 +54,14 @@ class EditorFloatingToolbar(editor: EditorImpl) :
     provider: FloatingToolbarProvider,
   ) {
     createLifetime().launch {
-      val dataContext = withContext(Dispatchers.UiWithModelAccess) {
+      val dataContext = withContext(Dispatchers.EDT) {
         editor.dataContext
       }
       val providerApplicable = readAction {
         provider.isApplicable(dataContext)
       }
       if (providerApplicable) {
-        withContext(Dispatchers.UiWithModelAccess) {
+        withContext(Dispatchers.EDT) {
           coroutineContext.ensureActive()
 
           val extensionDisposable = try {

@@ -22,18 +22,38 @@ import com.intellij.lang.Language
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorBundle
+import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.HectorComponentPanel
+import com.intellij.openapi.editor.HectorComponentPanelsProvider
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.event.MarkupModelListener
-import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.editor.markup.AnalyzerStatus
+import com.intellij.openapi.editor.markup.AnalyzingType
+import com.intellij.openapi.editor.markup.ErrorStripeRenderer
+import com.intellij.openapi.editor.markup.InspectionsLevel
+import com.intellij.openapi.editor.markup.InspectionsState
+import com.intellij.openapi.editor.markup.LanguageHighlightLevel
+import com.intellij.openapi.editor.markup.PassWrapper
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.SeverityStatusItem
+import com.intellij.openapi.editor.markup.StatusItem
+import com.intellij.openapi.editor.markup.UIController
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
@@ -55,7 +75,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Container
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.CancellationException
 
 open class TrafficLightRenderer private constructor(
@@ -579,7 +599,7 @@ open class TrafficLightRenderer private constructor(
   }
 
   // actions shouldn't be anonymous classes for statistics reasons
-  private class ShowImportTooltipAction(private val renderer: TrafficLightRenderer)
+  internal class ShowImportTooltipAction(private val renderer: TrafficLightRenderer)
     : ToggleAction(EditorBundle.message("iw.show.import.tooltip")) {
     override fun isSelected(e: AnActionEvent): Boolean {
       val psiFile = renderer.getPsiFile()
@@ -641,9 +661,12 @@ open class TrafficLightRenderer private constructor(
     ): TrafficLightRendererInfo {
       val viewProvider = psiFile.getViewProvider()
       val languages = viewProvider.getLanguages()
-      val settingMap = HashMap<Language, FileHighlightingSetting>(languages.size)
+      val settingMap = LinkedHashMap<Language, FileHighlightingSetting>(languages.size)
       val settings = HighlightingSettingsPerFile.getInstance(project)
-      for (psiRoot in viewProvider.getAllFiles()) {
+      val roots = viewProvider.getAllFiles().toMutableList()
+      // leave the first item (the base language) in place, show all others in a stable order
+      roots.subList(1, roots.size).sortBy { file ->  file.language.displayName }
+      for (psiRoot in roots) {
         val setting = settings.getHighlightingSettingForRoot(psiRoot)
         settingMap[psiRoot.getLanguage()] = setting
       }
@@ -651,7 +674,7 @@ open class TrafficLightRenderer private constructor(
       val virtualFile = psiFile.getVirtualFile()!!
       val inLib = fileIndex.isInLibrary(virtualFile) && !fileIndex.isInContent(virtualFile)
       val shouldHighlight = ProblemHighlightFilter.shouldHighlightFile(psiFile)
-      return TrafficLightRendererInfo(java.util.Map.copyOf(settingMap), inLib, shouldHighlight)
+      return TrafficLightRendererInfo(Collections.unmodifiableMap(settingMap), inLib, shouldHighlight)
     }
 
     private fun toPercent(progress: Double, finished: Boolean): Int {

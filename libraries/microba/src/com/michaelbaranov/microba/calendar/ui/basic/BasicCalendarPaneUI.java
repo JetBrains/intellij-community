@@ -5,9 +5,16 @@ import com.michaelbaranov.microba.calendar.HolidayPolicy;
 import com.michaelbaranov.microba.calendar.VetoPolicy;
 import com.michaelbaranov.microba.calendar.ui.CalendarPaneUI;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.plaf.ComponentUI;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -15,7 +22,11 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
+import java.util.TimeZone;
 
 public class BasicCalendarPaneUI extends CalendarPaneUI implements
     PropertyChangeListener, FocusListener {

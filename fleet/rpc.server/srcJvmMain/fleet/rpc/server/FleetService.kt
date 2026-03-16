@@ -6,7 +6,10 @@ import fleet.rpc.core.TransportDisconnectedException
 import fleet.rpc.core.serviceConnectionLoop
 import fleet.util.UID
 import fleet.util.async.use
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 class FleetService private constructor(
   val serviceId: UID,

@@ -4,9 +4,21 @@
   <category>JVM Tools</category>
   <vendor>JetBrains</vendor>
 
-  <depends>com.intellij.properties</depends>
-  <depends>com.intellij.java</depends>
-  <depends>com.intellij.modules.platform</depends>
+  <dependencies>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.java"/>
+    <module name="intellij.properties.backend"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.jsp"/>
+    <module name="intellij.properties.psi"/>
+    <module name="intellij.properties.backend.psi"/>
+    <module name="intellij.jvm.analysis"/>
+    <module name="intellij.java.impl.refactorings"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.backend"/>
+    <module name="intellij.platform.backend"/>
+    <!-- endregion -->
+  </dependencies>
 
   <description>
     Provides code inspections and corresponding quick fixes for internationalization in Java source code.

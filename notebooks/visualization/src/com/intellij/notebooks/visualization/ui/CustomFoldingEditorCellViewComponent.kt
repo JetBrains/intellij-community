@@ -11,9 +11,13 @@ import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.TextAttributes
 import org.jetbrains.annotations.TestOnly
-import java.awt.*
 import java.awt.AWTEvent.MOUSE_EVENT_MASK
 import java.awt.AWTEvent.MOUSE_MOTION_EVENT_MASK
+import java.awt.BorderLayout
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import javax.swing.BoxLayout
 import javax.swing.JComponent
@@ -48,7 +52,7 @@ open class CustomFoldingEditorCellViewComponent(protected val cell: EditorCell, 
   open fun updateCustomComponent() { }
 
   private fun updateGutterIcons(gutterAction: AnAction?) {
-    editor.updateManager.update { ctx ->
+    editor.notebookViewUpdater.update { ctx ->
       gutterActionRenderer = gutterAction?.let { ActionToGutterRendererAdapter(it) }
       ctx.addFoldingOperation {
         foldingRegion?.update()
@@ -65,7 +69,7 @@ open class CustomFoldingEditorCellViewComponent(protected val cell: EditorCell, 
     }
   }
 
-  override fun dispose(): Unit = editor.updateManager.update { ctx ->
+  override fun dispose(): Unit = editor.notebookViewUpdater.update { ctx ->
     disposeFolding(ctx)
   }
 

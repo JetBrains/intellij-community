@@ -58,7 +58,8 @@ jvm_library(
     "//plugins/completion-ml-ranking-models",
     "//plugins/completion-ml-ranking",
     "//platform/platform-impl/internal",
-  ]
+  ],
+  runtime_deps = [":completionMlRankingModels-tests"]
 )
 ### auto-generated section `build intellij.completionMlRankingModels.tests` end
 

@@ -4,19 +4,42 @@ package com.intellij.codeInspection.reference;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UAnnotation;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UDeclaration;
+import org.jetbrains.uast.UDeclarationKt;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UElementKt;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UExpressionList;
+import org.jetbrains.uast.UField;
+import org.jetbrains.uast.ULiteralExpression;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UParameter;
+import org.jetbrains.uast.UReferenceExpression;
+import org.jetbrains.uast.UResolvableKt;
+import org.jetbrains.uast.UTypeReferenceExpression;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import static com.intellij.psi.util.PsiFormatUtilBase.*;
+import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_CONTAINING_CLASS;
+import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_FQ_NAME;
+import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_NAME;
 
 public final class RefParameterImpl extends RefJavaElementImpl implements RefParameter {
   private static final int USED_FOR_READING_MASK = 0b01_00000000_00000000; // 17th bit

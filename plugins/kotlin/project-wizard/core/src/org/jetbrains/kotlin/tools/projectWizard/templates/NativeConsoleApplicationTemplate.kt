@@ -3,19 +3,21 @@
 package org.jetbrains.kotlin.tools.projectWizard.templates
 
 
+import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
+import org.jetbrains.kotlin.tools.projectWizard.core.Reader
+import org.jetbrains.kotlin.tools.projectWizard.core.asPath
+import org.jetbrains.kotlin.tools.projectWizard.core.buildList
+import org.jetbrains.kotlin.tools.projectWizard.core.safeAs
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ModuleIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.NativeTargetInternalIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.TargetConfigurationIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.withIrs
-import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
-import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.core.*
-import org.jetbrains.kotlin.tools.projectWizard.core.safeAs
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.NativeTargetConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.moduleType
+import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 
 object NativeConsoleApplicationTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.native.console.title")

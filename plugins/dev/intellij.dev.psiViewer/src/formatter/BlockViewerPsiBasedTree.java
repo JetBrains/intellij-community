@@ -5,11 +5,16 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.dev.psiViewer.PsiViewerDialog;
 import com.intellij.dev.psiViewer.ViewerPsiBasedTree;
 import com.intellij.diagnostic.CoreAttachmentFactory;
-import com.intellij.formatting.*;
+import com.intellij.formatting.ASTBlock;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingContext;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
@@ -30,7 +35,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -207,34 +212,36 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
       if (myTreeModel == null) {
         return;
       }
+      WriteIntentReadAction.run(() -> {
+        TreePath path = myBlockTree.getSelectionModel().getSelectionPath();
+        if (path == null) return;
+        DefaultMutableTreeNode component = (DefaultMutableTreeNode)path.getLastPathComponent();
+        if (component == null) return;
+        Object item = component.getUserObject();
 
-      TreePath path = myBlockTree.getSelectionModel().getSelectionPath();
-      if (path == null) return;
-      DefaultMutableTreeNode component = (DefaultMutableTreeNode)path.getLastPathComponent();
-      if (component == null) return;
-      Object item = component.getUserObject();
+        if (!(item instanceof BlockTreeNode descriptor)) return;
 
-      if (!(item instanceof BlockTreeNode descriptor)) return;
+        int blockStart = descriptor.getBlock().getTextRange().getStartOffset();
+        PsiFile file = myRootElement.getContainingFile();
+        PsiElement currentPsiEl = InjectedLanguageUtil.findElementAtNoCommit(file, blockStart);
+        if (currentPsiEl == null) currentPsiEl = file;
+        int blockLength = descriptor.getBlock().getTextRange().getLength();
+        while (currentPsiEl.getParent() != null &&
+               currentPsiEl.getTextRange().getStartOffset() == blockStart &&
+               currentPsiEl.getTextLength() != blockLength) {
+          currentPsiEl = currentPsiEl.getParent();
+        }
+        BlockTreeNode rootBlockNode = (BlockTreeNode)getRoot().getUserObject();
+        int baseOffset = 0;
+        if (rootBlockNode != null) {
+          baseOffset = rootBlockNode.getBlock().getTextRange().getStartOffset();
+        }
 
-      int blockStart = descriptor.getBlock().getTextRange().getStartOffset();
-      PsiFile file = myRootElement.getContainingFile();
-      PsiElement currentPsiEl = InjectedLanguageUtil.findElementAtNoCommit(file, blockStart);
-      if (currentPsiEl == null) currentPsiEl = file;
-      int blockLength = descriptor.getBlock().getTextRange().getLength();
-      while (currentPsiEl.getParent() != null &&
-             currentPsiEl.getTextRange().getStartOffset() == blockStart &&
-             currentPsiEl.getTextLength() != blockLength) {
-        currentPsiEl = currentPsiEl.getParent();
-      }
-      BlockTreeNode rootBlockNode = (BlockTreeNode)getRoot().getUserObject();
-      int baseOffset = 0;
-      if (rootBlockNode != null) {
-        baseOffset = rootBlockNode.getBlock().getTextRange().getStartOffset();
-      }
+        TextRange range = descriptor.getBlock().getTextRange();
+        range = range.shiftRight(-baseOffset);
+        myUpdater.updatePsiTree(currentPsiEl, myBlockTree.hasFocus() ? range : null);
+      });
 
-      TextRange range = descriptor.getBlock().getTextRange();
-      range = range.shiftRight(-baseOffset);
-      myUpdater.updatePsiTree(currentPsiEl, myBlockTree.hasFocus() ? range : null);
     }
   }
 

@@ -112,10 +112,10 @@ class GHPRReviewServiceImpl(private val securityService: GHPRSecurityService,
       LOG.info("Error occurred while updating review comment", it)
     }
 
-  override suspend fun addThread(reviewId: String, body: String, line: Int, side: Side, startLine: Int, fileName: String)
+  override suspend fun addThread(reviewId: String, body: String, line: Int, side: Side, startLine: Int, startSide: Side, fileName: String)
     : GHPullRequestReviewThread = runCatching {
-    requestExecutor.executeSuspend(GHGQLRequests.PullRequest.Review.addThread(repository.serverPath, reviewId, body, line, side, startLine,
-                                                                              fileName))
+    requestExecutor.executeSuspend(GHGQLRequests.PullRequest.Review
+                                     .addThread(repository.serverPath, reviewId, body, line, side, startLine, startSide, fileName))
   }.processErrorAndGet {
     LOG.info("Error occurred while adding review thread", it)
   }

@@ -14,7 +14,6 @@
     "reportImplicitStringConcatenation": "none",
     // Extra strict settings
     "reportMissingModuleSource": "error",
-    "reportShadowedImports": "error",
     "reportCallInDefaultInitializer": "error",
     "reportPropertyTypeMismatch": "error",
     "reportUninitializedInstanceVariable": "error",

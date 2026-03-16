@@ -6,16 +6,36 @@ import com.intellij.html.impl.providers.MicrodataReferenceProvider;
 import com.intellij.html.impl.util.MicrodataUtil;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.*;
-import com.intellij.psi.filters.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.filters.AndFilter;
+import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.filters.ScopeFilter;
+import com.intellij.psi.filters.XmlTagFilter;
+import com.intellij.psi.filters.XmlTextFilter;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.DtdReferencesProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.IdReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.XmlBaseReferenceProvider;
+import com.intellij.psi.xml.XmlAttlistDecl;
+import com.intellij.psi.xml.XmlDoctype;
+import com.intellij.psi.xml.XmlElementContentSpec;
+import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlEntityRef;
+import com.intellij.psi.xml.XmlProcessingInstruction;
+import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.patterns.XmlPatterns.*;
+import static com.intellij.patterns.XmlPatterns.xmlAttribute;
+import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
+import static com.intellij.patterns.XmlPatterns.xmlTag;
 
 public class XmlReferenceContributor extends PsiReferenceContributor {
   @Override

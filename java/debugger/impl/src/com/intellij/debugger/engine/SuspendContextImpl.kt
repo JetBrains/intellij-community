@@ -44,12 +44,8 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
   private val myDebugId: Long,
 ) : XSuspendContext(), SuspendContext, Disposable {
 
-  // Save the VM related to this suspend context, as a VM may be changed due to reattach
-  @Suppress("UsagesOfObsoleteApi")
-  val virtualMachineProxy: VirtualMachineProxyImpl = myDebugProcess.getVirtualMachineProxy()
-
-  @Suppress("UsagesOfObsoleteApi")
-  val managerThread: DebuggerManagerThreadImpl = myDebugProcess.managerThread
+  val managerThread: DebuggerManagerThreadImpl = DebuggerManagerThreadImpl.getCurrentThread()
+  val virtualMachineProxy: VirtualMachineProxyImpl get() = managerThread.vmProxy!!
 
   /** The thread that comes from the JVM event or was reset by switching to suspend-all procedure  */
   @get:ApiStatus.Internal
@@ -60,7 +56,10 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
   internal var myIsVotedForResume: Boolean = true
 
   @JvmField
-  protected var mySteppingThreadForResumeOneSteppingCurrentMode: ThreadReferenceProxyImpl? = null
+  internal var mySteppingThreadForResumeOneSteppingCurrentMode: ThreadReferenceProxyImpl? = null
+
+  @JvmField
+  internal var threadFilterWasPassed = true
 
   @get:ApiStatus.Internal
   @set:ApiStatus.Internal
@@ -268,7 +267,7 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
   @MagicConstant(flagsFromClass = EventRequest::class)
   override fun getSuspendPolicy(): Int = mySuspendPolicy
 
-  val suspendPolicyFromRequestors: String?
+  val suspendPolicyFromRequestors: String
     get() {
       if (mySuspendPolicy == EventRequest.SUSPEND_ALL) return DebuggerSettings.SUSPEND_ALL
       val eventSet = myEventSet
@@ -436,7 +435,6 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
   }
 
   override fun computeExecutionStacks(container: XExecutionStackContainer) {
-    assertCanBeUsed()
     managerThread.schedule(object : SuspendContextCommandImpl(this) {
       val myAddedThreads = hashSetOf<ThreadReferenceProxyImpl>()
 
@@ -460,6 +458,7 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
         comparator: Comparator<in JavaExecutionStack>,
         last: Boolean,
       ): CompletableFuture<Boolean> {
+        DebuggerManagerThreadImpl.assertIsManagerThread()
         val futures = threads.filterNotNull().mapNotNull { thread ->
           if (container.isObsolete) return CompletableFuture.completedFuture(false)
           if (!myAddedThreads.add(thread)) return@mapNotNull null
@@ -467,7 +466,7 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
         }
         return DebuggerUtilsAsync.reschedule(CompletableFuture.allOf(*futures.toTypedArray())).thenApply {
           if (container.isObsolete) return@thenApply true
-          val stacks = futures.map { it.join() }.sortedWith(comparator)
+          val stacks = futures.mapNotNull { it.join() }.sortedWith(comparator)
           container.addExecutionStack(stacks, last)
           true
         }

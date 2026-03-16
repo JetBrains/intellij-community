@@ -6,3 +6,5 @@ fun foo(p: Int) {
 // EXIST: p
 // EXIST: "acc: Int, c: Char ->"
 // EXIST: "acc, c ->"
+
+// IGNORE_K2

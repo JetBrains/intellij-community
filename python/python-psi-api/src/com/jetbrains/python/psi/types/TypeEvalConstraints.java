@@ -39,7 +39,7 @@ public final class TypeEvalConstraints {
     if (this == o) return true;
     if (!(o instanceof TypeEvalConstraints that)) return false;
 
-    return myAllowDataFlow == that.myAllowDataFlow && 
+    return myAllowDataFlow == that.myAllowDataFlow &&
            myAllowStubToAST == that.myAllowStubToAST &&
            myAllowCallContext == that.myAllowCallContext &&
            Objects.equals(myOrigin, that.myOrigin);

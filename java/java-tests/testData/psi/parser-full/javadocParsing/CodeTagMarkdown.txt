@@ -10,7 +10,8 @@ PsiJavaFile:CodeTagMarkdown.java
       PsiInlineDocTag:@code
         PsiDocToken:DOC_INLINE_TAG_START('{')
         PsiDocToken:DOC_TAG_NAME('@code')
-        PsiDocToken:DOC_COMMENT_DATA(' generalMethod((Object[]) null)')
+        PsiWhiteSpace(' ')
+        PsiDocToken:DOC_COMMENT_DATA('generalMethod((Object[]) null)')
         PsiDocToken:DOC_INLINE_TAG_END('}')
       PsiDocToken:DOC_COMMENT_DATA('.')
       PsiWhiteSpace('\n')

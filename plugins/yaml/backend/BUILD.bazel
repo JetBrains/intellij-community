@@ -28,6 +28,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
+    "//platform/core-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/structure-view-impl:structureView-impl",
     "//spellchecker",
@@ -66,6 +67,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
+    "//platform/core-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/testFramework",
@@ -96,6 +98,7 @@ jvm_library(
     "//platform/searchEverywhere/shared:searchEverywhere",
     "//platform/searchEverywhere/backend",
     "//plugins/IntelliLang/backend",
+    "@lib//:jet_check",
   ]
 )
 ### auto-generated section `build intellij.yaml.backend` end

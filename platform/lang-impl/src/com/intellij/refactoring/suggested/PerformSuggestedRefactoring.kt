@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.suggested
 
@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
@@ -129,15 +130,17 @@ internal fun performSuggestedRefactoring(state: SuggestedRefactoringState,
 
     is SuggestedChangeSignatureData -> {
       fun doRefactor(newParameterInfo: List<NewParameterInfo>) {
-        doRefactor(refactoringData, state, editor, actionPlace) {
-          val sig = refactoringData.newSignature
-          val newSig = SuggestedRefactoringSupport.Signature.create(
-            sig.name, sig.type, sig.parameters.map { param ->
-            val updated = newParameterInfo.firstOrNull { p -> p.newParameterData.presentableName == param.name }
-            if (updated == null) param else param.copy(name = updated.name)
-          }, sig.additionalData)
-          performChangeSignature(refactoringSupport, refactoringData.copy(newSignature = newSig!!),
-                                 newParameterInfo.map { info -> info.value }, project, editor)
+        WriteIntentReadAction.run {
+          doRefactor(refactoringData, state, editor, actionPlace) {
+            val sig = refactoringData.newSignature
+            val newSig = SuggestedRefactoringSupport.Signature.create(
+              sig.name, sig.type, sig.parameters.map { param ->
+                val updated = newParameterInfo.firstOrNull { p -> p.newParameterData.presentableName == param.name }
+                if (updated == null) param else param.copy(name = updated.name)
+              }, sig.additionalData)
+            performChangeSignature(refactoringSupport, refactoringData.copy(newSignature = newSig!!),
+                                   newParameterInfo.map { info -> info.value }, project, editor)
+          }
         }
       }
 

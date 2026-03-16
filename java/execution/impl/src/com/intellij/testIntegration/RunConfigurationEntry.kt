@@ -8,7 +8,7 @@ import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magni
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.FAILED_INDEX
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.vfs.VirtualFileManager
-import java.util.*
+import java.util.Date
 import javax.swing.Icon
 
 

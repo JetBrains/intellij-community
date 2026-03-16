@@ -10,5 +10,4 @@ fun g() {
     f(<caret>)
 }
 
-// IGNORE_K2
 // ELEMENT: create

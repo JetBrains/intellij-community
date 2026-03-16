@@ -3,7 +3,15 @@ package org.jetbrains.uast.kotlin
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtTryExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.DEFAULT_EXPRESSION_TYPES_LIST
+import org.jetbrains.uast.UAnnotated
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UTryExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 class KotlinUTryExpression(

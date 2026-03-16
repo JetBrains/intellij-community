@@ -7,7 +7,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.ChangeListColumn;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -22,7 +26,13 @@ import com.intellij.util.Consumer;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.*;
+import git4idea.GitCommit;
+import git4idea.GitFileRevision;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
+import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
@@ -32,7 +42,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 
 /**
  * The provider for committed change lists

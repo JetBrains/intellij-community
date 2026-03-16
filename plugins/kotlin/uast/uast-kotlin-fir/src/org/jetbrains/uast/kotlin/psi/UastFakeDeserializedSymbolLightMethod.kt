@@ -2,8 +2,22 @@
 package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.*
-import com.intellij.psi.impl.light.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiParameterList
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameterList
+import com.intellij.psi.PsiTypeParameterListOwner
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.impl.light.LightModifierList
+import com.intellij.psi.impl.light.LightParameterListBuilder
+import com.intellij.psi.impl.light.LightReferenceListBuilder
+import com.intellij.psi.impl.light.LightTypeParameterBuilder
+import com.intellij.psi.impl.light.LightTypeParameterListBuilder
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -11,7 +25,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
-import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.utils.SmartSet

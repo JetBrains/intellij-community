@@ -3,7 +3,7 @@ package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.impl.VcsUserImpl;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
@@ -45,7 +45,7 @@ public final class PatchFileHeaderParser {
         revision = revisionMatcher.group(1);
       }
       else if (authorMatcher.matches()) {
-        author = new VcsUserImpl(authorMatcher.group(1), ObjectUtils.chooseNotNull(authorMatcher.group(2), ""));
+        author = VcsUserUtil.createUser(authorMatcher.group(1), ObjectUtils.chooseNotNull(authorMatcher.group(2), ""));
       }
       else if (subjectMatcher.matches()) {
         message.append(subjectMatcher.group(1));

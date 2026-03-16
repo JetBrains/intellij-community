@@ -1,3 +1,21 @@
 *f:com.intellij.platform.debugger.impl.shared.ShowImagePopupUtil
 - sf:INSTANCE:com.intellij.platform.debugger.impl.shared.ShowImagePopupUtil
 - sf:showOnFrontend(com.intellij.openapi.project.Project,B[]):V
+*:com.intellij.xdebugger.impl.pinned.items.PinToTopMemberValue
+- com.intellij.xdebugger.impl.pinned.items.PinToTopValue
+- a:canBePinned():Z
+- getCustomMemberName():java.lang.String
+- getCustomParentTag():java.lang.String
+- isPinned():java.lang.Boolean
+*:com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue
+- com.intellij.xdebugger.impl.pinned.items.PinToTopValue
+- a:getTag():java.lang.String
+*:com.intellij.xdebugger.impl.pinned.items.PinToTopValue
+- canBePinned():Z
+*:com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopListener
+- a:onPinnedItemAdded(com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo):V
+- a:onPinnedItemRemoved(com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo):V
+com.intellij.xdebugger.impl.ui.XValueTextProvider
+- *a:shouldShowTextValue():Z
+f:com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil
+- *s:renderName(java.lang.String,I,java.util.function.Consumer):V

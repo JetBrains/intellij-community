@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
@@ -15,15 +16,32 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
 import com.intellij.vcs.log.history.FileHistoryUiProperties
 import com.intellij.vcs.log.history.isNewFileHistoryAvailable
 import com.intellij.vcs.log.history.isNewHistoryEnabled
-import com.intellij.vcs.log.impl.*
-import com.intellij.vcs.log.ui.table.column.*
+import com.intellij.vcs.log.impl.CommonUiProperties
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties
+import com.intellij.vcs.log.impl.VcsLogApplicationSettings
+import com.intellij.vcs.log.impl.VcsLogSharedSettings
+import com.intellij.vcs.log.impl.VcsLogUiProperties
+import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.ui.table.column.VcsLogColumn
+import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn
+import com.intellij.vcs.log.ui.table.column.addColumn
+import com.intellij.vcs.log.ui.table.column.getDynamicColumns
+import com.intellij.vcs.log.ui.table.column.isVisible
+import com.intellij.vcs.log.ui.table.column.removeColumn
+import com.intellij.vcs.log.ui.table.column.supportsColumnsToggling
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
@@ -45,6 +63,10 @@ internal class VcsLogConfigurable(private val project: Project) : BoundConfigura
         booleanPropertyCheckboxRow("action.Vcs.Log.AlignLabels.description", CommonUiProperties.LABELS_LEFT_ALIGNED, applicationSettings)
         booleanPropertyCheckboxRow("action.Vcs.Log.ShowChangesFromParents.description",
                                    MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS, applicationSettings)
+        booleanPropertyCheckboxWithMsDelayValueRow("action.Vcs.Log.ShowIssuePreviewOnHover.description",
+                                                   CommonUiProperties.SHOW_ISSUE_PREVIEW_ON_HOVER,
+                                                   CommonUiProperties.SHOW_ISSUE_PREVIEW_ON_HOVER_DELAY,
+                                                   applicationSettings, 0..2500, 250)
         diffPreviewLocationGroup(applicationSettings)
         columnVisibilityGroup(applicationSettings)
       }
@@ -119,6 +141,23 @@ internal class VcsLogConfigurable(private val project: Project) : BoundConfigura
     if (!properties.exists(property)) return
     row {
       booleanPropertyCheckbox(VcsLogBundle.message(textKey), property, properties)
+    }
+  }
+
+
+  private fun Panel.booleanPropertyCheckboxWithMsDelayValueRow(textKey: @PropertyKey(resourceBundle = VcsLogBundle.BUNDLE) String,
+                                                               booleanProperty: VcsLogUiProperties.VcsLogUiProperty<Boolean>,
+                                                               intProperty: VcsLogUiProperties.VcsLogUiProperty<Int>,
+                                                               properties: VcsLogUiProperties,
+                                                               range: IntRange? = null,
+                                                               keyboardStep: Int? = null) {
+    if (!properties.exists(booleanProperty) || !properties.exists(intProperty)) return
+    row {
+      booleanPropertyCheckbox(VcsLogBundle.message(textKey), booleanProperty, properties)
+      intTextField(range, keyboardStep)
+        .bindText({ properties[intProperty].toString() }, { it.toIntOrNull()?.let { properties[intProperty] } })
+      @Suppress("DialogTitleCapitalization")
+      label(ApplicationBundle.message("editbox.ms"))
     }
   }
 

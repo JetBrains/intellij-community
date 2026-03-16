@@ -84,6 +84,7 @@ enum class JavaFeature {
                     LanguageLevel.JDK_19_PREVIEW, LanguageLevel.JDK_20_PREVIEW),
   ENUM_QUALIFIED_NAME_IN_SWITCH(LanguageLevel.JDK_21, "feature.enum.qualified.name.in.switch"),
   SEQUENCED_COLLECTIONS(LanguageLevel.JDK_21, "feature.sequenced.collections"),
+  MATH_CLAMP_METHODS(LanguageLevel.JDK_21, "feature.math.clamp.methods"),
   STRING_TEMPLATES(LanguageLevel.JDK_21_PREVIEW, "feature.string.templates") {
     override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
       return super.isSufficient(useSiteLevel) && !useSiteLevel.isAtLeast(LanguageLevel.JDK_23)
@@ -303,6 +304,8 @@ enum class JavaFeature {
    */
   PATTERNS_WITH_TIGHTENED_DOMINANCE(LanguageLevel.JDK_26_PREVIEW, "feature.patterns.with.tightened.dominance"),
 
+
+  COMPARATOR_MIN_MAX(LanguageLevel.JDK_26, "feature.comparator.min.max"),
 
   VALHALLA_VALUE_CLASSES(LanguageLevel.JDK_X, "feature.valhalla.value.classes"),
   ;

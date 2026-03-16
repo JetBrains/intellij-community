@@ -8,7 +8,7 @@ import com.intellij.diff.tools.util.base.HighlightPolicy
 import com.intellij.diff.tools.util.base.IgnorePolicy
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
-import java.util.*
+import java.util.BitSet
 
 class BlocksComparisonUtilTest : HeavyDiffTestCase() {
   fun `test simple blocks`() {

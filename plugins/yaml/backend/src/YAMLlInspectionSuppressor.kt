@@ -53,7 +53,10 @@ private fun findNoinspectionCommentForKeyValue(yamlKeyValue: YAMLKeyValue, toolI
 }
 
 private fun findFileNoinspectionComment(element: PsiElement, toolId: String?): PsiComment? {
-  for (child in element.containingFile.children) {
+  // There are files with several PSI trees, and we're interested in the YAML tree (IJPL-228138)
+  val yamlFile = element.containingFile.viewProvider.getPsi(YAMLLanguage.INSTANCE) ?: return null
+
+  for (child in yamlFile.children) {
     if (child !is PsiComment) continue
     val text = child.text
     val matcher = SUPPRESS_IN_FILE_COMMENT_PATTERN.matcher(text)

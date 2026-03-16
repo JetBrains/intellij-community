@@ -24,7 +24,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 import java.io.BufferedInputStream
 import java.io.FileInputStream
-import java.util.*
+import java.util.Properties
 
 abstract class MavenResolveToWorkspaceTest : MavenMultiVersionImportingTestCase() {
   @Test

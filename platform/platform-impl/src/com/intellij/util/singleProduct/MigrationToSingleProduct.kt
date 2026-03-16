@@ -11,7 +11,11 @@ import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.InitialConfigImportState
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
@@ -64,7 +68,7 @@ fun migrateCommunityToSingleProductIfNeeded(args: List<String>) {
     return
   }
 
-  if (System.getenv()["TOOLBOX_VERSION"] != null) return
+  if (System.getenv("TOOLBOX_VERSION") != null) return
   if (!(OS.CURRENT == OS.macOS && currentDirName.endsWith(".app"))) return
 
   val newDir = currentDir.resolveSibling(newDirName)
@@ -185,10 +189,10 @@ private object MigrateToSingleProductCollector : CounterUsagesCollector() {
   private val GROUP = @Suppress("DEPRECATION") EventLogGroup("migrate.to.single.product", 1)
 
   @JvmField
-  val WELCOME_PAGE_SHOWN: EventId = GROUP.registerEvent("vision.page.shown", "How many times button on welcome vision page was shown after patch update to SID")
+  val WELCOME_PAGE_SHOWN: EventId = GROUP.registerEvent("vision.page.shown")
 
   @JvmField
-  val BUTTON_CLICKED: EventId = GROUP.registerEvent("vision.button.clicked", "How many times button on welcome vision page was clicked")
+  val BUTTON_CLICKED: EventId = GROUP.registerEvent("vision.button.clicked")
 
   override fun getGroup(): EventLogGroup = GROUP
 }
@@ -199,6 +203,6 @@ interface MigrationToSingleProductResourceProvider {
 
   companion object {
     @JvmStatic
-    fun getInstance(): MigrationToSingleProductResourceProvider = service()
+    fun getInstance(): MigrationToSingleProductResourceProvider = service()  // NB: registered only in IU and PY; check before use
   }
 }

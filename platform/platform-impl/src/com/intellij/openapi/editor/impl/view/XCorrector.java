@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl.view;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
 

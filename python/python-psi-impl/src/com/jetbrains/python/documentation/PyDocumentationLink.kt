@@ -23,7 +23,13 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.highlighting.PyHighlighter
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyPsiFacade
+import com.jetbrains.python.psi.PyTypeAliasStatement
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyTypeParser
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -78,7 +84,7 @@ object PyDocumentationLink {
   }
 
   @JvmStatic
-  fun toTypeAliasStatement(@NlsSafe content: String, typeAliasStatement: PyTypeAliasStatement) : HtmlChunk {
+  fun toTypeAliasStatement(@NlsSafe content: String, typeAliasStatement: PyTypeAliasStatement): HtmlChunk {
     val qualifiedName = typeAliasStatement.qualifiedName
     return when {
       qualifiedName != null -> HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_FUNC$qualifiedName", content)

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
-import com.intellij.build.events.MessageEvent;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.DefaultGradleSourceSetDependencyModel;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGradleSourceSetModel;
@@ -14,7 +13,12 @@ import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.model.project.ContentRootData;
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
+import com.intellij.openapi.externalSystem.model.project.LibraryData;
+import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
@@ -45,18 +49,33 @@ import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
+import org.gradle.tooling.model.dsl.GradleDslBaseScriptModel;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
-import org.jetbrains.annotations.*;
-import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
-import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
-import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.plugins.gradle.model.DefaultExternalProject;
+import org.jetbrains.plugins.gradle.model.DefaultExternalTask;
+import org.jetbrains.plugins.gradle.model.DefaultGradleLightBuild;
+import org.jetbrains.plugins.gradle.model.ExternalProject;
+import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
+import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
+import org.jetbrains.plugins.gradle.model.GradleLightBuild;
+import org.jetbrains.plugins.gradle.model.GradleLightProject;
+import org.jetbrains.plugins.gradle.model.GradleSourceSetDependencyModel;
+import org.jetbrains.plugins.gradle.model.GradleSourceSetModel;
+import org.jetbrains.plugins.gradle.model.GradleTaskModel;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
-import org.jetbrains.plugins.gradle.service.execution.*;
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
+import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
+import org.jetbrains.plugins.gradle.service.execution.GradleWrapperHelper;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionRunner;
 import org.jetbrains.plugins.gradle.service.syncAction.impl.GradleSyncProjectConfigurator;
@@ -67,14 +86,29 @@ import org.jetbrains.plugins.gradle.util.GradleModuleDataKt;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.find;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findAll;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findAllRecursively;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findChild;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getChildren;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.toCanonicalPath;
 import static org.jetbrains.plugins.gradle.service.project.ArtifactMappingServiceKt.OWNER_BASE_GRADLE;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getModuleId;
 
@@ -283,15 +317,14 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
       .spanBuilder("GradleCall")
       .startSpan();
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
+      if (GradleVersionUtil.isGradleAtLeast(resolverContext.getGradleVersion(), "9.2")) {
+        var scriptModel = GradleExecutionHelper.getModel(connection, resolverContext, GradleDslBaseScriptModel.class);
+        models.addRootModel(GradleDslBaseScriptModel.class, scriptModel);
+        GradleSyncProjectConfigurator.runScriptBasePhase(resolverContext);
+      }
+
       var modelFetchActionResultHandler = GradleSyncProjectConfigurator.createModelFetchResultHandler(resolverContext);
       GradleModelFetchActionRunner.runAndTraceBuildAction(connection, resolverContext, buildAction, modelFetchActionResultHandler);
-
-      var gradleVersion = resolverContext.getGradleVersion();
-      if (GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
-        var projectPath = resolverContext.getProjectPath();
-        var issue = new DeprecatedGradleVersionIssue(gradleVersion, projectPath);
-        resolverContext.report(MessageEvent.Kind.WARNING, issue);
-      }
     }
     catch (Throwable t) {
       gradleCallErrorsCount += 1;

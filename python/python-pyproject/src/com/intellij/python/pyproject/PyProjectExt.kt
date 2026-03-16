@@ -35,6 +35,9 @@ sealed class TomlTableSafeGetError {
  * On a missing value, returns an instance of [Result.Success] with a value of null.
  * On a present value with the valid type, returns an instance of [Result.Success] with that value.
  *
+ * @param key is the key in a table
+ * @param unquotedDottedKey specifies whether a key should be treated as a dotted key without quotes
+ *
  * Example:
  *
  * ```kotlin
@@ -46,8 +49,10 @@ sealed class TomlTableSafeGetError {
  * ```
  */
 @Internal
-inline fun <reified T> TomlTable.safeGet(key: String): Result<T?, TomlTableSafeGetError.UnexpectedType> {
-  val value = get("\"$key\"")
+inline fun <reified T> TomlTable.safeGet(
+  key: String, unquotedDottedKey: Boolean = false,
+): Result<T?, TomlTableSafeGetError.UnexpectedType> {
+  val value = if (unquotedDottedKey) get(key) else get("\"$key\"")
 
   if (value == null) {
     return success(null)
@@ -101,6 +106,9 @@ internal inline fun <reified T> TomlTable.safeGetRequired(key: String): Result<T
  * On a missing value, returns an instance of [Result.Success] with a value of null.
  * On a present value with the valid type, returns an instance of [Result.Success] with a [List] of type [T].
  *
+ * @param key is the key in a table
+ * @param unquotedDottedKey specifies whether a key should be treated as a dotted key without quotes
+ *
  * Example:
  *
  * ```kotlin
@@ -116,8 +124,10 @@ internal inline fun <reified T> TomlTable.safeGetRequired(key: String): Result<T
  * ```
  */
 @Internal
-inline fun <reified T> TomlTable.safeGetArr(key: String): Result<List<T>?, TomlTableSafeGetError.UnexpectedType> {
-  val array = safeGet<TomlArray>(key).getOr { return it }
+inline fun <reified T> TomlTable.safeGetArr(
+  key: String, unquotedDottedKey: Boolean = false,
+): Result<List<T>?, TomlTableSafeGetError.UnexpectedType> {
+  val array = safeGet<TomlArray>(key, unquotedDottedKey).getOr { return it }
 
   if (array == null) {
     return success(null)

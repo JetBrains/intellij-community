@@ -28,7 +28,7 @@ internal class InstallWithOptionsPackageAction : ModifyPackagesActionBase() {
       val service = PyPackagingToolWindowService.getInstance(project)
       val details = service.detailsForPackage(pkg) ?: return@launch
 
-      installWithOptions(project, details)
+      Helper.installWithOptions(project, details)
     }
   }
 
@@ -39,7 +39,7 @@ internal class InstallWithOptionsPackageAction : ModifyPackagesActionBase() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-  companion object {
+  object Helper {
     internal suspend fun installWithOptions(project: Project, details: PythonPackageDetails, version: String? = null) {
       val optionsString = withContext(Dispatchers.EDT) {
         Messages.showInputDialog(project,
@@ -54,6 +54,6 @@ internal class InstallWithOptionsPackageAction : ModifyPackagesActionBase() {
       val specification = details.toPackageSpecification(version ?: details.availableVersions.first()) ?: return
       project.service<PyPackagingToolWindowService>().installPackage(specification.toInstallRequest(), options)
     }
-
   }
+
 }

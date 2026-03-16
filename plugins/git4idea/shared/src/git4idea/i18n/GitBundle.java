@@ -26,7 +26,7 @@ public final class GitBundle {
   /**
    * @deprecated prefer {@link #message(String, Object...)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull @Nls String getString(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
     return message(key);
   }

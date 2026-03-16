@@ -24,7 +24,19 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionFromMethodQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyMakeMethodStaticQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.Property;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyRaiseStatement;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -52,6 +64,7 @@ public final class PyMethodMayBeStaticInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyFunction(@NotNull PyFunction node) {
       if (isBuiltin(node)) return;
@@ -93,8 +106,9 @@ public final class PyMethodMayBeStaticInspection extends PyInspection {
             final PyExpression expression = expressions[0];
             if (expression instanceof PyCallExpression) {
               final PyExpression callee = ((PyCallExpression)expression).getCallee();
-              if (callee != null && PyNames.NOT_IMPLEMENTED_ERROR.equals(callee.getText()))
+              if (callee != null && PyNames.NOT_IMPLEMENTED_ERROR.equals(callee.getText())) {
                 mayBeStatic[0] = false;
+              }
             }
             else if (PyNames.NOT_IMPLEMENTED_ERROR.equals(expression.getText())) {
               mayBeStatic[0] = false;

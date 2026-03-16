@@ -29,6 +29,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -68,7 +69,12 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
   @Override
   public PsiElement @NotNull [] getChildren() {
-    PsiElement psiChild = getFirstChild();
+    return getChildrenSkippingLeaves(this);
+  }
+
+  @ApiStatus.Internal
+  public static PsiElement @NotNull [] getChildrenSkippingLeaves(@NotNull PsiElement element) {
+    PsiElement psiChild = element.getFirstChild();
     if (psiChild == null) return EMPTY_ARRAY;
 
     List<PsiElement> result = null;

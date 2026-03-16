@@ -4,8 +4,16 @@ package com.intellij.ide.plugins
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
-import com.intellij.platform.testFramework.plugins.*
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
+import com.intellij.platform.testFramework.plugins.appService
+import com.intellij.platform.testFramework.plugins.buildDir
+import com.intellij.platform.testFramework.plugins.content
+import com.intellij.platform.testFramework.plugins.dependencies
+import com.intellij.platform.testFramework.plugins.depends
+import com.intellij.platform.testFramework.plugins.module
+import com.intellij.platform.testFramework.plugins.plugin
+import com.intellij.platform.testFramework.plugins.pluginAlias
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsExtension
@@ -17,6 +25,7 @@ import java.nio.file.FileVisitResult
 internal class PluginDependenciesTest {
   init {
     Logger.setUnitTestMode() // due to warnInProduction use in IdeaPluginDescriptorImpl
+    PluginManagerCore.isUnitTestMode = true // FIXME git rid of this IJPL-220869
   }
 
   @RegisterExtension
@@ -100,9 +109,9 @@ internal class PluginDependenciesTest {
     `foo plugin-dependency bar`()
     plugin("bar") {
       content {
-        module("bar.optional", ModuleLoadingRule.OPTIONAL) { packagePrefix = "bar.optional" }
-        module("bar.required", ModuleLoadingRule.REQUIRED) { packagePrefix = "bar.required" }
-        module("bar.embedded", ModuleLoadingRule.EMBEDDED) { packagePrefix = "bar.embedded" }
+        module("bar.optional", ModuleLoadingRuleValue.OPTIONAL) { packagePrefix = "bar.optional" }
+        module("bar.required", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "bar.required" }
+        module("bar.embedded", ModuleLoadingRuleValue.EMBEDDED) { packagePrefix = "bar.embedded" }
       }
     }.buildDir(pluginDirPath.resolve("bar"))
     val pluginSet = buildPluginSet()
@@ -142,7 +151,7 @@ internal class PluginDependenciesTest {
   fun `plugin is not loaded if required module is not available`() {
     plugin("sample.plugin") {
       content {
-        module("required.module", ModuleLoadingRule.REQUIRED) {
+        module("required.module", ModuleLoadingRuleValue.REQUIRED) {
           packagePrefix = "required"
           dependencies {
             module("unknown")
@@ -160,7 +169,7 @@ internal class PluginDependenciesTest {
     bar()
     plugin("sample.plugin") {
       content {
-        module("required.module", ModuleLoadingRule.REQUIRED) {
+        module("required.module", ModuleLoadingRuleValue.REQUIRED) {
           packagePrefix = "required"
           dependencies {
             plugin("bar")
@@ -179,7 +188,7 @@ internal class PluginDependenciesTest {
     `bar-plugin with module bar`()
     plugin("sample.plugin") {
       content {
-        module("required.module", ModuleLoadingRule.REQUIRED) {
+        module("required.module", ModuleLoadingRuleValue.REQUIRED) {
           packagePrefix = "required"
           dependencies {
             module("bar")
@@ -215,15 +224,15 @@ internal class PluginDependenciesTest {
     val samplePluginDir = pluginDirPath.resolve("sample-plugin")
     plugin("sample.plugin") {
       content {
-        module("embedded.module", ModuleLoadingRule.EMBEDDED) {
+        module("embedded.module", ModuleLoadingRuleValue.EMBEDDED) {
           packagePrefix = "embedded"
           isSeparateJar = true
         }
-        module("required.module", ModuleLoadingRule.REQUIRED) {
+        module("required.module", ModuleLoadingRuleValue.REQUIRED) {
           packagePrefix = "required"
           isSeparateJar = true
         }
-        module("optional.module", ModuleLoadingRule.OPTIONAL) {
+        module("optional.module", ModuleLoadingRuleValue.OPTIONAL) {
           packagePrefix = "optional"
         }
       }
@@ -248,8 +257,8 @@ internal class PluginDependenciesTest {
     val corePluginDir = pluginDirPath.resolve("core")
     plugin(PluginManagerCore.CORE_PLUGIN_ID) {
       content {
-        module("embedded.module", ModuleLoadingRule.EMBEDDED) { packagePrefix = "embedded" }
-        module("required.module", ModuleLoadingRule.REQUIRED) { packagePrefix = "required" }
+        module("embedded.module", ModuleLoadingRuleValue.EMBEDDED) { packagePrefix = "embedded" }
+        module("required.module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "required" }
       }
     }.buildDir(corePluginDir)
     val result = buildPluginSet()
@@ -266,7 +275,7 @@ internal class PluginDependenciesTest {
     val corePluginDir = pluginDirPath.resolve("core")
     plugin(PluginManagerCore.CORE_PLUGIN_ID) {
       content {
-        module("required.module", ModuleLoadingRule.REQUIRED) {
+        module("required.module", ModuleLoadingRuleValue.REQUIRED) {
           packagePrefix = "required"
           dependencies { module("unresolved") }
         }
@@ -281,7 +290,7 @@ internal class PluginDependenciesTest {
     val samplePluginDir = pluginDirPath.resolve("sample-plugin")
     plugin("sample.plugin") {
       content {
-        module("embedded.module", ModuleLoadingRule.EMBEDDED) {}
+        module("embedded.module", ModuleLoadingRuleValue.EMBEDDED) {}
       }
     }.buildDir(samplePluginDir)
     val result = buildPluginSet()
@@ -296,7 +305,7 @@ internal class PluginDependenciesTest {
     plugin("dep") {}.buildDir(pluginDirPath.resolve("dep"))
     plugin("sample.plugin") {
       content {
-        module("embedded.module", ModuleLoadingRule.EMBEDDED) {
+        module("embedded.module", ModuleLoadingRuleValue.EMBEDDED) {
           packagePrefix = "embedded"
           dependencies { plugin("dep") }
         }
@@ -312,16 +321,16 @@ internal class PluginDependenciesTest {
   fun `dependencies between plugin modules`() {
     plugin("sample.plugin") {
       content {
-        module("embedded.module", ModuleLoadingRule.EMBEDDED) {
+        module("embedded.module", ModuleLoadingRuleValue.EMBEDDED) {
           packagePrefix = "embedded"
         }
-        module("required.module", ModuleLoadingRule.REQUIRED) {
+        module("required.module", ModuleLoadingRuleValue.REQUIRED) {
           packagePrefix = "required"
           dependencies {
             module("embedded.module")
           }
         }
-        module("required2.module", ModuleLoadingRule.REQUIRED) {
+        module("required2.module", ModuleLoadingRuleValue.REQUIRED) {
           packagePrefix = "required2"
           dependencies {
             module("required.module")
@@ -494,7 +503,7 @@ internal class PluginDependenciesTest {
   fun `plugin is loaded if it has a depends dependency on plugin alias that is placed in required v2 module and other modules affects sorting`() {
     plugin("baz") {
       content {
-        module("baz.module", ModuleLoadingRule.REQUIRED) {
+        module("baz.module", ModuleLoadingRuleValue.REQUIRED) {
           packagePrefix = "baz.module"
           pluginAlias("bar")
         }
@@ -570,7 +579,7 @@ internal class PluginDependenciesTest {
   fun `plugin is not loaded if it is incompatible with another plugin and they both contain the same module`() {
     plugin("com.intellij.java") {
       content {
-        module("com.intellij.java.debugger.frontend", ModuleLoadingRule.EMBEDDED) {
+        module("com.intellij.java.debugger.frontend", ModuleLoadingRuleValue.EMBEDDED) {
           packagePrefix = "com.intellij.java.debugger.frontend"
         }
       }
@@ -586,14 +595,20 @@ internal class PluginDependenciesTest {
     }.buildDir(pluginDirPath.resolve("intellij.java.frontend"))
 
     val pluginSet = buildPluginSet()
-    assertThat(pluginSet).hasExactlyEnabledPlugins("com.intellij.java")
+    if (System.getProperty("revert.IJPL220159") == "true") {
+      // this is wrong: these two plugins conflict on declared content module ids, so they should be both excluded.
+      // Yet, in the old plugin init it's not an error
+      assertThat(pluginSet).hasExactlyEnabledPlugins("com.intellij.java")
+    } else {
+      assertThat(pluginSet).doesNotHaveEnabledPlugins()
+    }
   }
 
   @Test
   fun `plugin is loaded if it has a module dependency on v2 module with slash in its name`() {
     plugin("bar") {
       content {
-        module("bar/module", ModuleLoadingRule.REQUIRED) { packagePrefix = "bar.module" }
+        module("bar/module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "bar.module" }
       }
     }.buildDir(pluginDirPath.resolve("bar"))
     plugin("foo") { dependencies { module("bar/module") } }.buildDir(pluginDirPath.resolve("foo"))
@@ -606,7 +621,7 @@ internal class PluginDependenciesTest {
   fun `plugin is not loaded if it has a module dependency on v2 module with slash in its name but dependency has a dot instead`() {
     plugin("bar") {
       content {
-        module("bar/module", ModuleLoadingRule.REQUIRED) { packagePrefix = "bar.module" }
+        module("bar/module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "bar.module" }
       }
     }.buildDir(pluginDirPath.resolve("bar"))
     plugin("foo") { dependencies { module("bar.module") } }.buildDir(pluginDirPath.resolve("foo"))
@@ -619,9 +634,9 @@ internal class PluginDependenciesTest {
     plugin(PluginManagerCore.CORE_PLUGIN_ID) {
       pluginAlias("com.intellij.modules.platform")
       content {
-        module("embedded.module", ModuleLoadingRule.EMBEDDED) { packagePrefix = "embedded" }
-        module("required.module", ModuleLoadingRule.REQUIRED) { packagePrefix = "required" }
-        module("optional.module", ModuleLoadingRule.OPTIONAL) { packagePrefix = "optional" }
+        module("embedded.module", ModuleLoadingRuleValue.EMBEDDED) { packagePrefix = "embedded" }
+        module("required.module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "required" }
+        module("optional.module", ModuleLoadingRuleValue.OPTIONAL) { packagePrefix = "optional" }
       }
     }.buildDir(pluginDirPath.resolve("core"))
     plugin("foo") {}.buildDir(pluginDirPath.resolve("foo"))
@@ -638,9 +653,9 @@ internal class PluginDependenciesTest {
   fun `plugin is loaded when it has a plugin dependency on core plugin, its content modules are not in classloader parents`() {
     plugin(PluginManagerCore.CORE_PLUGIN_ID) {
       content {
-        module("embedded.module", ModuleLoadingRule.EMBEDDED) { packagePrefix = "embedded" }
-        module("required.module", ModuleLoadingRule.REQUIRED) { packagePrefix = "required" }
-        module("optional.module", ModuleLoadingRule.OPTIONAL) { packagePrefix = "optional" }
+        module("embedded.module", ModuleLoadingRuleValue.EMBEDDED) { packagePrefix = "embedded" }
+        module("required.module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "required" }
+        module("optional.module", ModuleLoadingRuleValue.OPTIONAL) { packagePrefix = "optional" }
       }
     }.buildDir(pluginDirPath.resolve("core"))
     plugin("foo") {
@@ -659,9 +674,9 @@ internal class PluginDependenciesTest {
   fun `plugin is loaded when it has a module dependency on content module of core plugin`() {
     plugin(PluginManagerCore.CORE_PLUGIN_ID) {
       content {
-        module("embedded.module", ModuleLoadingRule.EMBEDDED) { packagePrefix = "embedded" }
-        module("required.module", ModuleLoadingRule.REQUIRED) { packagePrefix = "required" }
-        module("optional.module", ModuleLoadingRule.OPTIONAL) { packagePrefix = "optional" }
+        module("embedded.module", ModuleLoadingRuleValue.EMBEDDED) { packagePrefix = "embedded" }
+        module("required.module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "required" }
+        module("optional.module", ModuleLoadingRuleValue.OPTIONAL) { packagePrefix = "optional" }
       }
     }.buildDir(pluginDirPath.resolve("core"))
     plugin("foo") {
@@ -702,7 +717,7 @@ internal class PluginDependenciesTest {
     foo()
     plugin("bar") {
       content {
-        module("content.module", ModuleLoadingRule.REQUIRED) {
+        module("content.module", ModuleLoadingRuleValue.REQUIRED) {
           depends("foo")
           isSeparateJar = true
         }
@@ -777,7 +792,7 @@ internal class PluginDependenciesTest {
   fun `content module is not loaded if it depends on module from plugin which was not included in explicit loaded subset`() {
     plugin("foo") {
       content {
-        module("foo.embedded", ModuleLoadingRule.EMBEDDED) {}
+        module("foo.embedded", ModuleLoadingRuleValue.EMBEDDED) {}
       }
     }.buildDir(pluginDirPath.resolve("foo"))
     plugin("bar") {
@@ -801,9 +816,9 @@ internal class PluginDependenciesTest {
   fun `optional content modules implicitly depend on main module, while required do not`() {
     plugin("foo") {
       content {
-        module("embedded.module", ModuleLoadingRule.EMBEDDED) { packagePrefix = "embedded" }
-        module("required.module", ModuleLoadingRule.REQUIRED) { packagePrefix = "required" }
-        module("optional.module", ModuleLoadingRule.OPTIONAL) { packagePrefix = "optional" }
+        module("embedded.module", ModuleLoadingRuleValue.EMBEDDED) { packagePrefix = "embedded" }
+        module("required.module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "required" }
+        module("optional.module", ModuleLoadingRuleValue.OPTIONAL) { packagePrefix = "optional" }
       }
     }.buildDir(pluginDirPath.resolve("foo"))
     val pluginSet = buildPluginSet()
@@ -866,7 +881,7 @@ internal class PluginDependenciesTest {
   }.buildDir(pluginDirPath.resolve("baz"))
   private fun `baz with a required module which has an alias bar and package prefix`() = plugin("baz") {
     content {
-      module("baz.module", ModuleLoadingRule.REQUIRED) {
+      module("baz.module", ModuleLoadingRuleValue.REQUIRED) {
         packagePrefix = "baz.module"
         pluginAlias("bar")
       }

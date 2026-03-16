@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
@@ -44,6 +44,7 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
   public void testReferenceInCall() { doSingleTest(); }
   public void testReferenceLambdaType() { doSingleTest(); }
   public void testReferenceNull() { doSingleTest(); }
+
   public void testWithAlignment() {
     final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     boolean old = settings.ALIGN_GROUP_FIELD_DECLARATIONS;
@@ -69,21 +70,13 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
 
   public void testDependantConstant() { doSingleTest(); }
   public void testDependantConstant2() { doSingleTest(); }
-
-  public void testArrayBraces() {
-    doSingleTest();
-  }
-
+  public void testMethodReference() { doSingleTest(); }
+  public void testArrayBraces() { doSingleTest(); }
   public void testInnerGeneric() { doSingleTest(); }
-
   public void testInnerGenericArray() { doSingleTest(); }
-  
   public void testFromUnfinishedAnonymousClass() { doSingleTest(); }
-
   public void testCreateFromAnnotationParameterIncorrectCode() { doSingleTest(); }
-
   public void testAbstractClassIncorrectCode() { doSingleTest(); }
-  
   public void testBrokenCode() { doSingleTest(); }
 
   protected void doSingleTest() {

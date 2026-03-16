@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+@SuppressWarnings("UseOptimizedEelFunctions")
 public final class VMOptions {
   private static final Logger LOG = Logger.getInstance(VMOptions.class);
   private static final ReadWriteLock ourUserFileLock = new ReentrantReadWriteLock();

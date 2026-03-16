@@ -15,7 +15,10 @@ import org.junit.rules.RuleChain;
 
 import java.io.File;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public final class WSLUtilTest {
   private static final TestFixtureRule appRule = new TestFixtureRule();

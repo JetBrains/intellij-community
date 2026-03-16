@@ -17,7 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private class WebPreviewEditorProvider : AsyncFileEditorProvider {
+internal class WebPreviewEditorProvider : AsyncFileEditorProvider {
   override fun accept(project: Project, file: VirtualFile): Boolean = file is WebPreviewVirtualFile
 
   override fun acceptRequiresReadAction(): Boolean = false

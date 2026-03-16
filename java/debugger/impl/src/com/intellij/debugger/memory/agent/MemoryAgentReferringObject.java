@@ -9,7 +9,7 @@ import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.function.Function;
 
 public abstract class MemoryAgentReferringObject implements ReferringObject {

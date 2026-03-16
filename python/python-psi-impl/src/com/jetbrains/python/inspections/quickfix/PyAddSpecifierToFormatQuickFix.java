@@ -10,7 +10,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyStringFormatParser;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -63,7 +68,8 @@ public class PyAddSpecifierToFormatQuickFix extends PsiUpdateModCommandQuickFix 
 
       int shift = 1;
       for (int i = 0; i < chunks.size(); i++) {
-        final PyStringFormatParser.PercentSubstitutionChunk chunk = PyUtil.as(chunks.get(i), PyStringFormatParser.PercentSubstitutionChunk.class);
+        final PyStringFormatParser.PercentSubstitutionChunk chunk =
+          PyUtil.as(chunks.get(i), PyStringFormatParser.PercentSubstitutionChunk.class);
         if (chunk != null) {
           if (elements.length <= i) return;
           final PyType type = context.getType(elements[i]);

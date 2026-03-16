@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMigration;
-import com.intellij.psi.impl.PsiManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 @Service(Service.Level.PROJECT)

@@ -13,6 +13,7 @@ import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -29,23 +30,25 @@ public final class LineSet {
   private static final int MODIFIED_MASK = 0x4;
   private static final int SEPARATOR_MASK = 0x3;
 
-  private final int[] myStarts;
-  private final byte[] myFlags; // MODIFIED_MASK bit is for is/setModified(line); SEPARATOR_MASK 2 bits stores line separator length: 0..2
+  private final int @NotNull [] myStarts;
+  private final byte @NotNull [] myFlags; // MODIFIED_MASK bit is for is/setModified(line); SEPARATOR_MASK 2 bits stores line separator length: 0..2
   private final int myLength;
 
-  private LineSet(int[] starts, byte[] flags, int length) {
+  private LineSet(int @NotNull [] starts, byte @NotNull [] flags, int length) {
     myStarts = starts;
     myFlags = flags;
     myLength = length;
   }
 
-  public static LineSet createLineSet(CharSequence text) {
+  @Contract("_ -> new")
+  public static @NotNull LineSet createLineSet(@NotNull CharSequence text) {
     return createLineSet(text, false);
   }
 
   private static @NotNull LineSet createLineSet(@NotNull CharSequence text, boolean markModified) {
-    IntList starts = new IntArrayList();
-    ByteList flags = new ByteArrayList();
+    int approxLineCount = text.length() / 20;
+    IntList starts = new IntArrayList(approxLineCount);
+    ByteList flags = new ByteArrayList(approxLineCount);
 
     LineTokenizer lineTokenizer = new LineTokenizer(text);
     while (!lineTokenizer.atEnd()) {
@@ -105,7 +108,8 @@ public final class LineSet {
     return new LineSet(starts, flags, myLength + lengthDelta);
   }
 
-  private LineSet genericUpdate(int startOffset, int endOffset, CharSequence replacement) {
+  @Contract("_, _, _ -> new")
+  private @NotNull LineSet genericUpdate(int startOffset, int endOffset, @NotNull CharSequence replacement) {
     int startLine = findLineIndex(startOffset);
     int endLine = findLineIndex(endOffset);
 
@@ -152,7 +156,7 @@ public final class LineSet {
     return new LineSet(starts, flags, myLength + lengthShift);
   }
 
-  private int shiftData(int[] dstStarts, byte[] dstFlags, int srcOffset, int dstOffset, int count, int offsetDelta) {
+  private int shiftData(int @NotNull [] dstStarts, byte @NotNull [] dstFlags, int srcOffset, int dstOffset, int count, int offsetDelta) {
     if (count < 0) return dstOffset;
 
     System.arraycopy(myFlags, srcOffset, dstFlags, dstOffset, count);

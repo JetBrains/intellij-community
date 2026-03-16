@@ -5,8 +5,19 @@ import app.cash.turbine.test
 import com.intellij.collaboration.async.ComputedListChange.Insert
 import com.intellij.collaboration.async.ComputedListChange.Remove
 import com.intellij.util.containers.HashingStrategy
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -17,6 +28,33 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class CoroutineUtilTest {
+  @Test
+  fun `flatMapLatestEach emits an empty list for empty inputs`() = runTest {
+    val input = flowOf(emptyList<Int>())
+    val output = input.flatMapLatestEach { flowOf(it + 1 /* this one is 'latest' */) }.toList()
+
+    assertThat(output)
+      .containsExactly(arrayOf())
+  }
+
+  @Test
+  fun `flatMapLatestEach correctly handles single item`() = runTest {
+    val input = flowOf(listOf(1))
+    val output = input.flatMapLatestEach { flowOf(it + 1) }.toList()
+
+    assertThat(output)
+      .containsExactly(arrayOf(2))
+  }
+
+  @Test
+  fun `flatMapLatestEach correctly handles many items`() = runTest {
+    val input = flowOf(listOf(), listOf(1), listOf(1, 3)).onEach { delay(100) }
+    val output = input.flatMapLatestEach { flowOf(it + 1) }.toList()
+
+    assertThat(output)
+      .containsExactly(arrayOf(), arrayOf(2), arrayOf(2, 4))
+  }
+
   @Test
   fun `Collecting batches works`() = runTest {
     val collectedList = flowOf(listOf(1, 2), listOf(3), listOf(4, 5))

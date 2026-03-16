@@ -3,7 +3,10 @@ package com.jetbrains.env.python.testing
 
 import com.intellij.execution.RunManager
 import com.intellij.openapi.project.Project
-import com.jetbrains.env.*
+import com.jetbrains.env.EnvTestTagsRequired
+import com.jetbrains.env.PyConfigurationProducerForRunner
+import com.jetbrains.env.PyEnvTestCase
+import com.jetbrains.env.PyProcessWithConsoleTestTask
 import com.jetbrains.env.ut.PyScriptTestProcessRunner
 import com.jetbrains.env.ut.PyScriptTestProcessRunner.TEST_TARGET_PREFIX
 import com.jetbrains.python.testing.PyTestConfiguration

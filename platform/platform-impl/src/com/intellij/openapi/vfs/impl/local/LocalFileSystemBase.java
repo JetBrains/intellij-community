@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.core.CoreBundle;
@@ -8,10 +8,21 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
+import com.intellij.openapi.util.io.FileSystemUtil;
+import com.intellij.openapi.util.io.FileTooBigException;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LargeFileWriteRequestor;
+import com.intellij.openapi.vfs.LocalFileOperationsHandler;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.SafeWriteRequestor;
+import com.intellij.openapi.vfs.VFileProperty;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -34,8 +45,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.*;
-import java.nio.file.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.IOError;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.DirectoryIteratorException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.text.Normalizer;
@@ -86,16 +112,37 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return file.getFileSystem() == this ? Path.of(toIoPath(file)) : null;
   }
 
-  private Path convertToNioFileAndCheck(VirtualFile file, boolean assertSlowOp) throws NoSuchFileException {
+  private Path convertToNioFileAndCheck(VirtualFile file, boolean assertSlowOp) throws IOException {
     if (assertSlowOp) { // remove condition when writes are moved to BGT
       SlowOperations.assertSlowOperationsAreAllowed();
     }
-    if (SystemInfo.isUnix && file.is(VFileProperty.SPECIAL)) { // avoid opening FIFO files
-      throw new NoSuchFileException(file.getPath(), null, "Not a file");
-    }
+
     var path = getNioPath(file);
     if (path == null) throw new NoSuchFileException(file.getPath());
+
+    checkNotSpecialFile(file, path);
+
     return path;
+  }
+
+  protected static void checkNotSpecialFile(@NotNull VirtualFile file,
+                                            @NotNull Path path) throws IOException {
+    if (SystemInfo.isUnix) {
+      //IJPL-234326: we don't want to deal with pipes (and symlinks to pipes), because it blocks IO potentially forever.
+      //  Strictly speaking, we want to prohibit only read/write operations, but right now we prohibit all accesses,
+      //  just to be sure -- could be relaxed later.
+      if (file.is(VFileProperty.SPECIAL)) {
+        throw new NoSuchFileException(file.getPath(), null, "Access to special files (fifo?) is prohibited");
+      }
+      if (file.is(VFileProperty.SYMLINK)) {
+        if (Files.exists(path)) {
+          BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class/*_follows_ symlinks*/);
+          if (attributes.isOther()) {
+            throw new NoSuchFileException(file.getPath(), null, "Access to special files (fifo?) is prohibited");
+          }
+        }
+      }
+    }
   }
 
   @Override
@@ -333,12 +380,14 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   //         LocalFileSystemImpl are really could/should deal with per-directory case-sensitivity though...
   @ApiStatus.Internal
   public @NotNull CaseSensitivity fetchCaseSensitivity(@NotNull VirtualFile parent, @NotNull String childName) {
-    if (Registry.is("vfs.fetch.case.sensitivity.using.eel")) {
+    // Both registry keys have the fallback value `false`. If this code is executed before `Registry` initialization,
+    // it means that there can be no connections to remote machines anyway.
+    if (Registry.is("vfs.fetch.case.sensitivity.using.eel", false)) {
       EelPath eelPath = LocalFileSystemEelUtil.toEelPath(parent, childName);
       if (
         eelPath != null && (
           !(eelPath.getDescriptor() instanceof LocalEelDescriptor)
-          || Registry.is("vfs.fetch.case.sensitivity.using.eel.local")  // TODO IJPL-204344
+          || Registry.is("vfs.fetch.case.sensitivity.using.eel.local", false)  // TODO IJPL-204344
         )
       ) {
         return LocalFileSystemEelUtil.fetchCaseSensitivityUsingEel(eelPath);
@@ -397,14 +446,18 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
     var length = Files.size(nioFile);
 
-    if (FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(nioFile.getFileName().toString()))) {
+    if (FileSizeLimit.isTooLargeForContentLoading(length, FileUtilRt.getExtension(nioFile.getFileName().toString()))) {
       throw new FileTooBigException("File " + nioFile.toAbsolutePath() + " is too large (=" + length + " b)");
     }
+
+    // Eel is handled above.
+    //noinspection UseOptimizedEelFunctions
     return Files.readAllBytes(nioFile);
   }
 
   @Override
-  public @NotNull OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) throws IOException {
+  public @NotNull OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp)
+    throws IOException {
     var path = convertToNioFileAndCheck(file, false);
     var stream = !SafeWriteRequestor.shouldUseSafeWrite(requestor) ? Files.newOutputStream(path) :
                  requestor instanceof LargeFileWriteRequestor ? new PreemptiveSafeFileOutputStream(path) :

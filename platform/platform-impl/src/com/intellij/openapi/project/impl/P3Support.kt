@@ -17,7 +17,6 @@ import java.util.concurrent.atomic.AtomicReference
  */
 @Experimental
 interface P3Support {
-
   /**
    * Checks if the P3 support is enabled.
    *
@@ -45,7 +44,7 @@ interface P3Support {
   /**
    * Specifies the name of the file in the shared config directory where the list of disabled plugins is stored.
    */
-  open val disabledPluginsFileName: String
+  val disabledPluginsFileName: String
     get() = DisabledPluginsState.DISABLED_PLUGINS_FILENAME
 }
 

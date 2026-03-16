@@ -16,7 +16,25 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayAccessExpression;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiCaseLabelElement;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPostfixExpression;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiUtil;

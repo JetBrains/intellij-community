@@ -7,7 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public final class GradleContainerUtil {
   public static final ImmutableDomainObjectSet<?> EMPTY_DOMAIN_OBJECT_SET = ImmutableDomainObjectSet.of(Collections.emptyList());

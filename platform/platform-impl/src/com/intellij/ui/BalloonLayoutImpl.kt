@@ -5,7 +5,6 @@ package com.intellij.ui
 
 import com.intellij.notification.Notification
 import com.intellij.notification.impl.NotificationCollector
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.popup.Balloon
@@ -19,15 +18,23 @@ import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Insets
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.Window
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import java.lang.Runnable
 import java.util.function.IntSupplier
 import javax.swing.JLayeredPane
 import javax.swing.JRootPane

@@ -11,7 +11,12 @@ import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandFinishedEvent

@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -20,11 +21,14 @@ final class UnknownMissingSdkFixLocal extends UnknownSdkFixActionLocalBase imple
 
   private final @NotNull UnknownSdkLocalSdkFix myFix;
   private final @NotNull UnknownSdk mySdk;
+  private final @Nullable Project myProject;
 
-  UnknownMissingSdkFixLocal(@NotNull UnknownSdk sdk,
+  UnknownMissingSdkFixLocal(@Nullable Project project,
+                            @NotNull UnknownSdk sdk,
                             @NotNull UnknownSdkLocalSdkFix fix) {
     myFix = fix;
     mySdk = sdk;
+    myProject = project;
   }
 
   @NotNull
@@ -58,10 +62,6 @@ final class UnknownMissingSdkFixLocal extends UnknownSdkFixActionLocalBase imple
     return ProjectBundle.message("config.unknown.sdk.local", sdkTypeName, myFix.getPresentableVersionString());
   }
 
-  public @NotNull @Nls String getActionAppliedMessage() {
-    return ProjectBundle.message("notification.text.sdk.usage.is.set.to", getSdkNameForUi(), myFix.getVersionString());
-  }
-
   @Override
   public @NotNull @Nls String getActionDetailedText() {
     String sdkTypeName = mySdk.getSdkType().getPresentableName();
@@ -93,7 +93,7 @@ final class UnknownMissingSdkFixLocal extends UnknownSdkFixActionLocalBase imple
 
       mySdk.getSdkType().setupSdkPaths(sdk);
       myFix.configureSdk(sdk);
-      UnknownMissingSdkFix.registerNewSdkInJdkTable(sdk.getName(), sdk);
+      UnknownMissingSdkFix.registerNewSdkInJdkTable(myProject, sdk.getName(), sdk);
 
       LOG.info("Automatically set Sdk " + mySdk + " to " + myFix.getExistingSdkHome());
       return sdk;

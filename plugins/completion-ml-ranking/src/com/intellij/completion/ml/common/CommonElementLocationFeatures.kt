@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.common
 
-import com.intellij.codeInsight.completion.BaseCompletionService
 import com.intellij.codeInsight.completion.CompletionLocation
+import com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_CONTRIBUTOR
 import com.intellij.codeInsight.completion.ml.ContextFeatures
 import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
@@ -34,7 +34,7 @@ class CommonElementLocationFeatures : ElementFeatureProvider {
       result["item_class"] = MLFeatureValue.className(it::class.java)
     }
 
-    element.getUserData(BaseCompletionService.LOOKUP_ELEMENT_CONTRIBUTOR)?.let {
+    element.getUserData(LOOKUP_ELEMENT_CONTRIBUTOR)?.let {
       val actualCompletionContributor: Class<*>? = element.getUserData(LOOKUP_ORIGINAL_ELEMENT_CONTRIBUTOR_TYPE)
       result["contributor"] = MLFeatureValue.className(actualCompletionContributor ?: it::class.java)
     }

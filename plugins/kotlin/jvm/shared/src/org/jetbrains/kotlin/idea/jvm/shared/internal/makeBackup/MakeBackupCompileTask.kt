@@ -6,7 +6,7 @@ import com.intellij.history.LocalHistory
 import com.intellij.openapi.compiler.CompileContext
 import com.intellij.openapi.compiler.CompileTask
 import com.intellij.openapi.util.Key
-import java.util.*
+import java.util.Random
 
 private val random: Random = Random()
 

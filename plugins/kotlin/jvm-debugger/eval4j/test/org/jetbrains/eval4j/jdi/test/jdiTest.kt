@@ -3,16 +3,25 @@
 package org.jetbrains.eval4j.jdi.test
 
 import com.intellij.debugger.impl.DebuggerUtilsAsync
-import com.sun.jdi.*
+import com.sun.jdi.Bootstrap
+import com.sun.jdi.ClassLoaderReference
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.StringReference
+import com.sun.jdi.ThreadReference
 import com.sun.jdi.event.BreakpointEvent
 import com.sun.jdi.event.ClassPrepareEvent
 import junit.framework.TestCase
 import junit.framework.TestSuite
-import org.jetbrains.eval4j.*
+import org.jetbrains.eval4j.ExceptionThrown
+import org.jetbrains.eval4j.MethodDescription
+import org.jetbrains.eval4j.ObjectValue
+import org.jetbrains.eval4j.ValueReturned
+import org.jetbrains.eval4j.interpreterLoop
 import org.jetbrains.eval4j.jdi.JDIEval
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.eval4j.jdi.jdiObj
 import org.jetbrains.eval4j.jdi.makeInitialFrame
+import org.jetbrains.eval4j.obj
 import org.jetbrains.eval4j.test.buildTestSuite
 import org.jetbrains.eval4j.test.getTestName
 import org.jetbrains.org.objectweb.asm.Opcodes

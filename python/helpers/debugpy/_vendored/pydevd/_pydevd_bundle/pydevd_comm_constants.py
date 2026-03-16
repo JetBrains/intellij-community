@@ -107,6 +107,9 @@ CMD_RETURN = 502
 CMD_SET_PROTOCOL = 503
 CMD_ERROR = 901
 
+CMD_IMAGE_COMMAND_START_LOAD = 213
+CMD_IMAGE_COMMAND_CHUNK_LOAD = 214
+
 # this number can be changed if there's need to do so
 # if the io is too big, we'll not send all (could make the debugger too non-responsive)
 MAX_IO_MSG_SIZE = 10000
@@ -191,10 +194,13 @@ ID_TO_MEANING = {
     "206": "CMD_STEP_INTO_COROUTINE",
     "207": "CMD_LOAD_SOURCE_FROM_FRAME_ID",
     "211": "CMD_TABLE_EXEC",
+    "213": "CMD_IMAGE_COMMAND_START_LOAD",
+    "214": "CMD_IMAGE_COMMAND_CHUNK_LOAD",
     "501": "CMD_VERSION",
     "502": "CMD_RETURN",
     "503": "CMD_SET_PROTOCOL",
     "901": "CMD_ERROR",
+
 }
 
 

@@ -6,25 +6,65 @@ import com.intellij.codeInsight.completion.EmptyDeclarativeInsertHandler
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.OffsetKey
 import com.intellij.codeInsight.completion.PrefixMatcher
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.lookup.LookupElementDecorator
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.SmartList
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.completion.*
+import org.jetbrains.kotlin.idea.completion.AbstractLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.BasicLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY
+import org.jetbrains.kotlin.idea.completion.KeywordValues
+import org.jetbrains.kotlin.idea.completion.LookupElementFactory
+import org.jetbrains.kotlin.idea.completion.SmartCompletionInBasicWeigher
+import org.jetbrains.kotlin.idea.completion.ToFromOriginalFileMapper
+import org.jetbrains.kotlin.idea.completion.createLookupElement
+import org.jetbrains.kotlin.idea.completion.createLookupElementForType
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
-import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.completion.shouldCompleteThisItems
+import org.jetbrains.kotlin.idea.completion.thisExpressionItems
+import org.jetbrains.kotlin.idea.completion.tryGetOffset
+import org.jetbrains.kotlin.idea.core.ArgumentPositionData
+import org.jetbrains.kotlin.idea.core.COMPARISON_TOKENS
+import org.jetbrains.kotlin.idea.core.ExpectedInfo
+import org.jetbrains.kotlin.idea.core.ExpectedInfos
+import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
+import org.jetbrains.kotlin.idea.core.SmartCastCalculator
+import org.jetbrains.kotlin.idea.core.fuzzyType
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.isAlmostEverything
 import org.jetbrains.kotlin.idea.util.toFuzzyType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.KtVariableDeclaration
+import org.jetbrains.kotlin.psi.KtWhenConditionWithExpression
+import org.jetbrains.kotlin.psi.KtWhenEntry
+import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -35,10 +75,12 @@ import org.jetbrains.kotlin.types.typeUtil.isBooleanOrNullableBoolean
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.utils.addIfNotNull
 
+@K1Deprecation
 interface InheritanceItemsSearcher {
     fun search(nameFilter: (String) -> Boolean, consumer: (LookupElement) -> Unit)
 }
 
+@K1Deprecation
 class SmartCompletion(
     private val expression: KtExpression,
     private val resolutionFacade: ResolutionFacade,

@@ -4,7 +4,9 @@ package com.intellij.gradle.toolingExtension.impl.util.collectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 

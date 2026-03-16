@@ -64,7 +64,8 @@ public final class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
     return myDataViewSettings;
   }
 
-  public XDebuggerGeneralSettings getGeneralSettings() {
+  @Override
+  public @NotNull XDebuggerGeneralSettings getGeneralSettings() {
     return myGeneralSettings;
   }
 
@@ -89,7 +90,8 @@ public final class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
   public void dispose() {
   }
 
-  public void forEachSettings(Consumer<XDebuggerSettings> consumer) {
+  @Override
+  public void forEachSettings(@NotNull Consumer<XDebuggerSettings> consumer) {
     SETTINGS_EP.forEachExtensionSafe(consumer);
   }
 
@@ -97,7 +99,8 @@ public final class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
     return SETTINGS_EP.findExtension(aClass);
   }
 
-  public @Nullable XDebuggerSettings<?> findFirstSettings(Predicate<XDebuggerSettings> predicate) {
+  @Override
+  public @Nullable XDebuggerSettings<?> findFirstSettings(@NotNull Predicate<XDebuggerSettings> predicate) {
     return SETTINGS_EP.findFirstSafe(predicate);
   }
 

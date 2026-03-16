@@ -19,13 +19,16 @@ kotlin {
     jvm() 
     js(IR)
 
+    val jvmMain by sourceSets.getting
+    val jsMain by sourceSets.getting
+
     sourceSets {
         val includedIntoJvm by creating { }
         val includedIntoJvmAndJs by creating { }
 
-        jvm().compilations["main"].source(includedIntoJvm)
+        jvmMain.dependsOn(includedIntoJvm)
 
-        jvm().compilations["main"].source(includedIntoJvmAndJs)
-        js().compilations["main"].source(includedIntoJvmAndJs)
+        jvmMain.dependsOn(includedIntoJvmAndJs)
+        jsMain.dependsOn(includedIntoJvmAndJs)
     }
 }

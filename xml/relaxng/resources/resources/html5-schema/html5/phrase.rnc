@@ -42,15 +42,15 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common.attrs.i18n
 		&	common.attrs.present
 		&	common.attrs.other
-		&	a.attrs.name?
 		&	common.attrs.aria?
+		&	aria.global?
 		)
 	a.attrs =
 		(	common.attrs.basic
 		&	common.attrs.i18n
 		&	common.attrs.present
 		&	common.attrs.other
-		&	a.attrs.name?
+		&	aria.global?
 		&	shared-hyperlink.attrs.download?
 		&	shared-hyperlink.attrs.target?
 		&	shared-hyperlink.attrs.rel?
@@ -59,10 +59,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-hyperlink.attrs.ping?
 		&	referrerpolicy?
 		)
-		a.attrs.name =
-		  attribute name {
-		    common.data.id # XXX not what the spec says
-		  }
 	a.inner.phrasing =
 		( common.inner.phrasing )
 	a.inner.flow =
@@ -87,7 +83,7 @@ datatypes w = "http://whattf.org/datatype-draft"
     }
   shared-hyperlink.attrs.rel =
     attribute rel {
-      string
+      w:rel-value
     }
   shared-hyperlink.attrs.hreflang =
     attribute hreflang {
@@ -401,7 +397,11 @@ referrerpolicy =
 	br.elem =
 		element br { br.inner & br.attrs }
 	br.attrs =
-		(	common.attrs
+		(	common.attrs.basic
+		&	common.attrs.i18n
+		&	common.attrs.present
+		&	common.attrs.other
+		&	aria.state.hidden?
 		&	common.attrs.aria.role.presentation?
 		)
 	br.inner =
@@ -414,7 +414,11 @@ referrerpolicy =
 	wbr.elem =
 		element wbr { wbr.inner & wbr.attrs }
 	wbr.attrs =
-		(	common.attrs
+		(	common.attrs.basic
+		&	common.attrs.i18n
+		&	common.attrs.present
+		&	common.attrs.other
+		&	aria.state.hidden?
 		&	common.attrs.aria.role.presentation?
 		)
 	wbr.inner =

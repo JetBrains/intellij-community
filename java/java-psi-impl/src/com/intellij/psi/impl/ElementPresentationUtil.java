@@ -8,9 +8,19 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiClassUtil;
+import com.intellij.psi.util.PsiMethodUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
@@ -20,7 +30,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class ElementPresentationUtil {
   private ElementPresentationUtil() {
@@ -220,6 +230,7 @@ public final class ElementPresentationUtil {
     iconManager.registerIconLayer(FLAGS_FINAL, iconManager.getPlatformIcon(PlatformIcons.FinalMark));
     iconManager.registerIconLayer(FLAGS_JUNIT_TEST, iconManager.getPlatformIcon(PlatformIcons.JunitTestMark));
     iconManager.registerIconLayer(FLAGS_RUNNABLE, iconManager.getPlatformIcon(PlatformIcons.RunnableMark));
+    iconManager.registerIconLayer(ElementBase.FLAGS_LOCKED, null);
   }
 
   public static Icon addVisibilityIcon(final PsiModifierListOwner element, final int flags, final RowIcon baseIcon) {

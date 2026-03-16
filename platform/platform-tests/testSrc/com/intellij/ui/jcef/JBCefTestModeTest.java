@@ -7,8 +7,14 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import static com.intellij.ui.scale.TestScaleHelper.*;
-import static org.junit.Assert.*;
+import static com.intellij.ui.scale.TestScaleHelper.assumeStandalone;
+import static com.intellij.ui.scale.TestScaleHelper.restoreProperties;
+import static com.intellij.ui.scale.TestScaleHelper.setRegistryProperty;
+import static com.intellij.ui.scale.TestScaleHelper.setSystemProperty;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Tests ide.browser.jcef.headless.enabled and ide.browser.jcef.testMode.enabled registry keys

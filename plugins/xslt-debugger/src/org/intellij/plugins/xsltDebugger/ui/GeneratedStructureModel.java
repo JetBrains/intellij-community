@@ -24,12 +24,12 @@ import com.intellij.pom.Navigatable;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Interner;
+import com.intellij.util.ui.EDT;
 import org.intellij.plugins.xsltDebugger.XsltDebuggerSession;
 import org.intellij.plugins.xsltDebugger.rt.engine.OutputEventQueue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -72,7 +72,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
   }
 
   public void update(final List<OutputEventQueue.NodeEvent> eventQueue) {
-    if (!SwingUtilities.isEventDispatchThread()) {
+    if (!EDT.isCurrentThreadEdt()) {
       ApplicationManager.getApplication().invokeLater(() -> updateImpl(eventQueue));
       return;
     }

@@ -4,7 +4,13 @@ package com.intellij.openapi.vfs.newvfs.persistent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.AsyncFileListener
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
@@ -25,7 +31,7 @@ import org.junit.runners.model.Statement
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.moveTo
 import kotlin.io.path.writeText
@@ -229,7 +235,7 @@ class VfsEventsTest : BareTestFixtureTestCase() {
 
   private fun createJar(directory: Path): Path {
     val jarPath = directory.resolve("Test.jar")
-    JBZipFile(jarPath.toFile()).use {
+    JBZipFile(jarPath, false).use {
       it.getOrCreateEntry("awesome.txt").setData("Hello!".toByteArray(Charsets.UTF_8), 666L)
       it.getOrCreateEntry("readme.txt").setData("Read it!".toByteArray(Charsets.UTF_8), 777L)
     }
@@ -251,7 +257,7 @@ class VfsEventsTest : BareTestFixtureTestCase() {
 
   private fun modifyJar(jarPath: Path) {
     assertTrue { Files.exists(jarPath) }
-    JBZipFile(jarPath.toFile()).use {
+    JBZipFile(jarPath, false).use {
       // modify
       it.getOrCreateEntry("awesome.txt").setData("Hello_modified!".toByteArray(Charsets.UTF_8), 666L)
       // add

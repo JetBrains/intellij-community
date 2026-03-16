@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -38,7 +39,15 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.usages.*;
+import com.intellij.usages.FindUsagesProcessPresentation;
+import com.intellij.usages.PsiElementUsageTarget;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageLimitUtil;
+import com.intellij.usages.UsageSearcher;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,10 +58,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -237,7 +253,9 @@ final class SearchForUsagesRunnable implements Runnable {
       @Override
       protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         if (e.getDescription().equals(UsageViewUtil.FIND_OPTIONS_HREF_TARGET)) {
-          FindManager.getInstance(myProject).showSettingsAndFindUsages(targets);
+          WriteIntentReadAction.run(() -> {
+            FindManager.getInstance(myProject).showSettingsAndFindUsages(targets);
+          });
         }
       }
     };
@@ -280,7 +298,7 @@ final class SearchForUsagesRunnable implements Runnable {
     List<Segment> segments = new ArrayList<>();
     Processor<Segment> processor = Processors.cancelableCollectProcessor(segments);
     usageInfo.processRangeMarkers(processor);
-    rangeBlinker.resetMarkers(segments);
+    rangeBlinker.resetMarkers(segments, false);
     rangeBlinker.startBlinking();
   }
 

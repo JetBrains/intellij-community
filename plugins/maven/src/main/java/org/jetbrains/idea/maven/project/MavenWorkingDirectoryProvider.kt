@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.WorkingDirectoryProvider
 import org.jetbrains.annotations.SystemIndependent
+import org.jetbrains.idea.maven.importing.MavenImportUtil
 
 class MavenWorkingDirectoryProvider : WorkingDirectoryProvider {
   override fun getWorkingDirectoryPath(module: Module): @SystemIndependent String? {
@@ -26,7 +27,8 @@ class MavenWorkingDirectoryProvider : WorkingDirectoryProvider {
       if (module.isDisposed) return@compute null
       val manager = MavenProjectsManager.getInstance(module.project)
       if (!manager.isMavenizedModule(module)) return@compute null
-      return@compute manager.findProject(module)?.directory
+      val pomXml = MavenImportUtil.findPomXml(module) ?: return@compute null
+      return@compute if (pomXml.isDirectory) pomXml.path else pomXml.parent.path
     }
   }
 }

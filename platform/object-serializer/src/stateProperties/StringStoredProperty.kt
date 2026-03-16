@@ -1,7 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization.stateProperties
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.JsonSchemaType
+import com.intellij.openapi.components.ScalarProperty
+import com.intellij.openapi.components.StoredProperty
+import com.intellij.openapi.components.StoredPropertyBase
 
 internal class NormalizedStringStoredProperty(private val defaultValue: String?) : StoredPropertyBase<String?>(), ScalarProperty {
   private var value = defaultValue

@@ -9,7 +9,9 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.*;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_BOOLEAN;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorTopmost;
 
 public class IfStatementPostfixTemplate extends IfPostfixTemplateBase implements DumbAware {
   public IfStatementPostfixTemplate() {

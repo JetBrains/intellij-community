@@ -20,7 +20,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 public abstract class LibraryTableTreeContentElement<E> extends NodeDescriptor<E> {
   protected LibraryTableTreeContentElement(@Nullable NodeDescriptor parentDescriptor) {

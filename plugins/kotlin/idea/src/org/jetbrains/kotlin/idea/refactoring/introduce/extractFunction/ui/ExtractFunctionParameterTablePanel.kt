@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBComboBoxLabel
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent
 import com.intellij.util.ui.AbstractTableCellEditor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.Parameter
 import org.jetbrains.kotlin.idea.refactoring.introduce.ui.AbstractParameterTablePanel
@@ -15,6 +16,7 @@ import java.awt.Component
 import javax.swing.JTable
 import javax.swing.table.DefaultTableCellRenderer
 
+@K1Deprecation
 open class ExtractFunctionParameterTablePanel : AbstractParameterTablePanel<Parameter, ExtractFunctionParameterTablePanel.ParameterInfo>() {
     companion object {
         const val PARAMETER_TYPE_COLUMN = 2

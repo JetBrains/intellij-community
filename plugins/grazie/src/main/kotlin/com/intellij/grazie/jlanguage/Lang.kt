@@ -24,6 +24,7 @@ enum class Lang(val displayName: String, val className: String, val iso: Languag
   BRITISH_ENGLISH("English (GB)", "BritishEnglish", LanguageISO.EN, "English (Great Britain)"),
   AMERICAN_ENGLISH("English (US)", "AmericanEnglish", LanguageISO.EN, "English (USA)"),
   CANADIAN_ENGLISH("English (Canadian)", "CanadianEnglish", LanguageISO.EN, "English (Canada)"),
+  AUSTRALIAN_ENGLISH("English (Australian)", "AustralianEnglish", LanguageISO.EN, "English (Australia)"),
   ARABIC("Arabic", "Arabic", LanguageISO.AR, "العربيةُ"),
   ASTURIAN("Asturian", "Asturian", LanguageISO.AST, "Asturianu"),
   BELARUSIAN("Belarusian", "Belarusian", LanguageISO.BE, "Беларуская"),

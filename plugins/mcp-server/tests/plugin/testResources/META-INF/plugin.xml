@@ -1,0 +1,25 @@
+<idea-plugin>
+  <id>intellij.mcpserver.tests.plugin</id>
+  <name>MCP Server Tests Plugin for intellij.mcpserver.tests module</name>
+  <vendor>JetBrains</vendor>
+
+  <content namespace="jetbrains">
+    <module name="intellij.java.rt"/>
+    <module name="intellij.libraries.hamcrest"/>
+    <module name="intellij.libraries.junit4"/>
+    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.junit5.jupiter"/>
+    <module name="intellij.libraries.junit5.launcher"/>
+    <module name="intellij.libraries.junit5.params"/>
+    <module name="intellij.libraries.junit5.vintage"/>
+    <module name="intellij.libraries.kotlinTest"/>
+    <module name="intellij.libraries.kotlinTestAssertionsCoreJvm"/>
+    <module name="intellij.mcpserver.tests"/>
+    <module name="intellij.platform.testFramework"/>
+    <module name="intellij.platform.testFramework.common"/>
+    <module name="intellij.platform.testFramework.core"/>
+    <module name="intellij.platform.testFramework.impl"/>
+    <module name="intellij.platform.testFramework.junit5"/>
+    <module name="intellij.tools.testsBootstrap"/>
+  </content>
+</idea-plugin>

@@ -3,8 +3,10 @@ package com.intellij.java.psi.formatter.java;
 
 import com.intellij.codeInsight.AbstractEnterActionTestCase;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
+@PerformanceUnitTest
 public class JavaEnterActionPerformanceTest extends AbstractEnterActionTestCase {
   public void testPerformance() {
     configureByFile("/codeInsight/enterAction/Performance.java");

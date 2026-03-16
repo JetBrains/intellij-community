@@ -5,9 +5,12 @@ import com.intellij.ui.render.RenderingUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 
 public class TableCellState {
   private boolean mySelected;

@@ -4,8 +4,8 @@ import com.intellij.codeInsight.editorActions.fillParagraph.ParagraphFillHandler
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
-import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
+import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 

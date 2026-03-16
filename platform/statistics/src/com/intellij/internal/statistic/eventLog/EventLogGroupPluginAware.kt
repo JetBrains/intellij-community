@@ -8,7 +8,6 @@ import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesColle
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfo
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
 
 /**
  * A class extending `EventLogGroup` that enables automatically adding plugin versions to all events belonging to the group.
@@ -19,28 +18,23 @@ import org.jetbrains.annotations.NonNls
  * @param id Unique identifier for the event group.
  * @param version Version of the event group.
  * @param recorder Name of the event recorder.
- * @param description Mandatory description of the event group.
  * @param pluginLoadedClass The class used to get the plugin classloader. This is required to get the PluginInfo.
  */
 @ApiStatus.Internal
 class EventLogGroupPluginAware<T>(
-  @NonNls @EventIdName id: String,
+  @EventIdName id: String,
   version: Int,
   recorder: String,
-  description: String,
   pluginLoadedClass: Class<T>,
-) : EventLogGroup(id, version, recorder, description, listOf(createPluginVersionField(pluginLoadedClass))) {
+) : EventLogGroup(id, version, recorder, listOf(createPluginVersionField(pluginLoadedClass))) {
   companion object {
     inline fun <reified T : FeatureUsagesCollector> create(
       id: String,
       version: Int,
       recorder: String,
-      description: String
-    ): EventLogGroupPluginAware<T> = EventLogGroupPluginAware(id, version, recorder, description, T::class.java)
+    ): EventLogGroupPluginAware<T> = EventLogGroupPluginAware(id, version, recorder, T::class.java)
 
-    private fun <T> createPluginVersionField(
-      collectorClass: Class<T>,
-    ): Pair<EventField<*>, FeatureUsageData.() -> Unit> {
+    private fun <T> createPluginVersionField(collectorClass: Class<T>): Pair<EventField<*>, FeatureUsageData.() -> Unit> {
       val dataSupplier: (fuData : FeatureUsageData) -> Unit = object : (FeatureUsageData) -> Unit {
         val pluginInfo : PluginInfo by lazy { getPluginInfo(collectorClass) }
 

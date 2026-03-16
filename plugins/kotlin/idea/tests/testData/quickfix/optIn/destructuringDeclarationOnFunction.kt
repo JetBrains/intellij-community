@@ -1,0 +1,14 @@
+// "Opt in for 'MyOptIn' on 'reproduceIssue'" "true"
+
+@RequiresOptIn
+annotation class MyOptIn
+
+@MyOptIn
+data class OptInData(val a: String, val b: String)
+
+fun reproduceIssue() {
+    val (x, y) = <caret>OptInData("1", "2")
+}
+
+// IGNORE_K1
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix

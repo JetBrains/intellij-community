@@ -6,12 +6,12 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 
 object WhatsNewBundle  {
-  private const val pathToBundle = "messages.WhatsNewBundle"
-  private val bundle by lazy { DynamicBundle(WhatsNewBundle::class.java, pathToBundle); }
+  private const val BUNDLE = "messages.WhatsNewBundle"
+  private val bundle by lazy { DynamicBundle(WhatsNewBundle::class.java, BUNDLE); }
 
   @Nls
   fun message(
-    @PropertyKey(resourceBundle = pathToBundle) key: String,
+    @PropertyKey(resourceBundle = BUNDLE) key: String,
     vararg params: Any
   ): String {
     return bundle.getMessage(key, *params)

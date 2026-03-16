@@ -3,6 +3,7 @@ package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -42,8 +43,14 @@ public class EmptyProgressIndicator extends EmptyProgressIndicatorBase implement
     ProgressManager.canceled(this);
   }
 
-  final @Nullable Throwable getCancellationCause() {
-    return myCancellationRequester;
+  @ApiStatus.Internal
+  @Override
+  protected final @Nullable Throwable getCancellationCause() {
+    if (myCancellationRequester != PLACEHOLDER) {
+      return myCancellationRequester;
+    } else {
+      return null;
+    }
   }
 
   @Override

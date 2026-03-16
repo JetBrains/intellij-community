@@ -13,14 +13,14 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.test.util.invalidateCaches
+import org.jetbrains.kotlin.test.util.invalidateK1ModeCaches
 import java.io.File
 
 abstract class AbstractFormatterTest : KotlinLightCodeInsightFixtureTestCase() {
 
     override fun tearDown() {
         runAll(
-            { runInEdtAndWait { project.invalidateCaches() } },
+            { runInEdtAndWait { project.invalidateK1ModeCaches() } },
             { super.tearDown() },
         )
     }

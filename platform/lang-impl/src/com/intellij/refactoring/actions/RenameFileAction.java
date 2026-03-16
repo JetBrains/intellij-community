@@ -1,7 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPromoter;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -17,7 +25,7 @@ import java.util.List;
 import java.util.Objects;
 
 @ApiStatus.Internal
-public final class RenameFileAction extends AnAction implements ActionPromoter {
+public final class RenameFileAction extends AnAction implements ActionPromoter, DumbAware {
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {
     final PsiFile file = e.getData(CommonDataKeys.PSI_FILE);

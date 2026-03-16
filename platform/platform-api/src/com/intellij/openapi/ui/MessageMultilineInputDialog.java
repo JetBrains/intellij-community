@@ -8,9 +8,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.BorderLayout;
 
 public class MessageMultilineInputDialog extends Messages.InputDialog {
   public MessageMultilineInputDialog(Project project,

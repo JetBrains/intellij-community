@@ -2,7 +2,11 @@ package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.processor.clazz.log.Slf4jProcessor;
 import de.plushnikov.intellij.plugin.quickfix.UseSlf4jAnnotationQuickFix;

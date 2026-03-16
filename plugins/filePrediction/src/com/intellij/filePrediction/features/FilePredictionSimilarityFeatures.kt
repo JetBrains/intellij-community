@@ -145,8 +145,8 @@ class FilePredictionSimilarityFeatures : FilePredictionFeatureProvider {
     result["name_prefix_norm"] = numerical((2 * commonPrefixLen.toDouble()) / (newFileName.length + prevFileName.length))
 
     var common = 0
-    val newWords = ContainerUtil.map2Set(NameUtilCore.nameToWords(newFileName), Strings::toLowerCase)
-    val prevWords = ContainerUtil.map2Set(NameUtilCore.nameToWords(prevFileName), Strings::toLowerCase)
+    val newWords = ContainerUtil.map2Set(NameUtilCore.nameToWordList(newFileName), Strings::toLowerCase)
+    val prevWords = ContainerUtil.map2Set(NameUtilCore.nameToWordList(prevFileName), Strings::toLowerCase)
     for (prevWord in prevWords) {
       if (newWords.contains(prevWord)) common++
     }

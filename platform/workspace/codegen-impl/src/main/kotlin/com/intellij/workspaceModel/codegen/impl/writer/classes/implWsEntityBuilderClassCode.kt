@@ -10,11 +10,11 @@ import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsBuilderIsIni
 
 fun ObjClass<*>.implWsEntityBuilderCode(): String {
   return """
-    internal class Builder(result: $javaDataName?): ${ModifiableWorkspaceEntityBase}<$javaFullName, $javaDataName>(result), $compatibleJavaBuilderName {
-        internal constructor(): this($javaDataName())
-        
+internal class Builder(result: $javaDataName?): ${ModifiableWorkspaceEntityBase}<$javaFullName, $javaDataName>(result), $compatibleJavaBuilderName {
+internal constructor(): this($javaDataName())
+
 ${
-    lines(2) {
+    lines {
       section("override fun applyToBuilder(builder: ${MutableEntityStorage})") {
         `if`("this.diff != null") {
           ifElse("existsInBuilder(builder)", {
@@ -24,14 +24,12 @@ ${
             line("error(\"Entity $name is already created in a different builder\")")
           }
         }
-        line()
         line("this.diff = builder")
         line("addToBuilder()")
         line("this.id = getEntityData().createEntityId()")
         lineComment("After adding entity data to the builder, we need to unbind it and move the control over entity data to builder")
         lineComment("Builder may switch to snapshot at any moment and lock entity data to modification")
         line("this.currentEntityData = null")
-        line()
         list(vfuFields) {
           "index(this, \"$name\", this.$name)"
         }
@@ -57,11 +55,9 @@ ${
         }
       }
 
-      line()
       section("override fun connectionIdList(): List<${ConnectionId}>") { 
         line("return connections")
       }
-      line()
 
       val collectionFields = allFields.noRefs().filter { it.valueType is ValueType.Collection<*,*> }
       if (collectionFields.isNotEmpty()) {
@@ -80,7 +76,6 @@ ${
             }
           }
         }
-        line()
       }
 
       lineComment("Relabeling code, move information from dataSource to this builder")
@@ -108,10 +103,10 @@ ${
         section("private fun indexLibraryRoots(libraryRoots: List<LibraryRoot>)") {
           line("val jarDirectories = mutableSetOf<VirtualFileUrl>()")
           line("val libraryRootList = libraryRoots.map {")
-          line("  if (it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF) {")
-          line("    jarDirectories.add(it.url)")
-          line("  }")
-          line("  it.url")
+          line("if (it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF) {")
+          line("jarDirectories.add(it.url)")
+          line("}")
+          line("it.url")
           line("}.toHashSet()")
           line("index(this, \"roots\", libraryRootList)")
           line("indexJarDirectories(this, jarDirectories)")
@@ -125,12 +120,12 @@ ${
         }
       }
     }
-  }
+}
         
-        ${allFields.filter { it.name != "symbolicId" }.lines("        ") { implWsBuilderFieldCode }.trimEnd()}
-        
-        override fun getEntityClass(): Class<$javaFullName> = $javaFullName::class.java
-    }
-    """.trimIndent()
+${allFields.filter { it.name != "symbolicId" }.lines { implWsBuilderFieldCode }.trimEnd()}
+
+override fun getEntityClass(): Class<$javaFullName> = $javaFullName::class.java
+}
+"""
 }
 

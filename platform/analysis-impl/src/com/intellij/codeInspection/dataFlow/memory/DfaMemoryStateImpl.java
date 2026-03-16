@@ -9,20 +9,50 @@ import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfEphemeralType;
 import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor;
+import com.intellij.codeInspection.dataFlow.value.DfaBinOpValue;
+import com.intellij.codeInspection.dataFlow.value.DfaCondition;
+import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
+import com.intellij.codeInspection.dataFlow.value.DfaRelation;
+import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.DfaWrappedValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.function.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 /**
  * Invariant: qualifiers of the variables used in myEqClasses or myVariableTypes must be canonical variables
@@ -203,7 +233,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (var == value) return;
 
     value = handleStackValueOnVariableFlush(value, var, null);
-    flushVariable(var, var.getDfType().isMergeable(var.getInherentType()), true);
+    flushVariable(var, var.getDfType().isMergeable(var.getInherentType()), true, false);
     flushQualifiedMethods(var);
 
     DfType dfType = filterDfTypeOnAssignment(var, getDfType(value)).meet(var.getDfType());
@@ -1410,20 +1440,20 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void flushVariable(@NotNull DfaVariableValue variable) {
-    flushVariable(variable, true, true);
+    flushVariable(variable, true, true, false);
   }
 
   @Override
   public void flushVariables(@NotNull Predicate<? super @NotNull DfaVariableValue> filter) {
-    flushVariables(filter, false);
+    flushVariables(filter, false, true);
   }
 
   @Override
   public void forgetVariables(@NotNull Predicate<? super @NotNull DfaVariableValue> filter) {
-    flushVariables(filter, true);
+    flushVariables(filter, true, false);
   }
 
-  private void flushVariables(@NotNull Predicate<? super @NotNull DfaVariableValue> filter, boolean onlyThis) {
+  private void flushVariables(@NotNull Predicate<? super @NotNull DfaVariableValue> filter, boolean onlyThis, boolean markFlushed) {
     BitSet vars = new BitSet();
     for (EqClassImpl aClass : myEqClasses) {
       if (aClass != null) {
@@ -1436,7 +1466,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (int id = vars.nextSetBit(0); id >= 0; id = vars.nextSetBit(id + 1)) {
       DfaVariableValue var = (DfaVariableValue)myFactory.getValue(id);
       if (filter.test(var)) {
-        flushVariable(var, !onlyThis, !onlyThis);
+        flushVariable(var, !onlyThis, !onlyThis, markFlushed && var.isFlushableByCalls());
       }
     }
   }
@@ -1449,8 +1479,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
    *                     about all known aliases as well. Flushing without canonicalization could be necessary only
    *                     to simplify memory state, if it's known that given variable is never used anymore.
    * @param flushDeps    whether to flush dependencies
+   * @param markFlushed  whether to mark variable as flushed
    */
-  private void flushVariable(@NotNull DfaVariableValue variable, boolean canonicalize, boolean flushDeps) {
+  private void flushVariable(@NotNull DfaVariableValue variable, boolean canonicalize, boolean flushDeps, boolean markFlushed) {
     DfaVariableValue canonical = canonicalize ? canonicalize(variable) : variable;
     EqClass eqClass = canonical.getDependentVariables().isEmpty() ? null : getEqClass(canonical);
     DfaVariableValue newCanonical =
@@ -1459,7 +1490,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         .orElse(null);
     myStack.replaceAll(value -> handleStackValueOnVariableFlush(value, canonical, newCanonical));
 
-    doFlush(canonical, false);
+    doFlush(canonical, markFlushed);
     if (flushDeps) {
       flushDependencies(canonical);
     }

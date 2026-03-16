@@ -6,8 +6,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComboBox;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
 
 /**
  * @deprecated please use ComboBox with browse extension, see <a href="https://plugins.jetbrains.com/docs/intellij/built-in-button.html#browse">UI guidelines</a>

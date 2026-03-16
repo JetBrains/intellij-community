@@ -32,7 +32,11 @@ import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.awt.event.MouseEvent
-import java.util.function.*
+import java.util.function.BiConsumer
+import java.util.function.Consumer
+import java.util.function.Function
+import java.util.function.Predicate
+import java.util.function.Supplier
 
 class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
 

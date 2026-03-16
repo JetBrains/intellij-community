@@ -7,7 +7,11 @@ import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
 
 @ApiStatus.Internal
 public final class BegPopupMenuBorder extends AbstractBorder implements UIResource {

@@ -122,9 +122,11 @@ class _RunnerWrapper(runner.Runner):
         self.hooks.clear()
         self.features = []
         if self.step_registry is None:
-            the_step_registry.clear()
+            if hasattr(the_step_registry, 'clear'):
+                the_step_registry.clear()
         else:
-            self.step_registry.clear()
+            if hasattr(self.step_registry, 'clear'):
+                self.step_registry.clear()
 
 
 class _BehaveRunner(_bdd_utils.BddRunner):

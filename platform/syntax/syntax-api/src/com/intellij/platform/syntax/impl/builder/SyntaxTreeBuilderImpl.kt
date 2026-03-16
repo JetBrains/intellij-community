@@ -8,8 +8,16 @@ import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.lexer.TokenListImpl
-import com.intellij.platform.syntax.parser.*
+import com.intellij.platform.syntax.parser.OpaqueElementPolicy
+import com.intellij.platform.syntax.parser.ProductionMarkerList
+import com.intellij.platform.syntax.parser.ProductionResult
+import com.intellij.platform.syntax.parser.SyntaxElementTypeRemapper
+import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder.Production
+import com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy
+import com.intellij.platform.syntax.parser.WhitespaceSkippedCallback
+import com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
+import com.intellij.platform.syntax.parser.WhitespacesBinders
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import kotlin.math.abs
@@ -45,6 +53,7 @@ internal class SyntaxTreeBuilderImpl(
   // mutable state
   private var myTokenTypeChecked = false
   private var myCurrentLexeme = 0
+  private var myCheckCanceledCounter = 0
   private var myCachedTokenType: SyntaxElementType? = null
 
   private var productionResult: ProductionResult? = null
@@ -128,17 +137,6 @@ internal class SyntaxTreeBuilderImpl(
     myComments = tokens
   }
 
-  override fun <T> enforceCommentTokensInside(tokens: SyntaxElementTypeSet, body: () -> T): T {
-    val oldComments = myComments
-    myComments = tokens
-    try {
-      return body()
-    }
-    finally {
-      myComments = oldComments
-    }
-  }
-
   override fun remapCurrentToken(type: SyntaxElementType) {
     remap(myCurrentLexeme, type)
     clearCachedTokenType()
@@ -195,15 +193,23 @@ internal class SyntaxTreeBuilderImpl(
   }
 
   override fun advanceLexer() {
-    if ((myCurrentLexeme and 0xff) == 0) {
-      cancellationProvider?.checkCancelled()
-    }
+    checkCanceled()
 
     if (eof()) return
 
     myTokenTypeChecked = false
     myCurrentLexeme++
     clearCachedTokenType()
+  }
+
+  private fun checkCanceled() {
+    myCheckCanceledCounter++
+    if ((myCheckCanceledCounter and 0xff) != 0) {
+      // perform the actual check once in 256 times
+      return
+    }
+
+    cancellationProvider?.checkCancelled()
   }
 
   fun lexType(index: Int): SyntaxElementType {

@@ -542,9 +542,38 @@ enum class FoldingRangeKind {
 
 }
 
-typealias SelectionRangeClientCapabilities = Unknown
-typealias LinkedEditingRangeClientCapabilities = Unknown
-typealias CallHierarchyClientCapabilities = Unknown
+@Serializable
+data class SelectionRangeClientCapabilities(
+    /**
+     * Whether implementation supports dynamic registration for selection range
+     * providers. If this is set to `true` the client supports the new
+     * `SelectionRangeRegistrationOptions` return value for the corresponding
+     * server capability as well.
+     */
+    val dynamicRegistration: Boolean? = null,
+)
+
+@Serializable
+data class LinkedEditingRangeClientCapabilities(
+    /**
+     * Whether the implementation supports dynamic registration.
+     * If this is set to `true` the client supports the new
+     * `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+     * return value for the corresponding server capability as well.
+     */
+    val dynamicRegistration: Boolean? = null,
+)
+
+@Serializable
+data class CallHierarchyClientCapabilities(
+    /**
+     * Whether implementation supports dynamic registration. If this is set to
+     * `true` the client supports the new `(TextDocumentRegistrationOptions &
+     * StaticRegistrationOptions)` return value for the corresponding server
+     * capability as well.
+     */
+    val dynamicRegistration: Boolean? = null,
+)
 
 @Serializable
 data class SemanticTokensClientCapabilities(
@@ -650,9 +679,36 @@ enum class TokenFormat {
     ;
 }
 
-typealias MonikerClientCapabilities = Unknown
-typealias TypeHierarchyClientCapabilities = Unknown
-typealias InlineValueClientCapabilities = Unknown
+@Serializable
+data class MonikerClientCapabilities(
+    /**
+     * Whether implementation supports dynamic registration. If this is set to
+     * `true` the client supports the new `(TextDocumentRegistrationOptions &
+     * StaticRegistrationOptions)` return value for the corresponding server
+     * capability as well.
+     */
+    val dynamicRegistration: Boolean? = null,
+)
+
+@Serializable
+data class TypeHierarchyClientCapabilities(
+    /**
+     * Whether implementation supports dynamic registration. If this is set to
+     * `true` the client supports the new `(TextDocumentRegistrationOptions &
+     * StaticRegistrationOptions)` return value for the corresponding server
+     * capability as well.
+     */
+    val dynamicRegistration: Boolean? = null,
+)
+
+@Serializable
+data class InlineValueClientCapabilities(
+    /**
+     * Whether implementation supports dynamic registration for inline
+     * value providers.
+     */
+    val dynamicRegistration: Boolean? = null,
+)
 
 @Serializable
 data class InlayHintClientCapabilities(

@@ -3,14 +3,19 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport;
+import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.vcs.changes.ui.HoverChangesTree;
+import com.intellij.openapi.vcs.changes.ui.HoverIcon;
+import com.intellij.openapi.vcs.changes.ui.NonSelectableNodeFilteringSelectionModel;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 @ApiStatus.Internal
 public class LocalChangesListView extends ChangesListView {

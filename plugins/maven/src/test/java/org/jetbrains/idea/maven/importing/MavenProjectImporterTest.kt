@@ -2,13 +2,36 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.utils.RealMavenPreventionFixture
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenImportListener
 import org.jetbrains.idea.maven.project.MavenProject
 import org.junit.Test
 
 class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
+
+
+  @Test
+  fun `import should stop if only static sync is enabled`() = runBlocking {
+    val noRealMaven = RealMavenPreventionFixture(project)
+    try {
+      noRealMaven.setUp()
+      Registry.get("maven.preimport.only").setValue(true, testRootDisposable)
+      importProjectAsync("""
+                <groupId>group</groupId>
+                <artifactId>onlystatic</artifactId>
+                <version>1</version>
+                """.trimIndent())
+      assertModules("onlystatic")
+    }
+    finally {
+      noRealMaven.tearDown()
+    }
+
+
+  }
 
   @Test
   fun `test maven import modules properly named`() = runBlocking {

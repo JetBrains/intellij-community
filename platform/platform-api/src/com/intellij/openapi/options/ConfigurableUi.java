@@ -4,7 +4,7 @@ package com.intellij.openapi.options;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * Implement {@link com.intellij.openapi.Disposable} if you need explicit dispose logic.

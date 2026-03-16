@@ -5,8 +5,15 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
 
 public class GradientViewport extends JBViewport {
   private final Insets myInsets;
@@ -45,7 +52,7 @@ public class GradientViewport extends JBViewport {
           g.fillRect(header.getX(), header.getY(), header.getWidth(), header.getHeight());
         }
       }
-      if (g instanceof Graphics2D && background != null && !Registry.is("ui.no.bangs.and.whistles")) {
+      if (g instanceof Graphics2D && background != null && !Registry.is("ui.simplified")) {
         paintGradient((Graphics2D)g, background, 0, header == null ? 0 : header.getHeight());
       }
       if (header != null) {

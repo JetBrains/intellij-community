@@ -6,7 +6,13 @@ import com.intellij.openapi.util.io.DataInputOutputUtilRt.readSeq
 import com.intellij.openapi.util.io.DataInputOutputUtilRt.writeSeq
 import com.intellij.util.io.IOUtil.readUTF
 import com.intellij.util.io.IOUtil.writeUTF
-import java.io.*
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.DataInput
+import java.io.DataOutput
+import java.io.File
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
 
 fun DataInput.readStringList(): List<String> = readSeq(this) { readString() }
 

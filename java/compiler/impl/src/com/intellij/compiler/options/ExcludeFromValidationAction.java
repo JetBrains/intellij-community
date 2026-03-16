@@ -3,6 +3,7 @@
 package com.intellij.compiler.options;
 
 import com.intellij.build.FileNavigatable;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -27,9 +28,11 @@ public class ExcludeFromValidationAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     final Pair<ExcludesConfiguration, VirtualFile> pair = getExcludedConfigurationAndFile(e, project);
     if (pair == null) return;
-    final ExcludeEntryDescription description = new ExcludeEntryDescription(pair.getSecond(), false, true, project);
+    final ExcludeEntryDescription description =
+      new ExcludeEntryDescription(pair.getSecond(), false, true, JavaPluginDisposable.getInstance(project));
     pair.getFirst().addExcludeEntryDescription(description);
   }
 

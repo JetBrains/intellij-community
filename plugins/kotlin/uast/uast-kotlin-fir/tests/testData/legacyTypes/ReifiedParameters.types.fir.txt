@@ -36,7 +36,7 @@ UFile (package = ) [public final class ReifiedParametersKt {...]
             UParameter (name = t) [@kotlin.Suppress(names = "s") var t: T]
                 UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "s")]
                     UNamedExpression (name = names) [names = "s"]
-                        UPolyadicExpression (operator = +) ["s"] : java.lang.String
+                        UPolyadicExpression (operator = +) ["s"] : @org.jetbrains.annotations.NotNull() java.lang.String
                             ULiteralExpression (value = "s") ["s"] : java.lang.String
             UBlockExpression [{...}]
                 UReturnExpression [return t]
@@ -46,7 +46,7 @@ UFile (package = ) [public final class ReifiedParametersKt {...]
                 UAnnotation (fqName = null) [@null]
                 UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "s")]
                     UNamedExpression (name = names) [names = "s"]
-                        UPolyadicExpression (operator = +) ["s"] : java.lang.String
+                        UPolyadicExpression (operator = +) ["s"] : @org.jetbrains.annotations.NotNull() java.lang.String
                             ULiteralExpression (value = "s") ["s"] : java.lang.String
             UBlockExpression [{...}]
                 UReturnExpression [return t]

@@ -28,6 +28,6 @@ class Main {
     AtomicReferenceArray<@Nullable String> arr = new AtomicReferenceArray<>(10);
     AtomicReferenceArray<String> arr2 = new AtomicReferenceArray<>(new String[10]); // technically wrong and should be highlighted, as array contains nulls
     @Nullable String[] data = new String[10];
-    AtomicReferenceArray<String> arr3 = new AtomicReferenceArray<>(data); // technically wrong and should be highlighted, as array contains nulls
+    AtomicReferenceArray<String> arr3 = new AtomicReferenceArray<>(data);
   }
 }

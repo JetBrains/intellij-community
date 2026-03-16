@@ -2,8 +2,10 @@
 
 package org.jetbrains.kotlin.j2k.ast
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 
+@K1Deprecation
 class Enum(
         name: Identifier,
         annotations: Annotations,

@@ -3,8 +3,12 @@ package com.intellij.diff.tools.combined
 
 import com.intellij.ui.scale.JBUIScale
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
-import java.util.*
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.LayoutManager2
+import java.awt.Rectangle
+import java.util.Collections
 import javax.swing.JComponent
 import javax.swing.JPanel
 

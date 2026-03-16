@@ -8,8 +8,26 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.DefaultExecutionResult;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.ConfigurationInfoProvider;
+import com.intellij.execution.configurations.DebuggingRunnerData;
+import com.intellij.execution.configurations.JavaCommandLine;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ModuleRunProfile;
+import com.intellij.execution.configurations.PatchedRunnableState;
+import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.execution.configurations.RemoteConnectionCreator;
+import com.intellij.execution.configurations.RemoteState;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunConfigurationWithRunnerSettings;
+import com.intellij.execution.configurations.RunConfigurationWithSuppressedDefaultDebugAction;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.impl.statistics.ProgramRunnerUsageCollector;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -161,7 +179,7 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
         DebugProcessImpl debugProcess = debuggerSession.getProcess();
-        result.set(XDebuggerManager.getInstance(env.getProject()).startSession(env, new XDebugProcessStarter() {
+        XDebugProcessStarter starter = new XDebugProcessStarter() {
           @Override
           public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
             XDebugSessionImpl sessionImpl = (XDebugSessionImpl)session;
@@ -173,7 +191,11 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
             sessionImpl.setPauseActionSupported(true); // enable pause by default
             return JavaDebugProcess.create(session, debuggerSession);
           }
-        }).getRunContentDescriptor());
+        };
+        RunContentDescriptor descriptor = XDebuggerManager.getInstance(env.getProject()).newSessionBuilder(starter)
+          .environment(env)
+          .startSession().getRunContentDescriptor();
+        result.set(descriptor);
       }
       catch (ProcessCanceledException ignored) {
       }

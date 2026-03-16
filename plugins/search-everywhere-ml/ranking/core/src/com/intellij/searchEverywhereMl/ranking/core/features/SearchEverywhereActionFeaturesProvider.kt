@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.actionSystem.EditorAction
+import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.ACTION_PLUGIN_TYPE
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.GLOBAL_STATISTICS_DEFAULT
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.GLOBAL_STATISTICS_UPDATED
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.GROUP_LENGTH_KEY
@@ -31,7 +32,6 @@ import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereAct
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.IS_TOGGLE_ACTION_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.MATCH_MODE_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.PLUGIN_ID
-import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.PLUGIN_TYPE
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.TEXT_LENGTH_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.TIME_SINCE_LAST_USAGE
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.TIME_SINCE_LAST_USAGE_SE
@@ -53,38 +53,38 @@ import com.intellij.util.Time
 internal class SearchEverywhereActionFeaturesProvider :
   SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java) {
   object Fields {
-    internal val IS_ACTION_DATA_KEY = EventFields.Boolean("isAction")
-    internal val IS_TOGGLE_ACTION_DATA_KEY = EventFields.Boolean("isToggleAction")
-    internal val IS_EDITOR_ACTION = EventFields.Boolean("isEditorAction")
-    internal val IS_SEARCH_ACTION = EventFields.Boolean("isSearchAction")
+    internal val IS_ACTION_DATA_KEY = EventFields.Boolean("is_action")
+    internal val IS_TOGGLE_ACTION_DATA_KEY = EventFields.Boolean("is_toggle_action")
+    internal val IS_EDITOR_ACTION = EventFields.Boolean("is_editor_action")
+    internal val IS_SEARCH_ACTION = EventFields.Boolean("is_search_action")
 
-    internal val MATCH_MODE_KEY = EventFields.Enum<MatchMode>("matchMode")
-    internal val TEXT_LENGTH_KEY = EventFields.Int("textLength")
-    internal val IS_GROUP_KEY = EventFields.Boolean("isGroup")
-    internal val GROUP_LENGTH_KEY = EventFields.Int("groupLength")
-    internal val HAS_ICON_KEY = EventFields.Boolean("withIcon")
-    internal val PLUGIN_TYPE = EventFields.StringValidatedByEnum("pluginType", "plugin_type")
-    internal val PLUGIN_ID = EventFields.StringValidatedByCustomRule("pluginId", PluginIdRuleValidator::class.java)
+    internal val MATCH_MODE_KEY = EventFields.Enum<MatchMode>("match_mode")
+    internal val TEXT_LENGTH_KEY = EventFields.Int("text_length")
+    internal val IS_GROUP_KEY = EventFields.Boolean("is_group")
+    internal val GROUP_LENGTH_KEY = EventFields.Int("group_length")
+    internal val HAS_ICON_KEY = EventFields.Boolean("with_icon")
+    internal val ACTION_PLUGIN_TYPE = EventFields.StringValidatedByEnum("action_plugin_type", "plugin_type")
+    internal val PLUGIN_ID = EventFields.StringValidatedByCustomRule("plugin_id", PluginIdRuleValidator::class.java)
 
     internal val GLOBAL_STATISTICS_DEFAULT = ActionsGlobalStatisticsFields(ActionsGlobalSummaryManager.STATISTICS_VERSION)
     internal val GLOBAL_STATISTICS_UPDATED = ActionsGlobalStatisticsFields(ActionsGlobalSummaryManager.UPDATED_STATISTICS_VERSION)
 
 
     internal val USAGE = EventFields.Int("usage")
-    internal val USAGE_SE = EventFields.Int("usageSe")
-    internal val USAGE_TO_MAX = EventFields.Double("usageToMax")
-    internal val USAGE_TO_MAX_SE = EventFields.Double("usageToMaxSe")
+    internal val USAGE_SE = EventFields.Int("usage_se")
+    internal val USAGE_TO_MAX = EventFields.Double("usage_to_max")
+    internal val USAGE_TO_MAX_SE = EventFields.Double("usage_to_max_se")
 
-    internal val TIME_SINCE_LAST_USAGE = EventFields.Long("timeSinceLastUsage")
-    internal val TIME_SINCE_LAST_USAGE_SE = EventFields.Long("timeSinceLastUsageSe")
-    internal val WAS_USED_IN_LAST_MINUTE = EventFields.Boolean("wasUsedInLastMinute")
-    internal val WAS_USED_IN_LAST_MINUTE_SE = EventFields.Boolean("wasUsedInLastMinuteSe")
-    internal val WAS_USED_IN_LAST_HOUR = EventFields.Boolean("wasUsedInLastHour")
-    internal val WAS_USED_IN_LAST_HOUR_SE = EventFields.Boolean("wasUsedInLastHourSe")
-    internal val WAS_USED_IN_LAST_DAY = EventFields.Boolean("wasUsedInLastDay")
-    internal val WAS_USED_IN_LAST_DAY_SE = EventFields.Boolean("wasUsedInLastDaySe")
-    internal val WAS_USED_IN_LAST_MONTH = EventFields.Boolean("wasUsedInLastMonth")
-    internal val WAS_USED_IN_LAST_MONTH_SE = EventFields.Boolean("wasUsedInLastMonthSe")
+    internal val TIME_SINCE_LAST_USAGE = EventFields.Long("time_since_last_usage")
+    internal val TIME_SINCE_LAST_USAGE_SE = EventFields.Long("time_since_last_usage_se")
+    internal val WAS_USED_IN_LAST_MINUTE = EventFields.Boolean("was_used_in_last_minute")
+    internal val WAS_USED_IN_LAST_MINUTE_SE = EventFields.Boolean("was_used_in_last_minute_se")
+    internal val WAS_USED_IN_LAST_HOUR = EventFields.Boolean("was_used_in_last_hour")
+    internal val WAS_USED_IN_LAST_HOUR_SE = EventFields.Boolean("was_used_in_last_hour_se")
+    internal val WAS_USED_IN_LAST_DAY = EventFields.Boolean("was_used_in_last_day")
+    internal val WAS_USED_IN_LAST_DAY_SE = EventFields.Boolean("was_used_in_last_day_se")
+    internal val WAS_USED_IN_LAST_MONTH = EventFields.Boolean("was_used_in_last_month")
+    internal val WAS_USED_IN_LAST_MONTH_SE = EventFields.Boolean("was_used_in_last_month_se")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
@@ -92,7 +92,7 @@ internal class SearchEverywhereActionFeaturesProvider :
       addAll(listOf(
         IS_ACTION_DATA_KEY, IS_TOGGLE_ACTION_DATA_KEY, IS_EDITOR_ACTION, IS_SEARCH_ACTION,
         MATCH_MODE_KEY, TEXT_LENGTH_KEY, IS_GROUP_KEY, GROUP_LENGTH_KEY, HAS_ICON_KEY,
-        PLUGIN_TYPE, PLUGIN_ID,
+        ACTION_PLUGIN_TYPE, PLUGIN_ID,
         USAGE, USAGE_SE, USAGE_TO_MAX, USAGE_TO_MAX_SE,
         TIME_SINCE_LAST_USAGE, TIME_SINCE_LAST_USAGE_SE,
         WAS_USED_IN_LAST_MINUTE, WAS_USED_IN_LAST_MINUTE_SE,
@@ -153,7 +153,7 @@ internal class SearchEverywhereActionFeaturesProvider :
 
       val pluginInfo = getPluginInfo(action.javaClass)
       if (pluginInfo.isSafeToReport()) {
-        add(PLUGIN_TYPE.with(pluginInfo.type.name))
+        add(ACTION_PLUGIN_TYPE.with(pluginInfo.type.name))
         pluginInfo.id?.let {
           add(PLUGIN_ID.with(it))
         }
@@ -195,7 +195,7 @@ internal class SearchEverywhereActionFeaturesProvider :
                                         isSe: Boolean): List<EventPair<*>> {
     return buildList {
       addAll(getUsageStatistics(usage, maxUsage, isSe))
-      addAll(getLastTimeUsadStatistics(time, lastUsedTime, isSe))
+      addAll(getLastTimeUsedStatistics(time, lastUsedTime, isSe))
     }
   }
 
@@ -213,7 +213,7 @@ internal class SearchEverywhereActionFeaturesProvider :
     }
   }
 
-  private fun getLastTimeUsadStatistics(time: Long, lastUsedTime: Long, isSe: Boolean): List<EventPair<*>> {
+  private fun getLastTimeUsedStatistics(time: Long, lastUsedTime: Long, isSe: Boolean): List<EventPair<*>> {
     if (lastUsedTime <= 0) return emptyList()
 
     val timeSinceLastUsage = time - lastUsedTime

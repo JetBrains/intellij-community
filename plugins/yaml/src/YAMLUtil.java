@@ -17,7 +17,13 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.YAMLDocument;
+import org.jetbrains.yaml.psi.YAMLFile;
+import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLMapping;
+import org.jetbrains.yaml.psi.YAMLPsiElement;
+import org.jetbrains.yaml.psi.YAMLSequenceItem;
+import org.jetbrains.yaml.psi.YAMLValue;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 
 import java.util.Arrays;

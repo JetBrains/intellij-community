@@ -3,7 +3,12 @@ package com.intellij.ide;
 
 import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.*;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId;
+import com.intellij.internal.statistic.eventLog.events.EventId1;
+import com.intellij.internal.statistic.eventLog.events.EventId2;
+import com.intellij.internal.statistic.eventLog.events.EventId3;
+import com.intellij.internal.statistic.eventLog.events.StringEventField;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;

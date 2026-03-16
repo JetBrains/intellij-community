@@ -1,4 +1,4 @@
-// "Change return type of enclosing function 'test' to 'Any'" "true"
+// "Specify 'Any' return type for enclosing function 'test'" "true"
 fun test(x: Int): Any {
     if (true) return "foo"<caret>
     return x

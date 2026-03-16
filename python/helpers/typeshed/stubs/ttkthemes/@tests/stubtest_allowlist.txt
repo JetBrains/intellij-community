@@ -1,0 +1,5 @@
+# Inconsistency because some params being between *args and **kwargs:
+ttkthemes.ThemedStyle.__init__
+ttkthemes.ThemedTk.__init__
+ttkthemes.themed_style.ThemedStyle.__init__
+ttkthemes.themed_tk.ThemedTk.__init__

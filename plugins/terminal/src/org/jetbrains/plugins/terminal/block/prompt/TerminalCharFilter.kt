@@ -5,9 +5,9 @@ import com.intellij.codeInsight.lookup.CharFilter
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.block.history.CommandHistoryPresenter.Companion.isTerminalCommandHistory
 import org.jetbrains.plugins.terminal.block.history.CommandSearchPresenter.Companion.isTerminalCommandSearch
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 
 internal class TerminalCharFilter : CharFilter() {

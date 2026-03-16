@@ -4,7 +4,7 @@ package com.intellij.diff.requests;
 import com.intellij.diff.DiffContext;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class ComponentDiffRequest extends DiffRequest {
   public abstract @NotNull JComponent getComponent(@NotNull DiffContext context);

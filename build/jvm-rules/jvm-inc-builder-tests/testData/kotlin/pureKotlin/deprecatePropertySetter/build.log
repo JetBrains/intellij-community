@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_deprecatePropertySetter-a.kotlin_module
+  test/Util.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/deprecatePropertySetter/a/util.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_deprecatePropertySetter-a.kotlin_module
+  test/ClientSet.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/deprecatePropertySetter/a/clientSet.kt
+End of files
+------------------------------------------
+Exit code: ERROR

@@ -32,6 +32,8 @@
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pydev" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
@@ -70,8 +72,8 @@
     <orderEntry type="module" module-name="intellij.python.grazie" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ml" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.gson" scope="TEST" />
@@ -85,8 +87,6 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.todo" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.community.testFramework.testEnv" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.community.testFramework.testEnv.conda" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.tests" scope="TEST" />
@@ -97,5 +97,20 @@
     <orderEntry type="module" module-name="intellij.python.pyproject" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.syntax" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.execService" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
+    <orderEntry type="module" module-name="intellij.python.test.env.common" />
+    <orderEntry type="module" module-name="intellij.python.test.env.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.test.env.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.execService.python" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.services.internal.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.junit5Tests.framework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.services.shared" />
+    <orderEntry type="module" module-name="intellij.python.venv" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.services.systemPython" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.interpreters" scope="TEST" />
   </component>
 </module>

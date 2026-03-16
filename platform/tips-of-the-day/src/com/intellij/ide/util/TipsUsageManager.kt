@@ -5,7 +5,12 @@ import com.intellij.featureStatistics.FeatureDescriptor
 import com.intellij.featureStatistics.FeaturesRegistryListener
 import com.intellij.ide.TipsOfTheDayUsagesCollector
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus

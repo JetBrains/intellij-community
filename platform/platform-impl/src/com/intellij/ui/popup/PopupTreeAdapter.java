@@ -6,9 +6,13 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.tree.TreeUtil;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.util.HashSet;

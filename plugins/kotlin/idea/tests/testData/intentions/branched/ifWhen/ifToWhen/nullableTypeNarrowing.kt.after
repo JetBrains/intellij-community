@@ -1,0 +1,19 @@
+// WITH_STDLIB
+fun test(x: Any?) {
+    when (x) {
+        null -> {
+            println("null")
+        }
+        is String -> {
+            println("string: $x")
+        }
+
+        is Int -> {
+            println("int: $x")
+        }
+
+        else -> {
+            println("other")
+        }
+    }
+}

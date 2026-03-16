@@ -9,7 +9,11 @@ import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
 
 /**

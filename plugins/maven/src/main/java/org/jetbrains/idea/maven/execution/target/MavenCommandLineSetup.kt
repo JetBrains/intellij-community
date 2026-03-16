@@ -20,18 +20,27 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.FileUtil.*
+import com.intellij.openapi.util.io.FileUtil.findAncestor
+import com.intellij.openapi.util.io.FileUtil.getRelativePath
+import com.intellij.openapi.util.io.FileUtil.isAncestor
+import com.intellij.openapi.util.io.FileUtil.namesEqual
+import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.util.text.nullize
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.idea.maven.execution.*
+import org.jetbrains.idea.maven.execution.MavenExecutionOptions
 import org.jetbrains.idea.maven.execution.MavenExternalParameters.MAVEN_OPTS
 import org.jetbrains.idea.maven.execution.MavenExternalParameters.encodeProfiles
+import org.jetbrains.idea.maven.execution.MavenRunConfiguration
+import org.jetbrains.idea.maven.execution.MavenRunner
+import org.jetbrains.idea.maven.execution.MavenRunnerParameters
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.execution.RunnerBundle.message
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
@@ -44,7 +53,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.LinkedList
 
 private const val JAVA_HOME_ENV_KEY = "JAVA_HOME"
 

@@ -2,7 +2,14 @@
 package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMirrorElement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PairFunction;
@@ -19,7 +26,15 @@ import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor
 import org.jetbrains.plugins.groovy.util.FixedValuesReferenceProvider;
 
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 public final class GroovyMethodInfo {
   private static volatile Map<String, Map<String, List<GroovyMethodInfo>>> METHOD_INFOS;

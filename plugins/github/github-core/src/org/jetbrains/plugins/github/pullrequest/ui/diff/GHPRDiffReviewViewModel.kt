@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.diff
 
 import com.intellij.collaboration.async.MappingScopedItemsContainer
+import com.intellij.collaboration.async.flatMapLatestEach
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.stateInNow
@@ -10,7 +11,6 @@ import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
 import com.intellij.collaboration.util.getOrNull
-import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
@@ -22,25 +22,33 @@ import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.ai.GHPRAIReviewExtension
 import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
-import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.viewedStateComputationState
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
+import org.jetbrains.plugins.github.pullrequest.ui.comment.lineLocation
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.ranges
 
 interface GHPRDiffReviewViewModel {
-  val commentableRanges: List<Range>
   val canComment: Boolean
+  val canNavigate: Boolean
+
+  val commentableRanges: List<Range>
   val changedRanges: List<Range>
+
   val threads: StateFlow<Collection<GHPRReviewThreadDiffViewModel>>
   val newComments: StateFlow<Collection<GHPRNewCommentDiffViewModel>>
   val aiComments: StateFlow<Collection<GHPRAICommentViewModel>>
@@ -49,7 +57,6 @@ interface GHPRDiffReviewViewModel {
 
   fun requestNewComment(location: GHPRReviewCommentLocation, focus: Boolean)
   fun cancelNewComment(side: Side, lineIdx: Int)
-  fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange)
 
   val isViewedState: StateFlow<ComputedResult<Boolean>>
   fun setViewedState(isViewed: Boolean)
@@ -74,29 +81,29 @@ internal class GHPRDiffReviewViewModelImpl(
   private val repository: GitRepository get() = dataContext.repositoryDataService.remoteCoordinates.repository
   private val path get() = relativePath(repository.root, change.filePath)
 
-  override val commentableRanges: List<Range> = diffData.patch.ranges
   override val canComment: Boolean = threadsVms.canComment
+  override val canNavigate: Boolean = diffData.isCumulative
+
+  override val commentableRanges: List<Range> = diffData.patch.ranges
   override val changedRanges: List<Range> = diffData.patch.hunks.flatMap { hunk -> PatchHunkUtil.getChangeOnlyRanges(hunk) }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   // Filter out only the threads relevant to the diff
   override val threads: StateFlow<Collection<GHPRReviewThreadDiffViewModel>> =
-    allThreads.flatMapLatest { allThreads ->
-      combine(allThreads.map { thread ->
-        thread.mapping.mapState { mapping -> thread.takeIf { mapping.change == this@GHPRDiffReviewViewModelImpl.change } }
-      }) { it.filterNotNull() }
-    }.stateInNow(cs, emptyList())
+    allThreads.flatMapLatestEach { thread ->
+      thread.mapping.mapState { mapping -> thread.takeIf { mapping.change == this@GHPRDiffReviewViewModelImpl.change } }
+    }.map { it.filterNotNull() }
+      .stateInNow(cs, emptyList())
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override val locationsWithDiscussions: StateFlow<Set<DiffLineLocation>> =
-    threads.flatMapLatest { list ->
-      combine(list.map { thread ->
-        thread.mapping.mapState {
-          if (!it.isVisible) return@mapState null
-          it.location
-        }
-      }) { it.filterNotNull().toSet() }
-    }.stateInNow(cs, emptySet())
+    threads.flatMapLatestEach { thread ->
+      thread.mapping.mapState {
+        if (!it.isVisible) return@mapState null
+        it.location?.lineLocation
+      }
+    }.map { it.filterNotNull().toSet() }
+      .stateInNow(cs, emptySet())
 
   private val newCommentsContainer =
     MappingScopedItemsContainer.byIdentity<GHPRReviewNewCommentEditorViewModel, GHPRNewCommentDiffViewModelImpl>(cs) {
@@ -132,18 +139,6 @@ internal class GHPRDiffReviewViewModelImpl(
 
   override fun cancelNewComment(side: Side, lineIdx: Int) =
     threadsVms.cancelNewComment(change, side, lineIdx)
-
-
-  override fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange) {
-    val newComment = threadsVms.newComments.value.firstOrNull {
-      when (val loc = it.position.value.location) {
-        is GHPRReviewCommentLocation.SingleLine -> loc.lineIdx == oldLineRange.end
-        is GHPRReviewCommentLocation.MultiLine -> loc.startLineIdx == oldLineRange.start && loc.lineIdx == oldLineRange.end
-      }
-    } ?: return
-    newComment.updateLineRange(newLineRange)
-    GHPRStatisticsCollector.logResizedComments(project)
-  }
 
   override val isViewedState: StateFlow<ComputedResult<Boolean>> =
     dataProvider.viewedStateData.viewedStateComputationState

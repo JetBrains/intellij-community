@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection.bytecodeAnalysis;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
+import com.intellij.codeInsight.InferredContractAnnotationsLineMarkerProvider;
+import com.intellij.codeInsight.ModCommandAwareExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
 import com.intellij.codeInsight.daemon.impl.LineMarkerSettingsImpl;
@@ -16,14 +20,28 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -38,7 +56,12 @@ import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -69,7 +92,6 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
           libModel.commit();
         }
       }
-      Registry.get(ProjectBytecodeAnalysis.NULLABLE_METHOD).setValue(true, module);
     }
 
     @Override
@@ -216,7 +238,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
   }
 
   @SuppressWarnings("unused")
-  public void _testExportInferredAnnotations() {
+  public void testExportInferredAnnotations() {
     PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
     assertNotNull(rootPackage);
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), BytecodeAnalysisSuppressor.EP_NAME, TEST_SUPPRESSOR,
@@ -278,10 +300,10 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
         }
       }
 
-      private void annotate(Map<String, Map<String, PsiNameValuePair[]>> annotations,
-                            PsiModifierListOwner owner,
-                            String annotationFQN,
-                            PsiNameValuePair[] attributes) {
+      private static void annotate(Map<String, Map<String, PsiNameValuePair[]>> annotations,
+                                   PsiModifierListOwner owner,
+                                   String annotationFQN,
+                                   PsiNameValuePair[] attributes) {
         String key = PsiFormatUtil.getExternalName(owner, false, Integer.MAX_VALUE);
         annotations.computeIfAbsent(key, k -> new TreeMap<>()).put(annotationFQN, attributes);
       }

@@ -8,7 +8,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.SmartPsiFileRange;
-import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
+import com.intellij.psi.impl.smartPointers.SmartPointerManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +56,7 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
                       @NotNull PsiLanguageInjectionHost newHost) {
     SmartPsiFileRange rangeMarker = relevantRangeInHost;
     Segment oldRangeInHostElementPSI = calcRangeInsideHostElement(false);
-    SmartPointerManagerImpl pointerManager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(rangeMarker.getProject());
+    SmartPointerManagerEx pointerManager = (SmartPointerManagerEx)SmartPointerManager.getInstance(rangeMarker.getProject());
     SmartPsiElementPointer<PsiLanguageInjectionHost> newHostPointer = pointerManager.createSmartPsiElementPointer(newHost, newHost.getContainingFile(), true);
 
     if (!rangeInHostElementPSI.equals(TextRange.create(oldRangeInHostElementPSI))) {

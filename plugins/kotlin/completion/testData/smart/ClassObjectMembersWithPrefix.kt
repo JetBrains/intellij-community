@@ -13,3 +13,5 @@ fun foo(){
 
 // EXIST: foo
 // EXIST: bar
+
+// IGNORE_K2

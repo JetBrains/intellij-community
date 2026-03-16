@@ -80,8 +80,6 @@ class PyNamespacePackageRootProvider: PyRootTypeProvider() {
   }
 
   private fun getCurrentNamespacePackages(): List<VirtualFile> = myNamespacePackages.values().mapNotNull { it.file }
-
-  companion object {
-    private val EASTERN_BLUE: Color = JBColor(0x29A5AD, 0x29A5AD)
-  }
 }
+
+private val EASTERN_BLUE: Color = JBColor(0x29A5AD, 0x29A5AD)

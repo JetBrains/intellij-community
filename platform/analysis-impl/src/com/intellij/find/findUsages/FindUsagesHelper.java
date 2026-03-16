@@ -70,6 +70,9 @@ public final class FindUsagesHelper {
     return true;
   }
 
+  /**
+   * @param processor must be thread-safe
+   */
   public static boolean processTextOccurrences(final @NotNull PsiElement element,
                                                @NotNull String stringToSearch,
                                                @NotNull GlobalSearchScope searchScope,

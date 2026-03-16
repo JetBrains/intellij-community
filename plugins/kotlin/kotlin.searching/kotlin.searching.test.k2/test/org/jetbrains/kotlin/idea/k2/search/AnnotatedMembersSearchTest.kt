@@ -8,8 +8,8 @@ import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.testFramework.LightProjectDescriptor
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.search.PsiBasedClassResolver
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.search.PsiBasedClassResolver
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
 abstract class AbstractAnnotatedMembersSearchTest : AbstractSearcherTest() {

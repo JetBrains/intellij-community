@@ -11,8 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Component;
 
 /**
  * @author Vladislav.Soroka

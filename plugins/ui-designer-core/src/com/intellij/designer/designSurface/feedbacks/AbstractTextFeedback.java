@@ -19,7 +19,9 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nls;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 /**
  * @author Alexander Lobas

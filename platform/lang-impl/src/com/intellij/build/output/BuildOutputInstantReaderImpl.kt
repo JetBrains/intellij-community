@@ -10,7 +10,7 @@ import com.intellij.util.ConcurrencyUtil.underThreadNameRunnable
 import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
 import java.io.IOException
-import java.util.*
+import java.util.LinkedList
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit

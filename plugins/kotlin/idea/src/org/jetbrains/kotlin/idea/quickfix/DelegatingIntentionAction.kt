@@ -3,5 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 open class DelegatingIntentionAction(val delegate: IntentionAction) : IntentionAction by delegate

@@ -37,6 +37,18 @@
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/252/find-all-model-252.jar
       find-ec-model-experimental:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/252/find-ec-model-252.jar
+- name: lib/modules/intellij.searchEverywhereMl.ranking.ext.jar
+  contentModules:
+  - name: intellij.searchEverywhereMl.ranking.ext
+- name: lib/modules/intellij.searchEverywhereMl.ranking.java.jar
+  contentModules:
+  - name: intellij.searchEverywhereMl.ranking.java
+- name: lib/modules/intellij.searchEverywhereMl.ranking.vcs.jar
+  contentModules:
+  - name: intellij.searchEverywhereMl.ranking.vcs
+- name: lib/modules/intellij.searchEverywhereMl.ranking.yaml.jar
+  contentModules:
+  - name: intellij.searchEverywhereMl.ranking.yaml
 - name: lib/modules/intellij.searchEverywhereMl.typos.jar
   contentModules:
   - name: intellij.searchEverywhereMl.typos
@@ -48,7 +60,3 @@
   - name: intellij.searchEverywhereMl
   contentModules:
   - name: intellij.platform.ml.logs
-  - name: intellij.searchEverywhereMl.ranking.ext
-  - name: intellij.searchEverywhereMl.ranking.java
-  - name: intellij.searchEverywhereMl.ranking.yaml
-  - name: intellij.searchEverywhereMl.ranking.vcs

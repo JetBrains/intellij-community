@@ -61,7 +61,8 @@ class Container(Generic[T]):
     def __init__(self, value: T) -> None:
         self.value = value
 
-    def set_value(self, value: T) -> Self: ...
+    def set_value(self, value: T) -> Self:
+        raise NotImplementedError
 
     # This should generate an error because Self isn't subscriptable.
     def foo(self, other: Self[int]) -> None:  # E

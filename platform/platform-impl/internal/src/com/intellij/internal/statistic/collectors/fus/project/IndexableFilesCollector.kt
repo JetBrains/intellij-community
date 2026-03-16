@@ -15,7 +15,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import kotlinx.coroutines.isActive
 import kotlin.coroutines.coroutineContext
 
-private class IndexableFilesCollector : ProjectUsagesCollector() {
+internal class IndexableFilesCollector : ProjectUsagesCollector() {
   private val GROUP = EventLogGroup("project.indexable.files", 4)
   private val ALL_INDEXABLE_FILES = GROUP.registerEvent("all.indexable.files", EventFields.Int("count"))
   private val ALL_NON_INDEXABLE_FILES = GROUP.registerEvent("all.non.indexable.files", EventFields.Int("count"))

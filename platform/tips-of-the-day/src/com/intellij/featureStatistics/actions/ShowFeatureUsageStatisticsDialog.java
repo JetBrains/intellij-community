@@ -2,7 +2,14 @@
 package com.intellij.featureStatistics.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.featureStatistics.*;
+import com.intellij.featureStatistics.CompletionStatistics;
+import com.intellij.featureStatistics.CumulativeStatistics;
+import com.intellij.featureStatistics.FeatureDescriptor;
+import com.intellij.featureStatistics.FeatureStatisticsBundle;
+import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
+import com.intellij.featureStatistics.GroupDescriptor;
+import com.intellij.featureStatistics.ProductivityFeaturesRegistry;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.ui.text.StyledTextPane;
@@ -30,13 +37,22 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
-import java.util.*;
 
 final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
   private static final Comparator<FeatureDescriptor> DISPLAY_NAME_COMPARATOR = Comparator.comparing(FeatureDescriptor::getDisplayName);

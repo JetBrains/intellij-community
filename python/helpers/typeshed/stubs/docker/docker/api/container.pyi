@@ -16,18 +16,57 @@ class _HasId(TypedDict):
 class _HasID(TypedDict):
     ID: str
 
+@type_check_only
+class _TopResult(TypedDict):
+    Titles: list[str]
+    Processes: list[list[str]]
+
 _Container: TypeAlias = _HasId | _HasID | str
 
 class ContainerApiMixin:
+    @overload
     def attach(
         self,
         container: _Container,
         stdout: bool = True,
         stderr: bool = True,
-        stream: bool = False,
+        stream: Literal[False] = False,
         logs: bool = False,
-        demux: bool = False,
-    ): ...
+        demux: Literal[False] = False,
+    ) -> bytes: ...
+    @overload
+    def attach(
+        self,
+        container: _Container,
+        stdout: bool = True,
+        stderr: bool = True,
+        stream: Literal[False] = False,
+        logs: bool = False,
+        *,
+        demux: Literal[True],
+    ) -> tuple[bytes | None, bytes | None]: ...
+    @overload
+    def attach(
+        self,
+        container: _Container,
+        stdout: bool = True,
+        stderr: bool = True,
+        *,
+        stream: Literal[True],
+        logs: bool = False,
+        demux: Literal[False] = False,
+    ) -> CancellableStream[bytes]: ...
+    @overload
+    def attach(
+        self,
+        container: _Container,
+        stdout: bool = True,
+        stderr: bool = True,
+        *,
+        stream: Literal[True],
+        logs: bool = False,
+        demux: Literal[True],
+    ) -> CancellableStream[tuple[bytes | None, bytes | None]]: ...
     def attach_socket(self, container: _Container, params=None, ws: bool = False): ...
     def commit(
         self,
@@ -145,7 +184,7 @@ class ContainerApiMixin:
     def start(self, container: _Container) -> None: ...
     def stats(self, container: _Container, decode: bool | None = None, stream: bool = True, one_shot: bool | None = None): ...
     def stop(self, container: _Container, timeout: int | None = None) -> None: ...
-    def top(self, container: _Container, ps_args: str | None = None) -> str: ...
+    def top(self, container: _Container, ps_args: str | None = None) -> _TopResult: ...
     def unpause(self, container: _Container) -> None: ...
     def update_container(
         self,

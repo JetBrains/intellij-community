@@ -17,7 +17,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.project.stateStore
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.createOrLoadProject
+import com.intellij.testFramework.loadProjectAndCheckResults
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import kotlinx.coroutines.runBlocking

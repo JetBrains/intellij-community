@@ -10,7 +10,7 @@ import com.intellij.openapi.externalSystem.service.project.settings.Configuratio
 import com.intellij.openapi.project.Project
 import com.maddyhome.idea.copyright.CopyrightProfile
 
-private class CopyrightConfigurationHandler: ConfigurationHandler {
+internal class CopyrightConfigurationHandler: ConfigurationHandler {
   override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
     val cfgMap = configuration.find("copyright") as? Map<*, *> ?: return
     val copyrightManager = CopyrightManager.getInstance(project)

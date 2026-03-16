@@ -4,7 +4,8 @@ package com.intellij.ui.tabs.impl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import java.awt.*;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 

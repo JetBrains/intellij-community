@@ -16,8 +16,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * This class represents an item of a lookup list.
@@ -32,8 +36,6 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
   public static final Object TAIL_TEXT_SMALL_ATTR = Key.create("tailTextSmall");
 
   public static final Object FORCE_QUALIFY = Key.create("FORCE_QUALIFY");
-
-  public static final Object CASE_INSENSITIVE = Key.create("CASE_INSENSITIVE");
 
   public static final Key<TailType> TAIL_TYPE_ATTR = Key.create("myTailType"); // one of constants defined in SimpleTailType interface
 
@@ -284,10 +286,5 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
   @Override
   public @NotNull Set<String> getAllLookupStrings() {
     return myAllLookupStrings;
-  }
-
-  @Override
-  public boolean isCaseSensitive() {
-    return !Boolean.TRUE.equals(getAttribute(CASE_INSENSITIVE));
   }
 }

@@ -2,7 +2,7 @@
   "inspections": [
     {
       "id": "KotlinTestJUnit",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "DifferentKotlinMavenVersion",
@@ -10,7 +10,7 @@
     },
     {
       "id": "DifferentMavenStdlibVersion",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.ContextAwareRunnable
@@ -9,7 +9,9 @@ import com.intellij.openapi.application.ThreadingSupport.RunnableWithTransferred
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.readLockCompensationTimeout
+import com.intellij.openapi.application.useBackgroundWriteAction
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.util.SuvorovProgress
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
@@ -19,19 +21,17 @@ import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.UIUtil
 import io.opentelemetry.api.metrics.BatchCallback
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.awt.event.InvocationEvent
-import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -138,15 +138,31 @@ object TestOnlyThreading {
    * Please note that in tests it is more appropriate to use [com.intellij.testFramework.PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue]
    */
   @JvmStatic
-  fun <T> releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action: () -> T): T {
+  fun releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action: Runnable) {
     val application = ApplicationManager.getApplication()
     if (application == null) {
-      return action()
+      return action.run()
     }
     if (application.isWriteIntentLockAcquired) {
-      return getGlobalThreadingSupport().releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action)
+      return getGlobalThreadingSupport().releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action::run)
     } else {
-      return action()
+      return action.run()
+    }
+  }
+
+  /**
+   * This method allows executing all scheduled AWT events that could depend on model changes.
+   *
+   * In the IntelliJ Platform Test Framework, there are many tests that run on the EDT, and these tests often need to wait until their asynchronous computations terminate.
+   * Historically, the tests were using synchronous dispatch of AWT events in these scenarios.
+   * In particular, it allowed to wait for scheduled write actions.
+   * With the introduction of Background Write Action, this strategy does not work -- a test cannot wait for a write action if it is not scheduled to the EDT.
+   * Such tests need to use this function, as it allows background write actions to proceed.
+   */
+  @JvmStatic
+  fun dispatchAwtEventsWithoutWriteIntentLock() {
+    releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+      UIUtil.dispatchAllInvocationEvents()
     }
   }
 }
@@ -170,19 +186,6 @@ object InternalThreading {
     backgroundWriteActionCounter.decrementAndGet()
   }
 
-  object RunInBackgroundWriteActionMarker
-    : CoroutineContext.Element,
-      CoroutineContext.Key<RunInBackgroundWriteActionMarker> {
-    override val key: CoroutineContext.Key<*> get() = this
-  }
-
-  @Internal
-  @JvmStatic
-  fun isBackgroundWriteActionAllowed(): Boolean =
-    currentThreadContext()[RunInBackgroundWriteActionMarker] != null
-
-
-
   @RequiresBackgroundThread(generateAssertion = false)
   @RequiresWriteLock(generateAssertion = false)
   @Throws(Throwable::class)
@@ -190,16 +193,18 @@ object InternalThreading {
   fun invokeAndWaitWithTransferredWriteAction(runnable: Runnable) {
     val lock = getGlobalThreadingSupport()
     assert(lock.isWriteAccessAllowed()) { "Transferring of write action is permitted only if write lock is acquired" }
+    if (!useBackgroundWriteAction) {
+      runnable.run()
+      return
+    }
     assert(!EDT.isCurrentThreadEdt()) { "Transferring of write action is permitted only on background thread" }
     val exceptionRef = Ref.create<Throwable?>()
     val capturedRunnable = AppScheduledExecutorService.captureContextCancellationForRunnableThatDoesNotOutliveContextScope {
       try {
-        lock.allowTakingLocksInsideAndRun {
-          // we can appear here if someone tries to acquire a read action in a forced slow-op section
-          // the users have no control over computations that run inside transferred write action, hence we reset the slow-op section
-          SlowOperations.startSection(SlowOperations.RESET).use {
-            (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(runnable)
-          }
+        // we can appear here if someone tries to acquire a read action in a forced slow-op section
+        // the users have no control over computations that run inside transferred write action, hence we reset the slow-op section
+        SlowOperations.startSection(SlowOperations.RESET).use {
+          (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(runnable)
         }
       }
       catch (e: Throwable) {

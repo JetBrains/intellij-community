@@ -5,7 +5,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 

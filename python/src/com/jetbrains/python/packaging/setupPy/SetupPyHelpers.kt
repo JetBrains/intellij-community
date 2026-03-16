@@ -4,6 +4,7 @@ package com.jetbrains.python.packaging.setupPy
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -11,14 +12,29 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyDictLiteralExpression
+import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyListLiteralExpression
+import com.jetbrains.python.psi.PyParenthesizedExpression
+import com.jetbrains.python.psi.PyRecursiveElementVisitor
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.rootManager
+import org.jetbrains.annotations.ApiStatus
 
-
-internal object SetupPyHelpers {
+@ApiStatus.Internal
+object SetupPyHelpers {
   const val SETUP_PY: String = "setup.py"
   const val REQUIRES: String = "requires"
   const val INSTALL_REQUIRES: String = "install_requires"
@@ -28,7 +44,7 @@ internal object SetupPyHelpers {
 
   @JvmStatic
   fun detectSetupPyInModule(module: Module): PyFile? {
-    val file = module.rootManager.contentRoots.firstNotNullOfOrNull {
+    val file = ModuleRootManager.getInstance(module).contentRoots.firstNotNullOfOrNull {
       it.findChild(SETUP_PY)
     } ?: return null
 
@@ -37,6 +53,7 @@ internal object SetupPyHelpers {
     }
   }
 
+  @JvmStatic
   fun parseSetupPy(file: PyFile): List<PyRequirement>? {
     val setupCall = findSetupCall(file) ?: return null
 

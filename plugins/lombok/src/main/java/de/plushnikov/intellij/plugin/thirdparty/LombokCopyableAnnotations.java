@@ -1,7 +1,11 @@
 package de.plushnikov.intellij.plugin.thirdparty;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
@@ -11,7 +15,14 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public enum LombokCopyableAnnotations {
   BASE_COPYABLE(LombokUtils.BASE_COPYABLE_ANNOTATIONS),

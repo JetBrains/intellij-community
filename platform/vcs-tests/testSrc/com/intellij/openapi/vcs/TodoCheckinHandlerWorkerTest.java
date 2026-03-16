@@ -15,7 +15,11 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 public class TodoCheckinHandlerWorkerTest extends HeavyPlatformTestCase {

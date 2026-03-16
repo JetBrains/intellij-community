@@ -2,7 +2,12 @@
 package com.intellij.codeInspection
 
 import com.intellij.codeInspection.util.InspectionMessage
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnchorOwner
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UastCallKind
 
 @JvmOverloads
 public fun ProblemsHolder.registerUProblem(

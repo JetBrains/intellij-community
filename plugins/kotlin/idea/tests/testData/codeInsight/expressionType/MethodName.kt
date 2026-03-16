@@ -4,4 +4,4 @@ fun foo(value: String) {
 
 // K1_TYPE: println(value) -> <html>Unit</html>
 
-// K2_TYPE: println(value) -> Unit
+// K2_TYPE: println(value) -> <b>Unit</b>

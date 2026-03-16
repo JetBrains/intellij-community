@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.FileASTNode;
@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.util.PsiUtilCore;
@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public class SingleRootFileViewProvider extends AbstractFileViewProvider implements FileViewProvider {
+  /** set on a file to bypass file size limit check */
   private static final Key<Boolean> OUR_NO_SIZE_LIMIT_KEY = Key.create("no.size.limit");
   private static final Logger LOG = Logger.getInstance(SingleRootFileViewProvider.class);
   private volatile PsiFile myPsiFile;
@@ -65,8 +66,8 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     super(manager, virtualFile, eventSystemEnabled);
     myBaseLanguage = language;
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(manager.getProject());
-    if (documentManager instanceof PsiDocumentManagerBase) {
-      ((PsiDocumentManagerBase)documentManager).assertFileIsFromCorrectProject(virtualFile);
+    if (documentManager instanceof PsiDocumentManagerEx) {
+      ((PsiDocumentManagerEx)documentManager).assertFileIsFromCorrectProject(virtualFile);
     }
   }
 
@@ -128,7 +129,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   @Override
-  public final PsiFile getCachedPsi(@NotNull Language target) {
+  public final @Nullable PsiFile getCachedPsi(@NotNull Language target) {
     if (target != getBaseLanguage()) return null;
     PsiFile obj = myPsiFile;
     return obj == PsiUtilCore.NULL_PSI_FILE ? null : obj;
@@ -169,11 +170,12 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
 
   public static boolean isTooLargeForIntelligence(@NotNull VirtualFile file,
                                                   @Nullable("if content size should be retrieved from a file") Long contentSize) {
-    if (!checkFileSizeLimit(file)) {
+    if (shouldBypassFileSizeLimitCheck(file)) {
       return false;
     }
     if (file instanceof LightVirtualFile && ((LightVirtualFile)file).isTooLargeForIntelligence() == ThreeState.YES) {
-      return false;
+      //MAYBE RC: shouldn't we also return 'false' immediately, if isTooLargeForIntelligence() == NO?
+      return true;
     }
     int maxSize = FileSizeLimit.getIntellisenseLimit(file.getExtension());
     return contentSize == null
@@ -193,13 +195,14 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
            ? fileSizeIsGreaterThan(vFile, maxLength)
            : contentSize > maxLength;
   }
-  private static boolean checkFileSizeLimit(@NotNull VirtualFile vFile) {
+
+  private static boolean shouldBypassFileSizeLimitCheck(@NotNull VirtualFile vFile) {
     if (Boolean.TRUE.equals(vFile.getCopyableUserData(OUR_NO_SIZE_LIMIT_KEY))) {
-      return false;
+      return true;
     }
     VirtualFile original = VirtualFileUtil.originalFile(vFile);
-    if (original != null) return checkFileSizeLimit(original);
-    return true;
+    if (original != null) return shouldBypassFileSizeLimitCheck(original);
+    return false;
   }
 
   public static void doNotCheckFileSizeLimit(@NotNull VirtualFile vFile) {

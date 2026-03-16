@@ -6,11 +6,13 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.packaging.dependencies.PythonDependenciesManager
+import com.jetbrains.python.packaging.PyRequirementParser
+import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import org.jetbrains.annotations.Nls
 
 class PyAddToDeclaredPackagesQuickFix(
-  private val manager: PythonDependenciesManager,
+  private val manager: PythonPackageManager,
   val packageName: String,
 ) : LocalQuickFix {
   override fun startInWriteAction(): Boolean = false
@@ -19,6 +21,9 @@ class PyAddToDeclaredPackagesQuickFix(
   override fun getName(): @IntentionName String = PyPsiBundle.message("QFIX.add.imported.package.to.declared.packages", packageName)
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    manager.addDependency(packageName)
+    PyPackageCoroutine.launch(project) {
+      val requirement = PyRequirementParser.fromLine(packageName) ?: return@launch
+      manager.addDependencyToFile(requirement)
+    }
   }
 }

@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
-import java.awt.*;
+import java.awt.Container;
 
 /**
  * AccessibleContext implementation that delegates all calls to another context.

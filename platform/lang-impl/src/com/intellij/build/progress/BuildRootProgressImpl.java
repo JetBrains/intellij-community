@@ -3,8 +3,9 @@ package com.intellij.build.progress;
 
 import com.intellij.build.BuildBundle;
 import com.intellij.build.BuildProgressListener;
-import com.intellij.build.events.*;
-import com.intellij.build.events.impl.*;
+import com.intellij.build.events.EventResult;
+import com.intellij.build.events.FinishBuildEvent;
+import com.intellij.build.events.StartBuildEvent;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,11 +15,8 @@ public final class BuildRootProgressImpl extends AbstractBuildProgress {
 
   private @Nullable BuildProgressDescriptor myDescriptor;
 
-  public BuildRootProgressImpl(
-    @NotNull BuildEvents buildEvents,
-    @NotNull BuildProgressListener buildProgressListener
-  ) {
-    super(buildEvents, buildProgressListener);
+  public BuildRootProgressImpl(@NotNull BuildProgressListener buildProgressListener) {
+    super(buildProgressListener);
   }
 
   @Override
@@ -60,21 +58,20 @@ public final class BuildRootProgressImpl extends AbstractBuildProgress {
   @Override
   public @NotNull BuildProgress<BuildProgressDescriptor> start(@NotNull String message, @NotNull BuildProgressDescriptor descriptor) {
     myDescriptor = descriptor;
-    return event(myBuildEvents.startBuild()
-      .withParentId(getParentId())
-      .withMessage(message)
-      .withBuildDescriptor(descriptor.getBuildDescriptor())
-      .build());
+    return event(
+      StartBuildEvent.builder(message, descriptor.getBuildDescriptor())
+        .withParentId(getParentId())
+        .build()
+    );
   }
 
   @Override
   public @NotNull BuildProgress<BuildProgressDescriptor> finish(long timeStamp, @NotNull String message, @NotNull EventResult result) {
-    return event(myBuildEvents.finishBuild()
-      .withStartBuildId(getBuildId())
-      .withParentId(getParentId())
-      .withTime(timeStamp)
-      .withMessage(message)
-      .withResult(result)
-      .build());
+    return event(
+      FinishBuildEvent.builder(getBuildId(), message, result)
+        .withParentId(getParentId())
+        .withTime(timeStamp)
+        .build()
+    );
   }
 }

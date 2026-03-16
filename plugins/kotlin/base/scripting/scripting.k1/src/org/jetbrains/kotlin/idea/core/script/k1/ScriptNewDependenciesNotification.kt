@@ -10,12 +10,14 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
-import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
+import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 
+@K1Deprecation
 fun VirtualFile.removeScriptDependenciesNotificationPanel(project: Project) {
     withSelectedEditor(project) { manager ->
         notificationPanel?.let {
@@ -25,6 +27,7 @@ fun VirtualFile.removeScriptDependenciesNotificationPanel(project: Project) {
     }
 }
 
+@K1Deprecation
 fun VirtualFile.addScriptDependenciesNotificationPanel(
     compilationConfigurationResult: ScriptCompilationConfigurationWrapper,
     project: Project,
@@ -47,11 +50,13 @@ fun VirtualFile.addScriptDependenciesNotificationPanel(
     }
 }
 
+@K1Deprecation
 @TestOnly
 fun VirtualFile.hasSuggestedScriptConfiguration(project: Project): Boolean {
     return FileEditorManager.getInstance(project).getSelectedEditor(this)?.notificationPanel != null
 }
 
+@K1Deprecation
 @TestOnly
 fun VirtualFile.applySuggestedScriptConfiguration(project: Project): Boolean {
     val notificationPanel = FileEditorManager.getInstance(project).getSelectedEditor(this)?.notificationPanel
@@ -92,7 +97,7 @@ private class NewScriptDependenciesNotificationPanel(
 
             @Suppress("DEPRECATION")
             val scriptDefinition = file.findScriptDefinition(project) ?: return@createActionLabel
-            KotlinScriptingSettingsImpl.getInstance(project).setAutoReloadConfigurations(scriptDefinition, true)
+            KotlinScriptingSettings.getInstance(project).setAutoReloadConfigurations(scriptDefinition, true)
         }
     }
 }

@@ -1,0 +1,23 @@
+### auto-generated section `build intellij.kotlin.base.scripting.scratch.definition` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "scripting.scratch.definition_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "scripting.scratch.definition",
+  module_name = "intellij.kotlin.base.scripting.scratch.definition",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":scripting.scratch.definition_resources"],
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "@lib//:kotlinc-kotlin-scripting-jvm",
+    "@lib//:kotlin-stdlib",
+  ]
+)
+### auto-generated section `build intellij.kotlin.base.scripting.scratch.definition` end

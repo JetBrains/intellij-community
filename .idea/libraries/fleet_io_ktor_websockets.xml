@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="fleet:io.ktor.websockets" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-websockets-jvm:3.1.3">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-websockets-jvm:3.3.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3.1.3/ktor-websockets-jvm-3.1.3.jar">
-          <sha256sum>ef28b4f12054ee125765b72fe3230e215a60b73b2ff2072a5c280fcf09329077</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3.3.2/ktor-websockets-jvm-3.3.2.jar">
+          <sha256sum>173817cf1c9e00e41b6f307cb5c80a03856a70d910d3b2fbe8c10a76ae4b0ead</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3.1.3/ktor-websockets-jvm-3.1.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3.3.2/ktor-websockets-jvm-3.3.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3.1.3/ktor-websockets-jvm-3.1.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3.3.2/ktor-websockets-jvm-3.3.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

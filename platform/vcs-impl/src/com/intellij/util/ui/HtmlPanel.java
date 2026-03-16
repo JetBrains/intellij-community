@@ -11,7 +11,7 @@ import com.intellij.ui.ColorUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JEditorPane;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.BadLocationException;
@@ -20,7 +20,7 @@ import javax.swing.text.Document;
 import javax.swing.text.Position;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
-import java.awt.*;
+import java.awt.Font;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;

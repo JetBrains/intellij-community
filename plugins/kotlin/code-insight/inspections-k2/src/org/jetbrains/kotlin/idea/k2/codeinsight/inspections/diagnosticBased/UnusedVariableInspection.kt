@@ -16,10 +16,20 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinKtDiagnosticBasedInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.isExplicitTypeReferenceNeededForTypeInference
-import org.jetbrains.kotlin.idea.codeinsight.utils.removeProperty
 import org.jetbrains.kotlin.idea.codeinsight.utils.renameToUnderscore
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.isPure
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import kotlin.reflect.KClass
 
 internal class UnusedVariableInspection :
@@ -53,7 +63,8 @@ internal class UnusedVariableInspection :
         ApplicabilityRanges.declarationName(element)
 
     class Context(
-        val couldBeAnExplicitlyIgnoredValue: Boolean
+        val couldBeAnExplicitlyIgnoredValue: Boolean,
+        val isSimpleCase: Boolean
     )
 
     override fun KaSession.prepareContextByDiagnostic(
@@ -66,11 +77,38 @@ internal class UnusedVariableInspection :
                     && !declaration.isVar
                     && element.languageVersionSettings.supportsFeature(LanguageFeature.UnnamedLocalVariables)
                     && !declaration.symbol.returnType.isUnitType
-        val typeReference = declaration.typeReference ?: return Context(couldBeAnExplicitlyIgnoredValue)
+        
+        val isSimpleCase = isSimpleCaseVariable(declaration)
+        val typeReference = declaration.typeReference ?: return Context(couldBeAnExplicitlyIgnoredValue, isSimpleCase)
         return if (!declaration.isExplicitTypeReferenceNeededForTypeInference(typeReference)) {
-            Context(couldBeAnExplicitlyIgnoredValue)
+            Context(couldBeAnExplicitlyIgnoredValue, isSimpleCase)
         } else {
             null
+        }
+    }
+
+    private fun isSimpleCaseVariable(declaration: KtCallableDeclaration): Boolean {
+        if (declaration !is KtProperty) return false
+        
+        val initializer = declaration.initializer ?: return false
+        
+        return when (initializer) {
+            // Literals: val x = 5, val s = "string", val b = true
+            is KtConstantExpression -> true
+            is KtStringTemplateExpression -> {
+                // Simple string literals without interpolation
+                initializer.entries.all { it is KtLiteralStringTemplateEntry }
+            }
+            // Simple property access or function calls that are likely pure
+            is KtDotQualifiedExpression -> {
+                // Simple cases like SomeClass.CONSTANT or obj.pureFunction()
+                initializer.isPure()
+            }
+            is KtNameReferenceExpression -> {
+                // Reference to another variable/constant
+                true
+            }
+            else -> false
         }
     }
 
@@ -95,7 +133,11 @@ internal class UnusedVariableInspection :
                     }
 
                     else -> {
-                        KotlinBundle.message("remove.variable.0", element.name.toString())
+                        if (context.isSimpleCase) {
+                            KotlinBundle.message("remove.variable.0", element.name.toString())
+                        } else {
+                            KotlinBundle.message("remove.variable.change.semantics", element.name.toString())
+                        }
                     }
                 }
             }
@@ -111,7 +153,8 @@ internal class UnusedVariableInspection :
                         if (context.couldBeAnExplicitlyIgnoredValue) {
                             renameToUnderscore(element)
                         } else {
-                            removeProperty(element)
+                            // Always remove the entire statement for both simple and complex cases
+                            element.delete()
                         }
                     }
                 }

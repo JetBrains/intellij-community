@@ -17,7 +17,6 @@ import com.intellij.grazie.rule.SentenceBatcher
 import com.intellij.grazie.rule.SentenceBatcher.AsyncBatchParser
 import com.intellij.grazie.text.TextChecker.ProofreadingContext
 import com.intellij.grazie.text.TextContent
-import com.intellij.grazie.utils.HighlightingUtil
 import com.intellij.grazie.utils.HunspellUtil
 import com.intellij.grazie.utils.getLanguageIfAvailable
 import com.intellij.openapi.Disposable
@@ -39,7 +38,7 @@ import org.languagetool.language.English
 
 object DependencyParser {
   private val LOG = Logger.getInstance(DependencyParser::class.java)
-  private val cachedTrees: MutableMap<String, Tree> = createConcurrentSoftKeySoftValueMap()
+  private val cachedTrees: MutableMap<SentenceWithLanguage, Tree> = createConcurrentSoftKeySoftValueMap()
 
   @JvmStatic
   fun getParser(context: ProofreadingContext, minimal: Boolean): AsyncBatchParser<Tree>? {
@@ -49,8 +48,7 @@ object DependencyParser {
 
   @JvmStatic
   fun getParser(text: TextContent, minimal: Boolean): AsyncBatchParser<Tree>? {
-    val stripPrefixLength = HighlightingUtil.stripPrefix(text)
-    val language = getLanguageIfAvailable(text.toString().substring(stripPrefixLength)) ?: return null
+    val language = getLanguageIfAvailable(text) ?: return null
     return getParser(language, text.containingFile, minimal)
   }
 
@@ -77,7 +75,7 @@ object DependencyParser {
           (ltLanguage?.disambiguator as? LazyCachingConcurrentDisambiguator)?.ensureInitializedAsync()
           @Suppress("UNCHECKED_CAST")
           return sentences.associateWith {
-            cachedTrees.getOrPut(it.sentence) {
+            cachedTrees.getOrPut(SentenceWithLanguage(it.sentence, language)) {
               ensureActive()
               Tree.createFlatTree(support, it.sentence)
             }
@@ -174,3 +172,5 @@ object DependencyParser {
     }
   }
 }
+
+private data class SentenceWithLanguage(val sentence: String, val language: Language)

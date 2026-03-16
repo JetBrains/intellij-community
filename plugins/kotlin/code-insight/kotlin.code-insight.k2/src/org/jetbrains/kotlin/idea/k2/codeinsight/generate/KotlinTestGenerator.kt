@@ -13,7 +13,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.JavaDirectoryService
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.refactoring.util.classMembers.MemberInfo
@@ -30,8 +34,12 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.psi.*
-import java.util.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import java.util.Properties
 
 class KotlinTestGenerator: TestGenerator {
     override fun generateTest(project: Project, d: CreateTestDialog): PsiElement? {

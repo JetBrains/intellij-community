@@ -2,7 +2,11 @@
 @file:Suppress("UNCHECKED_CAST")
 package fleet.util.openmap
 
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentHashMapOf
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toPersistentHashMap
 import kotlin.concurrent.atomics.AtomicReference
 
 interface Key<V : Any, in Domain>

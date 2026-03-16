@@ -3,7 +3,6 @@ package com.intellij.platform.syntax.psi
 
 import com.intellij.lang.LanguageExtension
 import com.intellij.platform.syntax.LanguageSyntaxDefinition
-import kotlin.jvm.JvmStatic
 
 /**
  * Extension providing access to [com.intellij.platform.syntax.LanguageSyntaxDefinition]s

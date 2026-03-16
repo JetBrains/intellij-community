@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive -opt-in=org.jetbrains.kotlin.K1Deprecation" />
+        </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="21" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
+          </stringArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
@@ -29,7 +45,7 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.plugin.k1" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectModel" />
@@ -54,15 +70,15 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
     <orderEntry type="module" module-name="intellij.groovy.psi" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java" />
     <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
     <orderEntry type="module" module-name="intellij.gradle.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.native" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" scope="TEST" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="library" exported="" name="kotlin-tooling-core" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.jvm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />

@@ -12,7 +12,7 @@ envs {
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
 
   if (System.getenv().containsKey("PYCHARM_ZIP_REPOSITORY")) {
-    zipRepository = new URL(System.getenv().get("PYCHARM_ZIP_REPOSITORY"))
+    zipRepository = new URL(System.getenv("PYCHARM_ZIP_REPOSITORY"))
     shouldUseZipsFromRepository = Os.isFamily(Os.FAMILY_WINDOWS)
   }
 

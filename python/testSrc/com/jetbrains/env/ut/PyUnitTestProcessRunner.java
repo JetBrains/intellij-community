@@ -17,11 +17,11 @@ package com.jetbrains.env.ut;
 
 import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.env.ProcessWithConsoleRunner;
+import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.testing.PyUnitTestConfiguration;
 import com.jetbrains.python.testing.PyUnitTestFactory;
-import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.testing.PythonTestConfigurationType;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;

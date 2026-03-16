@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.plugins.javaFX">
+<idea-plugin>
   <name>JavaFX</name>
   <id>org.jetbrains.plugins.javaFX</id>
   <vendor>JetBrains</vendor>
@@ -26,6 +26,6 @@
   </extensions>
 
   <dependencies>
-    <plugin id="com.intellij.java"/>
+    <module name="intellij.java.backend"/>
   </dependencies>
 </idea-plugin>

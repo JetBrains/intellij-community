@@ -16,7 +16,6 @@ import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal
 interface MavenEmbedderWrappers : AutoCloseable {
-  suspend fun getEmbedder(baseDir: String): MavenEmbedderWrapper = getEmbedder(Path.of(baseDir))
   suspend fun getAlwaysOnlineEmbedder(baseDir: String): MavenEmbedderWrapper
   suspend fun getEmbedder(baseDir: Path): MavenEmbedderWrapper
 }
@@ -61,8 +60,8 @@ private class MavenEmbedderWrappersImpl(private val project: Project) : MavenEmb
         settings.isOffline = false
       }
       val transformer = RemotePathTransformerFactory.createForProject(project)
-      val forceResolveDependenciesSequentially = Registry.Companion.`is`("maven.server.force.resolve.dependencies.sequentially")
-      val useCustomDependenciesResolver = Registry.Companion.`is`("maven.server.use.custom.dependencies.resolver")
+      val forceResolveDependenciesSequentially = Registry.`is`("maven.server.force.resolve.dependencies.sequentially")
+      val useCustomDependenciesResolver = Registry.`is`("maven.server.use.custom.dependencies.resolver")
 
       val embedder = connector.createEmbedder(MavenEmbedderSettings(
         settings,

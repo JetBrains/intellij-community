@@ -1,0 +1,24 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_changeTopLevelTypeAlias-a.kotlin_module
+  a/AKt.class
+  usage/A1UsageKt.class
+  usage/A2UsageKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/changeTopLevelTypeAlias/a/a.kt
+  kotlin/pureKotlin/changeTopLevelTypeAlias/a/a1Usage.kt
+  kotlin/pureKotlin/changeTopLevelTypeAlias/a/a2Usage.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_changeTopLevelTypeAlias-a.kotlin_module
+  a/Service.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/changeTopLevelTypeAlias/a/Service.kt
+  kotlin/pureKotlin/changeTopLevelTypeAlias/a/a.kt
+  kotlin/pureKotlin/changeTopLevelTypeAlias/a/a1Usage.kt
+  kotlin/pureKotlin/changeTopLevelTypeAlias/a/a2Usage.kt
+End of files
+------------------------------------------
+Exit code: OK

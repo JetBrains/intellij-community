@@ -3,8 +3,8 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsSafe;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.FontMetrics;
 import java.io.File;
 
 

@@ -29,7 +29,11 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyStructuralType;
@@ -84,7 +88,8 @@ final class PyTypeCheckerInspectionProblemRegistrar {
             var parameterName = unfilledParameterFromParamSpec.getParameter().getName();
             var paramSpecTypeName = unfilledParameterFromParamSpec.getParamSpecType().getVariableName();
             if (parameterName != null) {
-              visitor.registerProblem(rpar, PyPsiBundle.message("INSP.type.checker.unfilled.parameter.for.paramspec", parameterName, paramSpecTypeName));
+              visitor.registerProblem(rpar, PyPsiBundle.message("INSP.type.checker.unfilled.parameter.for.paramspec", parameterName,
+                                                                paramSpecTypeName));
             }
           }
 
@@ -151,7 +156,8 @@ final class PyTypeCheckerInspectionProblemRegistrar {
     }
 
     if (expectedSubstitutedName != null) {
-      return PyPsiBundle.message("INSP.type.checker.expected.matched.type.got.type.instead", expectedSubstitutedName, expectedTypeName, actualTypeName);
+      return PyPsiBundle.message("INSP.type.checker.expected.matched.type.got.type.instead", expectedSubstitutedName, expectedTypeName,
+                                 actualTypeName);
     }
     else {
       return PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedTypeName, actualTypeName);

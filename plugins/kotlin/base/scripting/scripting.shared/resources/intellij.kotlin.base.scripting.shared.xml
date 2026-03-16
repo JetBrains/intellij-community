@@ -7,6 +7,12 @@
             dynamic="true"/>
 
     <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kotlinScriptFilter"
+            interface="org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptProcessingFilter"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scriptAfterRunCallbackProvider"
             interface="org.jetbrains.kotlin.idea.core.script.shared.ScriptAfterRunCallbackProvider"
             area="IDEA_PROJECT"
@@ -32,6 +38,7 @@
 
     <fileType name="script-definition-marker" fieldName="INSTANCE"
               implementationClass="org.jetbrains.kotlin.idea.core.script.shared.definition.ScriptDefinitionMarkerFileType"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.core.script.shared.ScriptingSettingsFUSCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

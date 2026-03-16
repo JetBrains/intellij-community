@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -35,8 +35,13 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.platform.ide.navigation.NavigationOptions;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
@@ -46,10 +51,21 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import javax.swing.JScrollPane;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -203,7 +219,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     if (gotoData.listUpdaterTask != null) {
       Alarm alarm = new Alarm(popup);
-      alarm.addRequest(() -> showPopup.accept(popup), 300);
+      alarm.addRequest(() -> showPopup.accept(popup), IdeProductMode.isBackend() ? 300 : 17);
       gotoData.listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);
     }

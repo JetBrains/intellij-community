@@ -14,7 +14,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
@@ -33,10 +37,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
-import java.awt.*;
+import java.awt.Component;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -62,7 +70,14 @@ public final class SdkConfigurationUtil {
     }
 
     FileChooserDescriptor descriptor = createCompositeDescriptor(sdkTypes);
-    VirtualFile suggestedDir = getSuggestedSdkRoot(sdkTypes[0]);
+    VirtualFile suggestedDir;
+
+    if (project != null && project.getProjectFilePath() != null) {
+      suggestedDir = getSuggestedSdkRoot(sdkTypes[0], Path.of(project.getProjectFilePath()));
+    }
+    else {
+      suggestedDir = getSuggestedSdkRoot(sdkTypes[0]);
+    }
     FileChooser.chooseFiles(descriptor, project, suggestedDir, new FileChooser.FileChooserConsumer() {
       @Override
       public void consume(List<VirtualFile> selectedFiles) {
@@ -228,7 +243,7 @@ public final class SdkConfigurationUtil {
                                        @Nullable SdkAdditionalData additionalData,
                                        @Nullable String customSdkSuggestedName,
                                        @NotNull Supplier<? extends @NotNull ProjectJdkTable> projectJdkTableSupplier) {
-    return createSdk(allSdks, sdkType.sdkPath(homeDir), sdkType, additionalData, customSdkSuggestedName, projectJdkTableSupplier);
+    return createSdk(null, allSdks, sdkType.sdkPath(homeDir), sdkType, additionalData, customSdkSuggestedName, projectJdkTableSupplier);
   }
 
   public static @NotNull Sdk createSdk(@NotNull Collection<? extends Sdk> allSdks,
@@ -236,7 +251,7 @@ public final class SdkConfigurationUtil {
                                        @NotNull SdkType sdkType,
                                        @Nullable SdkAdditionalData additionalData,
                                        @Nullable String customSdkSuggestedName) {
-    return createSdk(allSdks, homePath, sdkType, additionalData, customSdkSuggestedName, () -> ProjectJdkTable.getInstance());
+    return createSdk(null, allSdks, homePath, sdkType, additionalData, customSdkSuggestedName, () -> ProjectJdkTable.getInstance());
   }
 
   @ApiStatus.Internal
@@ -246,10 +261,11 @@ public final class SdkConfigurationUtil {
                                        @NotNull SdkType sdkType,
                                        @Nullable SdkAdditionalData additionalData,
                                        @Nullable String customSdkSuggestedName) {
-    return createSdk(allSdks, homePath, sdkType, additionalData, customSdkSuggestedName, () -> ProjectJdkTable.getInstance(project));
+    return createSdk(project, allSdks, homePath, sdkType, additionalData, customSdkSuggestedName, () -> ProjectJdkTable.getInstance(project));
   }
 
-  private static @NotNull Sdk createSdk(@NotNull Collection<? extends Sdk> allSdks,
+  private static @NotNull Sdk createSdk(@Nullable Project project,
+                                        @NotNull Collection<? extends Sdk> allSdks,
                                         @NotNull String homePath,
                                         @NotNull SdkType sdkType,
                                         @Nullable SdkAdditionalData additionalData,
@@ -259,7 +275,7 @@ public final class SdkConfigurationUtil {
                            ? createUniqueSdkName(sdkType, homePath, allSdks)
                            : createUniqueSdkName(customSdkSuggestedName, allSdks);
 
-    Sdk sdk = SdkUtils.createSdkForEnvironment(projectJdkTableSupplier.get(), sdkName, sdkType, homePath);
+    Sdk sdk = SdkUtils.createSdkForEnvironment(projectJdkTableSupplier.get(), project, sdkName, sdkType, homePath);
     SdkModificator sdkModificator = sdk.getSdkModificator();
     if (additionalData != null) {
       // additional initialization.

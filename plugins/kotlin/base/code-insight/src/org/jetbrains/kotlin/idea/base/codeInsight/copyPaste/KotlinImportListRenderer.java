@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.base.codeInsight.copyPaste;
 import com.intellij.ide.util.FQNameCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JList;
+import java.awt.Component;
 
 /* package */ final class KotlinImportListRenderer extends FQNameCellRenderer {
     @Override

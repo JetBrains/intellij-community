@@ -17,6 +17,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/warmup",
     "//plugins/performanceTesting/core:performanceTesting",
+    "@lib//:kotlin-stdlib",
     "//platform/platform-impl:ide-impl",
     "//platform/core-api:core",
     "//platform/remote-driver/model",

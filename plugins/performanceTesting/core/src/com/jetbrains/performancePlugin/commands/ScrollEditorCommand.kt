@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -11,6 +11,13 @@ import com.jetbrains.performancePlugin.Timer
 import kotlinx.coroutines.delay
 import org.jetbrains.annotations.NonNls
 
+/**
+ * Scroll the current file to the end of the file.
+ *
+ * Syntax: `%scrollEditor <scroll Delay ms>`
+ *
+ * Example: `%scrollEditor 100`
+ */
 class ScrollEditorCommand(text: String, line: Int): PerformanceCommandCoroutineAdapter(text, line) {
 
   companion object {
@@ -19,6 +26,8 @@ class ScrollEditorCommand(text: String, line: Int): PerformanceCommandCoroutineA
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
+    val scrollDelay = extractCommandArgument(PREFIX).toLongOrNull() ?: 100
+    
     val timer = Timer()
     timer.start(NAME, true)
 
@@ -32,7 +41,7 @@ class ScrollEditorCommand(text: String, line: Int): PerformanceCommandCoroutineA
         editor.scrollingModel.scrollTo(logicalPosition, ScrollType.RELATIVE)
       }
       lineToScrollTo += 5
-      delay(100)
+      delay(scrollDelay)
     }
     timer.stop()
   }

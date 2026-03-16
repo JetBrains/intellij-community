@@ -21,6 +21,7 @@ jvm_library(
     "//platform/new-ui-onboarding",
     "//platform/core-ui",
     "//platform/projectModel-api:projectModel",
+    "@lib//:kotlin-stdlib",
     "//platform/util/coroutines",
     "//platform/statistics",
     "//platform/lang-impl",

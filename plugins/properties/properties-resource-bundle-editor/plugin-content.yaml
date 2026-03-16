@@ -1,3 +1,0 @@
-- name: lib/properties-resource-bundle-editor.jar
-  modules:
-  - name: intellij.properties.resource.bundle.editor

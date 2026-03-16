@@ -18,7 +18,12 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Font
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
+import javax.swing.UIManager
 
 open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
                                  actionGroup: ActionGroup,

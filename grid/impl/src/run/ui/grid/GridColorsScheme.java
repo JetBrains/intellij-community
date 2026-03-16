@@ -1,7 +1,12 @@
 package com.intellij.database.run.ui.grid;
 
 import com.intellij.database.settings.DataGridAppearanceSettings;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.DelegatingFontPreferences;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontCache;
+import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.impl.FontFamilyService;
@@ -10,7 +15,8 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.List;
 
 public class GridColorsScheme extends DelegateColorScheme {

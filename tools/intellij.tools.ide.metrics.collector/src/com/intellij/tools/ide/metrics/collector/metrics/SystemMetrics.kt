@@ -1,6 +1,7 @@
 package com.intellij.tools.ide.metrics.collector.metrics
 
-import java.util.*
+import java.util.Date
+import java.util.LinkedList
 
 data class MetricData<T : Number>(val name: String, val data: DataPoint<T>)
 

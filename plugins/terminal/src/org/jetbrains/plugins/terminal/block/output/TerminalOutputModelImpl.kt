@@ -13,7 +13,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptRenderingInfo
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.block.ui.executeInBulk
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.max
 import kotlin.math.min

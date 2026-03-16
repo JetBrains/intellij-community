@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data
 
 import com.intellij.openapi.Disposable
@@ -15,7 +15,7 @@ import com.intellij.util.io.PersistentEnumeratorBase
 import com.intellij.util.io.storage.AbstractStorage
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.VcsUserRegistry
-import com.intellij.vcs.log.impl.VcsUserImpl
+import com.intellij.vcs.log.util.VcsUserUtil
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.File
@@ -26,6 +26,7 @@ internal class VcsUserRegistryImpl internal constructor(project: Project) : Disp
   private val _persistentEnumerator = AtomicReference<PersistentEnumeratorBase<VcsUser>?>()
   private val persistentEnumerator: PersistentEnumeratorBase<VcsUser>?
     get() = _persistentEnumerator.get()
+  private val initLock = Any()
   private val interner = Interner.createInterner<VcsUser>()
   private val mapFile = File(USER_CACHE_APP_DIR, project.locationHash + "." + STORAGE_VERSION)
 
@@ -33,28 +34,34 @@ internal class VcsUserRegistryImpl internal constructor(project: Project) : Disp
     initEnumerator()
   }
 
-  private fun initEnumerator(): Boolean {
-    try {
-      val enumerator = IOUtil.openCleanOrResetBroken({
-                                                       PersistentBTreeEnumerator(mapFile.toPath(), VcsUserKeyDescriptor(this),
-                                                                                 AbstractStorage.PAGE_SIZE, null, STORAGE_VERSION)
-                                                     }, mapFile)
-      val wasSet = _persistentEnumerator.compareAndSet(null, enumerator)
-      if (!wasSet) {
-        LOG.error("Could not assign newly opened enumerator")
-        enumerator?.close()
+  private fun initEnumerator() {
+    if (persistentEnumerator != null) return
+
+    synchronized(initLock) {
+      if (persistentEnumerator != null) return
+
+      try {
+        val enumerator = IOUtil.openCleanOrResetBroken({
+                                                         PersistentBTreeEnumerator(mapFile.toPath(), VcsUserKeyDescriptor(this),
+                                                                                   AbstractStorage.PAGE_SIZE, null, STORAGE_VERSION)
+                                                       }, mapFile)
+        val wasSet = _persistentEnumerator.compareAndSet(null, enumerator)
+        if (!wasSet) {
+          LOG.error("Could not assign newly opened enumerator")
+          enumerator?.close()
+        }
+        return
       }
-      return wasSet
+      catch (e: IOException) {
+        LOG.warn(e)
+      }
+      return
     }
-    catch (e: IOException) {
-      LOG.warn(e)
-    }
-    return false
   }
 
   override fun createUser(name: String, email: String): VcsUser {
     synchronized(interner) {
-      return interner.intern(VcsUserImpl(name, email))
+      return interner.intern(VcsUserUtil.createUser(name, email))
     }
   }
 

@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.git.rpc
 
-import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
-import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
+import com.intellij.platform.vcs.impl.shared.RepositoryId
+import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
 import com.intellij.vcs.git.ref.GitCurrentRef
 import com.intellij.vcs.git.ref.GitFavoriteRefs
 import com.intellij.vcs.git.ref.GitReferenceName
@@ -18,6 +18,7 @@ import git4idea.GitDisposable
 import git4idea.GitStandardLocalBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitTag
+import git4idea.GitWorkingTree
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -100,6 +101,12 @@ sealed interface GitRepositoryEvent {
 
   @Serializable
   @ApiStatus.Internal
+  class WorkingTreesLoaded(override val repositoryId: RepositoryId, val workingTrees: Collection<GitWorkingTree>) : SingleRepositoryUpdate {
+    override fun toString(): String = "Working trees loaded in ${repositoryId}"
+  }
+
+  @Serializable
+  @ApiStatus.Internal
   class FavoriteRefsUpdated(
     override val repositoryId: RepositoryId,
     val favoriteRefs: GitFavoriteRefs,
@@ -121,7 +128,7 @@ class GitRepositoryDto(
   val shortName: String,
   val state: GitRepositoryStateDto,
   val favoriteRefs: GitFavoriteRefs,
-  val root: VirtualFileId,
+  val root: FilePathDto,
 )
 
 @Serializable
@@ -132,6 +139,7 @@ class GitRepositoryStateDto(
   val localBranches: Set<GitStandardLocalBranch>,
   val remoteBranches: Set<GitStandardRemoteBranch>,
   val tags: Set<GitTag>,
+  val workingTrees: Collection<GitWorkingTree>,
   val recentBranches: List<GitStandardLocalBranch>,
   val operationState: GitOperationState,
   /**

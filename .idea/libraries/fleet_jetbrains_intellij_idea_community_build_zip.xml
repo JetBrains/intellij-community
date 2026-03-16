@@ -1,0 +1,45 @@
+<component name="libraryTable">
+  <library name="fleet:jetbrains.intellij.idea.community.build.zip" type="repository">
+    <properties maven-id="com.jetbrains.intellij.idea:idea-community-build-zip:252.11244">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/idea/idea-community-build-zip/252.11244/idea-community-build-zip-252.11244.jar">
+          <sha256sum>c86d2bfa23d5d23f916d3574591a166b3df259bea6c23d39abea597b34ba022f</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.RC2/netty-buffer-4.2.0.RC2.jar">
+          <sha256sum>74d953cec00048b892112f9602fc7b1113ea55337dc1ede32e449efcb2b231c7</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.RC2/netty-common-4.2.0.RC2.jar">
+          <sha256sum>cc65afe17daf2f9380d3c64460f5b10ec279f98b9461fbf0ccf62b3cb3ee6c37</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.15-jb1/intellij-deps-fastutil-8.5.15-jb1.jar">
+          <sha256sum>5a0d7557d494732a6165e4188eb11f10faca196350cad04d9950abd83e6dd148</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.20.0/hash4j-0.20.0.jar">
+          <sha256sum>0181873ba85684d119134f5598432f5b63109a03adc455767a1500b2145df8a2</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/idea/idea-community-build-zip/252.11244/idea-community-build-zip-252.11244.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.RC2/netty-buffer-4.2.0.RC2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.RC2/netty-common-4.2.0.RC2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.15-jb1/intellij-deps-fastutil-8.5.15-jb1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.20.0/hash4j-0.20.0.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.RC2/netty-buffer-4.2.0.RC2-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.RC2/netty-common-4.2.0.RC2-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.20.0/hash4j-0.20.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/idea/idea-community-build-zip/252.11244/idea-community-build-zip-252.11244-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.RC2/netty-buffer-4.2.0.RC2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.RC2/netty-common-4.2.0.RC2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.15-jb1/intellij-deps-fastutil-8.5.15-jb1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.20.0/hash4j-0.20.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

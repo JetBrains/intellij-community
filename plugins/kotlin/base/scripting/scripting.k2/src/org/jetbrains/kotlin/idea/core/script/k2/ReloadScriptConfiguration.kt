@@ -2,8 +2,12 @@
 package org.jetbrains.kotlin.idea.core.script.k2
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -29,10 +33,9 @@ import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.core.script.k2.ReloadScriptConfigurationService.Companion.TOPIC
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.getScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
-import org.jetbrains.kotlin.idea.core.script.k2.highlighting.DefaultScriptResolutionStrategy
-import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptModuleManager.Companion.removeScriptModules
+import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.shared.scriptDiagnostics
 import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
@@ -112,10 +115,9 @@ class ReloadScriptConfigurationService(private val project: Project, private val
         val virtualFile = ktFile.alwaysVirtualFile
 
         scope.launch {
-            definition.getConfigurationResolver(project).remove(virtualFile)
-            project.removeScriptModules(listOf(virtualFile))
+            definition.getScriptEntityProvider(project).removeKotlinScriptEntity(virtualFile)
             ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
-            DefaultScriptResolutionStrategy.getInstance(project).execute(ktFile).join()
+            KotlinScriptResolutionService.getInstance(project).process(virtualFile)
 
             ktFile.putUserData(SHOW_NOTIFICATION, false)
             ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC).onNotificationChanged(virtualFile)

@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  test/B.class
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_sealedClassesRemoveInheritor-a.kotlin_module
+  test/A.class
+  test/Base.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/sealedClassesRemoveInheritor/a/A.kt
+  kotlin/pureKotlin/sealedClassesRemoveInheritor/a/Base.kt
+End of files
+------------------------------------------
+Exit code: OK

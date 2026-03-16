@@ -290,3 +290,23 @@ TOML File
       <empty list>
     PsiWhiteSpace(' ')
     PsiElement(BARE_KEY)('IntellijIdeaRulezzz')
+  PsiWhiteSpace('\n\n')
+  TomlKeyValue
+    TomlKey
+      TomlKeySegment
+        PsiElement(BARE_KEY)('true')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('1')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      TomlKeySegment
+        PsiElement(BARE_KEY)('false')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(BASIC_STRING)('"IntellijIdeaRulezzz"')

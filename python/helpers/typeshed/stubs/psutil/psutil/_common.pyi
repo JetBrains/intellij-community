@@ -1,286 +1,179 @@
 import enum
-from _typeshed import StrOrBytesPath, SupportsWrite
+import io
+import sys
+import threading
+from _typeshed import ConvertibleToFloat, FileDescriptorOrPath, Incomplete, StrOrBytesPath, SupportsWrite
+from collections import defaultdict
 from collections.abc import Callable
 from socket import AF_INET6 as AF_INET6, AddressFamily, SocketKind
-from typing import Any, Literal, NamedTuple, TypeVar, overload
+from typing import BinaryIO, Final, SupportsIndex, TypeVar, overload
+from typing_extensions import ParamSpec
 
-POSIX: bool
-WINDOWS: bool
-LINUX: bool
-MACOS: bool
-OSX: bool
-FREEBSD: bool
-OPENBSD: bool
-NETBSD: bool
-BSD: bool
-SUNOS: bool
-AIX: bool
+from . import _ntuples as ntp
 
-STATUS_RUNNING: Literal["running"]
-STATUS_SLEEPING: Literal["sleeping"]
-STATUS_DISK_SLEEP: Literal["disk-sleep"]
-STATUS_STOPPED: Literal["stopped"]
-STATUS_TRACING_STOP: Literal["tracing-stop"]
-STATUS_ZOMBIE: Literal["zombie"]
-STATUS_DEAD: Literal["dead"]
-STATUS_WAKE_KILL: Literal["wake-kill"]
-STATUS_WAKING: Literal["waking"]
-STATUS_IDLE: Literal["idle"]
-STATUS_LOCKED: Literal["locked"]
-STATUS_WAITING: Literal["waiting"]
-STATUS_SUSPENDED: Literal["suspended"]
-STATUS_PARKED: Literal["parked"]
+POSIX: Final[bool]
+WINDOWS: Final[bool]
+LINUX: Final[bool]
+MACOS: Final[bool]
+OSX: Final[bool]
+FREEBSD: Final[bool]
+OPENBSD: Final[bool]
+NETBSD: Final[bool]
+BSD: Final[bool]
+SUNOS: Final[bool]
+AIX: Final[bool]
 
-CONN_ESTABLISHED: str
-CONN_SYN_SENT: str
-CONN_SYN_RECV: str
-CONN_FIN_WAIT1: str
-CONN_FIN_WAIT2: str
-CONN_TIME_WAIT: str
-CONN_CLOSE: str
-CONN_CLOSE_WAIT: str
-CONN_LAST_ACK: str
-CONN_LISTEN: str
-CONN_CLOSING: str
-CONN_NONE: str
-NIC_DUPLEX_FULL: int
-NIC_DUPLEX_HALF: int
-NIC_DUPLEX_UNKNOWN: int
+STATUS_RUNNING: Final = "running"
+STATUS_SLEEPING: Final = "sleeping"
+STATUS_DISK_SLEEP: Final = "disk-sleep"
+STATUS_STOPPED: Final = "stopped"
+STATUS_TRACING_STOP: Final = "tracing-stop"
+STATUS_ZOMBIE: Final = "zombie"
+STATUS_DEAD: Final = "dead"
+STATUS_WAKE_KILL: Final = "wake-kill"
+STATUS_WAKING: Final = "waking"
+STATUS_IDLE: Final = "idle"
+STATUS_LOCKED: Final = "locked"
+STATUS_WAITING: Final = "waiting"
+STATUS_SUSPENDED: Final = "suspended"
+STATUS_PARKED: Final = "parked"
+
+CONN_ESTABLISHED: Final = "ESTABLISHED"
+CONN_SYN_SENT: Final = "SYN_SENT"
+CONN_SYN_RECV: Final = "SYN_RECV"
+CONN_FIN_WAIT1: Final = "FIN_WAIT1"
+CONN_FIN_WAIT2: Final = "FIN_WAIT2"
+CONN_TIME_WAIT: Final = "TIME_WAIT"
+CONN_CLOSE: Final = "CLOSE"
+CONN_CLOSE_WAIT: Final = "CLOSE_WAIT"
+CONN_LAST_ACK: Final = "LAST_ACK"
+CONN_LISTEN: Final = "LISTEN"
+CONN_CLOSING: Final = "CLOSING"
+CONN_NONE: Final = "NONE"
 
 class NicDuplex(enum.IntEnum):
     NIC_DUPLEX_FULL = 2
     NIC_DUPLEX_HALF = 1
     NIC_DUPLEX_UNKNOWN = 0
 
-POWER_TIME_UNKNOWN: int
-POWER_TIME_UNLIMITED: int
+NIC_DUPLEX_FULL: Final = NicDuplex.NIC_DUPLEX_FULL
+NIC_DUPLEX_HALF: Final = NicDuplex.NIC_DUPLEX_HALF
+NIC_DUPLEX_UNKNOWN: Final = NicDuplex.NIC_DUPLEX_UNKNOWN
 
 class BatteryTime(enum.IntEnum):
     POWER_TIME_UNKNOWN = -1
     POWER_TIME_UNLIMITED = -2
 
-ENCODING: str
-ENCODING_ERRS: str
+POWER_TIME_UNKNOWN: Final = BatteryTime.POWER_TIME_UNKNOWN
+POWER_TIME_UNLIMITED: Final = BatteryTime.POWER_TIME_UNLIMITED
 
-class sswap(NamedTuple):
-    total: int
-    used: int
-    free: int
-    percent: float
-    sin: int
-    sout: int
-
-class sdiskusage(NamedTuple):
-    total: int
-    used: int
-    free: int
-    percent: float
-
-class sdiskio(NamedTuple):
-    read_count: int
-    write_count: int
-    read_bytes: int
-    write_bytes: int
-    read_time: int
-    write_time: int
-
-class sdiskpart(NamedTuple):
-    device: str
-    mountpoint: str
-    fstype: str
-    opts: str
-
-class snetio(NamedTuple):
-    bytes_sent: int
-    bytes_recv: int
-    packets_sent: int
-    packets_recv: int
-    errin: int
-    errout: int
-    dropin: int
-    dropout: int
-
-class suser(NamedTuple):
-    name: str
-    terminal: str | None
-    host: str | None
-    started: float
-    pid: str
-
-class sconn(NamedTuple):
-    fd: int
-    family: AddressFamily
-    type: SocketKind
-    laddr: addr | tuple[()]
-    raddr: addr | tuple[()]
-    status: str
-    pid: int | None
-
-class snicaddr(NamedTuple):
-    family: AddressFamily
-    address: str
-    netmask: str | None
-    broadcast: str | None
-    ptp: str | None
-
-class snicstats(NamedTuple):
-    isup: bool
-    duplex: int
-    speed: int
-    mtu: int
-    flags: str
-
-class scpustats(NamedTuple):
-    ctx_switches: int
-    interrupts: int
-    soft_interrupts: int
-    syscalls: int
-
-class scpufreq(NamedTuple):
-    current: float
-    min: float
-    max: float
-
-class shwtemp(NamedTuple):
-    label: str
-    current: float
-    high: float | None
-    critical: float | None
-
-class sbattery(NamedTuple):
-    percent: int
-    secsleft: int
-    power_plugged: bool
-
-class sfan(NamedTuple):
-    label: str
-    current: int
-
-class pcputimes(NamedTuple):
-    user: float
-    system: float
-    children_user: float
-    children_system: float
-
-class popenfile(NamedTuple):
-    path: str
-    fd: int
-
-class pthread(NamedTuple):
-    id: int
-    user_time: float
-    system_time: float
-
-class puids(NamedTuple):
-    real: int
-    effective: int
-    saved: int
-
-class pgids(NamedTuple):
-    real: int
-    effective: int
-    saved: int
-
-class pio(NamedTuple):
-    read_count: int
-    write_count: int
-    read_bytes: int
-    write_bytes: int
-
-class pionice(NamedTuple):
-    ioclass: int
-    value: int
-
-class pctxsw(NamedTuple):
-    voluntary: int
-    involuntary: int
-
-class pconn(NamedTuple):
-    fd: int
-    family: AddressFamily
-    type: SocketKind
-    laddr: addr
-    raddr: addr
-    status: str
-
-class addr(NamedTuple):
-    ip: str
-    port: int
+ENCODING: Final[str]
+ENCODING_ERRS: Final[str]
 
 conn_tmap: dict[str, tuple[list[AddressFamily], list[SocketKind]]]
 
-class Error(Exception):
-    __module__: str
-    msg: Any
-    def __init__(self, msg: str = ...) -> None: ...
+class Error(Exception): ...
 
 class NoSuchProcess(Error):
-    __module__: str
-    pid: Any
-    name: Any
-    msg: Any
-    def __init__(self, pid, name=None, msg=None) -> None: ...
+    pid: int
+    name: str | None
+    msg: str
+    def __init__(self, pid: int, name: str | None = None, msg: str | None = None) -> None: ...
 
 class ZombieProcess(NoSuchProcess):
-    __module__: str
-    pid: Any
-    ppid: Any
-    name: Any
-    msg: Any
-    def __init__(self, pid, name=None, ppid=None, msg=None) -> None: ...
+    ppid: int | None
+    def __init__(self, pid: int, name: str | None = None, ppid: int | None = None, msg: str | None = None) -> None: ...
 
 class AccessDenied(Error):
-    __module__: str
-    pid: Any
-    name: Any
-    msg: Any
-    def __init__(self, pid=None, name=None, msg=None) -> None: ...
+    pid: int | None
+    name: str | None
+    msg: str
+    def __init__(self, pid: int | None = None, name: str | None = None, msg: str | None = None) -> None: ...
 
 class TimeoutExpired(Error):
-    __module__: str
-    seconds: Any
-    pid: Any
-    name: Any
-    def __init__(self, seconds, pid=None, name=None) -> None: ...
+    seconds: float
+    pid: int | None
+    name: str | None
+    msg: str
+    def __init__(self, seconds: float, pid: int | None = None, name: str | None = None) -> None: ...
 
-_Func = TypeVar("_Func", bound=Callable[..., Any])
+_P = ParamSpec("_P")
+_R = TypeVar("_R")
+_T = TypeVar("_T")
 
-def usage_percent(used, total, round_: int | None = None) -> float: ...
-def memoize(fun: _Func) -> _Func: ...
-def memoize_when_activated(fun: _Func) -> _Func: ...
+def usage_percent(used: ConvertibleToFloat, total: float, round_: SupportsIndex | None = None) -> float: ...
+
+# returned function has `cache_clear()` attribute:
+def memoize(fun: Callable[_P, _R]) -> Callable[_P, _R]: ...
+
+# returned function has `cache_activate(proc)` and `cache_deactivate(proc)` attributes:
+def memoize_when_activated(fun: Callable[_P, _R]) -> Callable[_P, _R]: ...
 def isfile_strict(path: StrOrBytesPath) -> bool: ...
 def path_exists_strict(path: StrOrBytesPath) -> bool: ...
 def supports_ipv6() -> bool: ...
-def parse_environ_block(data): ...
+def parse_environ_block(data: str) -> dict[str, str]: ...
 def sockfam_to_enum(num: int) -> AddressFamily: ...
 def socktype_to_enum(num: int) -> SocketKind: ...
 @overload
-def conn_to_ntuple(fd: int, fam: int, type_: int, laddr, raddr, status: str, status_map, pid: int) -> sconn: ...
+def conn_to_ntuple(
+    fd: int,
+    fam: int,
+    type_: int,
+    laddr: ntp.addr | tuple[str, int] | tuple[()],
+    raddr: ntp.addr | tuple[str, int] | tuple[()],
+    status: int | str,
+    status_map: dict[int, str] | dict[str, str],
+    pid: int,
+) -> ntp.sconn: ...
 @overload
-def conn_to_ntuple(fd: int, fam: int, type_: int, laddr, raddr, status: str, status_map, pid: None = None) -> pconn: ...
-def deprecated_method(replacement: str) -> Callable[[_Func], _Func]: ...
+def conn_to_ntuple(
+    fd: int,
+    fam: int,
+    type_: int,
+    laddr: ntp.addr | tuple[str, int] | tuple[()],
+    raddr: ntp.addr | tuple[str, int] | tuple[()],
+    status: int | str,
+    status_map: dict[int, str] | dict[str, str],
+    pid: None = None,
+) -> ntp.pconn: ...
+def deprecated_method(replacement: str) -> Callable[[Callable[_P, _R]], Callable[_P, _R]]: ...
 
 class _WrapNumbers:
-    lock: Any
-    cache: Any
-    reminders: Any
-    reminder_keys: Any
+    lock: threading.Lock
+    cache: dict[str, dict[str, tuple[int, ...]]]
+    reminders: dict[str, defaultdict[Incomplete, int]]
+    reminder_keys: dict[str, defaultdict[Incomplete, set[Incomplete]]]
     def __init__(self) -> None: ...
-    def run(self, input_dict, name): ...
-    def cache_clear(self, name=None) -> None: ...
-    def cache_info(self): ...
+    def run(self, input_dict: dict[str, tuple[int, ...]], name: str) -> dict[str, tuple[int, ...]]: ...
+    def cache_clear(self, name: str | None = None) -> None: ...
+    def cache_info(
+        self,
+    ) -> tuple[
+        dict[str, dict[str, tuple[int, ...]]],
+        dict[str, defaultdict[Incomplete, int]],
+        dict[str, defaultdict[Incomplete, set[Incomplete]]],
+    ]: ...
 
-def wrap_numbers(input_dict, name: str): ...
-def open_binary(fname): ...
-def open_text(fname): ...
-def cat(fname, fallback=..., _open=...): ...
-def bcat(fname, fallback=...): ...
+def wrap_numbers(input_dict: dict[str, tuple[int, ...]], name: str) -> dict[str, tuple[int, ...]]: ...
+def open_binary(fname: FileDescriptorOrPath) -> BinaryIO: ...
+def open_text(fname: FileDescriptorOrPath) -> io.TextIOWrapper: ...
+@overload
+def cat(fname: FileDescriptorOrPath, _open: Callable[[FileDescriptorOrPath], io.TextIOWrapper] = ...) -> str: ...
+@overload
+def cat(
+    fname: FileDescriptorOrPath, fallback: _T = ..., _open: Callable[[FileDescriptorOrPath], io.TextIOWrapper] = ...
+) -> str | _T: ...
+@overload
+def bcat(fname: FileDescriptorOrPath) -> str: ...
+@overload
+def bcat(fname: FileDescriptorOrPath, fallback: _T = ...) -> str | _T: ...
 def bytes2human(n: int, format: str = "%(value).1f%(symbol)s") -> str: ...
 def get_procfs_path() -> str: ...
-def term_supports_colors(file: SupportsWrite[str] = ...) -> bool: ...
+def decode(s: bytes) -> str: ...
+def term_supports_colors(file: SupportsWrite[str] = sys.stdout) -> bool: ...
 def hilite(s: str, color: str | None = None, bold: bool = False) -> str: ...
-def print_color(s: str, color: str | None = None, bold: bool = False, file: SupportsWrite[str] = ...) -> None: ...
-def debug(msg) -> None: ...
+def print_color(s: str, color: str | None = None, bold: bool = False, file: SupportsWrite[str] = sys.stdout) -> None: ...
+def debug(msg: str | Exception) -> None: ...
 
 __all__ = [
     # OS constants
@@ -330,26 +223,6 @@ __all__ = [
     "ENCODING",
     "ENCODING_ERRS",
     "AF_INET6",
-    # named tuples
-    "pconn",
-    "pcputimes",
-    "pctxsw",
-    "pgids",
-    "pio",
-    "pionice",
-    "popenfile",
-    "pthread",
-    "puids",
-    "sconn",
-    "scpustats",
-    "sdiskio",
-    "sdiskpart",
-    "sdiskusage",
-    "snetio",
-    "snicaddr",
-    "snicstats",
-    "sswap",
-    "suser",
     # utility functions
     "conn_tmap",
     "deprecated_method",

@@ -2,7 +2,10 @@
 package com.intellij.psi.impl.source.xml.stub;
 
 import com.intellij.psi.impl.source.xml.XmlStubBasedAttribute;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.StubBase;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;

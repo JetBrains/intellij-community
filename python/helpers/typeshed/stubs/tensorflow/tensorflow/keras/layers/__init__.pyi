@@ -395,7 +395,6 @@ class MultiHeadAttention(Layer[Any, tf.Tensor]):
         autocast: bool = True,
         name: str | None = None,
     ) -> None: ...
-    # @override
     @overload  # type: ignore[override]
     def __call__(
         self,
@@ -435,6 +434,50 @@ class GaussianDropout(Layer[tf.Tensor, tf.Tensor]):
         self,
         rate: float,
         seed: int | None = None,
+        *,
+        # **kwargs passed to Layer
+        activity_regularizer: _Regularizer = None,
+        trainable: bool = True,
+        dtype: _LayerDtype | None = None,
+        autocast: bool = True,
+        name: str | None = None,
+    ) -> None: ...
+
+class Activation(Layer[tf.Tensor, tf.Tensor]):
+    def __init__(
+        self,
+        activation: _Activation = None,
+        *,
+        # **kwargs passed to Layer
+        # **kwargs passed to Layer
+        activity_regularizer: _Regularizer = None,
+        trainable: bool = True,
+        dtype: _LayerDtype | None = None,
+        autocast: bool = True,
+        name: str | None = None,
+    ) -> None: ...
+
+class GlobalAveragePooling2D(Layer[tf.Tensor, tf.Tensor]):
+    def __init__(
+        self,
+        data_format: Literal["channels_last", "channels_first"] | None = None,
+        keepdims: bool = False,
+        *,
+        # **kwargs passed to Layer
+        activity_regularizer: _Regularizer = None,
+        trainable: bool = True,
+        dtype: _LayerDtype | None = None,
+        autocast: bool = True,
+        name: str | None = None,
+    ) -> None: ...
+
+class MaxPool2D(Layer[tf.Tensor, tf.Tensor]):
+    def __init__(
+        self,
+        pool_size: int | tuple[int, int] = (2, 2),
+        strides: int | tuple[int, int] | None = None,
+        padding: Literal["valid", "same"] = "valid",
+        data_format: Literal["channels_last", "channels_first"] | None = None,
         *,
         # **kwargs passed to Layer
         activity_regularizer: _Regularizer = None,

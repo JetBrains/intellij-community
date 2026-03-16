@@ -8,7 +8,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.openapi.roots.TestModulePropertiesProvider
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
+import com.intellij.platform.workspace.jps.entities.testProperties
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.annotations.ApiStatus

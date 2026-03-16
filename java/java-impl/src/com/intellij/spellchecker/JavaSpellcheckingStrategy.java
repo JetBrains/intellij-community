@@ -5,7 +5,12 @@ import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.util.ChronoUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
@@ -26,10 +31,12 @@ public final class JavaSpellcheckingStrategy extends SpellcheckingStrategy imple
       return myMethodNameTokenizer;
     }
     if (element instanceof PsiDocComment) {
-      return myDocCommentTokenizer;
+      return useTextLevelSpellchecking() ? EMPTY_TOKENIZER : myDocCommentTokenizer;
     }
     if (element instanceof PsiLiteralExpression literalExpression) {
-      if (ChronoUtil.isPatternForDateFormat(literalExpression) || SuppressManager.isSuppressedInspectionName(literalExpression)) {
+      if (useTextLevelSpellchecking()
+          || ChronoUtil.isPatternForDateFormat(literalExpression)
+          || SuppressManager.isSuppressedInspectionName(literalExpression)) {
         return EMPTY_TOKENIZER;
       }
       return myLiteralExpressionTokenizer;

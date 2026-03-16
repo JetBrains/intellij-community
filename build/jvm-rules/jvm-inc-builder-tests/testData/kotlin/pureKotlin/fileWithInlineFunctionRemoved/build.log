@@ -1,0 +1,13 @@
+================ Step #1 =================
+Cleaning output files:
+  test/InlineKt.class
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_fileWithInlineFunctionRemoved-a.kotlin_module
+  usage/UsageKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/fileWithInlineFunctionRemoved/a/usage.kt
+End of files
+------------------------------------------
+Exit code: ERROR

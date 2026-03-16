@@ -1,0 +1,15 @@
+<html>
+<body>
+Reports destructuring declarations where variable names don't match the original property names from data classes.
+<p><b>Example:</b></p>
+<pre><code>
+  data class Product(val id: String, val productName: String)
+  val (productId, name) = product
+</code></pre>
+<p>The quick-fix renames variables to match the original property names:</p>
+<ul>
+<li><b>Rename variables to match properties:</b> <code>val (id, productName) = product</code></li>
+</ul>
+<p>This inspection prepares code for an upcoming Kotlin language feature change where <code>val (x, y) = e</code> syntax will flip from position-based to name-based destructuring. Ensuring variable names match property names now will prevent breaking changes when this language evolution occurs.</p>
+</body>
+</html>

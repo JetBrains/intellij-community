@@ -1,18 +1,19 @@
-from typing import Any, NamedTuple
+from _typeshed import Incomplete
+from typing import NamedTuple
 
 class _Event(NamedTuple):
-    when: Any
-    callback: Any
-    args: Any
-    kwargs: Any
+    when: Incomplete
+    callback: Incomplete
+    args: Incomplete
+    kwargs: Incomplete
 
 class EventLoop:
-    current: Any
-    idlers: Any
+    current: Incomplete
+    idlers: Incomplete
     inactive: int
-    queue: Any
-    rpcs: Any
-    rpc_results: Any
+    queue: Incomplete
+    rpcs: Incomplete
+    rpc_results: Incomplete
     def __init__(self) -> None: ...
     def clear(self) -> None: ...
     def insort_event_right(self, event) -> None: ...

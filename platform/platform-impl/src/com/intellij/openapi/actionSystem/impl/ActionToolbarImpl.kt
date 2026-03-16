@@ -5,13 +5,30 @@ import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.codeWithMe.ClientId
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.UISettings.Companion.setupComponentAntialiasing
 import com.intellij.ide.ui.customization.CustomizationUtil
+import com.intellij.idea.AppMode
 import com.intellij.internal.inspector.UiInspectorActionUtil.collectActionGroupInfo
 import com.intellij.internal.inspector.UiInspectorUtil
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionButtonComponent
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionToolbarListener
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.ActionWithDelegate
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionResult
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.RightAlignedToolbarAction
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx.Companion.getInstanceEx
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -22,7 +39,11 @@ import com.intellij.openapi.actionSystem.impl.Utils.operationName
 import com.intellij.openapi.actionSystem.toolbarLayout.RIGHT_ALIGN_KEY
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.actionSystem.toolbarLayout.autoLayoutStrategy
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.CoroutineSupport
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -37,10 +58,17 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
-import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.ComponentTreeWatcher
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
+import com.intellij.ui.JBColor
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.RelativeFont
 import com.intellij.ui.ToolbarActionTracker.Companion.followToolbarComponent
+import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.paint.LinePainter2D
@@ -54,15 +82,48 @@ import com.intellij.util.animation.AlphaAnimationContext
 import com.intellij.util.concurrency.EdtScheduler
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.*
-import kotlinx.coroutines.*
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBSwingUtilities
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.initOnShow
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import sun.swing.SwingUtilities2
-import java.awt.*
-import java.awt.event.*
+import java.awt.AWTEvent
+import java.awt.Color
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Image
+import java.awt.Insets
+import java.awt.MouseInfo
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.RenderingHints
+import java.awt.Window
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.ComponentListener
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
@@ -70,7 +131,17 @@ import java.util.concurrent.Future
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.accessibility.AccessibleContext
-import javax.swing.*
+import javax.swing.AbstractButton
+import javax.swing.CellRendererPane
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JLayeredPane
+import javax.swing.JPanel
+import javax.swing.JRootPane
+import javax.swing.KeyStroke
+import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 import javax.swing.border.Border
 import kotlin.math.max
 
@@ -112,6 +183,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
   private var myUpdateOnFirstShowJob: Job? = null
 
   private var myUpdatesWithNewButtons = 0
+  private var myForcedUpdatesWithNewButtons = 0
   private var myLastNewButtonActionClass: String? = null
 
   private var myCustomButtonLook: ActionButtonLook? = null
@@ -369,12 +441,15 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     mySecondaryGroupUpdater = secondaryGroupUpdater
   }
 
+  /**
+   * The component order shall be consistent with [effectiveButtonOrder]
+   */
   protected open fun fillToolBar(actions: List<AnAction>, layoutSecondaries: Boolean) {
     var isLastElementSeparator = false
     val rightAligned: MutableList<AnAction> = ArrayList()
     for (i in actions.indices) {
       val action: AnAction = actions[i]
-      if (isAlignmentEnabled() && action is RightAlignedToolbarAction || forceRightAlignment()) {
+      if (isRightAlignedAction(action)) {
         rightAligned.add(action)
         continue
       }
@@ -428,6 +503,11 @@ open class ActionToolbarImpl @JvmOverloads constructor(
 
   protected open fun isSecondaryAction(action: AnAction, actionIndex: Int): Boolean {
     return !myActionGroup.isPrimary(action)
+  }
+
+  private fun isRightAlignedAction(action: AnAction): Boolean {
+    if (forceRightAlignment()) return true
+    return isAlignmentEnabled() && action is RightAlignedToolbarAction
   }
 
   protected open fun isAlignmentEnabled(): Boolean = true
@@ -973,9 +1053,11 @@ open class ActionToolbarImpl @JvmOverloads constructor(
           myPlace, ActualActionUiKind.Toolbar(this@ActionToolbarImpl),
           firstTimeFastTrack || isUnitTestMode)
         myLastNewButtonActionClass = null
-        actionsUpdated(forcedActual, actions)
+
+        val forceRebuild = forcedActual || presentationFactory.isNeedRebuild
+        actionsUpdated(forceRebuild, actions)
         if (firstTimeFastTrack) ClientProperty.put(this@ActionToolbarImpl, SUPPRESS_FAST_TRACK, true)
-        reportActionButtonChangedEveryTimeIfNeeded()
+        reportActionButtonChangedEveryTimeIfNeeded(forceRebuild)
       }
       catch (ex: CancellationException) {
         throw ex
@@ -996,18 +1078,40 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     }
   }
 
-  private fun reportActionButtonChangedEveryTimeIfNeeded() {
-    if (myUpdatesWithNewButtons < 0) return  // already reported
+  private fun reportActionButtonChangedEveryTimeIfNeeded(forceRebuild: Boolean) {
+    if (myUpdatesWithNewButtons < 0) {
+      return // already reported
+    }
 
     if (myLastNewButtonActionClass == null) {
       myUpdatesWithNewButtons = 0
+      myForcedUpdatesWithNewButtons = 0
       return
     }
-    if (++myUpdatesWithNewButtons < 20) return
-    LOG.error(Throwable("'" + myPlace + "' toolbar creates new components for " + myUpdatesWithNewButtons +
-                        " updates in a row. The latest button is created for '" + myLastNewButtonActionClass + "'." +
-                        " Toolbar action instances must not change on every update", myCreationTrace))
-    myUpdatesWithNewButtons = -1
+
+    myUpdatesWithNewButtons++;
+    if (forceRebuild) {
+      myForcedUpdatesWithNewButtons++;
+    }
+
+    if (myUpdatesWithNewButtons >= 20) {
+      val message = "'$myPlace' toolbar creates new components for $myUpdatesWithNewButtons updates in a row " +
+                    "(forced updates: $myForcedUpdatesWithNewButtons). " +
+                    "The latest button is created for '$myLastNewButtonActionClass'. " +
+                    "Toolbar action instances must not change on every update"
+      if (myForcedUpdatesWithNewButtons < 5 ||
+          ApplicationManager.getApplication().isUnitTestMode ||
+          PluginManagerCore.isRunningFromSources() ||
+          AppMode.isRunningFromDevBuild() ||
+          ApplicationManager.getApplication().isInternal) {
+        LOG.error(Throwable(message, myCreationTrace))
+      }
+      else {
+        LOG.warn(Throwable(message, myCreationTrace))
+      }
+      myUpdatesWithNewButtons = -1
+      myForcedUpdatesWithNewButtons = -1
+    }
   }
 
   private fun addLoadingIcon() {
@@ -1038,9 +1142,9 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     updateMinimumButtonSize()
   }
 
-  protected open fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) {
+  protected open fun actionsUpdated(forceRebuild: Boolean, newVisibleActions: List<AnAction>) {
     myListeners.getMulticaster().actionsUpdated()
-    if (!forced && !presentationFactory.isNeedRebuild) {
+    if (!forceRebuild) {
       if (replaceButtonsForNewActionInstances(newVisibleActions)) return
     }
     myForcedUpdateRequested = false
@@ -1080,13 +1184,16 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     data class Replacement(val buttonIndex: Int, val nextAction: AnAction)
 
     if (newVisibleActions.size != myVisibleActions.size) return false
+    val effectiveOldActions = myVisibleActions.sortedWith(effectiveButtonOrder())
+    val effectiveNewActions = newVisibleActions.sortedWith(effectiveButtonOrder())
+
     val components = getComponents()
     val pairs = ArrayList<Replacement>()
 
     var buttonIndex = 0 // avoid N^2 button search
-    for (index in myVisibleActions.indices) {
-      val prev: AnAction = myVisibleActions[index]
-      val next: AnAction = newVisibleActions[index]
+    for (index in effectiveOldActions.indices) {
+      val prev: AnAction = effectiveOldActions[index]
+      val next: AnAction = effectiveNewActions[index]
       if (next.javaClass != prev.javaClass) return false // in theory, that should be OK, but better to be safe
 
       val isSecondaryAction = isSecondaryAction(next, index)
@@ -1119,7 +1226,9 @@ open class ActionToolbarImpl @JvmOverloads constructor(
           break
         }
       }
-      if (actionButton == null) return false
+      if (actionButton == null) {
+        return false
+      }
 
       if (next === prev && canReuseActionButton(actionButton, nextP)) {
         continue // keep old component untouched
@@ -1129,7 +1238,9 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       pairs.add(Replacement(buttonIndex - 1, next))
     }
 
-    if (pairs.size == newVisibleActions.size) return false // no gain from in-place updates
+    if (pairs.size == effectiveNewActions.size) {
+      return false // no gain from in-place updates
+    }
 
     myVisibleActions = newVisibleActions
     for (pair in pairs) {
@@ -1141,6 +1252,18 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       button.validate()
     }
     return true
+  }
+
+  /**
+   * Order actions consistently with [Container.getComponents]
+   */
+  private fun effectiveButtonOrder(): Comparator<AnAction> {
+    return compareBy {
+      when {
+        isRightAlignedAction(it) -> 1
+        else -> 0
+      }
+    }
   }
 
   /**

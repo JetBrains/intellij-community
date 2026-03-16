@@ -21,7 +21,8 @@ public final class StatisticsRecorderUtil {
   }
 
   public static boolean isAnyTestModeEnabled() {
-    if (ApplicationManager.getApplication().isInternal()) {
+    var app = ApplicationManager.getApplication();
+    if (app != null && app.isInternal()) {
       return isFusInternalTestMode() || !StringUtil.isEmptyOrSpaces(System.getProperty(IDEA_RECORDER_INTERNAL_MODE));
     }
     return false;

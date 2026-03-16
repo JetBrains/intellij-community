@@ -18,7 +18,7 @@ import java.nio.file.Path
  *
  * Profiler limits attachment size to MAX_METRICS_LINES_TO_ATTACH.
  */
-private class OTelMetricsFreezeProfiler : FreezeProfiler {
+internal class OTelMetricsFreezeProfiler : FreezeProfiler {
   override fun start(reportDir: Path) {
   }
 

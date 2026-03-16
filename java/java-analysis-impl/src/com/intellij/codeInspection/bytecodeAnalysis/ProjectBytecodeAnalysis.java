@@ -11,14 +11,33 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -34,10 +53,28 @@ import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
-import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.In;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.Out;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.ParamValueBasedDirection;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.Pure;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.Throw;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.Volatile;
 
 public class ProjectBytecodeAnalysis {
   /**
@@ -47,13 +84,9 @@ public class ProjectBytecodeAnalysis {
   private static final boolean SKIP_INDEX = false;
 
   public static final Logger LOG = Logger.getInstance(ProjectBytecodeAnalysis.class);
-  public static final String NULLABLE_METHOD = "java.annotations.inference.nullable.method";
-  public static final String NULLABLE_METHOD_TRANSITIVITY = "java.annotations.inference.nullable.method.transitivity";
   public static final int EQUATIONS_LIMIT = 1000;
 
   private final Project myProject;
-  private final boolean nullableMethod;
-  private final boolean nullableMethodTransitivity;
   private final EquationProvider<?> myEquationProvider;
   private final NullableNotNullManager myNullabilityManager;
 
@@ -65,8 +98,6 @@ public class ProjectBytecodeAnalysis {
     myProject = project;
     myNullabilityManager = NullableNotNullManager.getInstance(project);
     myEquationProvider = SKIP_INDEX ? new PlainEquationProvider(myProject) : new IndexedEquationProvider(myProject);
-    nullableMethod = Registry.is(NULLABLE_METHOD);
-    nullableMethodTransitivity = Registry.is(NULLABLE_METHOD_TRANSITIVITY);
   }
 
   /**
@@ -369,21 +400,6 @@ public class ProjectBytecodeAnalysis {
       addMethodAnnotations(solutions, result, key, arity);
     }
 
-    if (nullableMethod) {
-      Solver nullableMethodSolver = new Solver(new ELattice<>(Value.Bot, Value.Null), Value.Bot);
-      EKey nullableKey = key.withDirection(NullableOut);
-      if (nullableMethodTransitivity) {
-        collectEquations(Collections.singletonList(nullableKey), nullableMethodSolver);
-      }
-      else {
-        collectSingleEquation(nullableKey, nullableMethodSolver);
-      }
-      Map<EKey, Value> nullableSolutions = nullableMethodSolver.solve();
-      if (nullableSolutions.get(nullableKey) == Value.Null || nullableSolutions.get(nullableKey.invertStability()) == Value.Null) {
-        result.nullables.add(key);
-      }
-    }
-
     return result;
   }
 
@@ -471,15 +487,6 @@ public class ProjectBytecodeAnalysis {
     }
   }
 
-  private void collectSingleEquation(EKey curKey, Solver solver) {
-    ProgressManager.checkCanceled();
-
-    for (Equations equations : myEquationProvider.getEquations(curKey.member)) {
-      Result result = equations.find(curKey.getDirection()).orElseGet(solver::getUnknownResult);
-      solver.addEquation(new Equation(withStability(curKey, equations.stable), result));
-    }
-  }
-
   private @NotNull PsiAnnotation createAnnotationFromText(@NotNull String text) throws IncorrectOperationException {
     PsiAnnotation annotation = JavaPsiFacade.getElementFactory(myProject).createAnnotationFromText(text, null);
     ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
@@ -550,7 +557,7 @@ public class ProjectBytecodeAnalysis {
     // Sometimes "null,_->!null;!null,_->!null" contracts are inferred for some reason
     // They are squashed to "_,_->!null" which is better expressed as @NotNull annotation
     if (nonFailingContracts.size() == 1) {
-      StandardMethodContract contract = nonFailingContracts.get(0);
+      StandardMethodContract contract = nonFailingContracts.getFirst();
       if (contract.getReturnValue().equals(ContractReturnValue.returnNotNull()) && contract.isTrivial()) {
         nonFailingContracts = Collections.emptyList();
         notNulls.add(methodKey);

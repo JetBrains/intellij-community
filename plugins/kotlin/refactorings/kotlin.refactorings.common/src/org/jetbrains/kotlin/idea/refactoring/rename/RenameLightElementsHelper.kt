@@ -1,7 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.rename
 
-import com.intellij.psi.*
+import com.intellij.psi.ElementManipulators
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.propertyNameByAccessor
@@ -38,9 +42,10 @@ internal object RenameLightElementsHelper {
             jvmNameAnnotation?.delete()
             return
         }
+        val jvmExposeBoxedAnnotation =
+            lightMethod.modifierList.findAnnotation(JvmStandardClassIds.JVM_EXPOSE_BOXED_ANNOTATION_FQ_NAME.asString())
         val nameExpression = (jvmNameAnnotation?.findAttributeValue("name")
-            ?: lightMethod.modifierList.findAnnotation(JvmStandardClassIds.JVM_EXPOSE_BOXED_ANNOTATION_FQ_NAME.asString())
-                ?.findAttributeValue("jvmName"))?.unwrapped as? KtStringTemplateExpression
+            ?: jvmExposeBoxedAnnotation?.findAttributeValue("jvmName"))?.unwrapped as? KtStringTemplateExpression
         if (nameExpression != null) {
             nameExpression.replace(KtPsiFactory(lightMethod.project).createStringTemplate(name))
         } else {

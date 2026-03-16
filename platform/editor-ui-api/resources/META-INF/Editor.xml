@@ -16,12 +16,12 @@
     <applicationSettings service="com.intellij.ide.ui.UISettings"/>
 
     <projectService
-      serviceInterface="com.intellij.openapi.vcs.FileStatusManager"
+      serviceInterface="com.intellij.openapi.vcs.FileStatusManager" open="true"
       serviceImplementation="com.intellij.openapi.vcs.DefaultFileStatusManager" />
     <projectService
-      serviceInterface="com.intellij.openapi.vcs.ElementStatusTracker"
+      serviceInterface="com.intellij.openapi.vcs.ElementStatusTracker" open="true"
       serviceImplementation="com.intellij.openapi.vcs.DefaultElementStatusTracker" />
     <applicationService serviceImplementation="com.intellij.ide.ui.NotRoamableUiSettings" />
-    <applicationService serviceImplementation="com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorCustomizer"/>
+    <applicationService serviceImplementation="com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorCustomizer" open="true"/>
   </extensions>
 </idea-plugin>

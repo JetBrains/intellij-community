@@ -3,7 +3,11 @@ package git4idea.actions;
 
 import com.intellij.dvcs.branch.DvcsBranchUtil;
 import com.intellij.ide.ui.ToolbarSettings;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -18,7 +22,7 @@ import git4idea.ui.branch.popup.GitBranchesTreePopupOnBackend;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Objects;
 
 final class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAware {

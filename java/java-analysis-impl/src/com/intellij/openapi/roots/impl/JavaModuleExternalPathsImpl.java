@@ -5,7 +5,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.roots.JavaModuleExternalPaths;
+import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.ModuleExtension;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.PersistentOrderRootType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -19,7 +24,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
   private static final String ROOT_ELEMENT = JpsJavaModelSerializerExtension.ROOT_TAG;

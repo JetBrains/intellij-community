@@ -5,6 +5,9 @@
 
 package org.jetbrains.kotlin.idea.util
 
+import org.jetbrains.kotlin.K1Deprecation
+
+@K1Deprecation
 @Suppress("OverridingDeprecatedMember")
 class FirPluginOracleServiceFE10Impl : FirPluginOracleService() {
     override fun isFirPlugin(): Boolean = false

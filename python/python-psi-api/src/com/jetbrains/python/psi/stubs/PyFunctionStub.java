@@ -6,9 +6,13 @@ import com.jetbrains.python.psi.PyFunction;
 
 public interface PyFunctionStub extends NamedStub<PyFunction>, PyAnnotationOwnerStub, PyTypeCommentOwnerStub, PyVersionSpecificStub {
   String getDocString();
+
   String getDeprecationMessage();
+
   boolean isAsync();
+
   boolean isGenerator();
+
   default boolean onlyRaisesNotImplementedError() {
     return false;
   }

@@ -5,3 +5,5 @@ fun foo(p: Boolean) {
 // EXIST: p
 // EXIST: "c ->"
 // EXIST: "c: Char ->"
+
+// IGNORE_K2

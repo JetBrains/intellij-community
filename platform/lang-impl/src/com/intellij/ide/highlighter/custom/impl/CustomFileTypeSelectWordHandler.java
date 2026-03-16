@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter.custom.impl;
 
 import com.intellij.codeInsight.editorActions.BraceMatcherBasedSelectioner;
@@ -7,15 +7,12 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-
-@ApiStatus.Internal
-public final class CustomFileTypeSelectWordHandler extends BraceMatcherBasedSelectioner {
+final class CustomFileTypeSelectWordHandler extends BraceMatcherBasedSelectioner {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     return e.getContainingFile().getFileType() instanceof CustomSyntaxTableFileType;

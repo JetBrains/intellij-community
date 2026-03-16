@@ -15,8 +15,16 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.jetbrains.rd.util.lifetime.intersect
-import java.awt.*
-import javax.swing.*
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Font
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JProgressBar
+import javax.swing.SwingConstants
 
 internal class WizardProgressPage(val progress: PluginImportProgress, val controller: WizardController) : OnboardingPage {
   override val stage: StartupWizardStage = StartupWizardStage.WizardProgressPage

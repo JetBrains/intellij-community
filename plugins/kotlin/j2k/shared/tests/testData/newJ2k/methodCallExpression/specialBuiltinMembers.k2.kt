@@ -82,24 +82,24 @@ internal class A {
     }
 
     fun kt7940() {
-        val b1 = Byte.Companion.MIN_VALUE
-        val b2 = Byte.Companion.MAX_VALUE
-        val s1 = Short.Companion.MIN_VALUE
-        val s2 = Short.Companion.MAX_VALUE
-        val i1 = Int.Companion.MIN_VALUE
-        val i2 = Int.Companion.MAX_VALUE
-        val l1 = Long.Companion.MIN_VALUE
-        val l2 = Long.Companion.MAX_VALUE
-        val f1 = Float.Companion.MIN_VALUE
-        val f2 = Float.Companion.MAX_VALUE
-        val f3 = Float.Companion.POSITIVE_INFINITY
-        val f4 = Float.Companion.NEGATIVE_INFINITY
-        val f5 = Float.Companion.NaN
-        val d1 = Double.Companion.MIN_VALUE
-        val d2 = Double.Companion.MAX_VALUE
-        val d3 = Double.Companion.POSITIVE_INFINITY
-        val d4 = Double.Companion.NEGATIVE_INFINITY
-        val d5 = Double.Companion.NaN
+        val b1 = Byte.MIN_VALUE
+        val b2 = Byte.MAX_VALUE
+        val s1 = Short.MIN_VALUE
+        val s2 = Short.MAX_VALUE
+        val i1 = Int.MIN_VALUE
+        val i2 = Int.MAX_VALUE
+        val l1 = Long.MIN_VALUE
+        val l2 = Long.MAX_VALUE
+        val f1 = Float.MIN_VALUE
+        val f2 = Float.MAX_VALUE
+        val f3 = Float.POSITIVE_INFINITY
+        val f4 = Float.NEGATIVE_INFINITY
+        val f5 = Float.NaN
+        val d1 = Double.MIN_VALUE
+        val d2 = Double.MAX_VALUE
+        val d3 = Double.POSITIVE_INFINITY
+        val d4 = Double.NEGATIVE_INFINITY
+        val d5 = Double.NaN
     }
 
     fun kt35593() {

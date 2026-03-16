@@ -7,7 +7,7 @@ import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
-import javax.swing.*;
+import javax.swing.JScrollPane;
 
 public final class ScrollPaneLayoutCodeGenerator extends LayoutCodeGenerator {
   private final Type myScrollPaneType = Type.getType(JScrollPane.class);

@@ -7,8 +7,8 @@ import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 @ApiStatus.Internal
 public final class LightEditPanel extends JPanel implements Disposable {

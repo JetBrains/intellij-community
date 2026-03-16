@@ -3,7 +3,10 @@ package com.intellij.idea;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.annotation.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Helps binding production classes and issue IDs with tests code

@@ -1,5 +1,6 @@
-from _typeshed import Incomplete
-from typing import type_check_only
+from _typeshed import FileDescriptorOrPath, Unused
+from collections.abc import Iterable
+from typing import Final, type_check_only
 
 RequirePyRXP: int
 simpleparse: int
@@ -7,23 +8,23 @@ simpleparse: int
 @type_check_only
 class _smartDecode:
     @staticmethod
-    def __call__(s): ...
+    def __call__(s: str | bytes | bytearray) -> str: ...
 
 smartDecode: _smartDecode
-NONAME: str
-NAMEKEY: int
-CONTENTSKEY: int
-CDATAMARKER: str
-LENCDATAMARKER: Incomplete
-CDATAENDMARKER: str
-replacelist: Incomplete
+NONAME: Final = ""
+NAMEKEY: Final = 0
+CONTENTSKEY: Final = 1
+CDATAMARKER: Final = "<![CDATA["
+LENCDATAMARKER: Final = 9
+CDATAENDMARKER: Final = "]]>"
+replacelist: list[tuple[str, str]]
 
-def unEscapeContentList(contentList): ...
-def parsexmlSimple(xmltext, oneOutermostTag: int = 0, eoCB=None, entityReplacer=...): ...
+def unEscapeContentList(contentList: Iterable[str]) -> list[str]: ...
+def parsexmlSimple(xmltext, oneOutermostTag: int = 0, eoCB: Unused = None, entityReplacer=...): ...
 
 parsexml = parsexmlSimple
 
-def parseFile(filename): ...
+def parseFile(filename: FileDescriptorOrPath): ...
 
 verbose: int
 

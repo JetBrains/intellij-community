@@ -13,8 +13,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
 import com.intellij.openapi.roots.LibraryOrderEntry
@@ -31,9 +29,13 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBinary
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.GradleProcessOutputInterceptor
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil.getTestData
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.project.open.createLinkSettings
@@ -398,7 +400,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
 
         const val LATEST_STABLE_GRADLE_PLUGIN_VERSION = "2.0.0"
 
-        val SUPPORTED_GRADLE_VERSIONS = arrayOf("6.8.3", "7.6")//, "9.0.0", "9.1.0") // To support them in KTIJ-36754
+        val SUPPORTED_GRADLE_VERSIONS = arrayOf("6.8.3", "7.6.5")//, "9.0.0", "9.1.0") // To support them in KTIJ-36754
 
         // https://kotlinlang.org/docs/gradle-configure-project.html#targeting-the-jvm
         val GRADLE_TO_KGP_VERSION = mapOf(
@@ -413,7 +415,3 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
     }
 }
 
-fun GradleImportingTestCase.enableExperimentalMPP(enable: Boolean) {
-    //enable experimental MPP features e.g. an import K/JS run tasks
-    (AdvancedSettings.getInstance() as AdvancedSettingsImpl).setSetting("kotlin.mpp.experimental", enable, testRootDisposable)
-}

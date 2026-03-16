@@ -10,11 +10,13 @@ import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+
 final class ThemeJsonPsiReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(
-      PlatformPatterns.psiElement(JsonStringLiteral.class)
+      psiElement(JsonStringLiteral.class)
         .inVirtualFile(PlatformPatterns.virtualFile().with(new PatternCondition<>("theme.json") {
           @Override
           public boolean accepts(@NotNull VirtualFile file, ProcessingContext context) {

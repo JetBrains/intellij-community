@@ -1,7 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.fus
 
-import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.EmptyStatisticsEventLogger
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
+import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
+import com.intellij.internal.statistic.eventLog.StatisticsFileEventLogger
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import java.util.concurrent.CompletableFuture
@@ -37,8 +41,8 @@ class FeatureUsageLogger {
   /**
    * Records that in a group (e.g. 'dialogs', 'intentions') a new event occurred.
    */
-  fun log(group: EventLogGroup, action: String): CompletableFuture<Void> {
-    return loggerProvider.logger.logAsync(group, action, false)
+  fun log(group: EventLogGroup, action: String): CompletableFuture<*> {
+    return loggerProvider.logger.logAsync(group = group, eventId = action, isState = false)
   }
 
   /**
@@ -46,21 +50,21 @@ class FeatureUsageLogger {
    * Adds context information to the event, e.g., source and shortcut for an action.
    */
   fun log(group: EventLogGroup, action: String, data: Map<String, Any>) {
-    loggerProvider.logger.logAsync(group, action, data, false)
+    loggerProvider.logger.logAsync(group = group, eventId = action, data = data, isState = false)
   }
 
   /**
    * Records a new state event in a group (e.g. 'run.configuration.type').
    */
-  fun logState(group: EventLogGroup, action: String): CompletableFuture<Void> {
-    return loggerProvider.logger.logAsync(group, action, true)
+  fun logState(group: EventLogGroup, action: String): CompletableFuture<*> {
+    return loggerProvider.logger.logAsync(group = group, eventId = action, isState = true)
   }
 
   /**
    * Records a new state event in a group (e.g. 'run.configuration.type').
    * Adds context information to the event, e.g. if configuration is stored on project or on IDE level.
    */
-  fun logState(group: EventLogGroup, action: String, data: Map<String, Any>): CompletableFuture<Void> {
+  fun logState(group: EventLogGroup, action: String, data: Map<String, Any>): CompletableFuture<*> {
     return loggerProvider.logger.logAsync(group, action, data, true)
   }
 

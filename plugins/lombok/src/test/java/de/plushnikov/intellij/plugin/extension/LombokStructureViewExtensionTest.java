@@ -8,7 +8,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 import org.intellij.lang.annotations.Language;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 public class LombokStructureViewExtensionTest extends AbstractLombokLightCodeInsightTestCase {
 

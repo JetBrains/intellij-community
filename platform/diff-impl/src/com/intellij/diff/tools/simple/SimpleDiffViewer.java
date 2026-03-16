@@ -9,17 +9,38 @@ import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.tools.util.*;
+import com.intellij.diff.tools.util.BaseSyncScrollable;
+import com.intellij.diff.tools.util.DiffChangedRangeProvider;
+import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.diff.tools.util.DiffNotifications;
+import com.intellij.diff.tools.util.DiffSplitter;
+import com.intellij.diff.tools.util.FoldingModelSupport;
+import com.intellij.diff.tools.util.KeyboardModifierListener;
+import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
+import com.intellij.diff.tools.util.PrevNextDifferenceIterableBase;
+import com.intellij.diff.tools.util.StatusPanel;
+import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.TwosideContentPanel;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.tools.util.text.TwosideTextDiffProvider;
-import com.intellij.diff.util.*;
+import com.intellij.diff.util.DiffDividerDrawUtil;
+import com.intellij.diff.util.DiffDrawUtil;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.LineRange;
 import com.intellij.diff.util.Range;
+import com.intellij.diff.util.Side;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diff.DiffBundle;
@@ -29,6 +50,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -40,10 +62,18 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import kotlin.enums.EnumEntries;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Iterator;
@@ -67,6 +97,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   protected boolean aligningViewModeSupported;
 
+  private final EditorScrollingPositionKeeper @NotNull [] myPositionKeepers = new EditorScrollingPositionKeeper[Side.getEntries().size()];
+
 
   public SimpleDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
@@ -83,8 +115,15 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     myTextDiffProvider = DiffUtil.createTextDiffProvider(getProject(), getRequest(), getTextSettings(), this::rediff, this);
 
-    for (Side side : Side.values()) {
-      DiffUtil.installLineConvertor(getEditor(side), getContent(side), myFoldingModel, side.getIndex());
+    EnumEntries<@NotNull Side> sides = Side.getEntries();
+    for (int i = 0; i < sides.size(); i++) {
+      Side side = sides.get(i);
+      EditorEx editor = getEditor(side);
+      EditorScrollingPositionKeeper positionKeeper = new EditorScrollingPositionKeeper(editor);
+      Disposer.register(this, positionKeeper);
+      myPositionKeepers[i] = positionKeeper;
+
+      DiffUtil.installLineConvertor(editor, getContent(side), myFoldingModel, side.getIndex());
     }
   }
 
@@ -248,7 +287,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     List<SimpleDiffChange> nonSkipped = changes != null ? ContainerUtil.filter(changes, it -> !it.isSkipped()) : null;
     FoldingModelSupport.Data foldingState = myFoldingModel.createState(nonSkipped, getFoldingModelSettings());
 
-    return () -> {
+    return () -> runPreservingScrollingPosition(() -> {
+
       myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
 
       clearDiffPresentation();
@@ -265,13 +305,25 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       }
 
       //maybe readaction
-      WriteIntentReadAction.run((Runnable)() -> myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings()));
+      WriteIntentReadAction.run(() -> myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings()));
 
       myInitialScrollHelper.onRediff();
 
       myContentPanel.repaintDivider();
       myStatusPanel.update();
-    };
+    });
+  }
+
+  private void runPreservingScrollingPosition(@NotNull Runnable action) {
+    for (EditorScrollingPositionKeeper keeper : myPositionKeepers) {
+      keeper.savePosition();
+    }
+
+    action.run();
+
+    for (EditorScrollingPositionKeeper keeper : myPositionKeepers) {
+      keeper.restorePosition(true);
+    }
   }
 
   protected @NotNull Runnable applyNotification(final @Nullable JComponent notification) {

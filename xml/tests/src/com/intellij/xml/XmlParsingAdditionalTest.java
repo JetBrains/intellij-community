@@ -10,9 +10,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.junit.runner.RunWith;
 
 import java.io.File;
@@ -30,6 +31,7 @@ public class XmlParsingAdditionalTest extends BasePlatformTestCase {
     }
   }
 
+  @PerformanceUnitTest
   public void testReparsePerformance() {
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new PsiAwareTextEditorProvider(),
                                                                             getTestRootDisposable());

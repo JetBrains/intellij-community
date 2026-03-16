@@ -17,7 +17,7 @@ class PluginRepositoryXmlGeneratorTest {
     val pluginPath = tmpDir.resolve("auto-uploading/JPA Buddy-251.20241018.zip")
     pluginPath.write("hello".toByteArray())
 
-    PluginRepositoryXmlGeneratorTestUtils.generatePluginRepositoryMetaFile(
+    generatePluginRepositoryMetaFileForTests(
       listOf(
         PluginRepositorySpec(pluginPath, """
           <idea-plugin>

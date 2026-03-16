@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 
 public final class LargeFileStatusTextAction extends StatusTextAction {
   private final LfeSearchManager searchManager;

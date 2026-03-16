@@ -10,7 +10,7 @@ import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Eugene Zhuravlev

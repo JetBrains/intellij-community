@@ -7,3 +7,4 @@ fun bar(o: Any){
     foo(o as HashMap<String, File>)<caret>
 }
 // AUTOCOMPLETE_SETTING: true
+// IGNORE_K2

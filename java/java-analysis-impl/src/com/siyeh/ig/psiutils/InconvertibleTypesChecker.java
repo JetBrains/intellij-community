@@ -2,7 +2,11 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.util.Couple;
-import com.intellij.psi.*;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.Contract;

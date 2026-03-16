@@ -1,0 +1,1113 @@
+diff --git private/extensions/maven.bzl private/extensions/maven.bzl
+index 726d9eb..9a12de0 100644
+--- private/extensions/maven.bzl
++++ private/extensions/maven.bzl
+@@ -215,11 +215,11 @@ def _generate_compat_repos(name, existing_compat_repos, artifacts):
+ 
+     return seen
+ 
+-def _deduplicate_non_root_artifacts(bazel_dep_to_non_root_artifacts, return_only_artifacts = False):
++def _deduplicate_non_root_artifacts(bazel_dep_to_non_root_artifacts, return_only_artifacts = False, include_testonly = False):
+     coordinate_to_artifact = {}
+     for bazel_dep_name in bazel_dep_to_non_root_artifacts:
+         for artifact in bazel_dep_to_non_root_artifacts.get(bazel_dep_name, []):
+-            if not getattr(artifact, "testonly", False):
++            if include_testonly or not getattr(artifact, "testonly", False):
+                 artifact_key = to_key(artifact)
+ 
+                 # prioritize highest version
+@@ -639,8 +639,8 @@ def maven_impl(mctx):
+                 rje_verbose_env_var,
+             )
+         else:
+-            merged_repo["artifacts"] = _deduplicate_non_root_artifacts(bazel_dep_to_non_root_artifacts, True)
+-            merged_repo["boms"] = _deduplicate_non_root_artifacts(bazel_dep_to_non_root_boms, True)
++            merged_repo["artifacts"] = _deduplicate_non_root_artifacts(bazel_dep_to_non_root_artifacts, True, include_testonly = True)
++            merged_repo["boms"] = _deduplicate_non_root_artifacts(bazel_dep_to_non_root_boms, True, include_testonly = True)
+ 
+         # For list attributes, concatenate but avoid duplicates (root items first)
+         for list_attr in ["repositories", "excluded_artifacts", "additional_netrc_lines", "additional_coursier_options"]:
+diff --git private/outdated.sh private/outdated.sh
+deleted file mode 100644
+index 1f56f87..0000000
+--- private/outdated.sh
++++ /dev/null
+@@ -1,15 +0,0 @@
+-#!/usr/bin/env bash
+-
+-set -e -o pipefail
+-
+-outdated_jar_path=$1
+-artifacts_file_path=$2
+-boms_file_path=$3
+-repositories_file_path=$4
+-extra_option_flag=$5
+-
+-java {proxy_opts} -jar "$outdated_jar_path" \
+-  --artifacts-file "$artifacts_file_path" \
+-  --boms-file "$boms_file_path" \
+-  --repositories-file "$repositories_file_path" \
+-  $extra_option_flag
+diff --git private/pin.sh private/pin.sh
+deleted file mode 100644
+index 24689a1..0000000
+--- private/pin.sh
++++ /dev/null
+@@ -1,57 +0,0 @@
+-#!/usr/bin/env bash
+-
+-# --- begin runfiles.bash initialization v3 ---
+-# Copy-pasted from the Bazel Bash runfiles library v3.
+-set -uo pipefail; set +e; f=bazel_tools/tools/bash/runfiles/runfiles.bash
+-source "${RUNFILES_DIR:-/dev/null}/$f" 2>/dev/null || \
+-  source "$(grep -sm1 "^$f " "${RUNFILES_MANIFEST_FILE:-/dev/null}" | cut -f2- -d' ')" 2>/dev/null || \
+-  source "$0.runfiles/$f" 2>/dev/null || \
+-  source "$(grep -sm1 "^$f " "$0.runfiles_manifest" | cut -f2- -d' ')" 2>/dev/null || \
+-  source "$(grep -sm1 "^$f " "$0.exe.runfiles_manifest" | cut -f2- -d' ')" 2>/dev/null || \
+-  { echo>&2 "ERROR: cannot find $f"; exit 1; }; f=; set -e
+-# --- end runfiles.bash initialization v3 ---
+-
+-set -euo pipefail
+-# Workaround lack of rlocationpath, see comment on _BUILD_PIN in coursier.bzl
+-maven_unsorted_file=$(rlocation "${1#external\/}")
+-if [[ ! -e $maven_unsorted_file ]]; then
+-  # for --experimental_sibling_repository_layout
+-  maven_unsorted_file="${1#..\/}"
+-fi
+-if [[ ! -e $maven_unsorted_file ]]; then (echo >&2 "Failed to locate the unsorted_deps.json file: $1" && exit 1) fi
+-readonly maven_install_json_loc={maven_install_location}
+-
+-cp "$maven_unsorted_file" "$maven_install_json_loc"
+-
+-if [ "{predefined_maven_install}" = "True" ]; then
+-    echo "Successfully pinned resolved artifacts for @{repository_name}, $maven_install_json_loc is now up-to-date."
+-else
+-    echo "Successfully pinned resolved artifacts for @{repository_name} in $maven_install_json_loc." \
+-      "This file should be checked into your version control system."
+-    echo
+-    echo "Next, please update your WORKSPACE file by adding the maven_install_json attribute" \
+-      "and loading pinned_maven_install from @{repository_name}//:defs.bzl".
+-    echo
+-    echo "For example:"
+-    echo
+-    cat <<EOF
+-=============================================================
+-
+-maven_install(
+-    artifacts = # ...,
+-    repositories = # ...,
+-    maven_install_json = "@//:{repository_name}_install.json",
+-)
+-
+-load("@{repository_name}//:defs.bzl", "pinned_maven_install")
+-pinned_maven_install()
+-
+-=============================================================
+-EOF
+-
+-    echo
+-    echo "To update {repository_name}_install.json, run this command to re-pin the unpinned repository:"
+-    echo
+-    echo "    bazel run @unpinned_{repository_name}//:pin"
+-fi
+-echo
+diff --git private/rules/coursier.bzl private/rules/coursier.bzl
+index 16f29de..6226427 100644
+--- private/rules/coursier.bzl
++++ private/rules/coursier.bzl
+@@ -47,7 +47,6 @@ load("@rules_java//java:java_library.bzl", "java_library")
+ load("@rules_java//java:java_plugin.bzl", "java_plugin")
+ load("@rules_jvm_external//private/rules:pin_dependencies.bzl", "pin_dependencies")
+ load("@rules_jvm_external//private/rules:jvm_import.bzl", "jvm_import")
+-load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+ {aar_import_statement}
+ 
+ {imports}
+@@ -70,45 +69,66 @@ load("%s", "aar_import")
+ """
+ 
+ _BUILD_PIN = """
+-sh_binary(
++java_binary(
+     name = "pin",
+-    srcs = ["pin.sh"],
++    main_class = "com.github.bazelbuild.rules_jvm_external.coursier.Pin",
+     args = [
++        "--unsorted-deps-file",
+         "$(rlocationpath :unsorted_deps.json)",
++        "--maven-install-location",
++        "{maven_install_location}",
++        "--predefined-maven-install",
++        "{predefined_maven_install}",
++        "--repository-name",
++        "{repository_name}",
+     ],
+     data = [
+         ":unsorted_deps.json",
+     ],
+-    deps = [
+-        "@bazel_tools//tools/bash/runfiles",
++    runtime_deps = [
++        "@rules_jvm_external//private/tools/java/com/github/bazelbuild/rules_jvm_external/coursier:coursier_cli_tools",
+     ],
+     visibility = ["//visibility:public"],
+ )
+ """
+ 
+ _BUILD_DIRECT_DEPS = """
+-sh_binary(
++java_binary(
+     name = "direct_deps",
+-    srcs = ["direct_deps.sh"],
++    main_class = "com.github.bazelbuild.rules_jvm_external.coursier.PrintFile",
++    args = [
++        "$(rlocationpath :direct_deps.txt)",
++    ],
++    data = [
++        ":direct_deps.txt",
++    ],
++    runtime_deps = [
++        "@rules_jvm_external//private/tools/java/com/github/bazelbuild/rules_jvm_external/coursier:coursier_cli_tools",
++    ],
+     visibility = ["//visibility:public"],
+ )
+ """
+ 
+ _BUILD_OUTDATED = """
+-sh_binary(
++java_binary(
+     name = "outdated",
+-    srcs = ["outdated.sh"],
++    main_class = "com.github.bazelbuild.rules_jvm_external.maven.Outdated",
+     data = [
+-        "@rules_jvm_external//private/tools/prebuilt:outdated_deploy.jar",
+         "outdated.artifacts",
+         "outdated.boms",
+         "outdated.repositories",
+     ],
+     args = [
+-        "$(location @rules_jvm_external//private/tools/prebuilt:outdated_deploy.jar)",
+-        "$(location outdated.artifacts)",
+-        "$(location outdated.boms)",
+-        "$(location outdated.repositories)",
++        "--artifacts-file",
++        "$(rlocationpath :outdated.artifacts)",
++        "--boms-file",
++        "$(rlocationpath :outdated.boms)",
++        "--repositories-file",
++        "$(rlocationpath :outdated.repositories)",
++    ],
++    jvm_flags = {proxy_jvm_flags},
++    runtime_deps = [
++        "@rules_jvm_external//private/tools/java/com/github/bazelbuild/rules_jvm_external/maven:outdated_lib",
+     ],
+     visibility = ["//visibility:public"],
+ )
+@@ -148,28 +168,20 @@ def _is_verbose(repository_ctx):
+ def _is_windows(repository_ctx):
+     return repository_ctx.os.name.find("windows") != -1
+ 
+-def _is_linux(repository_ctx):
+-    return repository_ctx.os.name.find("linux") != -1
+-
+ def _is_macos(repository_ctx):
+     return repository_ctx.os.name.find("mac") != -1
+ 
+-def _is_file(repository_ctx, path):
+-    return repository_ctx.which("test") and repository_ctx.execute(["test", "-f", path]).return_code == 0
++def _home_dir(repository_ctx):
++    if _is_windows(repository_ctx):
++        return _normalize_to_unix_path(repository_ctx.os.environ.get("USERPROFILE", repository_ctx.os.environ.get("HOME", "")))
++    return repository_ctx.os.environ.get("HOME", "")
+ 
+-def _is_directory(repository_ctx, path):
+-    return repository_ctx.which("test") and repository_ctx.execute(["test", "-d", path]).return_code == 0
++def _path_exists(repository_ctx, path):
++    return repository_ctx.path(path).exists
+ 
+ def _is_unpinned(repository_ctx):
+     return repository_ctx.attr.pinned_repo_name != ""
+ 
+-def _shell_quote(s):
+-    # Lifted from
+-    #   https://github.com/bazelbuild/bazel-skylib/blob/6a17363a3c27dde70ab5002ad9f2e29aff1e1f4b/lib/shell.bzl#L49
+-    # because this file cannot load symbols from bazel_skylib since commit
+-    # 47505f644299aa2483d0df06c2bb2c7aa10d26d4.
+-    return "'" + s.replace("'", "'\\''") + "'"
+-
+ def _execute(repository_ctx, cmd, timeout = 600, environment = {}, progress_message = None):
+     if progress_message:
+         repository_ctx.report_progress(progress_message)
+@@ -194,10 +206,14 @@ def _execute_with_argsfile(
+         tool_name,
+         progress_message,
+         error_description,
+-        files_to_inspect):
++        files_to_inspect,
++        empty_output = ""):
+     # Currently each tool can only be used once per repository.
+     # This could be avoided by adding a disambiguator to the argsfile name.
+ 
++    if len(files_to_inspect) == 0:
++        return empty_output
++
+     # Avoid argument limits by putting list of files to inspect into a file
+     repository_ctx.file(
+         "{}_argsfile".format(tool_name),
+@@ -278,23 +294,18 @@ def _get_aar_import_statement_or_empty_str(repository_ctx):
+         return ""
+ 
+ def _java_path(repository_ctx):
+-    # Allow setting an env var to keep legacy JAVA_HOME behavior
+-    use_java_home = repository_ctx.os.environ.get("RJE_COURSIER_USE_JAVA_HOME")
++    java_candidates = ["../bazel_tools/jdk/bin/java"]
++    if _is_windows(repository_ctx):
++        java_candidates = ["../bazel_tools/jdk/bin/java.exe"] + java_candidates
+ 
+-    if use_java_home == None:
+-        embedded_java = "../bazel_tools/jdk/bin/java"
+-        if _is_file(repository_ctx, embedded_java):
+-            return repository_ctx.path(embedded_java)
++    for java_candidate in java_candidates:
++        java_path = repository_ctx.path(java_candidate)
++        if java_path.exists:
++            return java_path
+ 
+-    java_home = repository_ctx.os.environ.get("JAVA_HOME")
+-    if java_home != None:
+-        return repository_ctx.path(java_home + "/bin/java")
+-    elif repository_ctx.which("java") != None:
+-        return repository_ctx.which("java")
+-    return None
++    fail("Unable to find embedded Java executable. Expected one of: %s" % ", ".join(java_candidates))
+ 
+-# Generate the base `coursier` command depending on the OS, JAVA_HOME or the
+-# location of `java`.
++# Generate the base `coursier` command using the embedded Java runtime.
+ def _generate_java_jar_command_for_coursier(repository_ctx, jar_path):
+     coursier_opts = repository_ctx.os.environ.get("COURSIER_OPTS", "")
+     coursier_opts = coursier_opts.split(" ") if len(coursier_opts) > 0 else []
+@@ -303,26 +314,15 @@ def _generate_java_jar_command_for_coursier(repository_ctx, jar_path):
+     coursier_opts.append("-XX:+ExitOnOutOfMemoryError")
+     java_path = _java_path(repository_ctx)
+ 
+-    if java_path != None:
+-        # https://github.com/coursier/coursier/blob/master/doc/FORMER-README.md#how-can-the-launcher-be-run-on-windows-or-manually-with-the-java-program
+-        # The -noverify option seems to be required after the proguarding step
+-        # of the main JAR of coursier.
+-        cmd = [java_path, "-noverify", "-jar"] + coursier_opts + _get_java_proxy_args(repository_ctx) + [jar_path]
+-    else:
+-        # Try to execute coursier directly
+-        cmd = [jar_path] + coursier_opts + ["-J%s" % arg for arg in _get_java_proxy_args(repository_ctx)]
+-
+-    return cmd
++    # https://github.com/coursier/coursier/blob/master/doc/FORMER-README.md#how-can-the-launcher-be-run-on-windows-or-manually-with-the-java-program
++    # The -noverify option seems to be required after the proguarding step
++    # of the main JAR of coursier.
++    return [java_path, "-noverify", "-jar"] + coursier_opts + _get_java_proxy_args(repository_ctx) + [jar_path]
+ 
+ def _generate_java_jar_command(repository_ctx, jar_path):
+     java_path = _java_path(repository_ctx)
+ 
+-    if java_path != None:
+-        cmd = [java_path, "-jar"] + _get_java_proxy_args(repository_ctx) + [jar_path]
+-    else:
+-        cmd = [jar_path] + ["-J%s" % arg for arg in _get_java_proxy_args(repository_ctx)]
+-
+-    return cmd
++    return [java_path, "-jar"] + _get_java_proxy_args(repository_ctx) + [jar_path]
+ 
+ # Extract the well-known environment variables http_proxy, https_proxy and
+ # no_proxy and convert them to java.net-compatible property arguments.
+@@ -333,19 +333,6 @@ def _get_java_proxy_args(repository_ctx):
+     no_proxy = repository_ctx.os.environ.get("no_proxy", repository_ctx.os.environ.get("NO_PROXY"))
+     return get_java_proxy_args(http_proxy, https_proxy, no_proxy)
+ 
+-def _windows_check(repository_ctx):
+-    # TODO(jin): Remove BAZEL_SH usage ASAP. Bazel is going bashless, so BAZEL_SH
+-    # will not be around for long.
+-    #
+-    # On Windows, run msys once to bootstrap it
+-    # https://github.com/bazelbuild/rules_jvm_external/issues/53
+-    if (_is_windows(repository_ctx)):
+-        bash = repository_ctx.os.environ.get("BAZEL_SH")
+-        if (bash == None):
+-            fail("Please set the BAZEL_SH environment variable to the path of MSYS2 bash. " +
+-                 "This is typically `c:\\msys64\\usr\\bin\\bash.exe`. For more information, read " +
+-                 "https://docs.bazel.build/versions/master/install-windows.html#getting-bazel")
+-
+ def _stable_artifact(artifact):
+     parsed = json.decode(artifact)
+ 
+@@ -421,16 +408,13 @@ def get_netrc_lines_from_entries(netrc_entries):
+     return netrc_lines
+ 
+ def get_home_netrc_contents(repository_ctx):
+-    if repository_ctx.os.name.startswith("windows"):
+-        home_dir = repository_ctx.os.environ.get("USERPROFILE", "")
+-    else:
+-        home_dir = repository_ctx.os.environ.get("HOME", "")
++    home_dir = _home_dir(repository_ctx)
+ 
+     if not home_dir:
+         return ""
+ 
+     netrcfile = "{}/.netrc".format(home_dir)
+-    if not repository_ctx.path(netrcfile).exists:
++    if not _path_exists(repository_ctx, netrcfile):
+         return ""
+ 
+     return repository_ctx.read(netrcfile)
+@@ -454,16 +438,6 @@ def _add_outdated_files(repository_ctx, artifacts, boms, repositories):
+         executable = False,
+     )
+ 
+-    repository_ctx.template(
+-        "outdated.sh",
+-        repository_ctx.attr._outdated,
+-        {
+-            "{repository_name}": repository_ctx.name,
+-            "{proxy_opts}": " ".join([_shell_quote(arg) for arg in _get_java_proxy_args(repository_ctx)]),
+-        },
+-        executable = True,
+-    )
+-
+ def get_direct_dependencies(all_artifacts, input_artifacts):
+     """Returns the resolved coordinates for the given input (direct) artifacts.
+ 
+@@ -515,20 +489,16 @@ def get_direct_dependencies(all_artifacts, input_artifacts):
+     return sorted(direct_deps.keys())
+ 
+ def _add_direct_deps_files(repository_ctx, direct_deps):
+-    """Creates the direct_deps.sh script file.
++    """Creates the direct_deps.txt file.
+ 
+     Args:
+         repository_ctx: The repository context.
+         direct_deps: A list of resolved coordinates in Gradle External format.
+     """
+-    script_content = "#!/bin/bash\n"
+-    for dep in direct_deps:
+-        script_content += "echo '%s'\n" % dep
+-
+     repository_ctx.file(
+-        "direct_deps.sh",
+-        script_content,
+-        executable = True,
++        "direct_deps.txt",
++        "\n".join(direct_deps) + "\n",
++        executable = False,
+     )
+ 
+ def is_repin_required(repository_ctx):
+@@ -551,8 +521,6 @@ def _pinned_coursier_fetch_impl(repository_ctx):
+         fail("Please specify the file label to maven_install.json (e.g." +
+              "//:maven_install.json).")
+ 
+-    _windows_check(repository_ctx)
+-
+     repositories = [json.decode(repository) for repository in repository_ctx.attr.repositories]
+ 
+     artifacts = [json.decode(artifact) for artifact in repository_ctx.attr.artifacts]
+@@ -725,13 +693,13 @@ def _pinned_coursier_fetch_impl(repository_ctx):
+                 "        netrc = \"../%s/netrc\"," % (repository_ctx.name),
+             ])
+             if len(artifact["urls"]) == 0 and importer.has_m2local(maven_install_json_content) and artifact.get("file") != None:
+-                if _is_windows(repository_ctx):
+-                    user_home = repository_ctx.os.environ.get("USERPROFILE").replace("\\", "/")
++                user_home = _home_dir(repository_ctx)
++                if user_home:
++                    m2local_urls = [
++                        "file://%s/.m2/repository/%s" % (user_home, artifact["file"]),
++                    ]
+                 else:
+-                    user_home = repository_ctx.os.environ.get("HOME")
+-                m2local_urls = [
+-                    "file://%s/.m2/repository/%s" % (user_home, artifact["file"]),
+-                ]
++                    m2local_urls = []
+             else:
+                 m2local_urls = []
+             http_files.append("        urls = %s," % repr(
+@@ -810,6 +778,7 @@ def _pinned_coursier_fetch_impl(repository_ctx):
+             imports = generated_imports,
+             aar_import_statement = _get_aar_import_statement_or_empty_str(repository_ctx),
+             unpinned_pin_target = unpinned_pin_target,
++            proxy_jvm_flags = repr(_get_java_proxy_args(repository_ctx)),
+         ) + pin_target,
+         executable = False,
+     )
+@@ -946,12 +915,17 @@ def get_coursier_cache_or_default(repository_ctx, use_unsafe_shared_cache):
+         return coursier_cache_env_var
+ 
+     # cache locations from https://get-coursier.io/docs/2.0.0-RC5-3/cache.html#default-location
+-    # Use linux as the default cache directory
+-    default_cache_dir = "%s/.cache/coursier/v1" % os_env.get("HOME")
++    # Use the XDG-style cache location as the cross-platform default.
++    home_dir = _home_dir(repository_ctx)
++    default_cache_dir = "%s/.cache/coursier/v1" % home_dir
+     if _is_windows(repository_ctx):
+-        default_cache_dir = "%s/Coursier/cache/v1" % os_env.get("LOCALAPPDATA").replace("\\", "/")
++        local_app_data = os_env.get("LOCALAPPDATA")
++        if local_app_data:
++            default_cache_dir = "%s/Coursier/cache/v1" % _normalize_to_unix_path(local_app_data)
++        elif home_dir:
++            default_cache_dir = "%s/AppData/Local/Coursier/cache/v1" % home_dir
+     elif _is_macos(repository_ctx):
+-        default_cache_dir = "%s/Library/Caches/Coursier/v1" % os_env.get("HOME")
++        default_cache_dir = "%s/Library/Caches/Coursier/v1" % home_dir
+     else:
+         # Coursier respects $XDG_CACHE_HOME as a replacement for $HOME/.cache
+         # outside of Windows and macOS.
+@@ -964,10 +938,12 @@ def get_coursier_cache_or_default(repository_ctx, use_unsafe_shared_cache):
+             return "%s/coursier/v1" % xdg_cache_home
+ 
+     # Logic based on # https://github.com/coursier/coursier/blob/f48c1c6b01ac5b720e66e06cf93587b21d030e8c/modules/paths/src/main/java/coursier/paths/CoursierPaths.java#L60
+-    if _is_directory(repository_ctx, default_cache_dir):
++    if _path_exists(repository_ctx, default_cache_dir):
+         return default_cache_dir
+-    elif _is_directory(repository_ctx, "%s/.coursier" % os_env.get("HOME")):
+-        return "%s/.coursier/cache/v1" % os_env.get("HOME")
++
++    legacy_cache_dir = "%s/.coursier" % home_dir
++    if _path_exists(repository_ctx, legacy_cache_dir):
++        return "%s/cache/v1" % legacy_cache_dir
+ 
+     return default_cache_dir
+ 
+@@ -1217,8 +1193,6 @@ def _coursier_fetch_impl(repository_ctx):
+     if hasher_exec_result.return_code != 0:
+         fail("Unable to run coursier: " + hasher_exec_result.stderr)
+ 
+-    _windows_check(repository_ctx)
+-
+     # Deserialize the spec blobs
+     repositories = []
+     for repository in repository_ctx.attr.repositories:
+@@ -1392,6 +1366,7 @@ def _coursier_fetch_impl(repository_ctx):
+         "Indexing jars",
+         "indexing jars",
+         files_to_inspect,
++        empty_output = "{}",
+     )
+ 
+     jars_to_index_results = json.decode(index_jars_stdout)
+@@ -1510,23 +1485,11 @@ def _coursier_fetch_impl(repository_ctx):
+     direct_deps = get_direct_dependencies(all_artifacts, artifacts)
+     _add_direct_deps_files(repository_ctx, direct_deps)
+ 
+-    repository_ctx.file(
+-        "BUILD",
+-        (_BUILD + _BUILD_PIN + outdated_build_file_content + _BUILD_DIRECT_DEPS).format(
+-            visibilities = ",".join(["\"%s\"" % s for s in (["//visibility:public"] if not repository_ctx.attr.strict_visibility else repository_ctx.attr.strict_visibility_value)]),
+-            repository_name = repository_name,
+-            imports = generated_imports,
+-            aar_import_statement = _get_aar_import_statement_or_empty_str(repository_ctx),
+-        ),
+-        executable = False,
+-    )
+-
+     # If maven_install.json has already been used in maven_install,
+     # we don't need to instruct user to update WORKSPACE and load pinned_maven_install.
+     # If maven_install.json is not used yet, provide complete instructions.
+     #
+-    # Also support custom locations for maven_install.json and update the pin.sh script
+-    # accordingly.
++    # Also support custom locations for maven_install.json.
+     predefined_maven_install = bool(repository_ctx.attr.maven_install_json)
+     if predefined_maven_install:
+         package_path = repository_ctx.attr.maven_install_json.package
+@@ -1537,23 +1500,20 @@ def _coursier_fetch_impl(repository_ctx):
+             maven_install_location = "/".join([package_path, file_name])  # e.g. path/to/some.json
+     else:
+         # Default maven_install.json file name.
+-        maven_install_location = "{repository_name}_install.json"
++        maven_install_location = "{}_install.json".format(repository_name)
+ 
+-    # Expose the script to let users pin the state of the fetch in
+-    # `<workspace_root>/maven_install.json`.
+-    #
+-    # $ bazel run @unpinned_maven//:pin
+-    #
+-    # Create the maven_install.json export script for unpinned repositories.
+-    repository_ctx.template(
+-        "pin.sh",
+-        repository_ctx.attr._pin,
+-        {
+-            "{maven_install_location}": "$BUILD_WORKSPACE_DIRECTORY/" + maven_install_location,
+-            "{predefined_maven_install}": str(predefined_maven_install),
+-            "{repository_name}": repository_name,
+-        },
+-        executable = True,
++    repository_ctx.file(
++        "BUILD",
++        (_BUILD + _BUILD_PIN + outdated_build_file_content + _BUILD_DIRECT_DEPS).format(
++            visibilities = ",".join(["\"%s\"" % s for s in (["//visibility:public"] if not repository_ctx.attr.strict_visibility else repository_ctx.attr.strict_visibility_value)]),
++            repository_name = repository_name,
++            imports = generated_imports,
++            aar_import_statement = _get_aar_import_statement_or_empty_str(repository_ctx),
++            maven_install_location = maven_install_location,
++            predefined_maven_install = str(predefined_maven_install),
++            proxy_jvm_flags = repr(_get_java_proxy_args(repository_ctx)),
++        ),
++        executable = False,
+     )
+ 
+     # Generate 'defs.bzl' with just the dependencies for ':pin'.
+@@ -1596,7 +1556,6 @@ def _coursier_fetch_impl(repository_ctx):
+ pinned_coursier_fetch = repository_rule(
+     attrs = {
+         "_compat_repository": attr.label(default = "//private:compat_repository.bzl"),
+-        "_outdated": attr.label(default = "//private:outdated.sh"),
+         "user_provided_name": attr.string(),
+         "resolver": attr.string(doc = "The resolver to use", values = ["coursier", "gradle", "maven"], default = "coursier"),
+         "repositories": attr.string_list(),  # list of repository objects, each as json
+@@ -1652,9 +1611,7 @@ coursier_fetch = repository_rule(
+         "_sha256_hasher": attr.label(default = "//private/tools/prebuilt:hasher_deploy.jar"),
+         "_index_jar": attr.label(default = "//private/tools/prebuilt:index_jar_deploy.jar"),
+         "_lock_file_converter": attr.label(default = "//private/tools/prebuilt:lock_file_converter_deploy.jar"),
+-        "_pin": attr.label(default = "//private:pin.sh"),
+         "_compat_repository": attr.label(default = "//private:compat_repository.bzl"),
+-        "_outdated": attr.label(default = "//private:outdated.sh"),
+         "user_provided_name": attr.string(),
+         "repositories": attr.string_list(),  # list of repository objects, each as json
+         "artifacts": attr.string_list(),  # list of artifact objects, each as json
+@@ -1715,7 +1672,6 @@ coursier_fetch = repository_rule(
+         ),
+     },
+     environ = [
+-        "JAVA_HOME",
+         "JDK_JAVA_OPTIONS",
+         "http_proxy",
+         "HTTP_PROXY",
+diff --git private/tools/java/com/github/bazelbuild/rules_jvm_external/coursier/BUILD private/tools/java/com/github/bazelbuild/rules_jvm_external/coursier/BUILD
+index 1ff90d2..d84f99b 100644
+--- private/tools/java/com/github/bazelbuild/rules_jvm_external/coursier/BUILD
++++ private/tools/java/com/github/bazelbuild/rules_jvm_external/coursier/BUILD
+@@ -4,7 +4,14 @@ load("//private/rules:artifact.bzl", "artifact")
+ 
+ java_library(
+     name = "coursier",
+-    srcs = glob(["*.java"]),
++    srcs = glob(
++        ["*.java"],
++        exclude = [
++            "Pin.java",
++            "PrintFile.java",
++            "RunfilesPaths.java",
++        ],
++    ),
+     visibility = [
+         "//private/tools/java/com/github/bazelbuild/rules_jvm_external/resolver/cmd:__pkg__",
+         "//tests/com/github/bazelbuild/rules_jvm_external:__subpackages__",
+@@ -24,6 +31,19 @@ java_library(
+     ],
+ )
+ 
++java_library(
++    name = "coursier_cli_tools",
++    srcs = [
++        "Pin.java",
++        "PrintFile.java",
++        "RunfilesPaths.java",
++    ],
++    visibility = ["//visibility:public"],
++    deps = [
++        "@bazel_tools//tools/java/runfiles",
++    ],
++)
++
+ java_binary(
+     name = "LockFileConverter",
+     main_class = "com.github.bazelbuild.rules_jvm_external.coursier.LockFileConverter",
+@@ -32,3 +52,21 @@ java_binary(
+         ":coursier",
+     ],
+ )
++
++java_binary(
++    name = "Pin",
++    main_class = "com.github.bazelbuild.rules_jvm_external.coursier.Pin",
++    visibility = ["//visibility:public"],
++    runtime_deps = [
++        ":coursier_cli_tools",
++    ],
++)
++
++java_binary(
++    name = "PrintFile",
++    main_class = "com.github.bazelbuild.rules_jvm_external.coursier.PrintFile",
++    visibility = ["//visibility:public"],
++    runtime_deps = [
++        ":coursier_cli_tools",
++    ],
++)
+diff --git private/tools/java/com/github/bazelbuild/rules_jvm_external/coursier/Pin.java private/tools/java/com/github/bazelbuild/rules_jvm_external/coursier/Pin.java
+new file mode 100644
+index 0000000..03a742a
+--- /dev/null
++++ private/tools/java/com/github/bazelbuild/rules_jvm_external/coursier/Pin.java
+@@ -0,0 +1,139 @@
++package com.github.bazelbuild.rules_jvm_external.coursier;
++
++import java.io.IOException;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.nio.file.Paths;
++import java.nio.file.StandardCopyOption;
++import java.util.Arrays;
++
++public class Pin {
++  private static class PinOptions {
++    private String unsortedDepsFile;
++    private String mavenInstallLocation;
++    private String predefinedMavenInstall;
++    private String repositoryName;
++
++    private static PinOptions parse(String[] args) {
++      PinOptions options = new PinOptions();
++
++      for (int i = 0; i < args.length; i++) {
++        switch (args[i]) {
++          case "--unsorted-deps-file":
++            options.unsortedDepsFile = args[++i];
++            break;
++          case "--maven-install-location":
++            options.mavenInstallLocation = args[++i];
++            break;
++          case "--predefined-maven-install":
++            options.predefinedMavenInstall = args[++i];
++            break;
++          case "--repository-name":
++            options.repositoryName = args[++i];
++            break;
++          default:
++            throw new IllegalArgumentException(
++                "Unable to parse command line: " + Arrays.toString(args));
++        }
++      }
++
++      if (options.unsortedDepsFile == null) {
++        throw new IllegalArgumentException("--unsorted-deps-file is required");
++      }
++      if (options.mavenInstallLocation == null) {
++        throw new IllegalArgumentException("--maven-install-location is required");
++      }
++      if (options.predefinedMavenInstall == null) {
++        throw new IllegalArgumentException("--predefined-maven-install is required");
++      }
++      if (options.repositoryName == null) {
++        throw new IllegalArgumentException("--repository-name is required");
++      }
++
++      return options;
++    }
++  }
++
++  private static Path workspaceRoot() {
++    String workspaceRoot = System.getenv("BUILD_WORKSPACE_DIRECTORY");
++    if (workspaceRoot == null || workspaceRoot.isEmpty()) {
++      workspaceRoot = System.getProperty("user.dir");
++    }
++    return Paths.get(workspaceRoot);
++  }
++
++  private static void printPostPinMessage(
++      String repositoryName, Path outputFile, boolean predefinedMavenInstall) {
++    if (predefinedMavenInstall) {
++      System.out.println(
++          String.format(
++              "Successfully pinned resolved artifacts for @%s, %s is now up-to-date.",
++              repositoryName, outputFile));
++    } else {
++      System.out.println(
++          String.format(
++              "Successfully pinned resolved artifacts for @%s in %s."
++                  + " This file should be checked into your version control system.",
++              repositoryName, outputFile));
++      System.out.println();
++      System.out.println(
++          String.format(
++              "Next, please update your WORKSPACE file by adding the maven_install_json attribute"
++                  + " and loading pinned_maven_install from @%s//:defs.bzl.",
++              repositoryName));
++      System.out.println();
++      System.out.println("For example:");
++      System.out.println();
++      System.out.println("=============================================================");
++      System.out.println();
++      System.out.println("maven_install(");
++      System.out.println("    artifacts = # ...,");
++      System.out.println("    repositories = # ...,");
++      System.out.println(
++          String.format("    maven_install_json = \"@//:%s_install.json\",", repositoryName));
++      System.out.println(")");
++      System.out.println();
++      System.out.println(
++          String.format(
++              "load(\"@%s//:defs.bzl\", \"pinned_maven_install\")", repositoryName));
++      System.out.println("pinned_maven_install()");
++      System.out.println();
++      System.out.println("=============================================================");
++      System.out.println();
++      System.out.println(
++          String.format(
++              "To update %s_install.json, run this command to re-pin the unpinned repository:",
++              repositoryName));
++      System.out.println();
++      System.out.println(String.format("    bazel run @unpinned_%s//:pin", repositoryName));
++    }
++    System.out.println();
++  }
++
++  public static void main(String[] args) throws IOException {
++    PinOptions options = PinOptions.parse(args);
++
++    Path unsortedDepsPath = RunfilesPaths.resolvePath(options.unsortedDepsFile);
++    if (!Files.exists(unsortedDepsPath)) {
++      throw new IllegalArgumentException(
++          "Failed to locate the unsorted_deps.json file: " + options.unsortedDepsFile);
++    }
++
++    Path outputPath = Paths.get(options.mavenInstallLocation);
++    if (!outputPath.isAbsolute()) {
++      outputPath = workspaceRoot().resolve(outputPath);
++    }
++
++    Path outputParent = outputPath.getParent();
++    if (outputParent != null) {
++      Files.createDirectories(outputParent);
++    }
++
++    Files.copy(unsortedDepsPath, outputPath, StandardCopyOption.REPLACE_EXISTING);
++
++    printPostPinMessage(
++        options.repositoryName,
++        outputPath,
++        Boolean.parseBoolean(options.predefinedMavenInstall));
++  }
++}
+diff --git private/tools/java/com/github/bazelbuild/rules_jvm_external/coursier/PrintFile.java private/tools/java/com/github/bazelbuild/rules_jvm_external/coursier/PrintFile.java
+new file mode 100644
+index 0000000..f8d4be9
+--- /dev/null
++++ private/tools/java/com/github/bazelbuild/rules_jvm_external/coursier/PrintFile.java
+@@ -0,0 +1,23 @@
++package com.github.bazelbuild.rules_jvm_external.coursier;
++
++import java.io.IOException;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.util.List;
++
++public class PrintFile {
++  public static void main(String[] args) throws IOException {
++    if (args.length != 1) {
++      throw new IllegalArgumentException("Expected exactly one argument: <path-to-file>");
++    }
++
++    Path filePath = RunfilesPaths.resolvePath(args[0]);
++    List<String> lines = Files.readAllLines(filePath, StandardCharsets.UTF_8);
++    for (String line : lines) {
++      if (!line.isEmpty()) {
++        System.out.println(line);
++      }
++    }
++  }
++}
+diff --git private/tools/java/com/github/bazelbuild/rules_jvm_external/coursier/RunfilesPaths.java private/tools/java/com/github/bazelbuild/rules_jvm_external/coursier/RunfilesPaths.java
+new file mode 100644
+index 0000000..5279871
+--- /dev/null
++++ private/tools/java/com/github/bazelbuild/rules_jvm_external/coursier/RunfilesPaths.java
+@@ -0,0 +1,66 @@
++package com.github.bazelbuild.rules_jvm_external.coursier;
++
++import com.google.devtools.build.runfiles.Runfiles;
++import java.io.IOException;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.nio.file.Paths;
++import java.util.LinkedHashSet;
++import java.util.Set;
++
++final class RunfilesPaths {
++  private RunfilesPaths() {}
++
++  static Path resolvePath(String path) throws IOException {
++    Path directPath = Paths.get(path);
++    if (Files.exists(directPath)) {
++      return directPath;
++    }
++
++    Runfiles.Preloaded runfiles = Runfiles.preload();
++    for (String runfilePath : runfileCandidates(path)) {
++      if (runfilePath == null || runfilePath.isEmpty()) {
++        continue;
++      }
++
++      String resolvedPathString;
++      try {
++        resolvedPathString = runfiles.unmapped().rlocation(runfilePath);
++      } catch (IllegalArgumentException e) {
++        continue;
++      }
++
++      if (resolvedPathString != null) {
++        Path resolvedPath = Paths.get(resolvedPathString);
++        if (Files.exists(resolvedPath)) {
++          return resolvedPath;
++        }
++      }
++    }
++
++    return directPath;
++  }
++
++  private static Set<String> runfileCandidates(String path) {
++    Set<String> candidates = new LinkedHashSet<>();
++    candidates.add(path);
++
++    String normalized = path;
++    while (normalized.startsWith("./")) {
++      normalized = normalized.substring(2);
++    }
++    candidates.add(normalized);
++
++    if (normalized.startsWith("external/")) {
++      normalized = normalized.substring("external/".length());
++      candidates.add(normalized);
++    }
++
++    while (normalized.startsWith("../")) {
++      normalized = normalized.substring(3);
++      candidates.add(normalized);
++    }
++
++    return candidates;
++  }
++}
+diff --git private/tools/java/com/github/bazelbuild/rules_jvm_external/maven/BUILD private/tools/java/com/github/bazelbuild/rules_jvm_external/maven/BUILD
+index f8ad94b..0fb657f 100644
+--- private/tools/java/com/github/bazelbuild/rules_jvm_external/maven/BUILD
++++ private/tools/java/com/github/bazelbuild/rules_jvm_external/maven/BUILD
+@@ -72,13 +72,22 @@ java_library(
+ 
+ java_binary(
+     name = "outdated",
+-    srcs = ["Outdated.java"],
+     main_class = "com.github.bazelbuild.rules_jvm_external.maven.Outdated",
+     visibility = ["//visibility:public"],
++    runtime_deps = [
++        ":outdated_lib",
++    ],
++)
++
++java_library(
++    name = "outdated_lib",
++    srcs = ["Outdated.java"],
++    visibility = ["//visibility:public"],
+     deps = [
+         artifact(
+             "org.apache.maven:maven-artifact",
+             repository_name = "rules_jvm_external_deps",
+         ),
++        "@bazel_tools//tools/java/runfiles",
+     ],
+ )
+diff --git private/tools/java/com/github/bazelbuild/rules_jvm_external/maven/Outdated.java private/tools/java/com/github/bazelbuild/rules_jvm_external/maven/Outdated.java
+index 11804ec..0f9a5a5 100644
+--- private/tools/java/com/github/bazelbuild/rules_jvm_external/maven/Outdated.java
++++ private/tools/java/com/github/bazelbuild/rules_jvm_external/maven/Outdated.java
+@@ -1,5 +1,6 @@
+ package com.github.bazelbuild.rules_jvm_external.maven;
+ 
++import com.google.devtools.build.runfiles.Runfiles;
+ import java.io.IOException;
+ import java.net.URL;
+ import java.nio.charset.StandardCharsets;
+@@ -8,8 +9,10 @@ import java.nio.file.Path;
+ import java.nio.file.Paths;
+ import java.util.Arrays;
+ import java.util.Comparator;
++import java.util.LinkedHashSet;
+ import java.util.List;
+ import java.util.Objects;
++import java.util.Set;
+ import java.util.TreeSet;
+ import javax.xml.parsers.DocumentBuilder;
+ import javax.xml.parsers.DocumentBuilderFactory;
+@@ -280,6 +283,59 @@ public class Outdated {
+     }
+   }
+ 
++  private static Set<String> runfileCandidates(String path) {
++    Set<String> candidates = new LinkedHashSet<>();
++    candidates.add(path);
++
++    String normalized = path;
++    while (normalized.startsWith("./")) {
++      normalized = normalized.substring(2);
++    }
++    candidates.add(normalized);
++
++    if (normalized.startsWith("external/")) {
++      normalized = normalized.substring("external/".length());
++      candidates.add(normalized);
++    }
++
++    while (normalized.startsWith("../")) {
++      normalized = normalized.substring(3);
++      candidates.add(normalized);
++    }
++
++    return candidates;
++  }
++
++  private static Path resolvePath(String path) throws IOException {
++    Path directPath = Paths.get(path);
++    if (Files.exists(directPath)) {
++      return directPath;
++    }
++
++    Runfiles.Preloaded runfiles = Runfiles.preload();
++    for (String runfilePath : runfileCandidates(path)) {
++      if (runfilePath == null || runfilePath.isEmpty()) {
++        continue;
++      }
++
++      String resolvedPathString;
++      try {
++        resolvedPathString = runfiles.unmapped().rlocation(runfilePath);
++      } catch (IllegalArgumentException e) {
++        continue;
++      }
++
++      if (resolvedPathString != null) {
++        Path resolvedPath = Paths.get(resolvedPathString);
++        if (Files.exists(resolvedPath)) {
++          return resolvedPath;
++        }
++      }
++    }
++
++    return directPath;
++  }
++
+   public static void main(String[] args) throws IOException {
+     verboseLog(String.format("Running outdated with args %s", Arrays.toString(args)));
+ 
+@@ -291,15 +347,15 @@ public class Outdated {
+     for (int i = 0; i < args.length; i++) {
+       switch (args[i]) {
+         case "--artifacts-file":
+-          artifactsFilePath = Paths.get(args[++i]);
++          artifactsFilePath = resolvePath(args[++i]);
+           break;
+ 
+         case "--boms-file":
+-          bomsFilePath = Paths.get(args[++i]);
++          bomsFilePath = resolvePath(args[++i]);
+           break;
+ 
+         case "--repositories-file":
+-          repositoriesFilePath = Paths.get(args[++i]);
++          repositoriesFilePath = resolvePath(args[++i]);
+           break;
+ 
+         case "--legacy-output":
+diff --git tests/integration/BUILD tests/integration/BUILD
+index 7b917f2..c2ad369 100644
+--- tests/integration/BUILD
++++ tests/integration/BUILD
+@@ -28,8 +28,11 @@ genquery(
+         "@testonly_testing//:com_google_auto_value_auto_value_annotations",
+         "@testonly_testing//:defs",
+         "@testonly_testing//:direct_deps",
++        "@testonly_testing//:direct_deps_deployjars_internal_rule",
+         "@testonly_testing//:outdated",
++        "@testonly_testing//:outdated_deployjars_internal_rule",
+         "@testonly_testing//:pin",
++        "@testonly_testing//:pin_deployjars_internal_rule",
+     ],
+ )
+ 
+diff --git tests/unit/coursier_test.bzl tests/unit/coursier_test.bzl
+index 7ea0dfc..913f327 100644
+--- tests/unit/coursier_test.bzl
++++ tests/unit/coursier_test.bzl
+@@ -364,8 +364,8 @@ def _mock_repo_path(path):
+     else:
+         return "/mockroot/" + path
+ 
+-def _mock_which(path):
+-    return False
++def _mock_path_never_exists(path):
++    return struct(exists = False)
+ 
+ def _get_coursier_cache_or_default_disabled_test(ctx):
+     env = unittest.begin(ctx)
+@@ -376,7 +376,7 @@ def _get_coursier_cache_or_default_disabled_test(ctx):
+             },
+             name = "linux",
+         ),
+-        which = _mock_which,
++        path = _mock_path_never_exists,
+     )
+     asserts.equals(
+         env,
+@@ -396,7 +396,7 @@ def _get_coursier_cache_or_default_enabled_with_default_location_linux_test(ctx)
+             },
+             name = "linux",
+         ),
+-        which = _mock_which,
++        path = _mock_path_never_exists,
+     )
+     asserts.equals(
+         env,
+@@ -416,7 +416,7 @@ def _get_coursier_cache_or_default_enabled_with_default_location_mac_test(ctx):
+             },
+             name = "mac",
+         ),
+-        which = _mock_which,
++        path = _mock_path_never_exists,
+     )
+     asserts.equals(
+         env,
+@@ -436,7 +436,7 @@ def _get_coursier_cache_or_default_enabled_with_custom_location_test(ctx):
+             },
+             name = "linux",
+         ),
+-        which = _mock_which,
++        path = _mock_path_never_exists,
+     )
+     asserts.equals(
+         env,
+@@ -469,14 +469,8 @@ def _get_coursier_sha256_from_env_test_impl(ctx):
+ 
+ get_coursier_sha256_from_env_test = add_test(_get_coursier_sha256_from_env_test_impl)
+ 
+-def _mock_which_true(path):
+-    return True
+-
+-def _mock_execute(args):
+-    if args[-1] == "/Users/testuser/Library/Caches/Coursier/v1":
+-        return struct(return_code = 1)
+-    else:
+-        return struct(return_code = 0)
++def _mock_path_with_home_dot_coursier(path):
++    return struct(exists = path == "/Users/testuser/.coursier")
+ 
+ def _get_coursier_cache_or_default_enabled_with_home_dot_coursier_directory_test(ctx):
+     env = unittest.begin(ctx)
+@@ -487,8 +481,7 @@ def _get_coursier_cache_or_default_enabled_with_home_dot_coursier_directory_test
+             },
+             name = "mac",
+         ),
+-        which = _mock_which_true,
+-        execute = _mock_execute,
++        path = _mock_path_with_home_dot_coursier,
+     )
+     asserts.equals(
+         env,

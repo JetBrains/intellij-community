@@ -8,6 +8,7 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
+import com.jetbrains.python.packaging.toolwindow.model.LoadingNode
 import com.jetbrains.python.packaging.toolwindow.packages.tree.PyPackagesTreeListener
 import com.jetbrains.python.packaging.toolwindow.packages.tree.PyPackagesTreeTable
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
@@ -113,6 +114,16 @@ internal class PyPackagingTreeGroup(
   fun setSdkToHeader(@Nls sdkName: String?) {
     itemsCount = null
     headerProperties.label.text = PyBundle.message("python.toolwindow.packages.sdk.label.html", repositoryName, sdkName)
+  }
+
+  fun setLoading(loading: Boolean) {
+    if (loading) {
+      tree.items = listOf(LoadingNode())
+    }
+    else if (tree.items.singleOrNull() is LoadingNode) {
+      tree.items = emptyList()
+    }
+    repaint()
   }
 
   fun addTo(panel: JPanel) {

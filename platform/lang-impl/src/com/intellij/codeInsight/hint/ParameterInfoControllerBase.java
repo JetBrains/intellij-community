@@ -3,7 +3,11 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.parameterInfo.*;
+import com.intellij.lang.parameterInfo.DeleteParameterInfoContext;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.lang.parameterInfo.ParameterInfoHandlerWithTabActionSupport;
+import com.intellij.lang.parameterInfo.ParameterInfoUtils;
+import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -18,7 +22,11 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -359,14 +367,6 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
       }
     }
     throw new TimeoutException();
-  }
-
-  /**
-   * @deprecated Always false
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean areParameterTemplatesEnabledOnCompletion() {
-    return false;
   }
 
   public static @NotNull ParameterInfoControllerBase createParameterInfoController(@NotNull Project project,

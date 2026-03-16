@@ -1,0 +1,34 @@
+// FILE: build.gradle.kts
+plugins {
+    id("some-custom-plugin")
+}
+
+kotlinStdLib
+
+// FILE: settings.gradle.kts
+rootProject.name = "GradleKotlinFixture"
+includeBuild("not-build-src")
+
+// FILE: not-build-src/build.gradle.kts
+plugins {
+    id("java-gradle-plugin")
+    `kotlin-dsl`
+}
+
+repositories {
+    mavenCentral()
+}
+
+gradlePlugin {
+    plugins.register("some-custom-plugin") {
+        id = "some-custom-plugin"
+        implementationClass = "SomeCustomPlugin"
+    }
+}
+
+// FILE: not-build-src/settings.gradle.kts
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
+}

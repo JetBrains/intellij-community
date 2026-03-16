@@ -6,7 +6,13 @@ import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.coverage.view.CoverageViewManager.StateBean
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe

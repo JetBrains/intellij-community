@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Point
-import java.util.*
+import java.util.LinkedList
 
 class InlineCompletionState internal constructor() : Disposable {
   private val _elements: MutableList<InlineCompletionElement.Presentable> = LinkedList()

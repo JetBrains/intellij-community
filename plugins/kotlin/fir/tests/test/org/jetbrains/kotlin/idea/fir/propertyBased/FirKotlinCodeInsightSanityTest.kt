@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.fir.propertyBased
 
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.propertyBased.KotlinCodeInsightSanityTest
+import org.jetbrains.kotlin.idea.propertyBased.KotlinIntentionPolicy
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 class FirKotlinCodeInsightSanityTest: KotlinCodeInsightSanityTest() {
@@ -10,4 +11,6 @@ class FirKotlinCodeInsightSanityTest: KotlinCodeInsightSanityTest() {
     override fun setUp() {
         setUpWithKotlinPlugin { super.setUp() }
     }
+
+    override fun createIntentionPolicy(): KotlinIntentionPolicy = K2IntentionPolicy()
 }

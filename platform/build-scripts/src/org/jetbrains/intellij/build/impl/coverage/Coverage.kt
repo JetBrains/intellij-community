@@ -14,7 +14,6 @@ import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -66,11 +65,7 @@ internal class CoverageImpl(
     val libraryName = "jetbrains.intellij.deps.coverage.reporter"
     val libraryModule = "intellij.platform.buildScripts"
     val jarName = "intellij-coverage-agent"
-    val library = context.findRequiredModule(libraryModule)
-                    .libraryCollection
-                    .findLibrary(libraryName)
-                  ?: error("Can't find the '$libraryName' library in the '$libraryModule' module")
-    val jar = library.getPaths(JpsOrderRootType.COMPILED)
+    val jar = context.outputProvider.findLibraryRoots(libraryName, moduleLibraryModuleName = libraryModule)
                 .firstOrNull { it.name.startsWith(jarName) && it.extension == "jar" }
               ?: error("Can't find the '$jarName' jar in '$libraryName' library")
     check(jar.exists()) { "'$jar' doesn't exist" }
@@ -107,7 +102,7 @@ internal class CoverageImpl(
   private val coveredModulesWithTransitiveDependencies: Collection<JpsModule> by lazy {
     coveredModuleNames.flatMap {
       JpsJavaExtensionService
-        .dependencies(context.findRequiredModule(it))
+        .dependencies(context.outputProvider.findRequiredModule(it))
         .withoutLibraries().withoutSdk().recursively()
         .includedIn(JpsJavaClasspathKind.runtime(true))
         .modules
@@ -160,9 +155,9 @@ internal class CoverageImpl(
     context.notifyArtifactBuilt(reportZip)
   }
 
-  private suspend fun outputRoots(): List<Path> {
+  private val outputRoots: List<Path> by lazy {
     val outputRoots = coveredModulesWithTransitiveDependencies.flatMap {
-      context.getModuleOutputRoots(it, false)
+      context.outputProvider.getModuleOutputRoots(it, false)
     }
     check(outputRoots.any()) {
       "No output roots for '${coveredModulesWithTransitiveDependencies.map { it.name }}'"
@@ -172,15 +167,15 @@ internal class CoverageImpl(
         .take(10)
         .joinToString(prefix = "Output roots don't exist:\n", separator = "\n")
     }
-    return outputRoots
+    outputRoots
   }
 
   private val sourceRoots: List<Path> by lazy {
-    val sourceRoots = coveredModulesWithTransitiveDependencies.asSequence().flatMap { module ->
-      module.sourceRoots.asSequence().filter {
-        it.rootType == JavaSourceRootType.SOURCE
-      }
-    }.map { it.path }.toList()
+    val sourceRoots = coveredModulesWithTransitiveDependencies.asSequence()
+      .flatMap { it.sourceRoots }
+      .filter { it.rootType == JavaSourceRootType.SOURCE }
+      .map { it.path }
+      .toList()
     check(sourceRoots.any()) {
       "Source roots for '${coveredModulesWithTransitiveDependencies.map { it.name }}'"
     }
@@ -203,7 +198,7 @@ internal class CoverageImpl(
 
   override suspend fun generateReport() {
     block("Generating a coverage report") {
-      generateReport(outputRoots = outputRoots(), sourceRoots = sourceRoots)
+      generateReport(outputRoots = outputRoots, sourceRoots = sourceRoots)
       publishReport()
     }
   }

@@ -62,8 +62,8 @@ public final class PyDefaultProjectAwareModuleConfiguratorImpl<
 
     Collection<VirtualFile> pyFiles = ReadAction.nonBlocking(() -> FilenameIndex
         .getAllFilesByExt(project, extension, searchScope))
-        .inSmartMode(project)
-        .executeSynchronously();
+      .inSmartMode(project)
+      .executeSynchronously();
 
     STATE state = detector.fun(Pair.create(module, pyFiles));
     if (state != null) {

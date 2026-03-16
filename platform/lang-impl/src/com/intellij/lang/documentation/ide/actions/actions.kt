@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.actions
 
 import com.intellij.codeInsight.lookup.LookupManager
@@ -7,7 +7,18 @@ import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.ide.impl.DocumentationHistory
 import com.intellij.lang.documentation.psi.psiDocumentationTargets
 import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTargets
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataMap
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataSnapshot
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.UiDataRule
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
@@ -80,9 +91,14 @@ private fun documentationTargetsInner(dataProvider: DataMap): List<Documentation
 }
 
 @ApiStatus.Internal
-fun targetsFromEditor(project: Project, editor: Editor, offset: Int): List<DocumentationTarget>? {
+fun targetsFromEditor(
+  project: Project,
+  editor: Editor,
+  offset: Int,
+): List<DocumentationTarget>? {
   val file = PsiUtilBase.getPsiFileInEditor(editor, project)
              ?: return null
+
   val ideTargetProvider = IdeDocumentationTargetProvider.getInstance(project)
   val lookup = LookupManager.getActiveLookup(editor)
   if (lookup != null) {

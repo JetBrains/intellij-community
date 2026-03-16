@@ -17,7 +17,10 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test

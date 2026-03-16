@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleTooling
 
+import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry
 import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.api.Project
@@ -32,6 +33,12 @@ class PrepareKotlinIdeaImportTaskModelBuilder : AbstractModelBuilderService() {
     }
 
     override fun buildAll(modelName: String, project: Project, context: ModelBuilderContext): PrepareKotlinIdeImportTaskModel? {
+        return GradleOpenTelemetry.callWithSpan("kotlin_import_daemon_prepare_kotlin_ide_import_buildAll") {
+            buildAllWithTelemetry(project)
+        }
+    }
+
+    private fun buildAllWithTelemetry(project: Project): PrepareKotlinIdeImportTaskModel? {
         val prepareKotlinIdeaImportTaskNames = project.tasks.names
             .filter { taskName -> taskName.startsWith(TaskNames.prepareKotlinIdeaImport) }
             .toSet()

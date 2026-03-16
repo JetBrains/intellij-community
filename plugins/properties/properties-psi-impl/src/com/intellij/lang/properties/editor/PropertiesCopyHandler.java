@@ -4,7 +4,12 @@ package com.intellij.lang.properties.editor;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
-import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.BundleNameEvaluator;
+import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.lang.properties.PropertiesImplUtil;
+import com.intellij.lang.properties.PropertiesReferenceManager;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -35,13 +40,21 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Font;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Batkovich

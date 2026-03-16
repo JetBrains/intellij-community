@@ -10,8 +10,8 @@ import com.intellij.util.ui.JBFont;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Font;
 import java.util.HashMap;
 import java.util.Map;
 

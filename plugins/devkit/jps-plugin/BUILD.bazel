@@ -32,7 +32,11 @@ jvm_library(
 jvm_library(
   name = "jps-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/devkit/jps-plugin:jps",
+    "//jps/model-impl",
+  ]
 )
 
 jvm_library(
@@ -53,7 +57,8 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/compiler/instrumentation-util",
-  ]
+  ],
+  runtime_deps = [":jps-tests"]
 )
 ### auto-generated section `build intellij.devkit.jps.tests` end
 

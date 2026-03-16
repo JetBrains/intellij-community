@@ -3,7 +3,11 @@ package com.intellij.task.impl
 
 import com.intellij.internal.statistic.IdeActivityDefinition
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField
+import com.intellij.internal.statistic.eventLog.events.ClassEventField
+import com.intellij.internal.statistic.eventLog.events.ClassListEventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.IntEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 internal object ProjectTaskManagerStatisticsCollector : CounterUsagesCollector() {

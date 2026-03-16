@@ -16,10 +16,21 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.cast
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.UastCallKind
+import org.jetbrains.uast.asRecursiveLogString
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.generate.UParameterInfo
 import org.jetbrains.uast.generate.replace
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.toUElementOfType
 import kotlin.test.fail as kfail
 
 class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {

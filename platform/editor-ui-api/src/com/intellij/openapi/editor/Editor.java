@@ -3,7 +3,6 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
@@ -14,18 +13,25 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * Represents an instance of a text editor.
@@ -448,5 +454,47 @@ public interface Editor extends UserDataHolder {
       int visibleEnd = logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
       return new ProperTextRange(visibleStart, Math.max(visibleEnd, visibleStart));
     });
+  }
+
+  /**
+   * Adapts editor to a {@link ModNavigator} interface, so
+   * the code that wants to update editor position can work uniformly
+   * both within {@link com.intellij.modcommand.ModCommand#psiUpdate(PsiElement, Consumer)}
+   * and with a physical editor instance.
+   *
+   * @return new {@code ModPsiNavigator} adapter.
+   */
+  default @NotNull ModNavigator asModNavigator() {
+    return new ModNavigator() {
+      @Override
+      public @NotNull Document getDocument() {
+        return Editor.this.getDocument();
+      }
+
+      @Override
+      public @NotNull Project getProject() {
+        return Objects.requireNonNull(Editor.this.getProject());
+      }
+
+      @Override
+      public @NotNull PsiFile getPsiFile() {
+        return Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getPsiFile(getDocument()));
+      }
+
+      @Override
+      public void select(@NotNull TextRange range) {
+        getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+      }
+
+      @Override
+      public void moveCaretTo(int offset) {
+        getCaretModel().moveToOffset(offset);
+      }
+
+      @Override
+      public int getCaretOffset() {
+        return getCaretModel().getOffset();
+      }
+    };
   }
 }

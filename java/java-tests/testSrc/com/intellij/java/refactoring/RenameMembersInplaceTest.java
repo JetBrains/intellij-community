@@ -62,6 +62,10 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
   public void testSuperMethodAnonymousInheritor() {
     doTestInplaceRename("xxx");
   }
+  
+  public void testDefaultConstructor() {
+    doTestInplaceRename("HeadlessHorseman");
+  }
 
   public void testMultipleConstructors() {
     doTestInplaceRename("Bar");

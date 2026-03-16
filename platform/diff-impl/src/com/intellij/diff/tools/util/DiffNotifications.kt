@@ -52,6 +52,11 @@ object DiffNotifications {
     return createNotification(DiffBundle.message("error.can.not.calculate.diff.file.too.big"))
   }
 
+  @JvmStatic
+  fun createReadOnlyFile(): JPanel {
+    return createNotification(DiffBundle.message("error.cant.resolve.conflicts.in.a.read.only.file"))
+  }
+
   //
   // Impl
   //

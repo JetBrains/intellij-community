@@ -1,5 +1,6 @@
 # <16.8 allowsMultipleMergeRequestAssignees, allowsMultipleMergeRequestReviewers removed
 fragment project on Project {
+  id
   name
   nameWithNamespace
   path
@@ -7,10 +8,12 @@ fragment project on Project {
   httpUrlToRepo
   sshUrlToRepo
 
+  squashReadOnly
   removeSourceBranchAfterMerge
   onlyAllowMergeIfAllDiscussionsAreResolved
   onlyAllowMergeIfPipelineSucceeds
   allowMergeOnSkippedPipeline
+  mergeRequestsFfOnlyEnabled
 
   userPermissions {
     createSnippet

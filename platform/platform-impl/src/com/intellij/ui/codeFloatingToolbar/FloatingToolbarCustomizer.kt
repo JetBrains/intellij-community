@@ -61,6 +61,20 @@ internal fun hasMinimalFloatingToolbar(language: Language): Boolean {
   return false
 }
 
+internal fun isIntentionsGroupHidden(language: Language): Boolean {
+  for (lang in LanguageUtil.getBaseLanguages(language)) {
+    forLanguage(lang)?.let { return it.hideIntentionsGroup }
+  }
+  return false
+}
+
+internal fun isConfigurationsGroupHidden(language: Language): Boolean {
+  for (lang in LanguageUtil.getBaseLanguages(language)) {
+    forLanguage(lang)?.let { return it.hideConfigurationsGroup }
+  }
+  return false
+}
+
 internal fun isSelectionRequiredForFloatingToolbar(language: Language): Boolean {
   if (!Registry.`is`("floating.codeToolbar.show.without.selection")) return true
 
@@ -89,6 +103,12 @@ internal class FloatingToolbarLanguageBean : PluginAware {
 
   @Attribute("minimal")
   var isMinimal: Boolean = false
+
+  @Attribute("hideIntentionsGroup")
+  var hideIntentionsGroup: Boolean = false
+
+  @Attribute("hideConfigurationsGroup")
+  var hideConfigurationsGroup: Boolean = false
 
   @Attribute("selectionRequired")
   var selectionRequired: Boolean = true

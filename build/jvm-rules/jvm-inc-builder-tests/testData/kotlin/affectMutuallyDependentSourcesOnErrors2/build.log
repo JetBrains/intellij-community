@@ -1,0 +1,23 @@
+================ Step #1 =================
+Cleaning output files:
+  A2Kt.class
+  AKt.class
+  META-INF/kotlin_affectMutuallyDependentSourcesOnErrors2-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/affectMutuallyDependentSourcesOnErrors2/a/a.kt
+  kotlin/affectMutuallyDependentSourcesOnErrors2/a/a2.kt
+End of files
+Cleaning output files:
+  BKt.class
+  CKt.class
+  META-INF/kotlin_affectMutuallyDependentSourcesOnErrors2-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/affectMutuallyDependentSourcesOnErrors2/a/a.kt
+  kotlin/affectMutuallyDependentSourcesOnErrors2/a/a2.kt
+  kotlin/affectMutuallyDependentSourcesOnErrors2/a/b.kt
+  kotlin/affectMutuallyDependentSourcesOnErrors2/a/c.kt
+End of files
+------------------------------------------
+Exit code: OK

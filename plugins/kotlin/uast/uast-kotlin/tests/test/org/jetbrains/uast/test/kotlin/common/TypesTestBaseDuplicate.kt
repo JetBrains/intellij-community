@@ -17,10 +17,10 @@ package org.jetbrains.uast.test.kotlin.org.jetbrains.uast.test.kotlin.common
 
 import com.intellij.lang.jvm.annotation.JvmAnnotationConstantValue
 import com.intellij.lang.jvm.annotation.JvmAnnotationEnumFieldValue
+import com.intellij.testFramework.assertEqualsToFile
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UFile
-import com.intellij.testFramework.assertEqualsToFile
 import org.jetbrains.uast.visitor.UastVisitor
 import java.io.File
 

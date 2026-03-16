@@ -28,7 +28,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreLanguage;
 import com.intellij.openapi.vcs.changes.ignore.lang.Syntax;
-import com.intellij.openapi.vcs.changes.ignore.psi.*;
+import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreElementImpl;
+import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreEntry;
+import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreNegation;
+import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreSyntax;
+import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreTypes;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 

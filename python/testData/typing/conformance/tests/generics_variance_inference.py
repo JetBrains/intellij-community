@@ -17,7 +17,7 @@ class ClassA[T1, T2, T3](list[T1]):
         ...
 
     def method2(self) -> T3:
-        ...
+        raise NotImplementedError
 
 
 def func_a(p1: ClassA[float, int, int], p2: ClassA[int, float, float]):
@@ -31,10 +31,10 @@ def func_a(p1: ClassA[float, int, int], p2: ClassA[int, float, float]):
 
 class ShouldBeCovariant1[T]:
     def __getitem__(self, index: int) -> T:
-        ...
+        raise NotImplementedError
 
     def __iter__(self) -> Iterator[T]:
-        ...
+        raise NotImplementedError
 
 
 vco1_1: ShouldBeCovariant1[float] = ShouldBeCovariant1[int]()  # OK
@@ -51,7 +51,7 @@ vco2_2: ShouldBeCovariant2[int] = ShouldBeCovariant2[float]()  # E
 
 class ShouldBeCovariant3[T]:
     def method1(self) -> "ShouldBeCovariant2[T]":
-        ...
+        raise NotImplementedError
 
 
 vco3_1: ShouldBeCovariant3[float] = ShouldBeCovariant3[int]()  # OK

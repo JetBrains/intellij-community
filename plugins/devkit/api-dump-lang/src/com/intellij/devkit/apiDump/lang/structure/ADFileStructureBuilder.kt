@@ -4,8 +4,12 @@ package com.intellij.devkit.apiDump.lang.structure
 import com.intellij.devkit.apiDump.lang.icons.ADIcons
 import com.intellij.devkit.apiDump.lang.psi.ADClassDeclaration
 import com.intellij.devkit.apiDump.lang.psi.ADFile
-import com.intellij.ide.structureView.*
+import com.intellij.ide.structureView.StructureViewBuilder
+import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewModel.ElementInfoProvider
+import com.intellij.ide.structureView.StructureViewModelBase
+import com.intellij.ide.structureView.StructureViewTreeElement
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder
 import com.intellij.ide.util.treeView.TreeAnchorizer
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.lang.PsiStructureViewFactory

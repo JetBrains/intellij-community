@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.ide.IdeEventQueue;
@@ -34,7 +34,6 @@ import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
-import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
@@ -42,8 +41,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Window;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -236,10 +240,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
           });
         };
         if (isSynchronousHeadlessExecution) {
-          TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
-            r.run();
-            return Unit.INSTANCE;
-          });
+          TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(r);
         } else {
           r.run();
         }

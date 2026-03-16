@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.opentelemetry.sdk.autoconfigure.spi` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "opentelemetry-sdk-autoconfigure-spi_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "opentelemetry-sdk-autoconfigure-spi",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":opentelemetry-sdk-autoconfigure-spi_resources"],
+  exports = ["@lib//:libraries-opentelemetry-sdk-autoconfigure-spi-opentelemetry-sdk-autoconfigure-spi"],
+  runtime_deps = ["@lib//:libraries-opentelemetry-sdk-autoconfigure-spi-opentelemetry-sdk-autoconfigure-spi"]
+)
+### auto-generated section `build intellij.libraries.opentelemetry.sdk.autoconfigure.spi` end

@@ -13,7 +13,7 @@ import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class StructuralSearchAction extends DumbAwareAction {
 

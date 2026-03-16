@@ -14,7 +14,11 @@ import org.jetbrains.kotlin.tooling.core.withClosure
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
-class KotlinJvmRunTaskData(val targetName: String, val taskName: String) {
+class KotlinJvmRunTaskData(
+    val targetName: String,
+    val taskName: String,
+    val gradlePluginType: KotlinGradlePluginType,
+) {
     companion object {
         private const val KOTLIN_KMP_JVM_RUN_CLASS_NAME = "org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmRun"
         private const val KOTLIN_JVM_RUN_CLASS_NAME = "org.gradle.api.tasks.JavaExec"
@@ -100,7 +104,7 @@ class KotlinJvmRunTaskData(val targetName: String, val taskName: String) {
                     .filter { target -> taskNameWithoutLocation.equals("${target.data.externalName}Run", ignoreCase = true) }
                     .firstOrNull { target -> target.data.moduleIds.any { targetModuleId -> targetModuleId in sourceSetModuleIds } }
                     ?: return@firstNotNullOfOrNull null
-                KotlinJvmRunTaskData(target.data.externalName, taskNameWithoutLocation)
+                KotlinJvmRunTaskData(target.data.externalName, taskNameWithoutLocation, KotlinGradlePluginType.Multiplatform)
             }
         }
 
@@ -108,7 +112,7 @@ class KotlinJvmRunTaskData(val targetName: String, val taskName: String) {
             allKotlinJvmRunTasks.firstNotNullOfOrNull { runTask ->
                 val taskNameWithoutLocation = runTask.data.name.substringAfterLast(':')
                 if (taskNameWithoutLocation != "run") return@firstNotNullOfOrNull null
-                return KotlinJvmRunTaskData("jvm", "run")
+                return KotlinJvmRunTaskData("jvm", "run", KotlinGradlePluginType.Jvm)
             }
 
     }

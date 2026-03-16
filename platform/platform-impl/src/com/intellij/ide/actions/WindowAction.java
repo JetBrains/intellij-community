@@ -1,18 +1,30 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ComponentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JRootPane;
+import javax.swing.RootPaneContainer;
+import java.awt.Component;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.Window;
 
 public abstract class WindowAction extends AnAction implements ActionRemoteBehaviorSpecification.Frontend, DumbAware {
 
@@ -24,25 +36,40 @@ public abstract class WindowAction extends AnAction implements ActionRemoteBehav
     if (root != null) root.putClientProperty(NO_WINDOW_ACTIONS, !enabled);
   }
 
-  {
+  @ApiStatus.Internal
+  protected WindowAction() {
     setEnabledInModalContext(true);
   }
 
+  @ApiStatus.Internal
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.EDT;
   }
 
+  @ApiStatus.Internal
   @Override
   public final void update(@NotNull AnActionEvent event) {
     @Nullable Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     Window window = ComponentUtil.getWindow(component);
     boolean enabled = isEnabledFor(window);
-    if (enabled && Registry.is("no.window.actions.in.editor")) {
+    if (enabled && Registry.is("no.window.actions.in.editor", false)) {
       Editor editor = event.getData(CommonDataKeys.EDITOR);
       enabled = editor == null || !editor.getContentComponent().hasFocus();
     }
     event.getPresentation().setEnabled(enabled);
+    event.getPresentation().setVisible(isVisibleFor(window));
+    event.getPresentation().setIcon(getIconFor(window));
+  }
+
+  @ApiStatus.Internal
+  protected @Nullable Icon getIconFor(@Nullable Window window) {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  protected boolean isVisibleFor(@Nullable Window window) {
+    return true;
   }
 
   private static boolean isEnabledFor(@Nullable Window window) {
@@ -90,6 +117,7 @@ public abstract class WindowAction extends AnAction implements ActionRemoteBehav
     return ourSizeHelper.getPreferredSize();
   }
 
+  @ApiStatus.Internal
   public static final class IncrementWidth extends WindowAction {
 
     @Override
@@ -98,6 +126,7 @@ public abstract class WindowAction extends AnAction implements ActionRemoteBehav
     }
   }
 
+  @ApiStatus.Internal
   public static final class DecrementWidth extends WindowAction {
 
     @Override
@@ -106,6 +135,7 @@ public abstract class WindowAction extends AnAction implements ActionRemoteBehav
     }
   }
 
+  @ApiStatus.Internal
   public static final class IncrementHeight extends WindowAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -113,6 +143,7 @@ public abstract class WindowAction extends AnAction implements ActionRemoteBehav
     }
   }
 
+  @ApiStatus.Internal
   public static final class DecrementHeight extends WindowAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {

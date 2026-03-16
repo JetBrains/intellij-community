@@ -13,7 +13,13 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.BooleanTableCellEditor;
+import com.intellij.ui.BooleanTableCellRenderer;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.table.JBTable;
@@ -24,12 +30,18 @@ import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -232,13 +244,19 @@ public class NullableAnnotationsPanel {
   }
 
   private void addRow(String annotation, boolean checked) {
-    myTableModel.addRow(new Object[]{annotation, checked});
+    int row = myTable == null ? -1 : myTable.getSelectedRow();
+    if (row == -1) {
+      myTableModel.addRow(new Object[]{annotation, checked});
+    } else {
+      myTableModel.insertRow(row + 1, new Object[]{annotation, checked});
+    }
   }
 
   private Integer selectAnnotation(String annotation) {
-    for (int i = 0; i < myTable.getRowCount(); i++) {
-      if (annotation.equals(myTable.getValueAt(i, 0))) {
+    for (int i = 0; i < myTableModel.getRowCount(); i++) {
+      if (annotation.equals(myTableModel.getValueAt(i, 0))) {
         myTable.setRowSelectionInterval(i, i);
+        myTable.scrollRectToVisible(myTable.getCellRect(i, 0, true));
         return i;
       }
     }
@@ -247,7 +265,7 @@ public class NullableAnnotationsPanel {
 
   private @NlsSafe String getSelectedAnnotation() {
     int selectedRow = myTable.getSelectedRow();
-    return selectedRow < 0 ? null : (String)myTable.getValueAt(selectedRow, 0);
+    return selectedRow < 0 ? null : (String)myTableModel.getValueAt(selectedRow, 0);
   }
 
   private void chooseAnnotation(@NlsSafe String title) {
@@ -265,7 +283,7 @@ public class NullableAnnotationsPanel {
       addAnnotationToCombo(qualifiedName);
       Object added = selectAnnotation(qualifiedName);
       assert added != null;
-      myTable.scrollRectToVisible(myTable.getCellRect((int)added, 0, true));
+      myTable.requestFocus();
     }
   }
 
@@ -286,19 +304,19 @@ public class NullableAnnotationsPanel {
   }
 
   public String[] getAnnotations() {
-    int size = myTable.getRowCount();
+    int size = myTableModel.getRowCount();
     String[] result = new String[size];
     for (int i = 0; i < size; i++) {
-      result[i] = (String)myTable.getValueAt(i, 0);
+      result[i] = (String)myTableModel.getValueAt(i, 0);
     }
     return result;
   }
 
   List<String> getCheckedAnnotations() {
     List<String> result = new ArrayList<>();
-    for (int i = 0; i < myTable.getRowCount(); i++) {
-      if (Boolean.TRUE.equals(myTable.getValueAt(i, 1))) {
-        result.add((String)myTable.getValueAt(i, 0));
+    for (int i = 0; i < myTableModel.getRowCount(); i++) {
+      if (Boolean.TRUE.equals(myTableModel.getValueAt(i, 1))) {
+        result.add((String)myTableModel.getValueAt(i, 0));
       }
     }
     return result;

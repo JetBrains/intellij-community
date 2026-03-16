@@ -4,7 +4,13 @@ package org.jetbrains.plugins.groovy.lang.psi.util
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil.*
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil.escapeSymbolsForDollarSlashyStrings
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil.escapeSymbolsForGString
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil.escapeSymbolsForSlashyStrings
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil.escapeSymbolsForString
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil.unescapeDollarSlashyString
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil.unescapeSlashyString
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil.unescapeString
 
 enum class StringKind {
 

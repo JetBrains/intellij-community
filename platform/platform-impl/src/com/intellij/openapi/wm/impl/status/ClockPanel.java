@@ -5,8 +5,14 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.text.DateTimeFormatManager;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.UIManager;
+import java.awt.BasicStroke;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.text.SimpleDateFormat;
@@ -15,7 +21,11 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static java.awt.RenderingHints.KEY_ANTIALIASING;
-import static java.util.Calendar.*;
+import static java.util.Calendar.HOUR;
+import static java.util.Calendar.HOUR_OF_DAY;
+import static java.util.Calendar.MINUTE;
+import static java.util.Calendar.SECOND;
+import static java.util.Calendar.getInstance;
 
 @ApiStatus.Internal
 public final class ClockPanel extends JComponent {

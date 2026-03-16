@@ -32,7 +32,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 //todo listen & notifyListeners readonly events?
 public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {

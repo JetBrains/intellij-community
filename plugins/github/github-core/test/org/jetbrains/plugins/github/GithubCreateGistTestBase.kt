@@ -11,7 +11,6 @@ import org.jetbrains.plugins.github.api.data.GithubGist
 import org.jetbrains.plugins.github.api.data.request.GithubGistRequest.FileContent
 import org.jetbrains.plugins.github.test.GithubTest
 import java.io.IOException
-import java.util.*
 
 abstract class GithubCreateGistTestBase : GithubTest() {
   protected lateinit var gistDescription: String

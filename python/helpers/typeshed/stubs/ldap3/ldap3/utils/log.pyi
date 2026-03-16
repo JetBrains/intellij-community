@@ -1,5 +1,5 @@
+from _typeshed import Incomplete
 from logging import NullHandler as NullHandler
-from typing import Any
 
 OFF: int
 ERROR: int
@@ -7,7 +7,7 @@ BASIC: int
 PROTOCOL: int
 NETWORK: int
 EXTENDED: int
-DETAIL_LEVELS: Any
+DETAIL_LEVELS: Incomplete
 
 def get_detail_level_name(level_name): ...
 def log(detail, message, *args) -> None: ...
@@ -22,4 +22,4 @@ def set_library_log_detail_level(detail) -> None: ...
 def get_library_log_detail_level(): ...
 def format_ldap_message(message, prefix): ...
 
-logger: Any
+logger: Incomplete

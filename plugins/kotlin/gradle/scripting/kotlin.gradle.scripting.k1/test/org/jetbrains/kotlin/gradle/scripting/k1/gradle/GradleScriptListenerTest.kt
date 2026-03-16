@@ -7,10 +7,9 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.ui.EDT.dispatchAllInvocationEvents
 import com.intellij.util.ui.UIUtil
-import junit.framework.TestCase
+import org.jetbrains.kotlin.gradle.scripting.k1.roots.GradleBuildRootsLocatorImpl
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleStandaloneScriptActionsManager
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
@@ -24,6 +23,7 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.runner.RunWith
 import java.io.File
+import java.nio.file.Path
 
 @RunWith(JUnit3RunnerWithInners::class)
 open class GradleScriptListenerTest : AbstractScriptConfigurationLoadingTest() {
@@ -60,7 +60,7 @@ open class GradleScriptListenerTest : AbstractScriptConfigurationLoadingTest() {
         val build = (myFile as? KtFile) ?: error("")
 
         val newProjectSettings = GradleProjectSettings()
-        newProjectSettings.gradleHome = gradleCoreJar.parentFile.parent
+        newProjectSettings.gradleHomePath = Path.of(gradleCoreJar.parentFile.parent)
         newProjectSettings.distributionType = DistributionType.LOCAL
         newProjectSettings.externalProjectPath = settings.virtualFile.parent.path
         ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID).linkProject(newProjectSettings)
@@ -240,7 +240,7 @@ open class GradleScriptListenerTest : AbstractScriptConfigurationLoadingTest() {
     }
 
     private fun markFileChanged(virtualFile: VirtualFile, ts: Long) {
-        GradleBuildRootsLocator.getInstance(project).fileChanged(virtualFile.path, ts)
+        (GradleBuildRootsLocator.getInstance(project) as? GradleBuildRootsLocatorImpl)?.fileChanged(virtualFile.path, ts)
     }
 
     fun testLoadedConfigurationWhenExternalFileChanged() {

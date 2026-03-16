@@ -11,7 +11,7 @@ import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.psi.impl.YAMLKeyValueImpl;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Objects;
 
 public class YAMLKeyNavigationItem implements NavigationItem {

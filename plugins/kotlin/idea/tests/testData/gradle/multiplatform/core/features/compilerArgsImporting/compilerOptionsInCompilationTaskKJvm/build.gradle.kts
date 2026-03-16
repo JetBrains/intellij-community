@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     kotlin("jvm")
@@ -10,10 +11,10 @@ repositories {
 }
 
 tasks.withType<KotlinJvmCompile>().configureEach {
-    kotlinOptions.jvmTarget = "11"
-    kotlinOptions.languageVersion = "1.7"
-    kotlinOptions.freeCompilerArgs += "-opt-in=OptInAnnotation"
     compilerOptions {
-        apiVersion.set(KotlinVersion.KOTLIN_1_7)
+        jvmTarget = JvmTarget.fromTarget("11")
+        languageVersion = {{minimalSupportedKotlinVersion}}
+        apiVersion.set({{minimalSupportedKotlinVersion}})
+        freeCompilerArgs.add("-opt-in=OptInAnnotation")
     }
 }

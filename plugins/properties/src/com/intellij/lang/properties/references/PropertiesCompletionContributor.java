@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.references;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionInitializationContext;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -77,7 +82,7 @@ public class PropertiesCompletionContributor extends CompletionContributor {
 
   public static final LookupElementRenderer<LookupElement> LOOKUP_ELEMENT_RENDERER = new LookupElementRenderer<>() {
     @Override
-    public void renderElement(LookupElement element, LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElement element, @NotNull LookupElementPresentation presentation) {
       IProperty property = (IProperty)element.getObject();
       presentation.setIcon(PlatformIcons.PROPERTY_ICON);
       String key = StringUtil.notNullize(property.getUnescapedKey());

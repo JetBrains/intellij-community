@@ -21,6 +21,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/util:util-ui",
     "//platform/platform-api:ide",
+    "//libraries/coil",
     "//platform/compose",
     "//platform/compose/markdown",
   ],

@@ -10,7 +10,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.psi.CommonClassNames.*;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_BOOLEAN;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_BYTE;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHARACTER;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_DOUBLE;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_FLOAT;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_LONG;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_SHORT;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_VOID;
 
 public final class JvmPrimitiveTypeKind {
   public static final JvmPrimitiveTypeKind BOOLEAN = new JvmPrimitiveTypeKind("boolean", JAVA_LANG_BOOLEAN, "Z");

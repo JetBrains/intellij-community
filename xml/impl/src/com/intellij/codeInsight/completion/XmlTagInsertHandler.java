@@ -10,7 +10,11 @@ import com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
 import com.intellij.codeInsight.template.macro.CompleteSmartMacro;
@@ -57,7 +61,11 @@ import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   public static final XmlTagInsertHandler INSTANCE = new XmlTagInsertHandler();

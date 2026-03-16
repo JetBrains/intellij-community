@@ -2,18 +2,29 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.community.execService.*
+import com.intellij.python.community.execService.Args
+import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.BinOnTarget
+import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.community.execService.ExecGetProcessOptions
+import com.intellij.python.community.execService.ExecOptions
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.ExecuteGetProcessError
+import com.intellij.python.community.execService.ProcessOutputTransformer
+import com.intellij.python.community.execService.PyProcessListener
+import com.intellij.python.community.execService.execGetStdout
+import com.intellij.python.community.execService.execute
 import com.intellij.python.community.execService.python.HelperName
 import com.intellij.python.community.execService.python.addHelper
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 // Various functions to execute code against SDK
@@ -102,8 +113,15 @@ fun Sdk.asBinToExecute(): Result<BinaryToExec, MessageError> {
         )
       }
     }
-    is PyRemoteSdkAdditionalData -> null
-    else -> homePath?.let { BinOnEel(Path.of(it)) }
+    else -> homePath?.let {
+      try {
+        BinOnEel(Path.of(it))
+      }
+      catch (e: InvalidPathException) {
+        LOGGER.warn("Can't convert ${homePath} to path", e)
+        null
+      }
+    }
   }
 
   return binaryToExec?.let { PyResult.success(it) }

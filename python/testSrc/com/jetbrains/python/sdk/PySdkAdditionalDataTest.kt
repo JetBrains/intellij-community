@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.testFramework.ProjectRule
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
 
 import org.jdom.Element
 import org.junit.Assert
@@ -27,11 +26,4 @@ class PySdkAdditionalDataTest {
     Assert.assertEquals("UUID hasn't been loaded", sut.uuid, loadedSut.uuid)
   }
 
-  @Test
-  fun remoteAdditionalDataTest() {
-    var data = PyRemoteSdkAdditionalData("!!!!!")
-
-    data = PyRemoteSdkAdditionalData("sftp://host:22/home/bin/python3")
-    data = PyRemoteSdkAdditionalData("docker://django:latest/python")
-  }
 }

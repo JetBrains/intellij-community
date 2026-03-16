@@ -23,6 +23,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
+    "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
@@ -49,6 +50,8 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   runtime_deps = ["//xml/dom-impl"]
 )
@@ -63,8 +66,10 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
+    "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
+    "//xml/xml-analysis-api:analysis",
     "//jps/model-api:model",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
@@ -95,6 +100,8 @@ jvm_library(
     "//platform/util/jdom",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.xpath` end

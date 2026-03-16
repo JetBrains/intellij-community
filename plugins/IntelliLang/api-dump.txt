@@ -266,12 +266,12 @@ a:org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel
 - p:updateTree():V
 f:org.intellij.plugins.intelliLang.inject.config.ui.AdvancedPanel
 - org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.openapi.project.Project,org.intellij.plugins.intelliLang.inject.config.BaseInjection):V
 - getComponent():javax.swing.JPanel
 f:org.intellij.plugins.intelliLang.inject.config.ui.BaseInjectionPanel
 - org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(org.intellij.plugins.intelliLang.inject.config.BaseInjection,com.intellij.openapi.project.Project):V
 - getComponent():javax.swing.JPanel
 org.intellij.plugins.intelliLang.inject.config.ui.InjectionPanel
@@ -284,7 +284,7 @@ org.intellij.plugins.intelliLang.inject.config.ui.InjectionPanel
 - a:reset():V
 f:org.intellij.plugins.intelliLang.inject.config.ui.LanguagePanel
 - org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.openapi.project.Project,org.intellij.plugins.intelliLang.inject.config.BaseInjection):V
 - getComponent():javax.swing.JPanel
 - getLanguage():java.lang.String

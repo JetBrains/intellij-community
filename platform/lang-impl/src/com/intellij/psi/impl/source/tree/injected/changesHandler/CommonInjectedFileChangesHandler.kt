@@ -2,19 +2,32 @@
 package com.intellij.psi.impl.source.tree.injected.changesHandler
 
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.diagnostic.*
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.ProperTextRange
+import com.intellij.openapi.util.Segment
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.component1
+import com.intellij.openapi.util.component2
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.ElementManipulators
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.parents
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import kotlin.Pair
 import kotlin.math.max
 import kotlin.math.min
 

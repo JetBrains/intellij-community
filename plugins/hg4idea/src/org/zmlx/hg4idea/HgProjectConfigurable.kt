@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.VcsExecutablePathSelector
@@ -72,8 +71,7 @@ class HgProjectConfigurable(val project: Project)
           checkBox(DvcsBundle.message("sync.setting"))
             .bindSelected({ projectSettings.syncSetting == DvcsSyncSettings.Value.SYNC },
                           { isSelected -> projectSettings.syncSetting = if (isSelected) DvcsSyncSettings.Value.SYNC else DvcsSyncSettings.Value.DONT_SYNC })
-            .gap(RightGap.SMALL)
-          contextHelp(DvcsBundle.message("sync.setting.description", HgVcs.DISPLAY_NAME.get()))
+            .contextHelp(DvcsBundle.message("sync.setting.description", HgVcs.DISPLAY_NAME.get()))
         }
       }
     }

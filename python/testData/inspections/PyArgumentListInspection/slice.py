@@ -1,5 +1,5 @@
-print(slice(<warning descr="Parameter(s) unfilledPossible callees:slice(self: slice, stop)slice(self: slice, start, stop, step=...)">)</warning>)
+print(slice(<warning descr="Parameter(s) unfilledPossible callees:slice(self: Self@slice, stop)slice(self: Self@slice, start, stop, step=...)">)</warning>)
 print(slice(1))
 print(slice(1, 2))
 print(slice(1, 2, 3))
-print(slice<warning descr="Unexpected argument(s)Possible callees:slice(self: slice, stop)slice(self: slice, start, stop, step=...)">(1, 2, 3, 4)</warning>)
+print(slice<warning descr="Unexpected argument(s)Possible callees:slice(self: Self@slice, stop)slice(self: Self@slice, start, stop, step=...)">(1, 2, 3, 4)</warning>)

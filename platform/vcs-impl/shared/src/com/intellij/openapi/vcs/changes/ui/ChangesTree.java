@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CommonActionsManager;
@@ -10,7 +10,17 @@ import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.DumbAware;
@@ -44,24 +54,50 @@ import com.intellij.util.ui.UpdateScaleHelper;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JTree;
+import javax.swing.KeyStroke;
+import javax.swing.UIManager;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.TreeUI;
-import javax.swing.tree.*;
-import java.awt.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
+import java.awt.AWTEvent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.*;
-import static com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*;
+import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
+import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.MODULE_GROUPING;
+import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
+import static com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.all;
+import static com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.allUnder;
+import static com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.selected;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static com.intellij.util.ui.ThreeStateCheckBox.State;
 
@@ -90,6 +126,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
   private boolean myIsModelFlat;
 
   private @NotNull InclusionModel myInclusionModel = new DefaultInclusionModel();
+  private @NotNull Set<Object> myPreviousInclusion = Collections.emptySet();
   private final @NotNull InclusionListener myInclusionModelListener = () -> {
     notifyInclusionListener();
     repaint();
@@ -137,6 +174,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
     setRootVisible(false);
     setShowsRootHandles(true);
     setOpaque(false);
+    setHorizontalAutoScrollingEnabled(false);
     if (withSpeedSearch) {
       TreeSpeedSearch.installOn(this, false, ChangesBrowserNode.TO_TEXT_CONVERTER);
     }
@@ -355,7 +393,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
   }
 
   public void installPopupHandler(ActionGroup group) {
-    PopupHandler.installPopupMenu(this, group, "ChangesTreePopup");
+    PopupHandler.installPopupMenu(this, group, ActionPlaces.CHANGES_TREE_POPUP);
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -510,36 +548,28 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
 
   public void selectFile(@Nullable FilePath toSelect) {
     if (toSelect == null) return;
-
-    int rowInTree = findRowContainingFile(getRoot(), toSelect);
-    if (rowInTree == -1) return;
-
-    setSelectionRow(rowInTree);
-    TreeUtil.showRowCentered(this, rowInTree, false);
+    TreeNode node = findNodeContainingFile(getRoot(), toSelect);
+    if (node != null) {
+      TreeUtil.selectNode(this, node);
+    }
   }
 
-  private int findRowContainingFile(@NotNull TreeNode root, @NotNull FilePath toSelect) {
-    TreeNode targetNode = TreeUtil.treeNodeTraverser(root).traverse(TreeTraversal.POST_ORDER_DFS).find(node -> {
-      if (node instanceof DefaultMutableTreeNode) {
-        Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
-        if (userObject instanceof Change) {
-          return matches((Change)userObject, toSelect);
-        }
-      }
+  public boolean containsFile(@NotNull FilePath path) {
+    return findNodeContainingFile(getRoot(), path) != null;
+  }
 
+  private static @Nullable TreeNode findNodeContainingFile(@NotNull TreeNode root, @NotNull FilePath toSelect) {
+    return TreeUtil.treeNodeTraverser(root).traverse(TreeTraversal.POST_ORDER_DFS).find(node -> {
+      if (node instanceof DefaultMutableTreeNode mutableTreeNode) {
+        Object userObject = mutableTreeNode.getUserObject();
+        return (userObject instanceof Change change) ?
+               ChangesUtil.matches(change, toSelect) :
+               toSelect.equals(VcsTreeModelData.mapUserObjectToFilePath(userObject));
+      }
       return false;
     });
-    if (targetNode != null) {
-      return TreeUtil.getRowForNode(this, (DefaultMutableTreeNode)targetNode);
-    }
-    else {
-      return -1;
-    }
   }
 
-  private static boolean matches(@NotNull Change change, @NotNull FilePath toSelect) {
-    return toSelect.equals(ChangesUtil.getAfterPath(change)) || toSelect.equals(ChangesUtil.getBeforePath(change));
-  }
 
   public @NotNull ChangesBrowserNode<?> getRoot() {
     return (ChangesBrowserNode<?>)getModel().getRoot();
@@ -560,7 +590,11 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
   }
 
   private void notifyInclusionListener() {
-    if (myTreeInclusionListener != null) myTreeInclusionListener.run();
+    Set<Object> currentInclusion = myInclusionModel.getInclusion();
+    if (myTreeInclusionListener != null && !currentInclusion.equals(myPreviousInclusion)) {
+      myPreviousInclusion = currentInclusion;
+      myTreeInclusionListener.run();
+    }
   }
 
   /**

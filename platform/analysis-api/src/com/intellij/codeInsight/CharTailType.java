@@ -2,7 +2,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ModNavigator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * Use {@link TailTypes#charType(char)} factory method instead of constructor to avoid possible deadlock
  * until deprecated static fields are not removed from {@link TailType},
  */
-public class CharTailType extends TailType {
+public class CharTailType extends ModNavigatorTailType {
   private final char myChar;
   private final boolean myOverwrite;
 
@@ -29,8 +29,8 @@ public class CharTailType extends TailType {
   }
 
   @Override
-  public int processTail(final @NotNull Editor editor, final int tailOffset) {
-    return insertChar(editor, tailOffset, myChar, myOverwrite);
+  public int processTail(@NotNull ModNavigator navigator, int tailOffset) {
+    return insertChar(navigator, tailOffset, myChar, myOverwrite);
   }
 
   @Override

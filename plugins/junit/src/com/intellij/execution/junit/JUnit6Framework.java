@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
@@ -10,7 +10,7 @@ import java.util.List;
 
 import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_METHOD_ORDERER_DEFAULT;
 
-public class JUnit6Framework extends JUnit5Framework {
+public class JUnit6Framework extends JupiterFramework {
   @Override
   public boolean isDumbAware() {
     // Only Java is available in dumb mode, other language implementation might not support it.

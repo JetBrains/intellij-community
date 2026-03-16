@@ -18,7 +18,16 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG;
@@ -261,7 +270,7 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
                                             @NotNull VcsRootChecker checker) {
     if (!maybeRoot.isInLocalFileSystem()) return null;
     if (!checker.isRoot(maybeRoot)) return null;
-    if (dirToCheckForIgnore != null && checker.isIgnored(maybeRoot, dirToCheckForIgnore)) return null;
+    if (dirToCheckForIgnore != null && checker.isIgnored(myProject, maybeRoot, dirToCheckForIgnore)) return null;
 
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).findVcsByName(checker.getSupportedVcs().getName());
     if (vcs == null) return null;

@@ -6,8 +6,9 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
+import java.awt.Graphics;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;

@@ -1,5 +1,9 @@
+from _typeshed import Incomplete
+from collections.abc import Iterable
+
 __all__ = [
     "powerlaw_sequence",
+    "is_valid_tree_degree_sequence",
     "zipf_rv",
     "cumulative_distribution",
     "discrete_sequence",
@@ -8,6 +12,7 @@ __all__ = [
 ]
 
 def powerlaw_sequence(n, exponent: float = 2.0, seed=None): ...
+def is_valid_tree_degree_sequence(degree_sequence: Iterable[Incomplete]) -> tuple[bool, str]: ...
 def zipf_rv(alpha, xmin: int = 1, seed=None) -> int: ...
 def cumulative_distribution(distribution): ...
 def discrete_sequence(n, distribution=None, cdistribution=None, seed=None): ...

@@ -13,7 +13,11 @@ class PyTypedDictGoToDeclarationProvider : GotoDeclarationHandlerBase() {
     val pyReferenceElement = sourceElement?.parent
     if (pyReferenceElement !is PyReferenceExpression || editor == null) return null
     val resolvedClass = pyReferenceElement.reference.resolve() as? PyClass ?: return null
-    if (PyTypedDictTypeProvider.isTypingTypedDictInheritor(resolvedClass, TypeEvalContext.userInitiated(sourceElement.project, sourceElement.containingFile))) {
+    if (PyTypedDictTypeProvider.Helper.isTypingTypedDictInheritor(
+        resolvedClass,
+        TypeEvalContext.userInitiated(sourceElement.project, sourceElement.containingFile)
+      )
+    ) {
       return resolvedClass
     }
 

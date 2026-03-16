@@ -16,7 +16,11 @@ import groovy.lang.Script;
 import org.jetbrains.plugins.groovy.dsl.toplevel.CompositeContextFilter;
 import org.jetbrains.plugins.groovy.dsl.toplevel.Context;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter;
-import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.*;
+import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.AnnotatedScope;
+import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClassScope;
+import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClosureScope;
+import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.Scope;
+import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ScriptScope;
 
 import java.util.ArrayList;
 import java.util.List;

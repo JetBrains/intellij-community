@@ -6,4 +6,8 @@ java_import(
   jars = ["kotlin-snapshot/org/jetbrains/kotlin/analysis-api-for-ide/2.3.255-dev-255/analysis-api-for-ide-2.3.255-dev-255.jar"],
   visibility = ["//visibility:public"]
 )
+
+exports_files([
+  "kotlin-snapshot/org/jetbrains/kotlin/analysis-api-for-ide/2.3.255-dev-255/analysis-api-for-ide-2.3.255-dev-255.jar",
+], visibility = ["//visibility:public"])
 ### auto-generated section `local-libs` end

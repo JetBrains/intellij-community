@@ -29,7 +29,7 @@ internal class InlineCompletionTypedHandler(originalHandler: TypedActionHandler?
       return
     }
 
-    if (editor.getUserData(InlineCompletionTemplateListener.Companion.TEMPLATE_IN_PROGRESS_KEY) != null) {
+    if (InlineCompletionTemplateListener.isInlineRefactoringInProgress(editor)) {
       myOriginalHandler?.execute(editor, charTyped, dataContext)
       return // ML-1684 Do now show inline completion while refactoring
     }

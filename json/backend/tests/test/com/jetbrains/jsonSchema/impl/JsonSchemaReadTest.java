@@ -147,7 +147,7 @@ public class JsonSchemaReadTest extends BasePlatformTestCase {
       { "foo": {"bar": "hello there"}}
     """);
 
-    var root = new JsonSchemaReader(schemaPsi.getVirtualFile()).read(schemaPsi);
+    var root = new JsonSchemaReader().read(schemaPsi);
     var existingNodeText = getChildAsText(root, "foo", "bar");
     Assert.assertEquals("hello there", existingNodeText);
 

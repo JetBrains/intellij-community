@@ -12,7 +12,18 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementDescriptionUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +32,10 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.List;
 
-import static com.intellij.psi.util.PsiFormatUtilBase.*;
+import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_NAME;
+import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_PARAMETERS;
+import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_TYPE;
+import static com.intellij.psi.util.PsiFormatUtilBase.TYPE_AFTER;
 
 /**
  * @author anna

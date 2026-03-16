@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.utils
 
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.isCommand
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -60,6 +61,13 @@ class SeResultsCountBalancer(private val logLabel: String,
   }
 
   suspend fun add(newItem: SeItemData): SeItemData {
+    if (newItem.isCommand) {
+      SeLog.logSuspendable(SeLog.BALANCING) {
+        "($logLabel) Command item ${newItem.presentation.text} with provider ${newItem.providerId} is returned without balancing"
+      }
+      return newItem
+    }
+
     allProvidersCounts[newItem.providerId]?.fetchAndIncrement()
 
     highPriorityPermits[newItem.providerId]?.acquire()

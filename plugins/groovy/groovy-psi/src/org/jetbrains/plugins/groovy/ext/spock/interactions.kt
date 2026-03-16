@@ -5,7 +5,11 @@ import com.intellij.psi.util.parents
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.RIGHT_SHIFT_SIGN
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.RIGHT_SHIFT_UNSIGNED_SIGN
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isExpressionStatement
 
 fun GrExpression.isInteractionPart(): Boolean {

@@ -22,7 +22,9 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.ide.plugins.BrokenPluginFileKt.updateBrokenPlugins;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 public class RepositoryHelperTest {
   @Rule

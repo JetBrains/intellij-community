@@ -11,7 +11,11 @@ import com.intellij.openapi.project.guessProjectForFile
 import com.intellij.testFramework.LightVirtualFile
 import training.featuresSuggester.SuggestingUtils.handleAction
 import training.featuresSuggester.TextFragment
-import training.featuresSuggester.actions.*
+import training.featuresSuggester.actions.Action
+import training.featuresSuggester.actions.BeforeEditorTextInsertedAction
+import training.featuresSuggester.actions.BeforeEditorTextRemovedAction
+import training.featuresSuggester.actions.EditorTextInsertedAction
+import training.featuresSuggester.actions.EditorTextRemovedAction
 import java.lang.ref.WeakReference
 
 class DocumentActionsListener : BulkAwareDocumentListener {

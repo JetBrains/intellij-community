@@ -16,7 +16,12 @@ import com.jetbrains.mlapi.feature.FeatureContainer
 import com.jetbrains.mlapi.feature.FeatureDeclaration
 import com.jetbrains.mlapi.feature.FeatureSet
 import com.jetbrains.python.PythonFileType
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyAssignmentStatement
+import com.jetbrains.python.psi.PyBinaryExpression
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
 
 private val interestingClasses = arrayOf(
   PyFile::class.java,

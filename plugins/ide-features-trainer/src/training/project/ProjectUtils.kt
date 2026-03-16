@@ -8,7 +8,11 @@ import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
@@ -18,7 +22,11 @@ import com.intellij.openapi.project.NOTIFICATIONS_SILENT_MODE
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.createDirectories
@@ -33,10 +41,18 @@ import java.io.File
 import java.io.FileFilter
 import java.io.IOException
 import java.io.PrintWriter
-import java.nio.file.*
+import java.nio.file.FileVisitResult
+import java.nio.file.FileVisitor
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.CompletableFuture
-import kotlin.io.path.*
+import kotlin.io.path.exists
+import kotlin.io.path.getLastModifiedTime
+import kotlin.io.path.isDirectory
+import kotlin.io.path.name
+import kotlin.io.path.pathString
 
 object ProjectUtils {
   private const val LEARNING_PROJECT_MODIFICATION = "LEARNING_PROJECT_MODIFICATION"

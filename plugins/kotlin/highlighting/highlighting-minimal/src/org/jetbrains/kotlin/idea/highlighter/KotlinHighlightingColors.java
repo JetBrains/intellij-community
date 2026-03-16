@@ -20,6 +20,7 @@ public final class KotlinHighlightingColors {
     public static final TextAttributesKey STRING_ESCAPE = createTextAttributesKey("KOTLIN_STRING_ESCAPE", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
     public static final TextAttributesKey INVALID_STRING_ESCAPE = createTextAttributesKey("KOTLIN_INVALID_STRING_ESCAPE", DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE);
     public static final TextAttributesKey OPERATOR_SIGN = createTextAttributesKey("KOTLIN_OPERATION_SIGN", DefaultLanguageHighlighterColors.OPERATION_SIGN);
+    public static final TextAttributesKey AMPERSAND = createTextAttributesKey("KOTLIN_AMPERSAND", OPERATOR_SIGN);
     public static final TextAttributesKey PARENTHESIS = createTextAttributesKey("KOTLIN_PARENTHESIS", DefaultLanguageHighlighterColors.PARENTHESES);
     public static final TextAttributesKey BRACES = createTextAttributesKey("KOTLIN_BRACES", DefaultLanguageHighlighterColors.BRACES);
     public static final TextAttributesKey BRACKETS = createTextAttributesKey("KOTLIN_BRACKETS", DefaultLanguageHighlighterColors.BRACKETS);

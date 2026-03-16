@@ -29,6 +29,7 @@ def func2(x: int) -> int:
     if x > 0:
         return x
     stop()
+    ...  # E?: This statement can be marked unreachable
     return "whatever works"  # No type error
 
 

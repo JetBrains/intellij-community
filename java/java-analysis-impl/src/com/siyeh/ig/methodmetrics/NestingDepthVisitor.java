@@ -15,7 +15,22 @@
  */
 package com.siyeh.ig.methodmetrics;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDoWhileStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.PsiSynchronizedStatement;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiWhileStatement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;

@@ -3,9 +3,14 @@ package com.intellij.maven.testFramework
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.compiler.CompilerConfiguration
-import com.intellij.compiler.CompilerTestUtil
 import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
-import com.intellij.openapi.application.*
+import com.intellij.java.testFramework.backend.CompilerTestUtil
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.module.LanguageLevelUtil
@@ -14,7 +19,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
@@ -22,19 +26,29 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.CompilerModuleExtension
+import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.JavadocOrderRootType
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.RootPolicy
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
-import com.intellij.platform.backend.observation.Observation
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
@@ -43,6 +57,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll.Companion.runAll
+import com.intellij.testFramework.replaceService
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.Dispatchers
@@ -50,12 +65,22 @@ import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.ArtifactDownloadResult
+import org.jetbrains.idea.maven.project.BundledMaven3
+import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
+import org.jetbrains.idea.maven.project.MavenEmbedderWrappers
+import org.jetbrains.idea.maven.project.MavenImportListener
+import org.jetbrains.idea.maven.project.MavenPluginResolver
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.idea.maven.project.PluginResolutionResult
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -64,22 +89,43 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 abstract class MavenImportingTestCase : MavenTestCase() {
 
   private var myProjectsManager: MavenProjectsManager? = null
   private var myCodeStyleSettingsTracker: CodeStyleSettingsTracker? = null
-  private var myNotificationAware: AutoImportProjectNotificationAware? = null
+  private lateinit var myNotificationAware: AutoImportProjectNotificationAware
   private var myProjectTracker: AutoImportProjectTracker? = null
   private var isAutoReloadEnabled = false
+  protected lateinit var myDisposable: Disposable
+
+  // plugin resolution is slow and many tests do not need it
+  protected open fun skipPluginResolution(): Boolean {
+    return true
+  }
 
   @Throws(Exception::class)
   override fun setUp() {
     isAutoReloadEnabled = false
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), PathManager.getConfigPath())
     super.setUp()
+    myDisposable = Disposer.newDisposable(testRootDisposable)
+    if (skipPluginResolution()) {
+      val pluginResolver = object : MavenPluginResolver {
+        override suspend fun resolvePlugins(
+          mavenProjects: Collection<MavenProject>,
+          forceUpdateSnapshots: Boolean,
+          mavenEmbedderWrappers: MavenEmbedderWrappers,
+          process: RawProgressReporter,
+          eventHandler: MavenEventHandler,
+        ): PluginResolutionResult {
+          MavenLog.LOG.warn("Plugin resolution skipped to speed up the test. It can be enabled using skipPluginResolution()=false")
+          return PluginResolutionResult(emptySet())
+        }
+      }
+      project.replaceService(MavenPluginResolver::class.java, pluginResolver, myDisposable)
+    }
     myCodeStyleSettingsTracker = CodeStyleSettingsTracker { currentCodeStyleSettings }
     val settingsFile = MavenUtil.resolveGlobalSettingsFile(BundledMaven3)
     if (settingsFile != null) {
@@ -87,12 +133,23 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     }
     myNotificationAware = AutoImportProjectNotificationAware.getInstance(project)
     myProjectTracker = AutoImportProjectTracker.getInstance(project)
+    if (initProjectManager()) {
+      projectsManager.initForTests()
+    }
+
     project.messageBus.connect(testRootDisposable).subscribe(MavenImportListener.TOPIC, MavenImportLoggingListener())
   }
+
+  protected open fun initProjectManager(): Boolean = true
 
   @Throws(Exception::class)
   override fun tearDown() {
     runAll(
+      ThrowableRunnable<Throwable> {
+        if (::myDisposable.isInitialized) {
+          Disposer.dispose(myDisposable)
+        }
+      },
       ThrowableRunnable<Throwable> { WriteAction.runAndWait<RuntimeException> { JavaAwareProjectJdkTableImpl.removeInternalJdkInTests() } },
       ThrowableRunnable<Throwable> { TestDialogManager.setTestDialog(TestDialog.DEFAULT) },
       ThrowableRunnable<Throwable> { removeFromLocalRepository("test") },
@@ -101,14 +158,14 @@ abstract class MavenImportingTestCase : MavenTestCase() {
                                                    CompilerTestUtil.deleteBuildSystemDirectory(project)
                                                  }, EmptyProgressIndicator())
 
-         },
+      },
       ThrowableRunnable<Throwable> { myProjectsManager = null },
       ThrowableRunnable<Throwable> { super.tearDown() },
       ThrowableRunnable<Throwable> {
         if (myCodeStyleSettingsTracker != null) {
           myCodeStyleSettingsTracker!!.checkForSettingsDamage()
         }
-      }
+      },
     )
   }
 
@@ -306,7 +363,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected fun getModule(name: String): Module {
-    val m = ReadAction.compute<Module?, RuntimeException> { ModuleManager.getInstance(project).findModuleByName(name) }
+    val m = ModuleManager.getInstance(project).findModuleByName(name)
     assertNotNull("Module $name not found", m)
     return m as Module
   }
@@ -358,11 +415,11 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected open suspend fun importProjectsAsync(files: List<VirtualFile>) {
-
     initProjectsManager(false)
     projectsManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null, null, true)
 
     IndexingTestUtil.suspendUntilIndexesAreReady(project)
+    awaitConfiguration()
   }
 
   protected fun importProjectWithProfiles(vararg profiles: String) {
@@ -398,6 +455,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
       }
     }
     IndexingTestUtil.waitUntilIndexesAreReady(project);
+    runBlockingMaybeCancellable { awaitConfiguration() }
   }
 
   protected suspend fun doImportProjectsAsync(files: List<VirtualFile>, failOnReadingError: Boolean, vararg profiles: String) {
@@ -435,18 +493,18 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertTrue("Auto-reload is disabled in this test", isAutoReloadEnabled)
   }
 
-  protected fun assertHasPendingProjectForReload() {
+  protected suspend fun assertHasPendingProjectForReload() {
     assertAutoReloadIsEnabled()
-    blockTillCinfigurationReady()
-    assertTrue("Expected notification about pending projects for auto-reload", myNotificationAware!!.isNotificationVisible())
-    assertNotEmpty(myNotificationAware!!.getProjectsWithNotification())
+    awaitConfiguration()
+    assertTrue("Expected notification about pending projects for auto-reload", myNotificationAware.isNotificationVisible())
+    assertTrue(projectWithMavenNotificationExists)
   }
 
-  protected fun assertNoPendingProjectForReload() {
+  protected suspend fun assertNoPendingProjectForReload() {
     assertAutoReloadIsEnabled()
-    blockTillCinfigurationReady()
-    assertFalse(myNotificationAware!!.isNotificationVisible())
-    assertEmpty(myNotificationAware!!.getProjectsWithNotification())
+    awaitConfiguration()
+
+    assertFalse(projectWithMavenNotificationExists)
   }
 
   @RequiresBackgroundThread
@@ -465,28 +523,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertNoPendingProjectForReload()
   }
 
-  @RequiresBackgroundThread
-  protected suspend fun awaitConfiguration() {
-    val isEdt = ApplicationManager.getApplication().isDispatchThread
-    if (isEdt) {
-      MavenLog.LOG.warn("Calling awaitConfiguration() from EDT sometimes causes deadlocks, even though it shouldn't")
-    }
-    assertFalse("Call awaitConfiguration() from background thread", isEdt)
-    Observation.awaitConfiguration(project) { message ->
-      logConfigurationMessage(message)
-    }
-  }
-
-  protected fun blockTillCinfigurationReady() {
-    runBlockingCancellable {
-      awaitConfiguration()
-    }
-  }
-
-  private fun logConfigurationMessage(message: String) {
-    if (message.contains("scanning")) return
-    MavenLog.LOG.warn(message)
-  }
 
   protected suspend fun updateAllProjects() {
     projectsManager.updateAllMavenProjects(MavenSyncSpec.incremental("MavenImportingTestCase incremental sync"))
@@ -504,8 +540,15 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     projectsManager.updateAllMavenProjects(MavenSyncSpec.full("MavenImportingTestCase full sync"))
   }
 
-  protected suspend fun downloadArtifacts() {
-    projectsManager.downloadArtifacts(projectsManager.getProjects(), null, true, true)
+  protected suspend fun downloadArtifacts(): ArtifactDownloadResult {
+    return projectsManager.downloadArtifacts(
+      MavenDownloadSourcesRequest.builder()
+        .forProjects(projectsManager.projects)
+        .forAllArtifacts()
+        .withSources()
+        .withDocs()
+        .build()
+    )
   }
 
   @Throws(Exception::class)
@@ -535,7 +578,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   protected fun setupJdkForModule(moduleName: String): Sdk {
     val sdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk()
-    WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()) }
+    WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance(project).addJdk(sdk, getTestRootDisposable()) }
     ModuleRootModificationUtil.setModuleSdk(getModule(moduleName), sdk)
     return sdk
   }
@@ -566,52 +609,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     }
   }
 
-  @RequiresBackgroundThread
-  protected suspend fun waitForImportWithinTimeout(action: suspend () -> Unit) {
-    MavenLog.LOG.warn("waitForImportWithinTimeout started")
-    val importStarted = AtomicBoolean(false)
-    val importFinished = AtomicBoolean(false)
-    val pluginResolutionFinished = AtomicBoolean(true)
-    val artifactDownloadingFinished = AtomicBoolean(true)
-    project.messageBus.connect(testRootDisposable)
-      .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
-        override fun importStarted() {
-          importStarted.set(true)
-        }
-
-        override fun importFinished(importedProjects: MutableCollection<MavenProject>, newModules: MutableList<Module>) {
-          if (importStarted.get()) {
-            importFinished.set(true)
-          }
-        }
-
-        override fun pluginResolutionStarted() {
-          pluginResolutionFinished.set(false)
-        }
-
-        override fun pluginResolutionFinished() {
-          pluginResolutionFinished.set(true)
-        }
-
-        override fun artifactDownloadingStarted() {
-          artifactDownloadingFinished.set(false)
-        }
-
-        override fun artifactDownloadingFinished() {
-          artifactDownloadingFinished.set(true)
-        }
-      })
-
-    action()
-
-    awaitConfiguration()
-
-    assertTrue("Import failed: start", importStarted.get())
-    assertTrue("Import failed: finish", importFinished.get())
-    assertTrue("Import failed: plugins", pluginResolutionFinished.get())
-    assertTrue("Import failed: artifacts", artifactDownloadingFinished.get())
-    MavenLog.LOG.warn("waitForImportWithinTimeout finished")
-  }
 
   private class MavenImportLoggingListener : MavenImportListener {
     private val logCounts = ConcurrentHashMap<String, Int>()
@@ -719,4 +716,8 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   protected fun runWithoutStaticSync() {
     Registry.get("maven.preimport.project").setValue(false, testRootDisposable)
   }
+
+  private val projectWithMavenNotificationExists: Boolean
+    get() = myNotificationAware.getProjectsWithNotification().any { it.systemId == MavenUtil.SYSTEM_ID }
 }
+

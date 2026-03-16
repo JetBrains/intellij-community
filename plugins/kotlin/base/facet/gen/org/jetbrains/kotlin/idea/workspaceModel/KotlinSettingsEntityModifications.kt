@@ -13,7 +13,8 @@ import com.intellij.util.descriptors.ConfigFileItem
 import org.jetbrains.kotlin.config.KotlinModuleKind
 
 @GeneratedCodeApiVersion(3)
-interface KotlinSettingsEntityBuilder : WorkspaceEntityBuilder<KotlinSettingsEntity>, ModuleSettingsFacetBridgeEntity.Builder<KotlinSettingsEntity> {
+interface KotlinSettingsEntityBuilder : WorkspaceEntityBuilder<KotlinSettingsEntity>,
+                                        ModuleSettingsFacetBridgeEntity.Builder<KotlinSettingsEntity> {
   override var entitySource: EntitySource
   override var moduleId: ModuleId
   override var name: String
@@ -162,7 +163,22 @@ fun KotlinSettingsEntity(
   flushNeeded: Boolean,
   entitySource: EntitySource,
   init: (KotlinSettingsEntityBuilder.() -> Unit)? = null,
-): KotlinSettingsEntityBuilder =
-  KotlinSettingsEntityType(moduleId, name, sourceRoots, configFileItems, useProjectSettings, implementedModuleNames, dependsOnModuleNames,
-                           additionalVisibleModuleNames, sourceSetNames, isTestModule, externalProjectId, isHmppEnabled,
-                           pureKotlinSourceFolders, kind, externalSystemRunTasks, version, flushNeeded, entitySource, init)
+): KotlinSettingsEntityBuilder = KotlinSettingsEntityType(moduleId,
+                                                          name,
+                                                          sourceRoots,
+                                                          configFileItems,
+                                                          useProjectSettings,
+                                                          implementedModuleNames,
+                                                          dependsOnModuleNames,
+                                                          additionalVisibleModuleNames,
+                                                          sourceSetNames,
+                                                          isTestModule,
+                                                          externalProjectId,
+                                                          isHmppEnabled,
+                                                          pureKotlinSourceFolders,
+                                                          kind,
+                                                          externalSystemRunTasks,
+                                                          version,
+                                                          flushNeeded,
+                                                          entitySource,
+                                                          init)

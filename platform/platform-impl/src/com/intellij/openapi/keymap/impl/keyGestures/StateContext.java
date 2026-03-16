@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.KeyboardGestureAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.KeyStroke;
+import java.awt.Component;
 import java.awt.event.KeyEvent;
 
 final class StateContext {

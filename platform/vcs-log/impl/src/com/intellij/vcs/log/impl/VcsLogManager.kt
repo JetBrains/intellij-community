@@ -22,30 +22,53 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.util.BitUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.log.*
-import com.intellij.vcs.log.data.DataPack
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.VcsLogGraphData
 import com.intellij.vcs.log.data.VcsLogStatusBarProgress
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
-import com.intellij.vcs.log.ui.*
+import com.intellij.vcs.log.ui.MainVcsLogUi
+import com.intellij.vcs.log.ui.VcsLogColorManager
+import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
+import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder
+import com.intellij.vcs.log.ui.VcsLogUiEx
+import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.collection
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.ints.IntSets
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
-import org.jetbrains.annotations.ApiStatus.*
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.event.HierarchyEvent
 import java.awt.event.HierarchyListener
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 
 @NonExtendable
@@ -101,7 +124,7 @@ open class VcsLogManager @Internal constructor(
    */
   @get:RequiresEdt
   val isLogUpToDate: Boolean
-    get() = dataManager.dataPack.isFull && !postponableRefresher.hasPostponedRoots()
+    get() = dataManager.graphData.isFull && !postponableRefresher.hasPostponedRoots()
 
   @Internal
   @CalledInAny
@@ -133,7 +156,7 @@ open class VcsLogManager @Internal constructor(
   }
 
   @Internal
-  suspend fun <R> runWithFreezing(operation: () -> R): R {
+  suspend fun <R> runWithFreezing(operation: suspend () -> R): R {
     withContext(Dispatchers.EDT) {
       freezeLog()
     }
@@ -215,7 +238,7 @@ open class VcsLogManager @Internal constructor(
 
   private fun installRefresher(ui: VcsLogUiEx) {
     postponableRefresher.registerRefresher(ui, ui.id, object : PostponableLogRefresher.Refresher {
-      override fun setDataPack(dataPack: DataPack) {
+      override fun setDataPack(dataPack: VcsLogGraphData) {
         LOG.debug("Refreshing log window ${ui}")
         ui.refresher.setDataPack(ui.isVisible(), dataPack)
       }
@@ -451,7 +474,7 @@ private fun VcsLogManager.containsCommit(hash: Hash, root: VirtualFile): Boolean
   if (!dataManager.storage.containsCommit(CommitId(hash, root))) return false
 
   @Suppress("UNCHECKED_CAST")
-  val permanentGraphInfo = dataManager.dataPack.permanentGraph as? PermanentGraphInfo<VcsLogCommitStorageIndex> ?: return true
+  val permanentGraphInfo = dataManager.graphData.permanentGraph as? PermanentGraphInfo<VcsLogCommitStorageIndex> ?: return true
 
   val commitIndex = dataManager.storage.getCommitIndex(hash, root)
   val nodeId = permanentGraphInfo.permanentCommitsInfo.getNodeId(commitIndex)
@@ -463,7 +486,7 @@ private fun VcsLogUiEx.isVisible(): Boolean = ComponentUtil.isShowing(mainCompon
 private suspend fun VcsLogManager.waitForUpToDateLog() {
   suspendCancellableCoroutine { continuation ->
     val dataPackListener = object : DataPackChangeListener {
-      override fun onDataPackChange(newDataPack: DataPack) {
+      override fun onDataPackChange(newDataPack: VcsLogGraphData) {
         if (isLogUpToDate) {
           dataManager.removeDataPackChangeListener(this)
           continuation.resumeWith(Result.success(Unit))

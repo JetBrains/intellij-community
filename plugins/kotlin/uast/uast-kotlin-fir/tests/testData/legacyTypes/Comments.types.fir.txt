@@ -31,7 +31,7 @@ UFile (package = ) [public abstract interface Pizza {...]
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [String("Margherita")] : @org.jetbrains.annotations.NotNull() java.lang.String
                             UIdentifier (Identifier (String)) [UIdentifier (Identifier (String))]
                             USimpleNameReferenceExpression (identifier = String, resolvesTo = PsiClass: String) [String]
-                            UPolyadicExpression (operator = +) ["Margherita"] : java.lang.String
+                            UPolyadicExpression (operator = +) ["Margherita"] : @org.jetbrains.annotations.NotNull() java.lang.String
                                 ULiteralExpression (value = "Margherita") ["Margherita"] : java.lang.String
         UMethod (name = contains) [public fun contains(@org.jetbrains.annotations.NotNull ingredient: Pizza.Ingredient) : boolean {...}]
             UParameter (name = ingredient) [@org.jetbrains.annotations.NotNull var ingredient: Pizza.Ingredient]

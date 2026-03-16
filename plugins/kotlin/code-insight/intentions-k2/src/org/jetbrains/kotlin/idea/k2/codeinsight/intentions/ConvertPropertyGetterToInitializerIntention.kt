@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.modcommand.ActionContext
@@ -8,7 +8,11 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
@@ -25,7 +29,7 @@ internal class ConvertPropertyGetterToInitializerIntention :
         KotlinBundle.message("convert.property.getter.to.initializer")
 
     override fun isApplicableByPsi(element: KtPropertyAccessor): Boolean {
-        if (!element.isGetter || element.singleExpression() == null || element.property.contextReceiverList != null) return false
+        if (!element.isGetter || element.singleExpression() == null || element.property.modifierList?.contextParameterList != null) return false
 
         val property = element.parent as? KtProperty ?: return false
         return !property.hasInitializer() &&

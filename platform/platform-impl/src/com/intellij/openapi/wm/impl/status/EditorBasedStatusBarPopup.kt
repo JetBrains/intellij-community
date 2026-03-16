@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LeakingThis")
 
 package com.intellij.openapi.wm.impl.status
@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.Document
@@ -17,7 +18,11 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListPopup
@@ -43,11 +48,16 @@ import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
@@ -80,7 +90,9 @@ abstract class EditorBasedStatusBarPopup(
       override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
         update()
         StatusBarPopupShown.log(project, this@EditorBasedStatusBarPopup.javaClass)
-        showPopup(e)
+        WriteIntentReadAction.run {
+          showPopup(e)
+        }
         return true
       }
     }.installOn(component, true)

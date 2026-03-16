@@ -5,7 +5,10 @@ import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.registerUProblem
-import com.intellij.psi.CommonClassNames.*
+import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
+import com.intellij.psi.CommonClassNames.JAVA_NET_URL
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_SET
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter
@@ -13,7 +16,13 @@ import com.intellij.util.asSafely
 import com.siyeh.HardcodedMethodConstants.EQUALS
 import com.siyeh.HardcodedMethodConstants.HASH_CODE
 import com.siyeh.ig.callMatcher.CallMatcher
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UCallableReferenceExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.isNullLiteral
+import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class UrlHashCodeInspection : AbstractBaseUastLocalInspectionTool() {

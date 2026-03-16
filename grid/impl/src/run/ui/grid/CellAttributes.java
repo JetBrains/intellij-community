@@ -3,7 +3,7 @@ package com.intellij.database.run.ui.grid;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 public class CellAttributes {
   private final @Nullable Color myBackgroundColor;

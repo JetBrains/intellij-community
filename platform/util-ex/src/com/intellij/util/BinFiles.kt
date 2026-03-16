@@ -4,6 +4,7 @@ package com.intellij.util
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.BinFiles.BIN_FILES_DIR_NAME
 import com.intellij.util.BinFiles.devFilesDir
 import com.intellij.util.BinFiles.getBinFile
 import com.intellij.util.io.outputStream

@@ -1,11 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.annotation;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.ModCommandAwareExternalAnnotationsManager;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -13,7 +20,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiUtilCore;
@@ -22,7 +37,14 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Bas Leijdekkers
@@ -126,7 +148,7 @@ public final class AnnotateOverriddenMethodsIntention extends BaseElementAtCaret
     }
     final Collection<PsiMethod> overridingMethods = OverridingMethodsSearch.search(method).findAll();
     final List<PsiMethod> prepare = new ArrayList<>();
-    final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
+    final ModCommandAwareExternalAnnotationsManager annotationsManager = ModCommandAwareExternalAnnotationsManager.getInstance(project);
     final Map<PsiMethod, ExternalAnnotationsManager.AnnotationPlace> annotationPlaces = new LinkedHashMap<>();
     for (PsiMethod overridingMethod : overridingMethods) {
       annotationPlaces.put(overridingMethod, annotationsManager.chooseAnnotationsPlaceNoUi(overridingMethod));
@@ -144,21 +166,13 @@ public final class AnnotateOverriddenMethodsIntention extends BaseElementAtCaret
       return;
     }
     final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-    try {
-      for (PsiMethod overridingMethod : overridingMethods) {
-        if (parameterIndex == -1) {
-          annotate(overridingMethod, annotationName, attributes, annotationsToRemove, annotationPlaces.get(overridingMethod), annotationsManager);
-        }
-        else {
-          final PsiParameterList parameterList = overridingMethod.getParameterList();
-          final PsiParameter[] parameters = parameterList.getParameters();
-          final PsiParameter parameter = parameters[parameterIndex];
-          annotate(parameter, annotationName, attributes, annotationsToRemove, annotationPlaces.get(overridingMethod), annotationsManager);
-        }
-      }
-    }
-    catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {
-      //escape on configuring root cancel further annotations
+    ActionContext context = ActionContext.from(editor, element.getContainingFile());
+    for (PsiMethod overridingMethod : overridingMethods) {
+      ModCommandExecutor.executeInteractively(context, getFamilyName(), editor, () -> {
+        PsiModifierListOwner target =
+          parameterIndex == -1 ? overridingMethod : overridingMethod.getParameterList().getParameter(parameterIndex);
+        return annotate(target, annotationName, attributes, annotationsToRemove, annotationPlaces.get(overridingMethod), annotationsManager);
+      });
     }
     if (!prepare.isEmpty()) {
       UndoUtil.markPsiFileForUndo(annotation.getContainingFile());
@@ -186,35 +200,31 @@ public final class AnnotateOverriddenMethodsIntention extends BaseElementAtCaret
     }
   }
 
-  private static void annotate(PsiModifierListOwner modifierListOwner,
-                               String annotationName,
-                               PsiNameValuePair[] attributes,
-                               List<String> annotationsToRemove,
-                               ExternalAnnotationsManager.AnnotationPlace annotationAnnotationPlace,
-                               ExternalAnnotationsManager annotationsManager) throws ProcessCanceledException {
+  private static @NotNull ModCommand annotate(@Nullable PsiModifierListOwner modifierListOwner,
+                                              @NotNull String annotationName,
+                                              @NotNull PsiNameValuePair @NotNull [] attributes,
+                                              @NotNull List<String> annotationsToRemove,
+                                              ExternalAnnotationsManager.@NotNull AnnotationPlace annotationAnnotationPlace,
+                                              @NotNull ModCommandAwareExternalAnnotationsManager annotationsManager) throws ProcessCanceledException {
+    if (modifierListOwner == null) return ModCommand.nop();
     PsiAnnotationOwner target = AnnotationTargetUtil.getTarget(modifierListOwner, annotationName);
-    if (target == null || target.hasAnnotation(annotationName)) return;
+    if (target == null || target.hasAnnotation(annotationName)) return ModCommand.nop();
     if (annotationAnnotationPlace == ExternalAnnotationsManager.AnnotationPlace.NOWHERE) {
-      return;
+      return ModCommand.nop();
     }
     if (annotationAnnotationPlace == ExternalAnnotationsManager.AnnotationPlace.EXTERNAL) {
-      for (String annotationToRemove : annotationsToRemove) {
-        annotationsManager.deannotate(modifierListOwner, annotationToRemove);
-      }
-      try {
-        annotationsManager.annotateExternally(modifierListOwner, annotationName, modifierListOwner.getContainingFile(), attributes);
-      }
-      catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {}
+      return annotationsManager.annotateExternallyModCommand(modifierListOwner, annotationName, attributes, annotationsToRemove);
     }
     else {
-      WriteAction.run(() -> {
+      return ModCommand.psiUpdate(modifierListOwner, (owner, updater) -> {
+        PsiAnnotationOwner writableTarget = Objects.requireNonNull(AnnotationTargetUtil.getTarget(owner, annotationName));
         for (String annotationToRemove : annotationsToRemove) {
-          final PsiAnnotation annotation = AnnotationUtil.findAnnotation(modifierListOwner, annotationToRemove);
+          final PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, annotationToRemove);
           if (annotation != null) {
             annotation.delete();
           }
         }
-        final PsiAnnotation inserted = target.addAnnotation(annotationName);
+        final PsiAnnotation inserted = writableTarget.addAnnotation(annotationName);
         for (PsiNameValuePair pair : attributes) {
           inserted.setDeclaredAttributeValue(pair.getName(), pair.getValue());
         }

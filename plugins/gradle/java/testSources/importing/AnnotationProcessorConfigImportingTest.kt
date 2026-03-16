@@ -22,7 +22,6 @@ import org.junit.Test
 class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
 
   @Test
-  @TargetVersions("4.6+")
   fun `test annotation processor config imported in module per project mode`() {
     currentExternalProjectSettings.isResolveModulePerSourceSet = false
 
@@ -56,7 +55,6 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   }
 
   @Test
-  @TargetVersions("4.6+")
   fun `test annotation processor modification in module per project mode`() {
     currentExternalProjectSettings.isResolveModulePerSourceSet = false
 
@@ -98,7 +96,6 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   }
 
   @Test
-  @TargetVersions("4.6+")
   fun `test annotation processor config imported in modules per source set mode`() {
     importProject {
       withJavaPlugin()
@@ -123,7 +120,6 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   }
 
   @Test
-  @TargetVersions("4.6+")
   fun `test annotation processor config imported correctly for multimodule project`() {
 
     createProjectSubFile("settings.gradle", including("projectA", "projectB"))
@@ -204,7 +200,6 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   }
 
   @Test
-  @TargetVersions("4.6+")
   fun `test two different annotation processors`() {
     createProjectSubFile("settings.gradle", including("project1", "project2"))
 
@@ -242,7 +237,6 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   }
 
   @Test
-  @TargetVersions("4.6+")
    fun `test change modules included in processor profile`() {
     createProjectSubFile("settings.gradle", including("project1", "project2"))
     importProject {
@@ -281,7 +275,6 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
    }
 
   @Test
-  @TargetVersions("4.6+")
   fun `test annotation processor with transitive deps`() {
     importProject {
       withJavaPlugin()

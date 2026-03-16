@@ -5,7 +5,10 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.entryPrefixLength
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.findPrefixLengthForPlainTextConversion
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.psi.generateBuildStringCall
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
 fun convertStringTemplateToBuildStringCall(element: KtStringTemplateExpression): KtExpression {
     val operands = createOperands(element)

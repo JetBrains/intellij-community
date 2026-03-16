@@ -25,22 +25,23 @@ internal suspend fun buildOriginalModuleRepository(context: CompilationContext):
   return spanBuilder("generate runtime module repository").use {
     val targetDirectory = context.paths.tempDir.resolve("module-descriptors")
     try {
-      val moduleOutputs = context.project.modules.associateBy({ it.name }, { context.getModuleOutputRoots(it, forTests = false) })
-      val testModuleOutputs = context.project.modules.associateBy({ it.name }, { context.getModuleOutputRoots(it, forTests = true) })
+      val outputProvider = context.outputProvider
+      val moduleOutputs = context.project.modules.associateBy({ it.name }, { outputProvider.getModuleOutputRoots(it, forTests = false) })
+      val testModuleOutputs = context.project.modules.associateBy({ it.name }, { outputProvider.getModuleOutputRoots(it, forTests = true) })
       val resourcePathsSchema = AbsolutePathsResourcePathsSchema(moduleOutputs, testModuleOutputs)
       val moduleDescriptors = RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptorsForWholeProject(context.project, resourcePathsSchema)
       withContext(Dispatchers.IO) {
         RuntimeModuleRepositoryGenerator.saveModuleRepository(moduleDescriptors, targetDirectory)
       }
     }
-    catch (t: Throwable) {
-      context.messages.logErrorAndThrow("Failed to generate runtime module repository for compiled classes: ${t.message}", t)
+    catch (e: Throwable) {
+      context.messages.logErrorAndThrow("Failed to generate runtime module repository for compiled classes: ${e.message}", e)
     }
-    OriginalModuleRepositoryImpl(context, targetDirectory.resolve(COMPACT_REPOSITORY_FILE_NAME))
+    OriginalModuleRepositoryImpl(targetDirectory.resolve(COMPACT_REPOSITORY_FILE_NAME), context)
   }
 }
 
-internal class OriginalModuleRepositoryImpl(context: CompilationContext, override val repositoryPath: Path) : OriginalModuleRepository {
+internal class OriginalModuleRepositoryImpl(override val repositoryPath: Path, context: CompilationContext) : OriginalModuleRepository {
   override val rawRepositoryData: RawRuntimeModuleRepositoryData
 
   init {

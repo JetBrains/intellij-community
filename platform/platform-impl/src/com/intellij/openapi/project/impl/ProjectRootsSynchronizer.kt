@@ -9,44 +9,47 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.workspaceModel.ide.ProjectRootEntity
 import com.intellij.workspaceModel.ide.registerProjectRoot
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
 
-@ApiStatus.Internal
+@Internal
 class ProjectRootsSynchronizer : ProjectActivity {
-  override suspend fun execute(project: Project) {
-    if (!Registry.`is`("ide.create.project.root.entity")) return
+  companion object {
+    @VisibleForTesting
+    suspend fun doRegister(project: Project) {
+      if (!Registry.`is`("ide.create.project.root.entity")) {
+        return
+      }
 
-    val projectRootsComponent = project.serviceAsync<ProjectRootPersistentStateComponent>()
-    val roots = projectRootsComponent.projectRootUrls
-    val virtualFileUrlManager = project.serviceAsync<WorkspaceModel>().getVirtualFileUrlManager()
-    for (root in roots) {
-      registerProjectRoot(project, virtualFileUrlManager.getOrCreateFromUrl(root))
+      val projectRootsComponent = project.serviceAsync<ProjectRootPersistentStateComponent>()
+      val roots = projectRootsComponent.projectRootUrls
+      val virtualFileUrlManager = project.serviceAsync<WorkspaceModel>().getVirtualFileUrlManager()
+      for (root in roots) {
+        registerProjectRoot(project, virtualFileUrlManager.getOrCreateFromUrl(root))
+      }
     }
+  }
 
-    launchListener(project, projectRootsComponent.scope)
+  override suspend fun execute(project: Project) {
+    doRegister(project)
+    return
+
+    launchListener(project)
   }
 
   /**
    * Keeps [ProjectRootPersistentStateComponent] in sync with the actual ProjectRootEntities in the workspace model.
    */
-  private fun launchListener(project: Project, scope: CoroutineScope) {
+  private suspend fun launchListener(project: Project) {
+    val workspaceModel = project.serviceAsync<WorkspaceModel>()
+    val flow = workspaceModel.eventLog
+      .filter { change -> change.getChanges(ProjectRootEntity::class.java).isNotEmpty() }
 
-    scope.launch {
-      val workspaceModel = project.serviceAsync<WorkspaceModel>()
-      val flow = workspaceModel.eventLog
-        .filter { change -> change.getChanges(ProjectRootEntity::class.java).isNotEmpty() }
-
-      val component = project.serviceAsync<ProjectRootPersistentStateComponent>()
-      component.projectRootUrls = workspaceModel.currentSnapshot.entities<ProjectRootEntity>().map { it.root.url }.toList()
-
-      flow.collect { change ->
-        val newRoots = change.storageAfter.entities<ProjectRootEntity>().map { it.root.url }.toList()
-        val component = project.serviceAsync<ProjectRootPersistentStateComponent>()
-        component.projectRootUrls = newRoots.toList()
-      }
+    val component = project.serviceAsync<ProjectRootPersistentStateComponent>()
+    component.projectRootUrls = workspaceModel.currentSnapshot.entities<ProjectRootEntity>().map { it.root.url }.toList()
+    flow.collect { change ->
+      component.projectRootUrls = change.storageAfter.entities<ProjectRootEntity>().map { it.root.url }.toList()
     }
   }
 }

@@ -3,15 +3,15 @@ package com.jetbrains.python.codeInsight.stdlib
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.python.extensions.getQName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.PyCustomMember
+import com.jetbrains.python.extensions.getQName
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyOverridingModuleMembersProvider
 import com.jetbrains.python.psi.types.TypeEvalContext
 
-class PyStdlibOverridingModuleMembersProvider: PyOverridingModuleMembersProvider() {
+class PyStdlibOverridingModuleMembersProvider : PyOverridingModuleMembersProvider() {
 
   override fun getMembersByQName(module: PyFile, qName: String, context: TypeEvalContext): List<PyCustomMember> = emptyList()
 
@@ -19,7 +19,8 @@ class PyStdlibOverridingModuleMembersProvider: PyOverridingModuleMembersProvider
     if (module.languageLevel.isPython2 &&
         name == "md5" &&
         module.name == "hashlib.py" &&
-        module.getQName() == QualifiedName.fromComponents("hashlib")) {
+        module.getQName() == QualifiedName.fromComponents("hashlib")
+    ) {
       // When module member is not found in it,
       // `__all__` and nearby module with the specified name are suggested as a fallback.
 

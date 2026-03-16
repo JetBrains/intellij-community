@@ -2,10 +2,13 @@
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 // TODO: clean up!!!
 
+@K1Deprecation
 val PsiElement.isAnonymousFunction: Boolean get() = this is KtNamedFunction && isAnonymousFunction
 
+@K1Deprecation
 val KtNamedFunction.isAnonymousFunction: Boolean get() = nameIdentifier == null

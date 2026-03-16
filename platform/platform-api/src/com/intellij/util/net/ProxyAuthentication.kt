@@ -66,9 +66,8 @@ interface ProxyAuthentication {
  * @return already known credentials if there are any, or prompts for new credentials otherwise.
  * @see ProxyAuthentication.getPromptedAuthentication
  */
-fun ProxyAuthentication.getOrPromptAuthentication(prompt: @Nls String, host: String, port: Int): Credentials? {
-  return getKnownAuthentication(host, port) ?: getPromptedAuthentication(prompt, host, port)
-}
+fun ProxyAuthentication.getOrPromptAuthentication(prompt: @Nls String, host: String, port: Int): Credentials? =
+  getKnownAuthentication(host, port) ?: getPromptedAuthentication(prompt, host, port)
 
 
 @ApiStatus.Internal
@@ -104,6 +103,8 @@ interface DisabledProxyAuthPromptsManager {
   fun enableAllPromptedAuthentications()
 }
 
+private val LOG = logger<PlatformProxyAuthentication>()
+
 @ApiStatus.Internal
 class PlatformProxyAuthentication(
   private val getCredentialStore: () -> ProxyCredentialStore,
@@ -111,7 +112,7 @@ class PlatformProxyAuthentication(
 ) : ProxyAuthentication {
   override fun getKnownAuthentication(host: String, port: Int): Credentials? {
     val credentials = getCredentialStore().getCredentials(host, port)
-    logger.debug {
+    LOG.debug {
       if (credentials != null) "returning known credentials for $host:$port, credentials=${credentials}"
       else "no known credentials for $host:$port"
     }
@@ -121,27 +122,27 @@ class PlatformProxyAuthentication(
   override fun getPromptedAuthentication(prompt: String, host: String, port: Int): Credentials? {
     val app = ApplicationManager.getApplication()
     if (app == null || app.isDisposed) {
-      logger.debug { "prompted auth for $host:$port: null, application is not initialized yet/already disposed " }
+      LOG.debug { "prompted auth for $host:$port: null, application is not initialized yet/already disposed " }
       return null
     }
     if (app.isUnitTestMode) {
-      logger.warn("prompted auth for $host:$port: can't prompt proxy authentication in tests")
+      LOG.warn("prompted auth for $host:$port: can't prompt proxy authentication in tests")
       return null
     }
     if (app.isHeadlessEnvironment) {
       // TODO request from terminal if allowed by system property ? and maybe check EnvironmentService ?
-      logger.debug { "prompted auth for $host:$port: null, can't prompt in headless mode " }
+      LOG.debug { "prompted auth for $host:$port: null, can't prompt in headless mode " }
       return null
     }
     if (isPromptedAuthenticationCancelled(host, port)) {
-      logger.debug { "prompted auth for $host:$port: prompted auth was cancelled " }
+      LOG.debug { "prompted auth for $host:$port: prompted auth was cancelled " }
       return null
     }
     val credentialStore = getCredentialStore()
     var result: Credentials? = null
     val login: String = credentialStore.getCredentials(host, port)?.userName ?: ""
-    if (logger.isDebugEnabled) {
-      logger.debug(Exception("proxy auth stacktrace")) { "prompting auth for $host:$port" }
+    if (LOG.isDebugEnabled) {
+      LOG.debug(Exception("proxy auth stacktrace")) { "prompting auth for $host:$port" }
     }
     runAboveAll {
       val dialog = AuthenticationDialog(
@@ -166,29 +167,24 @@ class PlatformProxyAuthentication(
         getDisabledPromptsManager().disablePromptedAuthentication(host, port)
       }
     }
-    logger.debug { if (result != null) "prompted auth for $host:$port: $result" else "prompted auth was cancelled" }
+    LOG.debug { if (result != null) "prompted auth for $host:$port: $result" else "prompted auth was cancelled" }
     return result
   }
 
-  override fun isPromptedAuthenticationCancelled(host: String, port: Int): Boolean {
-    return getDisabledPromptsManager().isPromptedAuthenticationDisabled(host, port)
-  }
+  override fun isPromptedAuthenticationCancelled(host: String, port: Int): Boolean =
+    getDisabledPromptsManager().isPromptedAuthenticationDisabled(host, port)
 
-  override fun enablePromptedAuthentication(host: String, port: Int) {
-    return getDisabledPromptsManager().enablePromptedAuthentication(host, port)
-  }
+  override fun enablePromptedAuthentication(host: String, port: Int): Unit =
+    getDisabledPromptsManager().enablePromptedAuthentication(host, port)
 
-  private companion object {
-    val logger = logger<PlatformProxyAuthentication>()
-
-    private fun runAboveAll(runnable: Runnable) {
-      val progressIndicator = ProgressManager.getInstance().getProgressIndicator()
-      if (progressIndicator != null && progressIndicator.isModal()) {
-        WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(runnable)
-      }
-      else {
-        ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.any())
-      }
+  @Suppress("DEPRECATION", "UsagesOfObsoleteApi")
+  private fun runAboveAll(runnable: Runnable) {
+    val progressIndicator = ProgressManager.getInstance().getProgressIndicator()
+    if (progressIndicator != null && progressIndicator.isModal()) {
+      WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(runnable)
+    }
+    else {
+      ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.any())
     }
   }
 }

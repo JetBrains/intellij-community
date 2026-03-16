@@ -3,15 +3,29 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.DifferentiateContext;
+import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.ReferenceID;
+import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.util.Pair;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.asIterable;
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.filter;
+import static org.jetbrains.jps.util.Iterators.find;
+import static org.jetbrains.jps.util.Iterators.flat;
+import static org.jetbrains.jps.util.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.recurse;
 
 /**
  * This class provides implementation common to all jvm strategies
@@ -22,7 +36,7 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
   protected final <T extends AnnotationInstance, D extends AnnotationInstance.Diff<T>> boolean isAffectedByAnnotations(
     Proto element, Difference.Specifier<T, D> annotationsDiff, Set<AnnotationGroup.AffectionKind> affectionKinds, Predicate<? super TypeRepr.ClassType> annotationSelector
   ) {
-    return !element.isPrivate() && find(getAffectedAnnotations(annotationsDiff, affectionKinds), annotationSelector::test) != null;
+    return !element.isPrivate() && find(getAffectedAnnotations(annotationsDiff, affectionKinds), annotationSelector) != null;
   }
 
   protected final <T extends AnnotationInstance, D extends AnnotationInstance.Diff<T>> Iterable<TypeRepr.ClassType> getAffectedAnnotations(
@@ -268,7 +282,7 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
   protected void affectSources(DifferentiateContext context, Iterable<NodeSource> sources, String affectReason, boolean forceAffect) {
     Set<NodeSource> deletedSources = context.getDelta().getDeletedSources();
     Predicate<? super NodeSource> affectionFilter = context.getParams().affectionFilter();
-    for (NodeSource source : filter(sources, affectionFilter::test)) {
+    for (NodeSource source : filter(sources, affectionFilter)) {
       if ((forceAffect || !context.isCompiled(source)) && !deletedSources.contains(source)) {
         context.affectNodeSource(source);
         debug(context, affectReason, source);

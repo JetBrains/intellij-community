@@ -30,6 +30,7 @@ import com.jetbrains.python.run.target.getTargetPathForPythonConsoleExecution
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
 
@@ -58,39 +59,27 @@ private fun appendSystemPythonPath(pythonPath: MutableCollection<TargetEnvironme
   }
 }
 
+@ApiStatus.Internal
 fun collectPythonPath(project: Project,
                       module: Module?,
                       sdkHome: String?,
                       pathMapper: PyRemotePathMapper?,
                       shouldAddContentRoots: Boolean,
-                      shouldAddSourceRoots: Boolean,
-                      isDebug: Boolean): Collection<TargetEnvironmentFunction<String>> {
+                      shouldAddSourceRoots: Boolean
+): Collection<TargetEnvironmentFunction<String>> {
   val sdk = PythonSdkUtil.findSdkByPath(sdkHome)
-  return collectPythonPath(project, module, sdk, pathMapper, shouldAddContentRoots, shouldAddSourceRoots, isDebug)
+  return collectPythonPath(project, module, sdk, pathMapper, shouldAddContentRoots, shouldAddSourceRoots)
 }
 
+@ApiStatus.Internal
 fun collectPythonPath(project: Project,
                       module: Module?,
                       sdk: Sdk?,
                       pathMapper: PyRemotePathMapper?,
                       shouldAddContentRoots: Boolean,
-                      shouldAddSourceRoots: Boolean,
-                      isDebug: Boolean): Collection<TargetEnvironmentFunction<String>> =
-  collectPythonPath(Context(project, sdk, pathMapper), module, shouldAddContentRoots, shouldAddSourceRoots, isDebug)
-
-private fun collectPythonPath(context: Context,
-                              module: Module?,
-                              shouldAddContentRoots: Boolean,
-                              shouldAddSourceRoots: Boolean,
-                              isDebug: Boolean): Collection<TargetEnvironmentFunction<String>> {
-  val pythonPath: MutableSet<TargetEnvironmentFunction<String>> = LinkedHashSet(
-    collectPythonPath(context,
-                      module,
-                      shouldAddContentRoots,
-                      shouldAddSourceRoots)
-  )
-  return pythonPath
-}
+                      shouldAddSourceRoots: Boolean
+): Collection<TargetEnvironmentFunction<String>> =
+  collectPythonPath(Context(project, sdk, pathMapper), module, shouldAddContentRoots, shouldAddSourceRoots)
 
 private fun collectPythonPath(context: Context,
                               module: Module?,

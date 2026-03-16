@@ -6,8 +6,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.actions.BasePlatformRefactoringAction
 import com.intellij.refactoring.actions.ExtractSuperActionBase
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtElement
 
+@K1Deprecation
 abstract class AbstractIntroduceAction : BasePlatformRefactoringAction() {
     init {
         setInjectedContext(true)

@@ -6,7 +6,7 @@ import de.plushnikov.intellij.plugin.LombokBundle;
 import icons.LombokIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class LombokConfigFileType extends LanguageFileType {
   public static final LombokConfigFileType INSTANCE = new LombokConfigFileType();

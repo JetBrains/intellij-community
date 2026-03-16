@@ -5,7 +5,9 @@ import com.intellij.openapi.vcs.checkout.CheckoutStrategy;
 
 import java.io.File;
 
-import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.*;
+import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.BRANCHES_NAME;
+import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.TAGS_NAME;
+import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.TRUNK_NAME;
 
 
 public class SvnTrunkCheckoutStrategy extends CheckoutStrategy {

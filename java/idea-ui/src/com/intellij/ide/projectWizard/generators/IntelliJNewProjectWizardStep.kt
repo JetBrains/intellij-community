@@ -21,13 +21,11 @@ import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PR
 import com.intellij.ide.wizard.setupProjectFromBuilder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
@@ -37,9 +35,16 @@ import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.UIBundle
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.whenItemSelectedFromUi
+import com.intellij.ui.dsl.builder.whenStateChangedFromUi
+import com.intellij.ui.dsl.builder.whenTextChangedFromUi
 import com.intellij.ui.layout.ValidationInfoBuilder
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
 
 abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) :
@@ -108,10 +113,6 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
         .onApply { logAddSampleCodeFinished(addSampleCode) }
     }
   }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("The onboarding tips generated unconditionally")
-  protected fun setupSampleCodeWithOnBoardingTipsUI(builder: Panel) = Unit
 
   protected fun setupModuleNameUI(builder: Panel) {
     builder.row(UIBundle.message("label.project.wizard.new.project.module.name")) {
@@ -217,22 +218,14 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   private fun configureSdk(project: Project, builder: ModuleBuilder) {
     if (!context.isCreatingNewProject) {
       // New module in an existing project: set module JDK
-      val isSameSdk = ProjectRootManager.getInstance(project).projectSdk?.name == jdkIntent?.name
+      val isSameSdk = ProjectRootManager.getInstance(project).projectSdk?.name == jdkIntent.name
       builder.moduleJdk = if (isSameSdk) null else context.projectJdk
-    }
-  }
-
-  private fun startJdkDownloadIfNeeded(module: Module) {
-    val sdkDownloadTask = sdkDownloadTask
-    if (sdkDownloadTask is JdkDownloadTask) {
-      // Download the SDK on project creation
-      module.project.service<JdkDownloadService>().scheduleDownloadJdk(sdkDownloadTask, module, context.isCreatingNewProject)
     }
   }
 
   fun setupProject(project: Project, builder: ModuleBuilder) {
     configureModuleBuilder(project, builder)
     setupProjectFromBuilder(project, builder)
-      ?.let(::startJdkDownloadIfNeeded)
+    project.service<JdkDownloadService>().scheduleDownloadSdk(context.projectJdk)
   }
 }

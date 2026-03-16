@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.util.PathUtil
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.EmptyHttpHeaders
@@ -12,8 +13,11 @@ import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
 import org.apache.http.client.utils.URIBuilder
 import org.jetbrains.ide.HttpRequestHandler
-import java.io.File
-import java.net.URL
+import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.readBytes
+import kotlin.io.path.toPath
 
 /**
  * "Web server" to serve Jupyter HTML
@@ -38,16 +42,17 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Set<Stri
      * Resources are in different folders when launched locally versus installation.
      * This method handles this difference; see build scripts.
      */
-    private fun getResource(javaClass: Class<*>, path: String): URL {
+    private fun getResource(javaClass: Class<*>, folderPath: String): Path {
       // After optimizations in PluginClassLoader, classLoader.getResource return null in debug,
       // so we have additional logic with PluginClassLoader.pluginDescriptor. This is only for debugging purposes.
-      var url = javaClass.classLoader.getResource(path)
-                ?: (javaClass.classLoader as? PluginAwareClassLoader)?.pluginDescriptor?.getPluginPath()?.normalize()?.resolve(path)?.toUri()?.toURL()
+      var path = javaClass.classLoader.getResource(folderPath)?.toURI()?.toPath()
+                 ?: (javaClass.classLoader as? PluginAwareClassLoader)?.pluginDescriptor?.getPluginPath()?.normalize()?.resolve(folderPath)
+                   ?.toUri()?.toPath()
 
       //Fixme Newest version of hack for split mode.
       // Frontend files "jupyter-web", is now not under lib folder, but directly under jupyter-plugin.
-      if (url.toString().contains("plugins/jupyter-plugin/lib/jupyter-web/")) {
-        url = URL(url.toString().replace("plugins/jupyter-plugin/lib/jupyter-web/", "plugins/jupyter-plugin/jupyter-web/"))
+      if (path != null && path.toCanonicalPath().contains("plugins/jupyter-plugin/lib/jupyter-web/")) {
+        path = Path(path.toCanonicalPath().replace("plugins/jupyter-plugin/lib/jupyter-web/", "plugins/jupyter-plugin/jupyter-web/"))
       }
 
       // In debug when we running remote-front via 'split (dev-build)' run config from IDE, we have:
@@ -55,19 +60,27 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Set<Stri
       // = out/classes/production/intellij.jupyter.plugin or out/classes/production/intellij.notebooks.plugin
       // PathUtil.getJarPathForClass(javaClass) = out/classes/production/intellij.jupyter.core
       // But our resources located not in out/classes but in out/dev-run
-      else if (url.toString().contains("out/classes/production/intellij.jupyter.plugin")) {
-        url = URL(url.toString().replace("out/classes/production/intellij.jupyter.plugin", "out/dev-run/Python/plugins/jupyter-plugin"))
+      else if (path != null && path.toCanonicalPath().contains("out/classes/production/intellij.jupyter.plugin")) {
+        path = Path(path.toCanonicalPath()
+                      .replace("out/classes/production/intellij.jupyter.plugin", "out/dev-run/Python/plugins/jupyter-plugin"))
       }
 
-      if (url != null) {
-        return url
+      if (path?.exists() == true) {
+        return path
       }
 
-      val myPath = PathUtil.getJarPathForClass(javaClass)
+      val jarPath = Path(PathUtil.getJarPathForClass(javaClass))
       // static/css/.. <--our resource
       // lib/python.jar <--getJarPathForClass
-      val result = File(File(myPath).parentFile.parentFile, path)
-      return result.toURI().toURL()
+
+      val parentFromLibs = jarPath.parent?.parent?.resolve(folderPath)?.takeIf { it.exists() }
+      if (parentFromLibs != null)
+        return parentFromLibs
+      val parentFromLibsModules = jarPath.parent?.parent?.parent?.resolve(folderPath)?.takeIf { it.exists() }
+      if (parentFromLibsModules != null)
+        return parentFromLibsModules
+
+      throw IllegalStateException("Cannot find resource: $folderPath based on $jarPath")
     }
   }
 

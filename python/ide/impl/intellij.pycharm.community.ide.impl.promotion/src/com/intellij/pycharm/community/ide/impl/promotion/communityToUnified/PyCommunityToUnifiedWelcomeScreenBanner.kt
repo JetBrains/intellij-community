@@ -79,7 +79,7 @@ internal class PyCommunityToUnifiedWelcomeScreenBanner : PyCommunityToUnifiedWel
       row {
         button(PyPromoSharedComponents.updateNow) {
           PyCommunityUnifiedPromoFusCollector.WelcomeScreenBannerClicked.log(PyCommunityUnifiedPromoFusCollector.BannerControl.UPDATE_NOW)
-          PyCommunityToUnifiedShowPromoActivity.launchUpdateDialog(null)
+          PyCommunityToUnifiedShowPromoActivity.Helper.launchUpdateDialog(null)
         }.applyToComponent { putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true) }
           .focused()
           .customize(customGaps = UnscaledGaps(right = 10))

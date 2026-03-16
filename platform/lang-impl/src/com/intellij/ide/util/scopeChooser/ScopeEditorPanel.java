@@ -6,7 +6,15 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,14 +31,44 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyUISettings;
-import com.intellij.packageDependencies.ui.*;
-import com.intellij.psi.search.scope.packageSet.*;
-import com.intellij.ui.*;
+import com.intellij.packageDependencies.ui.BackgroundTreeModel;
+import com.intellij.packageDependencies.ui.FileTreeModelBuilder;
+import com.intellij.packageDependencies.ui.Marker;
+import com.intellij.packageDependencies.ui.PackageDependenciesNode;
+import com.intellij.packageDependencies.ui.PackageTreeExpansionMonitor;
+import com.intellij.packageDependencies.ui.PanelProgressIndicator;
+import com.intellij.packageDependencies.ui.PatternDialectProvider;
+import com.intellij.packageDependencies.ui.RootNode;
+import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
+import com.intellij.packageDependencies.ui.TreeModel;
+import com.intellij.psi.search.scope.packageSet.ComplementPackageSet;
+import com.intellij.psi.search.scope.packageSet.CompoundPackageSet;
+import com.intellij.psi.search.scope.packageSet.IntersectionPackageSet;
+import com.intellij.psi.search.scope.packageSet.InvalidPackageSet;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.PackageSetBase;
+import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
+import com.intellij.psi.search.scope.packageSet.UnionPackageSet;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.DarculaColors;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.SmartExpander;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -44,19 +82,41 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.CancellablePromise;
 
-import javax.swing.*;
-import javax.swing.event.*;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTree;
+import javax.swing.SwingUtilities;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -64,15 +124,15 @@ import java.util.concurrent.TimeoutException;
 
 public final class ScopeEditorPanel implements Disposable {
   private static final @NotNull Logger LOG = Logger.getInstance(ScopeEditorPanel.class);
-  private JPanel myButtonsPanel;
-  private RawCommandLineEditor myPatternField;
-  private JPanel myTreeToolbar;
+  private final JPanel myButtonsPanel;
+  private final RawCommandLineEditor myPatternField;
+  private final JPanel myTreeToolbar;
   private final Tree myPackageTree;
   private @Nullable Invoker myPackageTreeInvoker;
-  private JPanel myPanel;
-  private JPanel myTreePanel;
-  private JLabel myMatchingCountLabel;
-  private JPanel myLegendPanel;
+  private final JPanel myPanel;
+  private final JPanel myTreePanel;
+  private final JLabel myMatchingCountLabel;
+  private final JPanel myLegendPanel;
 
   private final Project myProject;
   private final TreeExpansionMonitor<?> myTreeExpansionMonitor;
@@ -83,13 +143,13 @@ public final class ScopeEditorPanel implements Disposable {
   private @Nls String myErrorMessage;
   private Future<?> myUpdateAlarm = CompletableFuture.completedFuture(null);
 
-  private JLabel myCaretPositionLabel;
+  private final JLabel myCaretPositionLabel;
   private int myCaretPosition = 0;
-  private JPanel myMatchingCountPanel;
-  private JPanel myPositionPanel;
-  private JLabel myRecursivelyIncluded;
-  private JLabel myPartiallyIncluded;
-  private JBLabel myPatternLegend;
+  private final JPanel myMatchingCountPanel;
+  private final JPanel myPositionPanel;
+  private final JLabel myRecursivelyIncluded;
+  private final JLabel myPartiallyIncluded;
+  private final JBLabel myPatternLegend;
   private PanelProgressIndicator myCurrentProgress;
   private NamedScopesHolder myHolder;
   private Boolean myRebuildRequired = null; //updated in EDT only
@@ -105,12 +165,102 @@ public final class ScopeEditorPanel implements Disposable {
 
     @Topic.ProjectLevel
     Topic<SettingsChangedListener> TOPIC = new Topic<>(SettingsChangedListener.class, Topic.BroadcastDirection.TO_CHILDREN);
+
     void settingsChanged();
   }
 
   public ScopeEditorPanel(final @NotNull Project project, @NotNull NamedScopesHolder holder) {
     myProject = project;
     myHolder = holder;
+    {
+      myPatternField = new RawCommandLineEditor(text -> Arrays.asList(text.split("\\|\\|")),
+                                                strings -> StringUtil.join(strings, "||"));
+    }
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myPanel = new JPanel();
+      myPanel.setLayout(new GridLayoutManager(4, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myTreePanel = new JPanel();
+      myPanel.add(myTreePanel, new GridConstraints(1, 0, 3, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                   new Dimension(-1, 150), null, null, 0, false));
+      myButtonsPanel = new JPanel();
+      myButtonsPanel.setLayout(new BorderLayout(0, 0));
+      myPanel.add(myButtonsPanel, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                      GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                      0, false));
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(3, 3, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(panel1, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, 1,
+                                              GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JPanel panel2 = new JPanel();
+      panel2.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+      panel1.add(panel2, new GridConstraints(2, 0, 1, 3, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, 1,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
+                                             0, false));
+      myTreeToolbar = new JPanel();
+      panel2.add(myTreeToolbar, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, 1,
+                                                    GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myMatchingCountPanel = new JPanel();
+      myMatchingCountPanel.setLayout(new BorderLayout(0, 0));
+      panel2.add(myMatchingCountPanel, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                           null, null, null, 0, false));
+      myMatchingCountLabel = new JLabel();
+      myMatchingCountLabel.setHorizontalAlignment(4);
+      myMatchingCountLabel.setHorizontalTextPosition(4);
+      myMatchingCountLabel.setText("");
+      myMatchingCountPanel.add(myMatchingCountLabel, BorderLayout.CENTER);
+      final JLabel label1 = new JLabel();
+      this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages/IdeBundle", "label.scope.pattern"));
+      panel1.add(label1,
+                 new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myPositionPanel = new JPanel();
+      myPositionPanel.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myPositionPanel.setVisible(false);
+      panel1.add(myPositionPanel, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                      null, null, 0, false));
+      myCaretPositionLabel = new JLabel();
+      myCaretPositionLabel.setText("");
+      myCaretPositionLabel.setVisible(false);
+      myPositionPanel.add(myCaretPositionLabel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                    GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED,
+                                                                    null, null, null, 0, false));
+      panel1.add(myPatternField, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myPatternLegend = new JBLabel();
+      panel1.add(myPatternLegend, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final Spacer spacer1 = new Spacer();
+      myPanel.add(spacer1, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                               GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+      myLegendPanel = new JPanel();
+      myLegendPanel.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(myLegendPanel, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                     GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                     0, false));
+      myRecursivelyIncluded = new JLabel();
+      this.$$$loadLabelText$$$(myRecursivelyIncluded,
+                               this.$$$getMessageFromBundle$$$("messages/IdeBundle", "scope.editor.legend.recursively.included.label"));
+      myLegendPanel.add(myRecursivelyIncluded, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                   GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                                   null, null, 0, false));
+      myPartiallyIncluded = new JLabel();
+      this.$$$loadLabelText$$$(myPartiallyIncluded,
+                               this.$$$getMessageFromBundle$$$("messages/IdeBundle", "scope.editor.legend.partly.included.label"));
+      myLegendPanel.add(myPartiallyIncluded, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                 GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                                 null, null, 0, false));
+    }
 
     myPackageTree = new Tree(new RootNode(project));
 
@@ -127,8 +277,9 @@ public final class ScopeEditorPanel implements Disposable {
     myTreeMarker = new Marker() {
       @Override
       public boolean isMarked(@NotNull VirtualFile file) {
-        return myCurrentScope != null && (myCurrentScope instanceof PackageSetBase ? ((PackageSetBase)myCurrentScope).contains(file, project, myHolder)
-                                                                                   : myCurrentScope.contains(PackageSetBase.getPsiFile(file, myProject), myHolder));
+        return myCurrentScope != null &&
+               (myCurrentScope instanceof PackageSetBase ? ((PackageSetBase)myCurrentScope).contains(file, project, myHolder)
+                                                         : myCurrentScope.contains(PackageSetBase.getPsiFile(file, myProject), myHolder));
       }
     };
 
@@ -197,7 +348,54 @@ public final class ScopeEditorPanel implements Disposable {
       }
     });
   }
-  
+
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myPanel; }
+
   @Override
   public void dispose() {
     myIsDisposed = true;
@@ -219,7 +417,7 @@ public final class ScopeEditorPanel implements Disposable {
     return myPanel;
   }
 
-  public JPanel getTreePanel(){
+  public JPanel getTreePanel() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(myTreePanel, BorderLayout.CENTER);
     panel.add(myLegendPanel, BorderLayout.SOUTH);
@@ -252,15 +450,10 @@ public final class ScopeEditorPanel implements Disposable {
     updateStatusMessage();
   }
 
-  private void createUIComponents() {
-    myPatternField = new RawCommandLineEditor(text -> Arrays.asList(text.split("\\|\\|")),
-                                              strings -> StringUtil.join(strings, "||"));
-  }
-
   private static boolean invalidScopeInside(PackageSet currentScope) {
     if (currentScope instanceof InvalidPackageSet) return true;
     if (currentScope instanceof CompoundPackageSet) {
-      return ContainerUtil.or(((CompoundPackageSet)currentScope).getSets(), s->invalidScopeInside(s));
+      return ContainerUtil.or(((CompoundPackageSet)currentScope).getSets(), s -> invalidScopeInside(s));
     }
     if (currentScope instanceof ComplementPackageSet) {
       return invalidScopeInside(((ComplementPackageSet)currentScope).getComplementarySet());
@@ -435,13 +628,15 @@ public final class ScopeEditorPanel implements Disposable {
 
     if (current instanceof UnionPackageSet) {
       PackageSet[] sets = ((UnionPackageSet)current).getSets();
-      PackageSet[] processed = ContainerUtil.mapNotNull(sets, s -> processComplementaryScope(s, added, checkComplementSet, append), new PackageSet[0]);
+      PackageSet[] processed =
+        ContainerUtil.mapNotNull(sets, s -> processComplementaryScope(s, added, checkComplementSet, append), new PackageSet[0]);
       return processed.length == 0 ? null : UnionPackageSet.create(processed);
     }
 
     if (current instanceof IntersectionPackageSet) {
       PackageSet[] sets = ((IntersectionPackageSet)current).getSets();
-      PackageSet[] processed = ContainerUtil.mapNotNull(sets, s -> processComplementaryScope(s, added, checkComplementSet, append), new PackageSet[0]);
+      PackageSet[] processed =
+        ContainerUtil.mapNotNull(sets, s -> processComplementaryScope(s, added, checkComplementSet, append), new PackageSet[0]);
       return processed.length == 0 ? null : IntersectionPackageSet.create(processed);
     }
 
@@ -505,7 +700,7 @@ public final class ScopeEditorPanel implements Disposable {
       }
     }
   }
-  
+
   private void rebuild(final boolean updateText, final @Nullable Runnable runnable, final boolean requestFocus, final int delayMillis) {
     ThreadingAssertions.assertEventDispatchThread();
     myRebuildRequired = false;
@@ -627,7 +822,7 @@ public final class ScopeEditorPanel implements Disposable {
     return new MyPanelProgressIndicator(requestFocus);
   }
 
-  public void cancelCurrentProgress(){
+  public void cancelCurrentProgress() {
     ThreadingAssertions.assertEventDispatchThread();
     myUpdateAlarm.cancel(false);
     if (myCurrentProgress != null) {
@@ -644,8 +839,8 @@ public final class ScopeEditorPanel implements Disposable {
   }
 
   public String getPatternText() {
-     return myPatternField.getText();
-   }
+    return myPatternField.getText();
+  }
 
   public void reset(PackageSet packageSet, @Nullable Runnable runnable) {
     myCurrentScope = packageSet;
@@ -702,7 +897,7 @@ public final class ScopeEditorPanel implements Disposable {
     }
   }
 
-  private static final class ChooseScopeTypeAction extends ComboBoxAction{
+  private static final class ChooseScopeTypeAction extends ComboBoxAction {
     private final Runnable myUpdate;
 
     ChooseScopeTypeAction(final Runnable update) {
@@ -819,7 +1014,8 @@ public final class ScopeEditorPanel implements Disposable {
     private final @NotNull Consumer<? super List<PackageSet>> consumer;
     private List<PackageSet> selection;
 
-    private MyAction(@NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String key, @NotNull Consumer<? super List<PackageSet>> consumer) {
+    private MyAction(@NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String key,
+                     @NotNull Consumer<? super List<PackageSet>> consumer) {
       super(IdeBundle.message(key));
       setEnabled(false);
       this.consumer = consumer;

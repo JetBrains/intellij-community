@@ -24,7 +24,7 @@ import javax.swing.JComponent
 
 private enum class IftDumpMode { TEXT_ONLY, CODE_POSITIONS }
 
-private class DumpFeaturesTrainerText : DumbAwareAction() {
+internal class DumpFeaturesTrainerText : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 

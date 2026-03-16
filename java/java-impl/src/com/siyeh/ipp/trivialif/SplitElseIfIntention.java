@@ -17,7 +17,13 @@ package com.siyeh.ipp.trivialif;
 
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MCIntention;

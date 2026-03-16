@@ -10,7 +10,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;

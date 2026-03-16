@@ -17,7 +17,12 @@ package com.intellij.java.psi;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;

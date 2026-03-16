@@ -7,7 +7,11 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.*;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DClassElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DRootElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
 
 import java.util.Collection;

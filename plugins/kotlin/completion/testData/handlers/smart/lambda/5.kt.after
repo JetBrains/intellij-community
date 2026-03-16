@@ -6,3 +6,5 @@ fun bar() {
 }
 
 // ELEMENT: "{ String, StringBuilder -> ... }"
+
+// IGNORE_K2

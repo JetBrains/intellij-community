@@ -15,7 +15,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -32,7 +36,24 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyAugAssignmentStatement;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFStringFragment;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFormattedStringElement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyQuotesUtil;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStringElement;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
@@ -41,7 +62,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dennis.Ushakov
@@ -240,7 +265,7 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
 
     PsiElement[] refsToInline;
     if (replaceJustOneOccurrence && refExpr != null) {
-      refsToInline = new PsiElement[] { refExpr };
+      refsToInline = new PsiElement[]{refExpr};
     }
     else {
       refsToInline = PyDefUseUtil.getPostRefs(containerBlock, local, getObject(def));
@@ -276,7 +301,8 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
 
     for (final PsiElement ref : refsToInline) {
       final List<PsiElement> elems = new ArrayList<>();
-      final List<Instruction> latestDefs = PyDefUseUtil.getLatestDefs(containerBlock, local.getName(), ref, false, false, TypeEvalContext.codeInsightFallback(project));
+      final List<Instruction> latestDefs =
+        PyDefUseUtil.getLatestDefs(containerBlock, local.getName(), ref, false, false, TypeEvalContext.codeInsightFallback(project));
       for (Instruction i : latestDefs) {
         elems.add(i.getElement());
       }
@@ -384,7 +410,8 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
                                                                   PyTargetExpression local, Project project) {
     if (expr != null) {
       try {
-        final List<Instruction> candidates = PyDefUseUtil.getLatestDefs(containerBlock, local.getName(), expr, true, true, TypeEvalContext.codeInsightFallback(project));
+        final List<Instruction> candidates =
+          PyDefUseUtil.getLatestDefs(containerBlock, local.getName(), expr, true, true, TypeEvalContext.codeInsightFallback(project));
         if (candidates.size() == 1) {
           final PyStatement expression = getAssignmentByLeftPart((PyElement)candidates.get(0).getElement());
           return Pair.create(expression, false);

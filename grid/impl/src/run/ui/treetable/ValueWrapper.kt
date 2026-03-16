@@ -1,6 +1,10 @@
 package com.intellij.database.run.ui.treetable
 
-import com.intellij.database.datagrid.*
+import com.intellij.database.datagrid.DataGrid
+import com.intellij.database.datagrid.GridColumn
+import com.intellij.database.datagrid.GridHelper
+import com.intellij.database.datagrid.GridRow
+import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.extractors.toJson
 import com.intellij.database.run.ReservedCellValue
 import com.intellij.database.run.ui.DataAccessType
@@ -97,7 +101,7 @@ internal class ArrayWrapper(private val v: Array<Any?>) : LazyValueWrapper<Simpl
 internal class ColumnsWrapper(private val grid: DataGrid, private val rowIdx: ModelIndex<GridRow>) : LazyValueWrapper<Node>() {
   override fun createValue(): String {
     val formatter = grid.objectFormatter
-    val mode = GridHelper.get(grid).getDefaultMode()
+    val mode = GridHelper.get(grid).defaultMode
     return children()
       .take(MAX_NUMBER_OF_VALUES_TO_SHOW)
       .joinToString(prefix = "{", postfix = "}") { (column, value) ->

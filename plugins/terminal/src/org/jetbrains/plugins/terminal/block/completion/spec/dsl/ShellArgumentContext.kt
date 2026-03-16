@@ -29,28 +29,35 @@ sealed interface ShellArgumentContext {
   fun displayName(supplier: Supplier<@Nls String>)
 
   /**
-   * Whether this argument is not required to have a value.
+   * Specifies that this argument is not required to have a value.
    *
-   * False by default (the argument is required).
+   * By default, the argument is required.
    */
+  fun optional()
+
+  @Deprecated("Please use optional() method instead")
   var isOptional: Boolean
 
   /**
    * Specifies that this argument can be repeated infinitely.
    * For example, `git add` takes a variadic argument of filenames.
    *
-   * False by default.
+   * By default, the argument value can be specified only once.
    */
+  fun variadic()
+
+  @Deprecated("Please use variadic() method instead")
   var isVariadic: Boolean
 
   /**
-   * Specifies that the options can be placed between values of the variadic argument.
-   * For example, it is true for `git add` command.
-   * We can write like this: `git add file1 file2 -v file3`. Where `-v` is the option.
+   * Specifies that the options can't be placed between values of the variadic argument.
+   * By default, this behavior is allowed.
    *
-   * True by default.
+   * For example, it is not allowed for `echo` command.
+   * If we write: `echo hello -n world`, `-n` will be considered as a variadic argument value rather than an option.
+   * So, we should write `echo -n hello world` instead.
    */
-  var optionsCanBreakVariadicArg: Boolean
+  fun optionsCantBreakVariadicArg()
 
   /**
    * Generate suggestions for the argument values.
@@ -58,11 +65,12 @@ sealed interface ShellArgumentContext {
    * If you need custom caching logic or don't need it at all,
    * use another [suggestions] method overload and provide the ready to use [ShellRuntimeDataGenerator].
    *
-   * Use [helper function][org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion] to create [ShellCompletionSuggestion].
+   * Use [helper function][org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion]
+   * to create [ShellCompletionSuggestion] objects.
    *
    * @param content is a suspending function that will be executed at the moment of requesting the argument value suggestions.
    * Inside [content] you can access the values of [ShellRuntimeContext] and generate the list of suggestions depending on
-   * current shell directory, typed prefix, project and so on.
+   * current shell directory, typed prefix, project, and so on.
    */
   fun suggestions(content: suspend (ShellRuntimeContext) -> List<ShellCompletionSuggestion>)
 
@@ -82,6 +90,11 @@ sealed interface ShellArgumentContext {
    * Provide the hardcoded values for the argument.
    * It creates a [ShellCompletionSuggestion] for each of the provided [names] with
    * [ARGUMENT][com.intellij.terminal.completion.spec.ShellSuggestionType.ARGUMENT] suggestion type.
+   *
+   * @param names the names of the suggestions.
+   * Name is used to filter the completion popup to show only relevant items.
+   * Also, it is inserted when chosen from the popup, if [ShellSuggestionContext.insertValue] is not specified.
+   * Also, it is shown in the completion popup, if [ShellCompletionSuggestion.displayName] is not specified.
    */
   fun suggestions(vararg names: String)
 }

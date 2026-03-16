@@ -19,15 +19,23 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.*
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.ProjectTrackingRule
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.createOrLoadProject
 import com.intellij.util.io.sanitizeFileName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.Rule
+import org.junit.rules.DisableOnDebug
 import org.junit.rules.TestName
+import org.junit.rules.TestRule
+import org.junit.rules.Timeout
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.time.Duration.Companion.seconds
 
@@ -36,6 +44,8 @@ abstract class NavigationTestBase {
   @JvmField @Rule val testName = TestName()
   @JvmField @Rule val projectTrackingRule = ProjectTrackingRule()
   @JvmField @Rule internal val busConnection = RecentProjectManagerListenerRule()
+
+  @JvmField @Rule val timeout: TestRule = DisableOnDebug(Timeout(10, TimeUnit.SECONDS))
 
   lateinit var project: Project
 

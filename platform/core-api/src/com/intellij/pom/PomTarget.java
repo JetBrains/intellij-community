@@ -32,6 +32,8 @@ package com.intellij.pom;
  * Prefer using it in new code.
  * <p>
  * IntelliJ Program Object Model must not be confused with <a href="https://maven.apache.org/pom.html">Maven's Project Object Model</a>.
+ *
+ * @see PomDeclarationSearcher
  */
 public interface PomTarget extends Navigatable {
   PomTarget[] EMPTY_ARRAY = new PomTarget[0];

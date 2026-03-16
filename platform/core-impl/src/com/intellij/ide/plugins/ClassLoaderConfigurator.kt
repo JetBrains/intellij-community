@@ -16,7 +16,8 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.function.BiFunction
 import java.util.function.Function
 
@@ -147,7 +148,6 @@ class ClassLoaderConfigurator(
                                       || module.moduleId.name == "intellij.rider.plugins.unity.test.cases"
                                       || module.moduleId.name == "intellij.rider.plugins.unreal.link.test.cases"
                                       || module.moduleId.name == "intellij.rider.test.cases.qodana"
-                                      || module.moduleId.name == "intellij.rider.test.cases.supplementary"
                                       || module.moduleId.name == "intellij.rider.test.cases.consoles"
                                       || module.moduleId.name == "intellij.rider.test.cases.rdct")
       module.pluginClassLoader = PluginClassLoader(
@@ -310,22 +310,17 @@ class ClassLoaderConfigurator(
   }
 
   private fun createPluginClassLoader(
-    module: IdeaPluginDescriptorImpl,
+    module: PluginMainDescriptor,
     dependencies: Array<PluginModuleDescriptor>,
     classPath: ClassPath,
     libDirectories: List<Path>
   ): PluginClassLoader {
-    val resolveScopeManager: ResolveScopeManager? = if (module is PluginMainDescriptor) {
-       if (module.pluginId.idString == "com.intellij.diagram") {
-        // multiple packages - intellij.diagram and intellij.diagram.impl modules
-        createScopeWithExtraPackage("com.intellij.diagram.")
-      }
-      else {
-        createPluginDependencyAndContentBasedScope(descriptor = module, pluginSet = pluginSet)
-      }
+    val resolveScopeManager: ResolveScopeManager? = if (module.pluginId.idString == "com.intellij.diagram") {
+      // multiple packages - intellij.diagram and intellij.diagram.impl modules
+      createScopeWithExtraPackage("com.intellij.diagram.")
     }
     else {
-      createModuleResolveScopeManager()
+      createPluginDependencyAndContentBasedScope(descriptor = module, pluginSet = pluginSet)
     }
     return PluginClassLoader(classPath = classPath,
                              parents = dependencies,

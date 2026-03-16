@@ -7,7 +7,12 @@ import com.intellij.psi.util.QualifiedName
 import com.intellij.psi.util.siblings
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PythonFileType
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyEmptyExpression
+import com.jetbrains.python.psi.PyExpressionStatement
+import com.jetbrains.python.psi.PyNumericLiteralExpression
+import com.jetbrains.python.psi.PyQualifiedExpression
+import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.impl.ResolveResultList
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -30,18 +35,19 @@ class PyIPythonBuiltinReferenceResolveProvider : PyReferenceResolveProvider {
       IPythonBuiltinConstants.TRIPLE_UNDERSCORE -> return resolveOut(element, context)
     }
 
-     if (name in IPythonBuiltinConstants.MAGICS_LIST
-         && element.parent is PyExpressionStatement
-         && isAutomagicOn(element)) {
+    if (name in IPythonBuiltinConstants.MAGICS_LIST
+        && element.parent is PyExpressionStatement
+        && isAutomagicOn(element)
+    ) {
       return resolveMagics(element, context)
     }
     return emptyList()
   }
 
   /**
-    We resolve IPython built-ins in two cases:
-      1) in PyCharm PRO in Jupyter files only
-      2) in DataSpell in Python files and Jupyter files
+  We resolve IPython built-ins in two cases:
+  1) in PyCharm PRO in Jupyter files only
+  2) in DataSpell in Python files and Jupyter files
    */
   private fun needToResolve(context: TypeEvalContext): Boolean {
     val psiFile = context.origin ?: return false
@@ -71,14 +77,14 @@ class PyIPythonBuiltinReferenceResolveProvider : PyReferenceResolveProvider {
 
   private fun resolveIn(element: PyQualifiedExpression, context: TypeEvalContext): List<RatedResolveResult> {
     val historyClass = getPyClassByDottedPath(IPythonBuiltinConstants.HISTORY_MANAGER_DOTTED_PATH,
-                                            fromFoothold(element)) ?: return emptyList()
+                                              fromFoothold(element)) ?: return emptyList()
     val inHistDictPsi = historyClass.findClassAttribute(IPythonBuiltinConstants.IN_HIST_DICT, false, context)
     return ResolveResultList.to(inHistDictPsi)
   }
 
   private fun resolveOut(element: PyQualifiedExpression, context: TypeEvalContext): List<RatedResolveResult> {
     val historyClass = getPyClassByDottedPath(IPythonBuiltinConstants.HISTORY_MANAGER_DOTTED_PATH,
-                                             fromFoothold(element)) ?: return emptyList()
+                                              fromFoothold(element)) ?: return emptyList()
     val outHistDictPsi = historyClass.findClassAttribute(IPythonBuiltinConstants.OUT_HIST_DICT, false, context)
     return ResolveResultList.to(outHistDictPsi)
   }
@@ -126,11 +132,11 @@ class PyIPythonBuiltinReferenceResolveProvider : PyReferenceResolveProvider {
       if (sib is PyExpressionStatement
           && sib.nextSibling is PsiWhiteSpace
           && sib.children.let {
-            it.size == 2 && it.first() is PyReferenceExpression && it.last() is PsiErrorElement && it.first().text == "automagic"
-          }
+          it.size == 2 && it.first() is PyReferenceExpression && it.last() is PsiErrorElement && it.first().text == "automagic"
+        }
           && sib.nextSibling.nextSibling.let {
-            it is PyExpressionStatement && it.children.singleOrNull() is PyNumericLiteralExpression
-          }
+          it is PyExpressionStatement && it.children.singleOrNull() is PyNumericLiteralExpression
+        }
       ) {
         if (sib.nextSibling.nextSibling.text == "1") {
           return true

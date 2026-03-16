@@ -13,7 +13,7 @@ import org.intellij.plugins.xsltDebugger.XsltDebuggerBundle;
 import org.intellij.plugins.xsltDebugger.ui.actions.HideWhitespaceAction;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public final class StructureTabComponent extends AbstractTabComponent {
   private static final Key<StructureTabComponent> KEY = Key.create("STRUCTURE");

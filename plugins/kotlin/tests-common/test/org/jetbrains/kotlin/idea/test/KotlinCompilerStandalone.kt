@@ -20,7 +20,7 @@ import java.lang.ref.SoftReference
 import java.net.URLClassLoader
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlin.io.path.createTempDirectory

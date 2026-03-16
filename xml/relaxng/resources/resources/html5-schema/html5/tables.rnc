@@ -221,6 +221,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	tables.attrs.headers?
 #		&	tables.attrs.alignment
 		&	(	common.attrs.aria.implicit.cell
+			|	common.attrs.aria.implicit.gridcell
 			|	common.attrs.aria
 			)?
 		)

@@ -13,11 +13,26 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiAnchor;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.stubs.LanguageStubDescriptor;
@@ -37,17 +52,17 @@ public class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPo
 
   private Reference<E> myElement;
   private final SmartPointerElementInfo myElementInfo;
-  protected final SmartPointerManagerImpl myManager;
+  protected final SmartPointerManagerEx myManager;
   private byte myReferenceCount = 1;
   @Nullable SmartPointerTracker.PointerReference pointerReference;
 
-  SmartPsiElementPointerImpl(@NotNull SmartPointerManagerImpl manager,
+  SmartPsiElementPointerImpl(@NotNull SmartPointerManagerEx manager,
                              @NotNull E element,
                              @Nullable PsiFile containingFile,
                              boolean forInjected) {
     this(manager, element, createElementInfo(manager, element, containingFile, forInjected));
   }
-  SmartPsiElementPointerImpl(@NotNull SmartPointerManagerImpl manager,
+  SmartPsiElementPointerImpl(@NotNull SmartPointerManagerEx manager,
                              @NotNull E element,
                              @NotNull SmartPointerElementInfo elementInfo) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -136,7 +151,7 @@ public class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPo
     return myElementInfo.getPsiRange(myManager);
   }
 
-  private static @NotNull <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull SmartPointerManagerImpl manager,
+  private static @NotNull <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull SmartPointerManagerEx manager,
                                                                                            @NotNull E element,
                                                                                            @Nullable PsiFile containingFile,
                                                                                            boolean forInjected) {
@@ -201,7 +216,7 @@ public class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPo
 
     Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
     if (document != null &&
-        ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getSynchronizer().isDocumentAffectedByTransactions(document)) {
+        ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(project)).getSynchronizer().isDocumentAffectedByTransactions(document)) {
       LOG.error("Smart pointers must not be created during PSI changes");
     }
 

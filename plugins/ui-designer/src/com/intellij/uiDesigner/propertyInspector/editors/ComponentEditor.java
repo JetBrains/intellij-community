@@ -9,7 +9,8 @@ import com.intellij.uiDesigner.propertyInspector.renderers.ComponentRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 
 

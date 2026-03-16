@@ -4,7 +4,9 @@ package com.intellij.internal.statistics.serialization
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils
 import com.intellij.testFramework.PlatformTestUtil
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.io.File

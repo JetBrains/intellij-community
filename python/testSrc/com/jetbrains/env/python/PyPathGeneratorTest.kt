@@ -15,7 +15,7 @@ import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.run.collectPythonPath
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.tools.sdkTools.SdkCreationType
-import junit.framework.TestCase.*
+import junit.framework.TestCase.assertNotNull
 import org.junit.Test
 
 class PyPathGeneratorTest : PyEnvTestCase() {
@@ -58,13 +58,13 @@ class PyPathGeneratorTest : PyEnvTestCase() {
         }
 
         // Old (pre-target) API
-        var paths = PythonCommandLineState.collectPythonPath(module, sdkHome, true, true, false)
+        var paths = PythonCommandLineState.collectPythonPath(module, true, true)
         assertContains(expected = false, paths = paths, file = myFile!!)
         assertContains(paths = paths, file = myDir!!)
 
         // New (target) API
         val env = LocalTargetEnvironmentRequest().prepareEnvironment(TargetProgressIndicator.EMPTY)
-        paths = collectPythonPath(myFixture.project, module, sdkHome, null, true, true, false)
+        paths = collectPythonPath(myFixture.project, module, sdkHome, null, true, true)
           .map { it.apply(env) }
         assertContains(expected = false, paths = paths, file = myFile!!)
         assertContains(paths = paths, file = myDir!!)

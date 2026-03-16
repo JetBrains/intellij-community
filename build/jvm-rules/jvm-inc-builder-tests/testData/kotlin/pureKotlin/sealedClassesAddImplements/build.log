@@ -1,0 +1,21 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_sealedClassesAddImplements-a.kotlin_module
+  test/B.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/sealedClassesAddImplements/a/B.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_sealedClassesAddImplements-a.kotlin_module
+  test/A.class
+  test/B.class
+  test/Base.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/sealedClassesAddImplements/a/A.kt
+  kotlin/pureKotlin/sealedClassesAddImplements/a/B.kt
+  kotlin/pureKotlin/sealedClassesAddImplements/a/Base.kt
+End of files
+------------------------------------------
+Exit code: OK

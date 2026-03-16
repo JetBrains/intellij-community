@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.platform.welcomeScreen.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "welcomeScreen-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "welcomeScreen-impl",
+  module_name = "intellij.platform.welcomeScreen.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":welcomeScreen-impl_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/extensions",
+    "//platform/ide-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/project-frame",
+    "//platform/welcome-screen",
+    "//platform/util",
+    "//platform/util:util-ui",
+  ]
+)
+### auto-generated section `build intellij.platform.welcomeScreen.impl` end

@@ -10,8 +10,6 @@ import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 import com.intellij.workspaceModel.codegen.impl.writer.fields.*
 
 fun ObjClass<*>.generateMutableCode(reporter: ProblemReporter): String = lines {
-  checkSuperTypes(this@generateMutableCode, reporter)
-  checkSymbolicId(this@generateMutableCode, reporter)
   if (additionalAnnotations.isNotEmpty()) {
     line(additionalAnnotations)
   }
@@ -20,12 +18,13 @@ fun ObjClass<*>.generateMutableCode(reporter: ProblemReporter): String = lines {
   val superBuilders = superTypes.filterIsInstance<ObjClass<*>>().filter { !it.isStandardInterface }.joinToString {
     ", ${it.javaBuilderName}<$typeParameter>"
   }
-  val header = "$generatedCodeVisibilityModifier interface $defaultJavaBuilderName$typeDeclaration: ${WorkspaceEntity.Builder}<$typeParameter>$superBuilders"
+  val header = "${generatedCodeVisibilityModifier}interface $defaultJavaBuilderName$typeDeclaration: ${WorkspaceEntity.Builder}<$typeParameter>$superBuilders"
 
   section(header) {
-    list(allFields.noSymbolicId()) {
-      checkProperty(this, reporter)
-      getWsBuilderApi(this@generateMutableCode)
+    for (field in allFields.noSymbolicId()) {
+      checkProperty(field, reporter)
+      if (reporter.hasErrors()) return@generateMutableCode ""
+      line(field.getWsBuilderApi(this@generateMutableCode))
     }
   }
 }
@@ -43,7 +42,7 @@ fun checkSuperTypes(objClass: ObjClass<*>, reporter: ProblemReporter) {
   }
 }
 
-private fun checkSymbolicId(objClass: ObjClass<*>, reporter: ProblemReporter) {
+fun checkSymbolicId(objClass: ObjClass<*>, reporter: ProblemReporter) {
   if (!objClass.isEntityWithSymbolicId) return
   if (objClass.openness == ObjClass.Openness.abstract) return
   if (objClass.fields.none { it.name == "symbolicId" }) {
@@ -120,9 +119,9 @@ fun ObjClass<*>.generateEntityTypeObject(): String = lines {
     if (mandatoryFields.isNotEmpty()) {
       line("operator fun invoke(")
       mandatoryFields.forEach { field ->
-        line(" ".repeat(this.indentSize) + "${field.name}: ${field.valueType.javaType},")
+        line("${field.name}: ${field.valueType.javaType},")
       }
-      line(" ".repeat(this.indentSize) + "init: ($defaultJavaBuilderName$builderGeneric.() -> Unit)? = null,")
+      line("init: ($defaultJavaBuilderName$builderGeneric.() -> Unit)? = null,")
       section("): $defaultJavaBuilderName$builderGeneric") {
         line("val builder = builder()")
         list(mandatoryFields) {
@@ -141,7 +140,7 @@ fun ObjClass<*>.generateEntityTypeObject(): String = lines {
       }
     }
     else {
-      section("$generatedCodeVisibilityModifier operator fun invoke(init: ($defaultJavaBuilderName$builderGeneric.() -> Unit)? = null): $defaultJavaBuilderName$builderGeneric") {
+      section("${generatedCodeVisibilityModifier}operator fun invoke(init: ($defaultJavaBuilderName$builderGeneric.() -> Unit)? = null): $defaultJavaBuilderName$builderGeneric") {
         line("val builder = builder()")
         line("init?.invoke(builder)")
         line("return builder")
@@ -162,9 +161,14 @@ fun List<OwnProperty<*, *>>.mandatoryFields(): List<ObjProperty<*, *>> {
 }
 
 fun ObjClass<*>.generateTopLevelCode(reporter: ProblemReporter): String {
-  var result = generateMutableCode(reporter)
-  val companion = generateEntityTypeObject()
-  result = "$result\n$companion"
+  val mutableCode = generateMutableCode(reporter)
+  val entityTypeObject = generateEntityTypeObject()
+  val header = """
+    @file:JvmName("${name}Modifications")
+    
+    package ${module.name}
+  """.trimIndent()
+  var result = "$header\n$mutableCode\n$entityTypeObject"
   val extensions = generateExtensionCode()
   if (extensions != null) {
     result = "$result\n$extensions"
@@ -188,15 +192,15 @@ fun ObjClass<*>.generateConstructorCode(): String? {
     line("@${JvmOverloads::class.fqn}")
     line("@${JvmName::class.fqn}(\"create$name\")")
     if (mandatoryFields.isNotEmpty()) {
-      line("$generatedCodeVisibilityModifier fun $name(")
+      line("${generatedCodeVisibilityModifier}fun $name(")
       mandatoryFields.forEach { field ->
-        line(" ".repeat(this.indentSize) + "${field.name}: ${field.valueType.javaType},")
+        line("${field.name}: ${field.valueType.javaType},")
       }
-      line(" ".repeat(this.indentSize) + "init: ($defaultJavaBuilderName$builderGeneric.() -> Unit)? = null,")
-      line(" ".repeat(this.indentSize) + "): $defaultJavaBuilderName = ${name}Type(${mandatoryFields.joinToString(", ") { it.name }}, init)")
+      line("init: ($defaultJavaBuilderName$builderGeneric.() -> Unit)? = null,")
+      line("): $defaultJavaBuilderName = ${name}Type(${mandatoryFields.joinToString(", ") { it.name }}, init)")
     }
     else {
-      line("$generatedCodeVisibilityModifier fun $name(init: ($defaultJavaBuilderName$builderGeneric.() -> Unit)? = null): $defaultJavaBuilderName = ${name}Companion(init)")
+      line("${generatedCodeVisibilityModifier}fun $name(init: ($defaultJavaBuilderName$builderGeneric.() -> Unit)? = null): $defaultJavaBuilderName = ${name}Companion(init)")
     }
   }
 }
@@ -210,9 +214,9 @@ fun ObjClass<*>.generateExtensionCode(): String? {
       if (additionalAnnotations.isNotEmpty()) {
         line(additionalAnnotations)
       }
-      line("$generatedCodeVisibilityModifier fun ${MutableEntityStorage}.modify$name(")
-      line("  entity: $name,")
-      line("  modification: $defaultJavaBuilderName.() -> Unit,")
+      line("${generatedCodeVisibilityModifier}fun ${MutableEntityStorage}.modify$name(")
+      line("entity: $name,")
+      line("modification: $defaultJavaBuilderName.() -> Unit,")
       line("): $name = modifyEntity($defaultJavaBuilderName::class.java, entity, modification)")
       
       if (requiresCompatibility) {
@@ -232,5 +236,5 @@ fun ObjProperty<*, *>.getWsBuilderApi(objClass: ObjClass<*>): String {
     valueType is ValueType.Collection<*, *> && !valueType.isRefType() -> valueType.javaMutableType
     else -> valueType.javaBuilderTypeWithGeneric
   }
-  return "$override var $javaName: $returnType"
+  return "${override}var $javaName: $returnType"
 }

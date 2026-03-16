@@ -15,11 +15,13 @@
  */
 package org.jetbrains.idea.maven.utils
 
+import com.intellij.idea.IJIgnore
 import com.intellij.maven.testFramework.MavenTestCase
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.nio.file.Files
 
+@IJIgnore(issue = "IDEA-386161")
 class MavenJDOMUtilTest : MavenTestCase() {
   fun testReadingValuesWithComments() = runBlocking {
     assertEquals("aaa", readValue("<root><foo>aaa<!--a--></foo></root>", "foo"))

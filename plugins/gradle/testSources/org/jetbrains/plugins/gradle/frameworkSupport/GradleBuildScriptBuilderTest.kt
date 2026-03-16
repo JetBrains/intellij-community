@@ -440,7 +440,7 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
           |tasks.register("myTask")
         """.trimMargin()),
 
-        GradleVersion.version("4.5") to ("""
+        GradleVersion.version("4.6") to ("""
           |tasks.create 'myTask'
         """.trimMargin() to """
           |tasks.create("myTask")
@@ -459,7 +459,7 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
           |tasks.register<MyTask>("myTask")
         """.trimMargin()),
 
-        GradleVersion.version("4.5") to ("""
+        GradleVersion.version("4.6") to ("""
           |tasks.create 'myTask', MyTask
         """.trimMargin() to """
           |tasks.create("myTask", MyTask::class.java)
@@ -484,7 +484,7 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
           |}
         """.trimMargin()),
 
-        GradleVersion.version("4.5") to ("""
+        GradleVersion.version("4.6") to ("""
           |tasks.create('myTask', MyTask) {
           |    myConfiguration()
           |}

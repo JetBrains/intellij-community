@@ -8,7 +8,12 @@ import com.intellij.psi.PsiModifierListOwner
 import com.intellij.uast.UastVisitorAdapter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotated
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.findSourceAnnotation
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 private inline val SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME get() = ApiStatus.ScheduledForRemoval::class.java.canonicalName

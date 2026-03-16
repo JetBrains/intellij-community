@@ -51,5 +51,7 @@ abstract class JvmReferenceContributorTestBase : LightJvmCodeInsightFixtureTestC
     assertion(reference)
   }
 
-  protected fun PsiReference.lookupStringVariants() = variants.mapNotNull { if (it is LookupElement) it.lookupString else null }
+  protected fun PsiReference.lookupStringVariants(): List<String> {
+    return variants.mapNotNull { if (it is LookupElement) it.lookupString else null }
+  }
 }

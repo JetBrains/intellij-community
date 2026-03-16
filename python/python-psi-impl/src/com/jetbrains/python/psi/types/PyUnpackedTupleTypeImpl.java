@@ -27,7 +27,8 @@ public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
         throw new IllegalArgumentException("Unbounded unpacked tuple type of a TypeVarTuple or another unpacked tuple type is now allowed");
       }
       myElementTypes = new ArrayList<>(elementTypes);
-    } else {
+    }
+    else {
       myElementTypes = unpackElementTypes(elementTypes).toList();
     }
     myIsHomogeneous = isUnbound;
@@ -37,7 +38,8 @@ public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
     return types.stream().flatMap(type -> {
       if (type instanceof PyUnpackedTupleType unpackedTupleType && !unpackedTupleType.isUnbound()) {
         return unpackElementTypes(unpackedTupleType.getElementTypes());
-      } else {
+      }
+      else {
         return Stream.of(type);
       }
     });

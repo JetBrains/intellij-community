@@ -6,7 +6,6 @@ import com.intellij.notification.NotificationsConfiguration
 import com.intellij.notification.impl.NotificationSettings
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.diagnostic.Logger
-import kotlin.text.toRegex
 
 /**
  * @See com.intellij.driver.sdk.NotificationUtils

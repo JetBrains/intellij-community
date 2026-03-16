@@ -1,7 +1,7 @@
 package com.intellij.database.run.actions
 
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.database.datagrid.color.TableHeatmapColorLayer
+import com.intellij.openapi.actionSystem.AnActionEvent
 
 class ToggleTableViewColorPerColumnAction : ToggleTableViewBaseAction() {
 

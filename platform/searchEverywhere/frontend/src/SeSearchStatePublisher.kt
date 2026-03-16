@@ -21,7 +21,7 @@ class SeSearchStatePublisher {
 
       SeLog.log(SeLog.LISTENERS) { "Search started: $searchId, $pattern, $tabId" }
       currentSearchId = searchId
-      listeners.forEach { it.searchStarted(pattern, tabId) }
+      listeners.toList().forEach { it.searchStarted(pattern, tabId) }
     }
   }
 
@@ -32,7 +32,7 @@ class SeSearchStatePublisher {
         return@withLock
       }
       SeLog.log(SeLog.LISTENERS) { "Elements added: $searchId, ${uuidToElement.size}" }
-      listeners.forEach { it.elementsAdded(uuidToElement) }
+      listeners.toList().forEach { it.elementsAdded(uuidToElement) }
     }
   }
 
@@ -43,7 +43,7 @@ class SeSearchStatePublisher {
         return@withLock
       }
       SeLog.log(SeLog.LISTENERS) { "Elements removed: $searchId, $count" }
-      listeners.forEach { it.elementsRemoved(count) }
+      listeners.toList().forEach { it.elementsRemoved(count) }
     }
   }
 
@@ -55,7 +55,7 @@ class SeSearchStatePublisher {
       }
 
       SeLog.log(SeLog.LISTENERS) { "Search ${if (isFinished) "stopped" else "paused"} producing results: $searchId, $count" }
-      listeners.forEach { it.searchFinished(count) }
+      listeners.toList().forEach { it.searchFinished(count) }
 
       if (isFinished) currentSearchId = null
     }

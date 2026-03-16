@@ -26,7 +26,15 @@ import com.intellij.restructuredtext.psi.RestDirectiveBlock;
 import com.intellij.restructuredtext.psi.RestRole;
 import com.intellij.restructuredtext.python.PythonRestBundle;
 import com.jetbrains.python.ReSTService;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;

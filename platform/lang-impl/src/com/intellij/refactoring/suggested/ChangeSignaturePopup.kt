@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.suggested
 
@@ -8,6 +8,7 @@ import com.intellij.lang.LangBundle
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageNamesValidation
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -25,11 +26,27 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.FocusTraversalPolicy
+import java.awt.Font
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
+import java.awt.Insets
+import java.awt.Rectangle
 import java.awt.font.FontRenderContext
 import java.awt.geom.AffineTransform
 import java.util.function.Supplier
-import javax.swing.*
+import javax.swing.JButton
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTextField
 import kotlin.math.roundToInt
 
 internal class ChangeSignaturePopup(
@@ -82,27 +99,29 @@ internal class ChangeSignaturePopup(
     button.text = if (parameterValuesPage == null) updateButtonText else nextButtonText
 
     button.addActionListener {
-      when (currentPage) {
-        Page.SignatureChange -> {
-          if (parameterValuesPage != null) {
-            parameterValuesPage.initialize()
-            remove(signatureChangePage)
-            add(parameterValuesPage, BorderLayout.CENTER)
-            button.text = updateButtonText
-            onParameterValueChanged(null)
-            currentPage = Page.ParameterValues
-            onNext()
-            parameterValuesPage.defaultFocus()
+      WriteIntentReadAction.run {
+        when (currentPage) {
+          Page.SignatureChange -> {
+            if (parameterValuesPage != null) {
+              parameterValuesPage.initialize()
+              remove(signatureChangePage)
+              add(parameterValuesPage, BorderLayout.CENTER)
+              button.text = updateButtonText
+              onParameterValueChanged(null)
+              currentPage = Page.ParameterValues
+              onNext()
+              parameterValuesPage.defaultFocus()
+            }
+            else {
+              onOk(newParameterData.map { data -> NewParameterInfo(data, data.presentableName, NewParameterValue.None) })
+            }
           }
-          else {
-            onOk(newParameterData.map { data -> NewParameterInfo(data, data.presentableName, NewParameterValue.None) })
-          }
-        }
 
-        Page.ParameterValues -> {
-          val updatedValues = parameterValuesPage!!.getUpdatedValues()
-          if (updatedValues != null) {
-            onOk(updatedValues)
+          Page.ParameterValues -> {
+            val updatedValues = parameterValuesPage!!.getUpdatedValues()
+            if (updatedValues != null) {
+              onOk(updatedValues)
+            }
           }
         }
       }
@@ -301,8 +320,10 @@ private class ParameterValuesPage(
         ComponentValidator(this@ParameterValuesPage)
           .withValidator(
             Supplier {
-              documentManager.commitDocument(document)
-              refactoringSupport.ui.validateValue(data, component).also { onValueChanged(it) }
+              WriteIntentReadAction.compute {
+                documentManager.commitDocument(document)
+                refactoringSupport.ui.validateValue(data, component).also { onValueChanged(it) }
+              }
             }
           )
           .installOn(component)

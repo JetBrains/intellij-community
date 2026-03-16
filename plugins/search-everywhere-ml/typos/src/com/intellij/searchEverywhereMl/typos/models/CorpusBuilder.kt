@@ -3,9 +3,9 @@ package com.intellij.searchEverywhereMl.typos.models
 import com.intellij.ide.actions.ShowSettingsUtilImpl.Companion.getConfigurables
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
+import com.intellij.ide.util.gotoByName.getAnActionText
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -78,9 +78,8 @@ internal class CorpusBuilder(coroutineScope: CoroutineScope) {
     return actionManager.actionsOrStubs()
       .filterNot { it is ActionGroup && !it.isSearchable }
       .mapNotNull { action ->
-        val presentation = action.templatePresentation
-        action.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation)
-        presentation.text?.let { tokenizeText(it) }
+        val text = getAnActionText(action)
+        text?.let { tokenizeText(it) }
       }
       .toSet()
   }
@@ -123,8 +122,8 @@ internal class CorpusBuilder(coroutineScope: CoroutineScope) {
     }
 
     if (configurable is ConfigurableWrapper) {
-      configurable.extensionPoint.pluginDescriptor.description
-        ?.replace(Regex("<[^>]*>"), "") // matches everything enclosed in < and > and removes any HTML-like tags.
+      configurable.extensionPoint.pluginDescriptor?.description
+        ?.replace(HTML_TAGS_REGEX, "") // matches everything enclosed in < and > and removes any HTML-like tags.
         ?.split('.', '\n')
         ?.mapNotNull { tokenizeText(it) }
         ?.let { collectedTokens.addAll(it) }
@@ -140,6 +139,7 @@ internal class CorpusBuilder(coroutineScope: CoroutineScope) {
   }
 
   private val alphabeticPattern = Pattern.compile("^[a-zA-Z]+$")
+  private val HTML_TAGS_REGEX = Regex("<[^>]*>")
 
   private fun tokenizeText(text: String): List<String>? =
     splitText(text)

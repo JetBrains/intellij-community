@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.search.refIndex">
+<idea-plugin package="org.jetbrains.kotlin.idea.search.refIndex" visibility="internal">
   <extensions defaultExtensionNs="com.intellij">
     <codeUsageScopeOptimizer implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinScopeOptimizer"/>
 
@@ -22,12 +22,31 @@
             implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinDirectInheritorProvider"/>
   </extensions>
 
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kotlinCompilerReferenceIndexStorageProvider"
+            interface="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorageProvider"
+            dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <kotlinCompilerReferenceIndexStorageProvider
+            implementation="org.jetbrains.kotlin.idea.search.refIndex.jps.JpsKotlinCompilerReferenceIndexStorageProvider"
+            id="JpsKotlinCompilerReferenceIndexStorageProvider"
+            order="last"/>
+  </extensions>
+
   <actions>
     <action
             class="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexVerifierAction"
             id="KotlinCompilerReferenceIndexVerifierAction"
             internal="true">
       <add-to-group group-id="Internal" anchor="last"/>
+    </action>
+    <action id="KotlinCriDiagnostics"
+            class="org.jetbrains.kotlin.idea.search.refIndex.CriDiagnosticAction"
+            internal="true">
+      <add-to-group group-id="HelpDiagnosticTools" anchor="last"/>
     </action>
   </actions>
 

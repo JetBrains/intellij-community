@@ -9,7 +9,7 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 @ApiStatus.Internal
 public class NewChangelistDialog extends DialogWrapper {

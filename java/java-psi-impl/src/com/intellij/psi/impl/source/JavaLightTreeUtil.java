@@ -16,7 +16,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.psi.impl.source.tree.JavaElementType.*;
+import static com.intellij.psi.impl.source.tree.JavaElementType.ANONYMOUS_CLASS;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EXPRESSION_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.LITERAL_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.MODIFIER_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PARENTH_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE_CAST_EXPRESSION;
 
 public final class JavaLightTreeUtil {
   @Contract("_,null->null")

@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/codeInsight/generate/equalsWithHashCode")
-public class GenerateHashCodeAndEqualsActionTestGenerated extends AbstractGenerateHashCodeAndEqualsActionTest {
+public class GenerateHashCodeAndEqualsActionTestGenerated extends AbstractK1GenerateHashCodeAndEqualsActionTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {

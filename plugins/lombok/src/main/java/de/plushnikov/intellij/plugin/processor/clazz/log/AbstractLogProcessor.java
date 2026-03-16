@@ -2,7 +2,16 @@ package de.plushnikov.intellij.plugin.processor.clazz.log;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
@@ -89,9 +98,24 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
         builder.addErrorMessage("inspection.message.not.generating.field.s.field.with.same.name.already.exists", loggerName);
         result = false;
       }
+
+      final boolean loggerStatic = isLoggerStatic(psiClass);
+      if (psiClass.isRecord() && !loggerStatic) {
+        builder.addErrorMessage("inspection.message.logger.fields.must.be.static.in.records");
+        result = false;
+      }
+
+      if (loggerStatic &&
+          !(psiClass.hasModifierProperty(PsiModifier.STATIC) || psiClass.getContainingClass() == null || psiClass.isRecord())
+      ) {
+        builder.addErrorMessage("inspection.message.logger.can.be.used.on.static.inner.classes.only", StringUtil.getShortName(getSupportedAnnotationClasses()[0]));
+        result = false;
+      }
     }
     return result;
   }
+
+
 
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,

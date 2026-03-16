@@ -3,8 +3,14 @@
 package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.openapi.diagnostic.Logger
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.AnalysisResult
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -13,7 +19,15 @@ import org.jetbrains.kotlin.idea.statistics.KotlinFailureCollector
 import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.returnIfNoDescriptorForDeclarationException
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationContainer
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.resolve.BindingTraceContext
@@ -37,6 +51,7 @@ import org.jetbrains.kotlin.types.expressions.PreliminaryDeclarationVisitor
 /**
  * This function throws exception when resolveToDescriptorIfAny returns null, otherwise works equivalently.
  */
+@K1Deprecation
 fun KtDeclaration.unsafeResolveToDescriptor(
     resolutionFacade: ResolutionFacade,
     bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
@@ -49,6 +64,7 @@ fun KtDeclaration.unsafeResolveToDescriptor(
  * and then takes the relevant descriptor from binding context.
  * The exact set of declarations to resolve depends on bodyResolveMode
  */
+@K1Deprecation
 fun KtDeclaration.resolveToDescriptorIfAny(
     resolutionFacade: ResolutionFacade,
     bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL
@@ -65,6 +81,7 @@ fun KtDeclaration.resolveToDescriptorIfAny(
     }
 }
 
+@K1Deprecation
 fun KtAnnotationEntry.resolveToDescriptorIfAny(
     resolutionFacade: ResolutionFacade,
     bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL
@@ -74,6 +91,7 @@ fun KtAnnotationEntry.resolveToDescriptorIfAny(
     return context.get(BindingContext.ANNOTATION, this)
 }
 
+@K1Deprecation
 fun KtClassOrObject.resolveToDescriptorIfAny(
     resolutionFacade: ResolutionFacade,
     bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL
@@ -81,6 +99,7 @@ fun KtClassOrObject.resolveToDescriptorIfAny(
     return (this as KtDeclaration).resolveToDescriptorIfAny(resolutionFacade, bodyResolveMode) as? ClassDescriptor
 }
 
+@K1Deprecation
 fun KtNamedFunction.resolveToDescriptorIfAny(
     resolutionFacade: ResolutionFacade,
     bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL
@@ -88,6 +107,7 @@ fun KtNamedFunction.resolveToDescriptorIfAny(
     return (this as KtDeclaration).resolveToDescriptorIfAny(resolutionFacade, bodyResolveMode) as? FunctionDescriptor
 }
 
+@K1Deprecation
 fun KtProperty.resolveToDescriptorIfAny(
     resolutionFacade: ResolutionFacade,
     bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL
@@ -95,6 +115,7 @@ fun KtProperty.resolveToDescriptorIfAny(
     return (this as KtDeclaration).resolveToDescriptorIfAny(resolutionFacade, bodyResolveMode) as? VariableDescriptor
 }
 
+@K1Deprecation
 fun KtParameter.resolveToParameterDescriptorIfAny(
     resolutionFacade: ResolutionFacade,
     bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL
@@ -103,12 +124,14 @@ fun KtParameter.resolveToParameterDescriptorIfAny(
     return context.get(BindingContext.VALUE_PARAMETER, this) as? ValueParameterDescriptor
 }
 
+@K1Deprecation
 fun KtElement.resolveToCall(
     resolutionFacade: ResolutionFacade,
     bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL
 ): ResolvedCall<out CallableDescriptor>? = getResolvedCall(safeAnalyze(resolutionFacade, bodyResolveMode))
 
 
+@K1Deprecation
 fun KtElement.safeAnalyze(
     resolutionFacade: ResolutionFacade,
     bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
@@ -123,12 +146,14 @@ fun KtElement.safeAnalyze(
     }
 }
 
+@K1Deprecation
 @JvmOverloads
 fun KtElement.analyze(
     resolutionFacade: ResolutionFacade,
     bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
 ): BindingContext = resolutionFacade.analyze(this, bodyResolveMode)
 
+@K1Deprecation
 fun KtElement.analyzeAndGetResult(resolutionFacade: ResolutionFacade): AnalysisResult = try {
     AnalysisResult.success(resolutionFacade.analyze(this), resolutionFacade.moduleDescriptor)
 } catch (e: Exception) {
@@ -138,39 +163,47 @@ fun KtElement.analyzeAndGetResult(resolutionFacade: ResolutionFacade): AnalysisR
 
 // This function is used on declarations to make analysis not only declaration itself but also it content:
 // body for declaration with body, initializer & accessors for properties
+@K1Deprecation
 fun KtElement.analyzeWithContentAndGetResult(resolutionFacade: ResolutionFacade): AnalysisResult =
     resolutionFacade.analyzeWithAllCompilerChecks(this)
 
 // This function is used on declarations to make analysis not only declaration itself but also it content:
 // body for declaration with body, initializer & accessors for properties
+@K1Deprecation
 fun KtDeclaration.analyzeWithContent(resolutionFacade: ResolutionFacade): BindingContext =
     resolutionFacade.analyzeWithAllCompilerChecks(this).bindingContext
 
 // This function is used to make full analysis of declaration container.
 // All its declarations, including their content (see above), are analyzed.
+@K1Deprecation
 inline fun <reified T> T.analyzeWithContent(resolutionFacade: ResolutionFacade): BindingContext where T : KtDeclarationContainer, T : KtElement {
     return resolutionFacade.analyzeWithAllCompilerChecks(this).bindingContext
 }
 
+@K1Deprecation
 @JvmOverloads
 fun KtElement.safeAnalyzeNonSourceRootCode(
     bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
 ): BindingContext = safeAnalyzeNonSourceRootCode(getResolutionFacade(), bodyResolveMode)
 
+@K1Deprecation
 fun KtElement.safeAnalyzeNonSourceRootCode(
     resolutionFacade: ResolutionFacade,
     bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
 ): BindingContext =
     actionUnderSafeAnalyzeBlock({ analyze(resolutionFacade, bodyResolveMode) }, { BindingContext.EMPTY })
 
+@K1Deprecation
 fun KtDeclaration.safeAnalyzeWithContentNonSourceRootCode(): BindingContext =
     safeAnalyzeWithContentNonSourceRootCode(getResolutionFacade())
 
+@K1Deprecation
 fun KtDeclaration.safeAnalyzeWithContentNonSourceRootCode(
     resolutionFacade: ResolutionFacade,
 ): BindingContext =
     actionUnderSafeAnalyzeBlock({ analyzeWithContent(resolutionFacade) }, { BindingContext.EMPTY })
 
+@K1Deprecation
 @JvmOverloads
 @OptIn(FrontendInternals::class)
 fun KtExpression.computeTypeInfoInContext(
@@ -189,6 +222,7 @@ fun KtExpression.computeTypeInfoInContext(
     )
 }
 
+@K1Deprecation
 @JvmOverloads
 @OptIn(FrontendInternals::class)
 fun KtExpression.analyzeInContext(
@@ -214,6 +248,7 @@ fun KtExpression.analyzeInContext(
     return trace.bindingContext
 }
 
+@K1Deprecation
 @JvmOverloads
 fun KtExpression.computeTypeInContext(
     scope: LexicalScope,
@@ -223,6 +258,7 @@ fun KtExpression.computeTypeInContext(
     expectedType: KotlinType = TypeUtils.NO_EXPECTED_TYPE
 ): KotlinType? = computeTypeInfoInContext(scope, contextExpression, trace, dataFlowInfo, expectedType).type
 
+@K1Deprecation
 @JvmOverloads
 fun KtExpression.analyzeAsReplacement(
     expressionToBeReplaced: KtExpression,
@@ -240,6 +276,7 @@ fun KtExpression.analyzeAsReplacement(
     contextDependency = contextDependency
 )
 
+@K1Deprecation
 @JvmOverloads
 fun KtExpression.analyzeAsReplacement(
     expressionToBeReplaced: KtExpression,

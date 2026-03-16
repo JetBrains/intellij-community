@@ -9,13 +9,14 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -67,7 +68,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
   public boolean equals(Object obj) {
     synchronized (mySections) {
       if (!(obj instanceof CompositeAppearance appearance)) return false;
-      if (SwingUtilities.isEventDispatchThread()) {
+      if (EDT.isCurrentThreadEdt()) {
         return appearance.mySections.equals(mySections);
       }
       else {

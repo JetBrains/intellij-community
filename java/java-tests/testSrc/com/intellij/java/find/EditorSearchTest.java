@@ -17,8 +17,8 @@ package com.intellij.java.find;
 
 import com.intellij.find.EditorSearchSession;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
@@ -38,17 +38,17 @@ public class EditorSearchTest extends BasePlatformTestCase {
     int i = THE_CODE.indexOf(key);
     myFixture.getEditor().getSelectionModel().setSelection(i, i+key.length());
     myFixture.performEditorAction("Find");
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     assertEquals(key, getSearchTextComponent().getText());
     assertEquals(key, getSearchTextComponent().getSelectedText());
     assertEquals(3, getSearchTextComponent().getCaretPosition());
     assertTrue(getEditorSearchComponent().hasMatches());
     IdeFocusManager.findInstance().requestFocus(myFixture.getEditor().getContentComponent(), false);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     myFixture.performEditorAction("Find");
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     assertEquals(key, getSearchTextComponent().getText());
     assertEquals(key, getSearchTextComponent().getSelectedText());
     assertEquals(key.length(), getSearchTextComponent().getCaretPosition());
@@ -63,9 +63,9 @@ public class EditorSearchTest extends BasePlatformTestCase {
     int selectionEnd = myFixture.getEditor().getSelectionModel().getSelectionEnd();
     int caret = myFixture.getEditor().getCaretModel().getOffset();
 
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     myFixture.performEditorAction("Find");
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     assertEquals(key, getSearchTextComponent().getText());
     assertEquals(key, getSearchTextComponent().getSelectedText());
     assertEquals(key.length(), getSearchTextComponent().getCaretPosition());
@@ -74,7 +74,7 @@ public class EditorSearchTest extends BasePlatformTestCase {
       getSearchTextComponent().getDocument().remove(0, getSearchTextComponent().getDocument().getLength());
     } catch (BadLocationException ignore) {}
     
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     assertEquals(selectionStart, myFixture.getEditor().getSelectionModel().getSelectionStart());
     assertEquals(selectionEnd, myFixture.getEditor().getSelectionModel().getSelectionEnd());
     assertEquals(caret, myFixture.getEditor().getCaretModel().getOffset());

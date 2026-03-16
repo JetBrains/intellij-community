@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.actions
 
 import com.intellij.diff.DiffContentFactory
@@ -7,16 +7,17 @@ import com.intellij.diff.contents.DiffContentBase
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -37,7 +38,11 @@ class TestDiffContent(
 
   override fun getContentType(): FileType = FileTypes.PLAIN_TEXT
 
-  private val fakeDocument = (EditorFactory.getInstance() as EditorFactoryImpl).createDocument("", true, false).apply {
+  override fun getHighlightFile(): VirtualFile? {
+    return elemPtr.virtualFile
+  }
+
+  private val fakeDocument = EditorFactory.getInstance().createDocument("", true, false).apply {
     putUserData(UndoManager.ORIGINAL_DOCUMENT, original.document)
   }
 
@@ -103,6 +108,7 @@ class TestDiffContent(
   }
 
   companion object {
+    @JvmStatic
     fun create(
       project: Project,
       text: String,
@@ -114,8 +120,9 @@ class TestDiffContent(
       return TestDiffContent(project, diffContent, text, elemPtr).apply {
         val originalLineConvertor = original.getUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR)
         putUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR, IntUnaryOperator { value ->
-          if (!element.isValid) return@IntUnaryOperator -1
-          val line = value + original.document.getLineNumber(element.startOffset)
+          val valid = ReadAction.compute<Boolean, Throwable> { element.isValid }
+          if (!valid) return@IntUnaryOperator -1
+          val line = ReadAction.compute<Int, Throwable> { value + original.document.getLineNumber(element.startOffset) }
           originalLineConvertor?.applyAsInt(line) ?: line
         })
       }

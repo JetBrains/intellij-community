@@ -13,11 +13,15 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.*
+import com.intellij.psi.JavaCodeFragment
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.concurrency.Semaphore
 import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.InvalidStackFrameException
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.hasKotlinJvmRuntime
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
@@ -26,11 +30,20 @@ import org.jetbrains.kotlin.idea.debugger.base.util.hopelessAware
 import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugForeignPropertyDescriptorProvider
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockCodeFragment
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNullableType
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtTypeElement
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.types.KotlinType
 import java.util.concurrent.atomic.AtomicReference
 
+@K1Deprecation
 class KotlinK1CodeFragmentFactory : KotlinCodeFragmentFactoryBase() {
     override fun createPsiCodeFragmentImpl(item: TextWithImports, context: PsiElement?, project: Project): JavaCodeFragment {
         val contextElement = CodeFragmentContextTuner.getInstance().tuneContextElement(context)

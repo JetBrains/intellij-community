@@ -7,7 +7,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle.message
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-private class ExternalSystemGroupSearchableContributor: SearchableOptionContributor() {
+internal class ExternalSystemGroupSearchableContributor: SearchableOptionContributor() {
   private val buildToolsId = "build.tools"
   private val buildToolsName = message("settings.build.tools.display.name")
 

@@ -3,7 +3,6 @@ package git4idea.repo;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId;
 import com.intellij.util.messages.Topic;
 import git4idea.GitLocalBranch;
 import git4idea.GitVcs;
@@ -76,6 +75,7 @@ public interface GitRepository extends Repository {
   GitUntrackedFilesHolder getUntrackedFilesHolder();
 
   @NotNull
+  @ApiStatus.Internal
   GitResolvedMergeConflictsFilesHolder getResolvedConflictsFilesHolder();
 
 
@@ -126,9 +126,17 @@ public interface GitRepository extends Repository {
   @NotNull
   CoroutineScope getCoroutineScope();
 
+  /**
+   * @deprecated This method is deprecated and marked for removal, as it exposes API which wasn't designed for public use.
+   * Use {@link GitRepositoryTagsHolder} instead.
+   */
   @NotNull
+  @Deprecated(forRemoval = true)
   GitTagHolder getTagHolder();
 
   @NotNull
-  RepositoryId getRpcId();
+  GitRepositoryTagsHolder getTagsHolder();
+
+  @NotNull
+  GitWorkingTreeHolder getWorkingTreeHolder();
 }

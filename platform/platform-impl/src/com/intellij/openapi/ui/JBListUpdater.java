@@ -7,7 +7,8 @@ import com.intellij.ui.speedSearch.NameFilteringListModel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.ListModel;
+import javax.swing.SwingUtilities;
 import java.util.List;
 
 @ApiStatus.Internal

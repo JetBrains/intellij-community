@@ -1,6 +1,6 @@
 <idea-plugin>
   <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingImportListener"
+    <listener class="org.jetbrains.kotlin.idea.statistics.KotlinProjectSetupImportListener"
               topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>
   </projectListeners>
   <extensions defaultExtensionNs="com.intellij">
@@ -18,7 +18,7 @@
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector"/>
     <statistics.counterUsagesCollector
             implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinCodeVisionUsagesCollector"/>
-    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinProjectSetupFUSCollector"/>
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.IDESettingsFUSCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector"/>

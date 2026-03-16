@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -44,9 +45,15 @@ public final class LanguageLineWrapPositionStrategy extends LanguageExtension<Li
     Project project = editor.getProject();
     if (project != null && !project.isDisposed()) {
       try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162826")) {
-        PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-        if (psiFile != null) {
-          result = INSTANCE.forLanguage(psiFile.getLanguage());
+        LineWrapPositionStrategy strategy = ReadAction.compute(() -> {
+          PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+          if (file == null) {
+            return null;
+          }
+          return INSTANCE.forLanguage(file.getLanguage());
+        });
+        if (strategy != null) {
+          result = strategy;
         }
       }
     }

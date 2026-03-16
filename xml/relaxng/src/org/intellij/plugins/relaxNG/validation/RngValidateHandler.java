@@ -34,7 +34,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.concurrent.Future;

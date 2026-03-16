@@ -29,7 +29,12 @@ import com.intellij.ui.PlatformIcons;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
-import org.intellij.plugins.relaxNG.compact.psi.*;
+import org.intellij.plugins.relaxNG.compact.psi.RncDefine;
+import org.intellij.plugins.relaxNG.compact.psi.RncElementVisitor;
+import org.intellij.plugins.relaxNG.compact.psi.RncFile;
+import org.intellij.plugins.relaxNG.compact.psi.RncGrammar;
+import org.intellij.plugins.relaxNG.compact.psi.RncInclude;
+import org.intellij.plugins.relaxNG.compact.psi.RncPattern;
 import org.intellij.plugins.relaxNG.compact.psi.util.EscapeUtil;
 import org.intellij.plugins.relaxNG.compact.psi.util.RenameUtil;
 import org.intellij.plugins.relaxNG.model.Define;
@@ -38,7 +43,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Map;
 import java.util.Set;
 

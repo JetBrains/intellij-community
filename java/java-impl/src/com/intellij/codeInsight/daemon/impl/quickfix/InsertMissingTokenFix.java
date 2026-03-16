@@ -3,16 +3,12 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.modcommand.*;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-import java.util.Objects;
 
 public class InsertMissingTokenFix implements ModCommandAction {
   private final @NotNull String myToken;
@@ -41,20 +37,6 @@ public class InsertMissingTokenFix implements ModCommandAction {
 
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    int offset = context.offset();
-    Document document = context.file().getFileDocument();
-    if (document instanceof DocumentWindow window) {
-      offset = window.injectedToHost(offset);
-      document = window.getDelegate();
-    }
-    String oldText = document.getText();
-    String newText = oldText.substring(0, offset) + myToken + oldText.substring(offset);
-    VirtualFile file = Objects.requireNonNull(FileDocumentManager.getInstance().getFile(document));
-    ModCommand fix = new ModUpdateFileText(file, oldText, newText,
-                                           List.of(new ModUpdateFileText.Fragment(offset, 0, myToken.length())));
-    if (myMoveAfter) {
-      fix = fix.andThen(new ModNavigate(file, -1, -1, offset + myToken.length()));
-    }
-    return fix;
+    return ModCommand.insertText(context, myToken, myMoveAfter);
   }
 }

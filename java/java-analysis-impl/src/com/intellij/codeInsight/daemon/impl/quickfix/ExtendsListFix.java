@@ -7,7 +7,16 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -15,7 +24,7 @@ import org.jetbrains.annotations.PropertyKey;
 /**
  * @deprecated use {@link ExtendsListModCommandFix}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   // we don't modify this class
   @SafeFieldForPreview protected final @Nullable SmartPsiElementPointer<PsiClass> myClassToExtendFromPointer;

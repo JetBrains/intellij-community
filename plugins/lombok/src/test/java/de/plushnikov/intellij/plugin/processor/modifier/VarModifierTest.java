@@ -1,6 +1,10 @@
 package de.plushnikov.intellij.plugin.processor.modifier;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 

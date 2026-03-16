@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.opentelemetry.exporter.sender.jdk` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "opentelemetry-exporter-sender-jdk_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "opentelemetry-exporter-sender-jdk",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":opentelemetry-exporter-sender-jdk_resources"],
+  exports = ["@lib//:libraries-opentelemetry-exporter-sender-jdk-opentelemetry-exporter-sender-jdk"],
+  runtime_deps = ["@lib//:libraries-opentelemetry-exporter-sender-jdk-opentelemetry-exporter-sender-jdk"]
+)
+### auto-generated section `build intellij.libraries.opentelemetry.exporter.sender.jdk` end

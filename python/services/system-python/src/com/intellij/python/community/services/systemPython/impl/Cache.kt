@@ -17,11 +17,21 @@ import kotlin.time.Duration
  * If cache hasn't been calculated yet, this function suspends till [getDataForCache].
  * Cache could be cleared with [clear].
  *
- * Once [startUpdate] is called (which is idempotent call) cache will be updarted on [scope] every [updateInterval].
+ * Once [startUpdate] is called (which is idempotent call) cache will be updated on [scope] every [delayer].
  *
  * Cache isn't blocked while updating: a previous version is used.
  */
-internal class Cache<K, V>(scope: CoroutineScope, updateInterval: Duration, private val getDataForCache: suspend (K) -> List<V>) {
+internal class Cache<K : Any, V>(
+  scope: CoroutineScope,
+  delayer: UpdateCacheDelayer,
+  private val getDataForCache: suspend (K) -> List<V>,
+) {
+  constructor(
+    scope: CoroutineScope,
+    updateInterval: Duration,
+    getDataForCache: suspend (K) -> List<V>,
+  ) : this(scope, UpdateCacheDelayer.TimeBased(updateInterval), getDataForCache)
+
   private companion object {
     val logger = fileLogger()
   }
@@ -35,13 +45,21 @@ internal class Cache<K, V>(scope: CoroutineScope, updateInterval: Duration, priv
   private val cacheUpdateJob = lazy {
     scope.launch(Dispatchers.Default) {
       while (true) {
-        delay(updateInterval)
-        logger.debug("Updating cache")
-        val values = cache.keys.toList() // copy keys not to affect the current cache
-        for (k in values) {
-          updateCache(k)
+        val callAfterUpdate = delayer.delayBeforeUpdate()
+        updateCacheForAllKeys()
+        if (callAfterUpdate != null) {
+          callAfterUpdate()
         }
       }
+    }
+  }
+
+  private suspend fun updateCacheForAllKeys() {
+    val keys = cache.keys
+    logger.debug("Updating cache for keys ${keys.joinToString(", ")}")
+    val values = keys.toList() // copy keys not to affect the current cache
+    for (k in values) {
+      updateCache(k)
     }
   }
 
@@ -94,5 +112,21 @@ internal class Cache<K, V>(scope: CoroutineScope, updateInterval: Duration, priv
     cache[k] = newValue
     logger.info("End update for $k")
     return newValue
+  }
+}
+
+/**
+ * [Cache] calls [delayBeforeUpdate] in a loop and updates cache after each call.
+ * [TimeBased] is an implementation that uses [delay].
+ *
+ * Returned value (if any) is called after each cache update
+ */
+internal fun interface UpdateCacheDelayer {
+  suspend fun delayBeforeUpdate(): (() -> Unit)?
+  class TimeBased(private val duration: Duration) : UpdateCacheDelayer {
+    override suspend fun delayBeforeUpdate(): (() -> Unit)? {
+      delay(duration)
+      return null
+    }
   }
 }

@@ -7,7 +7,11 @@ import com.intellij.psi.PsiTypes
 import com.intellij.psi.PsiWildcardType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.INHABIT
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
-import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.ENDPOINT_TYPE_PARAMETER
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.EXTENDS_WILDCARD
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.NEW_TYPE_PARAMETER
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.REIFIED_AS_PROPER_TYPE
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.REIFIED_AS_TYPE_PARAMETER
 import org.jetbrains.plugins.groovy.intentions.style.inference.removeWildcard
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type

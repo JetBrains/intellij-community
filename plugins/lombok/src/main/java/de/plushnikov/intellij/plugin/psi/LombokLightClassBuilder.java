@@ -2,7 +2,16 @@ package de.plushnikov.intellij.plugin.psi;
 
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.light.LightPsiClassBuilder;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
@@ -13,7 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;

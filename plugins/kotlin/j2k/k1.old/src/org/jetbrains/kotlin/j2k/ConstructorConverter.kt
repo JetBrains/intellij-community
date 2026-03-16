@@ -2,10 +2,40 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.psi.*
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiAssignmentExpression
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiExpressionStatement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiStatement
 import com.intellij.psi.util.PsiUtil
-import org.jetbrains.kotlin.j2k.ast.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.j2k.ast.AnnotationUseTarget
+import org.jetbrains.kotlin.j2k.ast.Annotations
+import org.jetbrains.kotlin.j2k.ast.Block
+import org.jetbrains.kotlin.j2k.ast.CommentsAndSpacesInheritance
+import org.jetbrains.kotlin.j2k.ast.Constructor
+import org.jetbrains.kotlin.j2k.ast.DeferredElement
+import org.jetbrains.kotlin.j2k.ast.Expression
+import org.jetbrains.kotlin.j2k.ast.FunctionParameter
+import org.jetbrains.kotlin.j2k.ast.Identifier
+import org.jetbrains.kotlin.j2k.ast.Modifiers
+import org.jetbrains.kotlin.j2k.ast.PrimaryConstructor
+import org.jetbrains.kotlin.j2k.ast.PrototypeInfo
+import org.jetbrains.kotlin.j2k.ast.SecondaryConstructor
+import org.jetbrains.kotlin.j2k.ast.Type
+import org.jetbrains.kotlin.j2k.ast.assignPrototype
+import org.jetbrains.kotlin.j2k.ast.assignPrototypes
+import org.jetbrains.kotlin.j2k.ast.isNullable
 
+@K1Deprecation
 class ConstructorConverter(
         private val psiClass: PsiClass,
         private val converter: Converter,

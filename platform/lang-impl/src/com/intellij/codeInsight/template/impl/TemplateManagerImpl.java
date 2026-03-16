@@ -6,16 +6,35 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.OffsetKey;
 import com.intellij.codeInsight.completion.OffsetsInFile;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewEditor;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.CustomLiveTemplate;
+import com.intellij.codeInsight.template.CustomLiveTemplateBase;
+import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateActionContext;
+import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.codeInsight.template.TemplateEditingListener;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.TemplateSubstitutor;
 import com.intellij.lang.Language;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -28,12 +47,22 @@ import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
-
-import static com.intellij.codeInsight.template.impl.ListTemplatesHandler.filterTemplatesByPrefix;
 
 public final class TemplateManagerImpl extends TemplateManager implements Disposable {
   private final @NotNull Project myProject;
@@ -568,7 +597,9 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
   public static boolean isApplicableTemplatePresent(@NotNull PsiFile file, @NotNull Editor editor) {
     TemplateActionContext context = TemplateActionContext.expanding(file, editor);
     int offset = editor.getCaretModel().getOffset();
-    Map<TemplateImpl, String> templates = filterTemplatesByPrefix(listApplicableTemplates(context), editor, offset, true, false);
+    @NotNull Collection<? extends TemplateImpl> applicableTemplates = listApplicableTemplates(context);
+    Map<TemplateImpl, String> templates =
+      ListTemplatesHandler.filterTemplatesByPrefix(applicableTemplates, editor.getDocument(), offset, true, false);
     if (!templates.isEmpty()) {
       return true;
     }
@@ -652,5 +683,20 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     OffsetsInFile hostOffsets = offsetMap.toTopLevelFile();
     OffsetsInFile hostCopy = hostOffsets.copyWithReplacement(getStartOffset(hostOffsets), getEndOffset(hostOffsets), replacement);
     return hostCopy.toInjectedIfAny(getStartOffset(hostCopy));
+  }
+
+  /**
+   * Executes the template within ModCommand context. The template is not actually executed,
+   * but contributes to {@link ModPsiUpdater} to form the final {@link ModCommand}.
+   * <p>
+   *   Note that not all the template behavior is implemented yet, and not everything is supported in ModCommands at all,
+   *   so expect that complex templates that use rare features may not work correctly.
+   * </p>
+   *
+   * @param template template to execute.
+   * @param updater {@link ModPsiUpdater} to use.
+   */
+  public static void updateTemplate(@NotNull TemplateImpl template, @NotNull ModPsiUpdater updater) {
+    template.update(updater, new InteractiveTemplateStateProcessor());
   }
 }

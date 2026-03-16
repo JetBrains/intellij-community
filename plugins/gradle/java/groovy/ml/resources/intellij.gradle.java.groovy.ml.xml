@@ -1,0 +1,16 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="com.intellij.completion.ml.ranking"/>
+    <module name="intellij.gradle.java"/>
+    <module name="intellij.gradle.java.groovy"/>
+    <module name="intellij.java.psi"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.ml.contextFeatures language="Groovy" implementationClass="com.intellij.gradle.java.groovy.ml.GradleGroovyContextFeatureProvider"/>
+    <completion.ml.elementFeatures language="Groovy" implementationClass="com.intellij.gradle.java.groovy.ml.GradleGroovyElementFeatureProvider"/>
+    <completion.ml.ranking.features.policy language="Groovy" implementationClass="com.intellij.gradle.java.groovy.ml.GradleGroovyCompletionFeaturesPolicy"/>
+  </extensions>
+</idea-plugin>

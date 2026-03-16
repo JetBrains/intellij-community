@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  Foo$DefaultImpls.class
+  Foo.class
+  FooImpl.class
+  META-INF/kotlin_pureKotlin_changeTypeWithHierarhyDependency-a.kotlin_module
+  Type.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/changeTypeWithHierarhyDependency/a/Foo.kt
+  kotlin/pureKotlin/changeTypeWithHierarhyDependency/a/FooImpl.kt
+  kotlin/pureKotlin/changeTypeWithHierarhyDependency/a/types.kt
+End of files
+------------------------------------------
+Exit code: OK

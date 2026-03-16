@@ -4,14 +4,30 @@ package com.intellij.grazie.ide.language
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import java.nio.charset.StandardCharsets
 
 
 @Suppress("NonAsciiCharacters")
 class PropertiesSupportTest : GrazieTestBase() {
-  override val enableGrazieChecker: Boolean = true
+
+  override fun setUp() {
+    super.setUp()
+    val encodingManager = EncodingProjectManager.getInstance(project)
+    val defaultCharset = encodingManager.getDefaultCharsetForPropertiesFiles(null)
+    val native2Ascii = encodingManager.isNative2AsciiForPropertiesFiles()
+
+    encodingManager.setDefaultCharsetForPropertiesFiles(null, StandardCharsets.UTF_8)
+    encodingManager.setNative2AsciiForPropertiesFiles(null, false)
+
+    Disposer.register(testRootDisposable) {
+      encodingManager.setDefaultCharsetForPropertiesFiles(null, defaultCharset)
+      encodingManager.setNative2AsciiForPropertiesFiles(null, native2Ascii)
+    }
+  }
 
   fun `test asian-english mixed text in properties file`() {
     myFixture.configureByText("a.properties", "title=本地daemon插件jar")
@@ -24,8 +40,6 @@ class PropertiesSupportTest : GrazieTestBase() {
 
   fun `test grammar check in file`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
-    EncodingProjectManager.getInstance(project).setDefaultCharsetForPropertiesFiles(null, StandardCharsets.UTF_8)
-    EncodingProjectManager.getInstance(project).setNative2AsciiForPropertiesFiles(null, false)
 
     myFixture.configureByText(
       "a.properties",
@@ -59,6 +73,16 @@ class PropertiesSupportTest : GrazieTestBase() {
     myFixture.checkHighlighting()
   }
 
+  fun `test escaping in properties file`() {
+    myFixture.configureByText("a.properties",
+      """
+        one.liner=Hello\nworld\ragain\tanother
+      """.trimIndent()
+    )
+    myFixture.checkHighlighting()
+  }
+
+  @PerformanceUnitTest
   fun `test properties typos spellcheck performance`() {
     Benchmark.newBenchmark("Highlight typos in i18n.properties file") {
       runHighlightTestForFile("ide/language/properties/i18n.properties")

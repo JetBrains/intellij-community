@@ -6,9 +6,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.pty.PtyProcessTtyConnector
-import com.intellij.util.io.delete
 import com.jediterm.core.util.TermSize
 import com.pty4j.windows.conpty.WinConPtyProcess
 import org.jetbrains.annotations.ApiStatus
@@ -80,7 +80,7 @@ class ClassicTerminalTestShellSession(shellCommand: List<String>?, val widget: S
         catch (t: Throwable) {
           logger<ClassicTerminalTestShellSession>().error("Error closing TtyConnector", t)
         }
-        workingDirectory.delete()
+        NioFiles.deleteRecursively(workingDirectory)
       }
 
       if (SystemInfo.isWindows) {

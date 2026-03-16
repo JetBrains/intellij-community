@@ -22,14 +22,27 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.*
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinByConventionCallUsage
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinChangeSignatureConflictingUsageInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinFunctionCallUsage
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinOverrideUsageInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinPropertyCallUsage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.conflicts.checkNewPropertyConflicts
 import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
 import org.jetbrains.kotlin.idea.refactoring.conflicts.registerAlreadyDeclaredConflict
 import org.jetbrains.kotlin.idea.refactoring.conflicts.registerRetargetJobOnPotentialCandidates
 import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUsageInfo
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtValueArgumentName
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.types.Variance
@@ -74,7 +87,7 @@ class KotlinChangeSignatureConflictSearcher(
                 val unresolvableCollisions = mutableListOf<UsageInfo>()
                 val ktParameter = when {
                     parameter.isNewParameter -> null
-                    parameter.wasContextParameter -> function.modifierList?.contextReceiverList?.contextParameters()?.getOrNull(parameter.oldIndex)
+                    parameter.wasContextParameter -> function.contextParameters.getOrNull(parameter.oldIndex)
                     originalInfo.oldReceiverInfo != null && parameter.oldIndex == 0 -> null // it's a former receiver
                     else -> function.valueParameters[max(0, parameter.oldIndex - if (function.receiverTypeReference != null) 1 else 0)]
                 }
@@ -217,8 +230,8 @@ class KotlinChangeSignatureConflictSearcher(
             }
         }
 
-        val oldContextParameters = callableDeclaration.modifierList?.contextReceiverList?.contextParameters()
-        if (oldContextParameters != null && oldContextParameters.isNotEmpty()) {
+        val oldContextParameters = callableDeclaration.contextParameters
+        if (oldContextParameters.isNotEmpty()) {
             val usedIndexes = changeInfo.newParameters.filter { it.wasContextParameter }.map { it.oldIndex }
             oldContextParameters.withIndex().filter { it.index !in usedIndexes }.forEach {
                 registerConflictIfUsed(it.value)

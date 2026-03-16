@@ -26,13 +26,14 @@ import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
-import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimMethodNameMangling
 import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap
 import org.jetbrains.kotlin.idea.debugger.core.isInlineFunctionMarkerVariableName
 import org.jetbrains.kotlin.idea.debugger.core.isInlineLambdaMarkerVariableName
 import org.jetbrains.kotlin.idea.debugger.core.nameMatchesUpToDollar
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
 
@@ -122,8 +123,7 @@ open class KotlinMethodFilter(
     private fun nameMatches(location: Location, frameProxy: StackFrameProxyImpl?): Boolean {
         val method = location.safeMethod() ?: return false
         val targetMethodName = methodName
-        val isNameMangledInBytecode = methodInfo.isNameMangledInBytecode
-        val actualMethodName = method.name().trimIfMangledInBytecode(isNameMangledInBytecode)
+        val actualMethodName = method.name().trimMethodNameMangling()
 
         val isGeneratedLambda = actualMethodName.isGeneratedIrBackendLambdaMethodName()
         return actualMethodName == targetMethodName ||
@@ -144,8 +144,12 @@ private fun Method.isIntrinsicEquals(): Boolean =
 
 fun getCurrentDeclaration(positionManager: PositionManager, location: Location): KtDeclaration? {
     val elementAt = positionManager.getSourcePosition(location)?.elementAt
+    // This filtering is a bit complicated, we already skip local properties and destructuring.
+    // Consider restricting a parent type instead (e.g., only function, class, property, ...).
+    // See IDEA-373171.
     val declaration = elementAt?.getParentOfTypesAndPredicate(false, KtDeclaration::class.java) {
-        it !is KtProperty || !it.isLocal
+        !(it is KtProperty && it.isLocal) &&
+                it !is KtDestructuringDeclaration
     } ?: return null
     if (declaration is KtProperty) {
         // Smart step into visitor provides accessor element as a declaration
@@ -175,7 +179,7 @@ internal fun methodNameMatches(methodInfo: CallableMemberInfo, name: String): Bo
 }
 
 private fun LocalVariable.isInlinedFromFunction(methodInfo: CallableMemberInfo): Boolean {
-    val variableName = name().dropInlineScopeInfo().trimIfMangledInBytecode(methodInfo.isNameMangledInBytecode)
+    val variableName = name().dropInlineScopeInfo().trimMethodNameMangling()
     return when {
         variableName.isInlineFunctionMarkerVariableName -> {
             val inlineMethodName = variableName.substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)

@@ -27,7 +27,18 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.PyRemoveDictKeyQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyDictLiteralExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyKeyValueExpression;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyLiteralExpression;
+import com.jetbrains.python.psi.PyNumericLiteralExpression;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -40,7 +51,7 @@ import java.util.Map;
 
 /**
  * User: catherine
- *
+ * <p>
  * Inspection to detect using the same value as dictionary key twice.
  */
 public final class PyDictDuplicateKeysInspection extends PyInspection {
@@ -57,6 +68,7 @@ public final class PyDictDuplicateKeysInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyDictLiteralExpression(@NotNull PyDictLiteralExpression node) {
       if (node.isEmpty()) return;

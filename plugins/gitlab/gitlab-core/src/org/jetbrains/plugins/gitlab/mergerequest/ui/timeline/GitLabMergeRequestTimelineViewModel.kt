@@ -1,18 +1,39 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.childScope
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapDataToModel
+import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.transformConsecutiveSuccesses
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
-import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
+import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.onDoneIn
@@ -39,7 +60,8 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
   private val projectData: GitLabProject,
   private val preferences: GitLabMergeRequestsPreferences,
   override val currentUser: GitLabUserDTO,
-  private val mergeRequest: GitLabMergeRequest
+  private val mergeRequest: GitLabMergeRequest,
+  htmlConverter: GitLabMarkdownToHtmlConverter,
 ) : GitLabMergeRequestTimelineViewModel {
 
   private val cs = parentCs.childScope(this::class, Dispatchers.Default)
@@ -47,10 +69,10 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
   override val number: String = "!${mergeRequest.iid}"
   override val author: GitLabUserDTO = mergeRequest.author
   override val title: SharedFlow<String> = mergeRequest.details.map { it.title }.map { title ->
-    GitLabUIUtil.convertToHtml(project, mergeRequest.gitRepository, mergeRequest.glProject.projectPath, title)
+    htmlConverter.convertToHtml(title)
   }.modelFlow(cs, LOG)
   override val descriptionHtml: SharedFlow<String> = mergeRequest.details.map { it.description }.map { description ->
-    GitLabUIUtil.convertToHtml(project, mergeRequest.gitRepository, mergeRequest.glProject.projectPath, description)
+    htmlConverter.convertToHtml(description)
   }.modelFlow(cs, LOG)
   override val url: String = mergeRequest.url
 
@@ -60,7 +82,7 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
   override val timelineItems: SharedFlow<Result<List<GitLabMergeRequestTimelineItemViewModel>>> =
     mergeRequest.createTimelineItemsFlow(showEvents)
       .transformConsecutiveSuccesses {
-        mapDataToModel({ it.id }, { createItemVm(it) }, {})
+        mapDataToModel({ it.id }, { createItemVm(it, htmlConverter) }, {})
       }
       .modelFlow(cs, LOG)
 
@@ -73,7 +95,7 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
 
   override val newNoteVm: NewGitLabNoteViewModel? =
     if (mergeRequest.canAddNotes) {
-      GitLabNoteEditingViewModel.forNewNote(cs, project, mergeRequest, currentUser).apply {
+      GitLabNoteEditingViewModel.forNewNote(cs, project, projectData, mergeRequest, currentUser).apply {
         onDoneIn(cs) {
           text.value = ""
         }
@@ -83,7 +105,7 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
       null
     }
 
-  override val serverUrl: URL = mergeRequest.glProject.serverPath.toURL()
+  override val serverUrl: URL = mergeRequest.serverPath.toURL()
 
   private val _diffRequests = MutableSharedFlow<ChangesSelection.Precise>()
   val diffRequests: Flow<ChangesSelection.Precise> = _diffRequests.asSharedFlow()
@@ -142,17 +164,17 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
       }
     }
 
-  private fun CoroutineScope.createItemVm(item: GitLabMergeRequestTimelineItem)
+  private fun CoroutineScope.createItemVm(item: GitLabMergeRequestTimelineItem, htmlConverter: GitLabMarkdownToHtmlConverter)
     : GitLabMergeRequestTimelineItemViewModel =
     when (item) {
       is GitLabMergeRequestTimelineItem.Immutable ->
-        GitLabMergeRequestTimelineItemViewModel.Immutable.fromModel(project, mergeRequest, item)
+        GitLabMergeRequestTimelineItemViewModel.Immutable.fromModel(item, htmlConverter)
       is GitLabMergeRequestTimelineItem.UserDiscussion ->
-        GitLabMergeRequestTimelineItemViewModel.Discussion(project, cs, projectData, currentUser, mergeRequest, item.discussion).also {
+        GitLabMergeRequestTimelineItemViewModel.Discussion(project, cs, projectData, currentUser, mergeRequest, item.discussion, htmlConverter).also {
           handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
       is GitLabMergeRequestTimelineItem.DraftNote ->
-        GitLabMergeRequestTimelineItemViewModel.DraftNote(project, cs, mergeRequest, item.note).also {
+        GitLabMergeRequestTimelineItemViewModel.DraftNote(project, cs, mergeRequest, projectData, item.note, htmlConverter).also {
           handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
     }

@@ -9,5 +9,6 @@
         implementation="com.intellij.markdown.backend.providers.MarkdownLinkOpenerApiProvider"/>
       <platform.rpc.backend.remoteApiProvider
         implementation="com.intellij.markdown.backend.providers.VirtualFileAccessorProvider"/>
+      <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.lang.references.CommonLinkDestinationReferenceContributor"/>
     </extensions>
 </idea-plugin>

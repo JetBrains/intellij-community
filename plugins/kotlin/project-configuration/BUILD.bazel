@@ -16,7 +16,6 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-jps-common",
     "//libraries/asm",
     "//platform/analysis-api:analysis",
@@ -57,10 +56,16 @@ jvm_library(
     "//platform/diff-impl",
     "//platform/core-api:core",
     "//platform/util/coroutines",
-    "@lib//:maven-resolver-provider",
+    "//libraries/maven-resolver-provider",
     "//platform/util",
     "//platform/workspace/storage",
     "//platform/vcs-impl/shared",
+    "//platform/backend/workspace",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/execution",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/backend/observation",
   ]
 )
 ### auto-generated section `build intellij.kotlin.projectConfiguration` end

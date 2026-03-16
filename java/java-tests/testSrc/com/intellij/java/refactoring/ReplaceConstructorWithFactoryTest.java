@@ -9,8 +9,13 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModChooseAction;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
@@ -22,7 +27,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21_ANNOTATED;
 
-public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase {
+public class ReplaceConstructorWithFactoryTest extends LightJavaCodeInsightTestCase {
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {

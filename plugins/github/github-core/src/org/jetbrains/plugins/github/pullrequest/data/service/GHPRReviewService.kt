@@ -33,7 +33,7 @@ interface GHPRReviewService {
 
   suspend fun addComment(reviewId: String, body: String, commitSha: String, fileName: String, diffLine: Int): GHPullRequestReviewComment
 
-  suspend fun addThread(reviewId: String, body: String, line: Int, side: Side, startLine: Int, fileName: String): GHPullRequestReviewThread
+  suspend fun addThread(reviewId: String, body: String, line: Int, side: Side, startLine: Int, startSide: Side, fileName: String): GHPullRequestReviewThread
 
   suspend fun deleteComment(pullRequestId: GHPRIdentifier, commentId: String): GHPullRequestPendingReviewDTO
 

@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.wordSelection;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
@@ -15,12 +17,12 @@ import java.util.List;
 public final class JavaWordSelectioner extends AbstractWordSelectioner {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
-    ASTNode node = BasicJavaAstTreeUtil.toNode(e);
-    if (BasicJavaAstTreeUtil.isKeyword(node)) {
+    if (e instanceof PsiKeyword) {
       return true;
     }
-    if (BasicJavaAstTreeUtil.isJavaToken(node)) {
-      return BasicJavaAstTreeUtil.is(node, JavaTokenType.IDENTIFIER) || BasicJavaAstTreeUtil.is(node, JavaTokenType.STRING_LITERAL);
+    if (e instanceof PsiJavaToken) {
+      IElementType tokenType = ((PsiJavaToken)e).getTokenType();
+      return tokenType == JavaTokenType.IDENTIFIER || tokenType == JavaTokenType.STRING_LITERAL;
     }
     return false;
   }
@@ -28,10 +30,8 @@ public final class JavaWordSelectioner extends AbstractWordSelectioner {
   @Override
   public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> ranges = super.select(e, editorText, cursorOffset, editor);
-    if (ranges == null) {
-      return null;
-    }
-    if (BasicJavaAstTreeUtil.is(BasicJavaAstTreeUtil.toNode(e), JavaTokenType.STRING_LITERAL)) {
+    if (ranges == null) return null;
+    if (PsiUtil.isJavaToken(e, JavaTokenType.STRING_LITERAL)) {
       killRangesBreakingEscapes(e, ranges, e.getTextRange());
     }
     return ranges;

@@ -1,0 +1,12 @@
+// WITH_STDLIB
+class K : JavaClass() {
+    override fun getX(): JavaClass.X = JavaClass.X.A
+
+    fun foo() {
+        when (x) {
+            JavaClass.X.A -> println(1)
+            else -> println(2)
+        }
+    }
+}
+

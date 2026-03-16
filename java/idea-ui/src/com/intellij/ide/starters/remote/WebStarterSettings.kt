@@ -3,7 +3,15 @@
 
 package com.intellij.ide.starters.remote
 
-import com.intellij.ide.starters.shared.*
+import com.intellij.ide.starters.shared.LibraryInfo
+import com.intellij.ide.starters.shared.LibraryLink
+import com.intellij.ide.starters.shared.StarterAppPackaging
+import com.intellij.ide.starters.shared.StarterAppType
+import com.intellij.ide.starters.shared.StarterConfigFileFormat
+import com.intellij.ide.starters.shared.StarterLanguage
+import com.intellij.ide.starters.shared.StarterLanguageLevel
+import com.intellij.ide.starters.shared.StarterProjectType
+import com.intellij.ide.starters.shared.StarterWizardSettings
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Key
@@ -14,6 +22,7 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Paths
 import java.util.zip.ZipFile
+import javax.swing.Icon
 
 open class WebStarterServerOptions(
   val frameworkVersions: List<WebStarterFrameworkVersion>,
@@ -70,7 +79,8 @@ open class WebStarterDependency(
   override val description: String? = null,
   override val links: List<LibraryLink> = emptyList(),
   override val isDefault: Boolean = false,
-  override val isRequired: Boolean = false
+  override val isRequired: Boolean = false,
+  val icon: Icon? = null,
 ) : LibraryInfo {
   override fun toString(): String {
     return "WebStarterDependency(id='$id', title='$title')"

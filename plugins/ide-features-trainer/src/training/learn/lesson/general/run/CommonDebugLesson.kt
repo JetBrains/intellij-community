@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.learn.lesson.general.run
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.ui.RunConfigurationStartHistory
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
-import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
@@ -13,27 +12,45 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.xdebugger.*
+import com.intellij.xdebugger.XDebugProcess
+import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XDebugSessionListener
+import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.XDebuggerManagerListener
+import com.intellij.xdebugger.XDebuggerUtil
+import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.impl.InlayRunToCursorEditorListener
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
+import com.intellij.platform.debugger.impl.ui.XDebuggerUiBundle
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
 import org.assertj.swing.fixture.JComboBoxFixture
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
-import training.dsl.*
+import training.dsl.LearningBalloonConfig
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonSamplePosition
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.dsl.LessonUtil.checkPositionOfEditor
 import training.dsl.LessonUtil.highlightBreakpointGutter
 import training.dsl.LessonUtil.sampleRestoreNotification
+import training.dsl.TaskContext
+import training.dsl.TaskRuntimeContext
+import training.dsl.TaskTestContext
+import training.dsl.checkToolWindowState
+import training.dsl.highlightButtonById
+import training.dsl.lineWithBreakpoints
+import training.dsl.showInvalidDebugLayoutWarning
 import training.learn.CourseManager
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
@@ -146,7 +163,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
             invokeLater { debugSession.setBreakpointMuted(false) }  // session is not initialized at this moment
             if (!watchesRemoved) {
               val sessionData = (debugSession as XDebugSessionImpl).sessionData
-              val watchesManager = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).watchesManager
+              val watchesManager = XDebugManagerProxy.getInstance().getWatchesManager(project)
               watchesManager.setWatchEntries(sessionData.configurationName, emptyList())
               watchesRemoved = true
             }
@@ -219,12 +236,12 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
                                  icon(AllIcons.Debugger.AddToWatch)))
       text(LessonsBundle.message("debug.workflow.use.watches.shortcut", action(it),
                                  strong(LessonsBundle.message("debug.workflow.debugger.watches")), shortcut))
-      val addToWatchActionText = ActionsBundle.actionText(it)
+      val addToWatchActionText = XDebuggerUiBundle.message("action.Debugger.AddToWatch.text")
       triggerAndFullHighlight { usePulsation = true }.component { ui: ActionButton ->
         ui.action.templatePresentation.text == addToWatchActionText
       }
       stateCheck {
-        val watches = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).watchesManager.getWatchEntries(confNameForWatches)
+        val watches = XDebugManagerProxy.getInstance().getWatchesManager(project).getWatchEntries(confNameForWatches)
         watches.any { watch -> watch.expression.expression == needAddToWatch }
       }
       proposeSelectionChangeRestore(position)

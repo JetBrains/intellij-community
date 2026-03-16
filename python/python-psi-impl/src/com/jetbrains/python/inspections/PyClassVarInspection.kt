@@ -10,22 +10,41 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
-import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.psi.PyAnnotation
+import com.jetbrains.python.psi.PyAnnotationOwner
+import com.jetbrains.python.psi.PyAssignmentStatement
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyExpressionStatement
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyQualifiedExpression
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PySubscriptionExpression
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyTypeCommentOwner
+import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PySelfType
+import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeParameterType
+import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyClassVarInspection : PyInspection() {
 
-  override fun buildVisitor(holder: ProblemsHolder,
-                            isOnTheFly: Boolean,
-                            session: LocalInspectionToolSession): PsiElementVisitor = Visitor(holder,
-                                                                                              PyInspectionVisitor.getContext(session))
+  override fun buildVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+    session: LocalInspectionToolSession,
+  ): PsiElementVisitor = Visitor(holder,
+                                 PyInspectionVisitor.getContext(session))
 
   private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPyTargetExpression(node: PyTargetExpression) {
-        checkClassVarReassignment(node)
-        checkClassVarDeclaration(node)
-        checkAssignedValue(node)
+      checkClassVarReassignment(node)
+      checkClassVarDeclaration(node)
+      checkAssignedValue(node)
     }
 
     override fun visitPyReferenceExpression(node: PyReferenceExpression) {
@@ -100,7 +119,8 @@ class PyClassVarInspection : PyInspection() {
           val expectedType = myTypeEvalContext.getType(node)
           val actualType = node.findAssignedValue()?.let { myTypeEvalContext.getType(it) }
           if (expectedType != null && actualType != null &&
-              !PyTypeChecker.match(expectedType, actualType, myTypeEvalContext)) {
+              !PyTypeChecker.match(expectedType, actualType, myTypeEvalContext)
+          ) {
             val expectedName = PythonDocumentationProvider.getTypeName(expectedType, myTypeEvalContext)
             val actualName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
             registerProblem(node.findAssignedValue(),

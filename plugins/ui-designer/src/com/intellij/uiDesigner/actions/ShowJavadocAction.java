@@ -24,7 +24,7 @@ import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Point;
 
 public final class ShowJavadocAction extends AnAction {
 

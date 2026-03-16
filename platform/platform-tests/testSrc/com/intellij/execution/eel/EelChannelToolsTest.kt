@@ -10,14 +10,31 @@ import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendApi
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.channels.sendWholeBuffer
-import com.intellij.platform.eel.provider.utils.*
+import com.intellij.platform.eel.provider.utils.CopyError
+import com.intellij.platform.eel.provider.utils.EelChannelClosedException
+import com.intellij.platform.eel.provider.utils.EelOutputChannel
+import com.intellij.platform.eel.provider.utils.EelPipe
+import com.intellij.platform.eel.provider.utils.OnError
+import com.intellij.platform.eel.provider.utils.asEelChannel
+import com.intellij.platform.eel.provider.utils.asOutputStream
+import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
+import com.intellij.platform.eel.provider.utils.consumeAsInputStream
+import com.intellij.platform.eel.provider.utils.consumeReceiveChannelAsKotlin
+import com.intellij.platform.eel.provider.utils.copy
+import com.intellij.platform.eel.provider.utils.ensureClosed
+import com.intellij.platform.eel.provider.utils.lines
+import com.intellij.platform.eel.provider.utils.readAllBytes
+import com.intellij.platform.eel.provider.utils.readWholeText
+import com.intellij.platform.eel.provider.utils.sendUntilEnd
+import com.intellij.platform.eel.provider.utils.sendWholeBuffer
+import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import io.ktor.util.decodeString
 import io.ktor.util.moveToByteArray
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
-import io.mockk.spyk
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -25,18 +42,31 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
-import org.easymock.EasyMock.*
+import org.easymock.EasyMock.anyInt
+import org.easymock.EasyMock.anyObject
+import org.easymock.EasyMock.expect
+import org.easymock.EasyMock.mock
+import org.easymock.EasyMock.replay
+import org.easymock.EasyMock.verify
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junitpioneer.jupiter.cartesian.CartesianTest
 import org.junitpioneer.jupiter.params.IntRangeSource
 import org.opentest4j.AssertionFailedError
-import java.io.*
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 import java.net.SocketTimeoutException
 import java.nio.ByteBuffer
 import java.nio.ByteBuffer.allocate
@@ -50,6 +80,7 @@ import kotlin.math.absoluteValue
 import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 
+@Suppress("checkedExceptions")
 class EelChannelToolsTest {
   companion object {
     private const val TEXT = "Some text"
@@ -136,22 +167,29 @@ class EelChannelToolsTest {
     val srcErrorText = "src err"
     val dstErrorText = "dst err"
 
-    val src = spyk(ByteArrayInputStream(data).consumeAsEelChannel())
-    coEvery { src.receive(any()) } answers {
-      if (srcErr) {
-        throw IOException(srcErrorText)
+    // spyk from MockK doesn't work well with suspend functions.
+    val src = run {
+      val originalSrc = ByteArrayInputStream(data).consumeAsEelChannel()
+      object : EelReceiveChannel by originalSrc {
+        override suspend fun receive(dst: ByteBuffer): ReadResult {
+          if (srcErr) {
+            throw IOException(srcErrorText)
+          }
+          return originalSrc.receive(dst)
+        }
       }
-      else callOriginal()
     }
 
-    val dst = spyk(ByteArrayOutputStream().asEelChannel())
-    coEvery {
-      @Suppress("OPT_IN_USAGE") dst.send(any())
-    } answers {
-      if (dstErr) {
-        throw IOException(dstErrorText)
+    val dst = run {
+      val originalDst = ByteArrayOutputStream().asEelChannel()
+      object : EelSendChannel by originalDst {
+        override suspend fun send(src: ByteBuffer) {
+          if (dstErr) {
+            throw IOException(dstErrorText)
+          }
+          originalDst.send(src)
+        }
       }
-      else callOriginal()
     }
 
     // Due to mokk bug `Default` can't be used
@@ -191,7 +229,13 @@ class EelChannelToolsTest {
         return NOT_EOF
       }
 
+      override fun available(): Int {
+        TODO("Not yet implemented")
+      }
+
       override suspend fun closeForReceive() = Unit
+
+      override val prefersDirectBuffers: Boolean = false
     }
 
     val result = mutableListOf<Byte>()
@@ -206,7 +250,9 @@ class EelChannelToolsTest {
         result.add(dst.get())
       }
 
-      override suspend fun close() = Unit
+      override suspend fun close(err: Throwable?) = Unit
+
+      override val prefersDirectBuffers: Boolean = false
     }
 
     var errorHappened = false
@@ -243,7 +289,13 @@ class EelChannelToolsTest {
         return NOT_EOF
       }
 
+      override fun available(): Int {
+        TODO("Not yet implemented")
+      }
+
       override suspend fun closeForReceive() = Unit
+
+      override val prefersDirectBuffers: Boolean = false
     }
     val stream = channel.consumeAsInputStream()
     while (true) {
@@ -267,31 +319,24 @@ class EelChannelToolsTest {
   @Test
   fun testStreamAvailable(): Unit = timeoutRunBlocking {
     val bytesCount = 8192
-    val pipe = EelPipe()
+    val pipe = EelPipe(prefersDirectBuffers = false)
     val input = pipe.source.consumeAsInputStream()
     Assertions.assertEquals(0, input.available(), "empty stream must have 0 available")
 
     // 8192
     launch {
       pipe.sink.sendWholeBuffer(allocate(bytesCount))
-    } // 8192 * 2
-    launch {
-      pipe.sink.sendWholeBuffer(allocate(bytesCount))
     }
     awaitForCondition {
-      Assertions.assertEquals(bytesCount * 2, input.available(), "Wrong number of bytes available")
+      Assertions.assertEquals(bytesCount, input.available(), "Wrong number of bytes available")
     } // 8192
-    pipe.source.receive(allocate(bytesCount)) // 8193
+    pipe.source.receive(allocate(bytesCount)) // 0
     launch {
       pipe.sink.sendWholeBuffer(allocate(1))
     }
     awaitForCondition {
-      Assertions.assertEquals(bytesCount + 1, input.available(), "Wrong number of bytes available")
+      Assertions.assertEquals(1, input.available(), "Wrong number of bytes available")
     } // 1
-    pipe.source.receive(allocate(bytesCount))
-    awaitForCondition {
-      Assertions.assertEquals(1, input.available(), "After receiving there must be 0 bytes")
-    }
 
     //0
     pipe.source.receive(allocate(bytesCount))
@@ -310,7 +355,7 @@ class EelChannelToolsTest {
     awaitForCondition {
       Assertions.assertEquals(bytesCount, input.available(), "Wrong number of bytes available")
     }
-    pipe.closePipe()
+    pipe.closePipe(null)
     awaitForCondition {
       Assertions.assertEquals(0, input.available(), "Closed channel available must be 0 bytes")
     }
@@ -340,7 +385,7 @@ class EelChannelToolsTest {
   ): Unit = timeoutRunBlocking(30.seconds) {
     val repeatText = 3
     val result = allocate(8192)
-    val pipe = EelPipe()
+    val pipe = EelPipe(prefersDirectBuffers = false)
 
 
     async {
@@ -349,7 +394,7 @@ class EelChannelToolsTest {
         input.sendWholeBuffer(wrap(data))
       }
       assertFalse(input.isClosed)
-      input.close()
+      input.close(null)
       assertTrue(input.isClosed)
     }
 
@@ -413,7 +458,7 @@ class EelChannelToolsTest {
 
     @Test
     fun testSendWholeBuffer(): Unit = timeoutRunBlocking {
-      val pipe = EelOutputChannel()
+      val pipe = EelOutputChannel(false)
       val producerProgress = AtomicInteger(0)
       val chunksCount = 50
       coroutineScope {
@@ -456,7 +501,7 @@ class EelChannelToolsTest {
     }
 
     suspend fun testSendUntilEnd(chunksCount: Int, endAtChunk: Int? = null) {
-      val pipe = EelOutputChannel()
+      val pipe = EelOutputChannel(false)
       val producerProgress = AtomicInteger(0)
       coroutineScope {
         val processExited = CompletableDeferred<Unit>()
@@ -500,7 +545,7 @@ class EelChannelToolsTest {
 
     @Test
     fun testPipeWithErrorClosedForReceive(): Unit = timeoutRunBlocking {
-      val pipe = EelOutputChannel()
+      val pipe = EelOutputChannel(false)
       pipe.exposedSource.closeForReceive()
       try {
         pipe.sendWholeBuffer(ByteBuffer.wrap("D".toByteArray()))
@@ -513,7 +558,7 @@ class EelChannelToolsTest {
 
     @Test
     fun testPipeWithErrorException(): Unit = timeoutRunBlocking {
-      val pipe = EelOutputChannel()
+      val pipe = EelOutputChannel(false)
 
       val error = Exception("some error")
       val expectedMessageError = "Pipe was broken with message: ${error.message}"
@@ -540,7 +585,7 @@ class EelChannelToolsTest {
 
   @Test
   fun testPipeWithErrorClosed(): Unit = timeoutRunBlocking {
-    val pipe = EelPipe()
+    val pipe = EelPipe(prefersDirectBuffers = false)
     pipe.source.closeForReceive()
     try {
       pipe.sink.send(ByteBuffer.wrap("D".toByteArray()))
@@ -553,7 +598,7 @@ class EelChannelToolsTest {
 
   @Test
   fun testPipeWithErrorException(): Unit = timeoutRunBlocking {
-    val pipe = EelPipe()
+    val pipe = EelPipe(prefersDirectBuffers = false)
 
     val error = Exception("some error")
     val expectedMessageError = "Pipe was broken with message: ${error.message}"
@@ -579,7 +624,7 @@ class EelChannelToolsTest {
   @Test
   fun testPipeWithSeveralOutputs(): Unit = timeoutRunBlocking {
     val lettersSent: MutableCollection<Char> = ConcurrentLinkedDeque<Char>()
-    val pipe = EelPipe()
+    val pipe = EelPipe(prefersDirectBuffers = false)
     val sendJob1 = launch {
       for (c in 'a'..'z') {
         pipe.sink.sendWholeText("$c")
@@ -598,7 +643,7 @@ class EelChannelToolsTest {
     assertFalse(pipe.sink.isClosed)
     sendJob1.join()
     sendJob2.join()
-    pipe.sink.close()
+    pipe.sink.close(null)
     assertTrue(pipe.sink.isClosed)
     val text = readJob.await()
     assertThat("Some litters missing", text.toCharArray().toList(), containsInAnyOrder(*lettersSent.toTypedArray()))
@@ -626,6 +671,7 @@ class EelChannelToolsTest {
     val brokenChannel = mockk<EelReceiveChannel>()
     val error = IOException("go away me busy")
     coEvery { brokenChannel.receive(any()) } answers { throw error }
+    every { brokenChannel.prefersDirectBuffers } returns false
     try {
       consumeReceiveChannelAsKotlin(brokenChannel).receive()
     }

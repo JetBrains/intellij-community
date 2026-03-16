@@ -1,7 +1,7 @@
 import re
 from collections import OrderedDict
 from collections.abc import Iterator
-from typing import Any, Final
+from typing import Final
 
 from .locale import Locale
 
@@ -15,7 +15,7 @@ class LocaleDataLoader:
         region: str | None = None,
         use_given_order: bool = False,
         allow_conflicting_locales: bool = False,
-    ) -> OrderedDict[str, list[Any] | str | int]: ...
+    ) -> OrderedDict[str, Locale]: ...
     def get_locales(
         self,
         languages: list[str] | None = None,

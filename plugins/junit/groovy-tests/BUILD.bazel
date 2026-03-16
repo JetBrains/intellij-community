@@ -2,6 +2,12 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
+  name = "groovy-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
   name = "groovy-tests_test_lib",
   module_name = "intellij.junit.groovy.tests",
   visibility = ["//visibility:public"],
@@ -17,7 +23,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//jvm/jvm-analysis-testFramework:analysis-testFramework",
     "//plugins/junit/testFramework",
-  ]
+  ],
+  runtime_deps = [":groovy-tests"]
 )
 ### auto-generated section `build intellij.junit.groovy.tests` end
 

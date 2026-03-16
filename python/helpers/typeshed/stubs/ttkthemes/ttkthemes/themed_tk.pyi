@@ -1,5 +1,6 @@
 import tkinter
-from typing import Any
+from collections.abc import Callable
+from typing import Any, Literal
 
 from ._widget import ThemedWidget
 
@@ -7,19 +8,18 @@ class ThemedTk(tkinter.Tk, ThemedWidget):
     def __init__(
         self,
         # non-keyword-only args copied from tkinter.Tk
-        screenName: str | None = ...,
-        baseName: str | None = ...,
-        className: str = ...,
-        useTk: bool = ...,
-        sync: bool = ...,
-        use: str | None = ...,
-        *,
-        theme: str | None = ...,
+        screenName: str | None = None,
+        baseName: str | None = None,
+        className: str = "Tk",
+        useTk: bool = True,
+        sync: bool = False,
+        use: str | None = None,
+        theme: str | None = None,
         # fonts argument does nothing
-        toplevel: bool | None = ...,
-        themebg: bool | None = ...,
-        background: bool | None = ...,  # old alias for themebg
-        gif_override: bool = ...,
+        toplevel: bool | None = None,
+        themebg: bool | None = None,
+        background: bool | None = None,  # old alias for themebg
+        gif_override: bool = False,
     ) -> None: ...
     def set_theme(self, theme_name: str, toplevel: bool | None = None, themebg: bool | None = None) -> None: ...
     # Keep this in sync with tkinter.Tk
@@ -31,21 +31,21 @@ class ThemedTk(tkinter.Tk, ThemedWidget):
         toplevel: bool | None = ...,
         theme: str | None = ...,
         background: str = ...,
-        bd: tkinter._ScreenUnits = ...,
+        bd: float | str = ...,
         bg: str = ...,
-        border: tkinter._ScreenUnits = ...,
-        borderwidth: tkinter._ScreenUnits = ...,
+        border: float | str = ...,
+        borderwidth: float | str = ...,
         cursor: tkinter._Cursor = ...,
-        height: tkinter._ScreenUnits = ...,
+        height: float | str = ...,
         highlightbackground: str = ...,
         highlightcolor: str = ...,
-        highlightthickness: tkinter._ScreenUnits = ...,
+        highlightthickness: float | str = ...,
         menu: tkinter.Menu = ...,
-        padx: tkinter._ScreenUnits = ...,
-        pady: tkinter._ScreenUnits = ...,
-        relief: tkinter._Relief = ...,
-        takefocus: tkinter._TakeFocusValue = ...,
-        width: tkinter._ScreenUnits = ...,
+        padx: float | str = ...,
+        pady: float | str = ...,
+        relief: Literal["raised", "sunken", "flat", "ridge", "solid", "groove"] = ...,
+        takefocus: bool | Literal[0, 1, ""] | Callable[[str], bool | None] = ...,
+        width: float | str = ...,
     ) -> dict[str, tuple[str, str, str, Any, Any]] | None: ...
     def cget(self, k: str) -> Any: ...
     def configure(  # type: ignore[override]
@@ -56,21 +56,21 @@ class ThemedTk(tkinter.Tk, ThemedWidget):
         toplevel: bool | None = ...,
         theme: str | None = ...,
         background: str = ...,
-        bd: tkinter._ScreenUnits = ...,
+        bd: float | str = ...,
         bg: str = ...,
-        border: tkinter._ScreenUnits = ...,
-        borderwidth: tkinter._ScreenUnits = ...,
+        border: float | str = ...,
+        borderwidth: float | str = ...,
         cursor: tkinter._Cursor = ...,
-        height: tkinter._ScreenUnits = ...,
+        height: float | str = ...,
         highlightbackground: str = ...,
         highlightcolor: str = ...,
-        highlightthickness: tkinter._ScreenUnits = ...,
+        highlightthickness: float | str = ...,
         menu: tkinter.Menu = ...,
-        padx: tkinter._ScreenUnits = ...,
-        pady: tkinter._ScreenUnits = ...,
-        relief: tkinter._Relief = ...,
-        takefocus: tkinter._TakeFocusValue = ...,
-        width: tkinter._ScreenUnits = ...,
+        padx: float | str = ...,
+        pady: float | str = ...,
+        relief: Literal["raised", "sunken", "flat", "ridge", "solid", "groove"] = ...,
+        takefocus: bool | Literal[0, 1, ""] | Callable[[str], bool | None] = ...,
+        width: float | str = ...,
     ) -> dict[str, tuple[str, str, str, Any, Any]] | None: ...
     def __getitem__(self, k: str) -> Any: ...
     def __setitem__(self, k: str, v: Any) -> None: ...

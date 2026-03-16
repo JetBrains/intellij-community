@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":protobuf_resources"],
-  exports = ["@lib//:kotlinx-serialization-protobuf"],
-  runtime_deps = ["@lib//:kotlinx-serialization-protobuf"]
+  exports = ["@lib//:libraries-kotlinx-serialization-protobuf-kotlinx-serialization-protobuf"],
+  runtime_deps = ["@lib//:libraries-kotlinx-serialization-protobuf-kotlinx-serialization-protobuf"]
 )
 ### auto-generated section `build intellij.libraries.kotlinx.serialization.protobuf` end

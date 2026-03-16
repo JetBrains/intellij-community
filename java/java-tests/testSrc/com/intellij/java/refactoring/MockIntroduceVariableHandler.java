@@ -12,6 +12,7 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -98,7 +99,7 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
   }
 
   @Override
-  protected void showErrorMessage(Project project, Editor editor, String message) {
+  protected void showErrorMessage(@NotNull Project project, Editor editor, @NotNull String message) {
     throw new CommonRefactoringUtil.RefactoringErrorHintException(message);
   }
 

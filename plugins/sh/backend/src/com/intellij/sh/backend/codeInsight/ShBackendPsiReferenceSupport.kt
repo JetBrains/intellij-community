@@ -3,10 +3,14 @@ package com.intellij.sh.backend.codeInsight
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.sh.codeInsight.ShPsiReferenceSupport
-import com.intellij.sh.psi.*
+import com.intellij.sh.psi.ShLiteral
+import com.intellij.sh.psi.ShLiteralExpression
+import com.intellij.sh.psi.ShLiteralOperation
+import com.intellij.sh.psi.ShString
+import com.intellij.sh.psi.ShVariable
 import org.jetbrains.annotations.NotNull
 
-class ShBackendPsiReferenceSupport : ShPsiReferenceSupport {
+internal class ShBackendPsiReferenceSupport : ShPsiReferenceSupport {
   override fun getReferences(@NotNull o: ShLiteral): Array<PsiReference> {
     if (o is ShString || o.word != null) {
       val array = ReferenceProvidersRegistry.getReferencesFromProviders(o)

@@ -2,7 +2,16 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent

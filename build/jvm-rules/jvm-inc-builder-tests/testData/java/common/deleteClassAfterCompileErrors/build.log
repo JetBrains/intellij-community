@@ -1,0 +1,18 @@
+================ Step #1 =================
+Cleaning output files:
+  packageA/Server.class
+End of files
+Compiling files:
+  java/common/deleteClassAfterCompileErrors/a/packageA/Server.java
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  packageA/Client.class
+End of files
+Compiling files:
+  java/common/deleteClassAfterCompileErrors/a/packageA/Client.java
+End of files
+------------------------------------------
+Exit code: ERROR

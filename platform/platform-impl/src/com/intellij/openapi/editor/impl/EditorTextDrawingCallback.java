@@ -4,7 +4,8 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
 
 
 final class EditorTextDrawingCallback implements TextDrawingCallback {

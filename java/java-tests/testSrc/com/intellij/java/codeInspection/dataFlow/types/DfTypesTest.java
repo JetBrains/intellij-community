@@ -2,7 +2,11 @@
 package com.intellij.java.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.codeInspection.dataFlow.types.DfDoubleType;
+import com.intellij.codeInspection.dataFlow.types.DfFloatType;
+import com.intellij.codeInspection.dataFlow.types.DfLongType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.PsiTypes;
 import org.junit.Test;

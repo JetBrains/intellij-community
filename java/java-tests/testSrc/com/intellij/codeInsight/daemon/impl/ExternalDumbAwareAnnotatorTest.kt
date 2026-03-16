@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.lang.ExternalLanguageAnnotators
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.java.JavaLanguage
@@ -12,6 +11,7 @@ import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.ModuleFixture
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 
 class ExternalDumbAwareAnnotatorTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder<ModuleFixture>>() {
   fun testExternalDumbAwareAnnotator() {
@@ -31,7 +31,7 @@ class ExternalDumbAwareAnnotatorTest : CodeInsightFixtureTestCase<ModuleFixtureB
       }
     }
     ExternalLanguageAnnotators.INSTANCE.addExplicitExtension(JavaLanguage.INSTANCE, annotator)
-    (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).mustWaitForSmartMode(false, getTestRootDisposable())
+    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, getTestRootDisposable())
     try {
       DumbModeTestUtils.runInDumbModeSynchronously(project) {
         myFixture.testHighlighting(true, false, true)

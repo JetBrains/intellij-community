@@ -23,7 +23,14 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitLineHandlerListener;
+import git4idea.commands.GitMessageWithFilesDetector;
+import git4idea.commands.GitStandardProgressAnalyzer;
+import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
@@ -33,7 +40,11 @@ import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 import static git4idea.GitNotificationIdsHolder.MERGE_ERROR;
 import static git4idea.GitNotificationIdsHolder.MERGE_RESET_ERROR;

@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.ide.startup.importSettings.jar
   modules:
   - name: intellij.ide.startup.importSettings
   library: sqlite

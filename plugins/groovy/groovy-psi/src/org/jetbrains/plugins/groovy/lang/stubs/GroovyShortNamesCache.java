@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.stubs;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -19,7 +18,11 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Processor;
+import com.intellij.util.Processors;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NonNls;
@@ -31,9 +34,20 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.search.GrSourceFilterScope;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.*;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotationMethodNameIndex;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameStringIndex;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullScriptNameStringIndex;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrScriptClassNameIndex;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys.CLASS_SHORT_NAMES;
 
@@ -50,7 +64,7 @@ public final class GroovyShortNamesCache extends PsiShortNamesCache {
 
   public static GroovyShortNamesCache getGroovyShortNamesCache(Project project) {
     return Objects
-      .requireNonNull(ContainerUtil.findInstance(PsiShortNamesCache.EP_NAME.getExtensionList(project), GroovyShortNamesCache.class));
+      .requireNonNull(ContainerUtil.findInstance(EP_NAME.getExtensionList(project), GroovyShortNamesCache.class));
   }
 
   private @Nullable TopLevelFQNames getTopLevelNames() {
@@ -83,7 +97,7 @@ public final class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   private @Nullable TopLevelFQNames getScriptTopLevelNames() {
-    TopLevelFQNames names = ReadAction.compute(() -> getTopLevelNames());
+    TopLevelFQNames names = getTopLevelNames();
     if (names == null) return null;
 
     TopLevelFQNames topLevelFQNames = myTopLevelScriptFQNames;
@@ -131,7 +145,7 @@ public final class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   public @NotNull List<PsiClass> getClassesByFQName(String name, GlobalSearchScope scope, boolean inSource) {
-    TopLevelFQNames names = ReadAction.compute(() -> getTopLevelNames());
+    TopLevelFQNames names = getTopLevelNames();
     if (names != null) {
       String topLevelName = toTopLevelName(name);
       if (!names.names.contains(topLevelName)) {
@@ -142,12 +156,10 @@ public final class GroovyShortNamesCache extends PsiShortNamesCache {
       return Collections.emptyList();
     }
     GlobalSearchScope actualScope = inSource ? new GrSourceFilterScope(scope) : scope;
-    return ReadAction.compute(() -> {
-      List<PsiClass> result = new ArrayList<>();
-      result.addAll(StubIndex.getElements(GrFullClassNameStringIndex.KEY, name, myProject, actualScope, PsiClass.class));
-      result.addAll(getScriptClassesByFQName(name, scope, inSource));
-      return result;
-    });
+    List<PsiClass> result = new ArrayList<>();
+    result.addAll(StubIndex.getElements(GrFullClassNameStringIndex.KEY, name, myProject, actualScope, PsiClass.class));
+    result.addAll(getScriptClassesByFQName(name, scope, inSource));
+    return result;
   }
 
   @Override
@@ -249,7 +261,7 @@ public final class GroovyShortNamesCache extends PsiShortNamesCache {
     for (GroovyFile file : StubIndex.getElements(GrScriptClassNameIndex.KEY, name, myProject, new GrSourceFilterScope(scope), filter,
                                                  GroovyFile.class)) {
       PsiClass aClass = file.getScriptClass();
-      if (aClass != null && !processor.process(aClass)) return true;
+      if (aClass != null && !processor.process(aClass)) return false;
     }
     return true;
   }

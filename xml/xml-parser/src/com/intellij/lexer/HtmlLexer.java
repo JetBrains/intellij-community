@@ -145,6 +145,31 @@ public class HtmlLexer extends BaseHtmlLexer {
   }
 
   @Override
+  public @NotNull LexerPosition getCurrentPosition() {
+    return new MyPosition(
+      super.getCurrentPosition(),
+      myTokenType,
+      myTokenStart,
+      myTokenEnd,
+      embeddedLexer,
+      embeddedLexer != null ? embeddedLexer.getCurrentPosition() : null
+    );
+  }
+
+  @Override
+  public void restore(@NotNull LexerPosition position) {
+    MyPosition myPosition = (MyPosition)position;
+    super.restore(myPosition.myDelegate);
+    myTokenType = myPosition.myTokenType;
+    myTokenStart = myPosition.myTokenStart;
+    myTokenEnd = myPosition.myTokenEnd;
+    embeddedLexer = myPosition.embeddedLexer;
+    if (embeddedLexer != null) {
+      embeddedLexer.restore(myPosition.embeddedLexerPosition);
+    }
+  }
+
+  @Override
   public int getTokenStart() {
     if (myTokenType != null) {
       return myTokenStart;
@@ -213,6 +238,42 @@ public class HtmlLexer extends BaseHtmlLexer {
           embeddedLexer = null;
         }
       }
+    }
+  }
+
+  private static class MyPosition implements LexerPosition {
+
+    private final LexerPosition myDelegate;
+    private final IElementType myTokenType;
+    private final int myTokenStart;
+    private final int myTokenEnd;
+    private final Lexer embeddedLexer;
+    private final LexerPosition embeddedLexerPosition;
+
+    MyPosition(
+      LexerPosition delegate,
+      IElementType tokenType,
+      int tokenStart,
+      int tokenEnd,
+      Lexer embeddedLexer,
+      LexerPosition embeddedLexerPosition
+    ) {
+      myDelegate = delegate;
+      myTokenType = tokenType;
+      myTokenStart = tokenStart;
+      myTokenEnd = tokenEnd;
+      this.embeddedLexer = embeddedLexer;
+      this.embeddedLexerPosition = embeddedLexerPosition;
+    }
+
+    @Override
+    public int getOffset() {
+      return myDelegate.getOffset();
+    }
+
+    @Override
+    public int getState() {
+      return myDelegate.getState();
     }
   }
 }

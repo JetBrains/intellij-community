@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_internalTypealiasConstructor-a.kotlin_module
+  test/UseTypeAliasConstructorKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/internalTypealiasConstructor/a/useTypeAliasConstructor.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -28,7 +28,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
-private class SaveAsDirectoryBasedFormatAction : AnAction(), DumbAware {
+internal class SaveAsDirectoryBasedFormatAction : AnAction(), DumbAware {
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
     if (!isConvertableProject(project)) {

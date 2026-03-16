@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.nio.charset.StandardCharsets;
 
 public final class ModuleFileType implements InternalFileType {

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.inspections.migration
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory0
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.idea.migration.MigrationInfo
 import org.jetbrains.kotlin.idea.migration.isLanguageVersionUpdate
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 
+@K1Deprecation
 class NoConstructorMigrationInspection :
     AbstractDiagnosticBasedMigrationInspection<PsiElement>(PsiElement::class.java),
     MigrationFix {

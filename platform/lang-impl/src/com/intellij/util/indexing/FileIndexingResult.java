@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -10,7 +10,11 @@ import com.intellij.util.indexing.events.IndexingEventsLogger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
@@ -133,6 +137,7 @@ public final class FileIndexingResult {
                                 @NotNull Supplier<String> debugString) {
     if (allModificationsSuccessful) {
       IndexingEventsLogger.tryLog("INDEX_UPDATED", file, debugString);
+      //remove indexed (=processed) files from the 'dirty files queue' (FilesToUpdateCollector)
       indexImpl.getFilesToUpdateCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
 
       if (shouldMarkFileAsIndexed) {

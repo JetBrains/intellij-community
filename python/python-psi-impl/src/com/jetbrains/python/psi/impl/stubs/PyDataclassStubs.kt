@@ -101,7 +101,7 @@ class PyDataclassStubImpl(
   override fun matchArgsValue(): Boolean? = matchArgs
   override fun kwOnly(): Boolean? = kwOnly
   override fun slotsValue(): Boolean? = slots
-  
+
   override fun toString(): String {
     return "PyDataclassStub(" +
            "type='$type', " +

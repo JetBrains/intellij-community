@@ -8,7 +8,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
@@ -57,7 +56,6 @@ public class UnusedPropertyInspectionTest extends CodeInsightFixtureTestCase<Mod
           System.getProperty("used");
         }
       }""";
-    VirtualFile file = VfsTestUtil.createFile(src.getFile(), "org/main/Main.java", javaClass);
-    myFixture.allowTreeAccessForFile(file);
+    VfsTestUtil.createFile(src.getFile(), "org/main/Main.java", javaClass);
   }
 }

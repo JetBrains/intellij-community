@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ModCommandAction
@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.quickfix.WrapWithCollectionLiteralCallFix
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 
@@ -66,7 +65,7 @@ internal object WrapWithCollectionLiteralCallFixFactory {
     }
 
     val assignmentTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
-        createIfAvailable(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
+        createIfAvailable(diagnostic.expression, diagnostic.expectedType, diagnostic.actualType)
     }
 
     val nullForNonNullType = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NullForNonnullType ->
@@ -74,7 +73,7 @@ internal object WrapWithCollectionLiteralCallFixFactory {
     }
 
     val initializerTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
-        val initializer = (diagnostic.psi as? KtProperty)?.initializer ?: return@ModCommandBased emptyList()
+        val initializer = diagnostic.initializer ?: return@ModCommandBased emptyList()
         createIfAvailable(initializer, diagnostic.expectedType, diagnostic.actualType)
     }
 }

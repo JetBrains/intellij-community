@@ -1,2 +1,0 @@
-//<caret>
-public class A {}

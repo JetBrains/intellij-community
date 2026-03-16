@@ -2,11 +2,11 @@
   "inspections": [
     {
       "id": "HtmlRequiredSummaryAttribute",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "HtmlRequiredTitleAttribute",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "HtmlRequiredAltAttribute",
@@ -30,19 +30,19 @@
     },
     {
       "id": "HtmlDeprecatedAttribute",
-      "codeQualityCategory": "Code Style"
-    },
-    {
-      "id": "CheckImageSize",
-      "codeQualityCategory": "Performance"
-    },
-    {
-      "id": "HtmlRequiredLangAttribute",
       "codeQualityCategory": "Reliability"
     },
     {
+      "id": "CheckImageSize",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HtmlRequiredLangAttribute",
+      "codeQualityCategory": "Code Style"
+    },
+    {
       "id": "HtmlNonExistentInternetResource",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

@@ -51,10 +51,12 @@ class PyOverridingClassDunderMembersProvider : PyClassMembersProviderBase(), PyO
     return result
   }
 
-  private fun processDunderClass(type: PyClassType,
-                                 location: PyExpression?,
-                                 direction: AccessDirection,
-                                 context: TypeEvalContext): List<PsiElement> {
+  private fun processDunderClass(
+    type: PyClassType,
+    location: PyExpression?,
+    direction: AccessDirection,
+    context: TypeEvalContext,
+  ): List<PsiElement> {
     return if (type.isDefinition && type.pyClass.isNewStyleClass(context) || /* override */
                !type.isDefinition && !type.pyClass.isNewStyleClass(context) /* provide */) {
       resolveInObject(type, PyNames.__CLASS__, location, direction, context)
@@ -62,22 +64,26 @@ class PyOverridingClassDunderMembersProvider : PyClassMembersProviderBase(), PyO
     else emptyList()
   }
 
-  private fun processNotOverridden(type: PyClassType,
-                                   name: String,
-                                   location: PyExpression?,
-                                   direction: AccessDirection,
-                                   context: TypeEvalContext,
-                                   overridden: Boolean): List<PsiElement> {
+  private fun processNotOverridden(
+    type: PyClassType,
+    name: String,
+    location: PyExpression?,
+    direction: AccessDirection,
+    context: TypeEvalContext,
+    overridden: Boolean,
+  ): List<PsiElement> {
     return if (!overridden) resolveInObject(type, name, location, direction, context) else emptyList()
   }
 
   private fun toCustomMembers(name: String, resolved: List<PsiElement>) = resolved.map { PyCustomMember(name, it) }
 
-  private fun resolveInObject(type: PyClassType,
-                              name: String,
-                              location: PyExpression?,
-                              direction: AccessDirection,
-                              context: TypeEvalContext): List<PsiElement> {
+  private fun resolveInObject(
+    type: PyClassType,
+    name: String,
+    location: PyExpression?,
+    direction: AccessDirection,
+    context: TypeEvalContext,
+  ): List<PsiElement> {
     val objectType = PyBuiltinCache.getInstance(type.pyClass).objectType ?: return emptyList()
     val resolveContext = PyResolveContext.defaultContext(context)
     val results = objectType.resolveMember(name, location, direction, resolveContext) ?: return emptyList()

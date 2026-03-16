@@ -1,5 +1,4 @@
 from _typeshed import Incomplete
-from typing import Any
 
 from google.cloud.ndb import model
 
@@ -32,7 +31,7 @@ class Property(_BaseMetadata):
     def property_name(self): ...
     @property
     def kind_name(self): ...
-    property_representation: Any
+    property_representation: Incomplete
     @classmethod
     def key_for_kind(cls, kind): ...
     @classmethod

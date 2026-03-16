@@ -7,7 +7,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ModuleRootManagerEx;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.NativeLibraryOrderRootType;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -21,8 +26,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.roots.ModuleRootManagerTestCase;
 import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -155,9 +160,9 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     while (!FileUtil.delete(new File(libDir.getPath(),"lib.jar"))) {
 
     }
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     libDir.refresh(false, false);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     assertNull(libDir.findChild("lib.jar"));
 
@@ -165,7 +170,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     assertNull(aClass);
 
     copy(libJar, libDir, libJar.getName());
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     aClass = JavaPsiFacade.getInstance(getProject()).findClass("l.InLib", GlobalSearchScope.allScope(getProject()));
     assertNotNull(aClass);
@@ -202,11 +207,11 @@ public class LibraryTest extends ModuleRootManagerTestCase {
 
     // wait until unlock the file?
     while (!FileUtil.delete(new File(libDir.getPath(), "lib.jar"))) {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     libDir.refresh(false, false);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     assertNull(libDir.findChild("lib.jar"));
     
     aClass = JavaPsiFacade.getInstance(getProject()).findClass("l.InLib", GlobalSearchScope.allScope(getProject()));
@@ -226,7 +231,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     libJar = libDir.findFileByRelativePath(originalLibJar.getName());
     assertNotNull(libJar);
 
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     aClass = JavaPsiFacade.getInstance(getProject()).findClass("l.InLib", GlobalSearchScope.allScope(getProject()));
     assertNotNull(aClass);

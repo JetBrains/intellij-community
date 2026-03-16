@@ -5,7 +5,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
 import java.util.Collection;
 
 public final class ComboBoxUtil {

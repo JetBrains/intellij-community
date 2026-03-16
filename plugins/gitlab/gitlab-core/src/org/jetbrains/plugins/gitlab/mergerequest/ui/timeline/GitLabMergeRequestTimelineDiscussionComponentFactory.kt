@@ -3,8 +3,13 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
 import com.intellij.collaboration.async.inverted
 import com.intellij.collaboration.async.mapScoped
-import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.wrapWithLimitedSize
+import com.intellij.collaboration.ui.ComponentListPanelFactory
+import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.LoadingLabel
+import com.intellij.collaboration.ui.SimpleHtmlPane
+import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
@@ -14,6 +19,7 @@ import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFa
 import com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
+import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindContentIn
@@ -26,16 +32,28 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.ui.*
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.SingleComponentCenteringLayout
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.filePath
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.util.localizedMessageOrClassName
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabDiscussionComponentFactory
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabEditableComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteComponentFactory
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -52,19 +70,21 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
   fun createIn(project: Project,
                cs: CoroutineScope,
-               vm: GitLabMergeRequestTimelineDiscussionViewModel,
-               avatarIconsProvider: IconsProvider<GitLabUserDTO>): JComponent =
+               vm: GitLabMergeRequestTimelineItemViewModel.Discussion,
+               avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+               imageLoader: GitLabImageLoader): JComponent =
     VerticalListPanel().apply {
       name = "GitLab Discussion Panel ${vm.id}"
-      add(createDiscussionItemIn(project, cs, vm, avatarIconsProvider))
-      add(createRepliesPanelIn(project, cs, vm, avatarIconsProvider))
+      add(createDiscussionItemIn(project, cs, vm, avatarIconsProvider, imageLoader))
+      add(createRepliesPanelIn(project, cs, vm, avatarIconsProvider, imageLoader))
     }
 
   fun createIn(project: Project,
                cs: CoroutineScope,
                vm: GitLabMergeRequestTimelineItemViewModel.DraftNote,
-               avatarIconsProvider: IconsProvider<GitLabUserDTO>): JComponent {
-    val contentPanel = createContentIn(project, cs, vm)
+               avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+               imageLoader: GitLabImageLoader): JComponent {
+    val contentPanel = createContentIn(project, cs, vm, imageLoader)
     val mainItem = CodeReviewChatItemUIUtil.build(ComponentType.FULL,
                                                   { avatarIconsProvider.getIcon(vm.author, it) },
                                                   contentPanel) {
@@ -82,8 +102,10 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
   private fun createDiscussionItemIn(project: Project,
                                      cs: CoroutineScope,
                                      vm: GitLabMergeRequestTimelineDiscussionViewModel,
-                                     avatarIconsProvider: IconsProvider<GitLabUserDTO>): JComponent {
-    val contentPanel = createContentIn(project, cs, vm, avatarIconsProvider)
+                                     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+                                     imageLoader: GitLabImageLoader,
+                                     ): JComponent {
+    val contentPanel = createContentIn(project, cs, vm, avatarIconsProvider, imageLoader)
     val mainItem = CodeReviewChatItemUIUtil.buildDynamic(ComponentType.FULL,
                                                          { vm.author.createIconValue(cs, avatarIconsProvider, it) },
                                                          contentPanel) {
@@ -104,16 +126,17 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
   private fun createContentIn(project: Project,
                               cs: CoroutineScope,
                               vm: GitLabMergeRequestTimelineDiscussionViewModel,
-                              avatarIconsProvider: IconsProvider<GitLabUserDTO>): JPanel {
+                              avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+                              imageLoader: GitLabImageLoader,): JPanel {
     val mainNoteVm = vm.mainNote
     val repliesActionsPanel = createRepliesActionsPanel(cs, avatarIconsProvider, vm).apply {
       border = JBUI.Borders.empty(Replies.ActionsFolded.VERTICAL_PADDING, 0)
       bindVisibilityIn(cs, vm.repliesFolded)
     }
-    val textPanel = createDiscussionTextPane(project, cs, vm)
+    val textPanel = createDiscussionTextPane(project, cs, vm, imageLoader)
 
     val editVmFlow = mainNoteVm.flatMapLatest { it.actionsVm?.editVm ?: flowOf(null) }
-    val textContentPanel = EditableComponentFactory.wrapTextComponent(cs, textPanel, editVmFlow) {
+    val textContentPanel = GitLabEditableComponentFactory.wrapTextComponent(cs, textPanel, editVmFlow) {
       GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE,
                                            ACTION_PLACE)
     }.let {
@@ -162,10 +185,12 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
   private fun createContentIn(project: Project,
                               cs: CoroutineScope,
-                              vm: GitLabMergeRequestTimelineItemViewModel.DraftNote): JPanel {
-    val textPanel = GitLabNoteComponentFactory.createTextPanel(project, cs, vm.bodyHtml, vm.serverUrl)
+                              vm: GitLabMergeRequestTimelineItemViewModel.DraftNote,
+                              imageLoader: GitLabImageLoader): JPanel {
+    val textPanel = GitLabNoteComponentFactory.createTextPanel(project, cs, vm.bodyHtml, vm.serverUrl,
+                                                               imageLoader)
 
-    val textContentPanel = EditableComponentFactory.wrapTextComponent(cs, textPanel, vm.actionsVm?.editVm ?: flowOf(null)) {
+    val textContentPanel = GitLabEditableComponentFactory.wrapTextComponent(cs, textPanel, vm.actionsVm?.editVm ?: flowOf(null)) {
       GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE,
                                            ACTION_PLACE)
     }.let {
@@ -270,7 +295,10 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
     )
   }
 
-  private fun createDiscussionTextPane(project: Project, cs: CoroutineScope, vm: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
+  private fun createDiscussionTextPane(
+    project: Project, cs: CoroutineScope, vm: GitLabMergeRequestTimelineDiscussionViewModel,
+    imageLoader: GitLabImageLoader,
+  ): JComponent {
     val collapsedFlow = combine(vm.collapsible, vm.collapsed) { collapsible, collapsed ->
       collapsible && collapsed
     }
@@ -279,7 +307,7 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
       if (collapsed) mainNote.body else mainNote.bodyHtml
     }.flatMapLatest { it }
 
-    val textPane = GitLabNoteComponentFactory.createTextPanel(project, cs, textFlow, vm.serverUrl)
+    val textPane = GitLabNoteComponentFactory.createTextPanel(project, cs, textFlow, vm.serverUrl, imageLoader)
     val layout = SizeRestrictedSingleComponentLayout()
     return JPanel(layout).apply {
       name = "Text pane wrapper"
@@ -306,10 +334,14 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
   private fun createRepliesPanelIn(project: Project,
                                    cs: CoroutineScope,
                                    vm: GitLabMergeRequestTimelineDiscussionViewModel,
-                                   avatarIconsProvider: IconsProvider<GitLabUserDTO>): JPanel {
+                                   avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+                                   imageLoader: GitLabImageLoader,
+                                   ): JPanel {
     val repliesListPanel = ComponentListPanelFactory.createVertical(cs, vm.replies) { noteVm ->
-      GitLabNoteComponentFactory.create(ComponentType.FULL_SECONDARY, project, this, avatarIconsProvider, noteVm,
-                                        ACTION_PLACE)
+      GitLabNoteComponentFactory.create(
+        ComponentType.FULL_SECONDARY, project, this, avatarIconsProvider, imageLoader, noteVm,
+        ACTION_PLACE
+      )
     }
 
     val repliesPanel = VerticalListPanel().apply {

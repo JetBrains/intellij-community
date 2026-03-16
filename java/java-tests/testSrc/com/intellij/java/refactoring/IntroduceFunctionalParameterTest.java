@@ -22,12 +22,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
 @TestDataPath("$CONTENT_ROOT/testData")
-public class IntroduceFunctionalParameterTest extends LightRefactoringTestCase  {
+public class IntroduceFunctionalParameterTest extends LightJavaCodeInsightTestCase {
   public void testSampleRunnable() {
     doTest();
   }

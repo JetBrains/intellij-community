@@ -16,3 +16,5 @@ val s: String = X() <caret>
 // EXIST: ext1
 // ABSENT: ext2
 // ABSENT: extProp
+
+// IGNORE_K2

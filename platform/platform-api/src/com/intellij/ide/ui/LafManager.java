@@ -10,7 +10,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.ListCellRenderer;
+import javax.swing.UIManager;
 
 public abstract class LafManager {
   public static LafManager getInstance() {
@@ -72,6 +74,11 @@ public abstract class LafManager {
   public abstract void setAutodetect(boolean value);
 
   public abstract boolean getAutodetectSupported();
+
+  @ApiStatus.Internal
+  public @Nullable String getPreferredDarkThemeId() {
+    return null;
+  }
 
   public abstract void setPreferredDarkLaf(@NotNull UIThemeLookAndFeelInfo value);
 

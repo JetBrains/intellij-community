@@ -1,10 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.implCommon
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.CompletionUtilCore
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.TokenType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
@@ -13,8 +17,33 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
+import org.jetbrains.kotlin.psi.KtContextParameterList
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSimpleNameStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.KtTypeArgumentList
+import org.jetbrains.kotlin.psi.KtTypeParameterList
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
+import org.jetbrains.kotlin.psi.psiUtil.isPlain
+import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.psiUtil.prevLeaf
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import kotlin.math.max
 
@@ -138,7 +167,7 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
     protected open fun handleDefaultCase(tokenBefore: PsiElement): String? = null
 
     private fun isInValueOrTypeParametersList(tokenBefore: PsiElement): String? {
-        if (tokenBefore.parents.any { it is KtTypeParameterList || it is KtParameterList || it is KtContextReceiverList }) {
+        if (tokenBefore.parents.any { it is KtTypeParameterList || it is KtParameterList || it is KtContextParameterList }) {
             return EMPTY_SUFFIX
         }
         return null
@@ -207,6 +236,11 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
 
     private fun specialExtensionReceiverDummyIdentifierSuffix(tokenBefore: PsiElement): String? {
         if (tokenBefore.parentOfType<KtTypeReference>() != null) return null // already parsed as type reference
+        // If we just type `val a: <caret>`, then there is no `KtTypeReference` in the PSI tree.
+        // These cases work correctly without the special treatment of this function and would break when adding `.f`.
+        // See: KTIJ-36297
+        val potentialColonBefore = tokenBefore.getPrevSiblingIgnoringWhitespaceAndComments()
+        if (potentialColonBefore.elementType == KtTokens.COLON) return null
 
         var token = tokenBefore
         var ltCount = 0

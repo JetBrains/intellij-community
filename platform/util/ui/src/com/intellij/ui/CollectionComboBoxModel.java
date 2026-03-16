@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.ComboBoxModel;
 import java.util.List;
 
 public class CollectionComboBoxModel<T> extends CollectionListModel<T> implements ComboBoxModel<T> {

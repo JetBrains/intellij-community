@@ -29,6 +29,7 @@ import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.components.JBLabelDecorator
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.onTextChange
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
@@ -39,6 +40,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
 import javax.swing.JComponent
 
+@K1Deprecation
 class KotlinAwareMoveFilesOrDirectoriesDialog(
     private val project: Project,
     private val initialDirectory: PsiDirectory?,

@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.IntSLRUCache;
 import com.intellij.util.containers.IntObjectLRUMap;
 import com.intellij.util.io.DataEnumeratorEx;
@@ -19,9 +20,11 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.VFS;
+import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 @ApiStatus.Internal
@@ -183,7 +186,21 @@ public final class SLRUFileNameCache implements FileNameCache {
       end -= URLUtil.SCHEME_SEPARATOR.length();
     }
     if (StringUtil.containsAnyChar(name, FS_SEPARATORS, start, end)) {
-      throw new IllegalArgumentException("Must not intern long path: '" + name + "'");
+      // TODO AZ: Relax this check for remote EEL paths (IJPL-199502).
+      //          This may not be the best solution; this whole function should probably be rewritten or removed (see comment above).
+      // Remote EEL paths (Docker/Devcontainer) should be accepted:
+      //   Standard format:
+      //     Unix:    /$docker.ij/abc123def456@u~var~run~docker.sock/home/user
+      //     Windows: //docker.ij/abc123def456@tcp~host~2375/workspace
+      //   Devcontainer format:
+      //     Unix:    /$devcontainer.ij/abc123def456@u~socket/project
+      //     Windows: //devcontainer.ij/abc123def456@tcp~host~2375/workspace
+      //   Obsolete format:
+      //     Unix:    /docker-abc123def456/home
+      //     Windows: //docker/abc123def456/workspace
+      if (getEelDescriptor(Path.of(name)) == LocalEelDescriptor.INSTANCE) {
+        throw new IllegalArgumentException("Must not intern long path: '" + name + "'");
+      }
     }
   }
 

@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.*;
+import java.awt.Color;
 
 
 @ApiStatus.Internal

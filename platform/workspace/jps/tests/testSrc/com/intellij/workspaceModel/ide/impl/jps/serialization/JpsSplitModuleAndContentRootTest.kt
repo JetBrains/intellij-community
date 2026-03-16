@@ -14,7 +14,15 @@ import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
+import com.intellij.platform.workspace.jps.entities.modifyContentRootEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.JavaSettingsSerializer
 import com.intellij.platform.workspace.jps.serialization.impl.ModuleImlFileEntitiesSerializer
 import com.intellij.platform.workspace.jps.serialization.impl.getInternalFileSource

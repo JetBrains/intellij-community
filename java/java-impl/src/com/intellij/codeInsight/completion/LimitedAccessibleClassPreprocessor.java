@@ -12,10 +12,10 @@ import com.intellij.util.Processor;
 import java.util.HashSet;
 import java.util.Set;
 
-final class LimitedAccessibleClassPreprocessor implements Processor<PsiClass> {
+public final class LimitedAccessibleClassPreprocessor implements Processor<PsiClass> {
   private static final Logger LOG = Logger.getInstance(LimitedAccessibleClassPreprocessor.class);
   private final PsiElement myContext;
-  private final CompletionParameters myParameters;
+  private final BaseCompletionParameters myParameters;
   private final boolean myFilterByScope;
   private final Processor<? super PsiClass> myProcessor;
   private final int myLimit = Registry.intValue("ide.completion.variant.limit");
@@ -24,7 +24,7 @@ final class LimitedAccessibleClassPreprocessor implements Processor<PsiClass> {
   private final boolean myPkgContext;
   private final String myPackagePrefix;
 
-  LimitedAccessibleClassPreprocessor(CompletionParameters parameters, boolean filterByScope, Processor<? super PsiClass> processor) {
+  public LimitedAccessibleClassPreprocessor(BaseCompletionParameters parameters, boolean filterByScope, Processor<? super PsiClass> processor) {
     myContext = parameters.getPosition();
     myParameters = parameters;
     myFilterByScope = filterByScope;

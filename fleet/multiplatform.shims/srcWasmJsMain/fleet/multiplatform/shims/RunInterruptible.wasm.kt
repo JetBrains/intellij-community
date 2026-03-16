@@ -2,7 +2,10 @@
 package fleet.multiplatform.shims
 
 import fleet.util.multiplatform.Actual
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
-@Actual("runInterruptibleImpl")
-suspend fun runInterruptibleImplWasmJs(context: CoroutineContext, block: () -> Any?) = block()
+@Actual
+suspend fun runInterruptibleImplWasmJs(context: CoroutineContext, block: () -> Any?) = withContext(context) {
+  block()
+}

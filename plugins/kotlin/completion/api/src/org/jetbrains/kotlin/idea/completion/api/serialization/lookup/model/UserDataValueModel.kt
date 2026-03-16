@@ -13,6 +13,9 @@ import org.jetbrains.kotlin.name.Name
 @ApiStatus.Internal
 sealed class UserDataValueModel {
     @Serializable
+    data object UnitModel : UserDataValueModel()
+
+    @Serializable
     data class BooleanModel(val value: Boolean) : UserDataValueModel()
 
     @Serializable

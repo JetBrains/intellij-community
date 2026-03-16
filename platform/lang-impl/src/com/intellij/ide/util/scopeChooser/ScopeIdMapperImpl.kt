@@ -2,9 +2,12 @@
 package com.intellij.ide.util.scopeChooser
 
 import com.intellij.ide.scratch.ScratchesNamedScope
-
 import com.intellij.openapi.fileEditor.impl.OpenFilesScope
-import com.intellij.psi.search.*
+import com.intellij.psi.search.EverythingGlobalScope
+import com.intellij.psi.search.GlobalSearchScopesCore
+import com.intellij.psi.search.PredefinedSearchScopeProviderImpl
+import com.intellij.psi.search.ProjectAndLibrariesScope
+import com.intellij.psi.search.ProjectScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls

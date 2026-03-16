@@ -13,7 +13,11 @@ import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.util.io.jarFile
 import com.intellij.util.io.write
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.addDependency
+import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM3
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.tooling.core.closure

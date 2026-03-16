@@ -3,7 +3,11 @@ package org.jetbrains.plugins.github.util
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
 
 class AcquirableScopedValueOwner<out T : Any>(
   parentCs: CoroutineScope,
@@ -36,7 +40,7 @@ class AcquirableScopedValueOwner<out T : Any>(
       if (!cs.isActive) error("Already cancelled")
 
       subscriptionCount += 1
-      borrowCs.launchNow {
+      borrowCs.launchNow(CoroutineName("Value borrowing coroutine for $this")) {
         try {
           awaitCancellation()
         }

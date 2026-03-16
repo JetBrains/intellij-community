@@ -1,7 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package jetbrains.antlayout.tasks;
 
-import jetbrains.antlayout.datatypes.*;
+import jetbrains.antlayout.datatypes.Content;
+import jetbrains.antlayout.datatypes.DirContainer;
+import jetbrains.antlayout.datatypes.ExtractedDirContent;
+import jetbrains.antlayout.datatypes.FileSetContainer;
+import jetbrains.antlayout.datatypes.IdeaModule;
+import jetbrains.antlayout.datatypes.IdeaModuleTests;
+import jetbrains.antlayout.datatypes.JarContainer;
+import jetbrains.antlayout.datatypes.RenamedFileContainer;
+import jetbrains.antlayout.datatypes.RootContainer;
+import jetbrains.antlayout.datatypes.ZipContainer;
 import jetbrains.antlayout.util.TempFileFactory;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;

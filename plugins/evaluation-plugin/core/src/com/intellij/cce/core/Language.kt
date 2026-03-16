@@ -18,6 +18,7 @@ enum class Language(val displayName: String, private val extensions: List<String
   GO("Go", listOf("go"), "go"),
   DART("Dart", listOf("dart"), "Dart", needSdk = true),
   RUST("Rust", listOf("rs"), "Rust"),
+  BLAZOR("Blazor", listOf("razor", "cshtml"), "Blazor"),
   CSHARP("C#", listOf("cs"), "C#"),
   CSS("CSS", listOf("css"), "CSS"),
   LESS("Less", listOf("less"), "LESS"),

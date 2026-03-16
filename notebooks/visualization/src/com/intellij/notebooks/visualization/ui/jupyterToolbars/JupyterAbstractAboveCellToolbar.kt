@@ -19,7 +19,7 @@ import java.awt.Graphics2D
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 
-/** Base for floating-toolbar in the top right corner of cell,
+/** Base class for the floating-toolbar in the top right corner of the cell,
  * and for new-cells-creation-toolbar appearing between cells. */
 @ApiStatus.Internal
 abstract class JupyterAbstractAboveCellToolbar(
@@ -32,18 +32,21 @@ abstract class JupyterAbstractAboveCellToolbar(
   init {
     isOpaque = false
     targetComponent = toolbarTargetComponent
-    cursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)
+    cursor = Cursor.getDefaultCursor()
     val borderColor = when (NewUiValue.isEnabled()) {
       true -> JBColor.namedColor("Editor.Toolbar.borderColor", JBColor.border())
       else -> JBColor.GRAY
     }
     border = BorderFactory.createCompoundBorder(RoundedLineBorder(borderColor, getArcSize(), TOOLBAR_BORDER_THICKNESS),
-                                                BorderFactory.createEmptyBorder(getVerticalPadding(), getHorizontalPadding(), getVerticalPadding(), getHorizontalPadding()))
+                                                BorderFactory.createEmptyBorder(getVerticalPadding(),
+                                                                                getHorizontalPadding(),
+                                                                                getVerticalPadding(),
+                                                                                getHorizontalPadding()))
     putClientProperty(SelectClickedCellEventHelper.SKIP_CLICK_PROCESSING_FOR_CELL_SELECTION, true)
   }
 
-  override fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) {
-    super.actionsUpdated(forced, newVisibleActions)
+  override fun actionsUpdated(forceRebuild: Boolean, newVisibleActions: List<AnAction>) {
+    super.actionsUpdated(forceRebuild, newVisibleActions)
     actionsUpdatedCallback?.invoke()
   }
 
@@ -64,9 +67,9 @@ abstract class JupyterAbstractAboveCellToolbar(
     super.updateUI()
   }
 
-  protected abstract fun getArcSize(): Int
-  protected abstract fun getHorizontalPadding(): Int
-  protected open fun getVerticalPadding(): Int = getHorizontalPadding()
+  protected fun getArcSize(): Int = JBUI.scale(8)
+  protected fun getHorizontalPadding(): Int = JBUI.scale(3)
+  protected fun getVerticalPadding(): Int = JBUI.scale(3)
 
   companion object {
     const val ALPHA: Float = 1.0f

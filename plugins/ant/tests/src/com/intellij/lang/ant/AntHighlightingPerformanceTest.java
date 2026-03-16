@@ -5,12 +5,14 @@ import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.ExpectedHighlightingData;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Collection;
 
+@PerformanceUnitTest
 public class AntHighlightingPerformanceTest extends DaemonAnalyzerTestCase {
   @NotNull
   @Override

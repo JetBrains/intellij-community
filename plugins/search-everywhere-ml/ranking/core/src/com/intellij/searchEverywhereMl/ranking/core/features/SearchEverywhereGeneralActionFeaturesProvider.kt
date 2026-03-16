@@ -21,11 +21,11 @@ import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGen
 internal class SearchEverywhereGeneralActionFeaturesProvider
   : SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java) {
   object Fields {
-    internal val IS_ENABLED = EventFields.Boolean("isEnabled")
+    internal val IS_ENABLED = EventFields.Boolean("is_enabled")
 
     internal val ITEM_TYPE = EventFields.Enum<GotoActionModel.MatchedValueType>("type")
-    internal val TYPE_WEIGHT = EventFields.Int("typeWeight")
-    internal val IS_HIGH_PRIORITY = EventFields.Boolean("isHighPriority")
+    internal val TYPE_WEIGHT = EventFields.Int("type_weight")
+    internal val IS_HIGH_PRIORITY = EventFields.Boolean("is_high_priority")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {

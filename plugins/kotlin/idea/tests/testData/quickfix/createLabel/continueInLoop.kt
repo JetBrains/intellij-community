@@ -1,4 +1,4 @@
-// "Create label foo@" "true"
+// "Create Label 'foo'@" "true"
 
 fun test() {
     while (true) {

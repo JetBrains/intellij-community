@@ -1,12 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.test.kotlin
 
-import com.intellij.psi.PsiElement
-import org.jetbrains.uast.test.common.kotlin.IdentifiersTestBase
-import com.intellij.testFramework.assertEqualsToFile
-import org.jetbrains.uast.*
 import com.intellij.platform.uast.testFramework.common.UElementToParentMap
 import com.intellij.platform.uast.testFramework.common.visitUFileAndGetResult
+import com.intellij.psi.PsiElement
+import com.intellij.testFramework.assertEqualsToFile
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.test.common.kotlin.IdentifiersTestBase
+import org.jetbrains.uast.toUElementOfExpectedTypes
 import java.io.File
 import kotlin.test.assertNotNull
 

@@ -12,6 +12,7 @@ import org.gradle.tooling.model.idea.IdeaContentRoot
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
+import org.jetbrains.kotlin.idea.gradleJava.configuration.generatedSourceType
 import org.jetbrains.kotlin.idea.gradleJava.configuration.kotlinGradleProjectDataOrFail
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.KotlinMppGradleProjectResolverExtension.Result.Skip
 import org.jetbrains.kotlin.idea.gradleJava.configuration.resourceType
@@ -36,7 +37,7 @@ internal fun KotlinMppGradleProjectResolver.Context.populateContentRoots(
         .toMap()
     if (resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java) == null) return
     processSourceSets(gradleModule, mppModel, moduleDataNode, resolverCtx) { dataNode, sourceSet ->
-        if (dataNode == null || sourceSet.isManagedByComAndroidLibraryPlugin) return@processSourceSets
+        if (dataNode == null || shouldDelegateToOtherPlugin(sourceSet)) return@processSourceSets
 
         /* Execute all registered extension points and skip population of content roots if instructed by extensions */
         if (extensionInstance.beforePopulateContentRoots(this, dataNode, sourceSet) == Skip) {
@@ -54,6 +55,12 @@ internal fun KotlinMppGradleProjectResolver.Context.populateContentRoots(
             sourceSet.resourceType,
             null,
             dataNode
+        )
+        createContentRootData(
+            sourceSet.generatedKotlinDirs,
+            sourceSet.generatedSourceType,
+            null,
+            dataNode,
         )
 
         extensionInstance.afterPopulateContentRoots(this, dataNode, sourceSet)

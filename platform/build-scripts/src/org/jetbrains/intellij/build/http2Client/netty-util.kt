@@ -17,8 +17,8 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-internal suspend fun Bootstrap.connectAsync(): Channel = suspendCancellableCoroutine { continuation ->
-  val future = connect()
+internal suspend fun connect(bootstrap: Bootstrap): Channel = suspendCancellableCoroutine { continuation ->
+  val future = bootstrap.connect()
 
   if (future.isDone) {
     if (future.isSuccess) {

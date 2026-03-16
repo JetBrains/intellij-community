@@ -22,7 +22,11 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

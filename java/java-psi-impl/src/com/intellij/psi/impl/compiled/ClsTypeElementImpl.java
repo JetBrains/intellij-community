@@ -3,13 +3,24 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.impl.cache.ExternalTypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.PsiTypeElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -189,9 +200,9 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     PsiType type = deepestChild.getType();
     for (int i = depth - 1; i >= 0; i--) {
       if (i == 0 && isVarArgs()) {
-        type = new PsiEllipsisType(type);
+        type = new PsiEllipsisType(type).withContainerNullability(PsiTypeElementImpl.findContainerNullabilityContext(deepestChild));
       } else {
-        type = type.createArrayType();
+        type = type.createArrayType().withContainerNullability(PsiTypeElementImpl.findContainerNullabilityContext(deepestChild));
       }
       type = type.annotate(containers.get(i).getProvider(this));
     }

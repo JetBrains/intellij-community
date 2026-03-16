@@ -7,7 +7,6 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -18,10 +17,15 @@ import git4idea.commands.GitLineHandler
 import git4idea.repo.GitRepositoryManager
 import training.project.FileUtils
 import training.project.ProjectUtils
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.createDirectory
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.invariantSeparatorsPathString
 
 internal object GitProjectUtil {
   private const val remoteProjectName = "RemoteLearningProject"
@@ -38,7 +42,7 @@ internal object GitProjectUtil {
       }
     }
 
-    val root = gitProjectRoot.toNioPath().toFile()
+    val root = gitProjectRoot.toNioPath()
     if (copyGitProject(root)) {
       checkout(root, branch)
       addVcsMappingSynchronously(project, gitProjectRoot)
@@ -46,7 +50,7 @@ internal object GitProjectUtil {
     else error("Failed to copy git project")
   }
 
-  private fun checkout(root: File, branch: String) {
+  private fun checkout(root: Path, branch: String) {
     val handler = GitLineHandler(null, root, GitCommand.CHECKOUT)
     handler.addParameters(branch)
     handler.endOptions()
@@ -73,34 +77,35 @@ internal object GitProjectUtil {
     }
   }
 
-  fun createRemoteProject(remoteName: String, project: Project): File {
+  fun createRemoteProject(remoteName: String, project: Project): Path {
     val root = reCreateRemoteProjectDir()
     if (copyGitProject(root)) {
       configureRemote(remoteName, root, project)
       return root
     }
-    error("Failed to create remote project at path: ${root.path}")
+    error("Failed to create remote project at path: ${root}")
   }
 
-  private fun reCreateRemoteProjectDir(): File {
-    val projectsRoot = ProjectUtils.learningProjectsPath.toFile()
-    val remoteProjectRoot = projectsRoot.listFiles()?.find { it.name == remoteProjectName }.let {
-      it?.apply { deleteRecursively() } ?: File(projectsRoot.absolutePath + File.separator + remoteProjectName)
+  @OptIn(ExperimentalPathApi::class)
+  private fun reCreateRemoteProjectDir(): Path {
+    val projectsRoot = ProjectUtils.learningProjectsPath
+    val remoteProjectRoot = Files.list(projectsRoot).toList().find { it.fileName.toString() == remoteProjectName }.let {
+      it?.apply { deleteRecursively() } ?: projectsRoot.resolve(remoteProjectName)
     }
-    remoteProjectRoot.mkdir()
+    remoteProjectRoot.createDirectory()
     return remoteProjectRoot
   }
 
-  private fun copyGitProject(destination: File): Boolean {
+  private fun copyGitProject(destination: Path): Boolean {
     // Classloader of Git IFT plugin is required here
     val gitProjectURL = this.javaClass.classLoader.getResource("learnProjects/GitProject") ?: error("GitProject not found")
-    return FileUtils.copyResourcesRecursively(gitProjectURL, destination)
+    return FileUtils.copyResourcesRecursively(gitProjectURL, destination.toFile())
   }
 
-  private fun configureRemote(remoteName: String, remoteProjectRoot: File, project: Project) {
+  private fun configureRemote(remoteName: String, remoteProjectRoot: Path, project: Project) {
     val git = Git.getInstance()
     val repository = GitRepositoryManager.getInstance(project).repositories.first()
-    val remoteUrl = "file://${remoteProjectRoot.systemIndependentPath}"
+    val remoteUrl = "file://${remoteProjectRoot.invariantSeparatorsPathString}"
     thisLogger().info("Add remote repository with URL: $remoteUrl")
     git.addRemote(repository, remoteName, remoteUrl).throwOnError()
     repository.update()

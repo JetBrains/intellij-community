@@ -17,7 +17,12 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -320,22 +325,14 @@ public abstract class AbstractLayoutCodeProcessor {
         }
     };
 
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      ProgressManager.getInstance().run(new Task.Modal(myProject, getProgressTitle(), true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          runnable.accept(indicator);
-        }
-      });
-    }
-    else {
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, getProgressTitle(), true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          runnable.accept(indicator);
-        }
-      });
-    }
+    boolean isModal = ApplicationManager.getApplication().isHeadlessEnvironment();
+    Task.Backgroundable modal = new Task.Backgroundable(myProject, getProgressTitle(), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        runnable.accept(indicator);
+      }
+    };
+    ProgressManager.getInstance().run(modal.toModalIfNeeded(isModal));
   }
 
   private @NotNull @NlsContexts.ProgressTitle String getProgressTitle() {

@@ -3,7 +3,15 @@ package andel.undo
 
 import andel.editor.CaretPosition
 import andel.editor.Document
-import andel.operation.*
+import andel.operation.EditLog
+import andel.operation.Operation
+import andel.operation.Sticky
+import andel.operation.compose
+import andel.operation.invert
+import andel.operation.isIdentity
+import andel.operation.normalizeHard
+import andel.operation.transform
+import andel.operation.transformOnto
 import fleet.util.chunkedBy
 import kotlinx.serialization.Serializable
 

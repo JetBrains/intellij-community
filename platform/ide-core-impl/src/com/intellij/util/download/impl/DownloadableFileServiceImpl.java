@@ -4,7 +4,11 @@ package com.intellij.util.download.impl;
 import com.intellij.facet.frameworks.beans.Artifact;
 import com.intellij.facet.frameworks.beans.ArtifactItem;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.download.*;
+import com.intellij.util.download.DownloadableFileDescription;
+import com.intellij.util.download.DownloadableFileService;
+import com.intellij.util.download.DownloadableFileSetDescription;
+import com.intellij.util.download.DownloadableFileSetVersions;
+import com.intellij.util.download.FileDownloader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

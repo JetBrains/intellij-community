@@ -6,7 +6,6 @@ from typing_extensions import Self, TypeAlias, deprecated
 
 from ._types import TypeChecker
 from ._utils import Unset
-from .protocols import Validator
 
 _RelevanceFuncType: TypeAlias = Callable[[ValidationError], SupportsRichComparison]
 
@@ -19,9 +18,9 @@ class _Error(Exception):
     relative_path: deque[str | int]
     schema_path: deque[str | int]
     relative_schema_path: deque[str | int]
-    context: list[ValidationError] | None
+    context: list[ValidationError]
     cause: Exception | None
-    validator: Validator | Unset
+    validator: str | Unset
     validator_value: Any | Unset
     instance: Any | Unset
     schema: Mapping[str, Any] | bool | Unset

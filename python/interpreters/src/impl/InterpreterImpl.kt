@@ -12,7 +12,7 @@ import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.UUID
 
 internal class ValidInterpreterImpl(
   override val pythonInfo: PythonInfo,

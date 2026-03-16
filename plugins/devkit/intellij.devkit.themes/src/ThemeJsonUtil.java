@@ -18,13 +18,20 @@ import org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public final class ThemeJsonUtil {
-
   private static final @NonNls String UI_PROPERTY_NAME = "ui";
-
   private static final @NonNls String COLORS_PROPERTY_NAME = "colors";
+
+  private static final Pattern GROUP_MASK_PATTERN = Pattern.compile("(\\.Group[\\d+])");
+  private static final Pattern COLOR_MASK_PATTERN = Pattern.compile("(\\.Color[\\d+])");
+  private static final Pattern FRACTION_MASK_PATTERN = Pattern.compile("(\\.Fraction[\\d+])");
+
+  private static final String GROUP_N = ".GroupN";
+  private static final String COLOR_N = ".ColorN";
+  private static final String FRACTION_N = ".FractionN";
 
   static boolean isInsideUiProperty(@NotNull JsonProperty property) {
     PsiElement parent = property;
@@ -61,10 +68,24 @@ public final class ThemeJsonUtil {
   }
 
   static @Nullable Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> findMetadata(@NotNull JsonProperty property) {
-    final String key = property.getName();
-    final Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> byName = UIThemeMetadataService.getInstance().findByKey(key);
+    String key = property.getName();
+
+    Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> byName = UIThemeMetadataService.getInstance().findByKey(key);
     if (byName != null) return byName;
 
-    return UIThemeMetadataService.getInstance().findByKey(getParentNames(property) + "." + key);
+    String fullKey = getParentNames(property) + "." + key;
+    if (looksLikeNumberedMetaKey(fullKey)) {
+      fullKey = GROUP_MASK_PATTERN.matcher(fullKey).replaceAll(GROUP_N);
+      fullKey = FRACTION_MASK_PATTERN.matcher(fullKey).replaceAll(FRACTION_N);
+      fullKey = COLOR_MASK_PATTERN.matcher(fullKey).replaceAll(COLOR_N);
+    }
+
+    return UIThemeMetadataService.getInstance().findByKey(fullKey);
+  }
+
+  private static boolean looksLikeNumberedMetaKey(String key) {
+    return key.contains(".Group")
+           || key.contains(".Color")
+           || key.contains(".Fraction");
   }
 }

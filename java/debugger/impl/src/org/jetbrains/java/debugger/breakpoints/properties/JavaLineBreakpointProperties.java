@@ -8,6 +8,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaLineBreakpointProperties> {
   // TODO: rework encoding of inline position, introduce enum/class-based external API
 
@@ -108,5 +110,17 @@ public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaL
       }
     }
     return JavaDebuggerBundle.message("line.breakpoint.description.basic.line");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof JavaLineBreakpointProperties that)) return false;
+    if (!super.equals(o)) return false;
+    return Objects.equals(encodedInlinePosition, that.encodedInlinePosition);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), encodedInlinePosition);
   }
 }

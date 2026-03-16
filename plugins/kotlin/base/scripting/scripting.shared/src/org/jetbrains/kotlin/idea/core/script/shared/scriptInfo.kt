@@ -7,15 +7,11 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import java.lang.ref.Reference
 
-abstract class LightScriptInfo() {
+abstract class LightScriptInfo {
     @Volatile
     var heavyCache: Reference<HeavyScriptInfo>? = null
 
     abstract fun buildConfiguration(): ScriptCompilationConfigurationWrapper?
-}
-
-class DirectScriptInfo(val result: ScriptCompilationConfigurationWrapper) : LightScriptInfo() {
-    override fun buildConfiguration(): ScriptCompilationConfigurationWrapper = result
 }
 
 class HeavyScriptInfo(

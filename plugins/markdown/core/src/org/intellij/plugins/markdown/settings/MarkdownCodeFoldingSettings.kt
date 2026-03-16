@@ -1,6 +1,11 @@
 package org.intellij.plugins.markdown.settings
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

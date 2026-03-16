@@ -35,8 +35,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.*;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -58,7 +62,7 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   private final @NotNull Project myProject;
   private final @Nullable String myPresetUrl; //taken from GitHandler, used if git does not provide url
-  private final @NotNull File myWorkingDirectory;
+  private final @NotNull Path myWorkingDirectory;
   private final @NotNull AuthenticationGate myAuthenticationGate;
   private final @NotNull AuthenticationMode myAuthenticationMode;
 
@@ -69,7 +73,7 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @VisibleForTesting
   public GitHttpGuiAuthenticator(@NotNull Project project,
                                  @NotNull Collection<String> urls,
-                                 @NotNull File workingDirectory,
+                                 @NotNull Path workingDirectory,
                                  @NotNull AuthenticationGate authenticationGate,
                                  @NotNull AuthenticationMode authenticationMode) {
     myProject = project;
@@ -356,9 +360,9 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     private boolean myDataForSession = false;
 
     DialogProvider(@NotNull String url,
-                             @NotNull Project project,
-                             @NotNull PasswordSafeProvider passwordSafeDelegate,
-                             boolean showActionForGitHelper) {
+                   @NotNull Project project,
+                   @NotNull PasswordSafeProvider passwordSafeDelegate,
+                   boolean showActionForGitHelper) {
       super(url);
       myProject = project;
       myPasswordSafeDelegate = passwordSafeDelegate;

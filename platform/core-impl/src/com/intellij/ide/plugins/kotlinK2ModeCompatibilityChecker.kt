@@ -3,13 +3,13 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.platform.plugins.parser.impl.isKotlinPlugin
+import com.intellij.platform.pluginSystem.parser.impl.isKotlinPlugin
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
 private val pluginIdsToIgnoreK2KotlinCompatibility: Set<String> = buildSet {
   System.getProperty("idea.kotlin.plugin.plugin.ids.to.ignore.k2.compatibility")?.split(',')?.mapTo(this) { it.trim() }
-  addAll(listOf("fleet.backend.kotlin", "fleet.backend.mercury"))
+  addAll(listOf("fleet.backend.kotlin"))
 
   try {
     // KTIJ-30545

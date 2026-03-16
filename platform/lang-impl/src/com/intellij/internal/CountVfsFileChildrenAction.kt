@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -37,7 +36,7 @@ internal class CountVfsFileChildrenAction : AnAction(), DumbAware {
     val root = VIRTUAL_FILE.getData(e.dataContext) ?: return
     val project = e.project ?: return
 
-    currentThreadCoroutineScope().launch(Dispatchers.Default) {
+    e.coroutineScope.launch(Dispatchers.Default) {
       withBackgroundProgress(project, "Counting children on disk recursively...") {
         reportRawProgress { reporter ->
           var filesOnDiskCount = 0
@@ -61,7 +60,7 @@ internal class CountVfsFileChildrenAction : AnAction(), DumbAware {
       }
     }
 
-    currentThreadCoroutineScope().launch(Dispatchers.Default) {
+    e.coroutineScope.launch(Dispatchers.Default) {
       val fileIndex = ProjectFileIndex.getInstance(project)
       val workspaceFileIndex = WorkspaceFileIndex.getInstance(project)
       withBackgroundProgress(project, "Counting children in VFS recursively...") {
@@ -70,7 +69,7 @@ internal class CountVfsFileChildrenAction : AnAction(), DumbAware {
         var contentIndexableFilesCount = 0
         var excludedFilesCount = 0
         var ignoredFilesCount = 0
-        visitChildrenInVfsRecursively(root) { file ->
+        visitChildrenInVfsRecursively(root).forEach { file ->
           vfsFilesCount++
           runReadAction {
             when {
@@ -82,7 +81,6 @@ internal class CountVfsFileChildrenAction : AnAction(), DumbAware {
               fileIndex.isExcluded(file) -> excludedFilesCount++
             }
           }
-          true
         }
         vfsFilesCount-- // don't count the directory itself
         val message = "Under <i>${root.path}</i><br/>" +
@@ -98,16 +96,17 @@ internal class CountVfsFileChildrenAction : AnAction(), DumbAware {
 }
 
 @ApiStatus.Internal
-fun visitChildrenInVfsRecursively(file: VirtualFile, action: (VirtualFile) -> Boolean) {
-  VfsUtilCore.visitChildrenRecursively(file, object : VirtualFileVisitor<Unit>() {
-    override fun getChildrenIterable(file: VirtualFile): Iterable<VirtualFile?> {
-      val id = (file as? VirtualFileWithId)?.id ?: return emptyList()
-      val fs = ManagingFS.getInstance()
-      return FSRecords.getInstance().list(id).children.map { fs.findFileById(it.id) }
-    }
+fun visitChildrenInVfsRecursively(file: VirtualFile): Sequence<VirtualFile> = sequence {
+  yield(file)
+  if (file.isDirectory) {
+    val id = (file as? VirtualFileWithId)?.id ?: return@sequence
+    val fs = ManagingFS.getInstance()
+    val children = FSRecords.getInstance().list(id).children
+      .mapNotNull { fs.findFileById(it.id) }
+      .filter { it.name != ".DS_Store" }
 
-    override fun visitFile(file: VirtualFile): Boolean {
-      return action(file)
+    for (child in children) {
+      yieldAll(visitChildrenInVfsRecursively(child))
     }
-  })
+  }
 }

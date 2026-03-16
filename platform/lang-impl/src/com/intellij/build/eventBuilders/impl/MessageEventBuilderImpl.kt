@@ -12,16 +12,17 @@ import com.intellij.pom.Navigatable
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class MessageEventBuilderImpl : MessageEventBuilder {
+class MessageEventBuilderImpl(
+  private val message: @Message String,
+  private val kind: MessageEvent.Kind
+) : MessageEventBuilder {
 
   private var id: Any? = null
   private var parentId: Any? = null
   private var time: Long? = null
-  private var message: @Message String? = null
   private var hint: @Hint String? = null
   private var description: @Description String? = null
 
-  private var kind: MessageEvent.Kind? = null
   private var group: @Title String? = null
   private var navigatable: Navigatable? = null
 
@@ -34,17 +35,11 @@ class MessageEventBuilderImpl : MessageEventBuilder {
   override fun withTime(time: Long?): MessageEventBuilderImpl =
     apply { this.time = time }
 
-  override fun withMessage(message: @Message String): MessageEventBuilderImpl =
-    apply { this.message = message }
-
   override fun withHint(hint: @Hint String?): MessageEventBuilderImpl =
     apply { this.hint = hint }
 
   override fun withDescription(description: @Description String?): MessageEventBuilderImpl =
     apply { this.description = description }
-
-  override fun withKind(kind: MessageEvent.Kind): MessageEventBuilderImpl =
-    apply { this.kind = kind }
 
   override fun withGroup(group: @Title String?): MessageEventBuilderImpl =
     apply { this.group = group }
@@ -53,15 +48,5 @@ class MessageEventBuilderImpl : MessageEventBuilder {
     apply { this.navigatable = navigatable }
 
   override fun build(): MessageEventImpl =
-    MessageEventImpl(
-      id,
-      parentId,
-      time,
-      message ?: throw IllegalStateException("The MessageEvent's 'message' property should be defined"),
-      hint,
-      description,
-      kind ?: throw IllegalStateException("The MessageEvent's 'kind' property should be defined"),
-      group,
-      navigatable
-    )
+    MessageEventImpl(id, parentId, time, message, hint, description, kind, group, navigatable)
 }

@@ -11,7 +11,11 @@ import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindIntText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.io.blockingDispatcher
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
 internal class PooledFreezeAction : DumbAwareAction("Freeze pooled threads") {
@@ -35,7 +39,7 @@ internal class PooledFreezeAction : DumbAwareAction("Freeze pooled threads") {
     }
 
     if (dialog("Set Freeze Duration", ui).showAndGet()) {
-      val freezeScope = GlobalScope.childScope("FreezeScope")
+      val freezeScope = e.coroutineScope.childScope("FreezeScope")
 
       logger<UIFreezeAction>().info("Freeze pooled thread")
       val dispatcher = when {

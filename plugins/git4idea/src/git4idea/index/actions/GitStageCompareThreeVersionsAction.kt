@@ -10,7 +10,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.ThrowableComputable
-import git4idea.index.*
+import git4idea.index.ContentVersion
+import git4idea.index.GitStageTracker
+import git4idea.index.compareThreeVersions
+import git4idea.index.getRoot
+import git4idea.index.has
+import git4idea.index.isStagingAreaAvailable
+import git4idea.index.status
 import git4idea.index.vfs.filePath
 
 class GitStageCompareThreeVersionsAction : DumbAwareAction() {

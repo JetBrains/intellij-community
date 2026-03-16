@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.rhizomedb.impl
 
-import fleet.util.radixTrie.*
+import fleet.util.radixTrie.RadixTrie
+import fleet.util.radixTrie.get
+import fleet.util.radixTrie.remove
+import fleet.util.radixTrie.update
 
 internal typealias IntIntTrie<V> = RadixTrie<RadixTrie<V>>
 

@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
+import com.intellij.junit.testFramework.JUnitLibrary
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
-abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalformedDeclarationInspectionTestBase(JUNIT5_LATEST) {
+abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalformedDeclarationInspectionTestBase(JUnitLibrary.JUNIT3, JUnitLibrary.JUNIT4, JUnitLibrary.JUNIT5) {
   abstract val pluginVersion: String
 
   /* Malformed extensions */
@@ -27,6 +28,19 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
         @org.junit.jupiter.api.extension.RegisterExtension
         val <error descr="Field 'myRule5' annotated with '@RegisterExtension' should be of type 'org.junit.jupiter.api.extension.Extension'">myRule5</error> = Rule5()
         class Rule5 { }
+      }
+    """.trimIndent())
+  }
+
+  fun `test malformed extension anonymous object type`() {
+    myFixture.testHighlighting(
+      JvmLanguage.KOTLIN, """
+      class A {
+        @org.junit.jupiter.api.extension.RegisterExtension
+        private val myRule5 = object: Rule5(), B {}
+        
+        open class Rule5 {}
+        interface B : org.junit.jupiter.api.extension.Extension
       }
     """.trimIndent())
   }
@@ -1176,7 +1190,7 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
           fun foo(param: String) { }
 
           companion object {
-              private${if(pluginVersion == "K1") " final" else ""} val parameters: MutableCollection<Arguments> = TODO("initialize me")
+              private${if (pluginVersion == "K1") " final" else ""} val parameters: MutableCollection<Arguments> = TODO("initialize me")
           }
       }
     """.trimIndent(), "Add 'val' property 'parameters' to 'Test'")
@@ -1403,25 +1417,37 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
           fun beforeAll(foo: String) { println(foo) }
         }
       }
-      
-      @org.junit.jupiter.api.extension.ExtendWith(MyTest.MyCallback::class)
-      @CustomTestAnnotation
-      annotation class MyTest {
-          class MyCallback : org.junit.jupiter.api.extension.AfterEachCallback {
-              override fun afterEach(context: org.junit.jupiter.api.extension.ExtensionContext) {
-              }
-          }
-      }
-
-      @MyTest
-      class MultipleMetaParameterResolver {
-        companion object {
-          @JvmStatic
-          @org.junit.jupiter.api.BeforeAll
-          fun beforeAll(foo: String) { println(foo) }
-        }
-      }
     """.trimIndent())
+  }
+
+  fun `test nested meta-annotations`() {
+    myFixture.testHighlighting(
+      JvmLanguage.KOTLIN, """
+         class MyBefore : org.junit.jupiter.api.extension.BeforeEachCallback {
+          override fun beforeEach(context: org.junit.jupiter.api.extension.ExtensionContext) {
+          }
+        }
+        
+        @org.junit.jupiter.api.extension.ExtendWith(MyBefore::class)
+        annotation class CustomTestAnnotation
+
+        @org.junit.jupiter.api.extension.ExtendWith(MyTest.MyCallback::class)
+        @CustomTestAnnotation
+        annotation class MyTest {
+            class MyCallback : org.junit.jupiter.api.extension.AfterEachCallback {
+                override fun afterEach(context: org.junit.jupiter.api.extension.ExtensionContext) {
+                }
+            }
+        }
+  
+        @MyTest
+        class MultipleMetaParameterResolver {
+          companion object {
+            @org.junit.jupiter.api.Test
+            fun test() { }
+          }
+        }
+        """.trimIndent())
   }
 
   fun `test non-malformed parameter resolver with value source`() {
@@ -2167,6 +2193,131 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
     """.trimIndent())
   }
 
+  fun `test malformed before and after suite should be static highlighting`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      @org.junit.platform.suite.api.Suite
+      @org.junit.platform.suite.api.SelectClasses(MyTest::class)
+      class MySuite {
+        @org.junit.platform.suite.api.BeforeSuite
+        fun <error descr="Method 'before' annotated with '@BeforeSuite' should be static">before</error>() { }
+        
+        @org.junit.platform.suite.api.AfterSuite
+        fun <error descr="Method 'after' annotated with '@AfterSuite' should be static">after</error>() { }
+      }
+      
+      class MyTest {}
+    """.trimIndent())
+  }
+
+  fun `test malformed before and after suite should be of type void highlighting`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      @org.junit.platform.suite.api.Suite
+      @org.junit.platform.suite.api.SelectClasses(MyTest::class)
+      class MySuite {
+        companion object {
+          @JvmStatic
+          @org.junit.platform.suite.api.BeforeSuite
+          fun <error descr="Method 'before' annotated with '@BeforeSuite' should be of type 'void'">before</error>(): Int = 0
+          
+          @JvmStatic
+          @org.junit.platform.suite.api.AfterSuite
+          fun <error descr="Method 'after' annotated with '@AfterSuite' should be of type 'void'">after</error>(): Int = 0
+        }
+      }
+      
+      class MyTest {}
+    """.trimIndent())
+  }
+
+  fun `test malformed before and after suite should be not private highlighting`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      @org.junit.platform.suite.api.Suite
+      @org.junit.platform.suite.api.SelectClasses(MyTest::class)
+      class MySuite {
+        companion object {
+          @JvmStatic
+          @org.junit.platform.suite.api.BeforeSuite
+          private fun <error descr="Method 'before' annotated with '@BeforeSuite' should be public">before</error>() {}
+          
+          @JvmStatic
+          @org.junit.platform.suite.api.AfterSuite
+          fun after1() {}
+          
+          @JvmStatic
+          @org.junit.platform.suite.api.AfterSuite
+          internal fun after2() {}
+        }
+      }
+      
+      class MyTest {}
+      """.trimIndent())
+  }
+
+
+  fun `test malformed before and after suite should not declare parameters highlighting`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      @org.junit.platform.suite.api.Suite
+      @org.junit.platform.suite.api.SelectClasses(MyTest::class)
+      class MySuite {
+        companion object {
+          @JvmStatic
+          @org.junit.platform.suite.api.BeforeSuite
+          fun <error descr="Method 'before' annotated with '@BeforeSuite' should not declare parameter 'a'">before</error>(a: Int) {
+            print(a)
+          }
+      
+          @JvmStatic
+          @org.junit.platform.suite.api.AfterSuite
+          fun <error descr="Method 'after' annotated with '@AfterSuite' should not declare parameters 'test', 'suite' and 'a'">after</error>(test: MyTest, suite: MySuite, a: Int) {
+            print("" + test + suite + a)
+          }
+        }
+      }
+      
+      class MyTest {}
+      """.trimIndent())
+  }
+
+  fun `test malformed before and after suite requires Suite annotation highlighting`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      class MySuite {
+        companion object {
+          @JvmStatic
+          @org.junit.platform.suite.api.BeforeSuite
+          fun <error descr="Method 'before' annotated with '@BeforeSuite' requires the containing class to be annotated with '@Suite'">before</error>() {}
+      
+          @JvmStatic
+          @org.junit.platform.suite.api.AfterSuite
+          fun <error descr="Method 'after' annotated with '@AfterSuite' requires the containing class to be annotated with '@Suite'">after</error>() {}
+        }
+      }
+      """.trimIndent())
+  }
+
+  fun `test malformed before suite requires Suite annotation quickfix`() {
+    myFixture.testQuickFix(
+      JvmLanguage.KOTLIN, """
+      class MySuite {
+        companion object {
+          @JvmStatic
+          @org.junit.platform.suite.api.BeforeSuite
+          fun befo<caret>re() {}
+        }
+      }
+      """.trimIndent(), """
+      import org.junit.platform.suite.api.Suite
+      
+      @Suite
+      class MySuite {
+        companion object {
+          @JvmStatic
+          @org.junit.platform.suite.api.BeforeSuite
+          fun before() {}
+        }
+      }
+      """.trimIndent(), "Annotate as @Suite", testPreview = true)
+  }
+
   // Unconstructable test case
   fun testPlain() {
     myFixture.testHighlighting(
@@ -2275,5 +2426,51 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
         fun testMe() {}
       }
     """.trimIndent())
+  }
+
+  fun `test suite without selectors highlighting`() {
+    myFixture.testHighlighting(
+      JvmLanguage.KOTLIN, """
+      import org.junit.platform.suite.api.Suite
+
+      @Suite
+      class <error descr="Suite does not select any tests (no selector annotations)">MySuite1</error>
+      
+      @Suite(failIfNoTests = true)
+      class <error descr="Suite does not select any tests (no selector annotations)">MySuite2</error>
+      
+      @Suite(failIfNoTests = false)
+      class MySuite3
+    """.trimIndent())
+  }
+
+  fun `test suite with selector no highlighting`() {
+    myFixture.testHighlighting(
+      JvmLanguage.KOTLIN, """
+      import org.junit.platform.suite.api.*
+
+      @Suite
+      @SelectClasses
+      class MySuite1
+      
+      @Suite
+      @SelectPackages("com.example")
+      class MySuite2
+    """.trimIndent())
+  }
+
+  fun `test suite without selectors quickfix`() {
+    myFixture.testQuickFix(
+      JvmLanguage.KOTLIN, """
+      import org.junit.platform.suite.api.Suite
+
+      @Suite
+      class My<caret>Suite
+    """.trimIndent(), """
+      import org.junit.platform.suite.api.Suite
+
+      @Suite(failIfNoTests = false)
+      class MySuite
+    """.trimIndent(), "Set failIfNoTests = false", testPreview = true)
   }
 }

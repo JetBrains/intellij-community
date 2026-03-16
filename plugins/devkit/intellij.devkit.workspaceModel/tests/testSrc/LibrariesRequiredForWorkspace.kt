@@ -1,11 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
+import com.android.ide.common.repository.AgpVersion
 import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library.ModifiableModel
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.PathUtil
 import com.jetbrains.rd.framework.RdId
@@ -21,7 +26,8 @@ internal object LibrariesRequiredForWorkspace {
 
   private val rider = ModuleLibrary("intellij.rider")
   private val riderUnityPlugin = ModuleLibrary("intellij.rider.plugins.unity")
-  private val riderModel = ModuleLibrary("intellij.rider.model.generated")
+  private val riderModelGenerated = ModuleLibrary("intellij.rider.model.generated")
+  private val rdIdeModelGenerated = ModuleLibrary("intellij.rd.ide.model.generated")
   private val riderRdClient = ModuleLibrary("intellij.rider.rdclient.dotnet")
   private val gradle = ModuleLibrary("intellij.gradle")
   private val gradleToolingExtension = ModuleLibrary("intellij.gradle.toolingExtension")
@@ -29,11 +35,14 @@ internal object LibrariesRequiredForWorkspace {
   private val pyCommon = ModuleLibrary("intellij.python.common")
   private val cidrProjectModel = ModuleLibrary("intellij.cidr.projectModel")
   private val kotlinBaseScripting = ModuleLibrary("intellij.kotlin.base.scripting")
+  private val androidProjectSystem = ModuleLibrary("intellij.android.projectSystem")
+  private val androidGradleModels = ModuleLibrary("intellij.android.projectSystem.gradle.models")
 
   private val kotlinJpsCommon = JarLibrary("kotlinc-kotlin-jps-common", KotlinModuleKind::class.java)
   private val kotlinScriptingCommon = JarLibrary("kotlinc-kotlin-scripting-common", SourceCode::class.java)
   private val rdCore = JarLibrary("rd-core", IPrintable::class.java)
   private val rdFramework = JarLibrary("rd-framework", RdId::class.java)
+  private val androidStudioPlatform = JarLibrary("studio-platform", AgpVersion::class.java)
 
   fun getRelatedLibraries(moduleEntityName: String): List<RelatedLibrary> =
     when (moduleEntityName) {
@@ -47,7 +56,7 @@ internal object LibrariesRequiredForWorkspace {
         listOf(riderRdClient)
       }
       "intellij.rider.rdclient.dotnet" -> {
-        listOf(rdFramework, rdCore, riderModel, riderUnityPlugin, rider, riderRdClient)
+        listOf(rdFramework, rdCore, riderModelGenerated, riderUnityPlugin, rider, rdIdeModelGenerated)
       }
       "intellij.kotlin.base.facet" -> {
         listOf(intellijJava, kotlinJpsCommon)
@@ -69,6 +78,9 @@ internal object LibrariesRequiredForWorkspace {
       }
       "intellij.clion.openfolder" -> {
         listOf(cidrProjectModel)
+      }
+      "intellij.android.projectSystem.gradle" -> {
+        listOf(androidProjectSystem, androidGradleModels, androidStudioPlatform)
       }
       else -> {
         emptyList()
@@ -122,6 +134,23 @@ private fun addJarDirectoryBaseOnClass(model: ModifiableRootModel, libraryName: 
   addDependencyFromCompilationOutput(model, libraryName, baseClass)
 }
 
+private fun getSharedClassesRootVirtualFile(): VirtualFile {
+  val classesPathUrl = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(WorkspaceEntity::class.java))
+  val classesRootVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(classesPathUrl)
+  val sharedClassesRootVirtualFile = classesRootVirtualFile?.parent
+  assertNotNull("Cannot find $sharedClassesRootVirtualFile. Possibly, project was not compiled", sharedClassesRootVirtualFile)
+  return sharedClassesRootVirtualFile!!
+}
+
+internal fun refreshCompilationOutputInVfs() {
+  val sharedClassesRootVirtualFile = getSharedClassesRootVirtualFile()
+  VfsUtil.markDirtyAndRefresh(false, true, true, sharedClassesRootVirtualFile)
+  // markDirtyAndRefresh above is not enough, it does not add "new" files to the VFS
+  VfsUtil.iterateChildrenRecursively(sharedClassesRootVirtualFile!!, null) {
+    true
+  }
+}
+
 private fun addDependencyFromCompilationOutput(model: ModifiableRootModel, libraryName: String, baseClass: Class<*>) {
   val library = model.moduleLibraryTable.modifiableModel.createLibrary(libraryName)
   val modifiableModel = library.modifiableModel
@@ -155,15 +184,7 @@ private fun addDependencyFromCompilationOutput(model: ModifiableRootModel, libra
     assertNotNull("Cannot find $classpathFolder in production classes jars. Possibly, project was partially compiled", classpathRootVirtualFile)
   }
   else {
-    val classesPathUrl = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(WorkspaceEntity::class.java))
-    val classesRootVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(classesPathUrl)
-    val sharedClassesRootVirtualFile = classesRootVirtualFile?.parent
-    assertNotNull("Cannot find $sharedClassesRootVirtualFile. Possibly, project was not compiled", sharedClassesRootVirtualFile)
-    VfsUtil.markDirtyAndRefresh(false, true, true, sharedClassesRootVirtualFile)
-    // mark dirty and refresh above is not enough, it does not add "new" files to the VFS
-    VfsUtil.iterateChildrenRecursively(sharedClassesRootVirtualFile!!, null) {
-      true
-    }
+    val sharedClassesRootVirtualFile = getSharedClassesRootVirtualFile()
     classpathRootVirtualFile = sharedClassesRootVirtualFile.children?.find { it.name == classpathFolder }
     assertNotNull("Cannot find $classpathFolder in $sharedClassesRootVirtualFile. Possibly, project was partially compiled", classpathRootVirtualFile)
   }

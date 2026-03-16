@@ -2390,6 +2390,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Actions
 - sf:AddList:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:AddMulticaret:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:AddToDictionary:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:AiIntentionBulb:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Annotate:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ArrowCollapse:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ArrowExpand:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -2747,6 +2748,10 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Debugger
 - sf:Watch:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:WatchLastReturnValue:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V
+f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Debugger$PinToTop
+- sf:PinnedItem:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:UnpinnedItem:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- <init>():V
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Debugger$ThreadStates
 - sf:Idle:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Socket:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -2935,6 +2940,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$General
 - sf:LinkDropTriangle:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:LocalizationSettings:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Locate:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:LockedUltimate:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Menu:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Modified:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ModifiedSelected:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3065,6 +3071,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Ide
 - sf:FeedbackRatingOn:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:FeedbackRatingOnFocused:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Gift:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:GrayDot:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:HectorOff:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:HectorOn:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:HectorSyntax:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3405,6 +3412,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Plugins
 - sf:PluginLogo:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:PluginLogoDisabled:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Rating:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Refresh:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Updated:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Process

@@ -4,9 +4,23 @@ package com.intellij.xml.util;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import org.jdom.Verifier;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.xml.CommonXmlStrings.*;
+import static com.intellij.xml.CommonXmlStrings.AMP;
+import static com.intellij.xml.CommonXmlStrings.BODY_END;
+import static com.intellij.xml.CommonXmlStrings.BODY_START;
+import static com.intellij.xml.CommonXmlStrings.CDATA_END;
+import static com.intellij.xml.CommonXmlStrings.CDATA_START;
+import static com.intellij.xml.CommonXmlStrings.GT;
+import static com.intellij.xml.CommonXmlStrings.HTML_END;
+import static com.intellij.xml.CommonXmlStrings.HTML_START;
+import static com.intellij.xml.CommonXmlStrings.LT;
+import static com.intellij.xml.CommonXmlStrings.NBSP;
+import static com.intellij.xml.CommonXmlStrings.QUOT;
 
 public final class XmlStringUtil {
   private XmlStringUtil() {

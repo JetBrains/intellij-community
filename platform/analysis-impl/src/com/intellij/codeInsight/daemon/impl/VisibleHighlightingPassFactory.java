@@ -10,8 +10,9 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JScrollPane;
+import java.awt.Dimension;
+import java.awt.Point;
 
 @ApiStatus.Internal
 public abstract class VisibleHighlightingPassFactory {

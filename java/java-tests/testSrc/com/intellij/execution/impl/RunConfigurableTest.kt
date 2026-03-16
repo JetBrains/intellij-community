@@ -4,7 +4,10 @@ package com.intellij.execution.impl
 import com.intellij.execution.actions.ChooseRunConfigurationManager
 import com.intellij.execution.actions.ExecutorProvider
 import com.intellij.execution.application.ApplicationConfigurationType
-import com.intellij.execution.impl.RunConfigurableNodeKind.*
+import com.intellij.execution.impl.RunConfigurableNodeKind.CONFIGURATION
+import com.intellij.execution.impl.RunConfigurableNodeKind.CONFIGURATION_TYPE
+import com.intellij.execution.impl.RunConfigurableNodeKind.FOLDER
+import com.intellij.execution.impl.RunConfigurableNodeKind.TEMPORARY_CONFIGURATION
 import com.intellij.execution.junit.JUnitConfigurationType
 import com.intellij.ide.DataManager
 import com.intellij.openapi.util.Disposer
@@ -16,7 +19,9 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.RowsDnDSupport
-import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
+import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.ABOVE
+import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.BELOW
+import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.INTO
 import com.intellij.ui.treeStructure.Tree
 import org.junit.ClassRule
 import org.junit.Rule

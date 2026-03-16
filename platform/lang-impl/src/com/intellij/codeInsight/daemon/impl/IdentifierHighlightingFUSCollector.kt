@@ -2,17 +2,14 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.IntEventField
 import com.intellij.internal.statistic.eventLog.events.LongEventField
-import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import java.time.Duration
 
 internal object IdentifierHighlightingFUSReporter {
   fun report(project: Project, file: VirtualFile?, offset: Int, result: IdentifierHighlightingResult, fromCache:Boolean, computationDurationMs: Long) {

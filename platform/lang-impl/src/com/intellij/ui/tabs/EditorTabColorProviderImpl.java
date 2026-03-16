@@ -11,7 +11,7 @@ import com.intellij.ui.FileColorManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 public final class EditorTabColorProviderImpl implements EditorTabColorProvider, DumbAware {
   @Override

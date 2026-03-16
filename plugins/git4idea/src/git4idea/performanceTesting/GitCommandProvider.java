@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public final class GitCommandProvider implements CommandProvider {
+final class GitCommandProvider implements CommandProvider {
   @Override
   public @NotNull Map<String, CreateCommand> getCommands() {
     return Map.ofEntries(

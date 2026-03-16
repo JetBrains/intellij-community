@@ -1,0 +1,22 @@
+### auto-generated section `build intellij.libraries.netty.handler.proxy` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "libraries-netty-handler-proxy_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "libraries-netty-handler-proxy",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":libraries-netty-handler-proxy_resources"],
+  exports = ["@lib//:libraries-netty-handler-proxy-netty-handler-proxy"],
+  runtime_deps = [
+    "@lib//:libraries-netty-handler-proxy-netty-handler-proxy",
+    "//libraries/netty/buffer",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
+  ]
+)
+### auto-generated section `build intellij.libraries.netty.handler.proxy` end

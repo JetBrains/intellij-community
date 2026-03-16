@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle
 
 import com.intellij.openapi.actionSystem.IdeActions
@@ -16,6 +16,8 @@ import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsOlderThan
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertEquals
@@ -124,11 +126,23 @@ class KotlinGradleCompletionTest : AbstractGradleCodeInsightTest() {
         verifyCompletion(gradleVersion)
     }
 
-    //settings.gradle.kts
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("settingsGradleKts/topLevelSuggestionsCamelCaseInSettingsGradleKts.test")
     fun testTopLevelSuggestionsCamelCaseInSettingsGradleKts(gradleVersion: GradleVersion) {
+        assumeThatGradleIsOlderThan(gradleVersion, "9.2.0") {
+            "Gradle API changes"
+        }
+        verifyCompletion(gradleVersion)
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("settingsGradleKts/topLevelSuggestionsCamelCaseInSettingsGradle92Kts.test")
+    fun testTopLevelSuggestionsCamelCaseInSettingsGradle92Kts(gradleVersion: GradleVersion) {
+        assumeThatGradleIsAtLeast(gradleVersion, "9.2.0") {
+            "Gradle API changes"
+        }
         verifyCompletion(gradleVersion)
     }
 
@@ -257,7 +271,7 @@ class KotlinGradleCompletionTest : AbstractGradleCodeInsightTest() {
      * KTIJ-34791
      */
     @ParameterizedTest
-    @GradleTestSource("8.14.1")
+    @GradleTestSource("8.14.3")
     @TestMetadata("buildSrcDir/suggestionsInsideLambdaInBuildGradleKtsInBuildSrc.test")
     fun testSuggestionsInsideLambdaInBuildGradleKtsInBuildSrc(gradleVersion: GradleVersion) {
         verifyCompletion(gradleVersion)
@@ -302,7 +316,7 @@ class KotlinGradleCompletionTest : AbstractGradleCodeInsightTest() {
     private fun verifyCompletion(gradleVersion: GradleVersion) {
         test(gradleVersion, GRADLE_KMP_KOTLIN_FIXTURE) {
             val mainFileContent = mainTestDataFile
-            var mainFile = mainTestDataPsiFile
+            val mainFile = mainTestDataPsiFile
             val noExpectedSuggestions =
                 InTextDirectivesUtils.isDirectiveDefined(mainFileContent.content, "// \"NO-EXPECTED-SUGGESTIONS\"")
             val expectedSuggestions =

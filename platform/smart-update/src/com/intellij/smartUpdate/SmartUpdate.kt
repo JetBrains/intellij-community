@@ -5,7 +5,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -22,7 +29,8 @@ import org.jetbrains.ide.ToolboxUpdateAction
 import org.jetbrains.ide.UpdateActionsListener
 import java.time.Duration
 import java.time.LocalTime
-import java.util.*
+import java.util.LinkedList
+import java.util.Queue
 
 private val LOG = logger<SmartUpdate>()
 

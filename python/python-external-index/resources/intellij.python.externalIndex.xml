@@ -1,0 +1,6 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <workspaceModel.fileIndexContributor implementation="com.intellij.python.externalIndex.workspace.PyExternalFilesIndexContributor" />
+    <postStartupActivity implementation="com.intellij.python.externalIndex.PyWelcomeScreenOpenedFilesListener"/>
+  </extensions>
+</idea-plugin>

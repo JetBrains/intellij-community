@@ -13,8 +13,8 @@
 // limitations under the License.
 package com.intellij.ui.components.panels;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.LayoutManager;
 
 public class NonOpaquePanel extends Wrapper {
   public NonOpaquePanel() {

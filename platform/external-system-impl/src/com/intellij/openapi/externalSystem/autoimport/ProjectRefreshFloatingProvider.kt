@@ -9,8 +9,8 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 import com.intellij.openapi.editor.toolbar.floating.isInsideMainEditor
-import com.intellij.platform.externalSystem.impl.ExternalSystemImplCoroutineScope.esCoroutineScope
 import com.intellij.openapi.project.Project
+import com.intellij.platform.externalSystem.impl.ExternalSystemImplCoroutineScope.esCoroutineScope
 import com.intellij.util.application
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

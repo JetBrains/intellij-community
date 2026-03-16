@@ -5,7 +5,13 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.GlobalInspectionUtil;
+import com.intellij.codeInspection.GlobalSimpleInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptionsProcessor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -125,19 +131,26 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
     Project project = psiFile.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (document == null) return Collections.emptyList();
-    DaemonProgressIndicator daemonProgressIndicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
-    // in case the inspection is running in batch mode
+
     // todo IJPL-339 figure out what is the correct context here
     CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
-    HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, context, daemonProgressIndicator, visibleRange
+
+    DaemonProgressIndicator daemonProgressIndicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
+    // in case the inspection is running in batch mode
+    HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, context, daemonProgressIndicator, visibleRange);
+
+    GeneralHighlightingPass ghp = new GeneralHighlightingPass(
+      psiFile, document, startOffset, endOffset, true, visibleRange, null, runAnnotators, runVisitors, highlightErrorElements,
+      HighlightInfoUpdater.EMPTY
     );
-    GeneralHighlightingPass ghp =
-    new GeneralHighlightingPass(psiFile, document, startOffset, endOffset, true, visibleRange, null,
-                                runAnnotators, runVisitors, highlightErrorElements, HighlightInfoUpdater.EMPTY);
-    InjectedGeneralHighlightingPass ighp = new InjectedGeneralHighlightingPass(psiFile, document, null, startOffset, endOffset, true,
-                                                                               visibleRange, null,
-                                                                               runAnnotators, runVisitors, highlightErrorElements, HighlightInfoUpdater.EMPTY);
+    ghp.setContext(context);
+
+    InjectedGeneralHighlightingPass ighp = new InjectedGeneralHighlightingPass(
+      psiFile, document, null, startOffset, endOffset, true, visibleRange, null, runAnnotators, runVisitors,
+      highlightErrorElements, HighlightInfoUpdater.EMPTY
+    );
     ighp.setContext(context);
+
     String fileName = psiFile.getName();
     List<HighlightInfo> result = new ArrayList<>();
     IJTracer tracer = TelemetryManager.Companion.getTracer(HighlightVisitorScope);

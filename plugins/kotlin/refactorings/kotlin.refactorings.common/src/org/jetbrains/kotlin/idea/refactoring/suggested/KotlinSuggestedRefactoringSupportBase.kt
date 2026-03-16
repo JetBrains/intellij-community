@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.suggested
 
 import com.intellij.openapi.util.TextRange
@@ -7,7 +7,17 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 abstract class KotlinSuggestedRefactoringSupportBase : SuggestedRefactoringSupport {
@@ -28,7 +38,7 @@ abstract class KotlinSuggestedRefactoringSupportBase : SuggestedRefactoringSuppo
                     return anchor.nameIdentifier?.textRange
                 }
 
-                val start = anchor.modifierList?.contextReceiverList?.textRange?.startOffset
+                val start = anchor.modifierList?.contextParameterList?.textRange?.startOffset
                     ?: anchor.receiverTypeReference?.textRange?.startOffset
                     ?: anchor.nameIdentifier?.textRange?.startOffset
                     ?: return null

@@ -20,10 +20,24 @@
 package com.intellij.lang;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * Implement this interface if you want to enable word completion for specific element types.
+ * Register as an extension point "com.intellij.codeInsight.wordCompletionFilter"
+ *
+ * @see com.intellij.lang.LanguageWordCompletion
+ * @see com.intellij.codeInsight.completion.WordCompletionContributor
+ */
 public interface WordCompletionElementFilter {
-  boolean isWordCompletionEnabledIn(IElementType element);
+  /**
+   * @return true if word completion is enabled inside leaf tokens with the specified element type
+   */
+  boolean isWordCompletionEnabledIn(@NotNull IElementType element);
 
+  /**
+   * @return true if word completion is enabled in dumb mode
+   */
   default boolean isWordCompletionInDumbModeEnabled() {
     return true;
   }

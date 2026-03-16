@@ -92,10 +92,6 @@ interface PythonHelpersLocator {
     @RequiresBackgroundThread
     fun findPathStringInHelpers(@NonNls resourceName: String): String = findPathInHelpersPossibleNull(resourceName)?.absolutePathString()
                                                                         ?: ""
-
-    @Deprecated("Use {@link PythonHelpersLocator#findPathInHelpers}.", ReplaceWith("findPathInHelpers(resourceName)"), DeprecationLevel.ERROR)
-    @JvmStatic
-    fun getHelperPath(@NonNls resourceName: String): String = findPathStringInHelpers(resourceName)
   }
 
   @ApiStatus.Internal
@@ -154,13 +150,17 @@ interface PythonHelpersLocator {
 
   @RequiresBackgroundThread
   private fun assertHelpersLayout(root: Path): Path {
-    LOG.assertTrue(root.exists(), "Helpers root does not exist $root")
+    if (!root.exists()) {
+      LOG.info("Helpers root does not exist: $root")
+    }
     listOf("generator3", "pycharm", "pycodestyle.py", "pydev", "syspath.py", "typeshed").forEach { child ->
-      LOG.assertTrue(root.resolve(child).exists(), "No '$child' inside $root")
+      if (!root.resolve(child).exists()) {
+        LOG.info("No '$child' inside $root")
+      }
     }
 
     return root
   }
 }
 
-private class PythonHelpersLocatorDefault : PythonHelpersLocator
+internal class PythonHelpersLocatorDefault : PythonHelpersLocator

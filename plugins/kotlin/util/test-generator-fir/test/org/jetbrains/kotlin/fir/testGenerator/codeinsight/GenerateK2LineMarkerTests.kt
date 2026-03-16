@@ -3,8 +3,12 @@ package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.idea.k2.codeInsight.lineMarkers.test.AbstractKotlinPsiBasedTestFrameworkK2Test
 import org.jetbrains.kotlin.idea.k2.codeInsight.lineMarkers.test.AbstractLineMarkersK2Test
-import org.jetbrains.kotlin.testGenerator.model.*
-import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.HIGHLIGHTING
+import org.jetbrains.kotlin.testGenerator.model.MutableTWorkspace
+import org.jetbrains.kotlin.testGenerator.model.Patterns
+import org.jetbrains.kotlin.testGenerator.model.model
+import org.jetbrains.kotlin.testGenerator.model.testClass
+import org.jetbrains.kotlin.testGenerator.model.testGroup
 
 internal fun MutableTWorkspace.generateK2LineMarkerTests() {
     testGroup("code-insight/line-markers", category = HIGHLIGHTING) {

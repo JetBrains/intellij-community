@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.devkit.mcp` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "mcp_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "mcp",
+  module_name = "intellij.devkit.mcp",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":mcp_resources"],
+  deps = [
+    "//plugins/devkit/devkit-core:core",
+    "@lib//:kotlin-stdlib",
+    "//plugins/mcp-server:mcpserver",
+    "//platform/core-api:core",
+    "//platform/lang-core",
+    "//platform/util",
+    "//java/java-psi-api:psi",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
+    "//platform/progress/shared:ide-progress",
+  ]
+)
+### auto-generated section `build intellij.devkit.mcp` end

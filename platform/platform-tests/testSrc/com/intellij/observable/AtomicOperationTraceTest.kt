@@ -2,10 +2,18 @@
 package com.intellij.observable
 
 import com.intellij.openapi.observable.operation.OperationExecutionId
-import com.intellij.openapi.observable.operation.core.ObservableOperationStatus.*
-import com.intellij.openapi.observable.operation.core.*
+import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
+import com.intellij.openapi.observable.operation.core.ObservableOperationStatus.COMPLETED
+import com.intellij.openapi.observable.operation.core.ObservableOperationStatus.IN_PROGRESS
+import com.intellij.openapi.observable.operation.core.ObservableOperationStatus.SCHEDULED
+import com.intellij.openapi.observable.operation.core.onceWhenOperationFinished
+import com.intellij.openapi.observable.operation.core.onceWhenOperationStarted
+import com.intellij.openapi.observable.operation.core.traceRun
+import com.intellij.openapi.observable.operation.core.whenOperationFinished
+import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.util.Disposer
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean

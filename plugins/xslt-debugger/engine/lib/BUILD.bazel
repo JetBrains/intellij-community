@@ -2,8 +2,12 @@
 load("@rules_java//java:defs.bzl", "java_import")
 
 java_import(
-  name = "rmi-stubs",
+  name = "xslt-debugger-rt-_r_m_i_stubs",
   jars = ["rmi-stubs.jar"],
   visibility = ["//visibility:public"]
 )
+
+exports_files([
+  "rmi-stubs.jar",
+], visibility = ["//visibility:public"])
 ### auto-generated section `local-libs` end

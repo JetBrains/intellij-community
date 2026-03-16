@@ -6,7 +6,9 @@ import com.intellij.ide.RemoteDesktopService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.paint.LinePainter2D;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 public final class DrawUtil {
   private DrawUtil() {
@@ -38,7 +40,7 @@ public final class DrawUtil {
   }
 
   public static boolean isSimplifiedUI() {
-    return Registry.is("ui.no.bangs.and.whistles", false) || Registry.is("ui.simplified", false) ||
+    return Registry.is("ui.simplified", false) ||
            RemoteDesktopService.isRemoteSession() || PowerSaveMode.isEnabled();
   }
 }

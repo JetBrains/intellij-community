@@ -1,23 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.db
 
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.RunConfigurationEnvironmentUtils
-import java.util.*
+import com.intellij.util.EnvironmentUtil
 
 object WindowsEnvVariables {
   /*
- * Some widely used env vars.
- */
-  val applicationData: String = get("APPDATA").toString()
-  val localApplicationData: String = get("LOCALAPPDATA").toString()
-  val userProfile: String = get("USERPROFILE").toString()
-
-  /**
-   * Function to get one Windows env var.
-   *
-   * Use without %%. Example: get("APPDATA")
+   * Some widely used env vars.
    */
-  fun get(variable: String): String? = System.getenv()[variable] ?: System.getenv()[variable.uppercase(Locale.getDefault())]
+  val applicationData: String = EnvironmentUtil.getValue("APPDATA").toString()
+  val localApplicationData: String = EnvironmentUtil.getValue("LOCALAPPDATA").toString()
+  val userProfile: String = EnvironmentUtil.getValue("USERPROFILE").toString()
 
-  fun expandPath(path: String): String? = RunConfigurationEnvironmentUtils.expandVariables("%", "%", path, WindowsEnvVariables::get, false, null)
+  fun expandPath(path: String): String? =
+    RunConfigurationEnvironmentUtils.expandVariables("%", "%", path, EnvironmentUtil::getValue, false, null)
 }

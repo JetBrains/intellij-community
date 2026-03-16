@@ -13,6 +13,9 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":libraries-jackson-dataformat-yaml_resources"],
   exports = ["@lib//:jackson-dataformat-yaml"],
-  runtime_deps = ["@lib//:jackson-dataformat-yaml"]
+  runtime_deps = [
+    "@lib//:jackson-dataformat-yaml",
+    "//libraries/jackson/jackson",
+  ]
 )
 ### auto-generated section `build intellij.libraries.jackson.dataformat.yaml` end

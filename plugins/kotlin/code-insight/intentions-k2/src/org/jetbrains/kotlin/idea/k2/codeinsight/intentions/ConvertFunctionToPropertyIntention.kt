@@ -3,7 +3,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.modcommand.*
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.ModShowConflicts
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiBasedModCommandAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
@@ -11,9 +16,16 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.endOffset
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.name
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.base.psi.getReturnTypeReference
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -27,15 +39,21 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.propertyNameByGetMethodName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
+import org.jetbrains.kotlin.psi.psiUtil.getStartOffsetIn
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.types.expressions.OperatorConventions.UNARY_OPERATION_NAMES
 
 private data class Context(
     val callables: Collection<PsiElement>,
-    val refsToRename: Collection<PsiReference>,
-    val kotlinCallsToReplace: Collection<KtCallElement>,
-    val foreignRefsToRename: Collection<PsiReference>,
+    val elementsToChange: ElementsToChange,
     val newName: String,
     val conflicts: Map<PsiElement, ModShowConflicts.Conflict>,
     val newGetterName: String
@@ -95,13 +113,20 @@ internal class ConvertFunctionToPropertyIntention :
             if (returnType.isUnitType || returnType.isNothingType) return false
 
             val propertyName = element.getPropertyName() ?: return false
-            val existingProperty = findExistingPropertyWithSameName(element, propertyName)
-            return existingProperty == null
+            return findExistingPropertyWithSameName(element, propertyName) == null
         }
+
+    private fun findExistingPropertyWithSameName(element: KtNamedFunction, propertyName: String): KtProperty? {
+        val scope = element.getContainingKtFile().declarations
+            .filterIsInstance<KtProperty>()
+            .filter { it.name == propertyName && it.receiverTypeReference?.text == element.receiverTypeReference?.text }
+
+        return scope.firstOrNull()
+    }
 }
 
 private fun KtNamedFunction.getPropertyName(): String? {
-    val functionName = this.name?.let { Name.identifier(it) } ?: return null
+    val functionName = this.nameIdentifier?.let { Name.identifier(it.text) } ?: return null
     return (propertyNameByGetMethodName(functionName) ?: functionName).toString()
 }
 
@@ -115,11 +140,17 @@ private fun KaSession.prepareContext(element: KtNamedFunction): Context? {
     val functionSymbol = element.symbol
     val affectedCallablesWithSelf = getAffectedCallables(functionSymbol)
 
+    val conflictCheckContext = ConflictCheckContext(
+        conflicts = conflicts,
+        getterName = newGetterName,
+        callables = affectedCallablesWithSelf
+    )
+
     for (callable in affectedCallablesWithSelf) {
         if (callable !is PsiNamedElement) continue
 
         addConflictIfCantRefactor(callable, conflicts)
-        addConflictIfSamePropertyFound(callable, functionSymbol, conflicts, newGetterName, affectedCallablesWithSelf)
+        addConflictIfSamePropertyFound(callable, functionSymbol, conflictCheckContext)
 
         val foundReferences = findReferencesToElement(callable) ?: continue
         for (reference in foundReferences) {
@@ -129,9 +160,7 @@ private fun KaSession.prepareContext(element: KtNamedFunction): Context? {
 
     return Context(
         callables = affectedCallablesWithSelf,
-        refsToRename = elementsToChange.kotlinRefsToRename,
-        kotlinCallsToReplace = elementsToChange.kotlinCalls,
-        foreignRefsToRename = elementsToChange.foreignRefs,
+        elementsToChange = elementsToChange,
         newName = propertyName,
         conflicts = conflicts,
         newGetterName = newGetterName
@@ -144,13 +173,17 @@ private class ElementsToChange {
     val foreignRefs = mutableListOf<PsiReference>()
 }
 
-private fun findExistingPropertyWithSameName(element: KtNamedFunction, propertyName: String): KtProperty? {
-    val scope = element.getContainingKtFile().declarations
-        .filterIsInstance<KtProperty>()
-        .filter { it.name == propertyName && it.receiverTypeReference?.text == element.receiverTypeReference?.text }
+private data class ConflictCheckContext(
+    val conflicts: MutableMap<PsiElement, ModShowConflicts.Conflict>,
+    val getterName: String,
+    val callables: Collection<PsiElement>
+)
 
-    return scope.firstOrNull()
-}
+private data class FunctionConversionContext(
+    val newName: String,
+    val psiFactory: KtPsiFactory,
+    val updater: ModPsiUpdater
+)
 
 private fun checkReferenceCanBeChanged(
     reference: PsiReference,
@@ -182,19 +215,27 @@ private fun convertFunctionToProperty(
     actionContext: ActionContext
 ) {
     val writableElementContext = getWritable(elementContext, updater)
-    val (callables, refsToRename, kotlinCallsToReplace, foreignRefsToRename, newName, _, newGetterName) = writableElementContext
+    val (callables, elementsToChange, newName, _, newGetterName) = writableElementContext
 
     val psiFactory = KtPsiFactory(element.project)
     val newReference = psiFactory.createExpression(newName)
 
-    kotlinCallsToReplace.forEach { it.replace(newReference) }
-    refsToRename.forEach { it.handleElementRename(newName) }
-    foreignRefsToRename.forEach { it.handleElementRename(newGetterName) }
+    elementsToChange.kotlinCalls.forEach { it.replace(newReference) }
+    elementsToChange.kotlinRefsToRename.forEach { it.handleElementRename(newName) }
+    elementsToChange.foreignRefs.forEach { it.handleElementRename(newGetterName) }
 
     val mainElement = findMainElement(element, callables, actionContext)
     callables.forEach {
         when (it) {
-            is KtNamedFunction -> convertFunction(it, newName, psiFactory, updater, moveCaret = it == mainElement)
+            is KtNamedFunction -> {
+                val context = FunctionConversionContext(
+                    newName = newName,
+                    psiFactory = psiFactory,
+                    updater = updater
+                )
+                convertFunction(it, context, moveCaret = it == mainElement)
+            }
+
             is PsiMethod -> it.name = newGetterName
         }
     }
@@ -202,15 +243,15 @@ private fun convertFunctionToProperty(
 
 private fun convertFunction(
     originalFunction: KtNamedFunction,
-    newName: String,
-    psiFactory: KtPsiFactory,
-    updater: ModPsiUpdater,
+    context: FunctionConversionContext,
     moveCaret: Boolean
 ) {
-    val propertyName = getPropertyName(originalFunction, newName)
-    val newProperty = psiFactory.createDeclaration<KtProperty>(propertyName)
+    val propertyName = getPropertyName(originalFunction, context.newName)
+    val newProperty = context.psiFactory.createDeclaration<KtProperty>(propertyName)
     val replaced = originalFunction.replaced(newProperty)
-    if (moveCaret) updater.moveCaretTo(replaced.nameIdentifier!!.endOffset)
+    if (moveCaret) {
+        replaced.nameIdentifier?.let { context.updater.moveCaretTo(it.endOffset) }
+    }
 }
 
 private fun findMainElement(
@@ -229,7 +270,9 @@ private fun getPropertyName(
     return KtPsiFactory.CallableBuilder(target = KtPsiFactory.CallableBuilder.Target.READ_ONLY_PROPERTY).apply {
         val originalFunctionText = originalFunction.text
         val funKeyword = originalFunction.funKeyword
-        modifier(originalFunctionText.take(funKeyword!!.getStartOffsetIn(originalFunction)))
+        funKeyword?.let { keyword ->
+            modifier(originalFunctionText.take(keyword.getStartOffsetIn(originalFunction)))
+        }
         typeParams(originalFunction.typeParameters.map { it.text })
         originalFunction.receiverTypeReference?.let { receiver(it.text) }
         name(newName)
@@ -237,7 +280,9 @@ private fun getPropertyName(
         typeConstraints(originalFunction.typeConstraints.map { it.text })
 
         if (originalFunction.equalsToken != null) {
-            getterExpression(originalFunction.bodyExpression!!.text, breakLine = originalFunction.typeReference != null)
+            originalFunction.bodyExpression?.let { bodyExpr ->
+                getterExpression(bodyExpr.text, breakLine = originalFunction.typeReference != null)
+            }
         } else {
             originalFunction.bodyBlockExpression?.let { body ->
                 transform {
@@ -271,26 +316,50 @@ private fun checkValueArgumentsNotEmpty(callElement: KtCallElement, conflicts: M
     return false
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun KaSession.addConflictIfSamePropertyFound(
-    callable: PsiNamedElement,
-    callableSymbol: KaCallableSymbol,
-    conflicts: MutableMap<PsiElement, ModShowConflicts.Conflict>,
-    getterName: String,
-    callables: Collection<PsiElement>
+    affectedCallable: PsiNamedElement,
+    initialElementFunctionSymbol: KaCallableSymbol,
+    context: ConflictCheckContext
 ) {
-    if (callable is KtNamedFunction) {
-        callable.containingKtFile
-            .scopeContext(callable)
+    if (affectedCallable is KtNamedFunction) {
+        val containingSymbolType = (initialElementFunctionSymbol.containingSymbol as? KaClassifierSymbol)?.defaultType
+        val initialElementTypePointer = containingSymbolType?.createPointer() ?: return
+        val initialElementSymbolName = initialElementFunctionSymbol.name
+        affectedCallable.checkDeclarationConflict(initialElementTypePointer, initialElementSymbolName, context.conflicts)
+    } else if (affectedCallable is PsiMethod) {
+        affectedCallable.checkDeclarationConflict(context.getterName, context.conflicts, context.callables)
+    }
+}
+
+@OptIn(KaExperimentalApi::class)
+private fun KtNamedFunction.checkDeclarationConflict(
+    initialElementTypePointer: KaTypePointer<KaType>,
+    initialElementSymbolName: Name?,
+    conflicts: MutableMap<PsiElement, ModShowConflicts.Conflict>
+) {
+    val affectedCallable = this
+    // A separate `analyze` is needed to avoid KaBaseIllegalPsiException on analyzing the `affectedCallable` as `KtNamedFunction`
+    analyze(affectedCallable) {
+        val initialElementType = initialElementTypePointer.restore() ?: return@analyze
+        affectedCallable.containingKtFile
+            .scopeContext(affectedCallable)
             .compositeScope()
-            .callables { it == callableSymbol.name }
+            .callables { it == initialElementSymbolName }
             .filterIsInstance<KaPropertySymbol>()
             .find {
                 val receiverType = it.receiverType ?: return@find false
-                (callableSymbol.containingSymbol as? KaClassifierSymbol)?.defaultType?.semanticallyEquals(receiverType)
-                    ?: return@find false
-            }?.let { reportDeclarationConflict(conflicts, declaration = it.psi!!) { s -> KotlinBundle.message("0.already.exists", s) } }
-    } else if (callable is PsiMethod) {
-        callable.checkDeclarationConflict(getterName, conflicts, callables)
+                initialElementType.semanticallyEquals(receiverType)
+            }?.let { propertySymbol ->
+                propertySymbol.psi?.let { psiElement ->
+                    reportDeclarationConflict(conflicts, declaration = psiElement) { s ->
+                        KotlinBundle.message(
+                            "0.already.exists",
+                            s
+                        )
+                    }
+                }
+            }
     }
 }
 
@@ -312,18 +381,27 @@ private fun getWritable(
     elementContext: Context,
     updater: ModPsiUpdater,
 ): Context {
-    val (callables, refsToRename, kotlinCallsToReplace, foreignRefsToRename, newName, _, newGetterName) = elementContext
+    val (callables, elementsToChange, newName, _, newGetterName) = elementContext
+
+    val writableElementsToChange = ElementsToChange().apply {
+        kotlinCalls.addAll(elementsToChange.kotlinCalls.map(updater::getWritable))
+        kotlinRefsToRename.addAll(
+            elementsToChange.kotlinRefsToRename
+                .map(PsiReference::getElement)
+                .map(updater::getWritable)
+                .mapNotNull(PsiElement::getReference)
+        )
+        foreignRefs.addAll(
+            elementsToChange.foreignRefs
+                .map(PsiReference::getElement)
+                .map(updater::getWritable)
+                .mapNotNull(PsiElement::getReference)
+        )
+    }
+
     return Context(
         callables = callables.map(updater::getWritable),
-        refsToRename = refsToRename
-            .map(PsiReference::getElement)
-            .map(updater::getWritable)
-            .mapNotNull(PsiElement::getReference),
-        kotlinCallsToReplace = kotlinCallsToReplace.map(updater::getWritable),
-        foreignRefsToRename = foreignRefsToRename
-            .map(PsiReference::getElement)
-            .map(updater::getWritable)
-            .mapNotNull(PsiElement::getReference),
+        elementsToChange = writableElementsToChange,
         newName = newName,
         conflicts = emptyMap(),
         newGetterName = newGetterName

@@ -10,6 +10,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.DeletePsiElementsFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinEqualsHashCodeToStringSymbolUtils.matchesEqualsMethodSignature
+import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinEqualsHashCodeToStringSymbolUtils.matchesHashCodeMethodSignature
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.GenerateEqualsAndHashCodeUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.GenerateEqualsFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.GenerateHashCodeFix
@@ -29,11 +31,11 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
                 Pair(
                     classOrObjectMemberDeclarations.singleOrNull {
                         val function = it.symbol as? KaNamedFunctionSymbol ?: return@singleOrNull false
-                        GenerateEqualsAndHashCodeUtils.matchesEqualsMethodSignature(function)
+                        matchesEqualsMethodSignature(function)
                     } as? KtNamedFunction,
                     classOrObjectMemberDeclarations.singleOrNull {
                         val function = it.symbol as? KaNamedFunctionSymbol ?: return@singleOrNull false
-                        GenerateEqualsAndHashCodeUtils.matchesHashCodeMethodSignature(function)
+                        matchesHashCodeMethodSignature(function)
                     } as? KtNamedFunction,
                 )
             }

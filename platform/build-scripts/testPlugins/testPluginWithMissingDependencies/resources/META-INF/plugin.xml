@@ -1,0 +1,15 @@
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>TestPluginWithMissingDependencies</id>
+  <!--suppress PluginXmlValidity -->
+  <name>Test Plugin with Missing Dependencies</name>
+  <vendor>JetBrains</vendor>
+  <description>
+    This is a test plugin. It's used in PluginDependenciesValidatorTest to check that PluginDependenciesValidator correctly reports missing
+    dependencies in XML descriptors.
+  </description>
+  <depends>com.intellij.modules.idea</depends>
+  <content>
+    <module name="intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module"/>
+  </content>
+</idea-plugin>

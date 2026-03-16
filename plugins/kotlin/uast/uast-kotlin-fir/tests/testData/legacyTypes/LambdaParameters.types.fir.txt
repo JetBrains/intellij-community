@@ -1,15 +1,15 @@
 UFile (package = ) [public final class LambdaParametersKt {...]
     UClass (name = LambdaParametersKt) [public final class LambdaParametersKt {...}]
         UMethod (name = lambdaWithRecivier) [public static final fun lambdaWithRecivier() : void {...}]
-            UBlockExpression [{...}] : java.lang.String
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [buildString({ ...})] : java.lang.String
+            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.String
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [buildString({ ...})] : @org.jetbrains.annotations.NotNull() java.lang.String
                     UIdentifier (Identifier (buildString)) [UIdentifier (Identifier (buildString))]
                     ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super @org.jetbrains.annotations.NotNull() java.lang.StringBuilder, ? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
                         UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                             UReturnExpression [return append("a")]
                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [append("a")] : java.lang.StringBuilder
                                     UIdentifier (Identifier (append)) [UIdentifier (Identifier (append))]
-                                    UPolyadicExpression (operator = +) ["a"] : java.lang.String
+                                    UPolyadicExpression (operator = +) ["a"] : @org.jetbrains.annotations.NotNull() java.lang.String
                                         ULiteralExpression (value = "a") ["a"] : java.lang.String
         UMethod (name = itParameter) [public static final fun itParameter() : void {...}]
             UBlockExpression [{...}] : int

@@ -24,6 +24,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.intellij.lang.xpath.xslt.XsltConfig;
 import org.intellij.plugins.xpathView.XPathBundle;
@@ -31,8 +32,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 
 @State(name = "XSLT-Support.Configuration", storages = {@Storage(StoragePathMacros.NON_ROAMABLE_FILE)})
 class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<XsltConfigImpl> {
@@ -106,7 +112,7 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
       if (oldValue != myConfig.SHOW_LINKED_FILES) {
         final Project[] projects = ProjectManager.getInstance().getOpenProjects();
         for (Project project : projects) {
-          ProjectView.getInstance(project).refresh();
+          ProjectView.getInstance(project).refresh(ProjectViewUpdateCause.PLUGIN_XPATH);
         }
       }
     }

@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -13,6 +12,7 @@ import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementDescriptionUtil;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -167,6 +167,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
       return module != null && module.getModuleScope().contains(virtualFile);
     }
     if (HierarchyBrowserBaseEx.SCOPE_PROJECT.equals(scopeType)) {
+      if (srcElement.getContainingFile() instanceof PsiCompiledElement) return false;
       VirtualFile virtualFile = srcElement.getContainingFile().getVirtualFile();
       return virtualFile == null || !TestSourcesFilter.isTestSources(virtualFile, myProject);
     }

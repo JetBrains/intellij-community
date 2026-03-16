@@ -10,7 +10,7 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory
 import com.jetbrains.jsonSchema.extension.SchemaType
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.themes.DevKitThemesBundle
-import java.util.*
+import java.util.Collections
 
 @NonNls
 internal const val THEME_METADATA_JSON_EXTENSION = "themeMetadata.json"

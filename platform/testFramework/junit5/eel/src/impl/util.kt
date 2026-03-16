@@ -3,6 +3,10 @@
 
 package com.intellij.platform.testFramework.junit5.eel.impl
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
@@ -13,9 +17,11 @@ import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.provider.EelMachineResolver
 import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.testFramework.junit5.eel.fixture.IsolatedFileSystem
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystem
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystemProvider
@@ -24,12 +30,14 @@ import com.intellij.testFramework.junit5.fixture.TestFixtureInitializer
 import com.intellij.util.io.Ksuid
 import com.intellij.util.io.delete
 import org.junit.jupiter.api.Assumptions
-import java.nio.file.*
+import java.nio.file.FileStore
+import java.nio.file.FileSystem
+import java.nio.file.FileSystems
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.Path
 import kotlin.io.path.name
-
-internal const val FAKE_WINDOWS_ROOT = "\\\\dummy-ij-root\\test-eel\\"
 
 private val EelPlatform.name: String
   get() = when (this) {
@@ -70,9 +78,11 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
 
   val fakeLocalFileSystem = EelUnitTestFileSystem(EelUnitTestFileSystemProvider(defaultProvider), os, directory, fakeRoot)
   val apiRef = AtomicReference<EelApi>(null)
-  val descriptor = EelTestDescriptor(Path(fakeRoot), Ksuid.generate().toString(), os.osFamily, apiRef::get)
+  val id = Ksuid.generate()
+  val descriptor = EelTestDescriptor(Path(fakeRoot), id, os.osFamily)
 
-  val disposable = Disposer.newDisposable()
+  // EelDescriptor has almost static lifetime by contract, so we bind it to the application service
+  val disposable: Disposable = ApplicationManager.getApplication().service<TestEelService>()
 
   MultiRoutingFileSystemBackend.EP_NAME.point.registerExtension(
     object : MultiRoutingFileSystemBackend {
@@ -91,10 +101,32 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
     disposable,
   )
 
+  val machine: EelMachine = object : EelMachine {
+    override val internalName: String = "mock-$id"
+    override suspend fun toEelApi(descriptor: EelDescriptor): EelApi = apiRef.get()
+    override fun ownsPath(path: Path): Boolean {
+      return path.getEelDescriptor() == descriptor
+    }
+  }
+
+  EelMachineResolver.EP_NAME.point.registerExtension(object : EelMachineResolver {
+    override fun getResolvedEelMachine(eelDescriptor: EelDescriptor): EelMachine? {
+      return if (eelDescriptor == descriptor) machine else null
+    }
+
+    override suspend fun resolveEelMachine(eelDescriptor: EelDescriptor): EelMachine? {
+      return getResolvedEelMachine(eelDescriptor)
+    }
+
+    override suspend fun resolveEelMachineByInternalName(internalName: String): EelMachine? {
+      return if (internalName == machine.internalName) machine else null
+    }
+  }, disposable)
+
   EelProvider.EP_NAME.point.registerExtension(
     object : EelProvider {
-      override suspend fun tryInitialize(path: @MultiRoutingFileSystemPath String) {
-        // Nothing.
+      override suspend fun tryInitialize(path: @MultiRoutingFileSystemPath String): EelMachine? {
+        return if (getEelDescriptor(Path(path)) == descriptor) machine else null
       }
 
       override fun getEelDescriptor(path: @MultiRoutingFileSystemPath Path): EelDescriptor? =
@@ -104,14 +136,6 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
       override fun getCustomRoots(eelDescriptor: EelDescriptor): Collection<@MultiRoutingFileSystemPath String>? =
         if (eelDescriptor == descriptor) listOf(fakeRoot)
         else null
-
-      override fun getInternalName(eelMachine: EelMachine): String? =
-        if (eelMachine == descriptor.machine) meaningfulDirName
-        else null
-
-      override fun getEelMachineByInternalName(internalName: String): EelMachine? =
-        if (internalName == meaningfulDirName) descriptor.machine
-        else null
     },
     disposable,
   )
@@ -119,9 +143,13 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
   val eelApi = eelApiByOs(fakeLocalFileSystem, descriptor, os)
   apiRef.set(eelApi)
   val root = Path.of(fakeRoot)
-  initialized(IsolatedFileSystemImpl(root, descriptor, eelApi)) {
-    Disposer.dispose(disposable)
+
+  // We can't dispose descriptor after each test because EelMachineResolver must be available till the end of the app
+  Disposer.register(disposable) {
     directory.delete(true)
+  }
+
+  initialized(IsolatedFileSystemImpl(root, descriptor, eelApi)) {
   }
 }
 
@@ -140,3 +168,9 @@ internal fun checkMultiRoutingFileSystem() {
   Assumptions.assumeTrue(FileSystems.getDefault() is MultiRoutingFileSystem,
                          "Please enable `-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider`")
 }
+
+/**
+ * Used to dispose test eels
+ */
+@Service(Service.Level.APP)
+private class TestEelService : Disposable.Default

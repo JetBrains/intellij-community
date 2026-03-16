@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage.perFileVersion
 
-import com.google.common.io.Closer
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.testFramework.ApplicationRule
@@ -11,7 +10,10 @@ import com.intellij.util.io.KeyDescriptor
 import com.intellij.util.io.PersistentEnumerator
 import com.intellij.util.io.delete
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -66,11 +68,13 @@ class EnumeratedFastFileAttributeTest {
   @JvmField
   val temp = TempDirectory()
 
-  private val closer: Closer = Closer.create()
+  private val toClose: MutableList<EnumeratedFastFileAttribute<*>> = arrayListOf()
 
   @After
   fun tearDown() {
-    closer.close()
+    for (storage in toClose) {
+      storage.closeAndUnsafelyUnmap()
+    }
   }
 
   private fun createFileAttribute(version: Int = 0): FileAttribute {
@@ -82,7 +86,7 @@ class EnumeratedFastFileAttributeTest {
                                                 fileAttributeVersion: Int = 0): EnumeratedFastFileAttribute<EnumeratedTestClass> =
     EnumeratedFastFileAttribute(dir, createFileAttribute(fileAttributeVersion), EnumeratedTestClassDescriptor(), vfsVersion) {
       PersistentEnumerator(it, EnumeratedTestClassDescriptor(), 32)
-    }.also(closer::register)
+    }.also(toClose::add)
 
   @Test
   fun testDirCreatedAutomatically() {

@@ -55,7 +55,7 @@ class PsiJavaModuleModificationTrackerTest : LightJavaCodeInsightFixtureTestCase
     val file = fixture.configureByText("manifest.mf", "${PsiJavaModule.AUTO_MODULE_NAME} = M1\n")
     doTestIncremented {
       WriteCommandAction.runWriteCommandAction(fixture.project) {
-        val documentManager = PsiDocumentManagerBase.getInstance(fixture.project)
+        val documentManager = PsiDocumentManager.getInstance(fixture.project)
         val document = documentManager.getDocument(file)!!
         document.setText("${PsiJavaModule.AUTO_MODULE_NAME} = M2\n")
         documentManager.commitDocument(document)

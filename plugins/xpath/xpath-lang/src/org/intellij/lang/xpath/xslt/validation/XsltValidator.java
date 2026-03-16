@@ -15,14 +15,6 @@
  */
 package org.intellij.lang.xpath.xslt.validation;
 
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.psi.XsltParameter;
-import org.intellij.lang.xpath.xslt.psi.XsltVariable;
-import org.intellij.lang.xpath.xslt.quickfix.DeleteUnusedParameterFix;
-import org.intellij.lang.xpath.xslt.quickfix.DeleteUnusedVariableFix;
-import org.intellij.lang.xpath.xslt.quickfix.DeleteUnusedElementBase;
-import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
-
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -32,9 +24,16 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Query;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.psi.XsltParameter;
+import org.intellij.lang.xpath.xslt.psi.XsltVariable;
+import org.intellij.lang.xpath.xslt.quickfix.DeleteUnusedElementBase;
+import org.intellij.lang.xpath.xslt.quickfix.DeleteUnusedParameterFix;
+import org.intellij.lang.xpath.xslt.quickfix.DeleteUnusedVariableFix;
+import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.intellij.plugins.xpathView.XPathBundle;
 
 import java.util.Collection;

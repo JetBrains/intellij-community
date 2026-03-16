@@ -2,15 +2,14 @@
 package org.jetbrains.plugins.gitlab.api.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.jetbrains.plugins.gitlab.api.data.GitLabPlan
 
 class GitLabNamespaceRestDTO(
   @JsonProperty("plan") _plan: String
 ) {
   val plan: GitLabPlan = parseGitLabPlan(_plan)
 
-  private fun parseGitLabPlan(errorText: String): GitLabPlan = try {
-    GitLabPlan.valueOf(errorText.uppercase())
+  private fun parseGitLabPlan(textual: String): GitLabPlan = try {
+    GitLabPlan.valueOf(textual.uppercase())
   }
   catch (_: Throwable) {
     GitLabPlan.FREE

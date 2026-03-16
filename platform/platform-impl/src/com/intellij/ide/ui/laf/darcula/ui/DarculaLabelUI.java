@@ -4,17 +4,23 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ClientProperty;
-import com.intellij.ui.components.labels.DropDownLink;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JLabelUtil;
 import com.intellij.util.ui.SwingTextTrimmer;
 import sun.swing.SwingUtilities2;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.plaf.basic.BasicLabelUI;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Rectangle;
 
 public class DarculaLabelUI extends BasicLabelUI {
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
@@ -104,9 +110,6 @@ public class DarculaLabelUI extends BasicLabelUI {
       trimmer.setTrimmed(false);
     }
 
-    if (label instanceof DropDownLink) {
-      iconR.y += JBUIScale.scale(1);
-    }
     return result;
   }
 }

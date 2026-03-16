@@ -30,6 +30,9 @@ sealed interface GradleSyncPhase : Comparable<GradleSyncPhase> {
     }
   }
 
+  @ApiStatus.Internal
+  sealed interface BaseScript: GradleSyncPhase
+
   /**
    * In these phases, Gradle sync contributors are executed when models for [modelFetchPhase] are collected on the Gradle daemon side.
    */
@@ -44,6 +47,13 @@ sealed interface GradleSyncPhase : Comparable<GradleSyncPhase> {
       }
     }
   }
+
+  /**
+   * The phase corresponding to IntelliJ Platform data services execution.
+   * This is a temporary, internal API for migration purposes.
+   */
+  @ApiStatus.Internal
+  sealed interface DataServices: GradleSyncPhase
 
   companion object {
 
@@ -60,6 +70,13 @@ sealed interface GradleSyncPhase : Comparable<GradleSyncPhase> {
      */
     @JvmField
     val DECLARATIVE_PHASE: GradleSyncPhase = Static(1000, "DECLARATIVE_PHASE")
+
+    /**
+     *
+     */
+    @JvmField
+    @ApiStatus.Internal
+    val BASE_SCRIPT_MODEL_PHASE: GradleSyncPhase = GradleBaseScriptSyncPhase
 
     /**
      * In this phase, Gradle sync contributors,
@@ -83,6 +100,12 @@ sealed interface GradleSyncPhase : Comparable<GradleSyncPhase> {
     val DEPENDENCY_MODEL_PHASE: GradleSyncPhase = GradleModelFetchPhase.PROJECT_SOURCE_SET_DEPENDENCY_PHASE.asSyncPhase()
 
     /**
+     *
+     */
+    @JvmField
+    val SCRIPT_MODEL_PHASE: GradleSyncPhase = GradleModelFetchPhase.SCRIPT_MODEL_PHASE.asSyncPhase()
+
+    /**
      * In this phase, Gradle sync contributors,
      * contribute to the IDE project model for a rich experience in IntelliJ IDEA.
      * It is a code insight in Gradle scripts, data for run configuration creation and code completion in him,
@@ -90,6 +113,9 @@ sealed interface GradleSyncPhase : Comparable<GradleSyncPhase> {
      */
     @JvmField
     val ADDITIONAL_MODEL_PHASE: GradleSyncPhase = GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE.asSyncPhase()
+
+    @JvmField
+    val DATA_SERVICES_PHASE: GradleSyncPhase = GradleDataServicesSyncPhase()
   }
 }
 
@@ -105,7 +131,9 @@ private class GradleStaticSyncPhase(
   override fun compareTo(other: GradleSyncPhase): Int {
     return when (other) {
       is GradleStaticSyncPhase -> order.compareTo(other.order)
-      is GradleDynamicSyncPhase -> -1
+      is GradleBaseScriptSyncPhase -> -1
+      is GradleDynamicSyncPhase,
+      is GradleDataServicesSyncPhase -> -1
     }
   }
 
@@ -134,7 +162,9 @@ private class GradleDynamicSyncPhase(
   override fun compareTo(other: GradleSyncPhase): Int {
     return when (other) {
       is GradleStaticSyncPhase -> 1
+      is GradleBaseScriptSyncPhase -> 1
       is GradleDynamicSyncPhase -> modelFetchPhase.compareTo(other.modelFetchPhase)
+      is GradleDataServicesSyncPhase -> -1
     }
   }
 
@@ -150,4 +180,31 @@ private class GradleDynamicSyncPhase(
   override fun hashCode(): Int {
     return modelFetchPhase.hashCode()
   }
+}
+
+private data object GradleBaseScriptSyncPhase: GradleSyncPhase.BaseScript {
+
+  override val name: String = "BASE_SCRIPT_MODEL"
+
+  override fun compareTo(other: GradleSyncPhase): Int {
+    return when (other) {
+      is GradleStaticSyncPhase -> 1
+      is GradleBaseScriptSyncPhase -> 0
+      is GradleDynamicSyncPhase,
+      is GradleDataServicesSyncPhase -> -1
+    }
+  }
+}
+
+/**
+ * The implementation of the phase corresponding to IntelliJ Platform data services execution.
+ * This is a temporary, internal API for migration purposes.
+ */
+@ApiStatus.Internal
+private class GradleDataServicesSyncPhase: GradleSyncPhase.DataServices {
+
+  override val name: String = "DATA_SERVICES"
+
+  override fun compareTo(other: GradleSyncPhase): Int =
+    if (other is GradleDataServicesSyncPhase) 0 else 1
 }

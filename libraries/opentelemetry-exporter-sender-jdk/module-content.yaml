@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.opentelemetry.exporter.sender.jdk.jar
+  modules:
+  - name: intellij.libraries.opentelemetry.exporter.sender.jdk
+    libraries:
+      opentelemetry-exporter-sender-jdk:
+      - name: $MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-sender-jdk/1/opentelemetry-exporter-sender-jdk-1.jar

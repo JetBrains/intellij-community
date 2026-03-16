@@ -18,7 +18,7 @@ import org.jetbrains.io.addKeepAliveIfNeeded
 import org.jetbrains.io.flushChunkedResponse
 import java.nio.file.Path
 
-private class StaticFileHandler : WebServerFileHandler() {
+internal class StaticFileHandler : WebServerFileHandler() {
   override val pageFileExtensions = listOf("html", "htm", "shtml", "stm", "shtm")
 
   private var ssiProcessor: SsiProcessor? = null

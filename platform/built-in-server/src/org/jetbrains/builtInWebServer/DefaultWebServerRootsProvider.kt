@@ -8,7 +8,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.JavadocOrderRootType
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -21,7 +26,7 @@ import com.intellij.util.PlatformUtils
 
 internal data class SuitableRoot(val file: VirtualFile, val moduleQualifier: String?)
 
-private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
+internal class DefaultWebServerRootsProvider : WebServerRootsProvider() {
   override fun resolve(path: String, project: Project, pathQuery: PathQuery): PathInfo? {
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)
 
@@ -246,7 +251,7 @@ private fun findInLibrariesAndSdk(project: Project, rootTypes: Array<OrderRootTy
 
     val projectSdk = ProjectRootManager.getInstance(project).projectSdk
     return projectSdk?.let(inSdkFinder)
-           ?: ProjectJdkTable.getInstance().allJdks.asSequence().filter { it === projectSdk }.map { inSdkFinder(it) }.firstOrNull { it != null }
+           ?: ProjectJdkTable.getInstance(project).allJdks.asSequence().filter { it === projectSdk }.map { inSdkFinder(it) }.firstOrNull { it != null }
   }
 
   return rootTypes.asSequence().map { rootType ->

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.utils.getExpressionShortText
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -94,7 +93,7 @@ internal object CastExpressionFixFactories {
     }
 
     val assignmentTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
-        createFixes(diagnostic.isMismatchDueToNullability, diagnostic.actualType, diagnostic.expectedType, diagnostic.psi)
+        createFixes(diagnostic.isMismatchDueToNullability, diagnostic.actualType, diagnostic.expectedType, diagnostic.expression)
     }
 
     val returnTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReturnTypeMismatch ->
@@ -102,8 +101,7 @@ internal object CastExpressionFixFactories {
     }
 
     val initializerTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
-        val initializer = (diagnostic.psi as? KtProperty)?.initializer
-            ?: return@ModCommandBased emptyList()
+        val initializer = diagnostic.initializer ?: return@ModCommandBased emptyList()
 
         createFixes(
             diagnostic.isMismatchDueToNullability,

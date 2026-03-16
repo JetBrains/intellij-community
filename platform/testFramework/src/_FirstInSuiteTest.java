@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.GlobalState;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.UITestUtil;
 import com.intellij.util.ExceptionUtil;
@@ -14,7 +15,7 @@ import com.intellij.util.SystemProperties;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.List;
@@ -75,6 +76,7 @@ public class _FirstInSuiteTest extends TestCase {
   }
 
   // performance tests
+  @PerformanceUnitTest
   public void testNothingPerformance() throws Exception {
     System.out.println(Timings.getStatistics());
     testNothing();

@@ -40,7 +40,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
     <orderEntry type="module" module-name="intellij.platform.icons" />
-    <orderEntry type="library" name="jgoodies-forms" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jgoodies.forms" />
     <orderEntry type="module" module-name="intellij.libraries.asm" />
     <orderEntry type="module" module-name="intellij.java.i18n" exported="" />
     <orderEntry type="module" module-name="intellij.java.ui" />
@@ -66,6 +66,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.build.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" />
   </component>
   <component name="copyright">
     <Base>

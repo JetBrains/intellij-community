@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared;
 
@@ -1390,6 +1390,11 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
         @TestMetadata("expectClass.kt")
         public void testExpectClass() throws Exception {
             runTest("../testData/intentions/introduceBackingProperty/expectClass.kt");
+        }
+
+        @TestMetadata("explicitBackingField.kt")
+        public void testExplicitBackingField() throws Exception {
+            runTest("../testData/intentions/introduceBackingProperty/explicitBackingField.kt");
         }
 
         @TestMetadata("inapplicableAbstractProperty.kt")

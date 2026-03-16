@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
-import com.intellij.application.options.*;
+import com.intellij.application.options.CodeStyleAbstractConfigurable;
+import com.intellij.application.options.CodeStyleAbstractPanel;
+import com.intellij.application.options.IndentOptionsEditor;
+import com.intellij.application.options.JavaCodeStyleMainPanel;
+import com.intellij.application.options.JavaDocFormattingPanel;
+import com.intellij.application.options.JavaIndentOptionsEditor;
 import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
@@ -14,7 +19,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleConfigurable;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.codeStyle.DocCommentSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaPackageEntryTableAccessor;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;

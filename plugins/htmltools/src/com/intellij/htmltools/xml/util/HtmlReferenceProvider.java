@@ -16,9 +16,19 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.AttributeValueSelfReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.BasicAttributeValueReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceUtil;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.IdRefReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.IdReferenceProvider;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
@@ -45,7 +55,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 import static com.intellij.util.ObjectUtils.doIfNotNull;
 

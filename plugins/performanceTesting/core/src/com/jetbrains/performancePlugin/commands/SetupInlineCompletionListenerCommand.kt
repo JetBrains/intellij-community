@@ -14,7 +14,6 @@ import com.jetbrains.performancePlugin.PerformanceTestSpan
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
 import org.jetbrains.annotations.NonNls
-import kotlin.collections.mutableMapOf
 
 /**
  * InlineCompletionCommand is responsible for setting up an inline completion listener for the editor

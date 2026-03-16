@@ -7,12 +7,17 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal class MavenDependencyCollector : DependencyCollector {
 
   override suspend fun collectDependencies(project: Project): Set<DependencyInformation> {
+    val projects = withContext(Dispatchers.IO) {
+      MavenProjectsManager.getInstance(project).projects
+    }
     return readAction {
-      MavenProjectsManager.getInstance(project).projects.asSequence()
+      projects.asSequence()
         .flatMap { p -> p.dependencies }
         .map { it.groupId to it.artifactId }
         .distinct()

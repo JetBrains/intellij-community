@@ -1,0 +1,4 @@
+- name: dist.all/lib/intellij.platform.analysis.jar
+  modules:
+  - name: intellij.platform.analysis
+  - name: intellij.platform.util.text.matching

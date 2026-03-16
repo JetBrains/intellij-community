@@ -8,9 +8,11 @@ import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JTree;
 import javax.swing.tree.TreeCellRenderer;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
 
 final class LoadingNodeRenderer extends LabelBasedRenderer.Tree {
   static final TreeCellRenderer SHARED = new LoadingNodeRenderer();

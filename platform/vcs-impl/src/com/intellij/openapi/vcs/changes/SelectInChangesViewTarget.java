@@ -13,7 +13,9 @@ import com.intellij.openapi.wm.ToolWindow;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.*;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.LOCAL_CHANGES;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowIdFor;
 
 @ApiStatus.Internal
 public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {

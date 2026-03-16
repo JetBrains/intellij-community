@@ -11,7 +11,7 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.util.containers.stopAfter
 import com.intellij.util.takeWhileInclusive
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Collections
 import kotlin.reflect.KClass
 
 val PsiElement.startOffset: Int
@@ -453,6 +453,9 @@ fun PsiElement.startOffsetInAncestor(ancestor: PsiElement): Int {
 }
 
 inline fun <reified T : PsiElement> PsiElement.childrenOfType(): List<T> = PsiTreeUtil.getChildrenOfTypeAsList(this, T::class.java)
+
+val PsiElement.childrenSequence: Sequence<PsiElement>
+  get() = generateSequence(this.firstChild) { it.nextSibling }
 
 //<editor-fold desc="Deprecated Stuff">
 @Suppress("unused")

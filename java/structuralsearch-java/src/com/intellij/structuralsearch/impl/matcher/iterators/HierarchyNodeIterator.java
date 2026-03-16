@@ -2,7 +2,12 @@
 package com.intellij.structuralsearch.impl.matcher.iterators;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 import com.intellij.util.SmartList;

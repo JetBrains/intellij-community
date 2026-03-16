@@ -128,7 +128,7 @@ v1: TA7[int]  # E: requires at least two type arguments
 
 
 def func7(a: TA7[*Ts, T1, T2]) -> tuple[tuple[*Ts], T1, T2]:
-    ...
+    raise NotImplementedError
 
 
 def func8(a: TA7[str, bool], b: TA7[str, bool, float], c: TA7[str, bool, float, int]):
@@ -141,7 +141,7 @@ TA8 = tuple[T1, *Ts, T2, T3]
 
 
 def func9(a: TA8[T1, *Ts, T2, T3]) -> tuple[tuple[*Ts], T1, T2, T3]:
-    ...
+    raise NotImplementedError
 
 
 def func10(a: TA8[str, bool, float], b: TA8[str, bool, float, int]):

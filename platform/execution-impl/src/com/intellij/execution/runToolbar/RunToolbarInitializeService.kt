@@ -11,7 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.seconds
 
-private class RunToolbarInitializeService : ProjectActivity {
+internal class RunToolbarInitializeService : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()

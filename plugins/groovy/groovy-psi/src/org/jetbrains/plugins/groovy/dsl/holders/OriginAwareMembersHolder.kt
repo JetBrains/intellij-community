@@ -9,7 +9,11 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.search.ProjectScope
-import org.jetbrains.plugins.groovy.dsl.*
+import org.jetbrains.plugins.groovy.dsl.ClosureDescriptor
+import org.jetbrains.plugins.groovy.dsl.DslActivationStatus
+import org.jetbrains.plugins.groovy.dsl.DslErrorReporter
+import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor
+import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex
 import java.util.function.Consumer
 
 class OriginAwareMembersHolder(private val GDSLOrigin: VirtualFile,

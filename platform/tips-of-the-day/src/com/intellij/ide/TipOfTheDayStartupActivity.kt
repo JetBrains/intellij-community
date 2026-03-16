@@ -19,7 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 
-private class TipOfTheDayStartupActivity : ProjectActivity {
+internal class TipOfTheDayStartupActivity : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment ||
         ApplicationManager.getApplication().isUnitTestMode ||

@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.test.java
 
-import org.jetbrains.uast.UFile
 import com.intellij.platform.uast.testFramework.common.asIdentifiers
 import com.intellij.platform.uast.testFramework.common.asRefNames
 import com.intellij.testFramework.assertEqualsToFile
+import org.jetbrains.uast.UFile
 import java.io.File
 
 abstract class AbstractJavaIdentifiersTest : AbstractJavaUastTest() {

@@ -21,7 +21,6 @@ import org.jetbrains.plugins.gradle.service.execution.createMainInitScript
 import org.jetbrains.plugins.gradle.service.execution.createTargetPathMapperInitScript
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
-import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.io.File
@@ -92,7 +91,6 @@ fun <T : Any> buildGradleModel(
         val executionSettings = GradleExecutionSettings()
         val targetPathMapperInitScript = createTargetPathMapperInitScript()
         executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, targetPathMapperInitScript.toString())
-        val toolingExtensionClasses = AbstractModelBuilderTest.getToolingExtensionClasses()
         val kotlinToolingExtensionClasses = setOf(
             /* Representative of the `gradle-tooling` module */
             KotlinMPPGradleModelBuilder::class.java,
@@ -105,11 +103,8 @@ fun <T : Any> buildGradleModel(
 
             /* Representative of the `kotlin-gradle-plugin-idea` library */
             IdeaKotlinDependency::class.java,
-
-            /* Representative of the kotlin stdlib */
-            Unit::class.java
         )
-        val initScript = createMainInitScript(false, toolingExtensionClasses + kotlinToolingExtensionClasses)
+        val initScript = createMainInitScript(false, kotlinToolingExtensionClasses)
         executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.toString())
 
         val buildActionExecutor = gradleConnection.action(buildAction)

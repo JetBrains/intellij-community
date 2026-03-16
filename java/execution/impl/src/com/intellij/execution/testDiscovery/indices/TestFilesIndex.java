@@ -10,7 +10,11 @@ import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
+import com.intellij.util.io.IntCollectionDataExternalizer;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.VoidDataExternalizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -14,8 +14,14 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.DumbModeTask
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl.Companion.isSynchronousTaskExecution
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCoreUtil
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.RootsChangeRescanningInfo
+import com.intellij.openapi.project.isProjectOrWorkspaceFile
 import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
@@ -39,10 +45,16 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexImpl
+import com.intellij.util.indexing.FileBasedIndexProjectHandler
+import com.intellij.util.indexing.FilePropertyPusherEx
+import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushedDiagnostic.addEvent
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushingStatistics
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.Companion.shouldDumpInUnitTestMode
+import com.intellij.util.indexing.isFirstProjectScanningRequested
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createIterators
 import com.intellij.util.indexing.roots.IndexableFileScanner
 import com.intellij.util.indexing.roots.IndexableFileScanner.IndexableFileVisitor
@@ -58,7 +70,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
-import java.util.*
+import java.util.Queue
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Function
 import kotlin.coroutines.coroutineContext
@@ -100,11 +112,11 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
 
     // this is useful for debugging. Especially in integration tests: it is often clear why large file sets have changed
     // (e.g. imported modules or jdk), but it is often unclear why small file sets change and what these files are.
-    if (LOG.isDebugEnabled && events.size < 20) {
-      for (event in events) LOG.debug("""
-  File changed: ${event.path}.
-  event:$event
-  """.trimIndent())
+    if (LOG.isDebugEnabled) {
+      LOG.debug("${events.size} file(s) changed")
+      if (events.size < 20) {
+        for (event in events) LOG.debug("File changed: ${event.path}.\nrequestor:${event.requestor}\nevent:$event")
+      }
     }
 
     for (event in events) {

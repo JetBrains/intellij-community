@@ -15,6 +15,7 @@ import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.util.LineRange
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
@@ -26,7 +27,14 @@ import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
@@ -40,7 +48,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadComme
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.UpdateableGHPRReviewThreadCommentViewModel
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
-import java.util.*
+import java.util.Date
 
 interface GHPRTimelineThreadViewModel
   : GHPRReviewThreadViewModel,
@@ -57,7 +65,7 @@ interface GHPRTimelineThreadViewModel
   val isPending: StateFlow<Boolean>
 
   val filePath: String
-  val patchHunkWithAnchor: StateFlow<Pair<PatchHunk, LineRange?>>
+  val patchHunkWithAnchor: StateFlow<Pair<PatchHunk, LineRange?>?>
 
   val mainCommentVm: StateFlow<GHPRReviewThreadCommentViewModel?>
   val replies: StateFlow<List<GHPRReviewThreadCommentViewModel>>
@@ -75,7 +83,7 @@ internal class UpdateableGHPRTimelineThreadViewModel internal constructor(
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
-  initialData: GHPullRequestReviewThread
+  initialData: GHPullRequestReviewThread,
 ) : GHPRTimelineThreadViewModel {
   private val cs = parentCs.childScope("GitHub Pull Request Timeline Thread View Model")
   private val reviewData: GHPRReviewDataProvider = dataProvider.reviewData
@@ -98,7 +106,7 @@ internal class UpdateableGHPRTimelineThreadViewModel internal constructor(
     it.comments.firstOrNull()?.state == GHPullRequestReviewCommentState.PENDING
   }
 
-  override val patchHunkWithAnchor: StateFlow<Pair<PatchHunk, LineRange?>> = dataState.mapState {
+  override val patchHunkWithAnchor: StateFlow<Pair<PatchHunk, LineRange?>?> = dataState.mapState {
     calcDiffWithAnchor(it)
   }
 
@@ -193,9 +201,14 @@ internal class UpdateableGHPRTimelineThreadViewModel internal constructor(
     dataState.value = data
   }
 
-  private fun calcDiffWithAnchor(thread: GHPullRequestReviewThread): Pair<PatchHunk, LineRange?> {
+  private fun calcDiffWithAnchor(thread: GHPullRequestReviewThread): Pair<PatchHunk, LineRange?>? {
     val patchReader = PatchReader(PatchHunkUtil.createPatchFromHunk("_", thread.diffHunk))
-    val hunk = patchReader.readTextPatches().firstOrNull()?.hunks?.firstOrNull() ?: TODO("Handle")
+    val hunk = patchReader.readTextPatches().firstOrNull()?.hunks?.firstOrNull() ?: run {
+      LOG.error("Failed to parse diff hunk for thread ${thread.id}",
+                Attachment("threadData.txt", thread.toString()),
+                Attachment("threadDiffHunk.txt", thread.diffHunk))
+      return null
+    }
 
     val anchorLocation = thread.originalLine?.let { thread.side to it - 1 }
     val startAnchorLocation = if (thread.startSide != null && thread.originalStartLine != null) {

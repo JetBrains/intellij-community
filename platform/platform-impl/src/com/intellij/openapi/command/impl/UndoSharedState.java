@@ -17,10 +17,10 @@ final class UndoSharedState {
   private final @NotNull SharedUndoRedoStacksHolder undoStacks;
   private final @NotNull SharedUndoRedoStacksHolder redoStacks;
 
-  UndoSharedState(boolean isPerClientSupported) {
+  UndoSharedState(@NotNull UndoCapabilities undoCapabilities) {
     adjustableActions = new SharedAdjustableUndoableActionsHolder();
-    undoStacks = new SharedUndoRedoStacksHolder(adjustableActions, isPerClientSupported, true);
-    redoStacks = new SharedUndoRedoStacksHolder(adjustableActions, isPerClientSupported, false);
+    undoStacks = new SharedUndoRedoStacksHolder(adjustableActions, undoCapabilities, true);
+    redoStacks = new SharedUndoRedoStacksHolder(adjustableActions, undoCapabilities, false);
   }
 
   @NotNull SharedUndoRedoSnapshot getSharedUndoRedoSnapshot(@NotNull DocumentReference reference) {

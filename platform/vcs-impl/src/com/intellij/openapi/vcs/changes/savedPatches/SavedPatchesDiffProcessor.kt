@@ -6,7 +6,14 @@ import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi.Companion.SAVED_PATCHES_UI_PLACE
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
+import com.intellij.openapi.vcs.changes.ui.PresentableChange
+import com.intellij.openapi.vcs.changes.ui.TreeHandlerChangesTreeTracker
+import com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.util.containers.JBIterable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls

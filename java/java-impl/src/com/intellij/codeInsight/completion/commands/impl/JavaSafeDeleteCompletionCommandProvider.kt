@@ -5,13 +5,19 @@ import com.intellij.codeInsight.completion.command.CompletionCommand
 import com.intellij.codeInsight.completion.command.commands.AbstractSafeDeleteCompletionCommandProvider
 import com.intellij.codeInsight.completion.command.commands.DirectInspectionFixCompletionCommand
 import com.intellij.codeInsight.completion.command.getCommandContext
-import com.intellij.codeInsight.completion.command.getTargetContext
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.*
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 
-private class JavaSafeDeleteCompletionCommandProvider : AbstractSafeDeleteCompletionCommandProvider() {
+internal class JavaSafeDeleteCompletionCommandProvider : AbstractSafeDeleteCompletionCommandProvider() {
   override fun findElement(offset: Int, psiFile: PsiFile, editor: Editor?): PsiElement? {
     if (editor == null) return null
     var element = getCommandContext(offset, psiFile) ?: return null
@@ -33,8 +39,6 @@ private class JavaSafeDeleteCompletionCommandProvider : AbstractSafeDeleteComple
         return targetElement
       }
     }
-    val targetContext = getTargetContext(offset, editor)
-    if (targetContext?.isWritable != true) return null
     return element
   }
 

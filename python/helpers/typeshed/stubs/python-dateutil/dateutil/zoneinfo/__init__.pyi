@@ -16,7 +16,8 @@ ZONEFILENAME: Final[str]
 METADATA_FN: Final[str]
 
 class tzfile(_tzfile):
-    def __reduce__(self) -> tuple[Callable[[str], Self], tuple[str, ...]]: ...
+    # source code does this override, changing the type
+    def __reduce__(self) -> tuple[Callable[[str], Self], tuple[str]]: ...  # type: ignore[override]
 
 def getzoneinfofile_stream() -> BytesIO | None: ...
 

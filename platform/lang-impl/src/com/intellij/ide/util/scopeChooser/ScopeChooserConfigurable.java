@@ -8,7 +8,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -16,7 +22,12 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.MasterDetailsComponent;
+import com.intellij.openapi.ui.MasterDetailsState;
+import com.intellij.openapi.ui.MasterDetailsStateService;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
@@ -30,6 +41,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -37,13 +49,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class ScopeChooserConfigurable extends MasterDetailsComponent implements SearchableConfigurable {
   public static final @NonNls String SCOPE_CHOOSER_CONFIGURABLE_UI_KEY = "ScopeChooserConfigurable.UI";
@@ -134,7 +150,7 @@ public final class ScopeChooserConfigurable extends MasterDetailsComponent imple
       fileEditorManager.updateFilePresentation(openVirtualFile);
     }
 
-    ProjectView.getInstance(myProject).refresh();
+    ProjectView.getInstance(myProject).refresh(ProjectViewUpdateCause.SCOPE_CHOOSER);
   }
 
   private void checkForPredefinedNames() throws ConfigurationException {

@@ -19,12 +19,17 @@ jvm_library(
     "//platform/buildView",
     "//platform/core-api:core",
     "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/util/coroutines",
     "//platform/platform-impl/rpc",
     "//platform/ide-core-impl",
+    "//platform/project/shared:project",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/execution",
+    "//platform/execution-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.buildView.frontend` end

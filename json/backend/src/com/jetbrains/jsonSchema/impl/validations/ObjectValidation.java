@@ -6,7 +6,6 @@ import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,13 +18,25 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature;
 import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
-import com.jetbrains.jsonSchema.impl.*;
+import com.jetbrains.jsonSchema.impl.JsonComplianceCheckerOptions;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
+import com.jetbrains.jsonSchema.impl.JsonSchemaType;
+import com.jetbrains.jsonSchema.impl.JsonValidationError;
+import com.jetbrains.jsonSchema.impl.MatchResult;
 import kotlin.collections.CollectionsKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -229,13 +240,7 @@ public final class ObjectValidation implements JsonSchemaValidation {
       JsonSchemaObject propertySchema = resolvePropertySchema(schema, req);
       Object defaultValue = propertySchema == null ? null : propertySchema.getDefault();
       if (defaultValue == null) {
-        if (Registry.is("json.schema.object.v2")) {
-          defaultValue = schema.getExampleByName(req);
-        }
-        else {
-          var example = schema.getExample();
-          defaultValue = example == null ? null : example.get(req);
-        }
+        defaultValue = schema.getExampleByName(req);
       }
       Ref<Integer> enumCount = Ref.create(0);
 

@@ -3,7 +3,8 @@ package com.intellij.ui.jcef;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
 
 @ApiStatus.Internal
 public final class TestUtils {

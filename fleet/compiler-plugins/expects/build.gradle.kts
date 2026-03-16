@@ -18,17 +18,18 @@ val pluginVersion = run {
 }
 
 // the compiler plugin will be used together with this Kotlin compiler
-val KOTLIN_VERSION = "2.2.20"
+val KOTLIN_VERSION = "2.3.20-RC2"
 
 // the compiler plugin will be built with these Kotlin LV/APIV
-val KOTLIN_LANGUAGE_VERSION = "2.2"
-val KOTLIN_API_VERSION = "2.2"
+val KOTLIN_LANGUAGE_VERSION = "2.3"
+val KOTLIN_API_VERSION = "2.3"
 
 group = "jetbrains.fleet"
 version = pluginVersion
 
 repositories {
   mavenCentral()
+  maven("https://packages.jetbrains.team/maven/p/kt/dev/")
   if ("SNAPSHOT" in KOTLIN_VERSION || "dev" in KOTLIN_VERSION) {
     maven("https://packages.jetbrains.team/maven/p/kt/bootstrap")
     mavenLocal()

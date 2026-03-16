@@ -2,7 +2,6 @@
 package com.intellij.completion.ml.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.completion.ml.personalization.UserFactorDescriptions
 import com.intellij.completion.ml.personalization.UserFactorStorage
 import com.intellij.completion.ml.personalization.session.SessionFactorsUtils
@@ -12,6 +11,7 @@ import com.intellij.completion.ml.util.language
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginId
 
 class CompletionFactorsInitializer : LookupTracker() {

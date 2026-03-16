@@ -4,10 +4,17 @@ package com.intellij.vcs.log.visible;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsLogAggregatedStoredRefs;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsLogRootStoredRefs;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.data.EmptyPermanentGraph;
+import com.intellij.vcs.log.data.RefsModel;
+import com.intellij.vcs.log.data.RootRefsModel;
+import com.intellij.vcs.log.data.VcsLogGraphData;
+import com.intellij.vcs.log.data.VcsLogGraphDataFactory;
+import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.graph.GraphColorManagerImpl;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
@@ -33,14 +40,16 @@ final class SnapshotVisiblePackBuilder {
   }
 
   public @NotNull VisiblePack build(@NotNull VisiblePack visiblePack) {
-    DataPackBase dataPack = visiblePack.getDataPack();
-    if (dataPack instanceof DataPack.ErrorDataPack) {
+    VcsLogGraphData dataPack = visiblePack.getDataPack();
+    if (dataPack instanceof VcsLogGraphData.Error) {
       return visiblePack;
     }
 
     if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0 || !(visiblePack.getVisibleGraph() instanceof VisibleGraphImpl)) {
-      DataPackBase newDataPack = new DataPackBase(dataPack.getLogProviders(),
-                                                  RefsModel.createEmptyInstance(myStorage), false);
+      VcsLogGraphData newDataPack = VcsLogGraphDataFactory.buildData(RefsModel.createEmptyInstance(myStorage),
+                                                                     EmptyPermanentGraph.getInstance(),
+                                                                     dataPack.getLogProviders(),
+                                                                     false);
       if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
         return new VisiblePack.ErrorVisiblePack(newDataPack, visiblePack.getFilters(),
                                                 ((VisiblePack.ErrorVisiblePack)visiblePack).getError());
@@ -52,7 +61,7 @@ final class SnapshotVisiblePackBuilder {
                  visiblePack.getAdditionalData());
   }
 
-  private @NotNull VisiblePack build(@NotNull DataPackBase oldPack,
+  private @NotNull VisiblePack build(@NotNull VcsLogGraphData oldPack,
                                      @NotNull VisibleGraphImpl<Integer> oldGraph,
                                      @NotNull VcsLogFilterCollection filters,
                                      @NotNull Map<Key<?>, Object> data) {
@@ -62,8 +71,10 @@ final class SnapshotVisiblePackBuilder {
     Set<Integer> heads = ContainerUtil.map2Set(info.getPermanentGraphLayout().getHeadNodeIndex(),
                                                integer -> info.getPermanentCommitsInfo().getCommitId(integer));
 
-    RefsModel newRefsModel = createRefsModel(oldPack.getRefsModel(), heads, oldGraph, oldPack.getLogProviders(), visibleRow, visibleRange);
-    DataPackBase newPack = new DataPackBase(oldPack.getLogProviders(), newRefsModel, false);
+    VcsLogAggregatedStoredRefs
+      newRefsModel = createRefsModel(oldPack.getRefsModel(), heads, oldGraph, oldPack.getLogProviders(), visibleRow, visibleRange);
+    VcsLogGraphData newPack =
+      VcsLogGraphDataFactory.buildData(newRefsModel, EmptyPermanentGraph.getInstance(), oldPack.getLogProviders(), false);
     GraphColorGetter colorGetter = new GraphColorGetterByHeadFactory<>(new GraphColorManagerImpl(newRefsModel)).createColorGetter(info);
 
     VisibleGraph<Integer> newGraph = new VisibleGraphImpl<>(new CollapsedController(new BaseController(info), info, null),
@@ -72,10 +83,12 @@ final class SnapshotVisiblePackBuilder {
     return new VisiblePack(newPack, newGraph, true, filters, data);
   }
 
-  private RefsModel createRefsModel(@NotNull RefsModel refsModel,
-                                    @NotNull Set<Integer> heads,
-                                    @NotNull VisibleGraphImpl<Integer> visibleGraph,
-                                    @NotNull Map<VirtualFile, VcsLogProvider> providers, int visibleRow, int visibleRange) {
+  private VcsLogAggregatedStoredRefs createRefsModel(@NotNull VcsLogAggregatedStoredRefs refsModel,
+                                                     @NotNull Set<Integer> heads,
+                                                     @NotNull VisibleGraphImpl<Integer> visibleGraph,
+                                                     @NotNull Map<VirtualFile, VcsLogProvider> providers,
+                                                     int visibleRow,
+                                                     int visibleRange) {
     Set<VcsRef> branchesAndHeads = new HashSet<>();
 
     for (int row = Math.max(0, visibleRow - visibleRange);
@@ -90,11 +103,11 @@ final class SnapshotVisiblePackBuilder {
     }
 
     Map<VirtualFile, Set<VcsRef>> map = VcsLogUtil.groupRefsByRoot(branchesAndHeads);
-    Map<VirtualFile, CompressedRefs> refs = new HashMap<>();
+    Map<VirtualFile, VcsLogRootStoredRefs> refs = new HashMap<>();
     for (VirtualFile root : providers.keySet()) {
       Set<VcsRef> refsForRoot = map.get(root);
-      refs.put(root, new CompressedRefs(refsForRoot == null ? new HashSet<>() : refsForRoot, myStorage));
+      refs.put(root, RootRefsModel.create(refsForRoot == null ? new HashSet<>() : refsForRoot, myStorage));
     }
-    return RefsModel.create(refs, heads, myStorage, providers);
+    return RefsModel.create(refs, myStorage, providers);
   }
 }

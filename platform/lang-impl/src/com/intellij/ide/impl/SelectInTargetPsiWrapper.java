@@ -9,7 +9,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -21,7 +27,7 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
   @ApiStatus.Internal
   protected static final Logger LOG = Logger.getInstance(SelectInTargetPsiWrapper.class);
   
-  protected final Project myProject;
+  protected final @NotNull Project myProject;
 
   protected SelectInTargetPsiWrapper(final @NotNull Project project) {
     myProject = project;
@@ -114,6 +120,7 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
           return new ComputedContext(file, selector, null);
         }
       })
+      .withDocumentsCommitted(myProject)
       .expireWith(myProject)
       .finishOnUiThread(ModalityState.current(), computed -> {
         var file = computed.file;

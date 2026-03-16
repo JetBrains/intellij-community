@@ -491,6 +491,11 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
         public void testOverride6() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/changeSignature/override6/");
         }
+
+        @TestMetadata("override7")
+        public void testOverride7() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/changeSignature/override7/");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

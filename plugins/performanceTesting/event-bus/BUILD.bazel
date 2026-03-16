@@ -15,11 +15,15 @@ jvm_library(
   resources = [":tools-ide-starter-bus_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/jackson/jackson",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//libraries/jackson/databind",
     "//libraries/kotlin/reflect",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
+    "//libraries/netty/buffer",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//libraries/netty/codec-compression:libraries-netty-codec-compression",
   ]
 )
 
@@ -30,12 +34,16 @@ jvm_library(
   associates = [":tools-ide-starter-bus"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:junit5",
     "//libraries/jackson/jackson",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//libraries/jackson/databind",
     "//libraries/kotlin/reflect",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
+    "//libraries/netty/buffer",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//libraries/netty/codec-compression:libraries-netty-codec-compression",
   ]
 )
 ### auto-generated section `build intellij.tools.ide.starter.bus` end

@@ -9,7 +9,11 @@ import com.intellij.l10n.LocalizationListener
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.ReportValue
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -22,7 +26,7 @@ private const val DEFAULT_LOCALE = "en"
   category = SettingsCategory.SYSTEM,
   storages = [Storage(value = GeneralSettings.IDE_GENERAL_XML, usePathMacroManager = false)]
 )
-private class LocalizationStateServiceImpl : LocalizationStateService, PersistentStateComponent<LocalizationState> {
+internal class LocalizationStateServiceImpl : LocalizationStateService, PersistentStateComponent<LocalizationState> {
   private var localizationState = LocalizationState()
   private var restartRequired: Boolean = false
 
@@ -73,7 +77,7 @@ private class LocalizationStateServiceImpl : LocalizationStateService, Persisten
   }
 }
 
-private data class LocalizationState(
+internal data class LocalizationState(
   @get:ReportValue(possibleValues = ["am", "ar", "as", "az", "bn", "cs", "da", "de", "el", "en", "es", "fa", "fr", "gu",
     "ha", "hi", "hu", "ig", "in", "it", "ja", "kk", "kn", "ko", "ml", "mr", "my", "nb",
     "ne", "nl", "nn", "no", "or", "pa", "pl", "pt", "ro", "ru", "rw", "sd", "si", "so",

@@ -3,12 +3,12 @@ package com.intellij.xdebugger.impl.rpc.models
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.platform.debugger.impl.rpc.XStackFrameId
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 

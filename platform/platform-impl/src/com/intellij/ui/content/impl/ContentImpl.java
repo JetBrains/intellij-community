@@ -3,14 +3,25 @@ package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.BusyObject;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.content.AlertIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 

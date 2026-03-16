@@ -13,9 +13,11 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.text.UniqueNameGenerator
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtFile
 
+@K1Deprecation
 class MoveToKotlinFileProcessor @JvmOverloads constructor(
     project: Project,
     private val sourceFile: KtFile,

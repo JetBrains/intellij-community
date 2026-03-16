@@ -12,7 +12,12 @@ import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.gradle.GradleJpsBundle;
 import org.jetbrains.jps.gradle.model.JpsGradleExtensionService;
-import org.jetbrains.jps.gradle.model.impl.*;
+import org.jetbrains.jps.gradle.model.impl.GradleModuleResourceConfiguration;
+import org.jetbrains.jps.gradle.model.impl.GradleProjectConfiguration;
+import org.jetbrains.jps.gradle.model.impl.GradleResourceRootDescriptor;
+import org.jetbrains.jps.gradle.model.impl.GradleResourcesTarget;
+import org.jetbrains.jps.gradle.model.impl.GradleResourcesTargetType;
+import org.jetbrains.jps.gradle.model.impl.ResourceRootConfiguration;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.incremental.ProjectBuildException;
@@ -22,7 +27,12 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Vladislav.Soroka

@@ -6,7 +6,7 @@ import io.ktor.client.engine.cio.CIO
 import java.security.cert.X509Certificate
 import javax.net.ssl.X509TrustManager
 
-@Actual("defaultHttpClientEngine")
+@Actual
 internal fun defaultHttpClientEngineJvm(trustManager: TrustManager, proxyConfiguration: HttpProxyConfiguration?): HttpClientEngine {
   FleetHttp.logger.debug { "creating default HttpClientEngine" }
   return ProxyDelegatingEngineFactory(CIO, proxyConfiguration).create {

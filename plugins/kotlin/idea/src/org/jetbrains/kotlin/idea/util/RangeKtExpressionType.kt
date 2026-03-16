@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.util
 
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
-import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
+import org.jetbrains.kotlin.idea.codeinsight.utils.RangeKtExpressionType
+import org.jetbrains.kotlin.idea.codeinsight.utils.getRangeBinaryExpressionType
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -20,7 +21,7 @@ internal fun KtExpression.isComparable(context: BindingContext): Boolean {
 }
 
 internal fun KtExpression.getRangeBinaryExpressionType(context: Lazy<BindingContext>? = null): RangeKtExpressionType? {
-    return org.jetbrains.kotlin.idea.codeInsight.hints.getRangeBinaryExpressionType(this).takeIf {
+    return getRangeBinaryExpressionType(this).takeIf {
         val notNullContext = context?.value ?: safeAnalyze(BodyResolveMode.PARTIAL)
         getResolvedCall(notNullContext)?.resultingDescriptor?.fqNameOrNull()?.asString()?.startsWith("kotlin.") == true
     }

@@ -3,9 +3,9 @@ from logging import Logger
 from typing import Any, Final, overload
 
 log: Logger
-SERVICE_NAME: Final[str]
-ORIGIN: Final[str]
-IMDS_URL: Final[str]
+SERVICE_NAME: Final = "ec2"
+ORIGIN: Final = "AWS::EC2::Instance"
+IMDS_URL: Final = "http://169.254.169.254/latest/"
 
 def initialize() -> None: ...
 def get_token() -> str | None: ...

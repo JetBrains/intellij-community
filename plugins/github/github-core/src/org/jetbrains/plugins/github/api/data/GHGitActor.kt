@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.api.data
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import java.util.*
+import java.util.Date
 
 class GHGitActor(val name: String?,
                  val email: String?,

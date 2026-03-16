@@ -18,6 +18,7 @@ import com.intellij.execution.filters.LineNumbersMapping
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.UnknownFileType
@@ -29,10 +30,11 @@ import com.sun.jdi.Location
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.request.ClassPrepareRequest
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.WeakHashMap
 import java.util.concurrent.CompletableFuture
 
-class CompoundPositionManager() : PositionManagerWithConditionEvaluation, MultiRequestPositionManager, PositionManagerAsync {
+@ApiStatus.NonExtendable
+open class CompoundPositionManager() : PositionManagerWithConditionEvaluation, MultiRequestPositionManager, PositionManagerAsync {
   private val myPositionManagers = mutableListOf<PositionManager>()
   private val mySourcePositionCache: MutableMap<Location?, SourcePosition?> = WeakHashMap<Location?, SourcePosition?>()
 
@@ -216,15 +218,69 @@ class CompoundPositionManager() : PositionManagerWithConditionEvaluation, MultiR
   }
 
   companion object {
+    /** Disabled position manager, used when there is no active debug session. */
     @JvmField
-    val EMPTY: CompoundPositionManager = CompoundPositionManager()
+    internal val DISABLED = object : CompoundPositionManager() {
+      private fun prohibitUsage() {
+        logger<CompoundPositionManager>()
+          .error("CompoundPositionManager should be used only during debug session")
+      }
+
+      override suspend fun getSourcePositionAsync(location: Location?): SourcePosition? {
+        prohibitUsage()
+        return super.getSourcePositionAsync(location)
+      }
+
+      override fun getSourcePosition(location: Location?): SourcePosition? {
+        prohibitUsage()
+        return super.getSourcePosition(location)
+      }
+
+      override fun getAllClasses(classPosition: SourcePosition): MutableList<ReferenceType?> {
+        prohibitUsage()
+        return super.getAllClasses(classPosition)
+      }
+
+      override fun locationsOfLine(
+        type: ReferenceType,
+        position: SourcePosition,
+      ): MutableList<Location> {
+        prohibitUsage()
+        return super.locationsOfLine(type, position)
+      }
+
+      override fun createPrepareRequest(
+        requestor: ClassPrepareRequestor,
+        position: SourcePosition,
+      ): ClassPrepareRequest? {
+        prohibitUsage()
+        return super.createPrepareRequest(requestor, position)
+      }
+
+      override fun createPrepareRequests(
+        requestor: ClassPrepareRequestor,
+        position: SourcePosition,
+      ): MutableList<ClassPrepareRequest?> {
+        prohibitUsage()
+        return super.createPrepareRequests(requestor, position)
+      }
+
+      override fun evaluateCondition(
+        context: EvaluationContext,
+        frame: StackFrameProxyImpl,
+        location: Location,
+        expression: String,
+      ): ThreeState? {
+        prohibitUsage()
+        return super.evaluateCondition(context, frame, location, expression)
+      }
+    }
   }
 }
 
 private fun acceptsFileType(positionManager: PositionManager, fileType: FileType?): Boolean {
   if (fileType == null || fileType === UnknownFileType.INSTANCE) return true
-  val types = positionManager.acceptedFileTypes ?: return true
-  return types.contains(fileType)
+  return positionManager.isAcceptedFileType(fileType)
 }
 
 private suspend fun getSourcePositionAsync(positionManager: PositionManager, location: Location?): SourcePosition? {

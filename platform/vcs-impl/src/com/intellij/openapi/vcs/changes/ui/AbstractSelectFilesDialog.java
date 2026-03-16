@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
@@ -18,8 +17,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 
 @ApiStatus.Internal

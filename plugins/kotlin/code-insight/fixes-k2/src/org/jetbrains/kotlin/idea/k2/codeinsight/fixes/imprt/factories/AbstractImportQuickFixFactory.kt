@@ -1,13 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories
 
+import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.*
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportCandidate
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportContext
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportPositionTypeAndReceiver
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFixProvider
 import org.jetbrains.kotlin.name.Name
 
+/**
+ * Note: Do not confuse with [org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.KotlinAddImportActionFactory].
+ */
 internal abstract class AbstractImportQuickFixFactory : KotlinQuickFixFactory.IntentionBased<KaDiagnosticWithPsi<*>> {
 
     /**
@@ -23,10 +30,10 @@ internal abstract class AbstractImportQuickFixFactory : KotlinQuickFixFactory.In
         indexProvider: KtSymbolFromIndexProvider,
     ): List<ImportCandidate>
 
-    override fun KaSession.createQuickFixes(diagnostic: KaDiagnosticWithPsi<*>): List<ImportQuickFix> =
+    override fun KaSession.createQuickFixes(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> =
         createQuickFixes(setOf(diagnostic))
 
-    fun KaSession.createQuickFixes(diagnostics: Set<KaDiagnosticWithPsi<*>>): List<ImportQuickFix> {
+    fun KaSession.createQuickFixes(diagnostics: Set<KaDiagnosticWithPsi<*>>): List<IntentionAction> {
         return diagnostics
             .mapNotNull { diagnostic ->
                 val positionContext = detectPositionContext(diagnostic) ?: return@mapNotNull null

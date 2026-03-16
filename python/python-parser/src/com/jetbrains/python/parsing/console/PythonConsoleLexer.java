@@ -11,7 +11,11 @@ import com.jetbrains.python.psi.PyElementType;
 
 import java.util.Map;
 
-import static com.jetbrains.python.PyTokenTypes.*;
+import static com.jetbrains.python.PyTokenTypes.BAD_CHARACTER;
+import static com.jetbrains.python.PyTokenTypes.END_OF_LINE_COMMENT;
+import static com.jetbrains.python.PyTokenTypes.LINE_BREAK;
+import static com.jetbrains.python.PyTokenTypes.PERC;
+import static com.jetbrains.python.PyTokenTypes.STATEMENT_BREAK;
 import static com.jetbrains.python.parsing.console.PyConsoleTokenTypes.MAGIC_COMMAND_LINE;
 import static com.jetbrains.python.parsing.console.PyConsoleTokenTypes.SHELL_COMMAND;
 

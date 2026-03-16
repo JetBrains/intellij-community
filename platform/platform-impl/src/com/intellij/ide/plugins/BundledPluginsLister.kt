@@ -25,7 +25,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeTo
 import kotlin.io.path.relativeToOrSelf
 
-private class BundledPluginsLister : ModernApplicationStarter() {
+internal class BundledPluginsLister : ModernApplicationStarter() {
   // not premain because FileTypeManager is used to report extensions
   override suspend fun start(args: List<String>) {
     try {

@@ -4,7 +4,6 @@ package com.intellij.ide.environment.impl
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
-import com.intellij.ide.environment.EnvironmentKey
 import com.intellij.ide.environment.EnvironmentKeyProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -19,7 +18,6 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
-import java.util.function.Supplier
 import kotlin.io.path.Path
 import kotlin.io.path.absolute
 import kotlin.io.path.createFile

@@ -1,7 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.childScope
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.mapStatefulToStateful
+import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.timeline.CollapsibleTimelineItemViewModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewFoldableThreadViewModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
@@ -11,11 +16,23 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
+import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModelImpl
@@ -48,7 +65,8 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   projectData: GitLabProject,
   currentUser: GitLabUserDTO,
   private val mr: GitLabMergeRequest,
-  private val discussion: GitLabMergeRequestDiscussion
+  private val discussion: GitLabMergeRequestDiscussion,
+  htmlConverter: GitLabMarkdownToHtmlConverter
 ) : GitLabMergeRequestTimelineDiscussionViewModel {
 
   private val cs = parentCs.childScope(this::class)
@@ -57,11 +75,13 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val mainNote: Flow<GitLabNoteViewModel> = discussion.notes
     .map { it.first() }
     .distinctUntilChangedBy { it.id }
-    .mapScoped { GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(true), currentUser) }
+    .mapScoped {
+      GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(true), currentUser, htmlConverter)
+    }
     .modelFlow(cs, LOG)
 
   override val id: String = discussion.id.toString()
-  override val serverUrl: URL = mr.glProject.serverPath.toURL()
+  override val serverUrl: URL = mr.serverPath.toURL()
   override val author: Flow<GitLabUserDTO> = mainNote.map { it.author }
 
   private val _repliesFolded = MutableStateFlow(true)
@@ -78,7 +98,9 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
 
   override val replies: StateFlow<List<GitLabNoteViewModel>> = discussion.notes
     .map { it.drop(1) }
-    .mapStatefulToStateful { GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(false), currentUser) }
+    .mapStatefulToStateful {
+      GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(false), currentUser, htmlConverter)
+    }
     .stateIn(cs, SharingStarted.Lazily, listOf())
 
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy
@@ -94,7 +116,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val canCreateReplies: StateFlow<Boolean> = discussion.canAddNotes.stateIn(cs, SharingStarted.Eagerly, false)
   override val replyVm: StateFlow<NewGitLabNoteViewModel?> =
     discussion.canAddNotes.mapScoped { canAddNotes ->
-      if (canAddNotes) GitLabNoteEditingViewModel.forReplyNote(this, project, discussion, currentUser) else null
+      if (canAddNotes) GitLabNoteEditingViewModel.forReplyNote(this, project, projectData, discussion, currentUser) else null
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
   override val diffVm: Flow<GitLabDiscussionDiffViewModel?> =

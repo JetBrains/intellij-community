@@ -1,8 +1,8 @@
-from _typeshed import Incomplete
+import logging
 from abc import ABCMeta
 
 from hvac.api.vault_api_base import VaultApiBase
 
-logger: Incomplete
+logger: logging.Logger
 
 class SystemBackendMixin(VaultApiBase, metaclass=ABCMeta): ...

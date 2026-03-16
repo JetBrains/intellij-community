@@ -24,14 +24,24 @@ import org.jetbrains.annotations.Nullable;
 import org.kohsuke.rngom.digested.DElementPattern;
 
 import javax.xml.namespace.QName;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class CompositeDescriptor extends RngElementDescriptor {
   private final DElementPattern[] myPatterns;
 
   CompositeDescriptor(RngNsDescriptor nsDescriptor, DElementPattern pattern, List<DElementPattern> patterns) {
     super(nsDescriptor, pattern);
-    myPatterns = ContainerUtil.reverse(patterns).toArray(new DElementPattern[patterns.size()]);
+    if (patterns.size() > 1) {
+      myPatterns = new LinkedHashSet<>(ContainerUtil.reverse(patterns)).toArray(DElementPattern[]::new);
+    } else if (patterns.size() == 1) {
+      myPatterns = new DElementPattern[] {pattern};
+    } else {
+      myPatterns = new DElementPattern[0];
+    }
   }
 
   @Override

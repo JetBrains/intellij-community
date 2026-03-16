@@ -11,7 +11,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.velocity.context.AbstractContext java.lang.Object get(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -20,7 +19,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.velocity.context.AbstractContext java.lang.Object put(java.lang.String, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -29,7 +27,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.velocity.context.AbstractContext java.lang.Object remove(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -49,12 +46,6 @@
     </item>
     <item name='org.apache.velocity.context.EvaluateContext void initContext(org.apache.velocity.runtime.RuntimeServices) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.velocity.context.InternalContextAdapterImpl org.apache.velocity.app.event.EventCartridge attachEventCartridge(org.apache.velocity.app.event.EventCartridge)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.velocity.context.InternalContextAdapterImpl org.apache.velocity.app.event.EventCartridge getEventCartridge()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.velocity.context.InternalContextAdapterImpl org.apache.velocity.context.Context getInternalUserContext()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -100,9 +91,6 @@
     </item>
     <item name='org.apache.velocity.context.ProxyVMContext boolean isConstant(org.apache.velocity.runtime.parser.node.Node) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.velocity.context.ProxyVMContext java.lang.Object remove(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.velocity.context.ProxyVMContext void addVMProxyArg(org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.String, org.apache.velocity.runtime.Renderable) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>

@@ -15,7 +15,7 @@
  */
 package com.intellij.designer.designSurface;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @author Alexander Lobas

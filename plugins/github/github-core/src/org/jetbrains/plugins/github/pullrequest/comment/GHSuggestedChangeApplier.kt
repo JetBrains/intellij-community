@@ -22,7 +22,6 @@ import git4idea.util.GitFileUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.util.GithubUtil
-import java.io.File
 
 internal object GHSuggestedChangeApplier {
   suspend fun applySuggestedChange(project: Project,
@@ -74,12 +73,11 @@ internal object GHSuggestedChangeApplier {
     val suggestedChangedPath = GitCheckinEnvironment.ChangedPath(beforeLocalFilePath, afterLocalFilePath)
 
     val exceptions = mutableListOf<VcsException>()
-    GitCheckinEnvironment.runWithMessageFile(project, repository.root, commitMessage) { messageFile: File ->
-      GitCheckinEnvironment.commitUsingIndex(project, repository,
-                                             listOf(suggestedChangedPath), setOf(suggestedChangedPath),
-                                             messageFile, GitCommitOptions()).also {
-        exceptions.addAll(it)
-      }
+
+    GitCheckinEnvironment.commitUsingIndex(project, repository,
+                                           listOf(suggestedChangedPath), setOf(suggestedChangedPath),
+                                           commitMessage, GitCommitOptions()).also {
+      exceptions.addAll(it)
     }
 
     if (exceptions.isNotEmpty()) {

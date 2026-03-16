@@ -1,9 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.logs
 
-import com.intellij.platform.ml.*
+import com.intellij.platform.ml.DescribedLevelScheme
+import com.intellij.platform.ml.LevelSignature
+import com.intellij.platform.ml.MLApiPlatform
+import com.intellij.platform.ml.MLModel
+import com.intellij.platform.ml.MLTask
 import com.intellij.platform.ml.MLTaskApproach.Companion.findMlTaskApproach
 import com.intellij.platform.ml.MLTaskApproach.Companion.startMLSession
+import com.intellij.platform.ml.PerTier
 import com.intellij.platform.ml.analysis.AnalysisLogger
 import com.intellij.platform.ml.analysis.SessionAnalyserProvider
 import com.intellij.platform.ml.analysis.StructureAnalyser

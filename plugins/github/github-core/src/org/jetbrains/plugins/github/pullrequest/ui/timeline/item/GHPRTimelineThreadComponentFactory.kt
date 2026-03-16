@@ -6,7 +6,11 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.launchNowIn
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.*
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.ComponentListPanelFactory
+import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.SimpleHtmlPane
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread
@@ -14,14 +18,22 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
 import com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.util.*
+import com.intellij.collaboration.ui.util.DimensionRestrictions
+import com.intellij.collaboration.ui.util.bindContentIn
+import com.intellij.collaboration.ui.util.bindDisabledIn
+import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.supervisorScope
 import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentViewModel
@@ -34,8 +46,10 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 internal object GHPRTimelineThreadComponentFactory {
-  fun createIn(cs: CoroutineScope,
-               vm: GHPRTimelineThreadViewModel): JComponent =
+  fun createIn(
+    cs: CoroutineScope,
+    vm: GHPRTimelineThreadViewModel,
+  ): JComponent =
     VerticalListPanel().apply {
       name = "GitHub Thread Panel ${vm.id}"
       add(cs.createThreadItem(vm))
@@ -181,13 +195,19 @@ internal object GHPRTimelineThreadComponentFactory {
     })
     return TimelineDiffComponentFactory.createDiffWithHeader(this, vm, vm.filePath, fileNameClickListener) {
       Wrapper().apply {
-        bindContentIn(this@createDiffWithHeader, vm.patchHunkWithAnchor) { (hunk, anchorRange) ->
-          if (hunk.lines.isEmpty()) {
+        bindContentIn(this@createDiffWithHeader, vm.patchHunkWithAnchor) {
+          if (it == null) {
             JLabel(CollaborationToolsBundle.message("review.thread.diff.not.loaded"))
           }
           else {
-            TimelineDiffComponentFactory
-              .createDiffComponentIn(this, vm.project, EditorFactory.getInstance(), hunk, anchorRange)
+            val (hunk, anchorRange) = it
+            if (hunk.lines.isEmpty()) {
+              JLabel(CollaborationToolsBundle.message("review.thread.diff.not.loaded"))
+            }
+            else {
+              TimelineDiffComponentFactory
+                .createDiffComponentIn(this, vm.project, EditorFactory.getInstance(), hunk, anchorRange)
+            }
           }
         }
       }

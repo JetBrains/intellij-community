@@ -19,6 +19,8 @@ public interface LookupListener extends EventListener {
    * Note: this event comes inside the command that performs inserting of text into the editor and is
    * called before the lookup string is inserted into the document. If any listener returns false,
    * the lookup string is not inserted.
+   *
+   * @return true to continue with the insertion, false to cancel it.
    */
   default boolean beforeItemSelected(@NotNull LookupEvent event) {
     return true;

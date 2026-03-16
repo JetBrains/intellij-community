@@ -1,7 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.console
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModulePointer
 import com.intellij.openapi.module.ModulePointerManager
@@ -9,7 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.jetbrains.plugins.groovy.console.GroovyConsoleStateService.MyState
-import java.util.*
+import java.util.Collections
 
 @Service(Service.Level.PROJECT)
 @State(name = "GroovyConsoleState", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])

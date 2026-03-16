@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SystemProperties;
@@ -11,11 +10,29 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import javax.swing.JRootPane;
+import javax.swing.RootPaneContainer;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.DisplayMode;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.geom.Area;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.WeakHashMap;
 
 public final class ScreenUtil {
   public static final String DISPOSE_TEMPORARY = "dispose.temporary";
@@ -334,13 +351,17 @@ public final class ScreenUtil {
   }
 
   public static void moveRectangleToFitTheScreen(@NotNull Rectangle aRectangle) {
+    moveRectangleToFitTheScreen(aRectangle, false);
+  }
+
+  private static void moveRectangleToFitTheScreen(@NotNull Rectangle aRectangle, boolean crop) {
     if (StartupUiUtil.isWaylandToolkit()) return; // No abs coordinates in Wayland
 
     int screenX = aRectangle.x + aRectangle.width / 2;
     int screenY = aRectangle.y + aRectangle.height / 2;
     Rectangle screen = getScreenRectangle(screenX, screenY);
 
-    moveToFit(aRectangle, screen, null);
+    moveToFit(aRectangle, screen, null, crop);
   }
 
   public static void moveToFit(final @NotNull Rectangle rectangle, final @NotNull Rectangle container, @Nullable Insets padding) {
@@ -421,29 +442,7 @@ public final class ScreenUtil {
   }
 
   public static void fitToScreen(@NotNull Rectangle r) {
-    if (StartupUiUtil.isWaylandToolkit()) return; // No abs coordinates in Wayland
-
-    Rectangle screen = getScreenRectangle(r.x, r.y);
-
-    int xOverdraft = r.x + r.width - screen.x - screen.width;
-    if (xOverdraft > 0) {
-      int shift = Math.min(xOverdraft, r.x - screen.x);
-      xOverdraft -= shift;
-      r.x -= shift;
-      if (xOverdraft > 0) {
-        r.width -= xOverdraft;
-      }
-    }
-
-    int yOverdraft = r.y + r.height - screen.y - screen.height;
-    if (yOverdraft > 0) {
-      int shift = Math.min(yOverdraft, r.y - screen.y);
-      yOverdraft -= shift;
-      r.y -= shift;
-      if (yOverdraft > 0) {
-        r.height -= yOverdraft;
-      }
-    }
+    moveRectangleToFitTheScreen(r, true);
   }
 
   public static @NotNull Point findNearestPointOnBorder(@NotNull Rectangle rect, @NotNull Point p) {

@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.terminal.TerminalShellCommandHandler
 import java.io.File
 
-private class OpenFileShellCommandHandler : TerminalShellCommandHandler {
+internal class OpenFileShellCommandHandler : TerminalShellCommandHandler {
   override fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String) =
     handleCommand(command, localSession, workingDirectory) { file -> checkRegisteredFileType(file) }
 

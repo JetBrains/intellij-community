@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.opencsv.jar
+  modules:
+  - name: intellij.libraries.opencsv
+    libraries:
+      opencsv:
+      - name: $MAVEN_REPOSITORY$/com/opencsv/opencsv/5/opencsv-5.jar
+      - name: $MAVEN_REPOSITORY$/commons-beanutils/commons-beanutils/1/commons-beanutils-1.jar

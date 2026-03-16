@@ -2,14 +2,17 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel
+import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTrackableItemViewModel
 import com.intellij.collaboration.util.Hideable
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 
-internal sealed interface GitLabMergeRequestEditorMappedComponentModel : CodeReviewInlayModel {
-  abstract class Discussion<VM : GitLabMergeRequestDiscussionViewModel>(val vm: VM)
+internal sealed interface GitLabMergeRequestEditorMappedComponentModel : CodeReviewInlayModel.Ranged {
+  val vm: CodeReviewTrackableItemViewModel
+
+  abstract class Discussion<VM : GitLabMergeRequestDiscussionViewModel>(override val vm: VM)
     : GitLabMergeRequestEditorMappedComponentModel, Hideable {
     final override val key: Any = vm.id
     final override val hiddenState = MutableStateFlow(false)
@@ -18,7 +21,7 @@ internal sealed interface GitLabMergeRequestEditorMappedComponentModel : CodeRev
     }
   }
 
-  abstract class DraftNote<VM : GitLabNoteViewModel>(val vm: VM)
+  abstract class DraftNote<VM : GitLabNoteViewModel>(override val vm: VM)
     : GitLabMergeRequestEditorMappedComponentModel, Hideable {
     final override val key: Any = vm.id
     final override val hiddenState = MutableStateFlow(false)
@@ -27,8 +30,8 @@ internal sealed interface GitLabMergeRequestEditorMappedComponentModel : CodeRev
     }
   }
 
-  abstract class NewDiscussion<VM : NewGitLabNoteViewModel>(val vm: VM)
-    : GitLabMergeRequestEditorMappedComponentModel {
+  abstract class NewDiscussion<VM : NewGitLabNoteViewModel>(override val vm: VM) : GitLabMergeRequestEditorMappedComponentModel,
+                                                                                   CodeReviewInlayModel.Ranged.Adjustable {
     abstract fun cancel()
   }
 }

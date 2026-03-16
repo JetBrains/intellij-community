@@ -10,7 +10,7 @@ import com.sun.jdi.ClassType
 
 private val HELPER_CLASS_CACHE_KEY = Key.create<HelperClassCache>("HELPER_CLASS_CACHE_KEY")
 
-private class JdiHelperClassLoaderImpl : JdiHelperClassLoader {
+internal class JdiHelperClassLoaderImpl : JdiHelperClassLoader {
   @Throws(EvaluateException::class)
   override fun getHelperClass(
     cls: Class<*>, evaluationContext: EvaluationContextImpl,

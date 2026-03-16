@@ -478,13 +478,6 @@
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.intentions.ConvertRangeCheckToTwoComparisonsIntention</className>
-      <bundleName>messages.KotlinBundle</bundleName>
-      <categoryKey>group.names.kotlin</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertObjectLiteralToClassIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
@@ -1235,14 +1228,6 @@
                      level="WARNING"
                      language="kotlin"
                      key="inspection.replace.with.enum.map.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.DestructuringWrongNameInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     language="kotlin"
-                     key="inspection.destructuring.wrong.name.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.UnusedLambdaExpressionBodyInspection"
                      groupPath="Kotlin"

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.markup
 
 import andel.intervals.Interval
@@ -8,10 +8,8 @@ import andel.text.Text
 import com.intellij.openapi.editor.impl.ad.document.AdTextDocument
 import fleet.util.serialization.DataSerializer
 import kotlinx.serialization.Serializable
-import org.jetbrains.annotations.ApiStatus.Experimental
 
 
-@Experimental
 @Serializable(with = AdMarkupStorage.Serializer::class)
 internal data class AdMarkupStorage(
   private val document: AdTextDocument,

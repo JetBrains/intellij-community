@@ -4,7 +4,7 @@ import com.intellij.debugger.streams.shared.StreamDebuggerApi
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
 
-private class BackendStreamDebuggerRemoteApiProvider : RemoteApiProvider {
+internal class BackendStreamDebuggerRemoteApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<StreamDebuggerApi>()) {
       BackendStreamDebuggerApi()

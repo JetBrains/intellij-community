@@ -4,7 +4,11 @@ package com.intellij.ide.starters.shared
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.ui.*
+import com.intellij.openapi.ui.ComponentValidator
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CheckboxTreeBase
 import com.intellij.ui.CheckedTreeNode

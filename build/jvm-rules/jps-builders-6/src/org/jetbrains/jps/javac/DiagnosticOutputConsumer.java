@@ -3,7 +3,8 @@ package org.jetbrains.jps.javac;
 
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
-import javax.tools.*;
+import javax.tools.DiagnosticListener;
+import javax.tools.JavaFileObject;
 import java.io.File;
 
 public interface DiagnosticOutputConsumer extends DiagnosticListener<JavaFileObject> {

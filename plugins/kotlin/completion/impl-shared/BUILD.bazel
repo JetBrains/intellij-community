@@ -45,6 +45,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "//plugins/kotlin/base/kotlin.base.serialization",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build kotlin.completion.impl.shared` end

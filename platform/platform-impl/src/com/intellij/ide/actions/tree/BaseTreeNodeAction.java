@@ -10,7 +10,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 abstract class BaseTreeNodeAction extends AnAction implements ActionRemoteBehaviorSpecification.Frontend, DumbAware {
   BaseTreeNodeAction() {

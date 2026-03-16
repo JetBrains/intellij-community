@@ -15,7 +15,11 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetPresentable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.awt.*
+import java.awt.Desktop
+import java.awt.Menu
+import java.awt.MenuItem
+import java.awt.PopupMenu
+import java.awt.Taskbar
 
 internal suspend fun createMacDelegate(): SystemDock? {
   // todo get rid of UI dispatcher here

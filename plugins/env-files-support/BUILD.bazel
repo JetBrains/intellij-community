@@ -20,11 +20,13 @@ jvm_library(
     "//platform/lang-core",
     "//platform/indexing-api:indexing",
     "//platform/projectModel-api:projectModel",
+    "//platform/core-impl",
     "//platform/util",
     "//platform/platform-impl:ide-impl",
     "//platform/analysis-impl",
     "//platform/refactoring",
     "//platform/lang-impl",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.dotenv` end

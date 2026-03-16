@@ -9,7 +9,7 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   deps = [
     "//plugins/xpath/xslt-rt:rt",
-    "//plugins/xslt-debugger/engine/lib:rmi-stubs",
+    "//plugins/xslt-debugger/engine/lib:xslt-debugger-rt-_r_m_i_stubs",
   ]
 )
 ### auto-generated section `build intellij.xslt.debugger.rt` end

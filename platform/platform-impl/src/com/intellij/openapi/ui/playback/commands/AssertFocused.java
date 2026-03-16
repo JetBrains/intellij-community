@@ -10,8 +10,13 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import java.awt.*;
-import java.util.*;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class AssertFocused extends AbstractCommand {

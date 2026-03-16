@@ -15,7 +15,13 @@
  */
 package com.jetbrains.python.psi;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiBuilderFactory;
+import com.intellij.lang.PsiParser;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.ParsingDiagnostics;
@@ -60,7 +66,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   @Override
   public int getStubVersion() {
     // Don't forget to update versions of indexes that use the updated stub-based elements
-    return 105;
+    return 107;
   }
 
   @Override

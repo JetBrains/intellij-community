@@ -10,7 +10,12 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
-import com.intellij.vcs.log.ui.table.column.*
+import com.intellij.vcs.log.ui.table.column.Author
+import com.intellij.vcs.log.ui.table.column.Commit
+import com.intellij.vcs.log.ui.table.column.Date
+import com.intellij.vcs.log.ui.table.column.Root
+import com.intellij.vcs.log.ui.table.column.TableColumnVisibilityProperty
+import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn
 import org.jetbrains.annotations.NonNls
 
 @State(name = "Vcs.Log.App.Settings", storages = [Storage("vcs.xml")], category = SettingsCategory.TOOLS)
@@ -36,6 +41,8 @@ class VcsLogApplicationSettings : PersistentStateComponent<VcsLogApplicationSett
       CommonUiProperties.SHOW_DIFF_PREVIEW -> _state.isShowDiffPreview
       MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT -> _state.isDiffPreviewVerticalSplit
       CommonUiProperties.PREFER_COMMIT_DATE -> _state.isPreferCommitDate
+      CommonUiProperties.SHOW_ISSUE_PREVIEW_ON_HOVER -> _state.isShowIssuePreviewOnHover
+      CommonUiProperties.SHOW_ISSUE_PREVIEW_ON_HOVER_DELAY -> _state.showIssuePreviewOnHoverDelay
       else -> throw UnsupportedOperationException("Property $property does not exist")
     }
     @Suppress("UNCHECKED_CAST")
@@ -60,6 +67,8 @@ class VcsLogApplicationSettings : PersistentStateComponent<VcsLogApplicationSett
       MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT -> _state.isDiffPreviewVerticalSplit = value as Boolean
       CommonUiProperties.PREFER_COMMIT_DATE -> _state.isPreferCommitDate = value as Boolean
       CommonUiProperties.COLUMN_ID_ORDER -> _state.columnIdOrder = value as List<String>
+      CommonUiProperties.SHOW_ISSUE_PREVIEW_ON_HOVER -> _state.isShowIssuePreviewOnHover = value as Boolean
+      CommonUiProperties.SHOW_ISSUE_PREVIEW_ON_HOVER_DELAY -> _state.showIssuePreviewOnHoverDelay = value as Int
       is TableColumnVisibilityProperty -> _state.columnIdVisibility[property.name] = value as Boolean
       else -> throw UnsupportedOperationException("Property $property does not exist")
     }
@@ -76,6 +85,8 @@ class VcsLogApplicationSettings : PersistentStateComponent<VcsLogApplicationSett
            MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS == property ||
            CommonUiProperties.COLUMN_ID_ORDER == property ||
            CommonUiProperties.PREFER_COMMIT_DATE == property ||
+           CommonUiProperties.SHOW_ISSUE_PREVIEW_ON_HOVER == property ||
+           CommonUiProperties.SHOW_ISSUE_PREVIEW_ON_HOVER_DELAY == property ||
            property is TableColumnVisibilityProperty
   }
 
@@ -112,6 +123,12 @@ class VcsLogApplicationSettings : PersistentStateComponent<VcsLogApplicationSett
 
     @get:OptionTag("PREFER_COMMIT_DATE")
     var isPreferCommitDate = false
+
+    @get:OptionTag("SHOW_ISSUE_PREVIEW_ON_HOVER")
+    var isShowIssuePreviewOnHover = true
+
+    @get:OptionTag("SHOW_ISSUE_PREVIEW_ON_HOVER_DELAY")
+    var showIssuePreviewOnHoverDelay = 500
 
     @get:OptionTag("COLUMN_ID_ORDER")
     var columnIdOrder: List<String>? = ArrayList()

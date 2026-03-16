@@ -49,6 +49,13 @@ internal fun <T : MatchResult> T.addOwner(owner: PolySymbol): T {
   return copy(segments = newSegments)
 }
 
+internal fun <T : MatchResult> T.withAdditionalLastSegmentSymbol(additionalLastSegmentSymbol: PolySymbol): T {
+  val newSegments = mutableListOf<PolySymbolNameSegment>()
+  newSegments.addAll(segments)
+  newSegments.add(PolySymbolNameSegment.create(end, end, additionalLastSegmentSymbol))
+  return copy(segments = newSegments)
+}
+
 @Suppress("UNCHECKED_CAST")
 internal fun <T : MatchResult> T.copy(segments: List<PolySymbolNameSegment>): T =
   when (this) {
@@ -59,9 +66,6 @@ internal fun <T : MatchResult> T.copy(segments: List<PolySymbolNameSegment>): T 
 internal fun List<PolySymbolCodeCompletionItem>.applyIcons(symbol: PolySymbol) =
   if (symbol.icon != null) {
     map { item -> if (item.icon == null) item.withIcon(symbol.icon) else item }
-  }
-  else if (symbol.origin.defaultIcon != null) {
-    map { item -> if (item.icon == null) item.withIcon(symbol.origin.defaultIcon) else item }
   }
   else {
     this

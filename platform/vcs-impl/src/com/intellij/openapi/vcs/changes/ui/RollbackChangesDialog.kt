@@ -9,8 +9,14 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.ui.LocalChangesBrowser.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx
+import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.ui.LocalChangesBrowser.AllChanges
+import com.intellij.openapi.vcs.changes.ui.LocalChangesBrowser.NonEmptyChangeLists
+import com.intellij.openapi.vcs.changes.ui.LocalChangesBrowser.SelectedChangeLists
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
@@ -57,6 +63,9 @@ class RollbackChangesDialog private constructor(private val project: Project,
       row {
         cell(browser)
           .align(Align.FILL)
+          .applyToComponent {
+            minimumSize = JBUI.size(100, 100)
+          }
       }.resizableRow()
       row {
         cell(commitLegend.component)
@@ -67,9 +76,6 @@ class RollbackChangesDialog private constructor(private val project: Project,
                         { newValue -> PropertiesComponent.getInstance().setValue(DELETE_LOCALLY_ADDED_FILES_KEY, newValue) })
           .component
       }
-    }.also {
-      // Temporary workaround for IDEA-302779
-      it.minimumSize = JBUI.size(200, 150)
     }
   }
 

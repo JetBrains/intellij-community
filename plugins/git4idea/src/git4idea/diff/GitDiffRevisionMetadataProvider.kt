@@ -19,7 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import java.time.Duration
-import java.util.*
+import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 
 internal class GitDiffRevisionMetadataProvider : DiffRevisionMetadataProvider {

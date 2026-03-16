@@ -2,7 +2,11 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.codeInspection.ui.AggregateResultsExporter;
 import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,11 +23,21 @@ import org.jetbrains.annotations.Nullable;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 public final class InspectionsResultUtil {

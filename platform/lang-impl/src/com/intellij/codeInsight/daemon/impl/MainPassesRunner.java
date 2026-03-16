@@ -29,7 +29,11 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiDocumentManager;
@@ -210,14 +214,15 @@ public final class MainPassesRunner {
     for (int i = 0; i < retries; i++) {
       try {
         InspectionProfile currentProfile = myInspectionProfile;
-        settings.forceUseZeroAutoReparseDelay(true);
         Function<InspectionProfile, InspectionProfileWrapper> profileProvider =
           p -> currentProfile == null
                ? new InspectionProfileWrapper((InspectionProfileImpl)p)
                : new InspectionProfileWrapper(currentProfile, ((InspectionProfileImpl)p).getProfileManager());
-        InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile, profileProvider, () -> {
-          List<HighlightInfo> infos = codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator);
-          result.put(document, infos);
+        settings.forceUseZeroAutoReparseDelayIn(() -> {
+          InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile, profileProvider, () -> {
+            List<HighlightInfo> infos = codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator);
+            result.put(document, infos);
+          });
         });
         break;
       }
@@ -229,9 +234,6 @@ public final class MainPassesRunner {
         }
 
         exception = e;
-      }
-      finally {
-        settings.forceUseZeroAutoReparseDelay(false);
       }
     }
     if (exception != null) {

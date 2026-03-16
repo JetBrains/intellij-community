@@ -2,7 +2,13 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.EditorEventMulticaster;
+import com.intellij.openapi.editor.event.EditorMouseListener;
+import com.intellij.openapi.editor.event.EditorMouseMotionListener;
+import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.editor.event.VisibleAreaListener;
 import org.jetbrains.annotations.NotNull;
 
 public class MockEditorEventMulticaster implements EditorEventMulticaster {

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nls
 
 fun insertEditedCommitNode(builder: ChangesViewModelBuilder, editedCommit: EditedCommitPresentation) {
   when (editedCommit) {
-    is EditedCommitPresentation.Details -> {
+    is EditedCommitDetails -> {
       val commitNode = EditedCommitNode(editedCommit)
       builder.insertSubtreeRoot(commitNode)
       builder.insertChanges(editedCommit.changes, commitNode)

@@ -36,7 +36,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.Collections
+import java.util.WeakHashMap
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 

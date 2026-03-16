@@ -39,5 +39,5 @@ sealed interface InstanceRegistrar {
    * @throws InstanceNotRegisteredException if key class name registered via [overrideInitializer] was **not** found in the container
    * @return a handle to undo registration which was done by this function, or `null` if no instances were registered
    */
-  fun complete(): UnregisterHandle?
+  fun complete(): RegistrationResult?
 }

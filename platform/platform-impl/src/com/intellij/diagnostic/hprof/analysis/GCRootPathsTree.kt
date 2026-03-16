@@ -27,7 +27,7 @@ import com.intellij.diagnostic.hprof.util.TruncatingPrintBuffer
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
-import java.util.*
+import java.util.ArrayDeque
 import kotlin.math.ceil
 import kotlin.math.min
 

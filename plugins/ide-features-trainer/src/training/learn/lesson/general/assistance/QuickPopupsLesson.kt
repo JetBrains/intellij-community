@@ -7,8 +7,11 @@ import com.intellij.codeInsight.hint.ImplementationViewComponent
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.util.ui.UIUtil
 import org.assertj.swing.timing.Timeout
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.triggerOnQuickDocumentationPopup
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.ui.LearningUiUtil

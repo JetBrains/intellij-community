@@ -24,7 +24,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;

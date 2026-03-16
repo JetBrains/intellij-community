@@ -20,7 +20,6 @@ import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PySdkListCellRenderer
-import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.sdkSeemsValid
 import com.jetbrains.python.sdk.uv.isUv
@@ -36,7 +35,7 @@ internal enum class RunTypeField(val string: String) {
   override fun toString(): String = string
 }
 
-internal data class UvRunSettingsEditor(val project: Project) : SettingsEditor<UvRunConfiguration>() {
+internal class UvRunSettingsEditor() : SettingsEditor<UvRunConfiguration>() {
   private lateinit var panel: JPanel
   private val scriptField = TextFieldWithBrowseButton()
   private val moduleField = JBTextField()
@@ -47,11 +46,13 @@ internal data class UvRunSettingsEditor(val project: Project) : SettingsEditor<U
   private lateinit var uvSdkField: ComboBox<Sdk?>
   private val uvArgsField: RawCommandLineEditor = RawCommandLineEditor().withMonospaced(true)
 
+  private lateinit var debugJustMyCodeCheckbox: JBCheckBox
+
   private val propertyGraph = PropertyGraph()
   private val isScript = propertyGraph.property(true)
   private val isModule = propertyGraph.property(false)
 
-  constructor(project: Project, uvRunConfiguration: UvRunConfiguration, sdks: List<Sdk?>) : this(project) {
+  constructor(project: Project, uvRunConfiguration: UvRunConfiguration, sdks: List<Sdk?>) : this() {
     scriptField.addBrowseFolderListener(
       project,
       FileChooserDescriptorFactory.singleFile(),
@@ -128,6 +129,10 @@ internal data class UvRunSettingsEditor(val project: Project) : SettingsEditor<U
         cell(uvArgsField)
           .align(AlignX.FILL)
       }
+      row {
+        debugJustMyCodeCheckbox = checkBox(PyBundle.message("python.debugger.configuration.justMyCode.label"))
+          .component
+      }
     }
   }
 
@@ -139,6 +144,7 @@ internal data class UvRunSettingsEditor(val project: Project) : SettingsEditor<U
     scriptCheckSyncField.isSelected = uvRunConfiguration.options.checkSync
     uvSdkField.selectedItem = uvRunConfiguration.options.uvSdk
     uvArgsField.text = uvRunConfiguration.options.uvArgs.joinToString(" ")
+    debugJustMyCodeCheckbox.isSelected = uvRunConfiguration.options.debugJustMyCode
   }
 
   override fun applyEditorTo(uvRunConfiguration: UvRunConfiguration) {
@@ -154,6 +160,7 @@ internal data class UvRunSettingsEditor(val project: Project) : SettingsEditor<U
     uvRunConfiguration.options.checkSync = scriptCheckSyncField.isSelected
     uvRunConfiguration.options.uvSdkKey = uvSdkField.selectedItem.let {it as? Sdk}?.name
     uvRunConfiguration.options.uvArgs = uvArgsField.text.splitParams()
+    uvRunConfiguration.options.debugJustMyCode = debugJustMyCodeCheckbox.isSelected
   }
 
   override fun createEditor(): JComponent = panel
@@ -165,7 +172,7 @@ fun uvSdkList(): List<Sdk?> =
   PythonSdkUtil
     .getAllSdks()
     .filter { sdk ->
-      sdk.isUv && sdk.sdkSeemsValid && !PythonSdkType.hasInvalidRemoteCredentials(sdk)
+      sdk.isUv && sdk.sdkSeemsValid
     }
 
 private val whiteSpaceRegex = Regex("\\s+")

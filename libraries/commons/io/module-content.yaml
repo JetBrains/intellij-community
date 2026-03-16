@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.commons.io.jar
   modules:
   - name: intellij.libraries.commons.io
   library: commons-io

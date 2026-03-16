@@ -8,7 +8,11 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.SwitchStatement;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class EliminateLoopsHelper {
 

@@ -17,8 +17,8 @@ package com.intellij.xml.actions;
 
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 
 import java.io.File;
 

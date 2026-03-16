@@ -9,7 +9,15 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeCommandInfo
+import com.intellij.platform.searchEverywhere.SeCommandsProviderInterface
+import com.intellij.platform.searchEverywhere.SeExtendedInfo
+import com.intellij.platform.searchEverywhere.SeItem
+import com.intellij.platform.searchEverywhere.SeItemsProvider
+import com.intellij.platform.searchEverywhere.SeLegacyItem
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider
 import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
@@ -33,7 +41,7 @@ class SeRunConfigurationsItem(
 }
 
 @ApiStatus.Internal
-class SeRunConfigurationsProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider() {
+class SeRunConfigurationsProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider(), SeCommandsProviderInterface {
   override val contributor: SearchEverywhereContributor<Any> get() = contributorWrapper.contributor
   override val id: String get() = SeProviderIdUtils.RUN_CONFIGURATIONS_ID
   override val displayName: @Nls String get() = contributor.fullGroupName
@@ -60,6 +68,8 @@ class SeRunConfigurationsProvider(private val contributorWrapper: SeAsyncContrib
   override suspend fun canBeShownInFindResults(): Boolean {
     return contributor.showInFindResults()
   }
+
+  override fun getSupportedCommands(): List<SeCommandInfo> = getSupportedCommandsFromContributor()
 
   override fun dispose() {
     Disposer.dispose(contributorWrapper)

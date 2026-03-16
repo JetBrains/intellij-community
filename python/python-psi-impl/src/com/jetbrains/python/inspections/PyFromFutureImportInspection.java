@@ -22,7 +22,12 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.MoveFromFutureImportQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +47,7 @@ public final class PyFromFutureImportInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyFromImportStatement(@NotNull PyFromImportStatement node) {
       PyReferenceExpression importSource = node.getImportSource();
@@ -52,7 +58,7 @@ public final class PyFromFutureImportInspection extends PyInspection {
           boolean skippedDocString = false;
           for (PyStatement statement : statementList) {
             if (statement instanceof PyExpressionStatement &&
-                ((PyExpressionStatement) statement).getExpression() instanceof PyStringLiteralExpression &&
+                ((PyExpressionStatement)statement).getExpression() instanceof PyStringLiteralExpression &&
                 !skippedDocString) {
               skippedDocString = true;
               continue;

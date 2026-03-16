@@ -38,13 +38,17 @@ open class HighlightDisplayLevel(val severity: HighlightSeverity) {
   companion object {
     private val LEVEL_MAP = HashMap<HighlightSeverity, HighlightDisplayLevel>()
 
-    private fun createHighlightDisplayLevel(severity: HighlightSeverity,
-                                            key: TextAttributesKey,
-                                            icon: Icon,
-                                            outlineIcon: Icon): HighlightDisplayLevel {
-      return HighlightDisplayLevel(severity = severity,
-                                   icon = HighlightDisplayLevelColorizedIcon(key = key, baseIcon = icon),
-                                   outlineIcon = HighlightDisplayLevelColorizedIcon(key = key, baseIcon = outlineIcon))
+    private fun createHighlightDisplayLevel(
+      severity: HighlightSeverity,
+      key: TextAttributesKey,
+      icon: Icon,
+      outlineIcon: Icon,
+    ): HighlightDisplayLevel {
+      return HighlightDisplayLevel(
+        severity = severity,
+        icon = HighlightDisplayLevelColorizedIcon(key = key, baseIcon = icon),
+        outlineIcon = HighlightDisplayLevelColorizedIcon(key = key, baseIcon = outlineIcon),
+      )
     }
 
     @JvmField

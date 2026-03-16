@@ -4,7 +4,15 @@ package com.intellij.vcs.log.ui.filter
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogBranchFilter
+import com.intellij.vcs.log.VcsLogDataPack
+import com.intellij.vcs.log.VcsLogFilter
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.VcsLogRangeFilter
+import com.intellij.vcs.log.VcsLogRevisionFilter
+import com.intellij.vcs.log.branches
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties

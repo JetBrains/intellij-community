@@ -82,6 +82,16 @@ abstract class EnvVariablesTest {
     Assert.assertEquals("aaaa", map["va\"=;r3"])
   }
 
+  @Test
+  fun newLineSeparatedEnvVars() {
+    Assert.assertEquals(3, parseEnvsFromText("t1=val1\nt2=val2\nt3=val3\n").size.toLong())
+    Assert.assertEquals(4, parseEnvsFromText("t1=val1\nt2=val2\nt3=val3\n\nempty=\n").size.toLong())
+    Assert.assertEquals(3, parseEnvsFromText("t1=val1\nt2=val2\nt3=val3\n\n").size.toLong())
+    Assert.assertEquals(3, parseEnvsFromText("t1=val1\nt2=val2\nt3=val3\n\n\n").size.toLong())
+    Assert.assertEquals(3, parseEnvsFromText("t1=val1\nt2=val2\nt3=val3\n\nnoise\n").size.toLong())
+    Assert.assertEquals(3, parseEnvsFromText("t1=val1\nt2=val2\nt3=val3").size.toLong())
+  }
+
   private fun assertEnvVarTableRoundtrip(data: MutableMap<String, String>) {
     val stringification = EnvironmentVariablesTextFieldWithBrowseButton.stringifyEnvironment(
       EnvironmentVariablesData.create(data, false, null)

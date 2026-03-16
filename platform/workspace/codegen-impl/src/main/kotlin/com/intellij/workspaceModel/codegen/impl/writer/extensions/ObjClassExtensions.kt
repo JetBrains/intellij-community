@@ -24,7 +24,7 @@ internal val ObjClass<*>.compatibleJavaBuilderName: String
   get() = if (requiresCompatibility) "$name.Builder" else defaultJavaBuilderName
 
 internal val ObjClass<*>.defaultJavaBuilderName: String
-  get() = "Modifiable$name"
+  get() = "${name}Builder"
 
 internal val ObjClass<*>.javaBuilderName: String
   get() = if (requiresCompatibility) compatibleJavaBuilderName else defaultJavaBuilderName

@@ -15,7 +15,12 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -38,11 +43,21 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -565,7 +580,7 @@ public class ExpectedHighlightingData {
 
       @Override
       public boolean equals(HighlightInfo o1, HighlightInfo o2) {
-        return o1==null || o2 == null ? o1 == o2 : matchesPattern(o1, o2, false);
+        return o1==null || o2 == null ? o1 == o2 : matchesPattern(o1, o2);
       }
     });
     index.addAll(infos);
@@ -739,15 +754,15 @@ public class ExpectedHighlightingData {
     return ThreeState.NO;
   }
 
-  private static boolean matchesPattern(@NotNull HighlightInfo expectedInfo, @NotNull HighlightInfo info, boolean strictMatch) {
+  private static boolean matchesPattern(@NotNull HighlightInfo expectedInfo, @NotNull HighlightInfo info) {
     if (expectedInfo == info) return true;
-    boolean typeMatches = expectedInfo.type.equals(info.type) || !strictMatch && (expectedInfo.type == Holder.WHATEVER || info.type == Holder.WHATEVER);
+    boolean typeMatches = expectedInfo.type.equals(info.type) ||  (expectedInfo.type == Holder.WHATEVER || info.type == Holder.WHATEVER);
     boolean textAttributesMatches = sameTextAttributesByValue(expectedInfo.getTextAttributes(null, null), info.getTextAttributes(null, null)) ||
-                                    !strictMatch && (expectedInfo.forcedTextAttributes == null || info.forcedTextAttributes == null);
-    boolean attributesKeyMatches = !strictMatch && (expectedInfo.forcedTextAttributesKey == null || info.forcedTextAttributesKey == null) ||
+                                    (expectedInfo.forcedTextAttributes == null || info.forcedTextAttributes == null);
+    boolean attributesKeyMatches = (expectedInfo.forcedTextAttributesKey == null || info.forcedTextAttributesKey == null) ||
                                    Objects.equals(expectedInfo.forcedTextAttributesKey, info.forcedTextAttributesKey);
     return
-      haveSamePresentation(info, expectedInfo, strictMatch) &&
+      haveSamePresentation(info, expectedInfo, false) &&
       info.getSeverity() == expectedInfo.getSeverity() &&
       typeMatches &&
       textAttributesMatches &&
@@ -889,7 +904,7 @@ public class ExpectedHighlightingData {
     private final String myTooltip;
 
     MyLineMarkerInfo(TextRange range, GutterIconRenderer.Alignment alignment, String tooltip, String iconPath) {
-      super(NULL_POINTER, range, new PathIcon(iconPath), null, null, null, alignment);
+      super(NULL_POINTER, 0, range, new PathIcon(iconPath), null, null, null, alignment);
       myTooltip = tooltip;
     }
 

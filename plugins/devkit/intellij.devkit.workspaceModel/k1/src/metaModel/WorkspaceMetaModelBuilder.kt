@@ -1,19 +1,34 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.k1.metaModel
 
-import com.intellij.devkit.workspaceModel.metaModel.IncorrectObjInterfaceException
+import com.intellij.devkit.workspaceModel.metaModel.MetaModelBuilderException
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceEntityInheritsEntitySourceException
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceEntityMultipleInheritanceException
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceModelDefaults
-import com.intellij.devkit.workspaceModel.metaModel.impl.*
+import com.intellij.devkit.workspaceModel.metaModel.impl.CompiledObjModuleImpl
+import com.intellij.devkit.workspaceModel.metaModel.impl.ExtPropertyImpl
+import com.intellij.devkit.workspaceModel.metaModel.impl.ObjAnnotationImpl
+import com.intellij.devkit.workspaceModel.metaModel.impl.ObjClassImpl
+import com.intellij.devkit.workspaceModel.metaModel.impl.OwnPropertyImpl
 import com.intellij.devkit.workspaceModel.metaModel.unsupportedType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.workspaceModel.codegen.deft.meta.*
+import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
+import com.intellij.workspaceModel.codegen.deft.meta.ExtProperty
+import com.intellij.workspaceModel.codegen.deft.meta.Obj
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
+import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.isSealed
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.name.FqName
@@ -69,8 +84,11 @@ internal class WorkspaceMetaModelBuilder(
     }
     val externalProperties = extensionProperties.mapNotNull { property ->
       val receiver = property.extensionReceiverParameter?.value?.type?.constructor?.declarationDescriptor as? ClassDescriptor
-      receiver?.let { property to receiver }
-    }.filter { it.second.isEntityInterface && !it.second.isEntityBuilderInterface }
+      val entityReceiver = receiver?.takeIf { it.isEntityInterface && !it.isEntityBuilderInterface }
+      if (entityReceiver == null) return@mapNotNull null
+      if (!isEntityReference(property.returnType)) return@mapNotNull null
+      property to entityReceiver
+    }
     return objModuleStub.registerContent(externalProperties)
   }
 
@@ -154,7 +172,7 @@ internal class WorkspaceMetaModelBuilder(
 
       val blobType = ValueType.Blob<Any>(javaClassFqn, superTypes)
       val inheritors = descriptor.inheritors(javaPsiFacade, allScope)
-        .filter { it.packageName == compiledObjModule.name } // && it.module == moduleDescriptor }
+        .filter { it.packageName == compiledObjModule.name && it.name.identifier != "NonPersistentEntitySource" }
         .map { classDescriptorToValueType(it, hashMapOf(javaClassFqn to blobType), true) }
 
       if (inheritors.isNotEmpty()) {
@@ -256,7 +274,7 @@ internal class WorkspaceMetaModelBuilder(
         }
         classDescriptor.isAbstractClassOrInterface -> {
           if (!processAbstractTypes) {
-            throw IncorrectObjInterfaceException("$javaClassFqn is abstract type. Abstract types are not supported in generator")
+            throw MetaModelBuilderException("$javaClassFqn is abstract type. Abstract types are not supported in generator", classDescriptor.psiElement)
           }
           val inheritors = classDescriptor.inheritors(javaPsiFacade, allScope)
             .filter { !it.isEntitySource || ( it.packageName == compiledObjModule.name) } // && it.module == moduleDescriptor) }

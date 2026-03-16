@@ -11,5 +11,5 @@ abstract class LightJvmCodeInsightFixtureTestCase : LightJavaCodeInsightFixtureT
 
   override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptor(LanguageLevel.HIGHEST)
 
-  protected fun generateFileName() = getTestName(false).replace("[^a-zA-Z0-9\\.\\-]", "_")
+  protected fun generateFileName(): String = getTestName(false).replace("[^a-zA-Z0-9\\.\\-]", "_")
 }

@@ -17,7 +17,27 @@
 package org.jetbrains.plugins.github.api
 
 import com.apollographql.apollo.annotations.ApolloExperimental
-import com.apollographql.apollo.ast.*
+import com.apollographql.apollo.ast.GQLEnumTypeDefinition
+import com.apollographql.apollo.ast.GQLField
+import com.apollographql.apollo.ast.GQLFieldDefinition
+import com.apollographql.apollo.ast.GQLFragmentDefinition
+import com.apollographql.apollo.ast.GQLFragmentSpread
+import com.apollographql.apollo.ast.GQLInlineFragment
+import com.apollographql.apollo.ast.GQLInterfaceTypeDefinition
+import com.apollographql.apollo.ast.GQLListType
+import com.apollographql.apollo.ast.GQLNamedType
+import com.apollographql.apollo.ast.GQLNonNullType
+import com.apollographql.apollo.ast.GQLObjectTypeDefinition
+import com.apollographql.apollo.ast.GQLOperationDefinition
+import com.apollographql.apollo.ast.GQLResult
+import com.apollographql.apollo.ast.GQLSelection
+import com.apollographql.apollo.ast.GQLType
+import com.apollographql.apollo.ast.GQLTypeDefinition
+import com.apollographql.apollo.ast.GQLUnionTypeDefinition
+import com.apollographql.apollo.ast.Issue
+import com.apollographql.apollo.ast.fieldDefinitions
+import com.apollographql.apollo.ast.parseAsGQLDocument
+import com.apollographql.apollo.ast.validateAsExecutable
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.exc.InvalidNullException
 import com.fasterxml.jackson.databind.introspect.AnnotatedClass
@@ -39,7 +59,7 @@ import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.assertThrows
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import java.util.*
+import java.util.Date
 import kotlin.reflect.full.primaryConstructor
 
 typealias PluginQuery<T> = GQLQuery<T>
@@ -560,6 +580,8 @@ private object TestCases {
       GHGQLRequests.PullRequest.markFileAsViewed(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_TEXT),
       GHGQLRequests.PullRequest.unmarkFileAsViewed(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_TEXT),
 
+      GHGQLRequests.Ref.delete(DUMMY_SERVER_PATH, DUMMY_TEXT),
+
       GHGQLRequests.PullRequest.Timeline.items(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_TEXT, DUMMY_NUMBER, DUMMY_PAGINATION),
       GHGQLRequests.PullRequest.Timeline.items(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_TEXT, DUMMY_NUMBER, null),
       GHGQLRequests.PullRequest.Review.create(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_PR_EVENT, DUMMY_TEXT, DUMMY_TEXT, listOf()),
@@ -573,7 +595,7 @@ private object TestCases {
       GHGQLRequests.PullRequest.Review.addComment(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_TEXT, DUMMY_TEXT),
       GHGQLRequests.PullRequest.Review.deleteComment(DUMMY_SERVER_PATH, DUMMY_TEXT),
       GHGQLRequests.PullRequest.Review.updateComment(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_TEXT),
-      GHGQLRequests.PullRequest.Review.addThread(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_TEXT, DUMMY_NUMBER.toInt(), DUMMY_SIDE, DUMMY_NUMBER.toInt(), DUMMY_TEXT),
+      GHGQLRequests.PullRequest.Review.addThread(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_TEXT, DUMMY_NUMBER.toInt(), DUMMY_SIDE, DUMMY_NUMBER.toInt(), DUMMY_SIDE, DUMMY_TEXT),
       GHGQLRequests.PullRequest.Review.resolveThread(DUMMY_SERVER_PATH, DUMMY_TEXT),
       GHGQLRequests.PullRequest.Review.unresolveThread(DUMMY_SERVER_PATH, DUMMY_TEXT),
     )

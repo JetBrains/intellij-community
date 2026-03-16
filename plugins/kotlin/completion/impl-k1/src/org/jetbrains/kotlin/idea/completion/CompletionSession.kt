@@ -10,14 +10,21 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.completion.impl.RealPrefixMatchingWeigher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.ProcessingContext
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.base.fe10.analysis.classId
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptorWithTypeParameters
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
+import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.OriginCapability
@@ -29,19 +36,37 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
 import org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinClassesWeigher
-import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.core.ExpectedInfo
+import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
+import org.jetbrains.kotlin.idea.core.NotPropertiesService
+import org.jetbrains.kotlin.idea.core.compareDescriptors
+import org.jetbrains.kotlin.idea.core.fuzzyType
+import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.core.util.getResolveScope
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.kdoc.resolveKDocLink
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
+import org.jetbrains.kotlin.idea.util.FuzzyType
+import org.jetbrains.kotlin.idea.util.ImportInsertHelper
+import org.jetbrains.kotlin.idea.util.ReceiverType
+import org.jetbrains.kotlin.idea.util.ShadowedDeclarationsFilter
+import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.idea.util.receiverTypesWithIndex
+import org.jetbrains.kotlin.idea.util.toFuzzyType
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.ArrayFqNames
@@ -58,6 +83,7 @@ import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.util.match
 
+@K1Deprecation
 class CompletionSessionConfiguration(
     val useBetterPrefixMatcherForNonImportedClasses: Boolean,
     val nonAccessibleDeclarations: Boolean,
@@ -68,6 +94,7 @@ class CompletionSessionConfiguration(
     val excludeEnumEntries: Boolean,
 )
 
+@K1Deprecation
 fun CompletionSessionConfiguration(parameters: CompletionParameters) = CompletionSessionConfiguration(
     useBetterPrefixMatcherForNonImportedClasses = parameters.invocationCount < 2,
     nonAccessibleDeclarations = parameters.invocationCount >= 2,
@@ -78,6 +105,7 @@ fun CompletionSessionConfiguration(parameters: CompletionParameters) = Completio
     excludeEnumEntries = !parameters.position.languageVersionSettings.supportsFeature(LanguageFeature.EnumEntries),
 )
 
+@K1Deprecation
 abstract class CompletionSession(
     protected val configuration: CompletionSessionConfiguration,
     originalParameters: CompletionParameters,
@@ -276,9 +304,7 @@ abstract class CompletionSession(
 
     private fun _complete(): Boolean {
         // we restart completion when prefix becomes "get" or "set" to ensure that properties get lower priority comparing to get/set functions (see KT-12299)
-        val prefixPattern = StandardPatterns.string().with(object : PatternCondition<String>("get or set prefix") {
-            override fun accepts(prefix: String, context: ProcessingContext?) = prefix == "get" || prefix == "set"
-        })
+        val prefixPattern = StandardPatterns.string().oneOf("get", "set")
         collector.restartCompletionOnPrefixChange(prefixPattern)
 
         val statisticsContext = calcContextForStatisticsInfo()

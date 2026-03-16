@@ -5,9 +5,11 @@ package org.jetbrains.kotlin.idea.completion
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.channels.onClosed
+import org.jetbrains.kotlin.K1Deprecation
 import java.lang.System.currentTimeMillis
 
 
+@K1Deprecation
 interface CompletionBenchmarkSink {
     fun onCompletionStarted(completionSession: CompletionSession)
     fun onCompletionEnded(completionSession: CompletionSession, canceled: Boolean)

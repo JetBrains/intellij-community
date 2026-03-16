@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application
 
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.application.TransactionId
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.progress.ProgressManager

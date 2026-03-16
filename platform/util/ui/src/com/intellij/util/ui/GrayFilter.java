@@ -4,7 +4,7 @@ package com.intellij.util.ui;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.UIManager;
 import javax.swing.plaf.UIResource;
 import java.awt.image.RGBImageFilter;
 import java.util.Objects;

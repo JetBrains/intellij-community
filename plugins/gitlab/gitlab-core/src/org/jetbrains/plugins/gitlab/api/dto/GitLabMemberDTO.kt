@@ -10,7 +10,6 @@ import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
-import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
 
 @SinceGitLab("13.1")
 @GraphQLFragment("graphql/fragment/member.graphql")

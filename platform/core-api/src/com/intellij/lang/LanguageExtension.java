@@ -7,9 +7,18 @@ import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
 import kotlinx.collections.immutable.PersistentList;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.UnknownNullability;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;
 

@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrClassInitializer {
 

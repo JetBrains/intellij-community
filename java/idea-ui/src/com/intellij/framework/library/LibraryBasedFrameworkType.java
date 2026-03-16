@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class LibraryBasedFrameworkType extends FrameworkTypeEx {
   private static final Logger LOG = Logger.getInstance(LibraryBasedFrameworkType.class);

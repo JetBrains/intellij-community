@@ -6,12 +6,11 @@ import com.intellij.openapi.progress.runBlockingCancellable
 abstract class SuspendingLookupElementRenderer<T : LookupElement> : LookupElementRenderer<T>() {
   /**
    * Render LookupElement in a coroutine. There is no guarantee that the element is valid.
-   * The method will usually be called without a read lock.
+   * The method will usually be called without a read lock. However, if consumer calls it
+   * through `renderElement` method, there might be a read lock for which implementation should be prepared.
    *
-   * Avoid changing the dispatcher on which the coroutine runs, as this may cause
-   * spawning of hundreds of worker threads on unlimited dispatchers.
-   * E.g. `withContext`, `readAction`, `runBlocking`, `runBlockingCancellable` may move
-   * the coroutine to a different dispatcher.
+   * You may expect that the coroutine is called simultaneously
+   * from multiple coroutines for several different elements.
    */
   abstract suspend fun renderElementSuspending(element: T, presentation: LookupElementPresentation)
 

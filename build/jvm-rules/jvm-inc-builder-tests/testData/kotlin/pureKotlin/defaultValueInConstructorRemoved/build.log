@@ -1,0 +1,35 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_defaultValueInConstructorRemoved-a.kotlin_module
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/defaultValueInConstructorRemoved/a/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_defaultValueInConstructorRemoved-a.kotlin_module
+  foo/B.class
+  foo/CreateADefaultKt.class
+  foo/CreateANonDefaultKt.class
+  foo/UseAKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/defaultValueInConstructorRemoved/a/B.kt
+  kotlin/pureKotlin/defaultValueInConstructorRemoved/a/createADefault.kt
+  kotlin/pureKotlin/defaultValueInConstructorRemoved/a/createANonDefault.kt
+  kotlin/pureKotlin/defaultValueInConstructorRemoved/a/useA.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_defaultValueInConstructorRemoved-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/defaultValueInConstructorRemoved/a/B.kt
+  kotlin/pureKotlin/defaultValueInConstructorRemoved/a/createADefault.kt
+  kotlin/pureKotlin/defaultValueInConstructorRemoved/a/createANonDefault.kt
+  kotlin/pureKotlin/defaultValueInConstructorRemoved/a/useA.kt
+End of files
+------------------------------------------
+Exit code: OK

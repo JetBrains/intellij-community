@@ -15,12 +15,12 @@
  */
 package org.jetbrains.plugins.gradle.service.execution.helper
 
+import com.intellij.util.net.NetUtils
 import org.assertj.core.api.Assertions
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.junit.jupiter.params.ParameterizedTest
-import com.intellij.util.net.NetUtils
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
+import org.junit.jupiter.params.ParameterizedTest
 
 class GradleExecutionHelperJvmArgumentsTest : GradleExecutionHelperJvmArgumentsTestCase() {
 

@@ -7,7 +7,7 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.NlsContexts;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
 
 public class NonFocusableCheckBox extends JCheckBox {
   public NonFocusableCheckBox(@NlsContexts.Checkbox String text) {

@@ -9,8 +9,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
-public class ShGenerateUntilLoop extends ShBaseGenerateAction {
+@VisibleForTesting
+public final class ShGenerateUntilLoop extends ShBaseGenerateAction {
   @Override
   protected @NotNull CodeInsightActionHandler getHandler() {
     return this;

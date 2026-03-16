@@ -6,7 +6,8 @@ import com.jetbrains.python.ast.PyAstExceptPart;
 import com.jetbrains.python.psi.stubs.PyExceptPartStub;
 import org.jetbrains.annotations.Nullable;
 
-public interface PyExceptPart extends PyAstExceptPart, PyElement, StubBasedPsiElement<PyExceptPartStub>, PyNamedElementContainer, PyStatementPart {
+public interface PyExceptPart
+  extends PyAstExceptPart, PyElement, StubBasedPsiElement<PyExceptPartStub>, PyNamedElementContainer, PyStatementPart {
   PyExceptPart[] EMPTY_ARRAY = new PyExceptPart[0];
 
   @Override

@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.editor.quickDoc
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinDocumentationProvider
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith

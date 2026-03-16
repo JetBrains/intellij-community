@@ -3,6 +3,11 @@
     <module name="intellij.platform.vcs.core"/>
   </dependencies>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationSettings service="com.intellij.openapi.vcs.VcsApplicationSettings"/>
+    <projectSettings service="com.intellij.openapi.vcs.VcsConfiguration"/>
+  </extensions>
+
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.ui.filePathIconProvider"
                     interface="com.intellij.openapi.vcs.changes.FilePathIconProvider"

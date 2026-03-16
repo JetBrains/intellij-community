@@ -32,7 +32,6 @@ import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Objects;
 
 public class ThrowExceptionAction extends DebuggerAction {

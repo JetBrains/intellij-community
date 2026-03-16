@@ -22,6 +22,9 @@ public interface DifferentiateParameters {
   boolean isCompiledWithErrors();
 
   @NotNull
+  Predicate<? super NodeSource> scopeFilter();
+
+  @NotNull
   Predicate<? super NodeSource> affectionFilter();
 
   @NotNull

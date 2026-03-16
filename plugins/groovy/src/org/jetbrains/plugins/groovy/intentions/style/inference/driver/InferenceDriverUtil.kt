@@ -5,7 +5,6 @@ import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate

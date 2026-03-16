@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.ui.UIUtil
 import javax.swing.JCheckBox
 import javax.swing.JPanel

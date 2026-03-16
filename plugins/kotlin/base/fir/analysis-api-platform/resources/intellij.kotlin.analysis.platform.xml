@@ -8,6 +8,13 @@
             restartRequired="true"
     />
 
+    <registryKey
+            defaultValue="5"
+            description="The maximum number of files that the tree change preprocessor will process in a single write action before publishing a global modification event."
+            key="kotlin.analysis.treeChangePreprocessor.fileProcessingLimit"
+            restartRequired="true"
+    />
+
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeKotlinModificationTrackerFactory"/>
@@ -37,7 +44,7 @@
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.statistics.K2IdeKotlinObjectSizeCalculator"/>
 
     <psi.treeChangePreprocessor
-            implementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeOutOfBlockPsiTreeChangePreprocessor"/>
+            implementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeOutOfBlockModificationService$OutOfBlockTreeChangePreprocessor"/>
   </extensions>
 
   <projectListeners>
@@ -59,7 +66,7 @@
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
 
     <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeDumbModeInvalidationListener"
-              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
+              topic="com.intellij.openapi.project.DumbModeListenerBackgroundable"/>
   </projectListeners>
 
   <dependencies>

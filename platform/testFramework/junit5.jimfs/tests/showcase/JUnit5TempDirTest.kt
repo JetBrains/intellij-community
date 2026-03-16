@@ -2,7 +2,9 @@
 package com.intellij.platform.testFramework.junit5.jimfs.showcase
 
 import com.intellij.platform.testFramework.junit5.jimfs.JimFsTempDir
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path

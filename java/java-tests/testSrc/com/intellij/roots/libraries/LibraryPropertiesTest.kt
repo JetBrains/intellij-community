@@ -9,7 +9,11 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.impl.libraries.UnknownLibraryKind
-import com.intellij.openapi.roots.libraries.*
+import com.intellij.openapi.roots.libraries.LibraryProperties
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.roots.libraries.LibraryType
+import com.intellij.openapi.roots.libraries.NewLibraryConfiguration
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor
 import com.intellij.openapi.util.Disposer

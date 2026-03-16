@@ -9,7 +9,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.Hash
 import git4idea.commit.signature.GitCommitSignature
-import java.util.concurrent.*
+import java.util.concurrent.Executors
+import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.ThreadFactory
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
 /**
  * This loader ensures that only one git log process is launched no matter the amount of requests and only executes the latest request

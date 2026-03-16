@@ -17,8 +17,13 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaResourceRootProperties;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Box;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import java.awt.BorderLayout;
 
 public abstract class JavaResourceRootEditHandlerBase extends ModuleSourceRootEditHandler<JavaResourceRootProperties> {
   public JavaResourceRootEditHandlerBase(JpsModuleSourceRootType<JavaResourceRootProperties> rootType) {

@@ -18,7 +18,12 @@ package com.jetbrains.python.validation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyGlobalStatement;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,7 +60,8 @@ public class PyGlobalAnnotatorVisitor extends PyElementVisitor {
       for (PyTargetExpression expr : node.getGlobals()) {
         final String expr_name = expr.getReferencedName();
         if (paramNames.contains(expr_name)) {
-          myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.name.used.both.as.global.and.param", expr_name)).range(expr).create();
+          myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.name.used.both.as.global.and.param", expr_name))
+            .range(expr).create();
         }
       }
     }

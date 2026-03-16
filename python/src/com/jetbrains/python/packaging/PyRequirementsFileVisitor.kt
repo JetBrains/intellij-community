@@ -7,7 +7,8 @@ import com.intellij.psi.PsiFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.common.PythonPackage
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Locale
+
 @ApiStatus.Internal
 
 class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String, PythonPackage>,

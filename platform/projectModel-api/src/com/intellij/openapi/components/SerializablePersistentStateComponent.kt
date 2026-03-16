@@ -1,6 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components
 
+import com.intellij.util.xmlb.SettingsInternalApi
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
 
@@ -52,11 +54,24 @@ abstract class SerializablePersistentStateComponent<T : Any>(
   @Suppress("UNCHECKED_CAST")
   final override fun getState(): T = STATE_HANDLE.getVolatile(this) as T
 
+  /**
+   * Replaces the current state without updating [getStateModificationCount].
+   *
+   * This API is intended for state-loading paths (for example, [loadState]) where the store controls
+   * modification tracking separately.
+   *
+   * For runtime state changes, use [updateState]. Calling this method directly may cause persistence
+   * to skip saving because the modification count is unchanged.
+   */
+  @SettingsInternalApi
+  @Internal
   fun setState(newState: T) {
     STATE_HANDLE.setVolatile(this, newState)
   }
 
+  // method cannot be marked as Internal because it is the only way to be notified when state is loaded
   override fun loadState(state: T) {
+    @OptIn(SettingsInternalApi::class)
     setState(state)
   }
 

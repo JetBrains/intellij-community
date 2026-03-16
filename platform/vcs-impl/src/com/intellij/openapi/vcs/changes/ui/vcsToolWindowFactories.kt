@@ -16,10 +16,11 @@ import com.intellij.ui.IconManager
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StatusText
+import com.intellij.vcs.commit.CommitModeManager
 import java.util.function.Supplier
 import javax.swing.UIManager
 
-private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
+internal class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
   private val shouldShowWithoutActiveVcs = Registry.get("vcs.empty.toolwindow.show")
 
   override fun init(window: ToolWindow) {
@@ -63,7 +64,7 @@ private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
   }
 }
 
-private class CommitToolWindowFactory : VcsToolWindowFactory() {
+internal class CommitToolWindowFactory : VcsToolWindowFactory() {
   override fun init(window: ToolWindow) {
     super.init(window)
 
@@ -77,7 +78,7 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
   override fun isAvailable(project: Project): Boolean =
     canBeAvailableInProject(project) &&
     ProjectLevelVcsManager.getInstance(project).hasAnyMappings() &&
-    ChangesViewContentManager.isCommitToolWindowShown(project)
+    CommitModeManager.isCommitToolWindowEnabled(project)
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     super.createToolWindowContent(project, toolWindow)

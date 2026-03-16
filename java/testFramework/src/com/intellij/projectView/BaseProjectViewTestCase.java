@@ -22,7 +22,7 @@ import com.intellij.testFramework.TestSourceBasedTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.ListModel;
 import java.util.Arrays;
 import java.util.Comparator;
 

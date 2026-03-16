@@ -37,7 +37,6 @@ class BasicCompletionHandlerTest12 : CompletionHandlerTestBase() {
         fixture.configureByFile(fileName)
         doTestWithTextLoaded(
             fileText,
-            myFixture,
             CompletionType.BASIC,
             time,
             lookupString,

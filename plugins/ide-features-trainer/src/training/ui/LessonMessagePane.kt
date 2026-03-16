@@ -4,7 +4,12 @@ package training.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.text.StyledTextPane
 import com.intellij.ide.ui.text.paragraph.TextParagraph
-import com.intellij.ide.ui.text.parts.*
+import com.intellij.ide.ui.text.parts.CodeTextPart
+import com.intellij.ide.ui.text.parts.IconTextPart
+import com.intellij.ide.ui.text.parts.IllustrationTextPart
+import com.intellij.ide.ui.text.parts.RegularTextPart
+import com.intellij.ide.ui.text.parts.ShortcutTextPart
+import com.intellij.ide.ui.text.parts.TextPart
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.ui.scale.JBUIScale
@@ -13,7 +18,12 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.WatermarkIcon
 import training.dsl.TaskTextProperties
 import training.learn.lesson.LessonManager
-import java.awt.*
+import java.awt.Color
+import java.awt.Font
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Rectangle
+import java.awt.RenderingHints
 import java.awt.font.GlyphVector
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D

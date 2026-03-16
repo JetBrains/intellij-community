@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.i18n.GitBundle
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 internal class ShareProjectUntrackedFilesDialog(

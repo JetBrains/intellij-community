@@ -25,9 +25,12 @@ import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsReloadAction
@@ -88,8 +91,8 @@ class GHPRDiffService(private val project: Project, parentCs: CoroutineScope) {
           ImmutableToolbarLabelAction(CollaborationToolsBundle.message("review.diff.toolbar.label")),
           GHPRDiffReviewThreadsReloadAction(),
           actionManager.getAction("Github.PullRequest.Review.Submit"),
-          actionManager.getAction("GitHub.Diff.Review.PreviousComment"),
-          actionManager.getAction("GitHub.Diff.Review.NextComment"),
+          actionManager.getAction("CodeReview.PreviousComment"),
+          actionManager.getAction("CodeReview.NextComment"),
         )))
       }
     }

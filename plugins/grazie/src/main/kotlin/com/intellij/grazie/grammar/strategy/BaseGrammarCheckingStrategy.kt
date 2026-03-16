@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.grammar.strategy
 
-import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.ElementBehavior.*
+import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.ElementBehavior.ABSORB
+import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.ElementBehavior.STEALTH
+import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.ElementBehavior.TEXT
 import com.intellij.psi.PsiElement
 
 @JvmDefaultWithCompatibility

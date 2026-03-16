@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.training.promoter
 
 import com.intellij.java.ift.JavaLessonsBundle
@@ -21,7 +21,7 @@ import javax.swing.JComponent
  * Use Kotlin language as a language of this promoter, because it will be used only to log [StatisticBase.onboardingBannerShown] event.
  * And it will be possible to distinguish this promoter shown events from Java onboarding promoter.
  */
-private class JavaOrKotlinOnboardingTourPromoter : OnboardingLessonPromoter(
+internal class JavaOrKotlinOnboardingTourPromoter : OnboardingLessonPromoter(
     lessonId = ideaOnboardingLessonId, languageId = kotlinLanguageId, lessonName = JavaLessonsBundle.message("java.onboarding.lesson.name")
 ) {
     // show this promoter instead of Java onboarding tour promoter

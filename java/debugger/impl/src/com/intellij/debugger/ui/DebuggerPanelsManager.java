@@ -43,14 +43,17 @@ public final class DebuggerPanelsManager {
       return null;
     }
 
-    XDebugSession debugSession =
-      XDebuggerManager.getInstance(myProject).startSessionAndShowTab(modelEnvironment.getSessionName(), environment.getReuseContent(), new XDebugProcessStarter() {
-        @Override
-        public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
-          return JavaDebugProcess.create(session, debuggerSession);
-        }
-      });
-    return debugSession.getRunContentDescriptor();
+    XDebugProcessStarter starter = new XDebugProcessStarter() {
+      @Override
+      public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
+        return JavaDebugProcess.create(session, debuggerSession);
+      }
+    };
+    return XDebuggerManager.getInstance(myProject).newSessionBuilder(starter)
+      .sessionName(modelEnvironment.getSessionName())
+      .contentToReuse(environment.getReuseContent())
+      .showTab(true)
+      .startSession().getRunContentDescriptor();
   }
 
   public static DebuggerPanelsManager getInstance(Project project) {

@@ -14,7 +14,17 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.endOffset
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PythonLanguage
-import com.jetbrains.python.ast.*
+import com.jetbrains.python.ast.PyAstArgumentList
+import com.jetbrains.python.ast.PyAstDictLiteralExpression
+import com.jetbrains.python.ast.PyAstElement
+import com.jetbrains.python.ast.PyAstListLiteralExpression
+import com.jetbrains.python.ast.PyAstParameterList
+import com.jetbrains.python.ast.PyAstParenthesizedExpression
+import com.jetbrains.python.ast.PyAstRecursiveElementVisitor
+import com.jetbrains.python.ast.PyAstSequenceExpression
+import com.jetbrains.python.ast.PyAstSetLiteralExpression
+import com.jetbrains.python.ast.PyAstSubscriptionExpression
+import com.jetbrains.python.ast.PyAstTupleExpression
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore
 import com.jetbrains.python.psi.PyAstElementGenerator
 

@@ -6,7 +6,13 @@ import com.intellij.util.graph.InboundSemiGraph;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 @ApiStatus.Internal
 public class ShortestPathFinder<Node> {

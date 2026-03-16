@@ -17,7 +17,13 @@ package com.intellij.codeInspection.dataFlow.java.inliner;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiUtil;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;

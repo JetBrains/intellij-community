@@ -6,7 +6,6 @@ import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import org.jetbrains.plugins.github.api.data.GHRefUpdateRule
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest.BaseRef
 
 @GraphQLFragment("/graphql/fragment/pullRequestMergeability.graphql")
 data class GHPullRequestMergeabilityData(
@@ -23,4 +22,6 @@ data class GHPullRequestMergeabilityData(
     pageInfo: GraphQLCursorPageInfoDTO,
     nodes: List<GHPullRequestCommitWithCheckStatuses> = listOf()
   ) : GraphQLConnectionDTO<GHPullRequestCommitWithCheckStatuses>(pageInfo, nodes)
+
+  data class BaseRef(val refUpdateRule: GHRefUpdateRule?)
 }

@@ -23,7 +23,7 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 
-private class RepositoryLibrarySynchronizer : ProjectActivity {
+internal class RepositoryLibrarySynchronizer : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()

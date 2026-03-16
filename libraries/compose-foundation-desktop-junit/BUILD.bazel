@@ -15,7 +15,7 @@ jvm_library(
   exports = [
     "//libraries/compose-foundation-desktop",
     "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4-desktop",
-    "@lib//:kotlinx-coroutines-test",
+    "//libraries/kotlinx/coroutines/test",
     "//libraries/junit4",
     "//libraries/hamcrest",
   ]

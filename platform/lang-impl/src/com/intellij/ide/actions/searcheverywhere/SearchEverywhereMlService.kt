@@ -37,26 +37,25 @@ interface SearchEverywhereMlService {
    */
   fun isEnabled(): Boolean
 
-  fun onSessionStarted(project: Project?, mixedListInfo: SearchEverywhereMixedListInfo)
+  fun onSessionStarted(project: Project?, tabId: String, mixedListInfo: SearchEverywhereMixedListInfo)
 
   @Contract("_, _, _ -> new")
   fun createFoundElementInfo(contributor: SearchEverywhereContributor<*>,
-                                      element: Any,
-                                      priority: Int,
-                                      correction: SearchEverywhereSpellCheckResult): SearchEverywhereFoundElementInfo
+                             element: Any,
+                             priority: Int,
+                             correction: SearchEverywhereSpellCheckResult): SearchEverywhereFoundElementInfo
 
-  fun onSearchRestart(project: Project?, tabId: String, reason: SearchRestartReason,
-                               keysTyped: Int, backspacesTyped: Int, searchQuery: String,
-                               previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
-                               searchScope: ScopeDescriptor?, isSearchEverywhere: Boolean)
+  fun onSearchRestart(tabId: String, reason: SearchRestartReason,
+                      keysTyped: Int, backspacesTyped: Int, searchQuery: String,
+                      searchResults: List<SearchEverywhereFoundElementInfo>,
+                      searchScope: ScopeDescriptor?, isSearchEverywhere: Boolean)
 
-  fun onItemSelected(project: Project?, tabId: String,
-                              indexes: IntArray, selectedItems: List<Any>,
-                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
-                              closePopup: Boolean,
-                              query: String)
+  fun onItemSelected(tabId: String,
+                     indexes: IntArray, selectedItems: List<Any>,
+                     searchResults: List<SearchEverywhereFoundElementInfo>,
+                     query: String)
 
-  fun onSearchFinished(project: Project?, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>)
+  fun onSearchFinished(searchResults: List<SearchEverywhereFoundElementInfo>)
 
   fun notifySearchResultsUpdated()
 

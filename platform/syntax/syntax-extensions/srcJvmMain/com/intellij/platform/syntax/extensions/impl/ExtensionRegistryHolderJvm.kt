@@ -11,7 +11,7 @@ import fleet.util.multiplatform.Actual
  *
  * @see instantiateExtensionRegistry
  */
-@Actual("instantiateExtensionRegistry")
+@Actual
 internal fun instantiateExtensionRegistryJvm(): ExtensionSupport {
   try {
     val clazz = Class.forName("com.intellij.platform.syntax.psi.extensions.IntelliJExtensionSupport")

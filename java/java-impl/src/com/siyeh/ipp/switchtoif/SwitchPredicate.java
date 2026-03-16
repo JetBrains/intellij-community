@@ -16,7 +16,14 @@
 package com.siyeh.ipp.switchtoif;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ConvertSwitchToIfIntention;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiSwitchStatement;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;

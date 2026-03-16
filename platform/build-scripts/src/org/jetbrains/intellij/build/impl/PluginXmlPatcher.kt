@@ -9,7 +9,12 @@ import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompatibleBuildRange
-import org.jetbrains.intellij.build.JarPackagerDependencyHelper
+import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
+import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
+import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
+import org.jetbrains.intellij.build.classPath.embedContentModule
+import org.jetbrains.intellij.build.classPath.resolveIncludes
+import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 
 private val buildNumberRegex = Regex("""(\d+\.)+\d+""")
 private val digitDotDigitRegex = Regex("""\d+\.\d+""")
@@ -45,56 +50,80 @@ fun getCompatiblePlatformVersionRange(compatibleBuildRange: CompatibleBuildRange
 
 internal suspend fun patchPluginXml(
   moduleOutputPatcher: ModuleOutputPatcher,
-  plugin: PluginLayout,
+  platformLayout: PlatformLayout,
+  pluginLayout: PluginLayout,
   releaseDate: String,
   releaseVersion: String,
   pluginsToPublish: Set<PluginLayout?>,
-  helper: JarPackagerDependencyHelper,
-  platformLayout: PlatformLayout,
+  platformDescriptorCache: ScopedCachedDescriptorContainer,
+  pluginDescriptorCache: ScopedCachedDescriptorContainer,
   context: BuildContext,
 ) {
-  val pluginModule = context.findRequiredModule(plugin.mainModule)
-  val descriptorContent = plugin.rawPluginXmlPatcher(helper.getPluginXmlContent(pluginModule), context)
+  val pluginModule = context.findRequiredModule(pluginLayout.mainModule)
+  val descriptorContent = pluginLayout.rawPluginXmlPatcher(getUnprocessedPluginXmlContent(pluginModule, context.outputProvider).decodeToString(), context)
 
   val includeInBuiltinCustomRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
                                          context.proprietaryBuildTools.artifactsServer != null
-  val isBundled = !pluginsToPublish.contains(plugin)
+  val isBundled = !pluginsToPublish.contains(pluginLayout)
   val compatibleBuildRange = context.productProperties.customCompatibleBuildRange ?: when {
-    isBundled || plugin.pluginCompatibilityExactVersion || includeInBuiltinCustomRepository -> CompatibleBuildRange.EXACT
-    context.applicationInfo.isEAP || plugin.pluginCompatibilitySameRelease -> CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
+    isBundled || pluginLayout.pluginCompatibilityExactVersion || includeInBuiltinCustomRepository -> CompatibleBuildRange.EXACT
+    context.applicationInfo.isEAP || pluginLayout.pluginCompatibilitySameRelease -> CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
     else -> CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
   }
 
-  val pluginVersion = getPluginVersion(plugin, descriptorContent, context)
+  val pluginVersion = getPluginVersion(plugin = pluginLayout, descriptorContent = descriptorContent, context = context)
+
   @Suppress("TestOnlyProblems")
   val content = try {
-    val element = doPatchPluginXml(
-      rootElement = JDOMUtil.load(descriptorContent),
-      pluginModuleName = plugin.mainModule,
+    val element = JDOMUtil.load(descriptorContent)
+    doPatchPluginXml(
+      rootElement = element,
+      pluginModuleName = pluginLayout.mainModule,
       pluginVersion = pluginVersion.pluginVersion,
       releaseDate = releaseDate,
       releaseVersion = releaseVersion,
       compatibleSinceUntil = pluginVersion.sinceUntil ?: getCompatiblePlatformVersionRange(compatibleBuildRange, context.buildNumber),
-      toPublish = pluginsToPublish.contains(plugin),
-      retainProductDescriptorForBundledPlugin = plugin.retainProductDescriptorForBundledPlugin,
+      toPublish = pluginsToPublish.contains(pluginLayout),
+      retainProductDescriptorForBundledPlugin = pluginLayout.retainProductDescriptorForBundledPlugin,
       isEap = context.applicationInfo.isEAP,
     )
 
-    embedContentModules(
-      xml = element,
-      file = findFileInModuleSources(module = pluginModule, relativePath = "META-INF/plugin.xml")!!,
-      xIncludePathResolver = createXIncludePathResolver(plugin.includedModules.map { it.moduleName } + platformLayout.includedModules.map { it.moduleName }, context),
-      layout = plugin,
+    // see comment in productModuleLayout
+    val xIncludeResolver = XIncludeElementResolverImpl(
+      searchPath = listOf(
+        DescriptorSearchScope(pluginLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName }, pluginDescriptorCache),
+        DescriptorSearchScope(platformLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName }, platformDescriptorCache),
+      ),
       context = context,
     )
+    resolveIncludes(element = element, elementResolver = xIncludeResolver)
 
-    plugin.pluginXmlPatcher(JDOMUtil.write(element), context)
+    val dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper
+    val frontendModuleFilter = context.getFrontendModuleFilter()
+    filterAndProcessContentModules(rootElement = element, pluginMainModuleName = pluginLayout.mainModule, context = context) { moduleElement, moduleName, _ ->
+      if (!pluginLayout.pathsToScramble.isEmpty()) {
+        return@filterAndProcessContentModules
+      }
+
+      embedContentModule(
+        moduleElement = moduleElement,
+        pluginDescriptorContainer = pluginDescriptorCache,
+        xIncludeResolver = xIncludeResolver,
+        moduleName = moduleName,
+        dependencyHelper = dependencyHelper,
+        pluginLayout = pluginLayout,
+        frontendModuleFilter = frontendModuleFilter,
+        outputProvider = context.outputProvider,
+      )
+    }
+    pluginLayout.pluginXmlPatcher(JDOMUtil.write(element), context)
   }
   catch (e: Throwable) {
-    throw RuntimeException("Could not patch descriptor (module=${plugin.mainModule})", e)
+    throw RuntimeException("Could not patch descriptor (module=${pluginLayout.mainModule})", e)
   }
-  // os-specific plugins being built several times - we expect that plugin.xml must be the same
-  moduleOutputPatcher.patchModuleOutput(moduleName = plugin.mainModule, path = "META-INF/plugin.xml", content = content, overwrite = PatchOverwriteMode.IF_EQUAL)
+  // OS-specific plugins being built several times - we expect that plugin.xml must be the same
+  moduleOutputPatcher.patchModuleOutput(moduleName = pluginLayout.mainModule, path = PLUGIN_XML_RELATIVE_PATH, content = content, overwrite = PatchOverwriteMode.IF_EQUAL)
+  pluginDescriptorCache.put(PLUGIN_XML_RELATIVE_PATH, content.toByteArray())
 }
 
 private val DEV_BUILD_SCHEME: Regex = Regex("^${SnapshotBuildNumber.BASE.replace(".", "\\.")}\\.(SNAPSHOT|[0-9]+)$")
@@ -124,7 +153,7 @@ fun doPatchPluginXml(
   toPublish: Boolean,
   retainProductDescriptorForBundledPlugin: Boolean,
   isEap: Boolean,
-): Element {
+) {
   val ideaVersionElement = getOrCreateTopElement(rootElement, "idea-version", listOf("id", "name"))
   ideaVersionElement.setAttribute("since-build", compatibleSinceUntil.first)
   ideaVersionElement.setAttribute("until-build", compatibleSinceUntil.second)
@@ -158,8 +187,6 @@ fun doPatchPluginXml(
       }
     }
   }
-
-  return rootElement
 }
 
 fun getOrCreateTopElement(rootElement: Element, tagName: String, anchors: List<String>): Element {
@@ -168,7 +195,7 @@ fun getOrCreateTopElement(rootElement: Element, tagName: String, anchors: List<S
   }
 
   val newElement = Element(tagName)
-  val anchor = anchors.asSequence().mapNotNull { rootElement.getChild(it) }.firstOrNull()
+  val anchor = anchors.firstNotNullOfOrNull { rootElement.getChild(it) }
   if (anchor == null) {
     rootElement.addContent(0, newElement)
   }

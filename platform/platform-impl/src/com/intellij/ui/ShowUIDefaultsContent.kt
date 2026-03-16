@@ -14,9 +14,15 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.dsl.builder.text
 import com.intellij.ui.speedSearch.FilteringTableModel
 import com.intellij.ui.table.JBTable
+import com.intellij.util.text.matching.MatchingMode
 import java.awt.Color
 import javax.swing.UIManager
 
@@ -97,7 +103,7 @@ internal class ShowUIDefaultsContent(@JvmField val table: JBTable) {
       model.setFilter(null)
       return
     }
-    val matcher = NameUtil.buildMatcher("*" + searchField.getText(), NameUtil.MatchingCaseSensitivity.NONE)
+    val matcher = NameUtil.buildMatcher("*" + searchField.getText(), MatchingMode.IGNORE_CASE)
     model.setFilter(object : Condition<Any> {
       override fun value(pair: Any?): Boolean {
         val obj = (pair as Pair<*, *>).second

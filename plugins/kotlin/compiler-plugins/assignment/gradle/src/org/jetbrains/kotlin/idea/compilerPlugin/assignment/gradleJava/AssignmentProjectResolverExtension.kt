@@ -11,9 +11,9 @@ import org.jetbrains.kotlin.idea.gradleTooling.model.assignment.AssignmentModel
 
 class AssignmentProjectResolverExtension : AnnotationBasedPluginProjectResolverExtension<AssignmentModel>() {
     companion object {
-        val KEY = Key.create(AssignmentModel::class.java, 1)
+        val KEY: Key<AssignmentModel> = Key.create(AssignmentModel::class.java, 1)
     }
 
     override val modelClass get() = AssignmentModel::class.java
-    override val userDataKey get() = KEY
+    override val userDataKey: Key<AssignmentModel> get() = KEY
 }

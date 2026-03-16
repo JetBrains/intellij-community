@@ -8,7 +8,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import java.io.File
-import java.util.*
+import java.util.Properties
 
 @Suppress("PropertyName")
 abstract class ExternalSystemJdkComboBoxTestCase : ExternalSystemTestCase() {
@@ -25,7 +25,7 @@ abstract class ExternalSystemJdkComboBoxTestCase : ExternalSystemTestCase() {
   protected val comboBox by lazy {
     invokeAndWaitIfNeeded {
       runWriteAction {
-        val jdkTable = ProjectJdkTable.getInstance()
+        val jdkTable = ProjectJdkTable.getInstance(myProject)
         jdkTable.addJdk(JDK6, myProject)
         jdkTable.addJdk(JDK7, myProject)
         jdkTable.addJdk(JDK8, myProject)
@@ -50,7 +50,7 @@ abstract class ExternalSystemJdkComboBoxTestCase : ExternalSystemTestCase() {
    * @see com.intellij.openapi.projectRoots.JdkUtil.checkForJdk
    */
   private fun createFakeJdk(name: String, version: String): Sdk {
-    val sdk = ProjectJdkTable.getInstance().createSdk(name, getJavaSdkType())
+    val sdk = ProjectJdkTable.getInstance(myProject).createSdk(name, getJavaSdkType())
     val sdkModificator = sdk.sdkModificator
     sdkModificator.homePath = "$projectPath/jdk-$name"
     sdkModificator.commitChanges()

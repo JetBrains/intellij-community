@@ -12,7 +12,14 @@ import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForKtPropertyDe
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.idea.highlighter.visitor.AbstractHighlightingVisitor
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
 
 internal class DeclarationHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHighlightingVisitor(holder), DumbAware {
     override fun visitTypeAlias(typeAlias: KtTypeAlias) {
@@ -43,9 +50,10 @@ internal class DeclarationHighlightingVisitor(holder: HighlightInfoHolder) : Abs
     override fun visitDestructuringDeclaration(destructuringDeclaration: KtDestructuringDeclaration) {
         val isVar = destructuringDeclaration.isVar
         for (entry in destructuringDeclaration.entries) {
-            highlightName(entry, KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE)
+            val element = entry.identifyingElement ?: entry
+            highlightName(element, KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE)
             if (isVar) {
-                highlightName(entry, KotlinHighlightInfoTypeSemanticNames.MUTABLE_VARIABLE)
+                highlightName(element, KotlinHighlightInfoTypeSemanticNames.MUTABLE_VARIABLE)
             }
         }
     }

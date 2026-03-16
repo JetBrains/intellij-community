@@ -3,7 +3,12 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -30,7 +35,7 @@ public class PyTupleExpressionImpl extends PySequenceExpressionImpl implements P
     super.deleteChildInternal(child);
     final PyExpression[] children = getElements();
     final PyElementGenerator generator = PyElementGenerator.getInstance(getProject());
-    if (children.length == 1 && PyPsiUtils.getNextComma(children[0]) == null ) {
+    if (children.length == 1 && PyPsiUtils.getNextComma(children[0]) == null) {
       addAfter(generator.createComma().getPsi(), children[0]);
     }
     else if (children.length == 0 && !(getParent() instanceof PyParenthesizedExpression)) {

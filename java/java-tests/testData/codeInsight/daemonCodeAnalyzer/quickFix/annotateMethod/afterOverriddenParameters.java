@@ -1,4 +1,4 @@
-// "Annotate overriding method parameters as '@NotNull'" "true"
+// "Annotate overriding method parameters as non-null" "true"
 import org.jetbrains.annotations.NotNull;
 
 abstract class P2 {

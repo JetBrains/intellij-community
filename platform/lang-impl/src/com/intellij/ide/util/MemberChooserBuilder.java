@@ -9,7 +9,7 @@ import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public final class MemberChooserBuilder<T extends ClassMember> {
   private final Project myProject;

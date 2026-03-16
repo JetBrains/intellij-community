@@ -88,6 +88,7 @@ class DefaultCommitChangeListDialog(val workflow: SingleChangeListCommitWorkflow
 private class DiffCommitMessageEditor(project: Project, commitMessage: CommitMessage) : CommitMessage(project) {
   init {
     editorField.document = commitMessage.editorField.document
+
   }
 
   // we don't want to be squeezed to one line

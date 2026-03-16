@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProject
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getKotlinModuleId
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
-import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
@@ -18,8 +17,7 @@ internal fun KotlinMppGradleProjectResolver.Companion.getCompilations(
     gradleModule: IdeaModule,
     mppModel: KotlinMPPGradleModel,
     ideModule: DataNode<ModuleData>,
-    resolverCtx: ProjectResolverContext,
-    filterTargets: (KotlinTarget) -> Boolean = { true }
+    resolverCtx: ProjectResolverContext
 ): Sequence<Pair<DataNode<GradleSourceSetData>, KotlinCompilation>> {
 
     val sourceSetsMap = HashMap<String, DataNode<GradleSourceSetData>>()
@@ -31,7 +29,6 @@ internal fun KotlinMppGradleProjectResolver.Companion.getCompilations(
 
     return sequence {
         for (target in mppModel.targets) {
-            if (!filterTargets(target)) continue
             for (compilation in target.compilations) {
                 val moduleId = getKotlinModuleId(gradleModule, compilation, resolverCtx)
                 val moduleDataNode = sourceSetsMap[moduleId] ?: continue

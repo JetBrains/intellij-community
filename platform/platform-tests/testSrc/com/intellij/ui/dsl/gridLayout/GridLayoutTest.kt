@@ -1,8 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.gridLayout
 
-import com.intellij.ui.dsl.*
+import com.intellij.ui.dsl.PREFERRED_HEIGHT
+import com.intellij.ui.dsl.PREFERRED_SIZE
+import com.intellij.ui.dsl.PREFERRED_WIDTH
+import com.intellij.ui.dsl.doLayout
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.ui.dsl.label
 import com.intellij.ui.scale.JBUIScale
 import org.junit.Assert
 import org.junit.Test
@@ -51,7 +55,7 @@ class GridLayoutTest {
     RowsGridBuilder(panel)
       .cell(label, visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
-    // Visual paddings are compensated by layout, so whole component is fit
+    // Layout compensates for visual paddings, so the whole component is fit
     assertEquals(0, label.x)
     assertEquals(0, label.y)
     assertEquals(panel.preferredSize, PREFERRED_SIZE)
@@ -63,7 +67,7 @@ class GridLayoutTest {
       .cell(label, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.BOTTOM,
             resizableColumn = true, visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
-    // Visual paddings are compensated by layout, so whole component is fit
+    // Layout compensates for visual paddings, so the whole component is fit
     assertEquals(0, label.x)
     assertEquals(100 - PREFERRED_HEIGHT, label.y)
     assertEquals(panel.preferredSize, PREFERRED_SIZE)
@@ -153,9 +157,10 @@ class GridLayoutTest {
             visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
     assertEquals(PREFERRED_SIZE, label.preferredSize)
-    // Visual paddings are compensated by layout, so whole component is fit
+    // Layout compensates for visual paddings, so the whole component is fit
     assertEquals(max(0, JBUIScale.scale(gaps.left) - JBUIScale.scale(visualPaddings.left)), label.x)
-    assertEquals(JBUIScale.scale(gaps.top) + (100 - PREFERRED_HEIGHT - JBUIScale.scale(gaps.height) + JBUIScale.scale(visualPaddings.height)) / 2 - JBUIScale.scale(visualPaddings.top), label.y)
+    assertEquals(JBUIScale.scale(gaps.top) + (100 - PREFERRED_HEIGHT - JBUIScale.scale(gaps.height) + JBUIScale.scale(visualPaddings.height)) / 2 - JBUIScale.scale(
+      visualPaddings.top), label.y)
 
     panel.removeAll()
     RowsGridBuilder(panel)
@@ -163,7 +168,7 @@ class GridLayoutTest {
       .cell(label, horizontalAlign = HorizontalAlign.RIGHT, verticalAlign = VerticalAlign.FILL, resizableColumn = true, gaps = gaps,
             visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
-    // Visual paddings are compensated by layout, so whole component is fit
+    // Layout compensates for visual paddings, so the whole component is fit
     assertEquals(Dimension(PREFERRED_WIDTH, 100), label.size)
     assertEquals(200 - PREFERRED_WIDTH, label.x)
     assertEquals(0, label.y)
@@ -227,7 +232,7 @@ class GridLayoutTest {
     var preferredHeight = rowsCount * PREFERRED_HEIGHT + layout.rootGrid.rowsGaps.sumOf { it.height }
     assertEquals(Dimension(preferredWidth, preferredHeight), panel.preferredSize)
 
-    // Hide whole column 1
+    // Hide the whole column 1
     for (y in 0 until rowsCount) {
       labels[y][1].isVisible = false
       if (y == rowsCount - 1) {
@@ -236,7 +241,7 @@ class GridLayoutTest {
       assertEquals(Dimension(preferredWidth, preferredHeight), panel.preferredSize)
     }
 
-    // Hide whole row 2
+    // Hide the whole row 2
     for (x in 0 until columnsCount) {
       labels[2][x].isVisible = false
       if (x == columnsCount - 1) {

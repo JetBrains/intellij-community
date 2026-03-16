@@ -4,7 +4,11 @@ package com.intellij.collaboration.ui
 import com.intellij.collaboration.ui.util.bindIn
 import com.intellij.collaboration.ui.util.name
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.ui.*
+import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.ComboboxSpeedSearch
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.SideBorder
+import com.intellij.ui.SimpleTextAttributes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

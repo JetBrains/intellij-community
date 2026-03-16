@@ -3,7 +3,12 @@ package com.intellij.lang.ant;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;

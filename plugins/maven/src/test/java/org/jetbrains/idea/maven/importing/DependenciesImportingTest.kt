@@ -35,6 +35,7 @@ import java.util.Arrays
 import kotlin.io.path.exists
 
 class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
+  override fun skipPluginResolution() = false
 
   override fun setUp() {
     super.setUp()

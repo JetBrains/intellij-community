@@ -9,6 +9,7 @@ import org.jetbrains.intellij.build.checkForNoDiskSpace
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProduct
 import org.jetbrains.intellij.build.dev.readVmOptions
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.time.Duration
 
@@ -53,7 +54,9 @@ private class DevModeProductRunner(
 ) : IntellijProductRunner {
   override suspend fun runProduct(args: List<String>, additionalVmProperties: VmProperties, timeout: Duration) {
     val vmOptionsFromBuild = readVmOptions(homePath)
-    runApplicationStarter(
+    val appStarterId = args.firstOrNull() ?: "appStarter"
+    doRunApplicationStarter(
+      appStarterId = appStarterId,
       context = context,
       classpath = classPath,
       args = args,
@@ -62,6 +65,7 @@ private class DevModeProductRunner(
       vmProperties = additionalVmProperties,
       isFinalClassPath = true,
       vmOptions = vmOptionsFromBuild,
+      tempDir = Files.createTempDirectory(context.paths.tempDir, appStarterId),
     )
   }
 }

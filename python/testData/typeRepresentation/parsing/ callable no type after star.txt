@@ -1,0 +1,12 @@
+TypeRepresentation:a.pythonTypeRepresentation
+  PyFunctionTypeRepresentation
+    PyParameterListRepresentation
+      PsiElement(Py:LPAR)('(')
+      PyStarExpression
+        PsiElement(Py:MULT)('*')
+      PsiElement(Py:RPAR)(')')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:RARROW)('->')
+    PsiWhiteSpace(' ')
+    PyReferenceExpression: int
+      PsiElement(Py:IDENTIFIER)('int')

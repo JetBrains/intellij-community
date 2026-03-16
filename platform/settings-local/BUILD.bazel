@@ -46,7 +46,7 @@ jvm_library(
     "//platform/object-serializer",
     "//libraries/kotlinx/serialization/json",
     "//libraries/aalto-xml",
-    "@lib//:kotlinx-serialization-cbor",
+    "//libraries/kotlinx/serialization/cbor",
   ]
 )
 
@@ -90,7 +90,7 @@ jvm_library(
     "//libraries/aalto-xml",
     "//community-resources:customization",
     "//platform/testFramework/core",
-    "@lib//:kotlinx-serialization-cbor",
+    "//libraries/kotlinx/serialization/cbor",
   ]
 )
 ### auto-generated section `build intellij.platform.settings.local` end

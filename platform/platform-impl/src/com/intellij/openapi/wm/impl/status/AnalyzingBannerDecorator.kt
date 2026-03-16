@@ -14,7 +14,6 @@ import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.ui.JBUI
 import java.awt.Component
 import javax.swing.JPanel
-import kotlin.getValue
 
 /**
  * Places analyzing progress indicator on top, adds a banner under it.
@@ -91,7 +90,7 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, private val p
     val banner = InlineBanner().apply {
       setMessage(IndexingBundle.message("progress.indexing.banner.text"))
       addAction(IdeBundle.message("link.learn.more")) {
-        val url = HelpManagerImpl.getHelpUrl("Indexing")
+        val url = HelpManagerImpl.getHelpUrl("Project-analysis")
         if (url != null) {
           BrowserUtil.browse(url)
         }

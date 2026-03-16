@@ -28,7 +28,6 @@ import com.intellij.ui.stripe.ErrorStripePainter;
 import com.intellij.ui.stripe.TreeUpdater;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -36,16 +35,23 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
+import javax.swing.ToolTipManager;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
-import java.awt.*;
+import java.awt.Color;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Comparator;
+import java.util.List;
 
 import static com.intellij.ide.projectView.ProjectViewSelectionTopicKt.PROJECT_VIEW_SELECTION_TOPIC;
+import static com.intellij.ui.tree.project.ProjectViewUpdateCauseUtilKt.guessProjectViewUpdateCauseByCaller;
 
 public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractProjectViewPane
   implements AbstractProjectViewPane.ProjectViewPaneWithAsyncSelect {
@@ -192,7 +198,10 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     afterUpdate = cb.createSetDoneRunnable();
     if (myAsyncSupport != null) {
       myProject.getMessageBus().syncPublisher(ProjectViewListener.TOPIC).paneUpdateScheduled(this);
-      myAsyncSupport.updateAll(afterUpdate);
+      var cause = updateFromRootCause != null
+                  ? updateFromRootCause
+                  : guessProjectViewUpdateCauseByCaller(AbstractProjectViewPaneWithAsyncSupport.class);
+      myAsyncSupport.updateAll(afterUpdate, List.of(cause));
     }
     else {
       return ActionCallback.REJECTED;

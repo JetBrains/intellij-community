@@ -1,45 +1,127 @@
 import re
-from _typeshed import Unused
+from _typeshed import Incomplete, Unused
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from functools import cached_property
 from json.decoder import JSONDecoder
-from typing import Any, Literal, TypedDict, TypeVar, type_check_only
-from typing_extensions import Required, TypeAlias
+from typing import Any, ClassVar, Literal, TypedDict, TypeVar, overload, type_check_only
+from typing_extensions import Never, Required, TypeAlias, deprecated
 from urllib.request import Request, _DataType
 from xml.etree import ElementTree as ET
+
+from yt_dlp.utils import PagedList
 
 from ..cache import Cache
 from ..cookies import LenientSimpleCookie, YoutubeDLCookieJar
 from ..networking.common import Response, _RequestData
 from ..networking.impersonate import ImpersonateTarget
-from ..utils._utils import NO_DEFAULT, RetryManager as _RetryManager
+from ..utils._utils import NO_DEFAULT, ExtractorError, FormatSorter, RetryManager as _RetryManager, classproperty
 from ..YoutubeDL import YoutubeDL
 
 @type_check_only
 class _InfoDict(TypedDict, total=False):
-    age_limit: int
-    availability: Literal["private", "premium_only", "subscriber_only", "needs_auth", "unlisted", "public"] | None
-    available_at: int
-    creator: str | None
-    comment_count: int | None
-    duration: int | None
-    formats: list[dict[str, Any]] | None
     id: Required[str]
-    like_count: int | None
-    tags: list[str] | None
-    thumbnail: str | None
-    timestamp: int | float | None
     title: str | None
-    uploader: str | None
+    formats: list[dict[str, Any]] | None
+    available_at: int
     url: str | None
+    ext: str | None
+    format: str | None
+    player_url: str | None
+    direct: bool | None
+    alt_title: str | None
+    display_id: Incomplete
+    thumbnails: list[dict[str, Incomplete]] | None
+    thumbnail: str | None
+    description: str | None
+    uploader: str | None
+    license: str | None
+    creators: list[str] | None
+    timestamp: int | float | None
+    upload_date: Incomplete
+    release_timestamp: Incomplete
+    release_date: Incomplete
+    release_year: Incomplete
+    modified_timestamp: Incomplete
+    modified_date: Incomplete
+    uploader_id: Incomplete
+    uploader_url: str | None
+    channel: str | None
+    channel_id: Incomplete
+    channel_url: str | None
+    channel_follower_count: int | None
+    channel_is_verified: Incomplete
+    location: Incomplete
+    subtitles: Incomplete
+    automatic_captions: Incomplete
+    duration: int | None
+    view_count: int | None
+    concurrent_view_count: int | None
+    save_count: int | None
+    like_count: int | None
+    dislike_count: int | None
+    repost_count: int | None
+    average_rating: Incomplete
+    comment_count: int | None
+    comments: Incomplete
+    age_limit: int
+    webpage_url: str | None
+    categories: list[str] | None
+    tags: list[str] | None
+    cast: list[Incomplete] | None
+    is_live: bool | None
+    was_live: bool | None
+    live_status: Literal["is_live", "is_upcoming", "was_live", "not_live", "post_live"] | None
+    start_time: Incomplete
+    end_time: Incomplete
+    chapters: Incomplete
+    heatmap: Incomplete
+    playable_in_embed: bool | str | None
+    availability: Literal["private", "premium_only", "subscriber_only", "needs_auth", "unlisted", "public"] | None
+    media_type: str | None
+    _old_archive_ids: Incomplete
+    _format_sort_fields: Incomplete
+    chapter: str | None
+    chapter_number: int | None
+    chapter_id: str | None
+    series: str | None
+    series_id: str | None
+    season: str | None
+    season_number: int | None
+    season_id: str | None
+    episode: Incomplete
+    episode_number: int | None
+    episode_id: str | None
+    track: str | None
+    track_number: int | None
+    track_id: str | None
+    artists: list[str] | None
+    composers: list[str] | None
+    genres: list[str] | None
+    album: str | None
+    album_type: str | None
+    album_artists: list[str] | None
+    disc_number: int | None
+    section_start: Incomplete
+    section_end: Incomplete
+    rows: int | None
+    columns: int | None
+    playlist_count: int | None
+    entries: Iterable[_InfoDict] | PagedList
+    requested_formats: Iterable[_InfoDict]
+    # deprecated fields:
+    composer: Incomplete
+    artist: Incomplete
+    genre: Incomplete
+    album_artist: Incomplete
+    creator: str | None
 
 _StrNoDefaultOrNone: TypeAlias = str | None | type[NO_DEFAULT]
 _T = TypeVar("_T")
 
 class InfoExtractor:
-    IE_DESC: str | bool
-    SEARCH_KEY: str
-    def _login_hint(self, method: _StrNoDefaultOrNone, netrc: str | None = None) -> dict[str, str]: ...
+    IE_DESC: ClassVar[str | bool | None]
+    SEARCH_KEY: ClassVar[str | None]
+    def _login_hint(self, method: _StrNoDefaultOrNone = ..., netrc: str | None = None) -> dict[str, str]: ...
     def __init__(self, downloader: YoutubeDL | None = None) -> None: ...
     @classmethod
     def _match_valid_url(cls, url: str) -> re.Match[str] | None: ...
@@ -82,8 +164,8 @@ class InfoExtractor:
         fatal: bool = True,
         encoding: str | None = None,
         data: _DataType | None = None,
-        headers: Mapping[str, str] | None = None,
-        query: str | Mapping[str, str] | None = None,
+        headers: Mapping[str, str] | None = {},
+        query: str | Mapping[str, str] | None = {},
         expected_status: int | None = None,
         impersonate: ImpersonateTarget | str | bool | Collection[str | ImpersonateTarget] | None = None,
         require_impersonation: bool = False,
@@ -128,14 +210,21 @@ class InfoExtractor:
         parse_constant: Callable[[str], Any] | None = None,
         object_pairs_hook: Callable[[list[tuple[Any, Any]]], Any] | None = None,
     ) -> Any: ...
-    def report_warning(self, msg: str, video_id: str | None = None, only_once: bool = False) -> None: ...
+    # *args and **kwargs are passed to self._downloader.report_warning().
+    def report_warning(
+        self, msg: str, video_id: str | None = None, *args: Any, only_once: bool = False, **kwargs: Any
+    ) -> None: ...
     def to_screen(
         self, msg: str, message: str, skip_eol: bool = False, quiet: bool | None = None, only_once: bool = False
     ) -> None: ...
     def write_debug(self, msg: str, only_once: bool = False) -> None: ...
     # *args and **kwargs are passed to .params.get() where params is normally a mapping but is not required to be.
     def get_param(self, name: str, default: Any = None, *args: Any, **kwargs: Any) -> Any: ...
-    def report_drm(self, video_id: str) -> None: ...
+    @overload
+    def report_drm(self, video_id: str, partial: type[NO_DEFAULT] = ...) -> None: ...
+    @overload
+    @deprecated("InfoExtractor.report_drm no longer accepts the argument partial")
+    def report_drm(self, video_id: str, partial: bool) -> None: ...
     def report_extraction(self, id_or_name: str) -> None: ...
     def report_download_webpage(self, video_id: str) -> None: ...
     def report_age_confirmation(self) -> None: ...
@@ -149,7 +238,12 @@ class InfoExtractor:
     def raise_geo_restricted(
         self, msg: str = ..., countries: Collection[str] | None = None, metadata_available: bool = False
     ) -> None: ...
-    def raise_no_formats(self, msg: str, expected: bool = False, video_id: str | None = None) -> None: ...
+    @overload
+    def raise_no_formats(
+        self, msg: str | ExtractorError, expected: Literal[False] = False, video_id: str | None = None
+    ) -> Never: ...
+    @overload
+    def raise_no_formats(self, msg: str | ExtractorError, expected: Literal[True], video_id: str | None = None) -> None: ...
     @staticmethod
     def url_result(
         url: str,
@@ -169,7 +263,6 @@ class InfoExtractor:
         getter: Callable[..., Any] = ...,
         ie: InfoExtractor | None = None,
         video_kwargs: Mapping[str, Any] | None = None,
-        multi_video: bool = False,
         **kwargs: Any,  # Added to the dict return value.
     ) -> dict[str, Any]: ...
     @staticmethod
@@ -212,7 +305,7 @@ class InfoExtractor:
         headers: Mapping[str, str] = {},
         query: Mapping[str, str] = {},
         expected_status: int | None = None,
-        impersonate: str | None = None,
+        impersonate: ImpersonateTarget | str | bool | Collection[str | ImpersonateTarget] | None = None,
         require_impersonation: bool = False,
     ) -> tuple[ET.ElementTree, Response]: ...
     def _download_xml(
@@ -228,7 +321,7 @@ class InfoExtractor:
         headers: Mapping[str, str] = {},
         query: Mapping[str, str] = {},
         expected_status: int | None = None,
-        impersonate: str | None = None,
+        impersonate: ImpersonateTarget | str | bool | Collection[str | ImpersonateTarget] | None = None,
         require_impersonation: bool = False,
     ) -> ET.ElementTree: ...
     def _download_socket_json_handle(
@@ -244,7 +337,7 @@ class InfoExtractor:
         headers: Mapping[str, str] = {},
         query: Mapping[str, str] = {},
         expected_status: int | None = None,
-        impersonate: str | None = None,
+        impersonate: ImpersonateTarget | str | bool | Collection[str | ImpersonateTarget] | None = None,
         require_impersonation: bool = False,
     ) -> tuple[dict[str, Any], Response]: ...
     def _download_socket_json(
@@ -260,7 +353,7 @@ class InfoExtractor:
         headers: Mapping[str, str] = {},
         query: Mapping[str, str] = {},
         expected_status: int | None = None,
-        impersonate: str | None = None,
+        impersonate: ImpersonateTarget | str | bool | Collection[str | ImpersonateTarget] | None = None,
         require_impersonation: bool = False,
     ) -> dict[str, Any]: ...
     def _download_json_handle(
@@ -276,7 +369,7 @@ class InfoExtractor:
         headers: Mapping[str, str] = {},
         query: Mapping[str, str] = {},
         expected_status: int | None = None,
-        impersonate: str | None = None,
+        impersonate: ImpersonateTarget | str | bool | Collection[str | ImpersonateTarget] | None = None,
         require_impersonation: bool = False,
     ) -> tuple[dict[str, Any], Response]: ...
     def _download_json(
@@ -292,7 +385,7 @@ class InfoExtractor:
         headers: Mapping[str, str] = {},
         query: Mapping[str, str] = {},
         expected_status: int | None = None,
-        impersonate: str | None = None,
+        impersonate: ImpersonateTarget | str | bool | Collection[str | ImpersonateTarget] | None = None,
         require_impersonation: bool = False,
     ) -> dict[str, Any]: ...
     def _download_webpage(
@@ -301,14 +394,17 @@ class InfoExtractor:
         video_id: str,
         note: str | None = None,
         errnote: str | None = None,
-        transform_source: Callable[..., str] | None = ...,
         fatal: bool = True,
+        tries: int = 1,
+        timeout: float | type[NO_DEFAULT] = ...,
+        # Remaining arguments are collected with *args, **kwargs and
+        # forwarded to _download_webpage_handle().
         encoding: str | None = ...,
         data: _DataType | None = ...,
         headers: Mapping[str, str] = ...,
         query: Mapping[str, str] = ...,
         expected_status: int | None = ...,
-        impersonate: str | None = ...,
+        impersonate: ImpersonateTarget | str | bool | Collection[str | ImpersonateTarget] | None = ...,
         require_impersonation: bool = ...,
     ) -> str: ...
     def _parse_xml(
@@ -333,7 +429,7 @@ class InfoExtractor:
     ) -> Literal["needs_auth", "premium_only", "private", "public", "subscriber_only", "unlisted"] | None: ...
     def _request_webpage(
         self,
-        url_or_req: str | Request,
+        url_or_request: str | Request,
         video_id: str,
         note: str | None = None,
         errnote: str | None = None,
@@ -342,6 +438,8 @@ class InfoExtractor:
         headers: Mapping[str, str] | None = None,
         query: Mapping[str, str] | None = None,
         expected_status: int | None = None,
+        impersonate: ImpersonateTarget | str | bool | Collection[str | ImpersonateTarget] | None = None,
+        require_impersonation: bool = False,
     ) -> Response | Literal[False]: ...
     @classmethod
     def _match_id(cls, url: str) -> str: ...
@@ -418,15 +516,7 @@ class InfoExtractor:
         group: tuple[int, ...] | list[int] | None = None,
         fatal: bool = False,
     ) -> str | None: ...
-    def _html_search_meta(
-        self,
-        name: str,
-        html: str,
-        display_name: str | None = None,
-        fatal: bool = False,
-        flags: int = 0,
-        group: tuple[int, ...] | list[int] | None = None,
-    ) -> str | None: ...
+    def _html_search_meta(self, name: str, html: str, display_name: str | None = None, fatal: bool = False) -> str | None: ...
     def _dc_search_uploader(self, html: str) -> str | None: ...
     @staticmethod
     def _rta_search(html: str) -> int: ...
@@ -464,6 +554,11 @@ class InfoExtractor:
     @staticmethod
     def _hidden_inputs(html: str) -> dict[str, Any]: ...
     def _form_hidden_inputs(self, form_id: str, html: str) -> dict[str, Any]: ...
+    @classproperty
+    @deprecated(
+        "yt_dlp.InfoExtractor.FormatSort is deprecated and may be removed in the future. Use yt_dlp.utils.FormatSorter instead"
+    )
+    def FormatSort(self) -> FormatSorter: ...
     def _check_formats(self, formats: list[dict[str, Any]], video_id: str) -> None: ...
     @staticmethod
     def _remove_duplicate_formats(formats: list[dict[str, Any]]) -> None: ...
@@ -792,7 +887,7 @@ class InfoExtractor:
     def _live_title(self, name: _T) -> _T: ...
     def _get_cookies(self, url: str) -> LenientSimpleCookie: ...
     def _apply_first_set_cookie_header(self, url_handle: Response, cookie: str) -> None: ...
-    @property
+    @classproperty
     def _RETURN_TYPE(cls) -> str: ...
     def _get_subtitles(self, *args: Any, **kwargs: Any) -> list[dict[str, Any]]: ...  # Not implemented here.
     # Passes *args and **kwargs to _get_comments.
@@ -864,5 +959,8 @@ class SearchInfoExtractor(InfoExtractor):
     def _real_extract(self, query: str) -> _InfoDict: ...
     def _get_n_results(self, query: str, n: int) -> list[_InfoDict]: ...
     def _search_results(self, query: str) -> list[_InfoDict]: ...
+    @classproperty
+    def SEARCH_KEY(self) -> str | None: ...
 
-class UnsupportedURLIE(InfoExtractor): ...
+class UnsupportedURLIE(InfoExtractor):
+    IE_DESC: ClassVar[bool]

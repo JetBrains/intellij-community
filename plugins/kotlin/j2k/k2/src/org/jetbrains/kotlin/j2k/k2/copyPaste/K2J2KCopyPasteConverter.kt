@@ -12,7 +12,11 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind
-import org.jetbrains.kotlin.j2k.copyPaste.*
+import org.jetbrains.kotlin.j2k.copyPaste.ElementAndTextList
+import org.jetbrains.kotlin.j2k.copyPaste.J2KCopyPasteConverter
+import org.jetbrains.kotlin.j2k.copyPaste.TargetData
+import org.jetbrains.kotlin.j2k.copyPaste.convertCodeToKotlin
+import org.jetbrains.kotlin.j2k.copyPaste.runPostProcessing
 import org.jetbrains.kotlin.name.FqName
 
 private val LOG = Logger.getInstance(K2J2KCopyPasteConverter::class.java)

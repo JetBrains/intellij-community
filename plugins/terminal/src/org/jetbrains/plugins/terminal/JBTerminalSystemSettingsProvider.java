@@ -14,7 +14,7 @@ import com.jediterm.terminal.model.TerminalTypeAheadSettings;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Font;
 import java.util.concurrent.TimeUnit;
 
 public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsProviderBase {

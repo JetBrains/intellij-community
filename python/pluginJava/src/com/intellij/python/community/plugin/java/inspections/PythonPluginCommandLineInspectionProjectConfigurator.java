@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.java.inspections;
 
 import com.intellij.facet.FacetManager;
@@ -13,10 +13,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.search.FileTypeIndex;
-import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonFileType;
 import com.intellij.python.community.plugin.java.facet.JavaPythonFacet;
 import com.intellij.python.community.plugin.java.facet.JavaPythonFacetType;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
@@ -29,7 +29,7 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 
-public final class PythonPluginCommandLineInspectionProjectConfigurator implements CommandLineInspectionProjectConfigurator {
+final class PythonPluginCommandLineInspectionProjectConfigurator implements CommandLineInspectionProjectConfigurator {
   @Override
   public @NotNull String getName() {
     return "python";

@@ -1,9 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import com.jetbrains.python.PyNames.isProtected
+import com.jetbrains.python.PyNames.isPrivate
+import com.jetbrains.python.PyNames.isSunder
+import com.jetbrains.python.PyNames.isDunder
+
 
 class PyNamesTest {
   @Test

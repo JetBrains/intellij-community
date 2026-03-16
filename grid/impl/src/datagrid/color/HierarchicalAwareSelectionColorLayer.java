@@ -1,15 +1,21 @@
 package com.intellij.database.datagrid.color;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtil;
 import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.HierarchicalGridColumn;
+import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.run.ui.DataAccessType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 import static com.intellij.database.datagrid.GridUtil.getLastAncestorWithSelectedDirectLeaf;
-import static com.intellij.database.datagrid.color.SelectionColorLayer.*;
+import static com.intellij.database.datagrid.color.SelectionColorLayer.getSelectedColumnColor;
+import static com.intellij.database.datagrid.color.SelectionColorLayer.getSelectedRowColor;
+import static com.intellij.database.datagrid.color.SelectionColorLayer.isRowBgPaintedByTable;
 import static java.lang.Integer.max;
 
 public class HierarchicalAwareSelectionColorLayer implements ColorLayer {

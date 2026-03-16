@@ -5,6 +5,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
+import com.intellij.openapi.ui.validation.and
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
@@ -13,7 +15,7 @@ import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -46,7 +48,7 @@ internal abstract class CustomExistingEnvironmentSelector<P : PathHolder>(
         model.fileSystem,
         title = message("sdk.create.custom.existing.env.title"),
         selectedSdkProperty = selectedEnv,
-        validationRequestor = validationRequestor,
+        validationRequestor = validationRequestor and WHEN_PROPERTY_CHANGED(toolState.isValidationSuccessful),
         onPathSelected = model::addManuallyAddedPythonNotNecessarilySystem,
       ) {
         visibleIf(toolState.isValidationSuccessful)
@@ -67,11 +69,10 @@ internal abstract class CustomExistingEnvironmentSelector<P : PathHolder>(
     executablePath.initialize(scope)
     comboBox.initialize(
       scope = scope,
-      flow = existingEnvironments.map { existing ->
-        existing ?: return@map null
-        val withUniquePath = existing.distinctBy { interpreter -> interpreter.homePath }
-        sortForExistingEnvironment(withUniquePath, module)
-      }
+      flow = combine(existingEnvironments, model.manuallyAddedInterpreters) { detected, manual ->
+        detected ?: return@combine null
+        detected + manual
+      }.mapDistinctSortedForExistingEnvironment(module)
     )
   }
 

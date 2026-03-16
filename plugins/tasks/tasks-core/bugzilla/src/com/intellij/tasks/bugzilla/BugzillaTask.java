@@ -2,12 +2,16 @@
 package com.intellij.tasks.bugzilla;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.*;
+import com.intellij.tasks.Comment;
+import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.TaskState;
+import com.intellij.tasks.TaskType;
 import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Date;
 import java.util.Hashtable;
 

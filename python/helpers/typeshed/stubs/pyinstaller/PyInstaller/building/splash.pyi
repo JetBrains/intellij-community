@@ -2,8 +2,6 @@ from _typeshed import StrPath
 
 from PyInstaller.building.datastruct import Target, _TOCTuple
 
-splash_requirements: list[str]
-
 # Referenced in https://pyinstaller.org/en/stable/spec-files.html#example-merge-spec-file
 # Not to be imported during runtime, but is the type reference for spec files which are executed as python code
 class Splash(Target):

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions
 
 import com.intellij.codeInsight.actions.ReaderModeSettings
@@ -17,6 +17,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent
+import com.intellij.util.application
 
 private class ReaderModeFileEditorListener : FileOpenedSyncListener {
   override fun fileOpenedSync(source: FileEditorManager, file: VirtualFile, editorsWithProviders: List<FileEditorWithProvider>) {
@@ -59,7 +60,10 @@ private class ReaderModeEditorColorListener : EditorColorsListener {
       for (editor in (project.serviceIfCreated<FileEditorManager>() ?: continue).allEditors) {
         if (editor is PsiAwareTextEditorImpl) {
           ClientId.withExplicitClientId(ClientEditorManager.getClientId(editor.editor)) {
-            ReaderModeSettings.applyReaderMode(project, editor.editor, editor.file, fileIsOpenAlready = true)
+            // we use invokeLater here in order to break synchronous processing if color scheme was changed during the processing of input events
+            application.invokeLater {
+              ReaderModeSettings.applyReaderMode(project, editor.editor, editor.file, fileIsOpenAlready = true)
+            }
           }
         }
       }

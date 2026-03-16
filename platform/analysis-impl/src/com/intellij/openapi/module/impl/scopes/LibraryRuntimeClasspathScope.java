@@ -4,7 +4,15 @@ package com.intellij.openapi.module.impl.scopes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleSourceOrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.impl.ModuleOrderEnumerator;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,11 +20,17 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   private final ProjectFileIndex myIndex;
@@ -40,6 +54,13 @@ public final class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
     addAll(myEntries, entry.getRootFiles(OrderRootType.CLASSES));
     addAll(myEntries, entry.getRootFiles(OrderRootType.SOURCES));
+  }
+
+  @ApiStatus.Internal
+  public LibraryRuntimeClasspathScope(@NotNull Project project, VirtualFile[] roots) {
+    super(project);
+    myIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    addAll(myEntries, roots);
   }
 
   @Override

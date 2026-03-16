@@ -1,8 +1,8 @@
-from typing import Any
+from _typeshed import Incomplete
 
 from google.cloud.ndb import model
 
-BlobKey: Any
+BlobKey: Incomplete
 BLOB_INFO_KIND: str
 BLOB_MIGRATION_KIND: str
 BLOB_KEY_HEADER: str
@@ -51,10 +51,10 @@ class Error:
 def fetch_data(*args, **kwargs) -> None: ...
 def fetch_data_async(*args, **kwargs) -> None: ...
 
-get: Any
-get_async: Any
-get_multi: Any
-get_multi_async: Any
+get: Incomplete
+get_async: Incomplete
+get_multi: Incomplete
+get_multi_async: Incomplete
 
 class InternalError:
     def __init__(self, *args, **kwargs) -> None: ...

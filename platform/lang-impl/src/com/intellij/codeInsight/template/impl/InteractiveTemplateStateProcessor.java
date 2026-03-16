@@ -2,7 +2,12 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupEvent;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
+import com.intellij.codeInsight.lookup.LookupListener;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -29,7 +34,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiParserFacade;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
 import com.intellij.psi.impl.source.codeStyle.NewLineIndentMarkerProvider;

@@ -1,0 +1,14 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
+<!-- Source: see moduleSet("rpc.backend.extended") function in UltimateModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
+<idea-plugin>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.kernel.impl"/>
+    <module name="intellij.platform.rpc.topics" loading="embedded"/>
+    <module name="intellij.platform.rpc.topics.backend"/>
+    <module name="intellij.platform.rpc.topics.frontend"/>
+  </content>
+</idea-plugin>

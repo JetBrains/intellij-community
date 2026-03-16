@@ -17,11 +17,12 @@ import com.jetbrains.python.onFailure
 import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.run.PythonExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.uv.ScriptSyncCheckResult
 import com.jetbrains.python.sdk.uv.UvLowLevel
-import com.jetbrains.python.sdk.uv.impl.createUvCli
-import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
-import com.jetbrains.python.sdk.uv.impl.getUvExecutable
+import com.jetbrains.python.sdk.uv.impl.createUvCliLocal
+import com.jetbrains.python.sdk.uv.impl.createUvLowLevelLocal
+import com.jetbrains.python.sdk.uv.impl.getUvExecutableLocal
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -74,10 +75,10 @@ fun canRun(
   var isError = false
   var isUnsynced = false
   runWithModalProgressBlocking(project, PyBundle.message("uv.run.configuration.state.progress.name")) {
-    val uvExecutable = getUvExecutable()
+    val uvExecutable = getUvExecutableLocal()
 
     if (workingDirectory != null && uvExecutable != null) {
-      val uv = createUvCli(uvExecutable).mapSuccess { createUvLowLevel(workingDirectory, it) }.getOrNull()
+      val uv = createUvCliLocal(uvExecutable).mapSuccess { createUvLowLevelLocal(workingDirectory, it) }.getOrNull()
 
       when (uv?.let { requiresSync(it, options, logger) }?.getOrNull()) {
         true -> isUnsynced = true
@@ -99,7 +100,7 @@ fun canRun(
 
 @ApiStatus.Internal
 suspend fun requiresSync(
-  uv: UvLowLevel,
+  uv: UvLowLevel<PathHolder.Eel>,
   options: UvRunConfigurationOptions,
   logger: Logger,
 ): Result<Boolean, Unit> {

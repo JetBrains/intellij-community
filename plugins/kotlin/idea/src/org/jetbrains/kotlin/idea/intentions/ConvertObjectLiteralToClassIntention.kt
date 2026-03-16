@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
@@ -21,17 +22,39 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetin
 import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseStringExpression
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractableCodeDescriptorWithConflicts
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionData
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionEngine
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionEngineHelper
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionGeneratorConfiguration
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionGeneratorOptions
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionResult
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.TypeParameter
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.collectRelevantConstraints
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectLiteralExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtTypeParameter
+import org.jetbrains.kotlin.psi.createPrimaryConstructorParameterListIfAbsent
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 
+@K1Deprecation
 class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjectLiteralExpression>(
     KtObjectLiteralExpression::class.java,
     KotlinBundle.messagePointer("convert.object.literal.to.class")
@@ -66,7 +89,23 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
                     ReferencesSearch.search(it, element.useScope).findFirst() != null
         } ?: false
 
-        val newClass = psiFactory.createClass("class $className")
+        // Collect type parameters only from accessible ancestor classes
+        val ancestorTypeParameters = mutableListOf<KtTypeParameter>()
+        var currentClass = containingClass
+        while (currentClass != null) {
+            currentClass.typeParameters.let { ancestorTypeParameters.addAll(it) }
+            // Stop if this class is not inner - its outer classes' type parameters are not accessible
+            if (!currentClass.isInner()) break
+            currentClass = currentClass.containingClass()
+        }
+
+        val typeParamsSuffix = ancestorTypeParameters
+            .mapNotNull { it.name }
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString(prefix = "<", postfix = ">")
+            ?: ""
+
+        val newClass = psiFactory.createClass("class $className$typeParamsSuffix")
         objectDeclaration.getSuperTypeList()?.let {
             newClass.add(psiFactory.createColon())
             newClass.add(it)
@@ -85,9 +124,23 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
                     onFinish: (ExtractionResult) -> Unit
                 ) {
                     project.executeCommand(text) {
-                        val descriptor = descriptorWithConflicts.descriptor.copy(suggestedNames = listOf(className))
+                        val descriptor = descriptorWithConflicts.descriptor
+                        
+                        // Add outer class type parameters to force them in the call site
+                        val typeParameters = descriptor.typeParameters
+                        val outerTypeParameters = ancestorTypeParameters
+                            .filter { typeParam -> 
+                                typeParameters.none { it.originalDeclaration.name == typeParam.name }
+                            }
+                            .map { TypeParameter(it, it.collectRelevantConstraints()) }
+                        
+                        val modifiedDescriptor = descriptor.copy(
+                            suggestedNames = listOf(className),
+                            typeParameters = typeParameters + outerTypeParameters
+                        )
+                        
                         doRefactor(
-                            ExtractionGeneratorConfiguration(descriptor, ExtractionGeneratorOptions.DEFAULT),
+                            ExtractionGeneratorConfiguration(modifiedDescriptor, ExtractionGeneratorOptions.DEFAULT),
                             onFinish
                         )
                     }
@@ -107,10 +160,15 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
             }
 
             val introducedClass = runWriteAction {
-                functionDeclaration.replaced(newClass).apply {
-                    if (hasMemberReference && containingClass == (parent.parent as? KtClass)) addModifier(KtTokens.INNER_KEYWORD)
-                    primaryConstructor?.reformatted()
-                }.let { CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(it) }
+                val replaced = functionDeclaration.replaced(newClass)
+                // Should be inner if: uses outer members OR uses outer type parameters
+                val usesOuterTypeParams = ancestorTypeParameters.isNotEmpty()
+                val shouldBeInner = hasMemberReference || usesOuterTypeParams
+                if (shouldBeInner && containingClass == (replaced.parent.parent as? KtClass)) {
+                    replaced.addModifier(KtTokens.INNER_KEYWORD)
+                }
+                replaced.primaryConstructor?.reformatted()
+                CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(replaced)
             } ?: return@run
 
             val file = introducedClass.containingFile

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * User: catherine
- *
+ * <p>
  * Inspection to detect occurrences of @classmethod and @staticmethod
  * on methods outside of a class
  */
@@ -50,19 +50,22 @@ public final class PyDecoratorInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(final @NotNull PyFunction node){
+    public void visitPyFunction(final @NotNull PyFunction node) {
       PyClass containingClass = node.getContainingClass();
-      if (containingClass != null)
+      if (containingClass != null) {
         return;
+      }
 
       PyDecoratorList decorators = node.getDecoratorList();
-      if (decorators == null)
+      if (decorators == null) {
         return;
+      }
       for (PyDecorator decorator : decorators.getDecorators()) {
         String name = decorator.getText();
-        if (name.equals("@classmethod") || name.equals("@staticmethod"))
+        if (name.equals("@classmethod") || name.equals("@staticmethod")) {
           registerProblem(decorator, PyPsiBundle.message("INSP.decorators.method.only.decorator.on.method.outside.class", name),
                           new RemoveDecoratorQuickFix());
+        }
       }
     }
   }

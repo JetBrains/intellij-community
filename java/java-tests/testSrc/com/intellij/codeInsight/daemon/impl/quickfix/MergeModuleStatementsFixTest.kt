@@ -5,7 +5,9 @@ import com.intellij.JavaTestUtil.getRelativeJavaTestDataPath
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
-import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M4
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M6
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 
 class MergeModuleStatementsFixTest : LightJava9ModulesCodeInsightFixtureTestCase() {

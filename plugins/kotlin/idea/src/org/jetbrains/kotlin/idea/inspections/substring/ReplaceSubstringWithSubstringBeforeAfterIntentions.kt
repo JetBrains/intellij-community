@@ -4,11 +4,13 @@ package org.jetbrains.kotlin.idea.inspections.substring
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
 
+@K1Deprecation
 class ReplaceSubstringWithSubstringAfterInspection : ReplaceSubstringInspection() {
     override fun inspectionText(element: KtDotQualifiedExpression): String =
         KotlinBundle.message("inspection.replace.substring.with.substring.after.display.name")
@@ -28,6 +30,7 @@ class ReplaceSubstringWithSubstringAfterInspection : ReplaceSubstringInspection(
     }
 }
 
+@K1Deprecation
 class ReplaceSubstringWithSubstringBeforeInspection : ReplaceSubstringInspection() {
     override fun inspectionText(element: KtDotQualifiedExpression): String =
         KotlinBundle.message("inspection.replace.substring.with.substring.before.display.name")

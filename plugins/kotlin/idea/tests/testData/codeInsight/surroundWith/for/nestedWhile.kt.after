@@ -1,0 +1,8 @@
+fun foo() {
+    while (x > 0) {
+        for (item in <selection><caret>items</selection>) {
+            println(x)
+            x--
+        }
+    }
+}

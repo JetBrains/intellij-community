@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.settings
 
 import com.intellij.openapi.application.ApplicationManager
@@ -7,8 +7,6 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.serializer
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
 
 //todo this will be injected by ComponentManager (a client will request it from a coroutine scope as a service),
 // pluginId will be from coroutine scope
@@ -49,24 +47,9 @@ interface SettingValueSerializer<T : Any> {
   val serializer: KSerializer<T>
 }
 
-// see KotlinxSerializationBinding
-private val lookup = MethodHandles.lookup()
-private val kotlinMethodType = MethodType.methodType(KSerializer::class.java)
-
-// reflection-free
 private fun <T> resolveKotlinSerializer(aClass: Class<T>): KSerializer<T> {
-  val classLoader = aClass.classLoader
-  if (classLoader == null || aClass.isPrimitive || aClass.isEnum) {
-    // string
-    @Suppress("UNCHECKED_CAST")
-    return serializer(aClass) as KSerializer<T>
-  }
-
-  val lookup = MethodHandles.privateLookupIn(aClass, lookup)
-  val companionGetter = lookup.findStaticGetter(aClass, "Companion", classLoader.loadClass(aClass.name + "\$Companion"))
-  val companion = companionGetter.invoke()
   @Suppress("UNCHECKED_CAST")
-  return lookup.findVirtual(companion.javaClass, "serializer", kotlinMethodType).invoke(companion) as KSerializer<T>
+  return serializer(aClass) as KSerializer<T>
 }
 
 private class ObjectSettingSerializerDescriptor<T : Any>(private val aClass: Class<T>) : SettingSerializerDescriptor<T>,
@@ -76,7 +59,7 @@ private class ObjectSettingSerializerDescriptor<T : Any>(private val aClass: Cla
   }
 }
 
-private class MapSettingSerializerDescriptor<K : Any, V : Any?>(
+private class MapSettingSerializerDescriptor<K : Any, V>(
   private val keyClass: Class<K>,
   private val valueClass: Class<V>,
 ) : SettingSerializerDescriptor<Map<K, V>>, SettingValueSerializer<Map<K, V>> {

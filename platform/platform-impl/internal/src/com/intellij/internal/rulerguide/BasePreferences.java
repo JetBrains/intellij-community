@@ -3,7 +3,7 @@ package com.intellij.internal.rulerguide;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 
-import java.awt.*;
+import java.awt.Color;
 
 final class BasePreferences {
 

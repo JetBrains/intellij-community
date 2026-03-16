@@ -3,7 +3,12 @@ package git4idea.history
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.Executor.child
+import com.intellij.openapi.vcs.Executor.echo
+import com.intellij.openapi.vcs.Executor.mkdir
+import com.intellij.openapi.vcs.Executor.ourCurrentDir
+import com.intellij.openapi.vcs.Executor.rm
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
@@ -14,11 +19,19 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitFileRevision
 import git4idea.GitUtil
-import git4idea.test.*
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.add
+import git4idea.test.addCommit
+import git4idea.test.checkout
+import git4idea.test.checkoutNew
+import git4idea.test.commit
+import git4idea.test.last
+import git4idea.test.mv
 import junit.framework.TestCase
 import org.apache.commons.lang3.RandomStringUtils
 import java.io.File
 import java.io.IOException
+import java.nio.file.Path
 
 class GitFileHistoryTest : GitSingleRepoTest() {
 
@@ -41,7 +54,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   fun `test cyclic rename`() {
     val commits = ArrayList<TestCommit>()
 
-    commits.add(add("PostHighlightingPass.java", mkdir("source")))
+    commits.add(add("PostHighlightingPass.java", mkdir("source").toPath()))
     commits.add(modify(commits.last().file))
 
     commits.add(move(commits.last().file, mkdir("codeInside-impl")))
@@ -437,9 +450,9 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     return commit(file, "Modified ${file.relativePath()}")
   }
 
-  private fun add(fileName: String, dir: File, initialContent: String = RandomStringUtils.randomAlphanumeric(200)): TestCommit {
-    val relativePath = dir.relativeTo(ourCurrentDir()).path
-    val file = touch("$relativePath/$fileName", initialContent)
+  private fun add(fileName: String, dir: Path, initialContent: String = RandomStringUtils.randomAlphanumeric(200)): TestCommit {
+    val relativePath = dir.resolve(ourCurrentDir())
+    val file = touch(relativePath.resolve(fileName).toString(), initialContent)
     return commit(file, "Created ${file.relativePath()}")
   }
 

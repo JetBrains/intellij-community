@@ -20,7 +20,7 @@ public class FileEditorSelectInContext extends SmartSelectInContext {
 
   public FileEditorSelectInContext(@NotNull FileEditor fileEditor, @NotNull PsiFile psiFile) {
     super(psiFile, psiFile, () -> fileEditor);
-    editor = fileEditor instanceof TextEditor ? (TextEditor)fileEditor : null;
+    editor = fileEditor instanceof TextEditor te ? te : null;
   }
 
   @Override

@@ -9,13 +9,13 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getSymbolContainingMemberDeclarations
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.refactoring.rename.AbstractRenameTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.test.util.invalidateCaches
 
 abstract class AbstractFirRenameTest : AbstractRenameTest() {
 

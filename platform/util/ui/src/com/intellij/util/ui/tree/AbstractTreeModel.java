@@ -2,7 +2,10 @@
 package com.intellij.util.ui.tree;
 
 import com.intellij.openapi.util.CheckedDisposable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
@@ -33,7 +36,7 @@ public abstract class AbstractTreeModel implements CheckedDisposable, TreeModel 
    * @see TreeModelListener#treeStructureChanged(TreeModelEvent)
    */
   protected void treeStructureChanged(TreePath path, int[] indices, Object[] children) {
-    if (!listeners.isEmpty()) listeners.treeStructureChanged(new TreeModelEvent(this, path, indices, children));
+    if (!listeners.isEmpty()) listeners.treeStructureChanged(createTreeModelEvent(path, indices, children));
   }
 
   /**
@@ -45,7 +48,7 @@ public abstract class AbstractTreeModel implements CheckedDisposable, TreeModel 
    * @see TreeModelListener#treeNodesChanged(TreeModelEvent)
    */
   protected void treeNodesChanged(TreePath path, int[] indices, Object[] children) {
-    if (!listeners.isEmpty()) listeners.treeNodesChanged(new TreeModelEvent(this, path, indices, children));
+    if (!listeners.isEmpty()) listeners.treeNodesChanged(createTreeModelEvent(path, indices, children));
   }
 
   /**
@@ -57,7 +60,7 @@ public abstract class AbstractTreeModel implements CheckedDisposable, TreeModel 
    * @see TreeModelListener#treeNodesInserted(TreeModelEvent)
    */
   protected void treeNodesInserted(TreePath path, int[] indices, Object[] children) {
-    if (!listeners.isEmpty()) listeners.treeNodesInserted(new TreeModelEvent(this, path, indices, children));
+    if (!listeners.isEmpty()) listeners.treeNodesInserted(createTreeModelEvent(path, indices, children));
   }
 
   /**
@@ -70,7 +73,12 @@ public abstract class AbstractTreeModel implements CheckedDisposable, TreeModel 
    * @see TreeModelListener#treeNodesRemoved(TreeModelEvent)
    */
   protected void treeNodesRemoved(TreePath path, int[] indices, Object[] children) {
-    if (!listeners.isEmpty()) listeners.treeNodesRemoved(new TreeModelEvent(this, path, indices, children));
+    if (!listeners.isEmpty()) listeners.treeNodesRemoved(createTreeModelEvent(path, indices, children));
+  }
+
+  @ApiStatus.Internal
+  protected @NonNull TreeModelEvent createTreeModelEvent(@Nullable TreePath path, int @Nullable [] indices, Object @Nullable [] children) {
+    return new TreeModelEvent(this, path, indices, children);
   }
 
   /**

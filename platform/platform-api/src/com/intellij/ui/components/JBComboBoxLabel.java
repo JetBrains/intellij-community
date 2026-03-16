@@ -6,8 +6,13 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.PlatformIcons;
 import org.intellij.lang.annotations.MagicConstant;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
 
 /**
  * @author Konstantin Bulenkov

@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion.spec.dsl
 
-import com.intellij.terminal.completion.spec.*
+import com.intellij.terminal.completion.spec.ShellArgumentSpec
+import com.intellij.terminal.completion.spec.ShellCommandParserOptions
+import com.intellij.terminal.completion.spec.ShellCommandSpec
+import com.intellij.terminal.completion.spec.ShellOptionSpec
+import com.intellij.terminal.completion.spec.ShellRuntimeContext
+import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.createCacheKey
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.emptyListGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
@@ -14,8 +19,8 @@ internal class ShellCommandContextImpl(
   names: List<String>,
   private val parentNames: List<String> = emptyList()
 ) : ShellSuggestionContextBase(names), ShellCommandContext {
-  override var requiresSubcommand: Boolean = false
-  override var parserOptions: ShellCommandParserOptions = ShellCommandParserOptions.DEFAULT
+  private var requiresSubcommand: Boolean = false
+  private var parserOptions: ShellCommandParserOptions = ShellCommandParserOptions.DEFAULT
 
   private var subcommandSuppliers: MutableList<suspend (ShellRuntimeContext) -> List<ShellCommandSpec>> = mutableListOf()
   private var dynamicOptionSuppliers: MutableList<suspend (ShellRuntimeContext) -> List<ShellOptionSpec>> = mutableListOf()
@@ -23,6 +28,14 @@ internal class ShellCommandContextImpl(
   private val argumentSuppliers: MutableList<() -> ShellArgumentSpec> = mutableListOf()
 
   private val parentNamesWithSelf: List<String> = parentNames + names.first()
+
+  override fun requiresSubcommand() {
+    requiresSubcommand = true
+  }
+
+  override fun parserOptions(options: ShellCommandParserOptions) {
+    parserOptions = options
+  }
 
   override fun subcommands(content: suspend ShellChildCommandsContext.(ShellRuntimeContext) -> Unit) {
     val supplier: suspend (ShellRuntimeContext) -> List<ShellCommandSpec> = { shellContext ->

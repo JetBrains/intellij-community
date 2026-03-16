@@ -9,13 +9,22 @@ import com.intellij.ide.ui.AntialiasingType
 import com.intellij.ide.ui.UISettings
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.undo.UndoUtil
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
@@ -33,7 +42,6 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.progress.withCurrentThreadCoroutineScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -60,7 +68,6 @@ import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.ui.AwtTransformers
 import com.jediterm.terminal.util.CharUtils
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.output.TextAttributesProvider
@@ -715,10 +722,6 @@ internal fun updateFrontendSettingsAndSync(coroutineScope: CoroutineScope, doUpd
   }
   finally {
     // Trigger sending the updated values to the backend
-    coroutineScope.launch {
-      withCurrentThreadCoroutineScope {
-        saveSettingsForRemoteDevelopment(application)
-      }
-    }
+    saveSettingsForRemoteDevelopment(coroutineScope, application)
   }
 }

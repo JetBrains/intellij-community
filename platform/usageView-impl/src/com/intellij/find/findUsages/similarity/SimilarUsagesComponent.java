@@ -1,13 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages.similarity;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.*;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
@@ -21,8 +26,11 @@ import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import java.awt.Color;
+import java.awt.FlowLayout;
 import java.util.Collection;
 import java.util.Set;
 
@@ -100,7 +108,9 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     renderOriginalUsage();
     BoundedRangeModelThresholdListener.install(similarUsagesScrollPane.getVerticalScrollBar(), () -> {
       if (myAlreadyProcessedUsages < usagesToRender.size()) {
-        renderSimilarUsages(usagesToRender);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          renderSimilarUsages(usagesToRender);
+        });
         SimilarUsagesCollector.logMoreUsagesLoaded(myOriginalUsage.getProject(), myUsageView, myAlreadyRenderedUsages);
       }
       return Unit.INSTANCE;

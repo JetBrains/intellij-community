@@ -17,8 +17,20 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -95,7 +107,16 @@ public final class MixedResultsSearcher implements SESearcher {
 
     SearchEverywhereSpellingCorrector spellingCorrector = SearchEverywhereSpellingCorrector.getInstance();
     if (spellingCorrector == null || !spellingCorrector.isAvailableInTab(base.getSearchProviderId())) return original;
-    List<SearchEverywhereSpellCheckResult.Correction> fixes = spellingCorrector.getAllCorrections(pattern, MAX_SPELLING_CORRECTIONS);
+    List<SearchEverywhereSpellCheckResult.Correction> fixes = Collections.emptyList();
+    try {
+      fixes = spellingCorrector.getAllCorrections(pattern, MAX_SPELLING_CORRECTIONS);
+    }
+    catch (ProcessCanceledException c) {
+      throw c;
+    }
+    catch (Throwable e) {
+      LOG.warn("Spell check failed for contributor " + base.getSearchProviderId(), e);
+    }
     if (fixes.isEmpty()) return original;
 
     Map<SearchEverywhereContributor<?>, Integer> res = new LinkedHashMap<>();

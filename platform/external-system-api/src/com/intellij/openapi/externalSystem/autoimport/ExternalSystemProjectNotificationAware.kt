@@ -65,11 +65,13 @@ interface ExternalSystemProjectNotificationAware {
       return project.getService(ExternalSystemProjectNotificationAware::class.java)
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use ExternalSystemProjectNotificationAware#TOPIC directly")
     fun whenNotificationChanged(project: Project, listener: () -> Unit) {
       whenNotificationChanged(project, null, listener)
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use ExternalSystemProjectNotificationAware#TOPIC directly")
     fun whenNotificationChanged(project: Project, parentDisposable: Disposable?, listener: () -> Unit) {
       val aProject = project

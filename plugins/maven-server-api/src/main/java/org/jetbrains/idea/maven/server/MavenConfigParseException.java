@@ -4,8 +4,8 @@ package org.jetbrains.idea.maven.server;
 public class MavenConfigParseException extends RuntimeException {
   private final String myDirectory;
 
-  public MavenConfigParseException(String message, String workingDirectory) {
-    super(message);
+  public MavenConfigParseException(String message, String workingDirectory, Throwable cause) {
+    super(message, cause);
     myDirectory = workingDirectory;
   }
 

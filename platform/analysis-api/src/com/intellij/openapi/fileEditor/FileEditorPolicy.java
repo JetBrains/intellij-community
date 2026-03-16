@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
-import org.jetbrains.annotations.ApiStatus;
-
 public enum FileEditorPolicy {
 
   /**
@@ -17,7 +15,7 @@ public enum FileEditorPolicy {
   NONE,
 
   /**
-   * Do not create default IDE editor (if any) for the file.
+   * Do not create the default IDE editor (if any) for the file.
    * <p></p>
    * It is recommended to use {@link FileEditorPolicy#HIDE_OTHER_EDITORS} instead.
    */
@@ -32,11 +30,10 @@ public enum FileEditorPolicy {
    * @see FileEditorProvider
    * @see FileEditorProvider#getPolicy()
    */
-  @ApiStatus.Experimental
   HIDE_OTHER_EDITORS,
 
   /**
-   * Place created editor after the default IDE editor (if any).
+   * Place the created editor after the default IDE editor (if any).
    */
   // should be the last declaration
   PLACE_AFTER_DEFAULT_EDITOR

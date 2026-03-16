@@ -18,7 +18,7 @@ object PyImportCompletionFeatures {
   fun getElementImportPathFeatures(element: LookupElement, location: CompletionLocation): ElementImportPathFeatures? {
     val psiElement = element.psiElement ?: return null
     val importPath = QualifiedNameFinder.findShortestImportableQName(psiElement.containingFile) ?: return null
-    val caretLocationFile = location.completionParameters.originalFile
+    val caretLocationFile = location.baseCompletionParameters.originalFile
     val isImported = hasImportsFrom(caretLocationFile, importPath)
     val numComponents = importPath.componentCount
     val numPrivateComponents = importPath.components.count{ it.startsWith("_") }

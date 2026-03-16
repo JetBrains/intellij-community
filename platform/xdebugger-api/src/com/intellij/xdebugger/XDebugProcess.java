@@ -27,16 +27,18 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.event.HyperlinkListener;
+import java.util.List;
 
 /**
  * Extend this class to provide debugging capabilities for a custom language/framework.
  * <p>
  * In order to start the debugger by a 'Debug' action for a specific run configuration,
  * implement {@link com.intellij.execution.runners.ProgramRunner}
- * and call {@link XDebuggerManager#startSession}
+ * and call {@link XDebuggerManager#newSessionBuilder} and {@link XDebugSessionBuilder#startSession()} without setting {@link XDebugSessionBuilder#showTab}
  * from the {@link com.intellij.execution.runners.ProgramRunner#execute(ExecutionEnvironment)} method.
  * <p>
- * Otherwise, use method {@link XDebuggerManager#startSessionAndShowTab} to start a new debugging session.
+ * Otherwise, use {@link XDebuggerManager#newSessionBuilder} with {@link XDebugSessionBuilder#showTab}
+ * and {@link XDebugSessionBuilder#startSession()} to start a new debugging session.
  */
 public abstract class XDebugProcess {
   private final @NotNull XDebugSession mySession;
@@ -298,6 +300,14 @@ public abstract class XDebugProcess {
   @ApiStatus.Internal
   public @Nullable XDebugSessionEventsProvider getSessionEventsProvider() {
     return null;
+  }
+
+  /**
+   * Provide execution stacks corresponding to all the live threads in the debug process to the {@code container}.
+   */
+  @ApiStatus.Internal
+  public void computeRunningExecutionStacks(XSuspendContext.XExecutionStackGroupContainer container, @Nullable XSuspendContext suspendContext) {
+    container.addExecutionStack(List.of(), true);
   }
 
   /**

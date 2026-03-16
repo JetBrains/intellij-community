@@ -1,6 +1,14 @@
 package com.intellij.database.dump;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataConsumer;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.DataProducer;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridDataRequest;
+import com.intellij.database.datagrid.GridModel;
+import com.intellij.database.datagrid.GridPagingModel;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.IdentityDataProducerImpl;
 import com.intellij.database.extractors.DataExtractor;
 import com.intellij.database.extractors.DataExtractorFactory;
 import com.intellij.database.extractors.ExtractionConfig;

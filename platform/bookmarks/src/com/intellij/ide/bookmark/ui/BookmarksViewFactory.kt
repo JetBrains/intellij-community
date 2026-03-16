@@ -14,7 +14,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import java.util.concurrent.atomic.AtomicBoolean
 
-private class BookmarksViewFactory : DumbAware, ToolWindowFactory, ToolWindowManagerListener {
+internal class BookmarksViewFactory : DumbAware, ToolWindowFactory, ToolWindowManagerListener {
   private val orientation = AtomicBoolean(true)
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {

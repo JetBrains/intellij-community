@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java {@code import} or {@code import static} statement.
+ * Represents a Java {@code import}, {@code import static} or {@code import module} statement.
  */
 public interface PsiImportStatementBase extends PsiElement {
   /**
@@ -40,4 +40,9 @@ public interface PsiImportStatementBase extends PsiElement {
   PsiElement resolve();
 
   boolean isForeignFileImport();
+
+  
+  default boolean isReplaceEquivalent(PsiImportStatementBase other) {
+    return false;
+  }
 }

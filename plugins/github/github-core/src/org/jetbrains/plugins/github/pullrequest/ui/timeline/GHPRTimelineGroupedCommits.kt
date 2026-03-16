@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShort
-import java.util.*
+import java.util.Date
 
 class GHPRTimelineGroupedCommits : GHPRTimelineGroupedItems<GHPullRequestCommitShort>() {
   override val createdAt: Date?

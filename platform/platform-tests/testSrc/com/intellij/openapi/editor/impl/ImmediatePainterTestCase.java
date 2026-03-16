@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -19,8 +20,12 @@ import com.intellij.util.ui.ImageUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.KeyboardFocusManager;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +37,8 @@ public abstract class ImmediatePainterTestCase extends AbstractEditorTest {
   private Color myDefaultCaretColor;
   private KeyboardFocusManager myDefaultFocusManager;
   private AntialiasingType myDefaultAntiAliasing;
+  private boolean myDefaultSmoothCaretBlinking;
+  private boolean myDefaultAnimatedCaret;
 
   @Override
   protected void setUp() throws Exception {
@@ -45,7 +52,15 @@ public abstract class ImmediatePainterTestCase extends AbstractEditorTest {
     myDefaultFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     myDefaultAntiAliasing = UISettings.getInstance().getEditorAAType();
 
+    var settings = EditorSettingsExternalizable.getInstance();
+    myDefaultSmoothCaretBlinking = settings.isSmoothBlinkCaret();
+    myDefaultAnimatedCaret = settings.isAnimatedCaret();
+
     FontLayoutService.setInstance(null);
+
+    // Disable smooth caret features for pixel-perfect rendering
+    settings.setSmoothBlinkCaret(false);
+    settings.setAnimatedCaret(false);
 
     setZeroLatencyRenderingEnabled(true);
     setDoubleBufferingEnabled(true);
@@ -64,6 +79,11 @@ public abstract class ImmediatePainterTestCase extends AbstractEditorTest {
       getDefaultColorScheme().setColor(EditorColors.CARET_COLOR, myDefaultCaretColor);
       KeyboardFocusManager.setCurrentKeyboardFocusManager(myDefaultFocusManager);
       UISettings.getInstance().setEditorAAType(myDefaultAntiAliasing);
+
+      com.intellij.openapi.editor.ex.EditorSettingsExternalizable settings =
+        com.intellij.openapi.editor.ex.EditorSettingsExternalizable.getInstance();
+      settings.setSmoothBlinkCaret(myDefaultSmoothCaretBlinking);
+      settings.setAnimatedCaret(myDefaultAnimatedCaret);
     }
     catch (Throwable e) {
       addSuppressedException(e);

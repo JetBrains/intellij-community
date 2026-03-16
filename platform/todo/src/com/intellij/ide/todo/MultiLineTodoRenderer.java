@@ -7,10 +7,14 @@ import com.intellij.ui.HighlightableCellRenderer;
 import com.intellij.ui.HighlightedRegion;
 import com.intellij.usageView.UsageTreeColors;
 
-import javax.swing.*;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.List;
 
 public final class MultiLineTodoRenderer extends JPanel implements TreeCellRenderer {

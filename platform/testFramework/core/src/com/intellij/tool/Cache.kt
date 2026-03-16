@@ -5,7 +5,12 @@ import com.intellij.TestCaseLoader
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.*
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createFile
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 /**
  * Process with cache might be spawn / killed multiple times during aggregator test run.

@@ -16,6 +16,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -27,13 +28,11 @@ import com.jetbrains.python.console.completion.PydevConsoleElement
 import com.jetbrains.python.console.pydev.ConsoleCommunication
 import com.jetbrains.python.parsing.console.PythonConsoleData
 import com.jetbrains.python.remote.PyRemotePathMapper
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager
 import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.run.toStringLiteral
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.rootManager
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import java.util.function.Function
 
@@ -62,7 +61,6 @@ fun getPathMapper(project: Project,
   if (sdk == null) return null
   return when (val sdkAdditionalData = sdk.sdkAdditionalData) {
     is PyTargetAwareAdditionalData -> getPathMapper(project, consoleSettings, sdkAdditionalData)
-    is PyRemoteSdkAdditionalDataBase -> getPathMapper(project, consoleSettings, sdkAdditionalData)
     else -> null
   }
 }
@@ -112,17 +110,6 @@ private fun appendBasicMappings(project: Project, data: RemoteSdkProperties): Py
     pathMapper.addAll(mappings.settings, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
   }
   return pathMapper
-}
-
-fun getPathMapper(project: Project,
-                  consoleSettings: PyConsoleSettings,
-                  remoteSdkAdditionalData: PyRemoteSdkAdditionalDataBase): PyRemotePathMapper {
-  val remotePathMapper = PythonRemoteInterpreterManager.appendBasicMappings(project, null, remoteSdkAdditionalData)
-  val mappingSettings = consoleSettings.mappingSettings
-  if (mappingSettings != null) {
-    remotePathMapper.addAll(mappingSettings.pathMappings, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
-  }
-  return remotePathMapper
 }
 
 fun findPythonSdkAndModule(project: Project, contextModule: Module?): Pair<Sdk?, Module?> {
@@ -287,7 +274,7 @@ fun getModuleToStartConsole(project: Project, moduleManager: ModuleManager): Mod
   }
 
   val projectLocalModule = moduleManager.modules.firstOrNull {
-    val roots = it.rootManager.contentRoots
+    val roots = ModuleRootManager.getInstance(it).contentRoots
     roots.all { it.isInLocalFileSystem }
   }
   if (projectLocalModule != null) {

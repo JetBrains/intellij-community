@@ -4,88 +4,11 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
-import io.opentelemetry.api.trace.Span
 import org.jdom.Element
 import org.jdom.Namespace
-import java.io.IOException
-import java.nio.file.Path
-import java.util.*
-
-/**
- * The original element will be mutated in place.
- */
-internal fun resolveNonXIncludeElement(original: Element, base: Path, pathResolver: XIncludePathResolver, trackSourceFile: Boolean = false) {
-  check(!isIncludeElement(original))
-  val bases = ArrayDeque<Path>()
-  bases.push(base)
-  doResolveNonXIncludeElement(original = original, bases = bases, pathResolver = pathResolver, trackSourceFile = trackSourceFile)
-}
 
 private fun isIncludeElement(element: Element): Boolean {
   return element.name == "include" && element.namespace == JDOMUtil.XINCLUDE_NAMESPACE
-}
-
-internal const val SOURCE_FILE_ATTRIBUTE = "source-file"
-
-private fun resolveXIncludeElement(element: Element, bases: Deque<Path>, pathResolver: XIncludePathResolver, trackSourceFile: Boolean): MutableList<Element>? {
-  val base = bases.peek()
-  val href = requireNotNull(element.getAttributeValue("href")) { "Missing href attribute" }
-
-  val baseAttribute = element.getAttributeValue("base", Namespace.XML_NAMESPACE)
-  if (baseAttribute != null) {
-    throw UnsupportedOperationException("`base` attribute is not supported")
-  }
-
-  val fallbackElement = element.getChild("fallback", element.namespace)
-  val remote = pathResolver.resolvePath(
-    relativePath = href,
-    base = base,
-    isOptional = fallbackElement != null,
-    isDynamic = element.getAttribute("includeUnless") != null || element.getAttribute("includeIf") != null,
-  ) ?: return null
-
-  assert(!bases.contains(remote)) { "Circular XInclude Reference to $remote" }
-
-  val remoteElement = parseRemote(bases = bases, remote = remote, fallbackElement = fallbackElement, pathResolver = pathResolver, trackSourceFile = trackSourceFile) ?: return null
-  var remoteParsed = extractNeededChildren(element, remoteElement)
-
-  // Add source-file attribute to <content> elements if tracking is enabled
-  // Only set if not already set to preserve the original source file in nested includes
-  if (trackSourceFile) {
-    val sourceFileName = remote.fileName.toString()
-    for (resolvedElement in remoteParsed) {
-      if (resolvedElement.name == "content" && resolvedElement.getAttribute(SOURCE_FILE_ATTRIBUTE) == null) {
-        resolvedElement.setAttribute(SOURCE_FILE_ATTRIBUTE, sourceFileName)
-      }
-    }
-  }
-
-  var i = 0
-  while (true) {
-    if (i >= remoteParsed.size) {
-      break
-    }
-
-    val o = remoteParsed.get(i)
-    if (isIncludeElement(o)) {
-      val elements = resolveXIncludeElement(o, bases, pathResolver, trackSourceFile)
-      if (elements != null) {
-        remoteParsed.addAll(i, elements)
-        i += elements.size - 1
-        remoteParsed.removeAt(i)
-      }
-    }
-    else {
-      doResolveNonXIncludeElement(o, bases, pathResolver, trackSourceFile)
-    }
-
-    i++
-  }
-
-  for (element in remoteParsed) {
-    element.detach()
-  }
-  return remoteParsed
 }
 
 private fun extractNeededChildren(element: Element, remoteElement: Element): MutableList<Element> {
@@ -112,57 +35,102 @@ private fun extractNeededChildren(element: Element, remoteElement: Element): Mut
   val subTagName = matcher.group(2)
   if (subTagName != null) {
     // cut off the slash
-    e = e.getChild(subTagName.substring(1))
-    assert(e != null)
+    e = requireNotNull(e.getChild(subTagName.substring(1))) { "Child element not found: ${subTagName.substring(1)}" }
   }
   return e.children.toMutableList()
 }
 
-private fun parseRemote(bases: Deque<Path>, remote: Path, fallbackElement: Element?, pathResolver: XIncludePathResolver, trackSourceFile: Boolean): Element? {
-  try {
-    bases.push(remote)
-    val root = JDOMUtil.load(remote)
-    if (isIncludeElement(root)) {
-      val resolved = resolveXIncludeElement(root, bases, pathResolver, trackSourceFile)
-      return if (resolved.isNullOrEmpty()) root else resolved.single()
-    }
-    else {
-      doResolveNonXIncludeElement(root, bases, pathResolver, trackSourceFile)
-      return root
-    }
-  }
-  catch (e: IOException) {
-    if (fallbackElement != null) {
-      return null
-    }
-    Span.current().addEvent("$remote include ignored: ${e.message}")
-    return null
-  }
-  finally {
-    bases.pop()
-  }
+/**
+ * Resolver that returns JDOM Elements directly instead of file paths.
+ * Useful when working with preloaded/cached XML documents.
+ */
+interface XIncludeElementResolver {
+  // Return the Element for the given href, or null if not found/optional
+  fun resolveElement(relativePath: String, isOptional: Boolean, isDynamic: Boolean): Element?
 }
 
-private fun doResolveNonXIncludeElement(original: Element, bases: Deque<Path>, pathResolver: XIncludePathResolver, trackSourceFile: Boolean) {
+/**
+ * Recursively resolves XInclude elements using preloaded Elements instead of file paths.
+ *
+ * This is an optimized variant useful when working with cached or scrambled descriptors
+ * already loaded in memory, avoiding file I/O operations.
+ *
+ * @param element The root element to process. Will be mutated in place.
+ * @param elementResolver Strategy for resolving include references to preloaded Elements.
+ * @see resolveIncludes The file-based variant
+ */
+internal fun resolveIncludes(element: Element, elementResolver: XIncludeElementResolver) {
+  check(!isIncludeElement(element))
+  doResolveNonXIncludeElementFromCache(original = element, elementResolver = elementResolver)
+}
+
+private fun resolveXIncludeElement(element: Element, elementResolver: XIncludeElementResolver): MutableList<Element>? {
+  val href = requireNotNull(element.getAttributeValue("href")) { "Missing href attribute" }
+
+  val baseAttribute = element.getAttributeValue("base", Namespace.XML_NAMESPACE)
+  if (baseAttribute != null) {
+    throw UnsupportedOperationException("`base` attribute is not supported")
+  }
+
+  val fallbackElement = element.getChild("fallback", element.namespace)
+  val isDynamic = element.getAttribute("includeUnless") != null || element.getAttribute("includeIf") != null
+  val remoteElement = elementResolver.resolveElement(
+    relativePath = href,
+    isOptional = fallbackElement != null,
+    isDynamic = isDynamic,
+  ) ?: return null
+
+  val remoteParsed = extractNeededChildren(element, remoteElement)
+
+  // Process all children, recursively resolving any nested xi:include elements
+  var i = 0
+  while (i < remoteParsed.size) {
+    val child = remoteParsed.get(i)
+    if (isIncludeElement(child)) {
+      val elements = resolveXIncludeElement(element = child, elementResolver = elementResolver)
+      if (elements != null) {
+        if (elements.isEmpty()) {
+          // Remove the xi:include element that resolves to nothing
+          remoteParsed.removeAt(i)
+          i--  // Adjust index since we removed an element
+        }
+        else {
+          // Replace the xi:include element with resolved elements
+          remoteParsed.removeAt(i)
+          remoteParsed.addAll(i, elements)
+          // Skip over the newly inserted elements (loop will increment i by 1)
+          i += elements.size - 1
+        }
+      }
+    }
+    else {
+      doResolveNonXIncludeElementFromCache(original = child, elementResolver = elementResolver)
+    }
+
+    i++
+  }
+
+  for (element in remoteParsed) {
+    element.detach()
+  }
+  return remoteParsed
+}
+
+private fun doResolveNonXIncludeElementFromCache(original: Element, elementResolver: XIncludeElementResolver) {
   val contentList = original.content
   for (i in contentList.size - 1 downTo 0) {
     val content = contentList.get(i)
     if (content is Element) {
       if (isIncludeElement(content)) {
-        val result = resolveXIncludeElement(element = content, bases = bases, pathResolver = pathResolver, trackSourceFile = trackSourceFile)
+        val result = resolveXIncludeElement(element = content, elementResolver = elementResolver)
         if (result != null) {
           original.setContent(i, result)
         }
       }
       else {
         // process child element to resolve possible includes
-        doResolveNonXIncludeElement(original = content, bases = bases, pathResolver = pathResolver, trackSourceFile = trackSourceFile)
+        doResolveNonXIncludeElementFromCache(original = content, elementResolver = elementResolver)
       }
     }
   }
-}
-
-interface XIncludePathResolver {
-  // return null if there is no need to resolve x-include
-  fun resolvePath(relativePath: String, base: Path?, isOptional: Boolean, isDynamic: Boolean): Path?
 }

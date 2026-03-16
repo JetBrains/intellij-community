@@ -1,5 +1,5 @@
 import b
-<warning descr="'a' is 'Final' and could not be reassigned">b.a</warning> = 2
+<warning descr="'a' is 'Final' and cannot be reassigned">b.a</warning> = 2
 
 from b import a
-<warning descr="'a' is 'Final' and could not be reassigned">a</warning> = 3
+<warning descr="'a' is 'Final' and cannot be reassigned">a</warning> = 3

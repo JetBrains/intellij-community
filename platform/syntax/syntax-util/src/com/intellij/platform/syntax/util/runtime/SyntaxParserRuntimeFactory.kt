@@ -5,6 +5,12 @@ import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use createSyntaxGeneratedParserRuntime",
+            ReplaceWith("com.intellij.platform.syntax.psi.createSyntaxGeneratedParserRuntime(builder, extendedState)"))
 interface SyntaxParserRuntimeFactory {
-  fun buildParserRuntime(builder: SyntaxTreeBuilder, extendedState: SyntaxGeneratedParserRuntime.ParserUserState? = null): SyntaxGeneratedParserRuntime
+  fun buildParserRuntime(
+    builder: SyntaxTreeBuilder,
+    extendedState: ParserUserState? = null,
+  ): SyntaxGeneratedParserRuntime
 }

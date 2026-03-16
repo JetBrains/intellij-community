@@ -34,6 +34,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//platform/analysis-impl",
+    "//platform/projectModel-impl",
     "//platform/lang-impl",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
@@ -49,7 +50,8 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/util/jdom",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/core-impl",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -66,6 +68,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//platform/analysis-impl",
+    "//platform/projectModel-impl",
     "//platform/lang-impl",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
@@ -85,13 +88,14 @@ jvm_library(
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/util/jdom",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-test",
+    "//libraries/kotlin/test:libraries-kotlinTest",
     "@lib//:kotlin-test-junit",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//xml/relaxng",
     "//xml/relaxng:relaxng_test_lib",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.spellchecker` end

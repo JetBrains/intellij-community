@@ -15,17 +15,26 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.LocalPathCellEditor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.table.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
 
 @ApiStatus.Internal
 public final class LogsFragment<T extends RunConfigurationBase<?>> extends SettingsEditorFragment<T, JComponent> {
@@ -70,6 +79,7 @@ public final class LogsFragment<T extends RunConfigurationBase<?>> extends Setti
 
     myComponent = ToolbarDecorator.createDecorator(myFilesTable)
       .setToolbarPosition(ActionToolbarPosition.BOTTOM)
+      .setMinimumSize(new JBDimension(0, 100))
       .setAddAction(button -> {
         List<LogFileOptions> newList = new ArrayList<>(myModel.getItems());
         LogFileOptions newOptions = new LogFileOptions("", "", true);

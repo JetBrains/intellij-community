@@ -10,7 +10,12 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.*
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.siblings
+import com.intellij.psi.util.startOffset
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.toc.GenerateTableOfContentsAction.Manager.replaceString
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes

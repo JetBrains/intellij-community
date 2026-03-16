@@ -16,7 +16,8 @@ import com.intellij.task.ProjectTaskManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.List;
 

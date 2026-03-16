@@ -8,11 +8,16 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
-import org.jetbrains.kotlin.analysis.api.components.collectPossibleReferenceShortenings
 import org.jetbrains.kotlin.analysis.api.components.importableFqName
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFileSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.isTopLevel
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.ShortenCommandForIde
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -30,7 +35,7 @@ internal class ImportMemberIntention :
 
     data class Context(
         val fqName: FqName,
-        val shortenCommand: ShortenCommand,
+        val shortenCommand: ShortenCommandForIde,
     )
 
     override fun getFamilyName(): String =
@@ -85,7 +90,7 @@ private fun computeContext(file: KtFile, symbol: KaSymbol): ImportMemberIntentio
             } else {
                 (symbol as KaConstructorSymbol).containingClassId
             } ?: return null
-            val shortenCommand = collectPossibleReferenceShortenings(
+            val shortenCommand = collectPossibleReferenceShorteningsForIde(
                 file,
                 classShortenStrategy = {
                     if (it.classId == classId)
@@ -106,7 +111,7 @@ private fun computeContext(file: KtFile, symbol: KaSymbol): ImportMemberIntentio
             val callableId = symbol.callableId ?: return null
             if (callableId.callableName.isSpecial) return null
             if (symbol.importableFqName == null) return null
-            val shortenCommand = collectPossibleReferenceShortenings(
+            val shortenCommand = collectPossibleReferenceShorteningsForIde(
                 file,
                 classShortenStrategy = { ShortenStrategy.DO_NOT_SHORTEN },
                 callableShortenStrategy = {

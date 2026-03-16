@@ -101,7 +101,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     }
     finally {
       writeAction {
-        ProjectJdkTable.getInstance().removeJdk(sdk)
+        ProjectJdkTable.getInstance(project).removeJdk(sdk)
         ProjectRootManager.getInstance(project).setProjectSdk(null)
       }
     }
@@ -109,7 +109,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   private suspend fun createTestSdk11(): Sdk {
-    val sdk: Sdk = ProjectJdkTable.getInstance().createSdk(getTestName(true) + "-jdk11", JavaSdk.getInstance())
+    val sdk: Sdk = ProjectJdkTable.getInstance(project).createSdk(getTestName(true) + "-jdk11", JavaSdk.getInstance())
     val sdkModificator = sdk.sdkModificator
     sdkModificator.homePath = "jdk11-home-path"
     sdkModificator.versionString = "11"

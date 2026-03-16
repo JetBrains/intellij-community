@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.script
 
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.kotlin.idea.navigation.GotoCheck
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.navigation.GotoCheck
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.junit.Assert
 

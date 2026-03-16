@@ -9,21 +9,28 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FeatureProm
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.searchEverywhere.SeActionItemPresentation
-import com.intellij.platform.searchEverywhere.SeOptionActionItemPresentation
-import com.intellij.platform.searchEverywhere.SeRunnableActionItemPresentation
+import com.intellij.platform.searchEverywhere.SeItemDataKeys
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListItemRow
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListRow
 import com.intellij.platform.searchEverywhere.frontend.ui.weightTextIfEnabled
+import com.intellij.platform.searchEverywhere.presentations.SeActionItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeOptionActionItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeRunnableActionItemPresentation
 import com.intellij.ui.HtmlToSimpleColoredComponentConverter
+import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.render.IconCompOptionalCompPanel
 import com.intellij.ui.speedSearch.SpeedSearchUtil
-import com.intellij.util.ui.*
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
 import java.awt.Font
@@ -150,6 +157,11 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
         foreground = if (selected) NamedColorUtil.getListSelectionForeground(true)
         else NamedColorUtil.getInactiveTextColor()
       }
+    }
+
+    val isSemantic = (value as SeResultListItemRow).item.additionalInfo[SeItemDataKeys.IS_SEMANTIC].toBoolean()
+    if (isSemantic && Registry.`is`("search.everywhere.ml.semantic.highlight.items", false)) {
+      background = JBColor.GREEN.darker().darker()
     }
   }
 

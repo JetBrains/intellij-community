@@ -2,8 +2,12 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.modcommand.*
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommand.chooseAction
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiBasedModCommandAction
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget

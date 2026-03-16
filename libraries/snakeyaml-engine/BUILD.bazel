@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":snakeyaml-engine_resources"],
-  exports = ["@lib//:snakeyaml-engine"],
-  runtime_deps = ["@lib//:snakeyaml-engine"]
+  exports = ["@lib//:libraries-snakeyaml-engine-snakeyaml-engine"],
+  runtime_deps = ["@lib//:libraries-snakeyaml-engine-snakeyaml-engine"]
 )
 ### auto-generated section `build intellij.libraries.snakeyaml.engine` end

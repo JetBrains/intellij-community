@@ -1,9 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.DebuggerManager;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebugProcessListener;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
@@ -17,6 +22,7 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.DoubleClickListener;
@@ -40,7 +46,7 @@ import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
@@ -120,7 +126,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
         DebuggerManagerThreadImpl.assertIsManagerThread();
         debugProcess.removeDebugProcessListener(this);
         boolean activated = myIsTrackersActivated.get();
-        VirtualMachineProxyImpl proxy = debugProcess.getVirtualMachineProxy();
+        VirtualMachineProxyImpl proxy = VirtualMachineProxyImpl.getCurrent();
         if (!proxy.canBeModified()) {
           return;
         }
@@ -185,7 +191,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
                           @NotNull TrackingType type,
                           boolean isTrackerEnabled) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (!debugProcess.getVirtualMachineProxy().canBeModified()) {
+    if (!VirtualMachineProxyImpl.getCurrent().canBeModified()) {
       return;
     }
     if (type == TrackingType.CREATION) {
@@ -303,29 +309,31 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
   private class MyOpenNewInstancesListener extends MouseAdapter {
     @Override
     public void mouseClicked(MouseEvent e) {
-      if (e.getClickCount() != 1 || e.getButton() != MouseEvent.BUTTON1 || !isShowNewInstancesEvent(e)) {
-        return;
-      }
+      WriteIntentReadAction.run(() -> {
+        if (e.getClickCount() != 1 || e.getButton() != MouseEvent.BUTTON1 || !isShowNewInstancesEvent(e)) {
+          return;
+        }
 
-      TypeInfo selectedTypeInfo = getTable().getSelectedClass();
-      final ReferenceType ref = selectedTypeInfo != null ? ((JavaTypeInfo)selectedTypeInfo).getReferenceType() : null;
-      final TrackerForNewInstances strategy = ref == null ? null : getStrategy(selectedTypeInfo);
-      XDebugSession debugSession = XDebuggerManager.getInstance(myProject).getCurrentSession();
-      if (strategy != null && debugSession != null) {
-        final DebugProcess debugProcess =
-          DebuggerManager.getInstance(myProject).getDebugProcess(debugSession.getDebugProcess().getProcessHandler());
-        final MemoryViewDebugProcessData data = debugProcess.getUserData(MemoryViewDebugProcessData.KEY);
-        if (data != null) {
-          final List<ObjectReference> newInstances = strategy.getNewInstances();
-          data.getTrackedStacks().pinStacks(ref);
-          final InstancesWindow instancesWindow = new InstancesWindow(debugSession, new FixedListProvider(newInstances), ref);
-          Disposer.register(instancesWindow.getDisposable(), () -> data.getTrackedStacks().unpinStacks(ref));
-          instancesWindow.show();
+        TypeInfo selectedTypeInfo = getTable().getSelectedClass();
+        final ReferenceType ref = selectedTypeInfo != null ? ((JavaTypeInfo)selectedTypeInfo).getReferenceType() : null;
+        final TrackerForNewInstances strategy = ref == null ? null : getStrategy(selectedTypeInfo);
+        XDebugSession debugSession = XDebuggerManager.getInstance(myProject).getCurrentSession();
+        if (strategy != null && debugSession != null) {
+          final DebugProcess debugProcess =
+            DebuggerManager.getInstance(myProject).getDebugProcess(debugSession.getDebugProcess().getProcessHandler());
+          final MemoryViewDebugProcessData data = debugProcess.getUserData(MemoryViewDebugProcessData.KEY);
+          if (data != null) {
+            final List<ObjectReference> newInstances = strategy.getNewInstances();
+            data.getTrackedStacks().pinStacks(ref);
+            final InstancesWindow instancesWindow = new InstancesWindow(debugSession, new FixedListProvider(newInstances), ref);
+            Disposer.register(instancesWindow.getDisposable(), () -> data.getTrackedStacks().unpinStacks(ref));
+            instancesWindow.show();
+          }
+          else {
+            LOG.warn("MemoryViewDebugProcessData not found in debug session user data");
+          }
         }
-        else {
-          LOG.warn("MemoryViewDebugProcessData not found in debug session user data");
-        }
-      }
+      });
     }
   }
 
@@ -352,7 +360,9 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
     @Override
     protected boolean onDoubleClick(@NotNull MouseEvent event) {
       if (!isShowNewInstancesEvent(event)) {
-        handleClassSelection(getTable().getSelectedClass());
+        WriteIntentReadAction.run(() -> {
+          handleClassSelection(getTable().getSelectedClass());
+        });
         return true;
       }
 

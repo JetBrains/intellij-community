@@ -4,7 +4,11 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.tabs.JBTabsPosition
-import com.intellij.ui.tabs.impl.*
+import com.intellij.ui.tabs.impl.JBEditorTabPainter
+import com.intellij.ui.tabs.impl.JBEditorTabs
+import com.intellij.ui.tabs.impl.JBTabsImpl
+import com.intellij.ui.tabs.impl.TabLabel
+import com.intellij.ui.tabs.impl.TabPainterAdapter
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle

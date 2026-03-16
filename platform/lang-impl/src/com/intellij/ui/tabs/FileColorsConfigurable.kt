@@ -41,6 +41,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.layout.selected
 import com.intellij.ui.table.JBTable
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import com.intellij.util.ui.EditableModel
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.RegionPaintIcon
@@ -56,7 +57,7 @@ import javax.swing.table.DefaultTableCellRenderer
 private const val ID = "reference.settings.ide.settings.file-colors"
 @PropertyKey(resourceBundle = "messages.IdeBundle") private const val DISPLAY_NAME_KEY = "configurable.file.colors"
 
-private class FileColorsConfigurable(private val project: Project) : BoundSearchableConfigurable(message(DISPLAY_NAME_KEY), ID), NoScroll {
+internal class FileColorsConfigurable(private val project: Project) : BoundSearchableConfigurable(message(DISPLAY_NAME_KEY), ID), NoScroll {
   private val colorsTableModel = FileColorsTableModel(FileColorManager.getInstance(project) as FileColorManagerImpl)
 
   override fun createPanel(): DialogPanel {
@@ -103,7 +104,7 @@ private class FileColorsConfigurable(private val project: Project) : BoundSearch
   override fun apply() {
     super.apply()
     UISettings.getInstance().fireUISettingsChanged()
-    ProjectView.getInstance(project).currentProjectViewPane?.updateFromRoot(true)
+    ProjectView.getInstance(project).currentProjectViewPane?.updateFromRoot(true, ProjectViewUpdateCause.SETTINGS)
   }
 }
 

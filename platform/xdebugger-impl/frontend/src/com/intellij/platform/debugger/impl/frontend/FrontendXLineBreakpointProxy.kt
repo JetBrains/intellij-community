@@ -2,7 +2,7 @@
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.ide.rpc.DocumentPatchVersion
-import com.intellij.ide.rpc.util.TextRangeId
+import com.intellij.ide.rpc.util.TextRangeDto
 import com.intellij.ide.rpc.util.textRange
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.readAction
@@ -17,10 +17,13 @@ import com.intellij.openapi.vfs.findDocument
 import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDto
 import com.intellij.platform.debugger.impl.rpc.XLineBreakpointInfo
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
+import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.impl.breakpoints.*
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointVisualRepresentation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
@@ -96,13 +99,12 @@ internal class FrontendXLineBreakpointProxy(
   dto: XBreakpointDto,
   override val type: XLineBreakpointTypeProxy,
   manager: FrontendXBreakpointManager,
-  onBreakpointChange: (XBreakpointProxy) -> Unit,
-) : FrontendXBreakpointProxy(project, parentCs, dto, type, manager.breakpointRequestCounter, onBreakpointChange), XLineBreakpointProxy {
+) : FrontendXBreakpointProxy(project, parentCs, dto, type, manager.breakpointRequestCounter), XLineBreakpointProxy {
   private val debouncer = RequestsDebouncer(cs, this)
 
   private var lineSourcePosition: XSourcePosition? = null
 
-  private val visualRepresentation = XBreakpointVisualRepresentation(cs, this, useFeLineBreakpointProxy(), manager)
+  private val visualRepresentation = XBreakpointVisualRepresentation(cs, this, SplitDebuggerMode.isSplitDebugger(), manager)
 
   private val lineBreakpointInfo: XLineBreakpointInfo
     get() = currentState.lineBreakpointInfo!!
@@ -261,5 +263,5 @@ internal class FrontendXLineBreakpointProxy(
   }
 }
 
-private val UNAVAILABLE_RANGE = TextRangeId(-1, -1)
+private val UNAVAILABLE_RANGE = TextRangeDto(-1, -1)
 private fun XLineBreakpointInfo.invalidateHighlightingRangeOrNull() = if (highlightingRange == null) null else UNAVAILABLE_RANGE

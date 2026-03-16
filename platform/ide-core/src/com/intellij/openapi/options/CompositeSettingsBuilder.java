@@ -4,7 +4,7 @@ package com.intellij.openapi.options;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Collection;
 
 public interface CompositeSettingsBuilder<Settings> {

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jgoodies.common.jar
+  modules:
+  - name: intellij.libraries.jgoodies.common
+    libraries:
+      jgoodies-common:
+      - name: $MAVEN_REPOSITORY$/com/jgoodies/jgoodies-common/1/jgoodies-common-1.jar

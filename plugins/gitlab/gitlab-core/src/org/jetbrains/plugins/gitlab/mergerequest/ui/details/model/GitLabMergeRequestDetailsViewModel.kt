@@ -12,7 +12,11 @@ import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -20,7 +24,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.reviewState
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
-import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
+import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
 
 @ApiStatus.Internal
 interface GitLabMergeRequestDetailsViewModel : CodeReviewDetailsViewModel, GitLabMergeRequestViewModel {
@@ -46,7 +50,8 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
   currentUser: GitLabUserDTO,
   projectData: GitLabProject,
   private val mergeRequest: GitLabMergeRequest,
-  private val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+  avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+  htmlConverter: GitLabMarkdownToHtmlConverter,
 ) : GitLabMergeRequestDetailsViewModel {
 
   private val cs = parentCs.childScope(this::class)
@@ -56,13 +61,13 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
   override val author: GitLabUserDTO = mergeRequest.author
 
   override val title: SharedFlow<String> = mergeRequest.details.map { it.title }.map { title ->
-    GitLabUIUtil.convertToHtml(project, mergeRequest.gitRepository, mergeRequest.glProject.projectPath, title)
+    htmlConverter.convertToHtml(title)
   }.modelFlow(cs, LOG)
   override val description: SharedFlow<String> = mergeRequest.details.map { it.description }.map { description ->
     processIssueIdsHtml(project, description)
   }.modelFlow(cs, LOG)
   override val descriptionHtml: SharedFlow<String> = mergeRequest.details.map { it.description }.map {
-    if (it.isNotBlank()) GitLabUIUtil.convertToHtml(project, mergeRequest.gitRepository, mergeRequest.glProject.projectPath, it) else it
+    if (it.isNotBlank()) htmlConverter.convertToHtml(it) else it
   }.modelFlow(cs, LOG)
   override val reviewRequestState: SharedFlow<ReviewRequestState> = mergeRequest.details.map { it.reviewState }
     .modelFlow(cs, LOG)
@@ -81,10 +86,20 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
   override val detailsReviewFlowVm = GitLabMergeRequestReviewFlowViewModelImpl(
     project, cs, currentUser, projectData, mergeRequest, avatarIconsProvider
   )
-  override val branchesVm = GitLabMergeRequestBranchesViewModel(cs, mergeRequest, projectData.projectMapping)
-  override val statusVm = GitLabMergeRequestStatusViewModelImpl(project, cs, projectData.projectMapping.gitRepository,
-                                                                projectData.projectMapping.repository.serverPath, mergeRequest)
-  override val changesVm = GitLabMergeRequestChangesViewModelImpl(project, cs, mergeRequest)
+  override val branchesVm = GitLabMergeRequestBranchesViewModel(
+    cs,
+    mergeRequest,
+    projectData.projectCoordinates.serverPath,
+    projectData.gitRemote
+  )
+  override val statusVm = GitLabMergeRequestStatusViewModelImpl(
+    project,
+    cs,
+    projectData.gitRemote.repository,
+    projectData.projectCoordinates.serverPath,
+    mergeRequest
+  )
+  override val changesVm = GitLabMergeRequestChangesViewModelImpl(project, cs, mergeRequest, htmlConverter)
 
   override fun reloadData() {
     cs.launchNow {

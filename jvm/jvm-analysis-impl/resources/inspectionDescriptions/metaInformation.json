@@ -14,7 +14,7 @@
     },
     {
       "id": "SuppressionAnnotation",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Unspecified"
     },
     {
       "id": "LoggingSimilarMessage",
@@ -38,11 +38,11 @@
     },
     {
       "id": "TestFailedLine",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Unspecified"
     },
     {
       "id": "TestInProductSource",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "LoggingStringTemplateAsArgument",
@@ -82,7 +82,7 @@
     },
     {
       "id": "Dependency",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "ThreadRun",
@@ -90,7 +90,7 @@
     },
     {
       "id": "MustAlreadyBeRemovedApi",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "NonExtendableApiUsage",
@@ -110,7 +110,7 @@
     },
     {
       "id": "TestOnlyProblems",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

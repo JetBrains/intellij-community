@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Image
 import java.awt.event.ActionListener
 import java.net.URL
-import java.util.*
+import java.util.Dictionary
 import javax.swing.Icon
 import javax.swing.KeyStroke
 import javax.swing.text.html.StyleSheet

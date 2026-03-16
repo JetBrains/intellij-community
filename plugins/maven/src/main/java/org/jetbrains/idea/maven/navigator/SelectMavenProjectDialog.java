@@ -25,7 +25,8 @@ import org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import java.awt.event.ActionEvent;
 
 public class SelectMavenProjectDialog extends SelectFromMavenProjectsDialog {

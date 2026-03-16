@@ -2,7 +2,11 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.ide.palette.impl.PaletteToolWindowManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.palette.ComponentItem;
@@ -13,8 +17,11 @@ import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;

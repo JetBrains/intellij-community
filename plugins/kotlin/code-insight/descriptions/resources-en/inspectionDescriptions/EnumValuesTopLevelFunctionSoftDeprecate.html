@@ -1,0 +1,41 @@
+<html>
+<body>
+Reports calls from Kotlin to <code>enumValues<T>()</code> method that can be replaced with <code>enumEntries<T>()</code>.
+<p>
+    Use of <code>enumEntries<T>()</code> may improve performance of your code.
+</p>
+<p>
+    The quick-fix replaces <code>enumValues<T>()</code> with <code>enumEntries<T>()</code>.
+</p>
+<p>
+    <b>More details:</b> <a href="https://youtrack.jetbrains.com/issue/KT-61120/Consider-deprecating-or-decommisioning-enumValues-intrinsic-in-the-favor-of-enumEntries">
+    KT-61120 Provide modern and performant replacement for Enum.values()</a>
+</p>
+<p>
+    <b>Note:</b> <code>enumEntries<T>()</code> return type is different from the one of <code>enumValues<T>()</code>
+    (<code>EnumEntries&lt;T&gt;</code> which inherits from <code>List&lt;T&gt;</code> instead of <code>Array&lt;T&gt;</code>).
+    Due to this in some cases quick fix inserts extra <code>.toTypedArray()</code> conversion to not break the code, but
+    for most common cases replacement will be done without it (e.g. in <code>for</code> loop).
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+    enum class Version {
+        V1, V2
+    }
+
+    <b>enumValues</b><Version>().values().forEach { /* .. */ }
+    val firstVersion = <b>enumValues</b><Version>()[0]
+    functionExpectingArray(<b>enumValues</b><Version>())
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+    enum class Version {
+        V1, V2
+    }
+
+    <b>enumEntries</b><Version>().forEach { /* .. */ }
+    val firstVersion = <b>enumEntries</b><Version>()[0]
+    functionExpectingArray(<b>enumEntries<Version>().toTypedArray()</b>)
+</code></pre>
+</body>
+</html>

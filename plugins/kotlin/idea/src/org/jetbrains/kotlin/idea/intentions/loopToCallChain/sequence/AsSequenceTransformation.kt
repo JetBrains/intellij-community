@@ -2,11 +2,13 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.ChainedCallGenerator
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.SequenceTransformation
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 
+@K1Deprecation
 class AsSequenceTransformation(override val loop: KtForExpression) : SequenceTransformation {
     override val presentation: String
         get() = "asSequence()"

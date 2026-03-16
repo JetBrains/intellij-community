@@ -13,7 +13,17 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,9 +41,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.codeInspection.options.OptPane.*;
-import static com.intellij.psi.CommonClassNames.*;
-import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_THROWABLE;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.GET_CONSTRUCTOR;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.GET_DECLARED_CONSTRUCTOR;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.GET_DECLARED_FIELD;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.GET_DECLARED_METHOD;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.GET_FIELD;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.GET_METHOD;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveClass;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveType;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.computeConstantExpression;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getReflectiveClass;
 
 public final class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalInspectionTool {
 

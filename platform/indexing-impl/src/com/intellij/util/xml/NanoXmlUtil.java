@@ -9,12 +9,22 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharSequenceReader;
-import net.n3.nanoxml.*;
+import net.n3.nanoxml.IXMLBuilder;
+import net.n3.nanoxml.IXMLEntityResolver;
+import net.n3.nanoxml.IXMLValidator;
+import net.n3.nanoxml.NonValidator;
+import net.n3.nanoxml.StdXMLParser;
+import net.n3.nanoxml.StdXMLReader;
+import net.n3.nanoxml.XMLException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.UncheckedIOException;
 import java.util.Properties;
 
 public final class NanoXmlUtil {

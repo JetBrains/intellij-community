@@ -1,0 +1,11 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_anonymousObjectChanged-a.kotlin_module
+  a/AKt$foo$1.class
+  a/AKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/anonymousObjectChanged/a/a.kt
+End of files
+------------------------------------------
+Exit code: OK

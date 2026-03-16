@@ -1,9 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.CurrentContentRevision
+import com.intellij.openapi.vcs.changes.LocallyDeletedChange
+import com.intellij.openapi.vcs.changes.LogicalLock
+import com.intellij.openapi.vcs.changes.RemoteRevisionsCache
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.changes.TreeModelBuilderEx
 import com.intellij.ui.SimpleColoredComponent
@@ -24,6 +30,12 @@ internal class BackendChangesViewModelBuilderService(private val project: Projec
 
   override fun modifyTreeModelBuilder(modelBuilder: TreeModelBuilder) {
     val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
+    val shouldShowUntrackedLoading = changeListManager.unversionedFilesPaths.isEmpty() &&
+                                     !project.getService(InitialVfsRefreshService::class.java).isInitialVfsRefreshFinished() &&
+                                     changeListManager.isUnversionedInUpdateMode
+    if (shouldShowUntrackedLoading) {
+      modelBuilder.insertSubtreeRoot(ChangesBrowserUnversionedLoadingPendingNode())
+    }
 
     modelBuilder.setLocallyDeletedPaths(changeListManager.deletedFiles)
       .setModifiedWithoutEditing(changeListManager.modifiedWithoutEditing)

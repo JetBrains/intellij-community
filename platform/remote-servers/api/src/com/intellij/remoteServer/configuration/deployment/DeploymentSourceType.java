@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * Implement this class to provide a custom type of deployment source which can be used in 'Deploy to Server' run configurations.

@@ -17,7 +17,11 @@ package org.intellij.lang.xpath;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.parameterInfo.*;
+import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.lang.parameterInfo.ParameterInfoUIContext;
+import com.intellij.lang.parameterInfo.ParameterInfoUtils;
+import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;

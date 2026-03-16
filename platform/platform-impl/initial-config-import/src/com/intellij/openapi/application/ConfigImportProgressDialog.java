@@ -7,8 +7,15 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 @ApiStatus.Internal
 public final class ConfigImportProgressDialog extends JDialog {

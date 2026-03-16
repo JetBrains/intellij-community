@@ -1,0 +1,14 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.completion.impl.k2.jfr
+
+internal inline fun <T, E : AbstractCompletionEvent> E.timeEvent(f: E.() -> T): T {
+    begin()
+    try {
+        return f()
+    } catch (e: Exception) {
+        wasInterrupted = true
+        throw e
+    } finally {
+        commit()
+    }
+}

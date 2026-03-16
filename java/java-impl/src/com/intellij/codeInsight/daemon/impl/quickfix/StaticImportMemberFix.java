@@ -18,7 +18,14 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -64,9 +71,13 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
     myPsiModificationCount = PsiModificationTracker.getInstance(project).getModificationCount();
   }
 
-  private static boolean isValidCandidate(PsiFile psiFile, PsiMember candidate){
+  private static boolean isValidCandidate(@NotNull PsiFile psiFile, @NotNull PsiMember candidate){
     if (!candidate.isValid()) return false;
     if (PsiUtil.isMemberAccessibleAt(candidate, psiFile)) return true;
+    PsiImplicitClass possibleImplicitClass = PsiTreeUtil.getParentOfType(candidate, PsiImplicitClass.class);
+    if (possibleImplicitClass != null) {
+      if (!psiFile.equals(candidate.getContainingFile())) return false;
+    }
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(candidate);
     if (virtualFile == null) return false;
     return ProjectFileIndex.getInstance(psiFile.getProject()).isInContent(virtualFile);
@@ -77,7 +88,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
     PsiElement copy = PsiTreeUtil.findSameElementInCopy(getElement(), psiFile);
     if (copy == null) return IntentionPreviewInfo.EMPTY;
     if (candidates.isEmpty()) return IntentionPreviewInfo.EMPTY;
-    T element = candidates.get(0);
+    T element = candidates.getFirst();
     PsiClass containingClass = element.getContainingClass();
     if (containingClass == null) return IntentionPreviewInfo.EMPTY;
     consumer.accept(copy, element);
@@ -92,7 +103,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
 
   @Override
   public @NotNull String getText() {
-    return getBaseText() + (candidates == null || candidates.size() != 1 ? "..." : " '" + getMemberPresentableText(candidates.get(0)) + "'");
+    return getBaseText() + (candidates == null || candidates.size() != 1 ? "..." : " '" + getMemberPresentableText(candidates.getFirst()) + "'");
   }
 
   @Override
@@ -156,7 +167,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
       return false;
     }
 
-    T firstCandidate = candidates.get(0);
+    T firstCandidate = candidates.getFirst();
     PsiFile containingFile = callExpression.getContainingFile();
     if (containingFile == null || isPsiModificationStampChanged(containingFile.getProject())) {
       return false;

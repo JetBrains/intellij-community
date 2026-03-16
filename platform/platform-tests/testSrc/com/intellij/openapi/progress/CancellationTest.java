@@ -6,7 +6,7 @@ import com.intellij.testFramework.junit5.TestApplication;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 
 @TestApplication
 public abstract class CancellationTest {

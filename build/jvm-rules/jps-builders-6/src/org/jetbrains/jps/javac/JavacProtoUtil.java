@@ -14,7 +14,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
 import java.net.URI;
-import java.util.*;
+import java.util.Collection;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 @ApiStatus.Internal
 public final class JavacProtoUtil {

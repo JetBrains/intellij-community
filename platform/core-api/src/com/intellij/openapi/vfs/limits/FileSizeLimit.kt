@@ -6,6 +6,9 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.PersistentFSConstants
+import com.intellij.openapi.vfs.limits.FileSizeLimit.Companion.getDefaultContentLoadLimit
+import com.intellij.openapi.vfs.limits.FileSizeLimit.Companion.getDefaultIntellisenseLimit
+import com.intellij.openapi.vfs.limits.FileSizeLimit.Companion.getDefaultPreviewLimit
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
@@ -57,10 +60,11 @@ interface FileSizeLimit {
     }
 
     @JvmStatic
-    fun isTooLarge(fileSize: Long, extension: String?): Boolean {
+    fun isTooLargeForContentLoading(fileSize: Long, extension: String?): Boolean {
       val fileContentLoadLimit = getContentLoadLimit(extension)
       return fileSize > fileContentLoadLimit
     }
+
 
     /**
      * It is not only the **default** limit for the file types/extensions without an explicitly defined one,
@@ -82,20 +86,21 @@ interface FileSizeLimit {
       return getValue(extension, ExtensionSizeLimitInfo::content, getDefaultContentLoadLimit())
     }
 
+
     /**
      * It is not only the **default** limit for the file types/extensions without an explicitly defined one,
      * but also a **minimum** file size limit -- i.e., if a custom limit is defined, but it is less than
-     * [getIntellisenseLimit] -- it's value is ignored, and [getIntellisenseLimit] is used
+     * [getDefaultIntellisenseLimit] -- it's value is ignored, and [getDefaultIntellisenseLimit] is used
      * instead
      */
     //MAYBE RC: rename to getMinIntellisenseLimit()
     @JvmStatic
-    fun getIntellisenseLimit(): Int = PersistentFSConstants.getMaxIntellisenseFileSize()
+    fun getDefaultIntellisenseLimit(): Int = PersistentFSConstants.getMaxIntellisenseFileSize()
 
     @JvmStatic
     fun getIntellisenseLimit(extension: String?): Int {
       @Suppress("DEPRECATION")
-      return getValue(extension, ExtensionSizeLimitInfo::intellijSense, getIntellisenseLimit())
+      return getValue(extension, ExtensionSizeLimitInfo::intellijSense, getDefaultIntellisenseLimit())
     }
 
     /**
@@ -116,6 +121,7 @@ interface FileSizeLimit {
     fun getEncodingDetectionLimit(extension: String?): Int {
       return findApplicable(extension ?: "")?.encodingDetectionLimit ?: Int.MAX_VALUE
     }
+
 
     /** @return `getter( getLimitsByExtension()[extension] )`, but no less than [minValue] */
     private fun getValue(extension: String?, getter: (ExtensionSizeLimitInfo) -> Int?, minValue: Int): Int {

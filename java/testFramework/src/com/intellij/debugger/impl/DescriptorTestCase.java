@@ -20,7 +20,12 @@ import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class DescriptorTestCase extends DebuggerTestCase {
   private final Map<Object, NodeDescriptorText> myDescriptorLog = new LinkedHashMap<>();

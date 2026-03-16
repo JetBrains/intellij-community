@@ -7,15 +7,30 @@ import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUiKind;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
+import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import com.intellij.xdebugger.frame.XNamedValue;
+import com.intellij.xdebugger.frame.XNavigatable;
+import com.intellij.xdebugger.frame.XReferrersProvider;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.XValueModifier;
+import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx;
 import com.jetbrains.python.PydevBundle;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.render.PyNodeRenderer;
@@ -24,17 +39,22 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.jetbrains.python.debugger.PyDebugValueGroupsKt.*;
+import static com.jetbrains.python.debugger.PyDebugValueGroupsKt.DUNDER_LEN;
+import static com.jetbrains.python.debugger.PyDebugValueGroupsKt.extractChildrenToGroup;
+import static com.jetbrains.python.debugger.PyDebugValueGroupsKt.getPROTECTED_ATTRS_EXCLUDED;
 
-public class PyDebugValue extends XNamedValue {
+public class PyDebugValue extends XNamedValue implements PyXDebugValue {
   protected static final Logger LOG = Logger.getInstance(PyDebugValue.class);
   private static final String ARRAY = "Array";
   private static final String DATA_FRAME = "DataFrame";
@@ -107,12 +127,13 @@ public class PyDebugValue extends XNamedValue {
                       @Nullable String typeQualifier,
                       final @Nullable String value,
                       @Nullable String shape,
+                      @Nullable String arrayElementType,
                       boolean isReturnedVal,
                       boolean isIPythonHidden,
                       boolean errorOnEval,
                       @Nullable String typeRendererId,
                       final @NotNull PyFrameAccessor frameAccessor) {
-    this(name, type, typeQualifier, value, EVALUATOR_POSTFIXES.containsKey(type), shape, isReturnedVal, isIPythonHidden, errorOnEval, typeRendererId, null,
+    this(name, type, typeQualifier, value, EVALUATOR_POSTFIXES.containsKey(type), shape, arrayElementType, isReturnedVal, isIPythonHidden, errorOnEval, typeRendererId, null,
          frameAccessor);
   }
 
@@ -218,6 +239,7 @@ public class PyDebugValue extends XNamedValue {
     myTempName = tempName;
   }
 
+  @Override
   public @Nullable String getType() {
     return myType;
   }
@@ -423,7 +445,7 @@ public class PyDebugValue extends XNamedValue {
   }
 
   private void setAdditionalLinks(@NotNull XValueNode node) {
-    if (node instanceof XValueNodeImpl valueNode) {
+    if (node instanceof XValueNodeEx valueNode) {
       if (checkAndEnableViewAsImageVisibility(this)) {
         addViewAsImageLink(valueNode);
       }
@@ -431,7 +453,7 @@ public class PyDebugValue extends XNamedValue {
     }
   }
 
-  private void addConfigureTypeRendererLink(@NotNull XValueNodeImpl valueNode) {
+  private void addConfigureTypeRendererLink(@NotNull XValueNodeEx valueNode) {
     String typeRendererId = getTypeRendererId();
     if (typeRendererId != null) {
       XDebuggerTreeNodeHyperlink link = myFrameAccessor.getUserTypeRenderersLink(typeRendererId);
@@ -544,17 +566,21 @@ public class PyDebugValue extends XNamedValue {
       return;
     }
 
-    if (node instanceof XValueNodeImpl valueNode) {
+    if (node instanceof XValueNodeEx valueNode) {
       addViewAsImageLink(valueNode);
     }
     String linkText = PydevBundle.message("pydev.view.as", postfix);
     node.setFullValueEvaluator(new PyNumericContainerValueEvaluator(linkText, myFrameAccessor, treeName));
   }
 
-  private static void addViewAsImageLink(XValueNodeImpl valueNode) {
+  protected static void addViewAsImageLink(XValueNodeEx valueNode) {
     PyDebugValue debugValue = (PyDebugValue)valueNode.getXValue();
     if (!checkAndShowViewAsImageOnScreen(debugValue))
       return;
+    addViewAsImageHyperlink(valueNode);
+  }
+
+  protected static void addViewAsImageHyperlink(XValueNodeEx valueNode) {
     String viewAsImageText = PydevBundle.message("pydev.view.as.image");
     valueNode.addAdditionalHyperlink(new XDebuggerTreeNodeHyperlink(viewAsImageText) {
       @Override
@@ -577,7 +603,7 @@ public class PyDebugValue extends XNamedValue {
     });
   }
 
-  private static boolean checkAndShowViewAsImageOnScreen(PyDebugValue debugValue) {
+  protected static boolean checkAndShowViewAsImageOnScreen(PyDebugValue debugValue) {
       return Registry.is("actions.show.as.image.visibility", false)
              && !PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)
              && checkAndEnableViewAsImageVisibility(debugValue);
@@ -697,10 +723,12 @@ public class PyDebugValue extends XNamedValue {
     }
   }
 
+  @Override
   public @NotNull PyFrameAccessor getFrameAccessor() {
     return myFrameAccessor;
   }
 
+  @Override
   public void setFrameAccessor(@NotNull PyFrameAccessor frameAccessor) {
     myFrameAccessor = frameAccessor;
   }

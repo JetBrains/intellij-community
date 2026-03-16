@@ -1,0 +1,50 @@
+{
+  "nodes": [
+    {
+      "address": {
+        "project_root_file_path": "Sample.kt",
+        "text_range": [
+          16,
+          31
+        ]
+      },
+      "project_name": "kotlinGraph",
+      "id": "0",
+      "qualified_name": "I.m"
+    },
+    {
+      "address": {
+        "project_root_file_path": "Sample.kt",
+        "text_range": [
+          51,
+          81
+        ]
+      },
+      "project_name": "kotlinGraph",
+      "id": "1",
+      "qualified_name": "C.m"
+    },
+    {
+      "address": {
+        "project_root_file_path": "Sample.kt",
+        "text_range": [
+          85,
+          143
+        ]
+      },
+      "project_name": "kotlinGraph",
+      "id": "2",
+      "qualified_name": "SampleKt.use"
+    }
+  ],
+  "edges": [
+    {
+      "caller_id": "2",
+      "callee_id": "1"
+    },
+    {
+      "caller_id": "2",
+      "callee_id": "0"
+    }
+  ]
+}

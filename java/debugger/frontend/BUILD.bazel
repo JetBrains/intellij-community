@@ -23,7 +23,7 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "//java/debugger/shared",

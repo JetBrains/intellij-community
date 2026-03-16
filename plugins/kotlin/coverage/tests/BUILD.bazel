@@ -4,7 +4,23 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:junit4",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/jvm/shared",
+    "//plugins/kotlin/coverage",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//plugins/kotlin/test-framework",
+    "//plugins/kotlin/gradle/gradle",
+    "//platform/core-impl",
+    "//platform/indexing-api:indexing",
+    "//plugins/coverage",
+  ]
 )
 
 jvm_library(
@@ -13,13 +29,13 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
+    "//plugins/kotlin/plugin/k2",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:junit4",
     "//platform/core-api:core",
     "//platform/core-ui",
-    "//plugins/kotlin/plugin/k1",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
@@ -27,24 +43,19 @@ jvm_library(
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
-    "//plugins/kotlin/core",
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/jvm/shared",
     "//plugins/kotlin/coverage",
     "//plugins/kotlin/base/test:test_test_lib",
-    "//plugins/kotlin/tests-common",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/test-framework",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/core-impl",
     "//plugins/coverage",
     "//plugins/coverage:coverage_test_lib",
   ],
-  runtime_deps = [
-    "//plugins/kotlin/uast/uast-kotlin",
-    "//plugins/kotlin/gradle/gradle",
-    "//platform/indexing-api:indexing",
-  ]
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.coverage.tests` end
 

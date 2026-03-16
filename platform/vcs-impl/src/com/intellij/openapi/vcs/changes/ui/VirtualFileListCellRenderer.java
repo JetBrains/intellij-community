@@ -16,7 +16,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JList;
 import java.io.File;
 
 public class VirtualFileListCellRenderer extends ColoredListCellRenderer {

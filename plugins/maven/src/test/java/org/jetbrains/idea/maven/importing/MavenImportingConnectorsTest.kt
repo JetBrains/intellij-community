@@ -16,13 +16,20 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.MavenWrapper
-import org.jetbrains.idea.maven.server.*
+import org.jetbrains.idea.maven.server.MavenDistribution
+import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.idea.maven.server.MavenEmbedderSettings
+import org.jetbrains.idea.maven.server.MavenServerConnector
+import org.jetbrains.idea.maven.server.MavenServerConnectorImpl
+import org.jetbrains.idea.maven.server.MavenServerEmbedder
+import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 import org.junit.Test
 import java.nio.file.Files.createDirectories
 import java.nio.file.Path.of
 
 class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
+  override fun skipPluginResolution() = false
 
   private lateinit var myAnotherProjectRoot: VirtualFile
 
@@ -294,7 +301,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     assertThrows(UnsupportedOperationException::class.java) {
       runBlockingMaybeCancellable {
         val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
-        mavenEmbedderWrappers.getEmbedder(projectRoot.path).getEmbedder()
+        mavenEmbedderWrappers.getEmbedder(projectRoot.toNioPath()).getEmbedder()
       }
     }
     assertNotNull(settingsRef.get())

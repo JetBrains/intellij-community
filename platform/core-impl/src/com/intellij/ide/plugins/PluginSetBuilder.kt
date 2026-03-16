@@ -11,7 +11,7 @@ import com.intellij.util.containers.Java11Shim
 import com.intellij.util.graph.DFSTBuilder
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Arrays
 import java.util.function.Supplier
 
 @ApiStatus.Internal
@@ -28,15 +28,16 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     topologicalComparator = toCoreAwareComparator(builder.comparator())
     sortedModulesWithDependencies = unsortedModulesWithDependencies.sorted(topologicalComparator)
   }
-  
+
   private val enabledPluginIds = HashMap<PluginId, PluginModuleDescriptor>(unsortedPlugins.size)
   private val enabledModuleV2Ids = HashMap<PluginModuleId, ContentModuleDescriptor>(unsortedPlugins.size * 2)
 
-  internal fun checkPluginCycles(errors: MutableList<PluginLoadingError>) {
+  internal fun checkPluginCycles(): List<PluginLoadingError> {
     if (builder.isAcyclic) {
-      return
+      return emptyList()
     }
 
+    val errors = ArrayList<PluginLoadingError>()
     for (component in builder.components) {
       if (component.size < 2) {
         continue
@@ -46,7 +47,8 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         plugin.isMarkedForLoading = false
       }
 
-      val pluginString = component.joinToString(separator = ", ") { "'${it.name}'" }
+      val pluginString =
+        component.joinToString(separator = ", ") { "'${it.name} (${it.pluginId.idString}${if (it.contentModuleName != null) ":" + it.contentModuleName else ""})'" }
       errors.add(PluginLoadingError(
         reason = null,
         htmlMessageSupplier = Supplier {
@@ -74,6 +76,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         }
       PluginManagerCore.logger.info(detailedMessage.toString())
     }
+    return errors
   }
 
   // Only plugins returned. Not modules. See PluginManagerTest.moduleSort test to understand the issue.
@@ -112,11 +115,11 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     fun registerDependencyIsNotInstalledError(plugin: IdeaPluginDescriptorImpl, disabledModule: ContentModuleDescriptor) {
       loadingErrors.add(PluginDependencyIsNotInstalled(
         plugin = plugin,
-        dependencyNameOrId = (disabledModuleToProblematicPlugin.get(disabledModule.moduleId)
-                              ?: disabledModule.parent.pluginId).idString,
+        dependencyNameOrId = (disabledModuleToProblematicPlugin.get(disabledModule.moduleId) ?: disabledModule.parent.pluginId).idString,
         shouldNotifyUser = !plugin.isImplementationDetail,
       ))
     }
+
     fun markRequiredModulesAsDisabled(plugin: PluginMainDescriptor) {
       for (module in plugin.contentModules) {
         if (module.moduleLoadingRule.required && enabledRequiredContentModules.remove(module.moduleId) != null) {
@@ -162,8 +165,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         if (targetModule == null) {
           logMessages.add("Module ${module.contentModuleName ?: module.pluginId} is not enabled because dependency ${ref.name} is not available")
           when (module) {
-            is ContentModuleDescriptor -> disabledModuleToProblematicPlugin.put(module.moduleId, disabledModuleToProblematicPlugin.get(ref)
-                                                                                                 ?: PluginId.getId(ref.name))
+            is ContentModuleDescriptor -> disabledModuleToProblematicPlugin.put(module.moduleId, disabledModuleToProblematicPlugin.get(ref) ?: PluginId.getId(ref.name))
             is PluginMainDescriptor -> markRequiredModulesAsDisabled(module)
           }
           continue@m
@@ -213,7 +215,8 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
                 if (isDisabledDueToPackagePrefixConflict.containsKey(contentModule.moduleId)) {
                   val alreadyRegistered = isDisabledDueToPackagePrefixConflict[contentModule.moduleId]!!
                   loadingErrors.add(PluginPackagePrefixConflict(module, contentModule, alreadyRegistered))
-                } else {
+                }
+                else {
                   registerDependencyIsNotInstalledError(module, contentModule)
                 }
                 markRequiredModulesAsDisabled(module)
@@ -255,7 +258,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         }
       }
     }
-    
+
     if (!logMessages.isEmpty()) {
       PluginManagerCore.logger.info(logMessages.joinToString(separator = "\n", prefix = "Plugin set resolution:\n"))
     }
@@ -313,11 +316,12 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     }
   }
 
-  fun createPluginSetWithEnabledModulesMap(): PluginSet {
-    // FIXME pass proper list of incomplete plugins to ensure that this information isn't lost after enabling/disabling a plugin dynamically
-    //   and proper init context too
-    val incompletePlugins = emptyList<PluginMainDescriptor>()
-    computeEnabledModuleMap(incompletePlugins = incompletePlugins, initContext = ProductPluginInitContext())
+  fun createPluginSetWithEnabledModulesMap(
+    incompletePlugins: Collection<PluginMainDescriptor> = emptyList(),
+    nonLoadReasonCollector: ArrayList<PluginNonLoadReason>? = null
+  ): PluginSet {
+    val nonLoadReasons = computeEnabledModuleMap(incompletePlugins = incompletePlugins, initContext = ProductPluginInitContext())
+    nonLoadReasonCollector?.addAll(nonLoadReasons)
     return createPluginSet(incompletePlugins = incompletePlugins)
   }
 
@@ -329,14 +333,16 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       result.addAll(incompletePlugins)
     }
 
-    val java11Shim = Java11Shim.INSTANCE
     fun isPluginModuleEnabled(module: PluginModuleDescriptor): Boolean {
-      if (module !is ContentModuleDescriptor) return module.isMarkedForLoading
-      return enabledModuleV2Ids[module.moduleId] === module
+      if (module !is ContentModuleDescriptor) {
+        return module.isMarkedForLoading
+      }
+      return enabledModuleV2Ids.get(module.moduleId) === module
     }
 
+    val java11Shim = Java11Shim.INSTANCE
     return PluginSet(
-      sortedModulesWithDependencies = sortedModulesWithDependencies, 
+      sortedModulesWithDependencies = sortedModulesWithDependencies,
       allPlugins = allPlugins,
       enabledPlugins = sortedPlugins.filterTo(ArrayList<PluginMainDescriptor>()) { it.isMarkedForLoading },
       enabledModuleMap = java11Shim.copyOf(enabledModuleV2Ids),
@@ -367,7 +373,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       if (!enabledPluginIds.containsKey(incompatibleId) || isPluginDisabled(incompatibleId)) {
         continue
       }
-      return PluginIsIncompatibleWithAnotherPlugin(descriptor, enabledPluginIds[incompatibleId]!!, isNotifyUser)
+      return PluginIsIncompatibleWithAnotherPlugin(plugin = descriptor, incompatiblePlugin = enabledPluginIds.get(incompatibleId)!!, shouldNotifyUser = isNotifyUser)
     }
 
     getAllPluginDependencies(descriptor)
@@ -375,28 +381,33 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       ?.let { dependencyPluginId ->
         return idMap.get(dependencyPluginId)?.let {
           // FIXME this is not precise reason type and may confuse user
-          PluginDependencyIsDisabled(descriptor, it.pluginId, isNotifyUser)
+          PluginDependencyIsDisabled(plugin = descriptor, dependencyId = it.pluginId, shouldNotifyUser = isNotifyUser)
         } ?: createCannotLoadError(descriptor, dependencyPluginId, errors, isNotifyUser)
       }
 
-    val missingDependency = descriptor.moduleDependencies.modules
-      .firstOrNull { it !in enabledModuleV2Ids }
-    if (missingDependency != null) {
-      val problematicPlugin = disabledModuleToProblematicPlugin[missingDependency]
-      if (problematicPlugin != null && isPluginDisabled(problematicPlugin)) {
-        return PluginDependencyIsDisabled(plugin = descriptor, dependencyId = problematicPlugin, shouldNotifyUser = isNotifyUser)
-      }
-      return PluginModuleDependencyCannotBeLoadedOrMissing(plugin = descriptor, moduleDependency = missingDependency, containingPlugin = problematicPlugin, shouldNotifyUser = isNotifyUser)
+    val missingDependency = descriptor.moduleDependencies.modules.firstOrNull { !enabledModuleV2Ids.contains(it) } ?: return null
+
+    val problematicPlugin = disabledModuleToProblematicPlugin.get(missingDependency)
+    if (problematicPlugin != null && isPluginDisabled(problematicPlugin)) {
+      return PluginDependencyIsDisabled(plugin = descriptor, dependencyId = problematicPlugin, shouldNotifyUser = isNotifyUser)
     }
-    return null
+
+    return PluginModuleDependencyCannotBeLoadedOrMissing(
+      plugin = descriptor,
+      moduleDependency = missingDependency,
+      containingPlugin = problematicPlugin,
+      shouldNotifyUser = isNotifyUser,
+    )
   }
 }
 
 private enum class PluginModuleVisibilityCheckOption {
   /** No visibility checks performed */
   DISABLED,
+
   /** If a module depends on a module which is not visible to it, it's loaded and a warning is printed to the log */
   REPORT_WARNING,
+
   /** If a module depends on a module which is not visible to it, it's not loaded and an error is printed to the log */
   REPORT_ERROR,
 }
@@ -405,7 +416,8 @@ private val pluginModuleVisibilityCheck by lazy {
   when (System.getProperty("intellij.platform.plugin.modules.check.visibility")) {
     "warning" -> PluginModuleVisibilityCheckOption.REPORT_WARNING
     "error" -> PluginModuleVisibilityCheckOption.REPORT_ERROR
-    else -> PluginModuleVisibilityCheckOption.DISABLED
+    "disabled" -> PluginModuleVisibilityCheckOption.DISABLED
+    else -> PluginModuleVisibilityCheckOption.REPORT_WARNING
   }
 }
 
@@ -417,10 +429,11 @@ private fun createCannotLoadError(
 ): PluginNonLoadReason {
   val dependencyIdString = dependencyPluginId.idString
   val dependency = errors.get(dependencyPluginId)?.plugin
-  return if (dependency != null) {
-    PluginDependencyCannotBeLoaded(descriptor, dependency.name ?: dependencyIdString, isNotifyUser)
-  } else {
-    PluginDependencyIsNotInstalled(descriptor, dependencyIdString, isNotifyUser)
+  if (dependency != null) {
+    return PluginDependencyCannotBeLoaded(plugin = descriptor, dependency = dependency, shouldNotifyUser = isNotifyUser)
+  }
+  else {
+    return PluginDependencyIsNotInstalled(plugin = descriptor, dependencyNameOrId = dependencyIdString, shouldNotifyUser = isNotifyUser)
   }
 }
 

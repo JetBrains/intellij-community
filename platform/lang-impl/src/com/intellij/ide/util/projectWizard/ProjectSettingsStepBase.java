@@ -10,9 +10,17 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.DialogPanel;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DialogWrapperPeer;
+import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -36,10 +44,16 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -175,7 +189,9 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
           try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-            myCallback.consume(ProjectSettingsStepBase.this, getPeer());
+            WriteIntentReadAction.run(() -> {
+              myCallback.consume(ProjectSettingsStepBase.this, getPeer());
+            });
           }
         }
       }

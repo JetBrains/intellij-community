@@ -2,8 +2,8 @@
 package org.jetbrains.idea.devkit.debugger
 
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.testFramework.HeavyPlatformTestCase

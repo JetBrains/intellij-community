@@ -41,6 +41,10 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//java/java-psi-impl:psi-impl",
     "//platform/indexing-api:indexing",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/external-system-api:externalSystem",
+    "//platform/execution",
+    "//platform/statistics",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.scripting.shared` end

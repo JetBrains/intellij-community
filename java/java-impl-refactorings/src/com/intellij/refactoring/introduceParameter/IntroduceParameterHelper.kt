@@ -2,7 +2,11 @@
 package com.intellij.refactoring.introduceParameter
 
 import com.intellij.codeInsight.hints.InlayPresentationFactory
-import com.intellij.codeInsight.hints.presentation.*
+import com.intellij.codeInsight.hints.presentation.BiStatePresentation
+import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.codeInsight.hints.presentation.MouseButton
+import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.codeInsight.hints.presentation.WithAttributesPresentation
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT

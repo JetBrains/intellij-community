@@ -1,0 +1,13 @@
+LineBreakpoint created at stepOverInSuspendThread.kt:24
+LineBreakpoint created at stepOverInSuspendThread.kt:32
+Run Java
+Connected to the target VM
+stepOverInSuspendThread.kt:24
+stepOverInSuspendThread.kt:25
+stepOverInSuspendThread.kt:26
+stepOverInSuspendThread.kt:32
+stepOverInSuspendThread.kt:33
+stepOverInSuspendThread.kt:34
+Disconnected from the target VM
+
+Process finished with exit code 0

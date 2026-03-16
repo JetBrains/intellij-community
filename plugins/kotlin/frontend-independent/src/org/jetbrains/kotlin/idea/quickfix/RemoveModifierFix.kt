@@ -17,7 +17,16 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.coMap
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.quickFixesPsiBasedFactory
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDeclarationModifierList
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtTypeParameter
+import org.jetbrains.kotlin.psi.KtTypeProjection
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 
@@ -49,7 +58,7 @@ open class RemoveModifierFixBase(
         context: ActionContext,
         element: KtModifierListOwner,
         updater: ModPsiUpdater,
-    ): Unit = invokeImpl(element, modifier)
+    ): Unit = removeModifier(element, modifier)
 
     companion object {
         val removeRedundantModifier: QuickFixesPsiBasedFactory<PsiElement> = createRemoveModifierFactory(isRedundant = true)
@@ -60,7 +69,7 @@ open class RemoveModifierFixBase(
         val removeInnerModifier: QuickFixesPsiBasedFactory<PsiElement> = createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.INNER_KEYWORD)
         val removePrivateModifier: QuickFixesPsiBasedFactory<PsiElement> = createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.PRIVATE_KEYWORD)
 
-        fun invokeImpl(
+        fun removeModifier(
             element: KtModifierListOwner,
             modifier: KtModifierKeywordToken,
         ) {

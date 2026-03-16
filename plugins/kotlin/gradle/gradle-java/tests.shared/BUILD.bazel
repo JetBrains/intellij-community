@@ -4,7 +4,19 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests.shared",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:kotlin-gradle-plugin-idea"],
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/smRunner",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/backend/workspace",
+    "@lib//:kotlin-gradle-plugin-idea",
+    "@lib//:kotlin-test",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/gradle/gradle-java",
+  ]
 )
 
 jvm_library(
@@ -13,6 +25,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
+    "//jps/model-api:model",
     "@lib//:kotlin-stdlib",
     "//plugins/gradle:gradle-tests_test_lib",
     "//platform/analysis-api:analysis",
@@ -24,7 +37,6 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/indexing-api:indexing",
-    "//jps/model-api:model",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
@@ -35,9 +47,10 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "//platform/workspace/storage",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/gradle:gradle-common",
+    "//plugins/gradle/plugin",
     "//platform/backend/workspace",
     "//java/testFramework",
     "//plugins/kotlin/gradle/gradle-tooling/impl",
@@ -49,7 +62,7 @@ jvm_library(
     "//plugins/kotlin/base/project-model",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//platform/external-system-impl:externalSystem-tests_test_lib",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
     "//libraries/fastutil",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/base/facet",
@@ -60,7 +73,6 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
     "//plugins/kotlin/gradle/gradle",
     "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared_test_lib",
-    "//plugins/kotlin/idea",
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
@@ -85,7 +97,6 @@ jvm_library(
     "//plugins/groovy:groovy_test_lib",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/base/code-insight:code-insight_test_lib",
-    "//plugins/kotlin/base/fe10/analysis",
     "//plugins/kotlin/project-wizard/core",
     "//plugins/kotlin/project-wizard/core:core_test_lib",
     "//platform/testFramework/junit5",
@@ -95,8 +106,11 @@ jvm_library(
     "//java/openapi:java",
     "//plugins/kotlin/jvm-debugger/coroutines",
     "//java/java-runtime:rt",
+    "//platform/execution",
+    "//plugins/junit",
   ],
-  exports = ["@lib//:kotlin-gradle-plugin-idea"]
+  exports = ["@lib//:kotlin-gradle-plugin-idea"],
+  runtime_deps = [":tests.shared"]
 )
 ### auto-generated section `build kotlin.gradle.gradle-java.tests.shared` end
 

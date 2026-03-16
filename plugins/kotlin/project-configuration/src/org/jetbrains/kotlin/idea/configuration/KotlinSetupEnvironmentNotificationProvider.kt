@@ -12,6 +12,7 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
@@ -19,12 +20,17 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.IncompleteModelUtil.isIncompleteModel
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
+import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
@@ -32,7 +38,7 @@ import org.jetbrains.kotlin.idea.base.util.createComponentActionLabel
 import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
-import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
+import org.jetbrains.kotlin.idea.statistics.KotlinProjectSetupFUSCollector
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.idea.versions.getLibraryRootsWithIncompatibleAbi
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -40,6 +46,9 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.util.function.Consumer
 import java.util.function.Function
 import javax.swing.JComponent
+
+// We're searching for "main/kotlin" or "test/kotlin", which are 2 parent directories for the file
+private const val MAIN_KOTLIN_OR_TEST_KOTLIN_PATH_SIZE = 2
 
 // Code is partially copied from com.intellij.codeInsight.daemon.impl.SetupSDKNotificationProvider
 class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
@@ -63,11 +72,15 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
 
         val module = ModuleUtilCore.findModuleForPsiElement(psiFile) ?: return null
 
+        // In projects with JPS, the following situation occurs when raising a Kotlin stdlib version:
+        // The stdlib files are not yet loaded in the .m2 folder when this check happens: the notification shouldn't be shown
+        if (module.buildSystemType == BuildSystemType.JPS && !kotlinStdlibExistsOnDiskForJPS(module, project)) return null
+
         if (!KotlinProjectConfigurationService.getInstance(project).shouldShowNotConfiguredDialog(module)) {
             return null
         }
 
-        if (!ModuleRootManager.getInstance(module).fileIndex.isInSourceContent(file)) {
+        if (!ModuleRootManager.getInstance(module).fileIndex.isInSourceContent(file) && !fileIsUnderKotlinSourceRoot(file, project)) {
             return null
         }
 
@@ -83,10 +96,55 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
             !isStdlibModule(module) &&
             getLibraryRootsWithIncompatibleAbi(module).isEmpty()
         ) {
-            return createKotlinNotConfiguredPanel(module, getAbleToRunConfigurators(module).toList())
+            val configurators = getAbleToRunConfigurators(module).toList()
+            return createKotlinNotConfiguredPanel(module, configurators)
         }
 
         return null
+    }
+
+    private val mainAndTestDirNames = listOf("main", "test")
+
+    fun fileIsUnderKotlinSourceRoot(file: VirtualFile, project: Project): Boolean {
+        val projectParent = ProjectFileIndex.getInstance(project).getContentRootForFile(file)?.parent ?: return false
+        var fileParent = file.parent ?: return false
+        var srcParentExists = false
+        val parentsList = mutableListOf<String>()
+        while (fileParent != projectParent) {
+            val fileParentName = fileParent.name
+            if (fileParentName == "src") {
+                srcParentExists = true
+                break
+            }
+            parentsList.add(fileParentName)
+            fileParent = fileParent.parent ?: return false
+        }
+        return when {
+            !srcParentExists -> false
+            parentsList.size < MAIN_KOTLIN_OR_TEST_KOTLIN_PATH_SIZE -> false
+            parentsList.last() in mainAndTestDirNames && parentsList[parentsList.lastIndex - 1] == "kotlin" -> true
+            else -> false
+        }
+    }
+
+    // We do this check only for JPS projects because for other build systems this problem is not topical
+    private fun kotlinStdlibExistsOnDiskForJPS(module: Module, project: Project): Boolean {
+        val moduleDependencies = module.findModuleEntity()?.dependencies ?: return false
+        val kotlinStdlibDependencies =
+            moduleDependencies.filterIsInstance<LibraryDependency>().filter { it.library.name.contains("kotlin-stdlib") }
+        if (kotlinStdlibDependencies.isEmpty()) return false
+        return kotlinStdlibDependencies.all {
+            dependencyFilesExistOnDisk(it, project)
+        }
+    }
+
+    private fun dependencyFilesExistOnDisk(dependency: LibraryDependency, project: Project): Boolean {
+        val libraryId = dependency.library
+        val libraryEntity = project.workspaceModel.currentSnapshot.resolve(libraryId)
+        val libraryRoots = libraryEntity?.roots ?: return false
+        if (libraryRoots.isEmpty()) return false
+        val jarsWithClasses = libraryRoots.filter { it.type == LibraryRootTypeId.COMPILED }
+        return jarsWithClasses.all { jar -> VirtualFileManager.getInstance().findFileByUrl(jar.url.url)?.exists() == true }
     }
 
     companion object {
@@ -113,32 +171,35 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
                 }
             }
 
-        private fun createKotlinNotConfiguredPanel(module: Module, configurators: List<KotlinProjectConfigurator>): Function<in FileEditor, out JComponent?> =
+        private fun createKotlinNotConfiguredPanel(
+            module: Module,
+            configurators: List<KotlinProjectConfigurator>
+        ): Function<in FileEditor, out JComponent?> =
             Function { fileEditor: FileEditor ->
-                KotlinJ2KOnboardingFUSCollector.logShowConfigureKtPanel(module.project)
+                KotlinProjectSetupFUSCollector.logShowConfigureKtPanel(module.project)
 
                 EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning).apply {
-                text = KotlinProjectConfigurationBundle.message("kotlin.not.configured")
-                if (configurators.isNotEmpty()) {
-                    val project = module.project
-                    createComponentActionLabel(KotlinProjectConfigurationBundle.message("action.text.configure")) { label ->
-                        val singleConfigurator = configurators.singleOrNull()
-                        if (singleConfigurator != null) {
-                            singleConfigurator.apply(project)
-                        } else {
-                            val configuratorsPopup = createConfiguratorsPopup(project, configurators)
-                            configuratorsPopup.showUnderneathOf(label)
+                    text = KotlinProjectConfigurationBundle.message("kotlin.not.configured")
+                    if (configurators.isNotEmpty()) {
+                        val project = module.project
+                        createComponentActionLabel(KotlinProjectConfigurationBundle.message("action.text.configure")) { label ->
+                            val singleConfigurator = configurators.singleOrNull()
+                            if (singleConfigurator != null) {
+                                singleConfigurator.apply(project)
+                            } else {
+                                val configuratorsPopup = createConfiguratorsPopup(project, configurators)
+                                configuratorsPopup.showUnderneathOf(label)
+                            }
+                            KotlinProjectSetupFUSCollector.logClickConfigureKtNotification(project)
                         }
-                        KotlinJ2KOnboardingFUSCollector.logClickConfigureKtNotification(project)
-                    }
 
-                    createActionLabel(KotlinProjectConfigurationBundle.message("action.text.ignore")) {
-                        KotlinNotConfiguredSuppressedModulesState.suppressConfiguration(module)
-                        EditorNotifications.getInstance(project).updateAllNotifications()
+                        createActionLabel(KotlinProjectConfigurationBundle.message("action.text.ignore")) {
+                            KotlinNotConfiguredSuppressedModulesState.suppressConfiguration(module)
+                            EditorNotifications.getInstance(project).updateAllNotifications()
+                        }
                     }
                 }
             }
-        }
 
         private fun KotlinProjectConfigurator.apply(project: Project) {
             configure(project, emptyList())

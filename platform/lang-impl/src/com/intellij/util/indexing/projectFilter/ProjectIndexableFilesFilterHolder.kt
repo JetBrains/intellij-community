@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.projectFilter
 
 import com.intellij.internal.statistic.DeviceIdManager
@@ -20,7 +20,7 @@ internal sealed interface ProjectIndexableFilesFilterHolder {
   fun getProjectIndexableFiles(project: Project): ProjectIndexableFilesFilter?
 
   /**
-   * @returns true if fileId already contained in or was added to one of project filters
+   * @returns list of projects the fileId is contained in (or was added to) the apt project filter
    */
   fun ensureFileIdPresent(fileId: Int, projects: () -> Set<Project>): List<Project>
 

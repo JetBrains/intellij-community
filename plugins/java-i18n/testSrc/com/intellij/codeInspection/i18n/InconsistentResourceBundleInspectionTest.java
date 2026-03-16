@@ -16,7 +16,12 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
-import com.intellij.codeInspection.i18n.inconsistentResourceBundle.*;
+import com.intellij.codeInspection.i18n.inconsistentResourceBundle.DuplicatedPropertiesInspectionProvider;
+import com.intellij.codeInspection.i18n.inconsistentResourceBundle.InconsistentPropertiesEndsInspectionProvider;
+import com.intellij.codeInspection.i18n.inconsistentResourceBundle.InconsistentResourceBundleInspection;
+import com.intellij.codeInspection.i18n.inconsistentResourceBundle.MissingTranslationsInspectionProvider;
+import com.intellij.codeInspection.i18n.inconsistentResourceBundle.PropertiesKeysConsistencyInspectionProvider;
+import com.intellij.codeInspection.i18n.inconsistentResourceBundle.PropertiesPlaceholdersInspectionProvider;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 

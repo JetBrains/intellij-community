@@ -26,7 +26,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
-  ],
-  exports = ["//platform/lang-api:lang"]
+    "//platform/execution",
+  ]
 )
 ### auto-generated section `build intellij.platform.debugger` end

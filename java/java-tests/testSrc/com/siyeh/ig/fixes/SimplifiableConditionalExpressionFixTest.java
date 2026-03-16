@@ -40,4 +40,16 @@ public class SimplifiableConditionalExpressionFixTest extends IGQuickFixesTestCa
   public void testBinary() {
     doTest();
   }
+
+  public void testBooleanStringTernary() {
+    doTest();
+  }
+
+  public void testBooleanStringTernaryParen() {
+    doTest();
+  }
+
+  public void testBooleanStringTernaryDuplicateClass() {
+    doTest();
+  }
 }

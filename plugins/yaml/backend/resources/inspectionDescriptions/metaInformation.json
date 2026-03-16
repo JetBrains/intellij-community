@@ -2,7 +2,7 @@
   "inspections": [
     {
       "id": "YAMLIncompatibleTypes",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "YAMLUnresolvedAlias",
@@ -10,11 +10,11 @@
     },
     {
       "id": "YAMLDuplicatedKeys",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "YAMLSchemaDeprecation",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "YAMLRecursiveAlias",
@@ -26,7 +26,7 @@
     },
     {
       "id": "YAMLUnusedAnchor",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Code Style"
     }
   ]
 }

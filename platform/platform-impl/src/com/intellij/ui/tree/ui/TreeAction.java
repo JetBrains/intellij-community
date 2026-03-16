@@ -8,15 +8,30 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JTree;
+import javax.swing.KeyStroke;
 import javax.swing.plaf.UIResource;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static java.awt.event.KeyEvent.*;
+import static java.awt.event.KeyEvent.VK_DOWN;
+import static java.awt.event.KeyEvent.VK_END;
+import static java.awt.event.KeyEvent.VK_HOME;
+import static java.awt.event.KeyEvent.VK_KP_DOWN;
+import static java.awt.event.KeyEvent.VK_KP_LEFT;
+import static java.awt.event.KeyEvent.VK_KP_RIGHT;
+import static java.awt.event.KeyEvent.VK_KP_UP;
+import static java.awt.event.KeyEvent.VK_LEFT;
+import static java.awt.event.KeyEvent.VK_PAGE_DOWN;
+import static java.awt.event.KeyEvent.VK_PAGE_UP;
+import static java.awt.event.KeyEvent.VK_RIGHT;
+import static java.awt.event.KeyEvent.VK_UP;
 import static java.util.Arrays.asList;
 import static javax.swing.KeyStroke.getKeyStroke;
 import static javax.swing.tree.TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
@@ -194,6 +209,9 @@ final class TreeAction extends AbstractAction implements UIResource {
     else {
       tree.setSelectionPath(path);
     }
+    if (tree instanceof Tree) {
+      ((Tree)tree).onPathSelected(path);
+    }
     TreeUtil.scrollToVisible(tree, path, false);
   }
 
@@ -212,6 +230,9 @@ final class TreeAction extends AbstractAction implements UIResource {
         ((Tree)tree).startMeasuringExpandDuration(lead);
       }
       tree.expandPath(lead);
+      if (tree instanceof Tree) {
+        ((Tree)tree).onPathExpanded(lead);
+      }
     }
   }
 
@@ -261,6 +282,9 @@ final class TreeAction extends AbstractAction implements UIResource {
     TreePath sibling = TreeUtil.nextVisibleSibling(tree, tree.getLeadSelectionPath());
     if (sibling == null) return; // next sibling is not found
     tree.setSelectionPath(sibling);
+    if (tree instanceof Tree) {
+      ((Tree)tree).onPathSelected(sibling);
+    }
     TreeUtil.scrollToVisible(tree, sibling, false);
   }
 
@@ -268,6 +292,9 @@ final class TreeAction extends AbstractAction implements UIResource {
     TreePath sibling = TreeUtil.previousVisibleSibling(tree, tree.getLeadSelectionPath());
     if (sibling == null) return; // previous sibling is not found
     tree.setSelectionPath(sibling);
+    if (tree instanceof Tree) {
+      ((Tree)tree).onPathSelected(sibling);
+    }
     TreeUtil.scrollToVisible(tree, sibling, false);
   }
 

@@ -5,14 +5,53 @@ import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2Compos
 import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2IdeK1CodeClassLambdaComposeSteppingTest
 import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2IdeK1CodeComposeSteppingTest
 import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2IdeK2CodeComposeSteppingTest
-import org.jetbrains.kotlin.idea.fir.debugger.evaluate.*
-import org.jetbrains.kotlin.idea.k2.debugger.test.cases.*
+import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentAutoImportTest
+import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentCompletionHandlerTest
+import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentCompletionTest
+import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentHighlightingTest
+import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2MultiplatformCodeFragmentCompletionTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2BreakpointApplicabilityTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2ClassNameCalculatorTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2FlowAsyncStackTraceTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK1CodeBreakpointHighlightingTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK1CodeContinuationStackTraceTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK1CodeCoroutineDumpTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK1CodeFileRankingTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK1CodeKotlinSteppingTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK1CodeKotlinVariablePrintingTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK1CodeSuspendStackTraceTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK1CodeXCoroutinesStackTraceTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK1CoroutineViewJobHierarchyTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeBreakpointHighlightingTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeContinuationStackTraceTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeCoroutineDumpTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeFileRankingTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeKotlinEvaluateExpressionTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeKotlinSteppingPacketsNumberTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeKotlinSteppingTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeKotlinVariablePrintingTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeSuspendStackTraceTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeXCoroutinesStackTraceTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CoroutineViewJobHierarchyTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2MultiplatformCodeKotlinEvaluateExpressionTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IndyLambdaKotlinSteppingTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2KotlinExceptionFilterTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2PositionManagerTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2SelectExpressionForDebuggerTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2SmartStepIntoTest
 import org.jetbrains.kotlin.idea.parcelize.k2.debugger.test.cases.AbstractK2ParcelizeDebuggerEvaluationTest
 import org.jetbrains.kotlin.test.TargetBackend
-import org.jetbrains.kotlin.testGenerator.model.*
-import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.CODE_INSIGHT
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.COMPLETION
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.DEBUGGER
+import org.jetbrains.kotlin.testGenerator.model.MutableTWorkspace
+import org.jetbrains.kotlin.testGenerator.model.Patterns
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
+import org.jetbrains.kotlin.testGenerator.model.model
+import org.jetbrains.kotlin.testGenerator.model.testClass
+import org.jetbrains.kotlin.testGenerator.model.testGroup
 
 internal fun MutableTWorkspace.generateK2DebuggerTests() {
     testGroup("jvm-debugger/test/k2", testDataPath = "../testData", category = DEBUGGER) {
@@ -33,18 +72,18 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
             }
         }
         testClass<AbstractK2IdeK2CodeKotlinEvaluateExpressionTest> {
-            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
-            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
-            model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM)
+            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
+            model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM)
         }
 
         testClass<AbstractK2IdeK2MultiplatformCodeKotlinEvaluateExpressionTest> {
-            model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
         }
 
         testClass<AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest> {
-            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
-            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM)
+            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
         }
 
         testClass<AbstractK2SelectExpressionForDebuggerTest> {

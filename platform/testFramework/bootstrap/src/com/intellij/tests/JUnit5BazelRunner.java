@@ -8,21 +8,36 @@ import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.Filter;
 import org.junit.platform.engine.FilterResult;
 import org.junit.platform.engine.TestEngine;
+import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.discovery.ClassNameFilter;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.engine.discovery.MethodSelector;
 import org.junit.platform.engine.discovery.UniqueIdSelector;
-import org.junit.platform.launcher.*;
+import org.junit.platform.launcher.Launcher;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.PostDiscoveryFilter;
+import org.junit.platform.launcher.TestExecutionListener;
+import org.junit.platform.launcher.TestIdentifier;
+import org.junit.platform.launcher.TestPlan;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,6 +53,7 @@ public final class JUnit5BazelRunner {
   private static final int EXIT_CODE_TEST_RUNNER_FAILURE = 2;
   private static final int EXIT_CODE_TEST_FAILURE_OOM = 137;
 
+  private static final String bazelEnvRunfilesManifestOnly = "RUNFILES_MANIFEST_ONLY";
   private static final String bazelEnvSelfLocation = "SELF_LOCATION";
   private static final String bazelEnvTestTmpDir = "TEST_TMPDIR";
   private static final String bazelEnvRunFilesDir = "RUNFILES_DIR";
@@ -50,7 +66,6 @@ public final class JUnit5BazelRunner {
   private static final String jbEnvPrintTestSrcDirContent = "JB_TEST_PRINT_TEST_SRCDIR_CONTENT";
   private static final String jbEnvPrintEnv = "JB_TEST_PRINT_ENV";
   private static final String jbEnvPrintSystemProperties = "JB_TEST_PRINT_SYSTEM_PROPERTIES";
-  // true by default. try as much as possible to run tests in sandbox
   private static final String jbEnvSandbox = "JB_TEST_SANDBOX";
   private static final String jbEnvXmlOutputFile = "JB_XML_OUTPUT_FILE";
   // Enable IntelliJ Service Messages stream from test process
@@ -59,11 +74,14 @@ public final class JUnit5BazelRunner {
   private static final String jbEnvTestFilter = "JB_TEST_FILTER";
   // Allow rerun-failed selection via JUnit5 UniqueId list
   private static final String jbEnvTestUniqueIds = "JB_TEST_UNIQUE_IDS";
+  // Allow specifying test filter in JUnit5 format. Example: include-package=com.intellij.tests;exclude-classname=com.intellij.tests.IgnoredTest
+  private static final String jbEnvJunit5TestFilter = "JB_TEST_JUNIT5_FILTERS";
 
   private static final ClassLoader ourClassLoader = Thread.currentThread().getContextClassLoader();
   private static final Launcher launcher = LauncherFactory.create();
 
   private static final BucketsPostDiscoveryFilter bucketingPostDiscoveryFilter = new BucketsPostDiscoveryFilter();
+  private static final PostDiscoveryFilter performancePostDiscoveryFilter = new JUnit5TeamCityRunner.PerformancePostDiscoveryFilter();
 
   private static LauncherDiscoveryRequest getDiscoveryRequest() throws Throwable {
     List<? extends DiscoverySelector> bazelTestSelectors = getTestsSelectors(ourClassLoader);
@@ -71,6 +89,7 @@ public final class JUnit5BazelRunner {
       .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
       .selectors(bazelTestSelectors)
       .filters(getTestFilters(bazelTestSelectors))
+      .filters(generateFiltersFromJbEnv().toArray(new Filter[0]))
       .build();
   }
 
@@ -98,9 +117,11 @@ public final class JUnit5BazelRunner {
       // set intellij.test.jars.location as a temporary workaround for debugger-agent.jar downloading
       System.setProperty("intellij.test.jars.location", bazelTestTestSrcDir);
 
+      System.setProperty("idea.is.unit.test", "true");
+
       if (Boolean.parseBoolean(System.getenv(jbEnvPrintSortedClasspath))) {
         Arrays.stream(System.getProperty("java.class.path")
-          .split(Pattern.quote(File.pathSeparator)))
+                        .split(Pattern.quote(File.pathSeparator)))
           .sorted()
           .toList()
           .forEach(x -> System.err.println("CLASSPATH " + x));
@@ -138,7 +159,11 @@ public final class JUnit5BazelRunner {
       Path tempDir = getBazelTempDir();
 
       String jbEnvSandboxValue = System.getenv(jbEnvSandbox);
-      boolean sandbox = Boolean.parseBoolean(jbEnvSandboxValue != null ? jbEnvSandboxValue : "true");
+      if (jbEnvSandboxValue == null) {
+        throw new RuntimeException("Missing " + jbEnvSandbox + " env variable in bazel test environment");
+      }
+
+      boolean sandbox = Boolean.parseBoolean(jbEnvSandboxValue);
       System.err.println("Use sandbox: " + sandbox);
 
       if (sandbox) {
@@ -290,9 +315,36 @@ public final class JUnit5BazelRunner {
     }
   }
 
+  /**
+   * Parses Junit5 filters from JB_TEST_JUNIT5_FILTERS environmental variable.
+   * <p>
+   * <b>Format</b>: filter_option_1=value_1;filter_option_2=value_2;...
+   * <br>
+   * <b>Example</b>: include-package=com.intellij.tests;exclude-classname=com.intellij.tests.IgnoredTest
+   *
+   * @see JUnit5FilterOption
+   */
+  private static List<Filter<?>> generateFiltersFromJbEnv() {
+    List<Filter<?>> out = new ArrayList<>();
+    String junitFilters = System.getenv(jbEnvJunit5TestFilter);
+    if (junitFilters != null && !junitFilters.isBlank()) {
+      for (String filter : junitFilters.split(";")) {
+        String[] parts = filter.split("=");
+        if (parts.length != 2) {
+          throw new IllegalArgumentException("Invalid JUnit5 filter: " + filter + ". Filter should be in format: <option>=<value>");
+        }
+        JUnit5FilterOption filterOption = JUnit5FilterOption.fromString(parts[0]);
+        String filterString = parts[1];
+        out.add(filterOption.toJunitFilter(filterString));
+      }
+    }
+    return out;
+  }
+
   private static Filter<?>[] getTestFilters(List<? extends DiscoverySelector> bazelTestSelectors) {
     List<Filter<?>> filters = new ArrayList<>();
     filters.add(bucketingPostDiscoveryFilter);
+    filters.add(performancePostDiscoveryFilter);
 
     // value of --test_filter, if specified
     // https://bazel.build/reference/test-encyclopedia
@@ -419,8 +471,11 @@ public final class JUnit5BazelRunner {
   }
 
   private static Boolean isBazelTestRun() {
-    return Stream.of(bazelEnvSelfLocation, bazelEnvTestTmpDir, bazelEnvRunFilesDir, bazelEnvJavaRunFilesDir)
+    return Stream.of(bazelEnvTestTmpDir, bazelEnvRunFilesDir, bazelEnvJavaRunFilesDir)
       .allMatch(bazelTestEnv -> {
+        var bazelTestEnvValue = System.getenv(bazelTestEnv);
+        return bazelTestEnvValue != null && !bazelTestEnvValue.isBlank();
+      }) && Stream.of(bazelEnvSelfLocation, bazelEnvRunfilesManifestOnly).anyMatch(bazelTestEnv -> {
         var bazelTestEnvValue = System.getenv(bazelTestEnv);
         return bazelTestEnvValue != null && !bazelTestEnvValue.isBlank();
       });
@@ -453,6 +508,66 @@ public final class JUnit5BazelRunner {
 
     Path workDirPath = Path.of(testSrcDir);
     String communityMarkerFileName = "intellij.idea.community.main.iml";
+
+    // Try to get the actual workspace name from TEST_WORKSPACE env variable
+    // In Bazel's runfiles layout, the workspace subdirectory is named after the workspace
+    String testWorkspace = System.getenv("TEST_WORKSPACE");
+    String runfilesManifestOnly = System.getenv(bazelEnvRunfilesManifestOnly);
+    String runfilesManifestFile = System.getenv("RUNFILES_MANIFEST_FILE");
+
+    if (testWorkspace != null && !testWorkspace.isBlank()) {
+      // On Windows, when RUNFILES_MANIFEST_ONLY=1, we need to read the manifest file
+      // instead of looking for actual files in the runfiles directory
+      if ("1".equals(runfilesManifestOnly) && runfilesManifestFile != null) {
+        try {
+          Path manifestPath = Path.of(runfilesManifestFile);
+          if (Files.exists(manifestPath)) {
+            // In Bazel's external repository layout, the file might be at:
+            // - _main/external/community+/intellij.idea.community.main.iml (for ultimate repo accessing community as external)
+            // - community+/intellij.idea.community.main.iml (direct community+ workspace reference)
+            // - _main/intellij.idea.community.main.iml (if at workspace root)
+            String[] searchKeys = {
+              testWorkspace + "/external/community+/" + communityMarkerFileName,
+              "community+/" + communityMarkerFileName,
+              testWorkspace + "/" + communityMarkerFileName
+            };
+
+            for (String searchKey : searchKeys) {
+              try (final Stream<String> lines = Files.lines(manifestPath)) {
+                String realPath = lines
+                  .filter(line -> line.startsWith(searchKey + " "))
+                  .map(line -> line.substring(line.indexOf(' ') + 1))
+                  .findFirst()
+                  .orElse(null);
+
+                if (realPath != null) {
+                  Path realMarkerFile;
+                  try {
+                    realMarkerFile = Path.of(realPath).toRealPath();
+                  }
+                  catch (FileSystemException e) {
+                    continue;
+                  }
+                  Path communityRoot = realMarkerFile.getParent();
+                  Path parentPath = communityRoot.getParent();
+                  if (parentPath != null && Files.exists(parentPath.resolve(".ultimate.root.marker"))) {
+                    return parentPath;
+                  }
+                  else {
+                    return communityRoot;
+                  }
+                }
+              }
+            }
+          }
+        }
+        catch (IOException e) {
+          // Fall through to legacy logic
+        }
+      }
+    }
+
+    // Fallback to hardcoded workspace names for backward compatibility
     Path ultimateMarkerFile = workDirPath.resolve("community+").resolve(communityMarkerFileName);
     Path communityMarkerFile = workDirPath.resolve("_main").resolve(communityMarkerFileName);
     if (Files.exists(ultimateMarkerFile)) {
@@ -494,6 +609,10 @@ public final class JUnit5BazelRunner {
     List<Path> paths = (List<Path>)getBaseUrls.invoke(classLoader);
 
     String bazelTestSelfLocation = System.getenv(bazelEnvSelfLocation);
+    // the relevant jars are expected to be next to the classloader when no SELF_LOCATION is set (singlejar, windows runs)
+    if (bazelTestSelfLocation == null || bazelTestSelfLocation.isBlank()) {
+      return new HashSet<>(paths);
+    }
     Path bazelTestSelfLocationDir = Path.of(bazelTestSelfLocation).getParent().toAbsolutePath();
     return paths.stream()
       .filter(p -> bazelTestSelfLocationDir.equals(p.toAbsolutePath().getParent()))
@@ -522,6 +641,22 @@ public final class JUnit5BazelRunner {
     public void executionStarted(TestIdentifier testIdentifier) {
       if (testIdentifier.isTest()) {
         System.out.println("Started: " + testIdentifier.getDisplayName());
+      }
+    }
+
+    @Override
+    public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
+      if (testIdentifier.isTest()) {
+        System.out.println("Finished: " + testIdentifier.getDisplayName() + " (" + testExecutionResult.getStatus() + ")");
+      }
+
+      if (testExecutionResult.getStatus() != TestExecutionResult.Status.SUCCESSFUL && testExecutionResult.getThrowable().isPresent()) {
+        Throwable t = testExecutionResult.getThrowable().get();
+        t.printStackTrace(System.err);
+        String message = t.getMessage();
+        if (message != null && !message.isBlank()) {
+          System.err.println(message);
+        }
       }
     }
 

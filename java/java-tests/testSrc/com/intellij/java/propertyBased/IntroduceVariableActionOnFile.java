@@ -13,7 +13,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
@@ -218,7 +224,7 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
     }
 
     @Override
-    protected void showErrorMessage(Project project, Editor editor, String message) {
+    protected void showErrorMessage(@NotNull Project project, Editor editor, @NotNull String message) {
     }
   }
 }

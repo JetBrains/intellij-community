@@ -192,6 +192,31 @@ public abstract class FirReferenceResolveInJavaTestGenerated extends AbstractFir
             runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/SingleFileMultifileFacade.java");
         }
 
+        @TestMetadata("SuspendFunction.java")
+        public void testSuspendFunction() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/SuspendFunction.java");
+        }
+
+        @TestMetadata("SuspendLambdaParam0.java")
+        public void testSuspendLambdaParam0() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/SuspendLambdaParam0.java");
+        }
+
+        @TestMetadata("SuspendLambdaParam1.java")
+        public void testSuspendLambdaParam1() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/SuspendLambdaParam1.java");
+        }
+
+        @TestMetadata("SuspendLambdaParam21.java")
+        public void testSuspendLambdaParam21() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/SuspendLambdaParam21.java");
+        }
+
+        @TestMetadata("SuspendLambdaParam22.java")
+        public void testSuspendLambdaParam22() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/SuspendLambdaParam22.java");
+        }
+
         @TestMetadata("TopLevelFunction.java")
         public void testTopLevelFunction() throws Exception {
             runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/TopLevelFunction.java");

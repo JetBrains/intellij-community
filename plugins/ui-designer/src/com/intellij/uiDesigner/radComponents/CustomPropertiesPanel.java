@@ -2,7 +2,7 @@
 
 package com.intellij.uiDesigner.radComponents;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
 
 

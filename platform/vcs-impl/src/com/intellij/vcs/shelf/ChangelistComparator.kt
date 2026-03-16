@@ -2,7 +2,6 @@
 package com.intellij.vcs.shelf
 
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
-import java.util.Comparator
 
 internal object ChangelistComparator : Comparator<ShelvedChangeList> {
   override fun compare(o1: ShelvedChangeList, o2: ShelvedChangeList): Int {

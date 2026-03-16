@@ -3,7 +3,7 @@ plugins {
 }
 
 kotlin {
-    ios()
+    {{iosTargetPlaceholder}}
     jvm()
 
     sourceSets {

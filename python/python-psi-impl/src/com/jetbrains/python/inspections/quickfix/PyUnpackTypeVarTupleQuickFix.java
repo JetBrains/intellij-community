@@ -20,7 +20,7 @@ public class PyUnpackTypeVarTupleQuickFix extends PsiUpdateModCommandQuickFix {
   }
 
   public static void replaceToTypingExtensionsUnpack(@NotNull PsiElement elementTpReplace, @NotNull PsiElement elementInUnpack,
-                                            @NotNull PsiFile file, @NotNull Project project) {
+                                                     @NotNull PsiFile file, @NotNull Project project) {
     AddImportHelper.addOrUpdateFromImportStatement(file, "typing_extensions", "Unpack", null,
                                                    AddImportHelper.ImportPriority.FUTURE, null);
 

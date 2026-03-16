@@ -9,11 +9,20 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.PsiUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.sourcePsiElement
 
 /**
  * PSI visitor containing implementation of [MissingRecentApiInspection],

@@ -18,6 +18,7 @@ package com.intellij.java.psi.codeStyle.autodetect;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.autodetect.AbstractIndentAutoDetectionTest;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.TimeoutUtil;
@@ -26,6 +27,7 @@ import org.junit.Assert;
 
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 
+@PerformanceUnitTest
 public class JavaAutoDetectIndentPerformanceTest extends AbstractIndentAutoDetectionTest {
 
   @NotNull

@@ -10,8 +10,12 @@ import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceRpc
 import com.intellij.platform.execution.serviceView.FrontendServiceViewLuxComponent
 import com.intellij.platform.project.projectId
 import com.intellij.ui.components.panels.Wrapper
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

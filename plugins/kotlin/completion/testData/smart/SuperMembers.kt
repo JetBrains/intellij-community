@@ -35,3 +35,4 @@ abstract class A : Base(), I {
 // ABSENT: extOnFile
 
 // NOTHING_ELSE
+// IGNORE_K2

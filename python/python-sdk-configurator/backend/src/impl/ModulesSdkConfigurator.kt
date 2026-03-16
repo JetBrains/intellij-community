@@ -2,41 +2,44 @@ package com.intellij.python.sdkConfigurator.backend.impl
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessModuleDir
 import com.intellij.openapi.project.modules
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.removeUserData
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.python.common.tools.ToolId
+import com.intellij.python.pyproject.model.api.ModuleCreateInfo
 import com.intellij.python.pyproject.model.api.SuggestedSdk
+import com.intellij.python.pyproject.model.api.autoConfigureSdkIfNeeded
+import com.intellij.python.pyproject.model.api.getModuleInfo
 import com.intellij.python.pyproject.model.api.suggestSdk
 import com.intellij.python.sdkConfigurator.backend.impl.ModulesSdkConfigurator.Companion.create
 import com.intellij.python.sdkConfigurator.backend.impl.ModulesSdkConfigurator.Companion.popModulesSDKConfigurator
 import com.intellij.python.sdkConfigurator.common.impl.ModuleDTO
 import com.intellij.python.sdkConfigurator.common.impl.ModuleName
-import com.jetbrains.python.PathShorter
+import com.jetbrains.python.PathShortener
 import com.jetbrains.python.Result
+import com.jetbrains.python.module.PyModuleService
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
-import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import com.jetbrains.python.sdk.configuration.createSdk
+import com.jetbrains.python.sdk.findPythonSdk
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToPath
-import com.jetbrains.python.venvReader.Directory
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
- * Configures SDK for modules in [project].
+ * Configures SDK for modules in [project] in [ModuleConfigurationMode.INTERACTIVE] mode.
  *
  * 1. Create instance with [create]
  * 2. Ask use to choose from [modulesDTO]
@@ -47,7 +50,7 @@ import kotlinx.coroutines.withContext
 internal class ModulesSdkConfigurator private constructor(
   private val project: Project,
   private val modules: Map<ModuleName, ModuleCreateInfo>,
-  private val pathShorter: PathShorter,
+  private val pathShorter: PathShortener,
 ) {
 
   val modulesDTO: List<ModuleDTO>
@@ -61,7 +64,7 @@ internal class ModulesSdkConfigurator private constructor(
       when (createInfo) {
         is ModuleCreateInfo.CreateSdkInfoWrapper -> Unit
         is ModuleCreateInfo.SameAs -> {
-          children.getOrPut(createInfo.parentModuleName) { HashSet() }.add(moduleName)
+          children.getOrPut(createInfo.parentModule.name) { HashSet() }.add(moduleName)
         }
       }
     }
@@ -71,7 +74,7 @@ internal class ModulesSdkConfigurator private constructor(
         is ModuleCreateInfo.CreateSdkInfoWrapper -> {
           val version = when (val r = createInfo.createSdkInfo) {
             is CreateSdkInfo.ExistingEnv -> r.pythonInfo.languageLevel.toPythonVersion()
-            is CreateSdkInfo.WillCreateEnv -> null
+            is CreateSdkInfo.WillCreateEnv, is CreateSdkInfo.WillInstallTool -> null
           }
           ModuleDTO(moduleName,
                     path = createInfo.moduleDir?.let { pathShorter.toString(it) },
@@ -86,13 +89,15 @@ internal class ModulesSdkConfigurator private constructor(
       .toList()
   }
 
-  companion object {
+  internal companion object {
+
     /**
-     * Create instance and save in [project]
+     * Create instance and save in [project], see class doc
      */
-    suspend fun create(project: Project): ModulesSdkConfigurator = ModulesSdkConfigurator(project, getModulesWithoutSDKCreateInfo(project), PathShorter.create(project)).also {
-      project.putUserData(key, it)
-    }
+    suspend fun create(project: Project): ModulesSdkConfigurator =
+      ModulesSdkConfigurator(project, getModulesWithoutSDKCreateInfo(project), PathShortener.create(project)).also {
+        project.putUserData(key, it)
+      }
 
     /**
      * Get instance from project and **clear it**
@@ -104,52 +109,22 @@ internal class ModulesSdkConfigurator private constructor(
       return instance
     }
 
-    private suspend fun getModulesWithoutSDKCreateInfo(project: Project): Map<ModuleName, ModuleCreateInfo> = withBackgroundProgress(project, PySdkConfiguratorBundle.message("intellij.python.sdk.looking")) {
-      val tools = PyProjectSdkConfigurationExtension.createMap()
-      val limit = Semaphore(permits = Registry.intValue("intellij.python.sdkConfigurator.backend.sdk.parallel"))
-      val now = System.currentTimeMillis()
-      val resultDef = project.modules.filter { ModuleRootManager.getInstance(it).sdk == null }.map { module ->
-        limit.withPermit {
+    private suspend fun getModulesWithoutSDKCreateInfo(project: Project): Map<ModuleName, ModuleCreateInfo> =
+      withBackgroundProgress(project, PySdkConfiguratorBundle.message("intellij.python.sdk.looking")) {
+        val tools = PyProjectSdkConfigurationExtension.createMap()
+        val now = System.currentTimeMillis()
+        val resultDef = project.modules.filter { it.findPythonSdk() != null }.map { module ->
           async {
-            val moduleInfo = getModuleInfo(module, tools) ?: return@async null
+            val moduleInfo = module.getModuleInfo(tools) ?: return@async null
             Pair(module, moduleInfo)
           }
         }
-      }
-      val result = resultDef.awaitAll().filterNotNull()
-      logger.debug { "SDKs calculated in ${System.currentTimeMillis() - now}ms" }
-      result.associate { (module, createInfoAndDTO) ->
-        Pair(module.name, createInfoAndDTO)
-      }
-    }
-
-    private val logger = fileLogger()
-
-    private sealed interface ModuleCreateInfo {
-      data class CreateSdkInfoWrapper(val createSdkInfo: CreateSdkInfo, val toolId: ToolId, val moduleDir: Directory?) : ModuleCreateInfo
-      data class SameAs(val parentModuleName: ModuleName) : ModuleCreateInfo
-    }
-
-
-    private suspend fun getModuleInfo(module: Module, configuratorsByTool: Map<ToolId, PyProjectSdkConfigurationExtension>): ModuleCreateInfo? = // Save on module level
-      when (val r = module.suggestSdk()) {
-        is SuggestedSdk.PyProjectIndependent -> {
-          val tools = r.preferTools.map { configuratorsByTool[it]!! }
-          tools.firstNotNullOfOrNull { tool ->
-            val createInfo = (tool.asPyProjectTomlSdkConfigurationExtension()?.createSdkWithoutPyProjectTomlChecks(module)
-                              ?: tool.checkEnvironmentAndPrepareSdkCreator(module)) ?: return@firstNotNullOfOrNull null
-            CreateSdkInfoWithTool(createInfo, tool.toolId).asDTO(r.moduleDir)
-          }
+        val result = resultDef.awaitAll().filterNotNull()
+        logger.debug { "SDKs calculated in ${System.currentTimeMillis() - now}ms" }
+        result.associate { (module, createInfoAndDTO) ->
+          Pair(module.name, createInfoAndDTO)
         }
-        is SuggestedSdk.SameAs -> {
-          ModuleCreateInfo.SameAs(r.parentModule.name)
-        }
-        null -> null
-      } // No tools or not pyproject.toml at all? Use EP as a fallback
-      ?: PyProjectSdkConfigurationExtension.findAllSortedForModule(module).firstOrNull()?.let { CreateSdkInfoWithTool(it.createSdkInfo, it.toolId).asDTO(module.guessModuleDir()?.toNioPath()) }
-
-
-    private fun CreateSdkInfoWithTool.asDTO(moduleDir: Directory?): ModuleCreateInfo = ModuleCreateInfo.CreateSdkInfoWrapper(createSdkInfo, toolId, moduleDir)
+      }
 
 
     /**
@@ -163,7 +138,7 @@ internal class ModulesSdkConfigurator private constructor(
    * Errors are logged.
    *
    */
-  suspend fun configureSdks(modulesOnly: Set<ModuleName>) {
+  suspend fun configureSdks(modulesOnly: Set<ModuleName>) = project.pythonSdkConfigurationMutex.withLock {
     withContext(Dispatchers.Default) {
       val modulesMap = project.modules.associateBy { it.name }
       val modulesWithSameSdk = mutableMapOf<Module, Module>()
@@ -172,27 +147,28 @@ internal class ModulesSdkConfigurator private constructor(
           val createInfo = (modules[module.name] ?: error("No create info for module $module, caller broke the contract"))
           when (createInfo) {
             is ModuleCreateInfo.CreateSdkInfoWrapper -> {
-              when (val r = createInfo.createSdkInfo.sdkCreator(false)) {
+              when (val r = createInfo.createSdkInfo.createSdk(module)) {
                 is Result.Failure -> { //TODO: Show SDK creation error?
                   logger.warn("Failed to create SDK for ${module.name}: ${r.error}")
                 }
                 is Result.Success -> {
-                  val sdk = r.result!! // can't be `null` and will be non-null soon
-                  ModuleRootModificationUtil.setModuleSdk(module, sdk)
+                  val sdk = r.result
+                  module.pythonSdk = sdk
                 }
               }
             }
             is ModuleCreateInfo.SameAs -> {
-              val parent = modulesMap[createInfo.parentModuleName] ?: error("No parent module named ${createInfo.parentModuleName}")
+              val parentModuleName = createInfo.parentModule.name
+              val parent = modulesMap[parentModuleName] ?: error("No parent module named $parentModuleName")
               modulesWithSameSdk[module] = parent
             }
           }
         } // Link workspace members with their workspace
         val reportedBrokenModules = mutableSetOf<Module>()
         for ((module, parentModule) in modulesWithSameSdk) {
-          val parentSdk = ModuleRootManager.getInstance(parentModule).sdk
+          val parentSdk = PythonSdkUtil.findPythonSdk(module)
           if (parentSdk != null) {
-            ModuleRootModificationUtil.setModuleSdk(module, parentSdk) // This SDK is shared, no need to associate it
+            module.pythonSdk = parentSdk // This SDK is shared, no need to associate it
             // TODO: Support association with multiple modules
             if (parentSdk.getOrCreateAdditionalData().associatedModulePath != null) {
               parentSdk.setAssociationToPath(null)
@@ -210,3 +186,34 @@ internal class ModulesSdkConfigurator private constructor(
   }
 }
 
+/**
+ * See [ModuleConfigurationMode.AUTOMATIC]
+ */
+@ApiStatus.Internal // Opened for tests only: we can't put tests here because configurators are in communuty.impl
+suspend fun configureSdkAutomatically(project: Project): Unit = withContext(Dispatchers.Default) {
+  val moduleService = PyModuleService.getInstance(project)
+  val pythonModules = project.modules.filter { moduleService.isPythonModule(it) }
+
+  when (pythonModules.size) {
+    0 -> return@withContext
+    1 -> pythonModules.first().autoConfigureSdkIfNeeded()?.orLogException(logger)
+    else -> project.pythonSdkConfigurationMutex.withLock {
+      for (module in pythonModules) {
+        if (module.findPythonSdk() != null) continue
+        val sdkSuggestion = module.suggestSdk()
+        when (sdkSuggestion) {
+          is SuggestedSdk.SameAs -> {
+            val parentSdk = PythonSdkUtil.findPythonSdk(sdkSuggestion.parentModule) ?: continue
+            module.pythonSdk = parentSdk
+          }
+          is SuggestedSdk.PyProjectIndependent, null -> {
+            logger.trace { "${module.name} skipped in multimodule project autoconfig" }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+private val logger = fileLogger()

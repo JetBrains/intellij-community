@@ -5,7 +5,11 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.PsiType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UTypeReferenceExpression
+import org.jetbrains.uast.UastErrorType
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 class KotlinUTypeReferenceExpression(

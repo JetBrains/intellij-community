@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Instance of {@link RunningApplicationUpdater} may be provided by {@link RunningApplicationUpdaterProvider}.

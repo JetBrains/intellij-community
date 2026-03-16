@@ -2,7 +2,10 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.runBlocking
 
 import com.intellij.analysis.AnalysisScope
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.GlobalInspectionContext
+import com.intellij.codeInspection.GlobalInspectionTool
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.ProblemDescriptionsProcessor
 import com.intellij.codeInspection.ex.JobDescriptor
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.openapi.application.runReadAction

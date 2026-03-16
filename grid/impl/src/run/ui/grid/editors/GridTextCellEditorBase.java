@@ -1,6 +1,10 @@
 package com.intellij.database.run.ui.grid.editors;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtil;
+import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.grid.editors.GridCellEditorFactory.IsEditableChecker;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -13,7 +17,7 @@ import com.intellij.util.textCompletion.TextCompletionProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.EventObject;
 
 public abstract class GridTextCellEditorBase extends GridCellEditor.Adapter implements UiDataProvider, GridCellEditor.EditorBased {

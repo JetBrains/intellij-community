@@ -15,7 +15,7 @@ import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class ShowFileAnnotationCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+internal class ShowFileAnnotationCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
   companion object {
     const val NAME = "showFileAnnotation"

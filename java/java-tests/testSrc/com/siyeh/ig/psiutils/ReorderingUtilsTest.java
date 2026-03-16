@@ -3,7 +3,11 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiReturnStatement;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;

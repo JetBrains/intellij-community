@@ -2,11 +2,14 @@
 
 package org.jetbrains.kotlin.idea.util
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotated
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
@@ -15,6 +18,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
  *
  * @see [org.jetbrains.kotlin.idea.util.ModifierListModifactorKt.addAnnotation(org.jetbrains.kotlin.psi.KtModifierListOwner, org.jetbrains.kotlin.name.FqName, java.lang.String, org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget, boolean, java.lang.String, kotlin.jvm.functions.Function1<? super org.jetbrains.kotlin.psi.KtAnnotationEntry,java.lang.Boolean>)]
  */
+@K1Deprecation
 fun KtModifierListOwner.addAnnotation(
     annotationFqName: FqName,
     annotationInnerText: String? = null,
@@ -29,6 +33,7 @@ fun KtModifierListOwner.addAnnotation(
  *
  * @see [org.jetbrains.kotlin.idea.util.ModifierListModifactorKt.addAnnotation(org.jetbrains.kotlin.psi.KtModifierListOwner, org.jetbrains.kotlin.name.FqName, java.lang.String, org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget, boolean, java.lang.String, kotlin.jvm.functions.Function1<? super org.jetbrains.kotlin.psi.KtAnnotationEntry,java.lang.Boolean>)]
  */
+@K1Deprecation
 fun KtModifierListOwner.addAnnotation(
     annotationFqName: FqName,
     annotationInnerText: String? = null,
@@ -55,6 +60,7 @@ fun KtModifierListOwner.addAnnotation(
  * @param addToExistingAnnotation a lambda expression to run on an existing annotation if it has been found
  * @return `true` if an annotation has been added or modified, `false` otherwise
  */
+@K1Deprecation
 fun KtModifierListOwner.addAnnotation(
     annotationFqName: FqName,
     annotationInnerText: String? = null,
@@ -77,6 +83,7 @@ fun KtModifierListOwner.addAnnotation(
     )
 }
 
+@K1Deprecation
 fun KtAnnotated.findAnnotation(annotationFqName: FqName): KtAnnotationEntry? {
     if (annotationEntries.isEmpty()) return null
 
@@ -89,4 +96,5 @@ fun KtAnnotated.findAnnotation(annotationFqName: FqName): KtAnnotationEntry? {
     return annotationEntries.firstOrNull { entry -> context.get(BindingContext.ANNOTATION, entry)?.fqName == annotationFqName }
 }
 
+@K1Deprecation
 fun KtAnnotated.hasJvmFieldAnnotation(): Boolean = findAnnotation(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME) != null

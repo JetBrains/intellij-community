@@ -22,7 +22,7 @@ private fun <T : Any> registerSerializer(kryo: Kryo, type: Class<T>, serializer:
   kryo.register(type, serializer).apply { instantiator = initializer }
 }
 
-private object EmptySerializer : Serializer<Any>(false, true) {
+internal object EmptySerializer : Serializer<Any>(false, true) {
   override fun write(kryo: Kryo?, output: Output?, `object`: Any?) {}
   override fun read(kryo: Kryo, input: Input?, type: Class<out Any>?): Any = kryo.newInstance(type)
 }

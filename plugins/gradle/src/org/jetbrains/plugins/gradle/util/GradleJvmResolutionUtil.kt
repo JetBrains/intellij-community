@@ -5,13 +5,13 @@ package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
+import com.intellij.openapi.externalSystem.service.execution.getLocalJavaHomeIfMatchesEel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.Id
-import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
@@ -21,9 +21,13 @@ import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.util.JavaHomeValidationStatus.Invalid
 import org.jetbrains.plugins.gradle.util.JavaHomeValidationStatus.Success
+import org.jetbrains.plugins.gradle.util.JavaHomeValidationStatus.Undefined
+import org.jetbrains.plugins.gradle.util.JavaHomeValidationStatus.Unsupported
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.pathString
 
 private data class GradleJvmProviderId(val projectSettings: GradleProjectSettings) : Id
 
@@ -72,7 +76,7 @@ fun setupGradleJvm(project: Project, projectSettings: GradleProjectSettings, gra
          * This code allows to avoid some irregular conflicts
          * For example: strange duplications in SdkComboBox or unexpected modifications of gradleJvm
          */
-        val fakeSdk = sdk?.let(::findRegisteredSdk)
+        val fakeSdk = sdk?.let { findRegisteredSdk(project, it) }
         if (fakeSdk != null && projectSettings.gradleJvm == null) {
           projectSettings.gradleJvm = fakeSdk.name
         }
@@ -116,12 +120,12 @@ private fun GradleJvmResolutionContext.canUseJavaHomeJdk(): Boolean {
    * at the moment it's impossible to use a real environment from EEL due to this code being executed in a WriteAction on EDT.
    * See IDEA-375312 for more details.
    */
-  if (project.getEelDescriptor() != LocalEelDescriptor) {
-    return false
+  val localJavaHome = getLocalJavaHomeIfMatchesEel(project.getEelDescriptor())
+  val validationStatus = validateGradleJavaHome(project, gradleVersion, localJavaHome?.pathString)
+  return when (validationStatus) {
+    Invalid, Undefined, is Unsupported -> false
+    is Success -> true
   }
-  val javaHome = ExternalSystemJdkUtil.getJavaHome()
-  val validationStatus = validateGradleJavaHome(project, gradleVersion, javaHome)
-  return validationStatus is Success
 }
 
 private fun GradleJvmResolutionContext.findGradleJvm(): String? {
@@ -145,7 +149,7 @@ internal fun Project.resolveProjectJdk(): Sdk? {
   return null
 }
 
-private fun findRegisteredSdk(sdk: Sdk): Sdk? = runReadAction {
-  val projectJdkTable = ProjectJdkTable.getInstance()
+private fun findRegisteredSdk(project: Project, sdk: Sdk): Sdk? = runReadAction {
+  val projectJdkTable = ProjectJdkTable.getInstance(project)
   projectJdkTable.findJdk(sdk.name, sdk.sdkType.name)
 }

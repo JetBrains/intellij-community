@@ -17,7 +17,7 @@ package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.util.NlsContexts.Separator;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class ListSeparator {
 

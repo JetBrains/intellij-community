@@ -9,9 +9,17 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JRootPane;
+import javax.swing.RootPaneContainer;
+import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
+import java.awt.AWTException;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Robot;
+import java.awt.Window;
 import java.net.MalformedURLException;
 import java.net.URL;
 

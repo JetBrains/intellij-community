@@ -2,13 +2,14 @@
 package com.intellij.openapi.project.ex
 
 import com.intellij.openapi.application.PathManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.div
 import kotlin.io.path.name
 
-
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use P3PathsEx")
 class PerProjectInstancePaths(private val projectStoreBaseDir: Path) {
 

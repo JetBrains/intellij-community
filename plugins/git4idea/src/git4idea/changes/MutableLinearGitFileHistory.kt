@@ -89,7 +89,7 @@ internal class MutableLinearGitFileHistory(private val commitHashes: List<String
     return patches
   }
 
-  private class Entry(val patch: TextFilePatch?, val filePath: String? = patch?.filePath)
+  private data class Entry(val patch: TextFilePatch?, val filePath: String? = patch?.filePath)
 
   companion object {
     private val TextFilePatch.filePath

@@ -114,7 +114,6 @@ a:com.intellij.openapi.components.SerializablePersistentStateComponent
 - f:getState():java.lang.Object
 - f:getStateModificationCount():J
 - loadState(java.lang.Object):V
-- f:setState(java.lang.Object):V
 - pf:updateState(kotlin.jvm.functions.Function1):java.lang.Object
 f:com.intellij.openapi.components.SerializablePersistentStateComponent$Companion
 - f:compareAndSet(com.intellij.openapi.components.SerializablePersistentStateComponent,java.lang.Object,java.lang.Object):Z
@@ -945,7 +944,6 @@ com.intellij.openapi.roots.libraries.Library$ModifiableModel
 c:com.intellij.openapi.roots.libraries.LibraryKind
 - <init>(java.lang.String):V
 - s:create(java.lang.String):com.intellij.openapi.roots.libraries.LibraryKind
-- s:findById(java.lang.String):com.intellij.openapi.roots.libraries.LibraryKind
 - f:getKindId():java.lang.String
 c:com.intellij.openapi.roots.libraries.LibraryKindRegistry
 - sf:Companion:com.intellij.openapi.roots.libraries.LibraryKindRegistry$Companion
@@ -1023,6 +1021,9 @@ a:com.intellij.openapi.roots.libraries.PersistentLibraryKind
 - <init>(java.lang.String):V
 - a:createDefaultProperties():com.intellij.openapi.roots.libraries.LibraryProperties
 - getAdditionalRootTypes():com.intellij.openapi.roots.OrderRootType[]
+f:com.intellij.workspaceModel.ide.LibraryEntities
+- sf:getPresentableName(com.intellij.platform.workspace.jps.entities.LibraryEntity):java.lang.String
+f:com.intellij.workspaceModel.ide.SdkEntities
 com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
 - sf:Companion:com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry$Companion
 - a:findTypeById(com.intellij.platform.workspace.jps.entities.SourceRootTypeId):org.jetbrains.jps.model.module.JpsModuleSourceRootType

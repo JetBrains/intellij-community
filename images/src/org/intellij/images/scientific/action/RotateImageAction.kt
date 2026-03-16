@@ -8,11 +8,10 @@ import org.intellij.images.scientific.utils.ScientificUtils.rotateImage
 import java.awt.image.BufferedImage
 
 class RotateImageAction : BaseImageAction() {
-  override suspend fun performImageTransformation(
-    originalImage: BufferedImage,
-    currentImage: BufferedImage,
-    imageFile: VirtualFile,
-    transformationData: ImageTransformationData
+  override suspend fun performImageTransformation(originalImage: BufferedImage,
+                                                  currentImage: BufferedImage,
+                                                  imageFile: VirtualFile,
+                                                  transformationData: ImageTransformationData
   ): BufferedImage {
     val newAngle = (transformationData.getRotationAngle() + 90) % 360
     rotateImage(currentImage, 90).also {

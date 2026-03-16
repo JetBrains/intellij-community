@@ -2,6 +2,8 @@
 package org.jetbrains.tools.model.updater
 
 internal fun switchToBootstrapKotlinCompiler(preferences: GeneratorPreferences) {
+    val ticket = preferences.getTicketAndCheck()
+
     println("Switching Kotlin compiler version to $BOOTSTRAP_VERSION...")
 
     updateProjectAndCommit(
@@ -9,6 +11,6 @@ internal fun switchToBootstrapKotlinCompiler(preferences: GeneratorPreferences) 
         modifications = listOf(
             preferences::kotlincArtifactsMode.modify(GeneratorPreferences.ArtifactMode.BOOTSTRAP),
         ),
-        commitTitle = "[kotlin] restore cooperative development",
+        commitTitle = "[kotlin] $ticket restore cooperative development",
     )
 }

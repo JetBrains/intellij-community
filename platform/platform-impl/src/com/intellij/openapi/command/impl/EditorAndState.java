@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -16,32 +16,35 @@ final class EditorAndState {
 
   static @Nullable EditorAndState getStateFor(@Nullable Project project, @NotNull CurrentEditorProvider editorProvider) {
     FileEditor editor = editorProvider.getCurrentEditor(project);
-    if (editor == null) {
-      return null;
+    if (editor != null && editor.isValid()) {
+      FileEditorState state = editor.getState(FileEditorStateLevel.UNDO);
+      return new EditorAndState(editor, state);
     }
-    if (!editor.isValid()) {
-      return null;
-    }
-    return new EditorAndState(editor, editor.getState(FileEditorStateLevel.UNDO));
+    return null;
   }
 
-  private final FileEditorState myState;
-  private final VirtualFile myVirtualFile;
+  private final @NotNull FileEditorState editorState;
+  private final VirtualFile virtualFile;
 
-  EditorAndState(FileEditor editor, FileEditorState state) {
-    myVirtualFile = editor.getFile();
-    myState = state;
+  EditorAndState(@NotNull FileEditor editor, @NotNull FileEditorState state) {
+    virtualFile = editor.getFile();
+    editorState = state;
   }
 
-  boolean canBeAppliedTo(FileEditor editor) {
-    if (editor == null) return false;
-    if (!Objects.equals(myVirtualFile, editor.getFile())) return false;
-    if (myState == null) return false;
+  boolean canBeAppliedTo(@Nullable FileEditor editor) {
+    if (editor == null || !Objects.equals(virtualFile, editor.getFile())) {
+      return false;
+    }
     FileEditorState currentState = editor.getState(FileEditorStateLevel.UNDO);
-    return myState.getClass() == currentState.getClass();
+    return editorState.getClass() == currentState.getClass();
   }
 
-  FileEditorState getState() {
-    return myState;
+  @NotNull FileEditorState getState() {
+    return editorState;
+  }
+
+  @Override
+  public String toString() {
+    return editorState.toString();
   }
 }

@@ -21,7 +21,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.PySetFunctionToLiteralInspection;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpressionStatement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,11 +47,12 @@ public class ReplaceFunctionWithSetLiteralQuickFix extends PsiUpdateModCommandQu
     for (int i = 0; i != elements.length; ++i) {
       PyElement e = elements[i];
       str.append(e.getText());
-      if (i != elements.length-1)
+      if (i != elements.length - 1) {
         str.append(", ");
+      }
     }
     str.append("}");
     element.replace(elementGenerator.createFromText(LanguageLevel.forElement(element), PyExpressionStatement.class,
-                                                             str.toString()).getExpression());
+                                                    str.toString()).getExpression());
   }
 }

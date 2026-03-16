@@ -36,3 +36,6 @@ key4 = ""
 # INVALID don't parse invalid (identifier) value as next key
 key1 =IntellijIdeaRulezzz
 key2 = IntellijIdeaRulezzz
+
+true = 1
+false = "IntellijIdeaRulezzz"

@@ -3,14 +3,10 @@ package com.intellij.python.featuresTrainer.ift.lesson.essensial
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.execution.RunManager
-import com.intellij.execution.console.DuplexConsoleListener
-import com.intellij.execution.console.DuplexConsoleView
 import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -18,7 +14,6 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.actions.ToggleCaseAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
@@ -40,12 +35,34 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.sdk.pythonSdk
-import training.dsl.*
+import training.dsl.LearningBalloonConfig
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.adjustSearchEverywherePosition
 import training.dsl.LessonUtil.checkEditorModification
+import training.dsl.LessonUtil.checkInsideSearchEverywhere
 import training.dsl.LessonUtil.restoreIfModified
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.LessonUtil.restorePopupPosition
+import training.dsl.TaskContext
+import training.dsl.TaskTestContext
+import training.dsl.checkToolWindowState
+import training.dsl.defaultRestoreDelay
+import training.dsl.gotItStep
+import training.dsl.highlightButtonById
+import training.dsl.highlightDebugActionsToolbar
+import training.dsl.highlightRunToolbar
+import training.dsl.lineWithBreakpoints
+import training.dsl.parseLessonSample
+import training.dsl.proceedLink
+import training.dsl.proposeRestoreForInvalidText
+import training.dsl.sdkConfigurationTasks
+import training.dsl.showBalloonOnHighlightingComponent
+import training.dsl.showEndOfLessonDialogAndFeedbackForm
+import training.dsl.showInvalidDebugLayoutWarning
+import training.dsl.triggerOnEditorText
+import training.dsl.waitSmartModeStep
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
@@ -56,7 +73,12 @@ import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
 import training.ui.getFeedbackProposedPropertyName
-import training.util.*
+import training.util.LessonEndInfo
+import training.util.getActionById
+import training.util.getCallBackActionId
+import training.util.invokeActionForFocusContext
+import training.util.isToStringContains
+import training.util.learningToolWindow
 import java.awt.Point
 import java.awt.event.KeyEvent
 import javax.swing.JTree
@@ -506,7 +528,7 @@ class PythonOnboardingTourLesson :
       text(PythonLessonsBundle.message("python.onboarding.invoke.search.everywhere.2",
                                        LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT), LessonUtil.actionName(it)))
       triggerAndBorderHighlight().component { ui: ExtendableTextField ->
-        UIUtil.getParentOfType(SearchEverywhereUI::class.java, ui) != null
+        checkInsideSearchEverywhere(ui)
       }
       restoreIfModifiedOrMoved()
     }
@@ -524,9 +546,9 @@ class PythonOnboardingTourLesson :
       }
       text(PythonLessonsBundle.message("python.onboarding.search.everywhere.description",
                                        code("AVERAGE"), code(PythonLessonsBundle.message("toggle.case.part"))))
+      val actionText = ActionsBundle.actionText("EditorToggleCase")
       triggerAndBorderHighlight().listItem { item ->
-        val value = (item as? GotoActionModel.MatchedValue)?.value
-        (value as? GotoActionModel.ActionWrapper)?.action is ToggleCaseAction
+        item.isToStringContains(actionText)
       }
       restoreByUi()
       restoreIfModifiedOrMoved()

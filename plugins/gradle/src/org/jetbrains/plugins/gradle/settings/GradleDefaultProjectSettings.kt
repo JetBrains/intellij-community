@@ -1,13 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.observable.util.toEnumOrNull
 import com.intellij.util.xmlb.annotations.Attribute
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.util.GradleEnvironment
 import org.jetbrains.plugins.gradle.util.GradleVersionXmlConverter
+import java.nio.file.Path
 
 class GradleDefaultProjectSettings internal constructor() : BaseState() {
 
@@ -65,12 +72,13 @@ class GradleDefaultProjectSettings internal constructor() : BaseState() {
     fun createProjectSettings(externalProjectPath: String): GradleProjectSettings {
       val headlessDistributionType = GradleEnvironment.Headless.GRADLE_DISTRIBUTION_TYPE?.toEnumOrNull<DistributionType>()
       val headlessGradleHome = GradleEnvironment.Headless.GRADLE_HOME
+      val effectiveGradleHome = headlessGradleHome ?: state.gradleHome
       return GradleProjectSettings(externalProjectPath).apply {
         gradleJvm = state.gradleJvm
         delegatedBuild = state.delegatedBuild
         testRunner = state.testRunner
         distributionType = headlessDistributionType ?: state.distributionType
-        gradleHome = headlessGradleHome ?: state.gradleHome
+        gradleHomePath = effectiveGradleHome?.let { Path.of(effectiveGradleHome) }
       }
     }
   }

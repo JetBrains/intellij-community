@@ -18,9 +18,20 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
 
-import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.*;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.BIG_INTEGER_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.BOOLEAN_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.DOUBLE_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.INTEGER_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.STRING_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.getClassName;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.getType;
 
 public class CsvDocumentDataHookUp extends DocumentDataHookUp {
   private CsvFormat myFormat;
@@ -70,8 +81,10 @@ public class CsvDocumentDataHookUp extends DocumentDataHookUp {
 
     @Override
     protected void finishSession(@NotNull UpdateSession session, boolean success) {
-      if (success && ((CsvUpdateSession)session).myNewFormat != null) {
-         myFormat = ((CsvUpdateSession)session).myNewFormat;
+      if (success) {
+        if (((CsvUpdateSession)session).myNewFormat != null) {
+          myFormat = ((CsvUpdateSession)session).myNewFormat;
+        }
       }
     }
   }
@@ -134,7 +147,7 @@ public class CsvDocumentDataHookUp extends DocumentDataHookUp {
       GridRow row;
       if (named) {
         Object[] values = CsvFormatParser.values(format.dataRecord, sequence, valuesList.subList(1, valuesList.size())).toArray();
-        String name = valuesList.get(0).value(sequence).toString();
+        String name = valuesList.getFirst().value(sequence).toString();
         row = NamedRow.create(i, name, values);
       }
       else {
@@ -400,7 +413,7 @@ public class CsvDocumentDataHookUp extends DocumentDataHookUp {
                               @NotNull CsvRecord headerRecord) {
       List<ValueRange> values = headerRecord.values;
       int valuesStart = values.get(myFormatter.requiresRowNumbers() ? 1 : 0).getStartOffset();
-      int valuesEnd = values.get(values.size() - 1).getEndOffset();
+      int valuesEnd = values.getLast().getEndOffset();
 
       StringBuilder sb = new StringBuilder();
       for (GridColumn column : columns) {

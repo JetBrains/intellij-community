@@ -1,11 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.dashboard.splitApi.frontend
 
+import com.intellij.execution.RunContentDescriptorId
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.dashboard.RunDashboardServiceId
 import com.intellij.execution.services.ServiceEventListener
+import com.intellij.execution.services.ServiceViewManager
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.execution.ui.RunContentManagerImpl
@@ -16,8 +18,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.execution.dashboard.RunDashboardCoroutineScopeProvider
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper
-import com.intellij.platform.execution.dashboard.splitApi.*
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardAdditionalServiceDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardConfigurationDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardMainServiceDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceRpc
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardSettingsDto
+import com.intellij.platform.execution.dashboard.splitApi.ServiceCustomizationDto
+import com.intellij.platform.execution.dashboard.splitApi.ServiceStatusDto
+import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.FrontendRunConfigurationNode
 import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.RunDashboardStatusFilter
+import com.intellij.platform.execution.dashboard.splitApi.toAdditionalServiceDto
+import com.intellij.platform.execution.serviceView.ServiceViewManagerImpl
 import com.intellij.platform.execution.serviceView.shouldEnableServicesViewInCurrentEnvironment
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
@@ -31,7 +43,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class FrontendRunDashboardManager(private val project: Project) : RunDashboardManager {
+internal class FrontendRunDashboardManager(private val project: Project) : RunDashboardManager {
   private val frontendSettings = MutableStateFlow(RunDashboardSettingsDto())
   private val frontendDtos = MutableStateFlow<List<RunDashboardServiceDto>>(emptyList())
   private val frontendStatuses = MutableStateFlow(emptyMap<RunDashboardServiceId, ServiceStatusDto>())
@@ -123,6 +135,18 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
         if (RunDashboardUiManagerImpl.getInstance(project).syncContentsFromBackend()) {
           updateDashboard(true)
         }
+      }
+    }
+  }
+
+  internal suspend fun subscribeToNavigateToServiceEvents() {
+    RunDashboardServiceRpc.getInstance().getNavigateToServiceEvents(project.projectId()).collect { updateFromBackend ->
+      val serviceDto = frontendDtos.value.find { it.uuid == updateFromBackend.serviceId } ?: return@collect
+      val configurationNode = FrontendRunConfigurationNode(project, FrontendRunDashboardService(serviceDto))
+      withContext(Dispatchers.EDT) {
+        (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl?)
+          ?.trackingSelect(configurationNode, RunDashboardServiceViewContributor::class.java,
+                           serviceDto.isActivateToolWindowBeforeRun, updateFromBackend.focus)
       }
     }
   }
@@ -226,6 +250,11 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
   override fun getEnableByDefaultTypes(): Set<String?> {
     LOG.debug("getEnableByDefaultTypes() invoked on frontend; returning empty set")
     return emptySet()
+  }
+
+  override fun navigateToServiceOnRun(descriptorId: RunContentDescriptorId, focus: Boolean) {
+    LOG.debug("navigateToServiceOnRun() invoked on frontend; ignored")
+    return
   }
 
   override fun updateServiceRunContentDescriptor(contentWithNewDescriptor: Content, oldDescriptor: RunContentDescriptor) {
@@ -356,6 +385,9 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
     }
     synchronizationScope.launch {
       subscribeToBackendExcludedConfigurationUpdates()
+    }
+    synchronizationScope.launch {
+      subscribeToNavigateToServiceEvents()
     }
     synchronizationScope.launch {
       FrontendRunDashboardLuxHolder.getInstance(project).subscribeToRunToolwindowUpdates()

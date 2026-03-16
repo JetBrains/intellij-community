@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.quickfix.QuickFixContributor
 import org.jetbrains.kotlin.idea.quickfix.QuickFixes
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFix
@@ -8,6 +9,7 @@ import org.jetbrains.kotlin.idea.util.createIntentionFactory
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.parcelize.diagnostic.ErrorsParcelize
 
+@K1Deprecation
 class K1ParcelizeQuickFixContributor : QuickFixContributor {
     override fun registerQuickFixes(quickFixes: QuickFixes) {
         quickFixes.register(

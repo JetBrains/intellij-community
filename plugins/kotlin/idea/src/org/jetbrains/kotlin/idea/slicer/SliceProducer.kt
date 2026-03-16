@@ -5,8 +5,10 @@ package org.jetbrains.kotlin.idea.slicer
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
 
+@K1Deprecation
 interface SliceProducer {
     fun produce(usage: UsageInfo, mode: KotlinSliceAnalysisMode, parent: SliceUsage): Collection<SliceUsage>?
 
@@ -28,6 +30,7 @@ interface SliceProducer {
     }
 }
 
+@K1Deprecation
 fun SliceProducer.produceAndProcess(
     sliceUsage: SliceUsage,
     mode: KotlinSliceAnalysisMode,

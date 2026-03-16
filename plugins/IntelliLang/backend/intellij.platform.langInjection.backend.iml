@@ -20,5 +20,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="PROVIDED" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
   </component>
 </module>

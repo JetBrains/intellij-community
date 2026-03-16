@@ -61,7 +61,7 @@ object PyCommunityToUnifiedTooltip {
       }
       .withGotItButtonAction {
         PyCommunityUnifiedPromoFusCollector.TooltipClosed.log(PyCommunityUnifiedPromoFusCollector.TooltipCloseReason.UPDATE_NOW)
-        PyCommunityToUnifiedShowPromoActivity.launchUpdateDialog(project)
+        PyCommunityToUnifiedShowPromoActivity.Helper.launchUpdateDialog(project)
       }
       .withShowCount(Int.MAX_VALUE)
       .withFocus()

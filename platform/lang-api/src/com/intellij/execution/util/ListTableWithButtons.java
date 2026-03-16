@@ -4,7 +4,11 @@ package com.intellij.execution.util;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.CommonActionsPanel;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
@@ -13,12 +17,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Observable;
 import java.util.stream.Stream;
 
 public abstract class ListTableWithButtons<T> extends Observable {

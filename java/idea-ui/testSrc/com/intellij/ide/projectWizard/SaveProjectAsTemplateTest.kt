@@ -36,7 +36,7 @@ import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Date
 import kotlin.io.path.createFile
 
 private const val FOO_BAR_JAVA = "foo/Bar.java"
@@ -143,7 +143,7 @@ public class Bar {
 
   override fun tearDown() {
     try {
-      ProjectJdkTable.getInstance().apply {
+      ProjectJdkTable.getInstance(project).apply {
         allJdks.forEach { removeJdk(it) }
       }
       (FileTemplateManager.getDefaultInstance() as FileTemplateManagerImpl).setTestDate(null)

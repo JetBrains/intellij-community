@@ -3,7 +3,9 @@ package org.jetbrains.maven.server;
 
 import java.util.function.Consumer;
 
-import static org.jetbrains.maven.server.SpyConstants.*;
+import static org.jetbrains.maven.server.SpyConstants.NEWLINE;
+import static org.jetbrains.maven.server.SpyConstants.PREFIX;
+import static org.jetbrains.maven.server.SpyConstants.SEPARATOR;
 
 public final class EventInfoPrinter {
   private final Consumer<String> myPrinter;

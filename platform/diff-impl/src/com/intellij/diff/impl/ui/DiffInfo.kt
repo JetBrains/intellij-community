@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.impl.ui
 
 import com.intellij.diff.FrameDiffTool
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
@@ -45,7 +46,7 @@ abstract class DiffInfo : FrameDiffTool.DiffInfo {
     doLayout(titles.getOrNull(0).orEmpty(), titles.getOrNull(1).orEmpty())
   }
 
-  private fun doLayout(left: @Nls String, right: @Nls String) {
+  private fun doLayout(left: @NlsSafe String, right: @NlsSafe String) {
     setText(left, right)
 
     rightLabel.isVisible = right.isNotBlank()

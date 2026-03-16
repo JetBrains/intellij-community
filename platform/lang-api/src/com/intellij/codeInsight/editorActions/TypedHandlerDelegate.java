@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,6 +24,10 @@ public abstract class TypedHandlerDelegate {
   /**
    * If the specified character triggers auto-popup, schedules the auto-popup appearance. This method is called even
    * in overwrite mode, when the rest of typed handler delegate methods are not called. It is invoked only for the primary caret.
+   * <p>
+   * Don't check PSI structure of `file` directly in this method! It's NOT UP TO DATE.
+   * Instead, call {@link com.intellij.codeInsight.AutoPopupController#scheduleAutoPopup(Editor, Condition)} and put the checking logic in condition.
+   * In this case, the condition will be checked later on the up-to-date PSI file.
    */
   public @NotNull Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return Result.CONTINUE;

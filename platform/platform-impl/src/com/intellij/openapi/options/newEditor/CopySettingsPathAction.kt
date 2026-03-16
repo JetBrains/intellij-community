@@ -20,9 +20,15 @@ import com.intellij.util.ui.TextTransferable
 import org.jetbrains.ide.BuiltInServerManager
 import java.awt.datatransfer.Transferable
 import java.awt.event.ActionEvent
-import java.util.*
+import java.util.ArrayDeque
 import java.util.function.Supplier
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JTabbedPane
+import javax.swing.JToggleButton
+import javax.swing.JTree
 import javax.swing.border.TitledBorder
 
 internal class CopySettingsPathAction : DumbAwareAction() {

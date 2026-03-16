@@ -174,4 +174,14 @@ class YAMLStructuralKeysCompletionTest : BasePlatformTestCase() {
     val lookupElements = myFixture.complete(CompletionType.BASIC).map(::render)
     UsefulTestCase.assertEmpty(lookupElements)
   }
+
+  fun testNotCompletingInTheComments() {
+    myFixture.configureByText("test.yaml", """
+      - boo:
+          # <caret>
+          aa: 1
+    """.trimIndent())
+    val lookupElements = myFixture.complete(CompletionType.BASIC).map(::render)
+    assertEmpty(lookupElements)
+  }
 }

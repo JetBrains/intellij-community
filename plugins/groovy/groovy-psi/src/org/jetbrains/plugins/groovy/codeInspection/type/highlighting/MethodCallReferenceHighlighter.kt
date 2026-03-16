@@ -13,7 +13,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.psi.util.isClosureCall
-import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.applicable
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.canBeApplicable
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.inapplicable
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.totalApplicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate

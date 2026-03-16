@@ -20,9 +20,9 @@ class FunctionMaker:
     args: list[str]
     varargs: str | None
     varkw: str | None
-    defaults: tuple[Any, ...]
+    defaults: tuple[Any, ...] | None
     kwonlyargs: list[str]
-    kwonlydefaults: str | None
+    kwonlydefaults: _dict[str, Any] | None
     shortsignature: str | None
     name: str
     doc: str | None

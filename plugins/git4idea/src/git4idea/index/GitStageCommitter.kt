@@ -14,7 +14,11 @@ import com.intellij.vcs.commit.AbstractCommitter
 import com.intellij.vcs.commit.commitWithoutChangesRoots
 import com.intellij.vcs.commit.getLocalHistoryEventName
 import git4idea.GitUtil.getRepositoryForFile
-import git4idea.checkin.*
+import git4idea.checkin.GitCommitOptions
+import git4idea.checkin.GitPostCommitChangeConverter
+import git4idea.checkin.GitPushAfterCommitDialog
+import git4idea.checkin.GitRepositoryCommitter
+import git4idea.checkin.isPushAfterCommit
 import git4idea.index.ui.stagingAreaActionInvoked
 import git4idea.repo.GitRepository
 import git4idea.repo.isSubmodule

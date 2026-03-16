@@ -16,6 +16,8 @@ jvm_library(
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//platform/refactoring",
@@ -28,6 +30,7 @@ jvm_library(
     "//platform/indexing-impl",
     "//xml/xml-psi-api:psi",
     "//platform/core-ui",
+    "//xml/xml-analysis-api:analysis",
   ]
 )
 ### auto-generated section `build intellij.html.tools` end
@@ -36,7 +39,12 @@ jvm_library(
 jvm_library(
   name = "html-tools-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/htmltools:html-tools",
+    "//xml/impl",
+    "//platform/core-ui",
+  ]
 )
 
 jvm_library(
@@ -63,10 +71,14 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/analysis-impl",
+    "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//xml/xml-parser:parser",
     "//platform/refactoring",
-  ]
+    "//platform/core-impl",
+    "//xml/xml-analysis-api:analysis",
+  ],
+  runtime_deps = [":html-tools-tests"]
 )
 ### auto-generated section `build intellij.html.tools.tests` end
 

@@ -9,7 +9,9 @@ import com.intellij.ui.scale.paint.ImageComparator.AASmootherComparator;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.nio.file.Path;
 import java.util.function.Function;

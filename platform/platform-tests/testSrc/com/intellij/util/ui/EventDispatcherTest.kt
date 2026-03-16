@@ -8,7 +8,7 @@ import com.intellij.util.EventDispatcher
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.*
+import java.util.EventListener
 
 @ExtendWith(DoNoRethrowEventDispatcherErrors::class)
 class EventDispatcherTest {

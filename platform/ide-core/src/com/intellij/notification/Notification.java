@@ -4,7 +4,13 @@ package com.intellij.notification;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUiKind;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -14,16 +20,27 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.openapi.util.NlsContexts.*;
+import static com.intellij.openapi.util.NlsContexts.LinkLabel;
+import static com.intellij.openapi.util.NlsContexts.NotificationContent;
+import static com.intellij.openapi.util.NlsContexts.NotificationSubtitle;
+import static com.intellij.openapi.util.NlsContexts.NotificationTitle;
 
 /**
  * <p>A notification has an optional title and subtitle, mandatory content (plain text or HTML), and optional actions.</p>
@@ -42,14 +59,8 @@ import static com.intellij.openapi.util.NlsContexts.*;
  * @author Alexander Lobas
  */
 public class Notification {
-  /** @deprecated use {@link #Notification(String, String, NotificationType)} and {@link #setIcon} */
-  @Deprecated(forRemoval = true)
-  public Notification(@NotNull String groupId, @Nullable Icon icon, @NotNull NotificationType type) {
-    this(groupId, "", type);
-    setIcon(icon);
-  }
-
   private static final Logger LOG = Logger.getInstance(Notification.class);
+
   public static final DataKey<Notification> KEY = DataKey.create("Notification");
 
   public final @NotNull String id;
@@ -92,10 +103,12 @@ public class Notification {
    * @param groupId notification group ID registered in {@code plugin.xml} via {@link com.intellij.notification.impl.NotificationGroupEP}
    * @param title   an optional title (use an empty string ({@code ""}) to display the content without a title)
    */
-  public Notification(@NotNull String groupId,
-                      @NotNull @NotificationTitle String title,
-                      @NotNull @NotificationContent String content,
-                      @NotNull NotificationType type) {
+  public Notification(
+    @NotNull String groupId,
+    @NotNull @NotificationTitle String title,
+    @NotNull @NotificationContent String content,
+    @NotNull NotificationType type
+  ) {
     id = myTimestamp + "." + System.identityHashCode(this);
     myGroupId = groupId;
     myType = type;
@@ -177,17 +190,6 @@ public class Notification {
     return myGroupId;
   }
 
-  /** @deprecated use {@link #Notification(String, String, String, NotificationType)} and {@link #setListener} */
-  @Deprecated(forRemoval = true)
-  public Notification(@NotNull String groupId,
-                      @NotNull @NotificationTitle String title,
-                      @NotNull @NotificationContent String content,
-                      @NotNull NotificationType type,
-                      @Nullable NotificationListener listener) {
-    this(groupId, title, content, type);
-    myListener = listener;
-  }
-
   @ApiStatus.Internal
   public boolean canShowFor(@Nullable Project project) {
     if (myDoNotAskId == null && myDisplayId != null) {
@@ -195,15 +197,15 @@ public class Notification {
       myDoNotAskId = myDisplayId;
     }
     else if (myDoNotAskId == null) {
-      @NlsSafe String title = NotificationGroup.getGroupTitle(myGroupId);
+      @NlsSafe var title = NotificationGroup.getGroupTitle(myGroupId);
       if (title == null) {
         title = myGroupId;
       }
       myDoNotAskDisplayName = title;
       myDoNotAskId = myGroupId;
     }
-    String id = "Notification.DoNotAsk-" + myDoNotAskId;
-    boolean doNotAsk = PropertiesComponent.getInstance().getBoolean(id, false);
+    var id = "Notification.DoNotAsk-" + myDoNotAskId;
+    var doNotAsk = PropertiesComponent.getInstance().getBoolean(id, false);
     if (doNotAsk) {
       return false;
     }
@@ -211,21 +213,6 @@ public class Notification {
       return !PropertiesComponent.getInstance(project).getBoolean(id, false);
     }
     return true;
-  }
-
-  /** @deprecated use {@link #Notification(String, String, NotificationType)}, {@link #setIcon}, {@link #setSubtitle}, {@link #setListener} */
-  @Deprecated(forRemoval = true)
-  public Notification(@NotNull String groupId,
-                      @Nullable Icon icon,
-                      @Nullable @NotificationTitle String title,
-                      @Nullable @NotificationSubtitle String subtitle,
-                      @Nullable @NotificationContent String content,
-                      @NotNull NotificationType type,
-                      @Nullable NotificationListener listener) {
-    this(groupId, content != null ? content : "", type);
-    setIcon(icon);
-    setTitle(title, subtitle);
-    myListener = listener;
   }
 
   @ApiStatus.Internal
@@ -301,13 +288,6 @@ public class Notification {
 
   public @Nullable NotificationListener getListener() {
     return myListener;
-  }
-
-  /** @deprecated please use {@link #addAction(AnAction)} instead */
-  @Deprecated
-  public @NotNull Notification setListener(@NotNull NotificationListener listener) {
-    myListener = listener;
-    return this;
   }
 
   public static @NotNull Notification get(@NotNull AnActionEvent e) {
@@ -389,7 +369,7 @@ public class Notification {
     NotificationsManager.getNotificationsManager().expire(this);
 
     if (myWhenExpired != null) {
-      for (Runnable each : myWhenExpired) {
+      for (var each : myWhenExpired) {
         each.run();
       }
     }
@@ -451,14 +431,16 @@ public class Notification {
     return myToolWindowId;
   }
 
-  public final void assertHasTitleOrContent() {
+  final void assertHasTitleOrContent() {
     LOG.assertTrue(hasTitle() || hasContent(), "Notification should have title and/or content; groupId: " + myGroupId);
   }
 
   @Override
   public String toString() {
-    return String.format("Notification{id='%s', myGroupId='%s', myType=%s, myTitle='%s', mySubtitle='%s', myContent='%s'}",
-                         id, myGroupId, myType, myTitle, mySubtitle, myContent);
+    return String.format(
+      "Notification{id='%s', myGroupId='%s', myType=%s, myTitle='%s', mySubtitle='%s', myContent='%s'}",
+      id, myGroupId, myType, myTitle, mySubtitle, myContent
+    );
   }
 
   private static final String DO_NOT_ASK_PREFIX = "Notification.DoNotAsk-";
@@ -467,7 +449,7 @@ public class Notification {
   @ApiStatus.Experimental
   @Contract("_ -> this")
   public Notification setDoNotAskFor(@Nullable Project project) {
-    PropertiesComponent manager = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
+    var manager = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
     manager.setValue(DO_NOT_ASK_PREFIX + myDoNotAskId, true);
     manager.setValue(DO_NOT_ASK_DISPLAY_PREFIX + myDoNotAskId, myDoNotAskDisplayName);
     return this;
@@ -475,12 +457,11 @@ public class Notification {
 
   @ApiStatus.Experimental
   public static boolean isDoNotAskFor(@Nullable Project project, @NotNull String doNotAskId) {
-    return project != null && PropertiesComponent.getInstance(project).getBoolean(DO_NOT_ASK_PREFIX + doNotAskId)
-           || PropertiesComponent.getInstance().getBoolean(DO_NOT_ASK_PREFIX + doNotAskId);
+    return project != null && PropertiesComponent.getInstance(project).getBoolean(DO_NOT_ASK_PREFIX + doNotAskId) ||
+           PropertiesComponent.getInstance().getBoolean(DO_NOT_ASK_PREFIX + doNotAskId);
   }
 
-  //<editor-fold desc="Deprecated stuff.">
-
+  @ApiStatus.Internal
   public static void fire(@NotNull Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
     var dataContext = context != null ? context : CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT, sink -> sink.set(KEY, notification));
     var event = AnActionEvent.createEvent(action, dataContext, null, ActionPlaces.NOTIFICATION, ActionUiKind.NONE, null);
@@ -492,6 +473,51 @@ public class Notification {
    * (i.e., do not put under the "Actions" dropdown).
    */
   public enum CollapseActionsDirection {KEEP_LEFTMOST, KEEP_RIGHTMOST}
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link #Notification(String, String, NotificationType)} and {@link #setIcon} */
+  @Deprecated(forRemoval = true)
+  public Notification(@NotNull String groupId, @Nullable Icon icon, @NotNull NotificationType type) {
+    this(groupId, "", type);
+    setIcon(icon);
+  }
+
+  /** @deprecated use {@link #Notification(String, String, String, NotificationType)} and {@link #setListener} */
+  @Deprecated(forRemoval = true)
+  public Notification(
+    @NotNull String groupId,
+    @NotNull @NotificationTitle String title,
+    @NotNull @NotificationContent String content,
+    @NotNull NotificationType type,
+    @Nullable NotificationListener listener
+  ) {
+    this(groupId, title, content, type);
+    myListener = listener;
+  }
+
+  /** @deprecated use {@link #Notification(String, String, NotificationType)}, {@link #setIcon}, {@link #setSubtitle}, {@link #setListener} */
+  @Deprecated(forRemoval = true)
+  public Notification(
+    @NotNull String groupId,
+    @Nullable Icon icon,
+    @Nullable @NotificationTitle String title,
+    @Nullable @NotificationSubtitle String subtitle,
+    @Nullable @NotificationContent String content,
+    @NotNull NotificationType type,
+    @Nullable NotificationListener listener
+  ) {
+    this(groupId, content != null ? content : "", type);
+    setIcon(icon);
+    setTitle(title, subtitle);
+    myListener = listener;
+  }
+
+  /** @deprecated please use {@link #addAction(AnAction)} instead */
+  @Deprecated
+  public @NotNull Notification setListener(@NotNull NotificationListener listener) {
+    myListener = listener;
+    return this;
+  }
 
   /** @deprecated use {@link #setCollapseDirection} */
   @Deprecated(forRemoval = true)

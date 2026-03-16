@@ -1,0 +1,6 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <plugin id="com.jetbrains.performancePlugin"/>
+    <module name="intellij.tools.ide.util.common"/>
+  </dependencies>
+</idea-plugin>

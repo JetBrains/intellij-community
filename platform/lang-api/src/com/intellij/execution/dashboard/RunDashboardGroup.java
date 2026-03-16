@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.dashboard;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author konstantin.aleev

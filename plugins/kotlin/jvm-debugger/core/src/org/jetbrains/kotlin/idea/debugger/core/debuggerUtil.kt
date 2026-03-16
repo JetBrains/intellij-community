@@ -19,7 +19,14 @@ import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
-import com.sun.jdi.*
+import com.sun.jdi.AbsentInformationException
+import com.sun.jdi.LocalVariable
+import com.sun.jdi.Location
+import com.sun.jdi.Method
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.StackFrame
+import com.sun.jdi.Value
+import com.sun.jdi.VirtualMachine
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
@@ -28,18 +35,33 @@ import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionSymbol
-import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.base.util.CONTINUATION_TYPE
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INVOKE_SUSPEND_METHOD_NAME
+import org.jetbrains.kotlin.idea.debugger.base.util.dropInlineSuffix
+import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
+import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
+import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
+import org.jetbrains.kotlin.idea.debugger.base.util.safeGetSourcePosition
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.base.util.safeSourceName
+import org.jetbrains.kotlin.idea.debugger.base.util.safeVariables
+import org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider.Configuration.Companion.STOP_AT_LAMBDA
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.org.objectweb.asm.Label
 import org.jetbrains.org.objectweb.asm.MethodVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.tree.MethodNode
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.CompletableFuture
 
 fun Location.isInKotlinSources(): Boolean {
@@ -100,11 +122,13 @@ private suspend fun isInlinedArgument(localVariables: List<LocalVariable>, inlin
             .map { it.drop(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT.length) }
             .any { variableName ->
                 if (variableName.startsWith("-")) {
-                    val lambdaClassName = ClassNameCalculator.getClassName(inlineArgument)?.substringAfterLast('.') ?: return@any false
                     val cleanedVarName = dropInlineSuffix(variableName).dropInlineScopeInfo().removePrefix("-")
-                    if (!cleanedVarName.endsWith("-$lambdaClassName")) return@any false
-                    val candidateMethodName = cleanedVarName.removeSuffix("-$lambdaClassName")
-                    candidateMethodName == functionName || nameMatchesUpToDollar(candidateMethodName, functionName)
+                    ClassNameProvider(STOP_AT_LAMBDA).getCandidatesForElement(inlineArgument).any { lambdaClassNameCandidate ->
+                        val lambdaClassName = lambdaClassNameCandidate.substringAfterLast('.')
+                        if (!cleanedVarName.endsWith("-$lambdaClassName")) return@any false
+                        val candidateMethodName = cleanedVarName.removeSuffix("-$lambdaClassName")
+                        candidateMethodName == functionName || nameMatchesUpToDollar(candidateMethodName, functionName)
+                    }
                 } else {
                     // For Kotlin up to 1.3.10
                     lambdaOrdinalByLocalVariable(variableName) == lambdaOrdinal
@@ -136,7 +160,7 @@ fun <T : Any> DebugProcessImpl.invokeInManagerThread(f: (DebuggerContextImpl) ->
 }
 
 private fun lambdaOrdinalByArgument(elementAt: KtFunction): Int {
-    val className = ClassNameCalculator.getClassName(elementAt) ?: return 0
+    val className = ClassNameProvider(STOP_AT_LAMBDA).getCandidatesForElement(elementAt).firstOrNull() ?: return 0
     return className.substringAfterLast("$").toIntOrNull() ?: 0
 }
 

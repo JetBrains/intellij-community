@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.KotlinBaseFe10CodeInsightBundle
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 
+@K1Deprecation
 @Suppress("DEPRECATION")
 @Deprecated("Use 'org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester' instead")
 object Fe10KotlinNameSuggester : AbstractKotlinNameSuggester() {

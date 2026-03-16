@@ -14,12 +14,19 @@ import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
 import com.intellij.uiDesigner.lw.LwSplitPane;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadSplitPane;
+import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.Scrollable;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 

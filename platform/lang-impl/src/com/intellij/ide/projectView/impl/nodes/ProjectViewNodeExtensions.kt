@@ -4,8 +4,10 @@ package com.intellij.ide.projectView.impl.nodes
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 
-internal fun AbstractTreeNode<*>.getVirtualFileForNodeOrItsPSI(): VirtualFile? =
+@ApiStatus.Internal
+fun AbstractTreeNode<*>.getVirtualFileForNodeOrItsPSI(): VirtualFile? =
   if (this is ProjectViewNode) {
     virtualFile ?: if (this is AbstractPsiBasedNode) virtualFileForValue else null
   }

@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.refactoring.rename;
 
-import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.lang.properties.PropertiesImplUtil;
+import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.refactoring.PropertiesRefactoringSettings;
 import com.intellij.lang.properties.xml.XmlProperty;

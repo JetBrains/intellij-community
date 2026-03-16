@@ -26,7 +26,13 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.Nls
 import java.awt.Component
-import javax.swing.*
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
+import javax.swing.ListSelectionModel
 
 internal class SearchScopeSelector(property: ObservableMutableProperty<List<ScopeItem>>) : JPanel() {
 

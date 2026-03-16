@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.uv
 import com.intellij.openapi.module.Module
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.PyProjectToolFactory
-import com.intellij.python.pyproject.TomlTableSafeGetError
 import com.intellij.python.pyproject.getOrIssue
 import com.intellij.python.pyproject.safeGetArr
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 sealed class UvPyProjectIssue {
-  data class SafeGetError(val error: TomlTableSafeGetError) : UvPyProjectIssue()
+  data object SafeGetError : UvPyProjectIssue()
 }
 
 @ApiStatus.Internal
@@ -52,7 +51,7 @@ data class UvPyProject(val project: UvPyProjectTable?, val issues: List<UvPyProj
         return UvPyProject(null, issues)
       }
 
-      val uvDevDependencies = table.safeGetArr<String>("dev-dependencies").getOrIssue(issues, { SafeGetError(it) })
+      val uvDevDependencies = table.safeGetArr<String>("dev-dependencies").getOrIssue(issues, { SafeGetError })
 
       return UvPyProject(
         UvPyProjectTable(

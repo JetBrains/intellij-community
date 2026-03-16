@@ -11,7 +11,7 @@ import com.intellij.util.io.delete
 import com.intellij.util.io.outputStream
 import com.intellij.util.io.write
 import org.junit.Test
-import java.util.*
+import java.util.Base64
 import kotlin.io.path.readText
 
 internal class KeePassFileManagerTest : BaseKeePassFileManagerTest() {

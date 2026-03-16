@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 
-private class GradleStartupActivity : ProjectActivity {
+internal class GradleStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     readAction { ExternalProjectsManager.getInstance(project) }.runWhenInitialized { GradleExtensionsSettings.load(project) }
   }

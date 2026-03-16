@@ -4,13 +4,22 @@ package com.intellij.platform.debugger.impl.frontend
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLightLineBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.xdebugger.impl.XLineBreakpointInstallationInfo
-import com.intellij.xdebugger.impl.breakpoints.*
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
-import kotlinx.coroutines.*
+import com.intellij.xdebugger.SplitDebuggerMode
+import com.intellij.xdebugger.impl.breakpoints.CommonBreakpointGutterIconRenderer
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointVisualRepresentation
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import javax.swing.Icon
 
 internal class FrontendXLightLineBreakpoint(
@@ -22,7 +31,7 @@ internal class FrontendXLightLineBreakpoint(
 ) : XLightLineBreakpointProxy {
   private val cs = parentCs.childScope("FrontendXLightLineBreakpoint")
 
-  private val visualRepresentation = XBreakpointVisualRepresentation(cs, this, useFeLineBreakpointProxy(), breakpointManager)
+  private val visualRepresentation = XBreakpointVisualRepresentation(cs, this, SplitDebuggerMode.isSplitDebugger(), breakpointManager)
 
   init {
     // TODO IJPL-185322: let's add loading icon if light breakpoint is alive for more than ~300ms

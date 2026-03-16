@@ -34,6 +34,8 @@ jvm_library(
     "//platform/code-style-api:codeStyle",
     "//platform/usageView",
     "//platform/lvcs-api:lvcs",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.refactoring` end

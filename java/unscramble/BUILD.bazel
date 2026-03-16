@@ -27,6 +27,7 @@ jvm_library(
     "//platform/core-ui",
     "//java/java-impl:impl",
     "//platform/threadDumpParser",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.java.unscramble` end

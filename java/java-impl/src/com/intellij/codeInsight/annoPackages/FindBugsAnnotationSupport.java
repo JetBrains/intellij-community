@@ -4,7 +4,11 @@ package com.intellij.codeInsight.annoPackages;
 import com.intellij.codeInsight.ContextNullabilityInfo;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiClassType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 

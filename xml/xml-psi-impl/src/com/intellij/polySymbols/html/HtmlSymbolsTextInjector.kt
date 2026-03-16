@@ -22,7 +22,7 @@ import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlText
 import com.intellij.util.asSafely
-import java.util.*
+import java.util.Locale
 
 class HtmlSymbolsTextInjector : MultiHostInjector {
 

@@ -12,7 +12,7 @@ interface ChangesViewCommitWorkflowUi : NonModalCommitWorkflowUi {
 
   suspend fun refreshChangesViewBeforeCommit()
 
-  var inclusionModel: InclusionModel?
+  fun setInclusionModel(model: InclusionModel?)
 
   fun expand(item: Any)
   fun select(item: Any)

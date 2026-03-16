@@ -3,12 +3,14 @@ package com.intellij.platform.syntax.extensions.impl
 
 import fleet.util.multiplatform.linkToActual
 
-internal fun <K : Any, V : Any> newConcurrentMultiMap(): ConcurrentMultiMap<K, V> = ConcurrentMultiMapImpl()
+internal fun <K : Any, V : Any> newConcurrentMultiMap(): MultiplatformConcurrentMultiMap<K, V> = MultiplatformConcurrentMultiMapImpl()
 
-internal fun <K : Any, V : Any> newConcurrentMap(): ConcurrentMap<K, V> = linkToActual()
+internal fun <K : Any, V : Any> newConcurrentMap(): MultiplatformConcurrentMap<K, V> = linkToActual()
 
-private class ConcurrentMultiMapImpl<K : Any, V : Any> : ConcurrentMultiMap<K, V> {
-  private val map: ConcurrentMap<K, MutableSet<V>> = newConcurrentMap()
+internal fun <V : Any> newConcurrentSet(): MutableSet<V> = linkToActual()
+
+private class MultiplatformConcurrentMultiMapImpl<K : Any, V : Any> : MultiplatformConcurrentMultiMap<K, V> {
+  private val map: MultiplatformConcurrentMap<K, MutableSet<V>> = newConcurrentMap()
 
   override fun putValue(key: K, value: V) {
     map.computeIfAbsent(key) { newConcurrentSet() }.add(value)
@@ -24,19 +26,5 @@ private class ConcurrentMultiMapImpl<K : Any, V : Any> : ConcurrentMultiMap<K, V
 
   override fun remove(key: K) {
     map.remove(key)
-  }
-}
-
-private fun <V : Any> newConcurrentSet(): MutableSet<V> {
-  val map = newConcurrentMap<V, Boolean>()
-  return object : AbstractMutableSet<V>() {
-    override fun add(element: V): Boolean =
-      map.put(element, true) == null
-
-    override fun iterator(): MutableIterator<V> =
-      map.keys.iterator()
-
-    override val size: Int
-      get() = map.size
   }
 }

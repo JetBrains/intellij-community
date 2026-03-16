@@ -20,9 +20,11 @@ services:
       - minio-server
     entrypoint: >
       /bin/sh -c "
-      /usr/bin/mc config;
-      /usr/bin/mc config host add myminio http://minio-server:9000 ${UN} ${PW};
-      /usr/bin/mc mb myminio/bad-test-data --with-versioning;
+      until /usr/bin/mc alias set myminio http://minio-server:9000 ${UN} ${PW}; do
+        echo 'Waiting for MinIO server...'
+        sleep 1
+      done;
+      /usr/bin/mc mb myminio/bad-test-data;
       exit 0; 
       "
   cloud-config-server:

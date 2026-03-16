@@ -6,7 +6,7 @@ import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.javac.ast.JavacReferenceCollector;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
 
 public abstract class AbstractRefCollectorCompilerToolExtension extends JavaCompilerToolExtension {
   @Override

@@ -20,7 +20,11 @@ import training.util.iftPluginIsUsing
 import training.util.learningPanelWasOpenedInCurrentVersion
 import java.awt.Component
 import java.awt.event.ActionEvent
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JTextPane
 
 internal class IFTInteractiveCourse : InteractiveCourseFactory {
 

@@ -115,14 +115,14 @@ private fun notifyUnsatisfiedLinkError(e: UnsatisfiedLinkError) {
   CredentialStoreUiService.getInstance().notify(CredentialStoreBundle.message("notification.title.native.keychain.unavailable"), message, null, null)
 }
 
-private class MacOsCredentialStoreFactory : CredentialStoreFactory {
+internal class MacOsCredentialStoreFactory : CredentialStoreFactory {
   override fun create(): CredentialStore? = when {
     isMacOsCredentialStoreSupported && JnaLoader.isLoaded() -> NativeCredentialStoreWrapper(KeyChainCredentialStore())
     else -> null
   }
 }
 
-private class LinuxCredentialStoreFactory : CredentialStoreFactory {
+internal class LinuxCredentialStoreFactory : CredentialStoreFactory {
   override fun create(): CredentialStore? = when {
     SystemInfo.isLinux -> {
       @Suppress("SpellCheckingInspection") val preferWallet = Registry.`is`("credentialStore.linux.prefer.kwallet", false)

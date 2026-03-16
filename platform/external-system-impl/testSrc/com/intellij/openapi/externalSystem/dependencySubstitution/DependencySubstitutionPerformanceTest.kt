@@ -15,6 +15,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.junit5.StressTestApplication
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
@@ -25,6 +26,7 @@ import org.junit.jupiter.params.provider.CsvSource
 
 @StressTestApplication
 @TestApplication
+@PerformanceUnitTest
 class DependencySubstitutionPerformanceTest : DependencySubstitutionTestCase() {
 
   companion object {

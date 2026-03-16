@@ -8,7 +8,14 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +23,7 @@ import java.util.List;
 
 /**
  * User: catherine
- *
+ * <p>
  * QuickFix to replace assignment that can be replaced with augmented assignment.
  * for instance, i = i + 1   --> i +=1
  */
@@ -35,8 +42,9 @@ public class AugmentedAssignmentQuickFix extends PsiUpdateModCommandQuickFix {
       if (expression == null) return;
       PyExpression leftExpression = expression.getLeftExpression();
       PyExpression rightExpression = expression.getRightExpression();
-      if (rightExpression instanceof PyParenthesizedExpression)
+      if (rightExpression instanceof PyParenthesizedExpression) {
         rightExpression = ((PyParenthesizedExpression)rightExpression).getContainedExpression();
+      }
       if (target != null && rightExpression != null) {
         final String targetText = target.getText();
         final String rightText = rightExpression.getText();
@@ -54,16 +62,17 @@ public class AugmentedAssignmentQuickFix extends PsiUpdateModCommandQuickFix {
             final PsiElement psiOperator = expression.getPsiOperator();
             if (psiOperator == null) return;
             stringBuilder.append(targetText).append(" ").
-                append(psiOperator.getText()).append("= ").append(rightExpression.getText());
+              append(psiOperator.getText()).append("= ").append(rightExpression.getText());
             final PyAugAssignmentStatementImpl augAssignment = elementGenerator.createFromText(LanguageLevel.forElement(element),
-                                                          PyAugAssignmentStatementImpl.class, stringBuilder.toString());
-            for (PsiComment comment : comments)
+                                                                                               PyAugAssignmentStatementImpl.class,
+                                                                                               stringBuilder.toString());
+            for (PsiComment comment : comments) {
               augAssignment.add(comment);
+            }
             statement.replace(augAssignment);
           }
         }
       }
     }
   }
-
 }

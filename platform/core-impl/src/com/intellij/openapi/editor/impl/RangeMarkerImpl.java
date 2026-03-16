@@ -9,8 +9,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -19,17 +18,23 @@ import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.diff.FilesTooBigForDiffException;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
+
+import java.util.function.Supplier;
 
 @ApiStatus.Internal
-public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx {
+public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx, Supplier<RangeMarkerEx> {
   private static final Logger LOG = Logger.getInstance(RangeMarkerImpl.class);
 
   private final @NotNull Object myDocumentOrFile; // either VirtualFile (if any) or DocumentEx if no file associated
   @ApiStatus.Internal
   protected volatile RangeMarkerTree.RMNode<RangeMarkerEx> myNode;
-
-  private volatile long myId;
+  @ApiStatus.Internal
+  protected volatile long myId;
   private static final StripedIDGenerator counter = new StripedIDGenerator();
 
   @ApiStatus.Internal
@@ -169,22 +174,24 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   @Override
   public void setGreedyToLeft(boolean greedy) {
     RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
-    if (!isValid(node) || greedy == node.isGreedyToLeft()) return;
-
-    node.getTree().changeData(this, getStartOffset(node), getEndOffset(node), greedy, node.isGreedyToRight(), node.isStickingToRight(), getLayer());
+    if (isValid(node) && greedy != node.isGreedyToLeft()) {
+      node.getTree().changeData(this, getStartOffset(node), getEndOffset(node), greedy, node.isGreedyToRight(), node.isStickingToRight(), getLayer());
+    }
   }
 
   @Override
   public void setGreedyToRight(boolean greedy) {
     RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
-    if (!isValid(node) || greedy == node.isGreedyToRight()) return;
-    node.getTree().changeData(this, getStartOffset(node), getEndOffset(node), node.isGreedyToLeft(), greedy, node.isStickingToRight(), getLayer());
+    if (isValid(node) && greedy != node.isGreedyToRight()) {
+      node.getTree().changeData(this, getStartOffset(node), getEndOffset(node), node.isGreedyToLeft(), greedy, node.isStickingToRight(), getLayer());
+    }
   }
 
   public void setStickingToRight(boolean value) {
     RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
-    if (!isValid(node) || value == node.isStickingToRight()) return;
-    node.getTree().changeData(this, getStartOffset(node), getEndOffset(node), node.isGreedyToLeft(), node.isGreedyToRight(), value, getLayer());
+    if (isValid(node) && value != node.isStickingToRight()) {
+      node.getTree().changeData(this, getStartOffset(node), getEndOffset(node), node.isGreedyToLeft(), node.isGreedyToRight(), value, getLayer());
+    }
   }
 
   @Override
@@ -403,14 +410,9 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   private static boolean canHaveDocument(@NotNull VirtualFile file) {
     Document document = FileDocumentManager.getInstance().getCachedDocument(file);
     if (document != null) return true;
-    if (!file.isValid() || file.isDirectory() || isBinaryWithoutDecompiler(file)) return false;
+    if (!file.isValid() || file.isDirectory() || FileDocumentManagerBase.isBinaryWithoutDecompiler(file)) return false;
 
     return !file.getFileType().isBinary() || !VirtualFileUtil.isTooLarge(file);
-  }
-
-  private static boolean isBinaryWithoutDecompiler(@NotNull VirtualFile file) {
-    FileType fileType = file.getFileType();
-    return fileType.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(fileType) == null;
   }
 
   protected boolean setValid(boolean value) {
@@ -479,5 +481,10 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     int endOffset = Math.max(startOffset, TextRangeScalarUtil.endOffset(range));
     // piggyback myId to store offsets, to conserve memory
     myId = TextRangeScalarUtil.toScalarRange(startOffset, endOffset); // avoid invalid range
+  }
+
+  @Override
+  public RangeMarkerEx get() {
+    return this;
   }
 }

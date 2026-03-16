@@ -4,7 +4,13 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.hints.declarative.InlayActionData
 import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
-import com.intellij.psi.*
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiCapturedWildcardType
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiDisjunctionType
+import com.intellij.psi.PsiIntersectionType
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiWildcardType
 
 
 public object JavaTypeHintsFactory {

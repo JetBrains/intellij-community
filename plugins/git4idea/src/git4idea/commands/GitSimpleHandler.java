@@ -17,8 +17,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashSet;
 
 /**
@@ -61,7 +61,7 @@ public class GitSimpleHandler extends GitTextHandler {
    * @param command   a command to execute
    */
   @SuppressWarnings({"WeakerAccess"})
-  public GitSimpleHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
+  public GitSimpleHandler(@NotNull Project project, @NotNull Path directory, @NotNull GitCommand command) {
     super(project, directory, command);
   }
 

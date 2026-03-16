@@ -25,6 +25,7 @@ import kotlin.reflect.KProperty
  * }
  * ```
  */
+@JvmOverloads
 @TestOnly
 fun <T> testFixture(debugString: String = "", initializer: TestFixtureInitializer<T>): TestFixture<T> {
   return TestFixtureImpl(debugString, initializer)
@@ -68,9 +69,19 @@ sealed interface TestContext {
   val uniqueId: String
 
   /**
-   * Display name for the current test or container, for example [org.junit.jupiter.api.extension.ExtensionContext.getDisplayName]
+   * Display name for the current test or container.
+   *
+   * It's based on [org.junit.jupiter.api.extension.ExtensionContext.getDisplayName], but:
+   * - if it starts with the "test" prefix, the prefix is removed
+   * - if it ends with the "()" suffix, the suffix is removed
    */
   val testName: String
+
+  /**
+   * The underlying JUnit5 extension context.
+   * Provides access to the test execution context and allows extensions to interact with the JUnit5 framework.
+   */
+  val extensionContext: org.junit.jupiter.api.extension.ExtensionContext
 
   /**
    * Returns the annotation with which a test or container is marked or null if there is none.

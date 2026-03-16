@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.surroundWith
 
 import com.intellij.debugger.DebuggerInvocationUtil
@@ -10,7 +10,6 @@ import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -18,7 +17,13 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluationBundle
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinRuntimeTypeEvaluator
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
@@ -49,10 +54,12 @@ internal class KotlinRuntimeTypeCastSurrounder : Surrounder {
         val debuggerContext = DebuggerManagerEx.getInstanceEx(project).context
         val debuggerSession = debuggerContext.debuggerSession
         if (debuggerSession != null) {
-            val progressWindow = ProgressWindow(true, expression.project)
-            val worker = SurroundWithCastWorker(editor, expression, debuggerContext, progressWindow)
-            progressWindow.title = JavaDebuggerBundle.message("title.evaluating")
-            debuggerContext.managerThread?.startProgress(worker, progressWindow)
+            debuggerContext.managerThread?.startCommandWithModalProgress(
+                expression.project,
+                JavaDebuggerBundle.message("title.evaluating")
+            ) { progressIndicator ->
+                SurroundWithCastWorker(editor, expression, debuggerContext, progressIndicator)
+            }
         }
         return null
     }

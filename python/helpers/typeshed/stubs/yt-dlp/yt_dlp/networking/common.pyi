@@ -5,14 +5,14 @@ from _typeshed import Unused
 from collections.abc import Callable, Iterable, Mapping
 from email.message import Message
 from logging import Logger
-from typing import IO, Any
+from typing import IO, Any, Final
 from typing_extensions import Self, TypeAlias
 
 from ..cookies import YoutubeDLCookieJar
 from ..utils._utils import _YDLLogger
 from ..utils.networking import HTTPHeaderDict
 
-DEFAULT_TIMEOUT: int
+DEFAULT_TIMEOUT: Final = 20
 _RequestData: TypeAlias = bytes | Iterable[bytes] | IO[Any] | None
 _Preference: TypeAlias = Callable[[RequestHandler, Request], int]
 

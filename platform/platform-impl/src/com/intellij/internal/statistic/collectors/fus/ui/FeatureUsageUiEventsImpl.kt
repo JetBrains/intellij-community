@@ -4,8 +4,15 @@ package com.intellij.internal.statistic.collectors.fus.ui
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.ClassEventField
+import com.intellij.internal.statistic.eventLog.events.EnumEventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByCustomRule
+import com.intellij.internal.statistic.eventLog.events.EventId1
+import com.intellij.internal.statistic.eventLog.events.EventId3
+import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
+import com.intellij.internal.statistic.eventLog.events.StringEventField
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext

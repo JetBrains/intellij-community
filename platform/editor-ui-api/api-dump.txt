@@ -270,8 +270,6 @@ f:com.intellij.ide.ui.NotRoamableUiOptions
 - f:component7():F
 - f:component8():Z
 - f:component9():Z
-- f:copy(com.intellij.ide.ui.AntialiasingType,com.intellij.ide.ui.AntialiasingType,java.lang.String,F,F,F,F,Z,Z,Z,Z):com.intellij.ide.ui.NotRoamableUiOptions
-- bs:copy$default(com.intellij.ide.ui.NotRoamableUiOptions,com.intellij.ide.ui.AntialiasingType,com.intellij.ide.ui.AntialiasingType,java.lang.String,F,F,F,F,Z,Z,Z,Z,I,java.lang.Object):com.intellij.ide.ui.NotRoamableUiOptions
 - equals(java.lang.Object):Z
 - hashCode():I
 f:com.intellij.ide.ui.NotRoamableUiSettings
@@ -615,7 +613,6 @@ c:com.intellij.ide.util.treeView.FileNameComparator
 - s:getInstance():java.util.Comparator
 f:com.intellij.ide.util.treeView.IndexComparator
 - java.util.Comparator
-- sf:INSTANCE:com.intellij.ide.util.treeView.IndexComparator
 - compare(com.intellij.ide.util.treeView.NodeDescriptor,com.intellij.ide.util.treeView.NodeDescriptor):I
 - s:getInstance():com.intellij.ide.util.treeView.IndexComparator
 com.intellij.ide.util.treeView.InplaceCommentAppender
@@ -1350,6 +1347,7 @@ com.intellij.openapi.editor.Editor
 - addEditorMouseListener(com.intellij.openapi.editor.event.EditorMouseListener,com.intellij.openapi.Disposable):V
 - a:addEditorMouseMotionListener(com.intellij.openapi.editor.event.EditorMouseMotionListener):V
 - addEditorMouseMotionListener(com.intellij.openapi.editor.event.EditorMouseMotionListener,com.intellij.openapi.Disposable):V
+- asModNavigator():com.intellij.openapi.editor.ModNavigator
 - calculateVisibleRange():com.intellij.openapi.util.ProperTextRange
 - getAscent():I
 - a:getCaretModel():com.intellij.openapi.editor.CaretModel
@@ -1424,6 +1422,8 @@ Fa:com.intellij.openapi.editor.EditorFactory
 - a:addEditorFactoryListener(com.intellij.openapi.editor.event.EditorFactoryListener):V
 - a:addEditorFactoryListener(com.intellij.openapi.editor.event.EditorFactoryListener,com.intellij.openapi.Disposable):V
 - a:createDocument(java.lang.CharSequence):com.intellij.openapi.editor.Document
+- a:createDocument(java.lang.CharSequence,Z,Z):com.intellij.openapi.editor.Document
+- a:createDocument(Z):com.intellij.openapi.editor.Document
 - a:createDocument(C[]):com.intellij.openapi.editor.Document
 - a:createEditor(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.Editor
 - a:createEditor(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project):com.intellij.openapi.editor.Editor
@@ -2054,6 +2054,7 @@ c:com.intellij.openapi.editor.colors.FontPreferences
 - <init>():V
 - copyTo(com.intellij.openapi.editor.colors.FontPreferences):V
 - getBoldSubFamily():java.lang.String
+- getCharacterVariants():java.util.Set
 - s:getDefaultFontName():java.lang.String
 - getEffectiveFontFamilies():java.util.List
 - getFontFamily():java.lang.String
@@ -2079,6 +2080,8 @@ a:com.intellij.openapi.editor.colors.ModifiableFontPreferences
 - a:register(java.lang.String,I):V
 - a:resetFontSizes():V
 - a:setBoldSubFamily(java.lang.String):V
+- setCharacterVariant(java.lang.String,Z):V
+- setCharacterVariants(java.util.Set):V
 - a:setEffectiveFontFamilies(java.util.List):V
 - setFontSize(java.lang.String,F):V
 - a:setFontSize(java.lang.String,I):V
@@ -2244,7 +2247,6 @@ com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 com.intellij.openapi.editor.markup.GutterDraggableObject
 - sf:flavor:java.awt.datatransfer.DataFlavor
 - a:copy(I,com.intellij.openapi.vfs.VirtualFile,I):Z
-- getCursor(I,I):java.awt.Cursor
 - getCursor(I,com.intellij.openapi.vfs.VirtualFile,I):java.awt.Cursor
 - s:getFlavors():java.awt.datatransfer.DataFlavor[]
 - remove():V

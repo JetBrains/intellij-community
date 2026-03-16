@@ -15,7 +15,12 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo;
 
 import java.util.Collection;
 
-import static com.intellij.testFramework.UsefulTestCase.*;
+import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
+import static com.intellij.testFramework.UsefulTestCase.assertEquals;
+import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
+import static com.intellij.testFramework.UsefulTestCase.assertNotNull;
+import static com.intellij.testFramework.UsefulTestCase.assertNull;
+import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
 import static org.jetbrains.plugins.groovy.LightGroovyTestCase.assertType;
 import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.getDelegatesToInfo;
 

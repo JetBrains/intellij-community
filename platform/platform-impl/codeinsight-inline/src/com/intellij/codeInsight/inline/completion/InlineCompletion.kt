@@ -21,10 +21,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.application
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import java.util.concurrent.atomic.AtomicReference
-import javax.swing.SwingUtilities
 
 object InlineCompletion {
   private val KEY = Key.create<Pair<InlineCompletionHandler, Disposable>>("inline.completion.handler")
@@ -33,7 +33,7 @@ object InlineCompletion {
   fun getHandlerOrNull(editor: Editor): InlineCompletionHandler? = editor.getUserData(KEY)?.first
 
   fun install(editor: EditorEx, scope: CoroutineScope) {
-    if (!SwingUtilities.isEventDispatchThread()) {
+    if (!EDT.isCurrentThreadEdt()) {
       LOG.error("Inline Completion should be installed only in EDT. This error will be replaced with assertion.")
     }
 

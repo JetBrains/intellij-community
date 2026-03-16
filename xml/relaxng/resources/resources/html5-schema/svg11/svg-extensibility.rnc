@@ -45,8 +45,8 @@ attlist.foreignObject &=
     (common.attrs.aria.implicit.group | common.attrs.aria)?,
     attribute x { Coordinate.datatype }?,
     attribute y { Coordinate.datatype }?,
-    attribute width { Length.datatype },
-    attribute height { Length.datatype },
+    attribute width { Length.datatype }?,
+    attribute height { Length.datatype }?,
     attribute transform { TransformList.datatype }?
 
 ##

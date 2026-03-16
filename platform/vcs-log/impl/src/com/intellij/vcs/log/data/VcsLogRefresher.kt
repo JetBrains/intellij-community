@@ -4,15 +4,15 @@ package com.intellij.vcs.log.data
 import com.intellij.openapi.vfs.VirtualFile
 
 /**
- * Prepares the initial [DataPack] and handles subsequent VCS Log refreshes.
+ * Prepares the initial [VcsLogGraphData] and handles subsequent VCS Log refreshes.
  */
 internal interface VcsLogRefresher {
   /**
-   * Returns the [DataPack] currently stored in this refresher.
+   * Returns the [VcsLogGraphData] currently stored in this refresher.
    *
-   * @return current [DataPack]
+   * @return current [VcsLogGraphData]
    */
-  val currentDataPack: DataPack
+  val currentDataPack: VcsLogGraphData
 
   /**
    * Asynchronously loads some recent commits from the VCS, builds the DataPack and queues to refresh everything. <br></br>

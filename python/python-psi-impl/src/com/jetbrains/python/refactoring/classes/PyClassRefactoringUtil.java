@@ -16,7 +16,18 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
@@ -28,7 +39,27 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.FutureFeature;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyImportStatementBase;
+import com.jetbrains.python.psi.PyImportedNameDefiner;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStarImportElement;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -39,7 +70,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * @author Dennis.Ushakov
@@ -60,15 +99,15 @@ public final class PyClassRefactoringUtil {
   /**
    * Copies class field declarations to some other place
    *
-   * @param assignmentStatements list of class fields
-   *                             @param dequalifyIfDeclaredInClass If not null method will check if field declared in this class.
-   *                                                               If declared -- qualifier will be removed.
-   *                                                               For example: MyClass.Foo will become Foo it this param is MyClass.
+   * @param assignmentStatements       list of class fields
+   * @param dequalifyIfDeclaredInClass If not null method will check if field declared in this class.
+   *                                   If declared -- qualifier will be removed.
+   *                                   For example: MyClass.Foo will become Foo it this param is MyClass.
    * @return new (copied) fields
    */
   public static @NotNull List<PyAssignmentStatement> copyFieldDeclarationToStatement(final @NotNull Collection<? extends PyAssignmentStatement> assignmentStatements,
-                                                                            final @NotNull PyStatementList superClassStatement,
-                                                                            final @Nullable PyClass dequalifyIfDeclaredInClass) {
+                                                                                     final @NotNull PyStatementList superClassStatement,
+                                                                                     final @Nullable PyClass dequalifyIfDeclaredInClass) {
     final List<PyAssignmentStatement> declarations = new ArrayList<>(assignmentStatements.size());
 
     for (final PyAssignmentStatement pyAssignmentStatement : assignmentStatements) {
@@ -79,7 +118,6 @@ public final class PyClassRefactoringUtil {
         final String newValue = getNewValueToAssign((PyReferenceExpression)value, dequalifyIfDeclaredInClass);
 
         setNewAssigneeValue(newDeclaration, newValue);
-
       }
 
       declarations.add(PyPsiRefactoringUtil.addElementToStatementList(newDeclaration, superClassStatement));
@@ -90,27 +128,32 @@ public final class PyClassRefactoringUtil {
 
   /**
    * Sets new value to assignment statement.
+   *
    * @param assignmentStatement statement to change
-   * @param newValue new value
+   * @param newValue            new value
    */
   private static void setNewAssigneeValue(final @NotNull PyAssignmentStatement assignmentStatement, final @NotNull String newValue) {
     final PyExpression oldValue = assignmentStatement.getAssignedValue();
     final PyExpression newExpression =
-      PyElementGenerator.getInstance(assignmentStatement.getProject()).createExpressionFromText(LanguageLevel.forElement(assignmentStatement), newValue);
+      PyElementGenerator.getInstance(assignmentStatement.getProject())
+        .createExpressionFromText(LanguageLevel.forElement(assignmentStatement), newValue);
     if (oldValue != null) {
       oldValue.replace(newExpression);
-    } else {
+    }
+    else {
       assignmentStatement.add(newExpression);
     }
   }
 
   /**
    * Checks if current value declared in provided class and removes class qualifier if true
-   * @param currentValue current value
-   * @param dequalifyIfDeclaredInClass  class to check
+   *
+   * @param currentValue               current value
+   * @param dequalifyIfDeclaredInClass class to check
    * @return value as string
    */
-  private static @NotNull String getNewValueToAssign(final @NotNull PyReferenceExpression currentValue, final @NotNull PyClass dequalifyIfDeclaredInClass) {
+  private static @NotNull String getNewValueToAssign(final @NotNull PyReferenceExpression currentValue,
+                                                     final @NotNull PyClass dequalifyIfDeclaredInClass) {
     final PyExpression qualifier = currentValue.getQualifier();
     if ((qualifier instanceof PyReferenceExpression) &&
         ((PyReferenceExpression)qualifier).getReference().isReferenceTo(dequalifyIfDeclaredInClass)) {
@@ -128,7 +171,9 @@ public final class PyClassRefactoringUtil {
    * @param skipIfExist do not add anything if method already exists
    * @return newly added methods or existing one (if skipIfExists is true and method already exists)
    */
-  public static @NotNull List<PyFunction> addMethods(final @NotNull PyClass destination, final boolean skipIfExist, final PyFunction @NotNull ... methods) {
+  public static @NotNull List<PyFunction> addMethods(final @NotNull PyClass destination,
+                                                     final boolean skipIfExist,
+                                                     final PyFunction @NotNull ... methods) {
 
     final PyStatementList destStatementList = destination.getStatementList();
     final List<PyFunction> result = new ArrayList<>(methods.length);
@@ -199,7 +244,7 @@ public final class PyClassRefactoringUtil {
     newElement.putCopyableUserData(ENCODED_FROM_FUTURE_IMPORTS, null);
     PsiFile destFile = newElement.getContainingFile();
     if (fromFutureImports != null & destFile != null) {
-      for (FutureFeature futureFeature: fromFutureImports) {
+      for (FutureFeature futureFeature : fromFutureImports) {
         AddImportHelper.addOrUpdateFromImportStatement(destFile, PyNames.FUTURE_MODULE, futureFeature.toString(), null,
                                                        AddImportHelper.ImportPriority.FUTURE, null);
       }
@@ -277,12 +322,12 @@ public final class PyClassRefactoringUtil {
       if (target instanceof PyFile || target instanceof PsiDirectory) {
         boolean preferFromImport = useFromImport != null ? useFromImport : true;
         boolean isUsedAsQualifier = sourceNode.getParent() instanceof PyQualifiedExpression &&
-                                   ((PyQualifiedExpression)sourceNode.getParent()).getQualifier() == sourceNode;
+                                    ((PyQualifiedExpression)sourceNode.getParent()).getQualifier() == sourceNode;
         boolean shouldQualifyReference = target instanceof PyFile &&
-                                        !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT &&
-                                        useFromImport != null && useFromImport &&
-                                        asName == null &&
-                                        !isUsedAsQualifier;
+                                         !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT &&
+                                         useFromImport != null && useFromImport &&
+                                         asName == null &&
+                                         !isUsedAsQualifier;
         if (shouldQualifyReference) {
           preferFromImport = false;
         }
@@ -386,7 +431,7 @@ public final class PyClassRefactoringUtil {
 
   private static @NotNull Set<FutureFeature> collectFromFutureImports(@NotNull PyFile file) {
     EnumSet<FutureFeature> result = EnumSet.noneOf(FutureFeature.class);
-    for (FutureFeature feature: FutureFeature.values()) {
+    for (FutureFeature feature : FutureFeature.values()) {
       if (file.hasImportFromFuture(feature)) {
         result.add(feature);
       }
@@ -453,7 +498,8 @@ public final class PyClassRefactoringUtil {
 
   /**
    * Forces the use of 'import as' when restoring references (i.e. if there are name clashes)
-   * @param node with encoded import
+   *
+   * @param node   with encoded import
    * @param asName new alias for import
    */
   public static void forceAsName(@NotNull PyReferenceExpression node, @NotNull String asName) {
@@ -484,7 +530,7 @@ public final class PyClassRefactoringUtil {
    *
    * @param importStatement parent import statement that contains reference to given element
    * @param element         PSI element reference to which should be updated
-   * @return                whether import statement was actually updated
+   * @return whether import statement was actually updated
    */
   public static boolean updateUnqualifiedImportOfElement(@NotNull PyImportStatementBase importStatement, @NotNull PsiNamedElement element) {
     final String name = PyPsiRefactoringUtil.getOriginalName(element);
@@ -536,7 +582,8 @@ public final class PyClassRefactoringUtil {
   }
 
 
-  public static PsiFile placeFile(@NotNull Project project, @NotNull String path, @NotNull String filename, boolean isNamespace) throws IOException {
+  public static PsiFile placeFile(@NotNull Project project, @NotNull String path, @NotNull String filename, boolean isNamespace)
+    throws IOException {
     return placeFile(project, path, filename, null, isNamespace);
   }
 
@@ -545,7 +592,11 @@ public final class PyClassRefactoringUtil {
    *
    * @return the placed file
    */
-  public static PsiFile placeFile(@NotNull Project project, @NotNull String path, @NotNull String filename, @Nullable String content, boolean isNamespace) throws IOException {
+  public static PsiFile placeFile(@NotNull Project project,
+                                  @NotNull String path,
+                                  @NotNull String filename,
+                                  @Nullable String content,
+                                  boolean isNamespace) throws IOException {
     PsiDirectory psiDir = createDirectories(project, path, isNamespace);
     LOG.assertTrue(psiDir != null);
     PsiFile psiFile = psiDir.findFile(filename);
@@ -566,10 +617,11 @@ public final class PyClassRefactoringUtil {
   /**
    * Create all intermediate dirs with inits from one of roots up to target dir.
    *
-   * @param target  a full path to target dir
+   * @param target a full path to target dir
    * @return deepest child directory, or null if target is not in roots or process fails at some point.
    */
-  private static @Nullable PsiDirectory createDirectories(@NotNull Project project, @NotNull String target, boolean isNamespace) throws IOException {
+  private static @Nullable PsiDirectory createDirectories(@NotNull Project project, @NotNull String target, boolean isNamespace)
+    throws IOException {
     String relativePath = null;
     VirtualFile closestRoot = null;
 
@@ -642,13 +694,13 @@ public final class PyClassRefactoringUtil {
         properties.setProperty("NAME", FileUtilRt.getNameWithoutExtension(file.getName()));
         final String content = template.getText(properties);
         psi = PyClassRefactoringUtil.placeFile(project,
-                                                  StringUtil.notNullize(
-                                                    file.getParent(),
-                                                    baseDir != null ? baseDir
-                                                      .getPath() : "."
-                                                  ),
-                                                  file.getName(),
-                                                  content, isNamespace
+                                               StringUtil.notNullize(
+                                                 file.getParent(),
+                                                 baseDir != null ? baseDir
+                                                   .getPath() : "."
+                                               ),
+                                               file.getName(),
+                                               content, isNamespace
         );
       }
       catch (IOException e) {

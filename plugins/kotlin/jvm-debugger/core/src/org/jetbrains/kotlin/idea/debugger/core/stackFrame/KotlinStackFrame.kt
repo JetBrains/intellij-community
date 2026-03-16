@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.debugger.core.stackFrame
 import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.impl.instanceOf
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
@@ -15,10 +16,14 @@ import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.coroutines.CONTINUATION_VARIABLE_NAME
 import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
-import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.base.util.CONTINUATION_TYPE
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.DESTRUCTURED_LAMBDA_ARGUMENT_VARIABLE_PREFIX
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INLINE_SCOPE_NUMBER_SEPARATOR
+import org.jetbrains.kotlin.idea.debugger.base.util.dropInlineSuffix
+import org.jetbrains.kotlin.idea.debugger.base.util.getInlineDepth
+import org.jetbrains.kotlin.idea.debugger.base.util.isSubtype
+import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariables
 import org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesState
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.NameUtils.CONTEXT_RECEIVER_PREFIX
@@ -107,7 +112,7 @@ open class KotlinStackFrame(
         val thisObject = evaluationContext.frameProxy?.thisObject() ?: return false
 
         val thisObjectType = thisObject.type()
-        if (thisObjectType.isSubtype(Function::class.java.name) && '$' in thisObjectType.signature()) {
+        if (thisObjectType.instanceOf(Function::class.java.name) && '$' in thisObjectType.signature()) {
             val existingThis = ExistingInstanceThisRemapper.find(children)
             if (existingThis != null) {
                 existingThis.remove()
@@ -124,7 +129,7 @@ open class KotlinStackFrame(
             ExistingInstanceThisRemapper.find(children)?.remove()
             val dispatchReceiver = (evaluationContext.frameProxy as? KotlinStackFrameProxyImpl)?.dispatchReceiver() ?: return true
             val dispatchReceiverType = dispatchReceiver.type()
-            if (dispatchReceiverType.isSubtype(Function::class.java.name) && '$' in dispatchReceiverType.signature()) {
+            if (dispatchReceiverType.instanceOf(Function::class.java.name) && '$' in dispatchReceiverType.signature()) {
                 attachCapturedValues(evaluationContext, children, dispatchReceiver, existingVariables)
             }
             return true

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.targetDescriptors
 import org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider
 import org.jetbrains.kotlin.idea.quickfix.ImportFixBase
@@ -9,6 +10,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
+@K1Deprecation
 class K1ReferenceImporterFacility : KotlinReferenceImporterFacility {
     override fun createImportFixesForExpression(expression: KtExpression): Sequence<ImportFixBase<*>> {
         val file = expression.containingKtFile

@@ -10,14 +10,23 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttributeDecl;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlEnumeratedType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.psi.xml.XmlElementType.*;
-import static com.intellij.psi.xml.XmlTokenType.*;
+import static com.intellij.psi.xml.XmlElementType.XML_ATTRIBUTE_DECL;
+import static com.intellij.psi.xml.XmlElementType.XML_ATTRIBUTE_VALUE;
+import static com.intellij.psi.xml.XmlElementType.XML_ENUMERATED_TYPE;
+import static com.intellij.psi.xml.XmlTokenType.XML_ATT_FIXED;
+import static com.intellij.psi.xml.XmlTokenType.XML_ATT_IMPLIED;
+import static com.intellij.psi.xml.XmlTokenType.XML_ATT_REQUIRED;
+import static com.intellij.psi.xml.XmlTokenType.XML_NAME;
 
 public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttributeDecl {
   private static final Logger LOG = Logger.getInstance(XmlAttributeDeclImpl.class);

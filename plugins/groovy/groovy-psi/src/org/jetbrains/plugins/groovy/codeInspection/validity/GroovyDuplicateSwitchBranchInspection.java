@@ -27,7 +27,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
 

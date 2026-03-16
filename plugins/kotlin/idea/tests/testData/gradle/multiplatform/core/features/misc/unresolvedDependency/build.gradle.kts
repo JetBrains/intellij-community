@@ -8,7 +8,7 @@ repositories {
 
 kotlin {
     jvm() 
-    ios()
+    {{iosTargetPlaceholder}}
 
     sourceSets {
         val commonMain by getting {

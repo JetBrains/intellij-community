@@ -3,9 +3,11 @@
 
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.PluginManagerCore.JAVA_PLUGIN_ALIAS_ID
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.containers.Java11Shim
-import java.util.*
+import java.util.Collections
+import java.util.IdentityHashMap
 
 private val PLATFORM_PLUGIN_ALIAS_ID = PluginId.getId("com.intellij.modules.platform")
 private val LANG_PLUGIN_ALIAS_ID = PluginId.getId("com.intellij.modules.lang")
@@ -13,10 +15,18 @@ private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
 private val RIDER_ALIAS_ID = PluginId.getId("com.intellij.modules.rider")
 private val RIDER_MODULE_ID = PluginModuleId("intellij.rider", PluginModuleId.JETBRAINS_NAMESPACE)
 private val JSON_ALIAS_ID = PluginId.getId("com.intellij.modules.json")
+private val CWM_PLUGIN_ID = PluginId.getId("com.jetbrains.codeWithMe")
+private val CWM_RIDER_PLUGIN_ID = PluginId.getId("intellij.rider.plugins.cwm")
 private val JSON_BACKEND_MODULE_ID = PluginModuleId("intellij.json.backend", PluginModuleId.JETBRAINS_NAMESPACE)
+private val JAVA_BACKEND_MODULE_ID = PluginModuleId("intellij.java.backend", PluginModuleId.JETBRAINS_NAMESPACE)
+private val REMOTE_DEVELOPMENT_MODULE_ID = PluginModuleId("intellij.cwm", PluginModuleId.JETBRAINS_NAMESPACE)
+private val REMOTE_DEVELOPMENT_RIDER_MODULE_ID = PluginModuleId("intellij.rider.plugins.cwm", PluginModuleId.JETBRAINS_NAMESPACE)
 
-internal class ModulesWithDependencies(val modules: List<PluginModuleDescriptor>,
-                                       val directDependencies: Map<PluginModuleDescriptor, List<PluginModuleDescriptor>>) {
+
+internal class ModulesWithDependencies(
+  @JvmField val modules: List<PluginModuleDescriptor>,
+  @JvmField val directDependencies: Map<PluginModuleDescriptor, List<PluginModuleDescriptor>>,
+) {
   internal fun sorted(topologicalComparator: Comparator<PluginModuleDescriptor>): ModulesWithDependencies {
     return ModulesWithDependencies(
       modules = modules.sortedWith(topologicalComparator),
@@ -59,13 +69,17 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
    // and is loaded only in IntelliJ IDEA, so it may use classes from Java plugin.
     val implicitDep = if (hasAllModules && PluginCompatibilityUtils.isLegacyPluginWithoutPlatformAliasDependencies(module)) {
       pluginIdToDescriptor.get(PluginManagerCore.JAVA_PLUGIN_ALIAS_ID)
-    } else null
+    }
+    else {
+      null
+    }
     if (implicitDep != null) {
       if (module === implicitDep) {
         PluginManagerCore.logger.error("Plugin $module depends on self")
       }
       else {
         dependenciesCollector.add(implicitDep)
+        moduleIdToModule.get(JAVA_BACKEND_MODULE_ID)?.let { dependenciesCollector.add(it) }
       }
     }
 
@@ -87,10 +101,20 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
         if (doesDependOnPluginAlias(module, JSON_ALIAS_ID)) {
           moduleIdToModule.get(JSON_BACKEND_MODULE_ID)?.let { dependenciesCollector.add(it) }
         }
+        if (doesDependOnPluginAlias(module, CWM_PLUGIN_ID)) {
+          moduleIdToModule.get(REMOTE_DEVELOPMENT_MODULE_ID)?.let { dependenciesCollector.add(it) }
+        }
+        if (doesDependOnPluginAlias(module, CWM_RIDER_PLUGIN_ID)) {
+          moduleIdToModule.get(REMOTE_DEVELOPMENT_RIDER_MODULE_ID)?.let { dependenciesCollector.add(it) }
+        }
         moduleIdToModule.get(COLLABORATION_TOOLS_MODULE_ID)?.let { dependenciesCollector.add(it) }
       }
 
       /* Compatibility Layer */
+
+      if (doesDependOnPluginAlias(module, JAVA_PLUGIN_ALIAS_ID)) {
+        moduleIdToModule.get(JAVA_BACKEND_MODULE_ID)?.let { dependenciesCollector.add(it) }
+      }
 
       if (doesDependOnPluginAlias(module, RIDER_ALIAS_ID)) {
         moduleIdToModule.get(RIDER_MODULE_ID)?.let { dependenciesCollector.add(it) }
@@ -108,7 +132,7 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
         dependenciesCollector.add(main)
       }
 
-      /* if the plugin containing the module is incompatible with some other plugins, make sure that the module is processed after that plugins (and all their required modules) 
+      /* if the plugin containing the module is incompatible with some other plugins, make sure that the module is processed after these plugins (and all their required modules)
          to ensure that the proper module is disabled in case of package conflict */
       for (incompatibility in main.incompatiblePlugins) {
         val incompatibleDescriptor = pluginIdToDescriptor.get(incompatibility)
@@ -137,7 +161,7 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
   ) to additionalEdges
 }
 
-// alias in most cases points to Core plugin, so, we cannot use computed dependencies to check
+// alias in most cases points to Core plugin, so we cannot use computed dependencies to check
 private fun doesDependOnPluginAlias(plugin: IdeaPluginDescriptorImpl, @Suppress("SameParameterValue") aliasId: PluginId): Boolean {
   return plugin.dependencies.any { it.pluginId == aliasId } || plugin.moduleDependencies.plugins.any { it == aliasId }
 }
@@ -164,7 +188,7 @@ internal fun toCoreAwareComparator(comparator: Comparator<PluginModuleDescriptor
  * `<depends>com.intellij.modules.platform</depends>` or `<depends>com.intellij.modules.lang</depends>` tags.
  * See [this article](https://youtrack.jetbrains.com/articles/IJPL-A-956#keep-compatibility-with-external-plugins) for more details.
  */
-private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins = listOf(
+private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins = arrayOf(
   "intellij.platform.collaborationTools.auth",
   "intellij.platform.collaborationTools.auth.base",
   "intellij.platform.tasks",
@@ -175,13 +199,14 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.spellchecker.xml",
   "intellij.relaxng",
   "intellij.spellchecker",
+  "intellij.platform.structuralSearch",
 ).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
 
 /**
  * List of content modules from the core plugin which should be automatically added as dependencies third-party plugins and plugins with dependency on `com.intellij.modules.vcs`
  * plugin alias for compatibility.
  */
-private val vcsApiContentModules = listOf(
+private val vcsApiContentModules = arrayOf(
   "intellij.platform.vcs.impl",
   "intellij.platform.vcs.dvcs",
   "intellij.platform.vcs.dvcs.impl",
@@ -196,7 +221,7 @@ private val COLLABORATION_TOOLS_MODULE_ID = PluginModuleId("intellij.platform.co
  * List of content modules from the core plugin which should be automatically added as dependencies to all plugins with dependency on `org.jetbrains.completion.full.line` plugin
  * alias for compatibility.
  */
-private val fullLineApiContentModules = listOf(
+private val fullLineApiContentModules = arrayOf(
   "intellij.fullLine.core",
   "intellij.fullLine.local",
   "intellij.fullLine.core.impl",
@@ -222,8 +247,10 @@ private fun collectDirectDependenciesInOldFormat(
         }
       }
       else {
-        // e.g. `.env` plugin in an old format and doesn't explicitly specify dependency on a new extracted modules
-        dependenciesCollector.addAll(dep.contentModules)
+        // e.g. `.env` plugin in an old format and doesn't explicitly specify dependency on new extracted modules
+        if (dep is PluginMainDescriptor) {
+          dependenciesCollector.addAll(dep.contentModules)
+        }
 
         dependenciesCollector.add(dep)
       }
@@ -290,7 +317,7 @@ private fun collectDirectDependenciesInNewFormat(
     }
   }
 
-  if (module.pluginId != PluginManagerCore.CORE_ID) {
+  if (module.pluginId != PluginManagerCore.CORE_ID && module is PluginMainDescriptor) {
     /* Add edges to all required content modules. 
        This is needed to ensure that the main plugin module is processed after them, and at that point we can determine whether the plugin 
        can be loaded or not. */

@@ -22,9 +22,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
+/// Wraps [ModCommandAction] so old APIs can consume it as [LocalQuickFixAndIntentionActionOnPsiElement].
 @ApiStatus.Internal
 public final class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntentionActionOnPsiElement
   implements Iconable, PriorityAction, IntentionActionWithFixAllOption, ReportingClassSubstitutor {

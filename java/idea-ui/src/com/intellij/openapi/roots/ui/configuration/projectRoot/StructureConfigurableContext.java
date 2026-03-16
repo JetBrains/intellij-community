@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -32,7 +33,7 @@ public final class StructureConfigurableContext implements Disposable, LibraryEd
   public StructureConfigurableContext(Project project, final ModulesConfigurator modulesConfigurator) {
     myProject = project;
     myModulesConfigurator = modulesConfigurator;
-    Disposer.register(project, this);
+    Disposer.register(JavaPluginDisposable.getInstance(project), this);
     myDaemonAnalyzer = new ProjectStructureDaemonAnalyzer(this);
   }
 

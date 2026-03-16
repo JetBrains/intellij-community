@@ -14,7 +14,13 @@ import com.intellij.platform.ml.feature.FeatureFilter.Companion.inverted
 import com.intellij.platform.ml.feature.FeatureSelector.Companion.asFilter
 import com.intellij.platform.ml.monitoring.MLApproachListener
 import com.intellij.platform.ml.monitoring.MLSessionListener
-import com.intellij.platform.ml.session.*
+import com.intellij.platform.ml.session.DescribedRootContainer
+import com.intellij.platform.ml.session.DescribedTierScheme
+import com.intellij.platform.ml.session.MLModelPrediction
+import com.intellij.platform.ml.session.MLModelPredictionBranching
+import com.intellij.platform.ml.session.RootCollector
+import com.intellij.platform.ml.session.SessionTreeHandler
+import com.intellij.platform.ml.session.SolitaryLeafCollector
 import org.jetbrains.annotations.ApiStatus
 
 /**

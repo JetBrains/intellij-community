@@ -9,11 +9,16 @@ import com.intellij.util.ui.StartupUiUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.ImagesIcons;
 import org.intellij.images.editor.ImageDocument;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.plaf.ComponentUI;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 
 /**
@@ -21,6 +26,7 @@ import java.awt.image.BufferedImage;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
+@ApiStatus.Internal
 @Deprecated(forRemoval = true)
 public class ThumbnailComponentUI extends ComponentUI {
   private static final @NonNls String DOTS = "...";

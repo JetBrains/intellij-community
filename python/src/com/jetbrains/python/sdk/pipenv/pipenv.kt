@@ -4,13 +4,8 @@ package com.jetbrains.python.sdk.pipenv
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.PathUtil
-import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus.Internal
-import javax.swing.Icon
-
-// TODO: Provide a special icon for pipenv
-val PIPENV_ICON: Icon = PythonIcons.Python.PythonClosed
 
 /**
  * Tells if the SDK was added as a pipenv.

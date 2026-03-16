@@ -18,7 +18,17 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyIfStatement
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyRecursiveElementVisitor
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyReturnStatement
+import com.jetbrains.python.psi.PyStatementList
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.references.PyImportReference
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch
@@ -37,7 +47,8 @@ class PyInlineFunctionHandler : InlineActionHandler() {
 
   override fun canInlineElement(element: PsiElement?): Boolean {
     if (element is PyFunction) {
-      val containingFile = if (element.containingFile is PyiFile) PyiUtil.getOriginalElement(element)?.containingFile else element.containingFile
+      val containingFile = if (element.containingFile is PyiFile) PyiUtil.getOriginalElement(element)?.containingFile
+      else element.containingFile
       return containingFile is PyFile
     }
     return false
@@ -47,8 +58,10 @@ class PyInlineFunctionHandler : InlineActionHandler() {
     invoke(project, editor, element)
   }
 
-  fun invoke(project: Project?, editor: Editor?, element: PsiElement?, showDialog: Boolean = true,
-             inlineThisOnly: Boolean = false) {
+  fun invoke(
+    project: Project?, editor: Editor?, element: PsiElement?, showDialog: Boolean = true,
+    inlineThisOnly: Boolean = false,
+  ) {
     if (project == null || editor == null || element !is PyFunction) return
     val functionScope = ControlFlowCache.getScope(element)
     val error = when {
@@ -70,25 +83,27 @@ class PyInlineFunctionHandler : InlineActionHandler() {
       else -> null
     }
     if (error != null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, error, PyPsiBundle.message("refactoring.inline.function.title"), REFACTORING_ID)
+      CommonRefactoringUtil.showErrorHint(project, editor, error, PyPsiBundle.message("refactoring.inline.function.title"),
+                                          Helper.REFACTORING_ID)
       return
     }
     if (showDialog && !ApplicationManager.getApplication().isUnitTestMode) {
-      PyRefactoringUiService.getInstance().showPyInlineFunctionDialog(project, editor, element, findReference(editor))
+      PyRefactoringUiService.getInstance().showPyInlineFunctionDialog(project, editor, element, Helper.findReference(editor))
     }
     else {
-      val processor = PyInlineFunctionProcessor(project, editor, element, findReference(editor), inlineThisOnly, true)
+      val processor = PyInlineFunctionProcessor(project, editor, element, Helper.findReference(editor), inlineThisOnly, true)
       processor.setPreviewUsages(false)
       processor.run()
     }
   }
 
   private fun isSpecialMethod(function: PyFunction): Boolean {
-    return function.containingClass != null && function.name != null && 
+    return function.containingClass != null && function.name != null &&
            PyNames.getBuiltinMethods(LanguageLevel.forElement(function)).contains(function.name)
   }
 
-  private fun hasNestedFunction(function: PyFunction): Boolean = SyntaxTraverser.psiTraverser(function.statementList).traverse().any { it is PyFunction }
+  private fun hasNestedFunction(function: PyFunction): Boolean =
+    SyntaxTraverser.psiTraverser(function.statementList).traverse().any { it is PyFunction }
 
   private fun hasNonExhaustiveIfs(function: PyFunction): Boolean {
     val returns = mutableListOf<PyReturnStatement>()
@@ -125,7 +140,7 @@ class PyInlineFunctionHandler : InlineActionHandler() {
   private fun checkLastStatement(statementList: PyStatementList, cache: MutableSet<PyIfStatement>): Boolean {
     val statements = statementList.statements
     if (statements.isEmpty()) return true
-    when(val last = statements.last()) {
+    when (val last = statements.last()) {
       is PyIfStatement -> if (checkInterruptsControlFlow(last, cache)) return true
       !is PyReturnStatement -> return true
     }
@@ -159,14 +174,14 @@ class PyInlineFunctionHandler : InlineActionHandler() {
     return VfsUtil.isAncestor(skeletonsDir, containingFile.virtualFile, true)
   }
 
-  companion object {
+  object Helper {
     @JvmStatic
     fun getInstance(): PyInlineFunctionHandler {
       return EP_NAME.findExtensionOrFail(PyInlineFunctionHandler::class.java)
     }
 
     @JvmStatic
-    val REFACTORING_ID = "refactoring.inlineMethod"
+    val REFACTORING_ID: String = "refactoring.inlineMethod"
 
     @JvmStatic
     @VisibleForTesting
@@ -175,4 +190,5 @@ class PyInlineFunctionHandler : InlineActionHandler() {
       return if (reference !is PyImportReference) reference else null
     }
   }
+
 }

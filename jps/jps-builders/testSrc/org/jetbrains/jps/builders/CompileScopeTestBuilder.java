@@ -14,7 +14,12 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Set;
 
 public final class CompileScopeTestBuilder {
   private final boolean myForceBuild;

@@ -3,6 +3,7 @@ package com.intellij.application;
 
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.UsefulTestCase;
 import org.junit.Assert;
 
@@ -15,6 +16,7 @@ public class ApplicationFlagsTest extends UsefulTestCase implements StressDetect
     assertStressTestDetected(true);
   }
 
+  @PerformanceUnitTest
   public void testPerformanceFlagSetCorrectly() {
     assertStressTestDetected(true);
   }

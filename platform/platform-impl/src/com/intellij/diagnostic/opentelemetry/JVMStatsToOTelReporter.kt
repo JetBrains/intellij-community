@@ -21,13 +21,23 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit.NANOSECONDS
+import kotlin.Any
+import kotlin.ArithmeticException
+import kotlin.Long
+import kotlin.LongArray
+import kotlin.String
+import kotlin.Throwable
+import kotlin.collections.forEachIndexed
+import kotlin.collections.set
+import kotlin.collections.sum
+import kotlin.collections.sumOf
 
 /**
  * Reports JVM-wide metrics into OTel.Metrics.
  * Currently reported: heap & direct memory usage, threads count, GC times, JVM/OS CPU consumption.
  * Feel free to add more.
  */
-private class JVMStatsToOTelReporter : ProjectActivity {
+internal class JVMStatsToOTelReporter : ProjectActivity {
   override suspend fun execute(project: Project) {
     serviceAsync<ReportingService>()
   }

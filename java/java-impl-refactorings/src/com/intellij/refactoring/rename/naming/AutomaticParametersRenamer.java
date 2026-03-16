@@ -1,8 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -10,12 +12,21 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 
 public class AutomaticParametersRenamer extends AutomaticRenamer {
+  /**
+   * @deprecated Use {@link #AutomaticParametersRenamer(PsiParameter, String, Language)} instead.
+   */
+  @Deprecated
   public AutomaticParametersRenamer(PsiParameter param, String newParamName) {
+    this(param, newParamName, JavaLanguage.INSTANCE);
+  }
+
+  public AutomaticParametersRenamer(PsiParameter param, String newParamName, Language language) {
     final PsiElement scope = param.getDeclarationScope();
     if (scope instanceof PsiMethod method) {
       final int parameterIndex = method.getParameterList().getParameterIndex(param);
       if (parameterIndex < 0) return;
-      for (PsiMethod overrider : OverridingMethodsSearch.search(method).asIterable()) {
+      for (PsiMethod overrider : OverridingMethodsSearch.search(method).findAll()) {
+        if (!overrider.getLanguage().isKindOf(language)) continue;
         final PsiParameter[] parameters = overrider.getParameterList().getParameters();
         if (parameterIndex >= parameters.length) continue;
         final PsiParameter inheritedParam = parameters[parameterIndex];

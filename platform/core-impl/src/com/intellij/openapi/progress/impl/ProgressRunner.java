@@ -12,7 +12,12 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.CeProcessCanceledException;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -25,10 +30,21 @@ import kotlin.Unit;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.Job;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Async;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 import static com.intellij.openapi.application.ModalityKt.asContextElement;
@@ -297,9 +313,6 @@ public final class ProgressRunner<R> {
     if (!EDT.isCurrentThreadEdt()) {
       return false;
     }
-    if (isSync && !ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
-      throw new IllegalStateException("Running sync tasks on pure EDT (w/o IW lock) is dangerous for several reasons.");
-    }
     if (!isSync && isModal) {
       throw new IllegalStateException("Running async modal tasks from EDT is impossible: modal implies sync dialog show + polling events");
     }
@@ -432,21 +445,18 @@ public final class ProgressRunner<R> {
   }
 
   private static void pollLaterInvocatorActively(@NotNull CompletableFuture<?> resultFuture, @NotNull Runnable pollAction) {
-    ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
-      while (true) {
-        try {
-          resultFuture.get(10, TimeUnit.MILLISECONDS);
-        }
-        catch (TimeoutException ignore) {
-          ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(pollAction);
-          continue;
-        }
-        catch (Throwable ignored) {
-        }
-        break;
+    while (true) {
+      try {
+        resultFuture.get(10, TimeUnit.MILLISECONDS);
       }
-      return null;
-    });
+      catch (TimeoutException ignore) {
+        ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(pollAction);
+        continue;
+      }
+      catch (Throwable ignored) {
+      }
+      break;
+    }
   }
 
   public static boolean isCanceled(@NotNull Future<? extends ProgressIndicator> progressFuture) {

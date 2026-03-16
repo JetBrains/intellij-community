@@ -14,7 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 
-class GitRollbackCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+internal class GitRollbackCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
     const val NAME = "gitRollbackFile"
     const val PREFIX = "$CMD_PREFIX$NAME"

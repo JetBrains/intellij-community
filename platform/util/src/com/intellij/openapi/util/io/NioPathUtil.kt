@@ -10,7 +10,12 @@ import java.io.IOException
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.io.path.*
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createFile
+import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 
 /**
  * Normalizes and returns a path with forward slashes ('/').

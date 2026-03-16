@@ -5,7 +5,11 @@ import com.intellij.codeInsight.CodeInsightUtilCore.forcePsiPostprocessAndRestor
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.*
+import com.intellij.lang.jvm.actions.CreateAbstractMethodActionGroup
+import com.intellij.lang.jvm.actions.CreateMethodActionGroup
+import com.intellij.lang.jvm.actions.CreateMethodRequest
+import com.intellij.lang.jvm.actions.JvmActionGroup
+import com.intellij.lang.jvm.actions.JvmGroupIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile

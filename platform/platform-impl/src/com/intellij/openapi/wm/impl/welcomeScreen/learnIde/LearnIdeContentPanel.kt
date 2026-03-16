@@ -15,7 +15,11 @@ import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Rectangle
-import javax.swing.*
+import javax.swing.Box
+import javax.swing.BoxLayout
+import javax.swing.JPanel
+import javax.swing.JTextPane
+import javax.swing.ScrollPaneConstants
 import javax.swing.plaf.ComponentUI
 
 @ApiStatus.Internal

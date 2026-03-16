@@ -1,0 +1,45 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+
+
+java_binary(
+    name = "haven",
+    main_class = "fleet.buildtool.cli.MainKt",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":cli"],
+)
+
+### auto-generated section `build fleet.build.cli` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_cli",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi",
+  ],
+  x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
+  x_jvm_default = "all-compatibility",
+  x_lambdas = "class"
+)
+
+jvm_library(
+  name = "cli",
+  module_name = "fleet.build.cli",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_cli",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-io-core",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:fleet-clikt-core",
+    "@lib//:fleet-clikt",
+  ],
+  exports = [
+    "@lib//:fleet-clikt-core",
+    "@lib//:fleet-clikt",
+  ]
+)
+### auto-generated section `build fleet.build.cli` end

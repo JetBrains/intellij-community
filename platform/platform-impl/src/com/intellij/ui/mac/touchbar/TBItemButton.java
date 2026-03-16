@@ -21,8 +21,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.AsyncPromise;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Dimension;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 

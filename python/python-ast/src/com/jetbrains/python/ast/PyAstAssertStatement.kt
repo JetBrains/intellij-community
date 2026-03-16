@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface PyAstAssertStatement : PyAstStatement {
-  val arguments: Array<PyAstExpression>
+  val arguments: Array<out PyAstExpression>
 
   override fun acceptPyVisitor(pyVisitor: PyAstElementVisitor) {
     pyVisitor.visitPyAssertStatement(this)

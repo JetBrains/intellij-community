@@ -5,3 +5,4 @@ fun foo() {
     val c = object : A() {}
     val b = A()
     val d/*<# : |(|) |->| |[foo.A:kotlin.fqn.class]A #>*/ = { A() }
+}

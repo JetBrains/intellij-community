@@ -2,7 +2,7 @@
 package com.intellij.ide.bookmark.providers
 
 import com.intellij.ide.bookmark.Bookmark
-import java.util.*
+import java.util.Objects
 
 internal class InvalidBookmark(override val provider: LineBookmarkProvider, val url: String, val line: Int) : Bookmark {
 

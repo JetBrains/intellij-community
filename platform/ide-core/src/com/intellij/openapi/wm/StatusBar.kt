@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm
 
 import com.intellij.openapi.Disposable
@@ -9,6 +9,7 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -85,7 +86,11 @@ interface StatusBar : StatusBarInfo {
   fun fireNotificationPopup(content: JComponent, backgroundColor: Color?)
 
   @Internal
-  fun createChild(coroutineScope: CoroutineScope, frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar?
+  fun createChild(
+    coroutineScope: CoroutineScope,
+    frame: IdeFrame,
+    currentFileEditorFlow: StateFlow<FileEditor?>,
+  ): StatusBar?
 
   val component: JComponent?
 
@@ -126,10 +131,10 @@ interface StatusBar : StatusBarInfo {
   fun getWidgetAnchor(id: @NonNls String): @NonNls String? = null
 
   /**
-   * if not `null`, an editor which should be used as the current one
-   * by editor-based widgets installed on this status bar, otherwise should be ignored.
+   * The current file editor for this status bar, used by editor-based widgets.
+   * For child status bars (detached windows), this reflects the editor in that specific window.
    */
   @get:Internal
   @get:ApiStatus.Experimental
-  val currentEditor: () -> FileEditor?
+  val currentEditor: StateFlow<FileEditor?>
 }

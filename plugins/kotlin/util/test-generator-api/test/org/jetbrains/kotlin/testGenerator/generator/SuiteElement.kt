@@ -10,11 +10,16 @@ import org.jetbrains.kotlin.testGenerator.generator.methods.KotlinPluginModeMeth
 import org.jetbrains.kotlin.testGenerator.generator.methods.RunTestMethod
 import org.jetbrains.kotlin.testGenerator.generator.methods.SetUpMethod
 import org.jetbrains.kotlin.testGenerator.generator.methods.TestCaseMethod
-import org.jetbrains.kotlin.testGenerator.model.*
+import org.jetbrains.kotlin.testGenerator.model.TAnnotation
+import org.jetbrains.kotlin.testGenerator.model.TGroup
+import org.jetbrains.kotlin.testGenerator.model.TModel
+import org.jetbrains.kotlin.testGenerator.model.TSuite
+import org.jetbrains.kotlin.testGenerator.model.makeJavaIdentifier
+import org.jetbrains.kotlin.testGenerator.model.toJavaIdentifier
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.junit.runner.RunWith
 import java.io.File
-import java.util.*
+import java.util.EnumSet
 import javax.lang.model.element.Modifier
 import kotlin.io.path.name
 

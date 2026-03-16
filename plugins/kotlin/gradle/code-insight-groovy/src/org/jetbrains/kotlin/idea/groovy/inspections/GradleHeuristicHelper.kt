@@ -14,7 +14,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
-import java.util.*
 
 object GradleHeuristicHelper {
 

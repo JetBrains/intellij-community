@@ -10,6 +10,22 @@ value class PyPackageName private constructor(val name: String) {
     fun from(name: String): PyPackageName =
       PyPackageName(normalizePackageName(name))
 
+    /**
+     * Normalizes a project name according to
+     * https://packaging.python.org/en/latest/specifications/name-normalization/#name-format
+     *
+     * Keeps only lowercase ASCII letters, digits, and hyphens.
+     * Replaces everything else with a hyphen, collapses consecutive hyphens, and strips leading/trailing hyphens.
+     */
+    @JvmStatic
+    fun normalizeProjectName(name: String): String {
+      return name
+        .lowercase()
+        .replace(Regex("[^a-z0-9-]"), "-")
+        .replace(Regex("-{2,}"), "-")
+        .trim('-')
+    }
+
     @JvmStatic
     fun normalizePackageName(packageName: String): String {
       var name = packageName.trim()

@@ -13,73 +13,70 @@ import com.intellij.platform.settings.SettingsController
 import com.intellij.platform.settings.settingDescriptorFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Path
 
-@ApiStatus.Internal
-object BundledPluginsState {
-  const val BUNDLED_PLUGINS_FILENAME: String = "bundled_plugins.txt"
+@Internal
+suspend fun saveBundledPluginsState() {
+  val settingsController = serviceAsync<SettingsController>()
+  val settingDescriptor = settingDescriptorFactory(PluginManagerCore.CORE_ID).settingDescriptor("bundled.plugins.list.saved.version") {
+    tags = listOf(CacheTag)
+  }
 
-  suspend fun saveBundledPluginsState() {
-    val settingsController = serviceAsync<SettingsController>()
-    val settingDescriptor = settingDescriptorFactory(PluginManagerCore.CORE_ID).settingDescriptor("bundled.plugins.list.saved.version") {
-      tags = listOf(CacheTag)
+  val savedBuildNumber = getSavedBuildNumber(settingsController, settingDescriptor)
+  val currentBuildNumber = ApplicationInfo.getInstance().build
+
+  val shouldSave = savedBuildNumber == null ||
+                   savedBuildNumber < currentBuildNumber ||
+                   (!ApplicationManager.getApplication().isUnitTestMode && PluginManagerCore.isRunningFromSources())
+  if (!shouldSave) {
+    return
+  }
+
+  val bundledPluginIds = PluginManagerCore.loadedPlugins.filterTo(HashSet()) { it.isBundled }
+  withContext(Dispatchers.IO) {
+    try {
+      writePluginIdsToFile(bundledPluginIds, PathManager.getConfigDir())
+      settingsController.setItem(settingDescriptor, currentBuildNumber.asString())
     }
-
-    val savedBuildNumber = getSavedBuildNumber(settingsController, settingDescriptor)
-    val currentBuildNumber = ApplicationInfo.getInstance().build
-
-    val shouldSave = savedBuildNumber == null ||
-                     savedBuildNumber < currentBuildNumber ||
-                     (!ApplicationManager.getApplication().isUnitTestMode && PluginManagerCore.isRunningFromSources())
-    if (!shouldSave) {
-      return
-    }
-
-    val bundledPluginIds = PluginManagerCore.loadedPlugins.filterTo(HashSet()) { it.isBundled }
-    withContext(Dispatchers.IO) {
-      try {
-        writePluginIdsToFile(bundledPluginIds)
-        setSavedBuildNumber(currentBuildNumber, settingsController, settingDescriptor)
-      }
-      catch (e: IOException) {
-        PluginManagerCore.logger.warn("Unable to save bundled plugins list", e)
-      }
+    catch (e: IOException) {
+      PluginManagerCore.logger.warn("Unable to save bundled plugins list", e)
     }
   }
-
-  @VisibleForTesting
-  fun writePluginIdsToFile(pluginIds: Set<IdeaPluginDescriptor>, configDir: Path = PathManager.getConfigDir()) {
-    PluginStringSetFile.write(
-      path = configDir.resolve(BUNDLED_PLUGINS_FILENAME),
-      strings = pluginIds.mapTo(HashSet()) { "${it.pluginId.idString}|${it.category}" },
-    )
-  }
-
-  fun readPluginIdsFromFile(configDir: Path = PathManager.getConfigDir()): Set<BundledPlugin> {
-    val path = configDir.resolve(BUNDLED_PLUGINS_FILENAME)
-    val bundledPlugins = PluginStringSetFile.readSafe(path, PluginManagerCore.logger)
-      .mapTo(mutableSetOf()) {
-        val splitResult = it.split('|')
-        val id = splitResult.first()
-        val category = splitResult.getOrNull(1)
-        BundledPlugin(PluginId.getId(id), if (category == "null") null else category)
-      }
-    return bundledPlugins
-  }
-
-  private fun getSavedBuildNumber(settingsController: SettingsController,
-                                  settingDescriptor: SettingDescriptor<String>): BuildNumber? {
-    return settingsController.getItem(settingDescriptor)?.let { BuildNumber.fromString(it) }
-  }
-
-  private fun setSavedBuildNumber(value: BuildNumber?,
-                                  settingsController: SettingsController,
-                                  settingDescriptor: SettingDescriptor<String>) {
-    settingsController.setItem(settingDescriptor, value?.asString())
-  }
-
-  data class BundledPlugin(val id: PluginId, val category: String?)
 }
+
+@Internal
+fun readPluginIdsFromFile(configDir: Path): Set<BundledPlugin> {
+  val path = configDir.resolve(BUNDLED_PLUGINS_FILENAME)
+  return PluginStringSetFile.readSafe(path, PluginManagerCore.logger)
+    .mapTo(LinkedHashSet()) { s ->
+      val splitResult = s.split('|')
+      val id = splitResult.first()
+      BundledPlugin(id = PluginId.getId(id), category = splitResult.getOrNull(1)?.takeIf { it != "null" })
+    }
+}
+
+@Internal
+const val BUNDLED_PLUGINS_FILENAME: String = "bundled_plugins.txt"
+
+@VisibleForTesting
+@Internal
+fun writePluginIdsToFile(pluginIds: Set<IdeaPluginDescriptor>, configDir: Path) {
+  writePluginStringSet(
+    path = configDir.resolve(BUNDLED_PLUGINS_FILENAME),
+    strings = pluginIds.mapTo(HashSet()) { "${it.pluginId.idString}|${it.category}" },
+  )
+}
+
+@Internal
+data class BundledPlugin(@JvmField val id: PluginId, @JvmField val category: String?)
+
+private fun getSavedBuildNumber(
+  settingsController: SettingsController,
+  settingDescriptor: SettingDescriptor<String>,
+): BuildNumber? {
+  return settingsController.getItem(settingDescriptor)?.let { BuildNumber.fromString(it) }
+}
+

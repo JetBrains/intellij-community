@@ -8,7 +8,11 @@ import org.jetbrains.annotations.ApiStatus.Internal
 sealed interface SeResultListRow
 
 @Internal
-class SeResultListItemRow(val item: SeItemData) : SeResultListRow
+class SeResultListItemRow(val item: SeItemData) : SeResultListRow {
+  override fun toString(): String {
+    return "SeResultListItemRow(presentation=${item.presentation})"
+  }
+}
 
 @Internal
 data object SeResultListMoreRow : SeResultListRow

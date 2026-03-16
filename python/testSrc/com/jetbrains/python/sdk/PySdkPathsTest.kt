@@ -15,8 +15,12 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.jetbrains.python.PythonMockSdk
 import com.jetbrains.python.PythonPluginDisposable
@@ -285,7 +289,7 @@ class PySdkPathsTest {
     val module = projectModel.createModule(name)
     assertThat(PyUtil.getSourceRoots(module)).isEmpty()
 
-    module.rootManager.modifiableModel.apply {
+   ModuleRootManager.getInstance(module).modifiableModel.apply {
       addContentEntry(moduleRoot)
       runWriteActionAndWait { commit() }
     }

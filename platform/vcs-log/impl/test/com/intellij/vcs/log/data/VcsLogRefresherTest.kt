@@ -8,13 +8,23 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.TimedCommitParser
 import com.intellij.vcs.log.TimedVcsCommit
 import com.intellij.vcs.log.graph.GraphCommit
-import com.intellij.vcs.log.impl.*
+import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcs.log.impl.TestVcsLogProvider
+import com.intellij.vcs.log.impl.TimedVcsCommitImpl
+import com.intellij.vcs.log.impl.VcsLogSharedSettings
+import com.intellij.vcs.log.impl.VcsRefImpl
 import com.intellij.vcs.test.VcsPlatformTest
 import junit.framework.TestCase
-import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
-import java.util.*
-import java.util.concurrent.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.function.Consumer
 import kotlin.concurrent.Volatile
 
@@ -164,7 +174,7 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     private val project = logData.project
 
     val dataWaiter = DataWaiter()
-    val loader = VcsLogRefresherImpl(cs, logData.storage, logData.logProviders, VcsLogProgress(project),
+    val loader = VcsLogRefresherImpl(cs, project, logData.storage, logData.logProviders, VcsLogProgress(project),
                                      null, dataWaiter, recentCommitsCount)
 
     @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
@@ -222,16 +232,16 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     return VcsRefImpl(HashImpl.build(commit), name, TestVcsLogProvider.BRANCH_TYPE, projectRoot)
   }
 
-  private class DataWaiter : Consumer<DataPack> {
+  private class DataWaiter : Consumer<VcsLogGraphData> {
     @Volatile
-    private var _queue: BlockingQueue<DataPack>? = ArrayBlockingQueue(10)
-    val queue: BlockingQueue<DataPack>
+    private var _queue: BlockingQueue<VcsLogGraphData>? = ArrayBlockingQueue(10)
+    val queue: BlockingQueue<VcsLogGraphData>
       get() = _queue!!
 
     @Volatile
     private var exception: Exception? = null
 
-    override fun accept(t: DataPack) {
+    override fun accept(t: VcsLogGraphData) {
       try {
         queue.add(t)
       }
@@ -243,7 +253,7 @@ class VcsLogRefresherTest : VcsPlatformTest() {
 
     @JvmOverloads
     @Throws(InterruptedException::class)
-    fun get(timeout: Long = 1, timeUnit: TimeUnit = TimeUnit.SECONDS): DataPack {
+    fun get(timeout: Long = 1, timeUnit: TimeUnit = TimeUnit.SECONDS): VcsLogGraphData {
       return queue.poll(timeout, timeUnit)!!
     }
 

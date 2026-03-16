@@ -4,8 +4,12 @@ package org.jetbrains.kotlin.fir.testGenerator
 import org.jetbrains.kotlin.idea.fir.search.refIndex.AbstractFindUsagesWithCompilerReferenceIndexFirTest
 import org.jetbrains.kotlin.idea.fir.search.refIndex.AbstractKotlinCompilerReferenceByReferenceFirTest
 import org.jetbrains.kotlin.idea.fir.search.refIndex.AbstractKotlinCompilerReferenceFirTest
-import org.jetbrains.kotlin.testGenerator.model.*
-import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.FIND_USAGES
+import org.jetbrains.kotlin.testGenerator.model.MutableTWorkspace
+import org.jetbrains.kotlin.testGenerator.model.Patterns
+import org.jetbrains.kotlin.testGenerator.model.model
+import org.jetbrains.kotlin.testGenerator.model.testClass
+import org.jetbrains.kotlin.testGenerator.model.testGroup
 
 internal fun MutableTWorkspace.generateK2RefIndexTests() {
     testGroup("compiler-reference-index/tests.k2", testDataPath = "../../idea/tests/testData", category = FIND_USAGES) {

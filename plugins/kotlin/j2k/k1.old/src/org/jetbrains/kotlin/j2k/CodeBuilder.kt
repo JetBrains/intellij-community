@@ -3,10 +3,17 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiCompiledElement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.util.SmartList
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.j2k.DocCommentConverter
+import org.jetbrains.kotlin.j2k.CodeBuilder.Companion.plus
 import org.jetbrains.kotlin.j2k.ast.CommentsAndSpacesInheritance
 import org.jetbrains.kotlin.j2k.ast.Element
 import org.jetbrains.kotlin.j2k.ast.SpacesInheritance
@@ -14,6 +21,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import kotlin.math.max
 
+@K1Deprecation
 fun <T> CodeBuilder.buildList(generators: Collection<() -> T>, separator: String, prefix: String = "", suffix: String = ""): CodeBuilder {
     if (generators.isNotEmpty()) {
         append(prefix)
@@ -30,13 +38,16 @@ fun <T> CodeBuilder.buildList(generators: Collection<() -> T>, separator: String
     return this
 }
 
+@K1Deprecation
 @JvmName("appendElements")
 fun CodeBuilder.append(elements: Collection<Element>, separator: String, prefix: String = "", suffix: String = ""): CodeBuilder {
     return buildList(elements.filter { !it.isEmpty }.map { { append(it) } }, separator, prefix, suffix)
 }
 
+@K1Deprecation
 class ElementCreationStackTraceRequiredException : RuntimeException()
 
+@K1Deprecation
 class CodeBuilder(private val topElement: PsiElement?, private var docConverter: DocCommentConverter) {
     private val commentPatternsToDrop = listOf("^//[ ]*noinspection[ ]+[A-Za-z][A-Za-z0-9_]*([ ].*?)?$".toRegex())
 

@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingMode;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Wrap;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -30,12 +34,19 @@ public class CallChunkBlockBuilder {
 
   public CallChunkBlockBuilder(@NotNull CommonCodeStyleSettings settings, @NotNull JavaCodeStyleSettings javaSettings,
                                @NotNull FormattingMode formattingMode) {
+    this(settings, javaSettings, formattingMode, false);
+  }
+
+  public CallChunkBlockBuilder(@NotNull CommonCodeStyleSettings settings, @NotNull JavaCodeStyleSettings javaSettings,
+                               @NotNull FormattingMode formattingMode,
+                               boolean enforceUseSpaceIndent) {
     mySettings = settings;
     myIndentSettings = settings.getIndentOptions();
     myJavaSettings = javaSettings;
     myFormattingMode = formattingMode;
     myUseRelativeIndents = myIndentSettings != null && myIndentSettings.USE_RELATIVE_INDENTS;
-    mySmartIndent = Indent.getSmartIndent(Indent.Type.CONTINUATION, myUseRelativeIndents);
+    mySmartIndent = enforceUseSpaceIndent ? Indent.getSmartIndent(Indent.Type.SPACES, true)
+                                          : Indent.getSmartIndent(Indent.Type.CONTINUATION, myUseRelativeIndents);
   }
 
   public @NotNull Block create(final @NotNull List<? extends ASTNode> subNodes,

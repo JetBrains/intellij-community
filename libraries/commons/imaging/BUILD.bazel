@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":imaging_resources"],
-  exports = ["@lib//:commons-imaging"],
-  runtime_deps = ["@lib//:commons-imaging"]
+  exports = ["@lib//:libraries-commons-imaging-commons-imaging"],
+  runtime_deps = ["@lib//:libraries-commons-imaging-commons-imaging"]
 )
 ### auto-generated section `build intellij.libraries.commons.imaging` end

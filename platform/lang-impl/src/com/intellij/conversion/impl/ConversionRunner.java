@@ -1,7 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion.impl;
 
-import com.intellij.conversion.*;
+import com.intellij.conversion.ArtifactsSettings;
+import com.intellij.conversion.CannotConvertException;
+import com.intellij.conversion.ComponentManagerSettings;
+import com.intellij.conversion.ConversionProcessor;
+import com.intellij.conversion.ConverterProvider;
+import com.intellij.conversion.ModuleSettings;
+import com.intellij.conversion.ProjectConverter;
+import com.intellij.conversion.ProjectLibrariesSettings;
+import com.intellij.conversion.RunManagerSettings;
+import com.intellij.conversion.WorkspaceSettings;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;

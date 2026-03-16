@@ -3,6 +3,7 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import com.jetbrains.python.PydevBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +46,10 @@ public class PyFullValueEvaluator extends XFullValueEvaluator {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         final PyDebugValue value = myDebugProcess.evaluate(expression, false, doTrunc);
+        if (value == null) {
+          callback.evaluated(PydevBundle.message("pydev.session.finished"));
+          return;
+        }
         if (value.getValue() == null) {
           throw new PyDebuggerException("Failed to Load Value");
         }

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.ComboBoxEditor;
 import java.awt.event.ActionListener;
 
 /**
@@ -34,7 +34,7 @@ public class EditorComboBoxEditor implements ComboBoxEditor{
     myTextField.setName(NAME);
   }
 
-  protected void onEditorCreate(EditorEx editor) {}
+  protected void onEditorCreate(@NotNull EditorEx editor) {}
 
   @Override
   public void selectAll() {

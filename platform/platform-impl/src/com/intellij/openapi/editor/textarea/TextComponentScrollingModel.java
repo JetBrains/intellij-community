@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Rectangle;
 
 
 final class TextComponentScrollingModel implements ScrollingModel {

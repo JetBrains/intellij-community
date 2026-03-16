@@ -5,7 +5,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.RowSorter;
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.List;

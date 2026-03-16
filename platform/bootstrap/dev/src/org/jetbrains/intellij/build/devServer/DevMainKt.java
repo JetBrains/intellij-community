@@ -2,24 +2,24 @@
 package org.jetbrains.intellij.build.devServer;
 
 import com.intellij.util.lang.PathClassLoader;
-import com.intellij.util.lang.UrlClassLoader;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.AbstractMap;
 import java.util.Collection;
 
 // in java - don't use kotlin to avoid loading non-JDK classes
 public final class DevMainKt {
-
   private DevMainKt() { }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] rawArgs) throws Throwable {
-    long start = System.currentTimeMillis();
+    var start = System.currentTimeMillis();
 
-    MethodHandles.Lookup lookup = MethodHandles.lookup();
+    var lookup = MethodHandles.lookup();
 
     if (!(DevMainKt.class.getClassLoader() instanceof PathClassLoader classLoader)) {
       System.err.println("********************************************************************************************");
@@ -31,7 +31,7 @@ public final class DevMainKt {
     }
 
     // separate method to not retain local variables like implClass
-    String mainClassName = build(lookup, classLoader);
+    var mainClassName = build(lookup, classLoader);
 
     System.setProperty("idea.vendor.name", "JetBrains");
     System.setProperty("idea.use.dev.build.server", "true");
@@ -39,25 +39,26 @@ public final class DevMainKt {
     //noinspection UseOfSystemOutOrSystemErr
     System.out.println("build completed in " + (System.currentTimeMillis() - start) + "ms");
 
-    Class<?> mainClass = classLoader.loadClass(mainClassName);
+    var mainClass = classLoader.loadClass(mainClassName);
     //noinspection ConfusingArgumentToVarargsMethod
     lookup.findStatic(mainClass, "main", MethodType.methodType(void.class, String[].class)).invokeExact(rawArgs);
   }
 
   private static String build(MethodHandles.Lookup lookup, PathClassLoader classLoader) throws Throwable {
+    AbstractMap.SimpleImmutableEntry<String, Collection<Path>> mainClassAndClassPath;
+
     // do not use classLoader as a parent - make sure that we don't make the initial classloader dirty
     // (say, do not load kotlin coroutine classes)
-    Class<?> implClass = new PathClassLoader(UrlClassLoader.build()
-                                               .files(classLoader.getFiles())
-                                               .parent(ClassLoader.getPlatformClassLoader()))
-      .loadClass("org.jetbrains.intellij.build.devServer.DevMainImpl");
+    // also close the temporary classloader to unlock output jars on Windows
+    try (var tempClassLoader = new URLClassLoader(classLoader.getUrls().toArray(URL[]::new), ClassLoader.getPlatformClassLoader())) {
+      var implClass = tempClassLoader.loadClass("org.jetbrains.intellij.build.devServer.DevMainImpl");
 
-    @SuppressWarnings("unchecked")
-    AbstractMap.SimpleImmutableEntry<String, Collection<Path>> mainClassAndClassPath = 
-      (AbstractMap.SimpleImmutableEntry<String, Collection<Path>>)
+      //noinspection unchecked
+      mainClassAndClassPath = (AbstractMap.SimpleImmutableEntry<String, Collection<Path>>)
         lookup
           .findStatic(implClass, "buildDevMain", MethodType.methodType(AbstractMap.SimpleImmutableEntry.class))
           .invokeExact();
+    }
 
     classLoader.reset(mainClassAndClassPath.getValue());
     return mainClassAndClassPath.getKey();

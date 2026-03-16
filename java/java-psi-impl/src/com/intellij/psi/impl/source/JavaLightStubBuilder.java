@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -13,7 +13,12 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.stubs.LightStubBuilder;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
@@ -84,7 +89,7 @@ public class JavaLightStubBuilder extends LightStubBuilder {
     if (nodeType == JavaElementType.PARAMETER_LIST && parentType == JavaElementType.LAMBDA_EXPRESSION) {
       return true;
     }
-    if (nodeType == JavaDocElementType.DOC_COMMENT) {
+    if (JavaDocElementType.DOC_COMMENT_TOKENS.contains(nodeType)) {
       return true;
     }
 

@@ -13,7 +13,9 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;

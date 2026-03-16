@@ -5,18 +5,18 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
 import kotlinx.coroutines.runBlocking
-import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicReference
 
 class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
+  override fun skipPluginResolution() = false
+
   @Test
   fun testBasic() = runBlocking {
     createProjectSubDir("res")

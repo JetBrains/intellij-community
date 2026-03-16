@@ -8,6 +8,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -29,8 +30,16 @@ import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 
 import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor;
 
@@ -117,7 +126,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
             item +
             ", class " +
             item.getClass().getName();
-          name = presentation.getPresentableText();
+          name = ReadAction.compute(() -> presentation.getPresentableText());
           assert name != null :
             "PSI elements displayed in choose by name lists must return a non-null value from getPresentation().getPresentableName: element " +
             item +
@@ -140,8 +149,8 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
             color = status.getColor();
           }
 
-          textAttributes = NodeRenderer.getSimpleTextAttributes(presentation).toTextAttributes();
-          icon = presentation.getIcon(false);
+          textAttributes = ReadAction.compute(() -> NodeRenderer.getSimpleTextAttributes(presentation).toTextAttributes());
+          icon = ReadAction.compute(() -> presentation.getIcon(false));
         }
 
         if (isProblemFile) {
@@ -154,7 +163,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
         setIcon(icon);
 
         if (myRenderLocation) {
-          String containerText = presentation.getLocationString();
+          String containerText = ReadAction.compute(() -> presentation.getLocationString());
 
           if (containerText != null && !containerText.isEmpty()) {
             append(" " + containerText, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));

@@ -1,4 +1,4 @@
-version = "1.9.*"
+version = "1.11.*"
 upstream_repository = "https://github.com/asweigart/pyperclip"
 
 [tool.stubtest]

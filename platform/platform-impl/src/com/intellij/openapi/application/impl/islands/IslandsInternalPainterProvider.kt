@@ -25,4 +25,8 @@ internal class IslandsInternalPainterProvider : IslandsPainterProvider() {
     val customization = InternalUICustomization.getInstance()
     return if (customization == null) super.getSingleRowTabInsets(tabsPosition) else customization.getSingleRowTabInsets(tabsPosition)
   }
+
+  override fun isRoundedTabDuringDrag(): Boolean {
+    return InternalUICustomization.getInstance()?.isRoundedTabDuringDrag == true
+  }
 }

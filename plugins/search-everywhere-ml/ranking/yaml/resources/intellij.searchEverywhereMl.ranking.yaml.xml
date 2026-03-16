@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.searchEverywhereMl.ranking.yaml">
+<idea-plugin>
 
   <dependencies>
     <module name="intellij.yaml.backend"/>

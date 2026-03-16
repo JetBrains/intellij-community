@@ -44,7 +44,7 @@ public abstract class IntentionManager {
    *
    * @return array of registered actions.
    */
-  public abstract IntentionAction @NotNull [] getIntentionActions();
+  public abstract @NotNull IntentionAction @NotNull [] getIntentionActions();
 
   /**
    * Returns all registered intention actions which are available now
@@ -52,7 +52,7 @@ public abstract class IntentionManager {
    *
    * @return list of actions.
    */
-  public abstract @NotNull @Unmodifiable List<IntentionAction> getAvailableIntentions();
+  public abstract @NotNull @Unmodifiable List<@NotNull IntentionAction> getAvailableIntentions();
 
   /**
    * Returns all registered intention actions which are available for passed languages
@@ -60,7 +60,7 @@ public abstract class IntentionManager {
    *
    * @return list of actions.
    */
-  public abstract @NotNull @Unmodifiable List<IntentionAction> getAvailableIntentions(@NotNull @Unmodifiable Collection<String> languages);
+  public abstract @NotNull @Unmodifiable List<@NotNull IntentionAction> getAvailableIntentions(@NotNull @Unmodifiable Collection<String> languages);
 
   /**
    * @deprecated Please use {@code <intentionAction>} extension point instead
@@ -75,7 +75,7 @@ public abstract class IntentionManager {
    * E.g. actions for suppress the problem via comment, javadoc or annotation,
    * and edit corresponding inspection settings.
    */
-  public abstract @NotNull @Unmodifiable List<IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey,
+  public abstract @NotNull @Unmodifiable List<@NotNull IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey,
                                                                                            @NotNull PsiElement context);
 
   /**
@@ -93,7 +93,7 @@ public abstract class IntentionManager {
    * @return options for cleanup intention {@link #createCleanupAllIntention()}
    * e.g. edit enabled cleanup inspections or starting cleanup on predefined scope
    */
-  public abstract @NotNull @Unmodifiable List<IntentionAction> getCleanupIntentionOptions();
+  public abstract @NotNull @Unmodifiable List<@NotNull IntentionAction> getCleanupIntentionOptions();
 
   /**
    * Wraps given action in a LocalQuickFix object.

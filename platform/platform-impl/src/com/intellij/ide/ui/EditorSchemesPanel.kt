@@ -63,7 +63,7 @@ internal class EditorSchemesPanel(val colorAndFontsOptions: ColorAndFontOptions,
   override fun useBoldForNonRemovableSchemes(): Boolean = false
 }
 
-private class OpenEditorSchemeConfigurableAction(val component: JComponent, val selectedSchemeProvider: () -> String?) :
+internal class OpenEditorSchemeConfigurableAction(val component: JComponent, val selectedSchemeProvider: () -> String?) :
   DumbAwareAction(IdeBundle.message("combobox.editor.color.scheme.edit")) {
 
   override fun actionPerformed(e: AnActionEvent) {

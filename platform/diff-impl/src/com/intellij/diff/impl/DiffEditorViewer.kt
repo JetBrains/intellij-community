@@ -8,7 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.vfs.VirtualFile
-import java.util.*
+import java.util.EventListener
 import javax.swing.JComponent
 
 interface DiffEditorViewer {

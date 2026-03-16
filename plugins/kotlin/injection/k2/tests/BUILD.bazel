@@ -29,14 +29,15 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/testFramework",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
-  ]
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.injection.tests` end
 

@@ -3800,6 +3800,18 @@
           "javaType": "boolean"
         },
         {
+          "name": "show_virtual_thread_containers",
+          "mapTo": "SHOW_VIRTUAL_THREAD_CONTAINERS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "show_only_platform_threads",
+          "mapTo": "SHOW_ONLY_PLATFORM_THREADS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
           "name": "borderless_mode",
           "mapTo": "BORDERLESS_MODE",
           "type": "Boolean",
@@ -9580,7 +9592,7 @@
     {
       "name": "screen.forwarding.common.settings",
       "scope": "app",
-      "pluginId": "com.jetbrains.codeWithMe",
+      "pluginId": "com.jetbrains.remoteDevelopment",
       "classFqn": "com.jetbrains.rd.platform.codeWithMe.screenForwarding.ScreenForwardingCommonSettings",
       "storage": "screenForwardingSettings.xml",
       "properties": [
@@ -9594,7 +9606,7 @@
     {
       "name": "screen.forwarding.settings",
       "scope": "app",
-      "pluginId": "com.jetbrains.codeWithMe",
+      "pluginId": "com.jetbrains.remoteDevelopment",
       "classFqn": "com.jetbrains.rdserver.screenForwarding.ScreenForwardingHostSettings",
       "storage": "screenForwarding.xml",
       "properties": [

@@ -172,6 +172,32 @@ private fun updateRootsForModulesWithInheritedSdk(project: Project, sdk: Sdk?, a
   }
 }
 
+/**
+ * Handles transferred roots and virtualenv exclusion when a module's Python SDK changes.
+ * Registered as a listener for [PySdkListener.TOPIC].
+ *
+ * Note: cannot use the public [removeTransferredRoots] for `prevSdk` because its guard
+ * `module.pythonSdk == sdk` fails — by the time the listener fires, the SDK is already changed.
+ */
+internal class PySdkTransferredRootsListener : PySdkListener {
+  override fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?) {
+    if (prevSdk != null) {
+      val oldPaths = getPathsToTransfer(prevSdk)
+      if (oldPaths.isNotEmpty()) {
+        runInEdt {
+          val rootsToRemove = TransferredRootsDetector(module.project).detect(module, oldPaths, oldPaths)
+          removeTransferredRoots(module, rootsToRemove)
+        }
+      }
+    }
+
+    if (newSdk != null) {
+      transferRoots(module, newSdk)
+      module.excludeInnerVirtualEnv(newSdk)
+    }
+  }
+}
+
 private object ModuleRootAndDepOps {
   val LOG = thisLogger()
 }

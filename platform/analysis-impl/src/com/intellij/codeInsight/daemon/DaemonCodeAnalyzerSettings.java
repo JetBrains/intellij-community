@@ -2,10 +2,12 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -45,11 +47,12 @@ public class DaemonCodeAnalyzerSettings {
   }
 
   @ApiStatus.Internal
-  public void forceUseZeroAutoReparseDelay(boolean useZeroAutoReparseDelay) {
-    if (useZeroAutoReparseDelay) {
-      myForceZeroAutoReparseDelay.incrementAndGet();
+  public <E extends Throwable> void forceUseZeroAutoReparseDelayIn(@NotNull ThrowableRunnable<E> runnable) throws E {
+    myForceZeroAutoReparseDelay.incrementAndGet();
+    try {
+      runnable.run();
     }
-    else {
+    finally {
       myForceZeroAutoReparseDelay.decrementAndGet();
     }
   }

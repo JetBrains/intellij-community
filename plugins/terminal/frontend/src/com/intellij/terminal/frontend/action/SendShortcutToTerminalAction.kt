@@ -1,7 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend.action
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.ide.IdeEventQueue
+import com.intellij.openapi.actionSystem.ActionPromoter
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.DumbAwareAction
@@ -12,7 +18,6 @@ import com.intellij.terminal.frontend.view.impl.handleKeyEvent
 import org.jetbrains.plugins.terminal.TerminalBundle
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
-import javax.swing.KeyStroke
 
 /**
  * Processes shortcuts of disabled terminal actions.
@@ -54,7 +59,15 @@ internal class SendShortcutToTerminalAction(
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val shortcut = e.shortcut
+    if (e.inputEvent !is KeyEvent) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    // Can't use the shortcut that can be calculated from the input event,
+    // because it will contain only the second stroke in case of double stroke shortcuts.
+    // So, have to take a real shortcut from the IdeKeyEventDispatcher context.
+    val shortcut = IdeEventQueue.getInstance().keyEventDispatcher.context.shortcut
     if (shortcut == null) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -92,10 +105,3 @@ internal class SendShortcutToTerminalActionPromoter : ActionPromoter {
     return if (action != null) listOf(action) else emptyList()
   }
 }
-
-private val AnActionEvent.shortcut: Shortcut?
-  get() {
-    val inputEvent = inputEvent ?: return null
-    if (inputEvent !is KeyEvent) return null
-    return KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(inputEvent), null)
-  }

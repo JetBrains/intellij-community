@@ -212,7 +212,7 @@ internal class ArrayListEelAbsolutePath private constructor(
         if (error != null) throw EelPathException(raw, error)
       }
 
-      return ArrayListEelAbsolutePath(descriptor, Root.Windows(raw.substring(0, index).replace("/", "\\")), parts)
+      return ArrayListEelAbsolutePath(descriptor, Root.Windows(raw.substring(0, index).replace("/", "\\") + "\\" + parts.first()), parts.drop(1))
     }
 
     /** https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#traditional-dos-paths */

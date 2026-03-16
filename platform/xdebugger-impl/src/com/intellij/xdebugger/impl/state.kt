@@ -11,7 +11,6 @@ import com.intellij.xdebugger.impl.breakpoints.BreakpointState
 import com.intellij.xdebugger.impl.breakpoints.LineBreakpointState
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState
-import com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -100,13 +99,6 @@ class WatchState : XExpressionState {
 
   @get:Attribute
   var isPaused: Boolean = false
-}
-
-@ApiStatus.Internal
-@Tag("pin-to-top-manager")
-class PinToTopManagerState : BaseState() {
-    @get:XCollection(propertyElementName = "pinned-members")
-    var pinnedMembersList by list<PinnedItemInfo>()
 }
 
 internal class XDebuggerState : BaseState() {

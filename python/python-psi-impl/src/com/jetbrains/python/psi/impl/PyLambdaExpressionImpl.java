@@ -5,12 +5,27 @@ import com.intellij.lang.ASTNode;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyLambdaExpression;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PySlashParameter;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableParameterImpl;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyExpectedTypeJudgement;
+import com.jetbrains.python.psi.types.PyFunctionTypeImpl;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static com.intellij.util.containers.ContainerUtil.map;
 
@@ -34,7 +49,7 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
       }
     }
 
-    @Nullable PyType expected = PyTypeChecker.getExpectedType(this, context);
+    @Nullable PyType expected = PyExpectedTypeJudgement.getExpectedType(this, context);
 
     if (expected instanceof PyCallableType expectedCallable) {
       var params = new ArrayList<PyCallableParameter>();
@@ -76,7 +91,6 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
     );
   }
 
-
   @Override
   public @NotNull List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     return Optional
@@ -91,13 +105,13 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
   public @Nullable PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression body = getBody();
     if (body == null) return null;
-    
+
     final PyFunctionImpl.YieldCollector visitor = new PyFunctionImpl.YieldCollector();
     body.accept(visitor);
-    
+
     final List<PyType> yieldTypes = map(visitor.getYieldExpressions(), it -> it.getYieldType(context));
     final List<PyType> sendTypes = map(visitor.getYieldExpressions(), it -> it.getSendType(context));
-    
+
     if (!yieldTypes.isEmpty()) {
       return PyTypingTypeProvider.wrapInGeneratorType(
         PyUnionType.union(yieldTypes), PyUnionType.union(sendTypes), context.getType(body), this);

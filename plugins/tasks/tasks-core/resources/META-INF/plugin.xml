@@ -121,8 +121,6 @@
     <applicationService serviceImplementation="com.intellij.tasks.config.TaskSettings"/>
     <search.optionContributor implementation="com.intellij.tasks.config.TaskSearchableOptionContributor"/>
 
-    <lang.documentationProvider language="TEXT" implementationClass="com.intellij.tasks.doc.TaskDocumentationProvider"/>
-
     <tasks.repositoryType implementation="com.intellij.tasks.youtrack.YouTrackRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.lighthouse.LighthouseRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.pivotal.PivotalTrackerRepositoryType"/>
@@ -143,6 +141,7 @@
     <tasks.commitPlaceholderProvider implementation="com.intellij.tasks.impl.DefaultCommitPlaceholderProvider"/>
 
     <vcs.changeListDecorator implementation="com.intellij.tasks.impl.TaskManagerDecorator"/>
+    <vcs.issueDocumentationTargetProvider implementation="com.intellij.tasks.impl.TaskIssueLinkDocumentationTargetProvider"/>
     <notificationGroup id="Task Group" displayType="BALLOON" bundle="messages.TaskBundle" key="notification.group.tasks"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.tasks.impl.TaskManagementUsageCollector"/>

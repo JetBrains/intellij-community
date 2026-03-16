@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class GuiFormFileType implements /*UIBased*/FileType {
 
@@ -56,5 +56,10 @@ public final class GuiFormFileType implements /*UIBased*/FileType {
   @Override
   public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
     return CharsetToolkit.UTF8;
+  }
+
+  @Override
+  public boolean isCharsetHardcoded() {
+    return true;
   }
 }

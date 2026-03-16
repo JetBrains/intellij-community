@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.platform.ijent.community.buildConstants
@@ -38,8 +38,6 @@ private val MRFS_AND_IJENT_DISABLED_BY_DEFAULT_IN: Collection<String> = java.uti
 )
 
 const val IJENT_BOOT_CLASSPATH_MODULE: String = "intellij.platform.core.nio.fs"
-
-const val IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY: String = "wsl.use.remote.agent.for.nio.filesystem"
 
 const val IJENT_REQUIRED_DEFAULT_NIO_FS_PROVIDER_CLASS: String = "com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider"
 

@@ -6,7 +6,9 @@ import org.gradle.tooling.BuildActionExecuter
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.StreamedValueListener
 import org.gradle.tooling.internal.consumer.PhasedBuildAction
-import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters.*
+import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters.BuildActionParametersBuilder
+import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters.PhasedBuildActionParametersBuilder
+import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters.StreamedValueAwareBuilder
 
 internal abstract class TargetBuildExecutor<R>(
   connection: TargetProjectConnection,

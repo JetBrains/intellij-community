@@ -27,6 +27,7 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.findFacadeClass
@@ -41,7 +42,23 @@ import org.jetbrains.kotlin.idea.base.util.restrictByFileType
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToBeShortenedDescendantsToWaitingSet
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
-import org.jetbrains.kotlin.idea.refactoring.move.*
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveConflictCheckerInfo
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveRenameUsage
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMover
+import org.jetbrains.kotlin.idea.refactoring.move.MoveConflictUsageInfo
+import org.jetbrains.kotlin.idea.refactoring.move.MoveConflictsFoundException
+import org.jetbrains.kotlin.idea.refactoring.move.MoveContainerChangeInfo
+import org.jetbrains.kotlin.idea.refactoring.move.MoveContainerInfo
+import org.jetbrains.kotlin.idea.refactoring.move.MoveDeclarationsDescriptor
+import org.jetbrains.kotlin.idea.refactoring.move.checkAllConflicts
+import org.jetbrains.kotlin.idea.refactoring.move.cleanUpInternalUsages
+import org.jetbrains.kotlin.idea.refactoring.move.getInternalReferencesToUpdateOnPackageNameChange
+import org.jetbrains.kotlin.idea.refactoring.move.getTargetModule
+import org.jetbrains.kotlin.idea.refactoring.move.markInternalUsages
+import org.jetbrains.kotlin.idea.refactoring.move.postProcessMoveUsages
+import org.jetbrains.kotlin.idea.refactoring.move.restoreInternalUsages
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
@@ -50,6 +67,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.utils.ifEmpty
 import org.jetbrains.kotlin.utils.keysToMap
+import java.util.Collections
 import kotlin.math.max
 import kotlin.math.min
 
@@ -72,6 +90,7 @@ private object ElementHashingStrategy : HashingStrategy<PsiElement> {
     }
 }
 
+@K1Deprecation
 @IntellijInternalApi
 open class MoveKotlinDeclarationsProcessor(
     val descriptor: MoveDeclarationsDescriptor,
@@ -152,7 +171,7 @@ open class MoveKotlinDeclarationsProcessor(
                 val results = ReferencesSearch
                     .search(lightElement, searchScope)
                     .asIterable()
-                    .mapNotNullTo(ArrayList()) { ref ->
+                    .mapNotNullTo(Collections.synchronizedList(ArrayList())) { ref ->
                         if (foundReferences.add(ref) && elementsToMove.none { it.isAncestor(ref.element) }) {
                             KotlinMoveRenameUsage.createIfPossible(ref, lightElement, addImportToOriginalFile = true, isInternal = false)
                         } else null
@@ -160,7 +179,7 @@ open class MoveKotlinDeclarationsProcessor(
 
               val name = lightElement.kotlinFqName?.quoteIfNeeded()?.asString()
                 if (name != null) {
-                    fun searchForKotlinNameUsages(results: ArrayList<UsageInfo>) {
+                    fun searchForKotlinNameUsages(results: MutableList<UsageInfo>) {
                         TextOccurrencesUtil.findNonCodeUsages(
                             lightElement,
                             searchScope,
@@ -190,7 +209,7 @@ open class MoveKotlinDeclarationsProcessor(
                             results
                         )
 
-                        ArrayList<UsageInfo>().also { searchForKotlinNameUsages(it) }.forEach { kotlinNonCodeUsage ->
+                        Collections.synchronizedList(ArrayList<UsageInfo>()).also { searchForKotlinNameUsages(it) }.forEach { kotlinNonCodeUsage ->
                             if (results.none { it.intersectsWith(kotlinNonCodeUsage) }) {
                                 results.add(kotlinNonCodeUsage)
                             }

@@ -1,7 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.template.formatter;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.ASTBlock;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.BlockEx;
+import com.intellij.formatting.ChildAttributes;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Spacing;
+import com.intellij.formatting.Wrap;
+import com.intellij.formatting.WrapType;
 import com.intellij.formatting.templateLanguages.BlockWithParent;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;

@@ -1,16 +1,31 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.Gray;
+import com.intellij.ui.wayland.WaylandUtilKt;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import javax.swing.JWindow;
+import javax.swing.RootPaneContainer;
+import javax.swing.SwingUtilities;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.HierarchyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -184,7 +199,8 @@ public final class MovablePopup {
         if (myHeavyWeight) {
           JWindow view = new JWindow(owner);
           view.setType(Window.Type.POPUP);
-          if (StartupUiUtil.isWaylandToolkit()) {
+          if (StartupUiUtil.isWaylandToolkit() ||
+              AppMode.isRemoteDevHost() /* Needed only with Wayland toolkit on the client, but won't hurt in other cases */) {
             // Wayland popups *must* know their parent in order to be
             // placed on the screen relative to it.
             try {
@@ -194,6 +210,7 @@ public final class MovablePopup {
             }
             catch (NoSuchFieldException| IllegalAccessException ignore) {
             }
+            WaylandUtilKt.setUnconstrainedPopupPositioning(view, true);
           }
           setAlwaysOnTop(view, myAlwaysOnTop);
           setWindowFocusable(view, myWindowFocusable);
@@ -201,7 +218,7 @@ public final class MovablePopup {
           view.setAutoRequestFocus(false);
           view.setFocusable(false);
           view.setFocusableWindowState(false);
-          if (myTransparent && SystemInfoRt.isMac) {
+          if (myTransparent && (SystemInfoRt.isMac || StartupUiUtil.isWaylandToolkit())) {
             try {
               Field field = JRootPane.class.getDeclaredField("useTrueDoubleBuffering");
               field.setAccessible(true);

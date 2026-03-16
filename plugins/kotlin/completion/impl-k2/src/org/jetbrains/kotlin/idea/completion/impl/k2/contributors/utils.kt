@@ -1,14 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
-import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.PsiDocumentManager
-import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -25,29 +22,32 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.abbreviationOrSelf
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.buildClassTypeWithStarProjections
-import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.completion.KOTLIN_CAST_REQUIRED_COLOR
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.api.serialization.ensureSerializable
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.CallableMetadataProvider
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
-import org.jetbrains.kotlin.idea.completion.impl.k2.argList
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributorBase.AdaptToExplicitReceiverInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.AdaptToExplicitReceiverInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.addRequiredTypeArgumentsIfNecessary
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.qualifyContextSensitiveResolutionIfNecessary
 import org.jetbrains.kotlin.idea.completion.impl.k2.hasNoExplicitReceiver
-import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
-import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionLookupElementFactory
-import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
-import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionOptions
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.FunctionCallLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.FunctionLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.CallableWeigher.callableWeight
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.Weighers.applyWeighs
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.util.KotlinK2CodeFragmentUtils
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 context(_: KaSession, context: K2CompletionSectionContext<*>)
@@ -57,7 +57,7 @@ internal fun createCallableLookupElements(
     scopeKind: KaScopeKind? = null,
     presentableText: @NlsSafe String? = null, // TODO decompose
     withTrailingLambda: Boolean = false, // TODO find a better solution
-    aliasName: Name? = null
+    aliasName: Name? = null,
 ): Sequence<LookupElementBuilder> {
     val callableSymbol = signature.symbol
     val namedSymbol = when (callableSymbol) {
@@ -109,36 +109,9 @@ internal fun createCallableLookupElements(
         }
 
         lookup.applyWeighs(symbolWithOrigin)
-        val newLookup = context.positionContext.position.argList?.let { argList ->
-            lookup.withChainedInsertHandler(InsertRequiredTypeArgumentsInsertHandler( argList.args.text, argList.offset))
-        } ?: lookup
-        newLookup.applyKindToPresentation()
-    }
-}
-
-/**
- * Inserts the [typeArgs] at the [exprOffset] for expressions that require type arguments
- * after a chained dot call.
- */
-@Serializable
-internal class InsertRequiredTypeArgumentsInsertHandler(
-    private val typeArgs: String,
-    private val exprOffset: Int,
-): SerializableInsertHandler {
-    override fun handleInsert(
-        context: InsertionContext,
-        item: LookupElement
-    ) {
-        val beforeCaret = context.file.findElementAt(exprOffset) ?: return
-        val callExpr = when (val beforeCaretExpr = beforeCaret.prevSibling) {
-            is KtCallExpression -> beforeCaretExpr
-            is KtDotQualifiedExpression -> beforeCaretExpr.collectDescendantsOfType<KtCallExpression>().lastOrNull()
-            else -> null
-        } ?: return
-
-        addTypeArguments(callExpr, typeArgs, callExpr.project)
-        // Need to commit the PSI changes to the document for potential following insert handlers that modify the document
-        PsiDocumentManager.getInstance(context.project).doPostponedOperationsAndUnblockDocument(context.document)
+            .addRequiredTypeArgumentsIfNecessary(context.positionContext)
+            .qualifyContextSensitiveResolutionIfNecessary(context.positionContext)
+            .applyKindToPresentation()
     }
 }
 
@@ -218,3 +191,40 @@ internal fun KtExpression.evaluateRuntimeKaType(): KaType? {
 context(_: KaSession)
 internal fun KaType.replaceTypeParametersWithStarProjections(): KaType? =
     abbreviationOrSelf.symbol?.let { buildClassTypeWithStarProjections(it) }
+
+
+/**
+ * Represents a [callableId] that is variadic in its parameters.
+ * For completion, we want to group these as a single completion item to not clutter up the list
+ * with often 25+ nearly identical results.
+ * The [renderedParameters] is the string representation of the parameter list that will be used in rendering
+ * rather than the rendered parameters of the callable.
+ * We use the [lowestNumberOfArguments] as a performance measure to exactly show the completion item with this number of arguments,
+ * all other callables with the same [callableId] but different number of arguments will be filtered out.
+ */
+internal class VariadicCallable(
+    val callableId: CallableId,
+    val renderedParameters: String,
+    val lowestNumberOfArguments: Int,
+)
+
+
+/**
+ * For performance reason, we statically register the variadic callables we want to group
+ */
+private val variadicCallableIds: Map<CallableId, VariadicCallable> = listOf(
+    VariadicCallable(
+        callableId = CallableId(FqName.topLevel(Name.identifier("kotlin")), Name.identifier("context")),
+        renderedParameters = "(a: A, ..., block: context(A, ...) () -> R)",
+        lowestNumberOfArguments = 2,
+    )
+).associateBy { it.callableId }
+
+/**
+ * Returns a [VariadicCallable] in case the signature represents a registered variadic callable
+ * found within [variadicCallableIds], otherwise returns `null`.
+ */
+internal fun KaCallableSignature<*>.getVariadicCallable(): VariadicCallable? {
+    val callableId = callableId ?: return null
+    return variadicCallableIds[callableId]
+}

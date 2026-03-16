@@ -3,6 +3,7 @@ package com.intellij.util.indexing.impl.perFileVersion
 
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl
+import com.intellij.util.io.Unmappable
 import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
 
@@ -12,7 +13,7 @@ import java.io.Closeable
  * [AutoRefreshingOnVfsCloseRef] tracks VFS close events and recreates references automatically after VFS re-mounted.
  */
 @ApiStatus.Internal
-class AutoRefreshingOnVfsCloseRef<T : Closeable>(private val factory: (FSRecordsImpl) -> T) : Closeable {
+class AutoRefreshingOnVfsCloseRef<T : Closeable>(private val factory: (FSRecordsImpl) -> T) : Closeable, Unmappable {
 
   @Volatile
   private var attributeAccessor: T? = null
@@ -37,7 +38,23 @@ class AutoRefreshingOnVfsCloseRef<T : Closeable>(private val factory: (FSRecords
 
   override fun close() {
     try {
+      val attributeAccessor = attributeAccessor
       attributeAccessor?.close()
+    }
+    finally {
+      attributeAccessor = null //will be re-opened on next invoke() call
+    }
+  }
+
+  override fun closeAndUnsafelyUnmap() {
+    try {
+      val attributeAccessor = attributeAccessor
+      if (attributeAccessor is Unmappable) {
+        attributeAccessor.closeAndUnsafelyUnmap()
+      }
+      else {
+        attributeAccessor?.close()
+      }
     }
     finally {
       attributeAccessor = null

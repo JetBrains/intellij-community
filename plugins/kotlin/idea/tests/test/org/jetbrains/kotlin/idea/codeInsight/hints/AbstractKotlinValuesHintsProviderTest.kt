@@ -3,19 +3,9 @@
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
-import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
-import java.io.File
 
-abstract class AbstractKotlinValuesHintsProviderTest : AbstractKotlinInlayHintsProviderTest() {
-
+abstract class AbstractK1KotlinValuesHintsProviderTest: AbstractKotlinValuesHintsProviderTest() {
     override fun inlayHintsProvider(): InlayHintsProvider =
         org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinValuesHintsProvider()
-
-    override fun doTestProviders(file: File) {
-        val fileContents = FileUtil.loadFile(file, true)
-        withCustomCompilerOptions(fileContents, project, module) {
-            super.doTestProviders(file)
-        }
-    }
 }
+

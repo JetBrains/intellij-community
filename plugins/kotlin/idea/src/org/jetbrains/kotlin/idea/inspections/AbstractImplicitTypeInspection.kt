@@ -2,10 +2,12 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 
+@K1Deprecation
 abstract class AbstractImplicitTypeInspection(
     additionalChecker: (KtCallableDeclaration, AbstractImplicitTypeInspection) -> Boolean
 ) : IntentionBasedInspection<KtCallableDeclaration>(

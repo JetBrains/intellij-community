@@ -27,6 +27,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
     "//libraries/guava",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/dvcs-impl:vcs-dvcs-impl",
     "//platform/vcs-log/api:vcs-log",
     "//platform/vcs-log/impl",
@@ -39,6 +40,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/dvcs-impl/shared",
     "//platform/vcs-impl/shared",
+    "//platform/core-impl",
   ]
 )
 
@@ -65,6 +67,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
     "//libraries/guava",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/dvcs-impl:vcs-dvcs-impl",
     "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
     "//platform/vcs-log/api:vcs-log",
@@ -80,6 +83,8 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/dvcs-impl/shared",
     "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.vcs.hg` end

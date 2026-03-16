@@ -34,11 +34,12 @@ jvm_library(
     "//platform/util/base",
     "//libraries/aalto-xml",
     "//platform/util/xmlDom",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "//platform/util/coroutines",
     "//platform/util/multiplatform",
+    "//platform/eel",
     ":platform_util_troveCompileOnly_provided",
   ],
   exports = [
@@ -71,7 +72,11 @@ resourcegroup(
 jvm_library(
   name = "util-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/core-impl",
+    "//libraries/kotlinx/coroutines/debug",
+  ]
 )
 
 jvm_library(
@@ -118,7 +123,7 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/testFramework/junit5.jimfs",
     "//platform/testFramework/junit5.jimfs:junit5.jimfs_test_lib",
-    "@lib//:kotlinx-coroutines-debug",
+    "//libraries/kotlinx/coroutines/debug",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/util/coroutines",
@@ -129,7 +134,8 @@ jvm_library(
     "//platform/ijent/buildConstants",
     "//platform/testFramework/monorepo",
     "//platform/testFramework/monorepo:monorepo_test_lib",
-  ]
+  ],
+  runtime_deps = [":util-tests"]
 )
 ### auto-generated section `build intellij.platform.util.tests` end
 
@@ -171,7 +177,7 @@ jvm_library(
   resources = [":util-ui_resources"],
   javac_opts = ":custom-javac-options",
   deps = [
-    "@lib//:eawtstub-provided",
+    "@lib//:mac-provided",
     "//platform/util",
     "//libraries/imgscalr",
     "@lib//:jna",
@@ -179,7 +185,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/fastutil",
     "//platform/util-ex",
-    "@lib//:netty-buffer",
+    "//libraries/netty/buffer",
     "//libraries/caffeine",
     "//libraries/aalto-xml",
     "//platform/util/xmlDom",
@@ -188,7 +194,7 @@ jvm_library(
     "//libraries/jsvg",
     "//platform/util/rt-java8",
     "//libraries/hash4j",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/diagnostic",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/protobuf",

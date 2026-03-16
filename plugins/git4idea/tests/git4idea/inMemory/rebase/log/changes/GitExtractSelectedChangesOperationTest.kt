@@ -25,7 +25,7 @@ internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest
     val changesToExtract = filterChangesByFileName(targetCommit, listOf("b"))
     val newMessage = "Extract b"
 
-    GitExtractSelectedChangesOperation(objectRepo, targetCommit, newMessage, changesToExtract).run()
+    GitExtractSelectedChangesOperation(objectRepo, targetCommit.id, newMessage, changesToExtract).run()
       as GitCommitEditingOperationResult.Complete
 
     file("b").assertExists()
@@ -56,7 +56,7 @@ internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest
     val changesToExtract = filterChangesByFileName(targetCommit, listOf("App.java", "AppTest.java"))
     val newMessage = "Extract src directory"
 
-    GitExtractSelectedChangesOperation(objectRepo, targetCommit, newMessage, changesToExtract).run()
+    GitExtractSelectedChangesOperation(objectRepo, targetCommit.id, newMessage, changesToExtract).run()
       as GitCommitEditingOperationResult.Complete
 
     file("src/main/App.java").assertExists()
@@ -88,7 +88,7 @@ internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest
     val changesToExtract = filterChangesByFileName(amendedInitialCommit, listOf("b"))
     val newMessage = "Extract b from initial"
 
-    GitExtractSelectedChangesOperation(objectRepo, amendedInitialCommit, newMessage, changesToExtract).run()
+    GitExtractSelectedChangesOperation(objectRepo, amendedInitialCommit.id, newMessage, changesToExtract).run()
       as GitCommitEditingOperationResult.Complete
 
     assertLastMessage(newMessage)
@@ -118,7 +118,7 @@ internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest
     val changesToExtract = filterChangesByFileName(targetCommit, listOf("b"))
     val newMessage = "Extract removal of b"
 
-    GitExtractSelectedChangesOperation(objectRepo, targetCommit, newMessage, changesToExtract).run()
+    GitExtractSelectedChangesOperation(objectRepo, targetCommit.id, newMessage, changesToExtract).run()
       as GitCommitEditingOperationResult.Complete
 
     file("b").assertNotExists()
@@ -148,13 +148,13 @@ internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest
     updateChangeListManager()
 
     val fileRemoval = filterChangesByFileName(commit, listOf("component"))
-    GitExtractSelectedChangesOperation(objectRepo, commit, "Extract component file removal", fileRemoval).run()
+    GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract component file removal", fileRemoval).run()
       as GitCommitEditingOperationResult.Incomplete
 
     assertErrorNotification(GitBundle.message("in.memory.rebase.log.changes.extract.failed.title"), GitBundle.message("in.memory.split.tree.mixed.error"))
 
     val filesCreation = filterChangesByFileName(commit, listOf("A.java", "B.java"))
-    val result = GitExtractSelectedChangesOperation(objectRepo, commit, "Extract component files creation", filesCreation).run()
+    val result = GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract component files creation", filesCreation).run()
       as GitCommitEditingOperationResult.Complete
 
     with(repo) {
@@ -170,7 +170,7 @@ internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest
 
     result.undo()
 
-    GitExtractSelectedChangesOperation(objectRepo, commit, "Extract file removal and component files creation", filesCreation + fileRemoval).run()
+    GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract file removal and component files creation", filesCreation + fileRemoval).run()
       as GitCommitEditingOperationResult.Complete
 
     with(repo) {
@@ -200,7 +200,7 @@ internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest
     updateChangeListManager()
 
     val fileCreation = filterChangesByFileName(commit, listOf("component"))
-    val result = GitExtractSelectedChangesOperation(objectRepo, commit, "Extract component file creation", fileCreation).run()
+    val result = GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract component file creation", fileCreation).run()
       as GitCommitEditingOperationResult.Complete
 
     with(repo) {
@@ -212,14 +212,14 @@ internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest
     result.undo()
 
     val directoryFileRemoval = filterChangesByFileName(commit, listOf("A.java"))
-    GitExtractSelectedChangesOperation(objectRepo, commit, "Extract component directory file removal", directoryFileRemoval).run()
+    GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract component directory file removal", directoryFileRemoval).run()
       as GitCommitEditingOperationResult.Incomplete
 
     assertErrorNotification(GitBundle.message("in.memory.rebase.log.changes.extract.failed.title"), GitBundle.message("in.memory.split.tree.mixed.error"))
 
     val directoryRemovalAndFileCreation = filterChangesByFileName(commit, listOf("A.java", "B.java", "component"))
 
-    GitExtractSelectedChangesOperation(objectRepo, commit, "Extract directory removal and file creation", directoryRemovalAndFileCreation).run()
+    GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract directory removal and file creation", directoryRemovalAndFileCreation).run()
       as GitCommitEditingOperationResult.Complete
 
     with(repo) {

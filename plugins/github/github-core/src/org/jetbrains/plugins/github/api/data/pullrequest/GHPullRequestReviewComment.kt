@@ -4,8 +4,12 @@ package org.jetbrains.plugins.github.api.data.pullrequest
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.collaboration.api.dto.GraphQLFragment
-import org.jetbrains.plugins.github.api.data.*
-import java.util.*
+import org.jetbrains.plugins.github.api.data.GHActor
+import org.jetbrains.plugins.github.api.data.GHComment
+import org.jetbrains.plugins.github.api.data.GHCommitHash
+import org.jetbrains.plugins.github.api.data.GHNode
+import org.jetbrains.plugins.github.api.data.GHReactable
+import java.util.Date
 
 @GraphQLFragment("/graphql/fragment/pullRequestReviewComment.graphql")
 data class GHPullRequestReviewComment(

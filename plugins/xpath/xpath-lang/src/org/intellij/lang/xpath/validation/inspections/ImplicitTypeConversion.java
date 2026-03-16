@@ -38,7 +38,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.BitSet;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.group;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.separator;
 
 // TODO: Option to flag literals: <number> = '123', <string> = 123, etc.
 public class ImplicitTypeConversion extends XPathInspection {

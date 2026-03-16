@@ -17,7 +17,21 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
-import com.sun.jdi.*
+import com.sun.jdi.AbsentInformationException
+import com.sun.jdi.ClassNotLoadedException
+import com.sun.jdi.ClassNotPreparedException
+import com.sun.jdi.ClassType
+import com.sun.jdi.Field
+import com.sun.jdi.InterfaceType
+import com.sun.jdi.InternalException
+import com.sun.jdi.LocalVariable
+import com.sun.jdi.Location
+import com.sun.jdi.Method
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.StackFrame
+import com.sun.jdi.Type
+import com.sun.jdi.Value
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 

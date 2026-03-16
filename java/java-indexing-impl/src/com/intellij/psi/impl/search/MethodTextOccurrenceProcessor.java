@@ -2,7 +2,16 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.CachedSingletonsRegistry;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.ReferenceRange;
+import com.intellij.psi.ResolvingHint;
 import com.intellij.psi.search.RequestResultProcessor;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;

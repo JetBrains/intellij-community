@@ -7,7 +7,12 @@ import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.hasTextSearchStrings
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 

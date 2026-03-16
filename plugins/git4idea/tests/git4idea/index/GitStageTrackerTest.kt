@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.google.common.util.concurrent.MoreExecutors
@@ -177,7 +177,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
   }
 
   private fun GitStageTracker.futureUpdate(name: String): Future<Unit> {
-    val removeListener = Disposer.newDisposable("Listener disposable")
+    val removeListener = Disposer.newDisposable(this, "Listener disposable")
     val future = SettableFuture.create<Unit>()
     addListener(object : GitStageTrackerListener {
       override fun update() {

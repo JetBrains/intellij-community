@@ -3,9 +3,11 @@ package org.jetbrains.kotlin.idea.base.analysis
 
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiFileEx
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.resolution.KaResolutionActivityTracker
 
 internal class KotlinBatchReferenceProcessingSuppressor : PsiFileEx.BatchReferenceProcessingSuppressor {
+    @OptIn(KaPlatformInterface::class)
     override fun isSuppressed(file: PsiFile): Boolean {
         return KaResolutionActivityTracker.getInstance()?.isKotlinResolutionActive == true
     }

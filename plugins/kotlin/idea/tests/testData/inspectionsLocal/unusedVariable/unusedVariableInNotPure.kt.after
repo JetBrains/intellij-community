@@ -1,0 +1,12 @@
+// "Remove variable a (may change semantics)" "true"
+
+var counter = 0
+fun nextId(): Int {
+    counter++          // side effect
+    println(counter)   // I/O side effect
+    return counter
+}
+
+fun test() {
+}
+// IGNORE_K1

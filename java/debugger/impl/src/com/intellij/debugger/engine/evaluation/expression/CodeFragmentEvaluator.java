@@ -1,13 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateRuntimeException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,10 +30,10 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator {
     myStatements = evaluators;
   }
 
-  public Value getValue(String localName, VirtualMachineProxyImpl vm) throws EvaluateException {
+  public Value getValue(@NotNull String localName, @NotNull EvaluationContextImpl context) throws EvaluateException {
     if (!mySyntheticLocals.containsKey(localName)) {
       if (myParentFragmentEvaluator != null) {
-        return myParentFragmentEvaluator.getValue(localName, vm);
+        return myParentFragmentEvaluator.getValue(localName, context);
       }
       else {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.variable.not.declared", localName));
@@ -43,7 +46,9 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator {
     else if (value == null) {
       return null;
     }
-    else if (value instanceof Boolean) {
+
+    @NotNull VirtualMachineProxyImpl vm = context.getSuspendContext().getVirtualMachineProxy();
+    if (value instanceof Boolean) {
       return vm.mirrorOf(((Boolean)value).booleanValue());
     }
     else if (value instanceof Byte) {
@@ -67,13 +72,12 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator {
     else if (value instanceof Double) {
       return vm.mirrorOf(((Double)value).doubleValue());
     }
-    else if (value instanceof String) {
-      return vm.mirrorOf((String)value);
+    else if (value instanceof String stringValue) {
+      return DebuggerUtilsEx.mirrorOfString(stringValue, context);
     }
-    else {
-      LOG.error("unknown default initializer type " + value.getClass().getName());
-      return null;
-    }
+
+    LOG.error("unknown default initializer type " + value.getClass().getName());
+    return null;
   }
 
   boolean hasValue(String localName) {

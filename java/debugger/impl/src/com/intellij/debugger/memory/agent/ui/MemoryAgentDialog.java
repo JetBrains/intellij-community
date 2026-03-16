@@ -15,13 +15,13 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JProgressBar;
 
 @ApiStatus.Internal
 public abstract class MemoryAgentDialog extends DialogWrapper {
@@ -65,7 +65,7 @@ public abstract class MemoryAgentDialog extends DialogWrapper {
         @Override
         public void sessionPaused() {
           if (myRebuildOnSessionEvents) {
-            myTree.invokeLater(() -> myTree.rebuildAndRestore(XDebuggerTreeState.saveState(myTree)));
+            myTree.invokeLater(() -> myTree.rebuild());
           }
         }
 

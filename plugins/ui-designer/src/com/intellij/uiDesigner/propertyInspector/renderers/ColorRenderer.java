@@ -11,8 +11,10 @@ import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import java.awt.Color;
+import java.awt.Graphics;
 
 /**
  * This renderer is used both as PropertyRenderer and as cell renderer in the color chooser pane list.

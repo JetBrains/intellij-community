@@ -3,7 +3,6 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
-import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
@@ -13,7 +12,6 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    PyModuleNameCompletionContributor.ENABLED = false;
   }
 
   private void doTest() {
@@ -346,5 +344,39 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   public void testLiteralsInDecoratorArgumentList() {
     List<String> variants = doTestByTestName();
     assertContainsElements(variants, PyNames.TRUE);
+  }
+
+  // PY-52547
+  public void testAsyncKeywordCompletionOnly() {
+    List<String> variants = doTestByText("""
+                   some_variable = 42
+                   def some_function():
+                       pass
+                   class SomeClass:
+                       pass
+                   async <caret>
+                   """);
+
+      assertContainsElements(variants, PyNames.DEF, PyNames.WITH, PyNames.FOR);
+      assertDoesntContain(variants, "some_variable", "some_function", "SomeClass");
+  }
+
+  // PY-46932
+  public void testAsyncKeywordConstructCompletion() {
+    List<String> variants = doTestByText("""
+                   some_variable = 42
+                   def some_function():
+                       pass
+                   class SomeClass:
+                       pass
+                   as<caret>
+                   """);
+
+    assertContainsElements(
+      variants,
+      PyNames.ASYNC + " " + PyNames.DEF,
+      PyNames.ASYNC + " " + PyNames.FOR,
+      PyNames.ASYNC + " " + PyNames.WITH
+    );
   }
 }

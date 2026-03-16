@@ -38,7 +38,7 @@ print(T)  # E: Runtime error: 'T' is not defined
 def decorator1[
     T, **P, R
 ](x: type[Foo[T]]) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    ...
+    raise NotImplementedError
 
 
 @decorator1(Foo[T])  # E: Runtime error: 'T' is not defined
@@ -79,7 +79,7 @@ class Outer1:
 
 
 def decorator2[**P, R](x: int) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    ...
+    raise NotImplementedError
 
 
 T = int(0)

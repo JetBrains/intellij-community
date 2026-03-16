@@ -2,8 +2,8 @@ package org.jetbrains.idea.maven.intentions
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.util.PsiTreeUtil
 import kotlinx.coroutines.Dispatchers

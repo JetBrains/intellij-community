@@ -10,16 +10,45 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.codeserver.core.JavaPsiAnnotationUtil;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationOwner;
+import com.intellij.psi.PsiAnnotationParameterList;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.JavaElementKind;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -46,7 +75,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
   /**
    * @deprecated use {@link AddAnnotationModCommandAction} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public AddAnnotationPsiFix(@NotNull String fqn,
                              @NotNull PsiModifierListOwner modifierListOwner,
                              String @NotNull ... annotationsToRemove) {
@@ -67,7 +96,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
   /**
    * @deprecated use {@link AddAnnotationModCommandAction} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public AddAnnotationPsiFix(@NotNull String fqn,
                              @NotNull PsiModifierListOwner modifierListOwner,
                              PsiNameValuePair @NotNull [] values,

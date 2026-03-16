@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Caret
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.intellij.plugins.markdown.ui.actions.styling.SelectionUtil.obtainCaretSnapshots
 import kotlin.math.abs
 
 internal object SelectionUtil {

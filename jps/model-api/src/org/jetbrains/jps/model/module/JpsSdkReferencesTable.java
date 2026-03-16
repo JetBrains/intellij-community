@@ -20,8 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 
 public interface JpsSdkReferencesTable extends JpsCompositeElement {
   @Nullable

@@ -5,7 +5,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.util.io.FileUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class ProjectImportWizardStep extends ModuleWizardStep {
   private final WizardContext myContext;

@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.scale.JBUIScale
@@ -24,14 +25,19 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
-import java.util.*
+import java.util.Locale
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.KeyStroke
 import javax.swing.ListCellRenderer
-import kotlin.math.*
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.math.sqrt
+import kotlin.math.tan
 
-private class CalculatorSEContributorFactory : SearchEverywhereContributorFactory<EvaluationResult> {
+internal class CalculatorSEContributorFactory : SearchEverywhereContributorFactory<EvaluationResult> {
   override fun createContributor(initEvent: AnActionEvent): SearchEverywhereContributor<EvaluationResult> {
     return CalculatorSEContributor()
   }
@@ -48,6 +54,7 @@ internal class CalculatorSEContributor : WeightedSearchEverywhereContributor<Eva
   override fun getGroupName(): String = LangBundle.message("search.everywhere.calculator.group.name")
   override fun getSortWeight(): Int = 0
   override fun showInFindResults(): Boolean = false
+  override fun isShownInSeparateTab(): Boolean = Registry.`is`("search.everywhere.calculator.tab", false)
 
   override fun fetchWeightedElements(pattern: String,
                                      progressIndicator: ProgressIndicator,

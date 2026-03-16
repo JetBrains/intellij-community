@@ -1,18 +1,11 @@
-from _typeshed import Incomplete
-from typing import ClassVar
+import datetime
+from typing import Final
 
 from ..core import ChineseNewYearCalendar
 
-holidays: Incomplete
-workdays: Incomplete
+holidays: Final[dict[int, dict[str, list[tuple[int, int]]]]]
+workdays: Final[dict[int, dict[str, list[tuple[int, int]]]]]
 
 class China(ChineseNewYearCalendar):
-    shift_new_years_day: ClassVar[bool]
-    include_chinese_new_year_eve: ClassVar[bool]
-    extra_working_days: Incomplete
+    extra_working_days: list[datetime.date]
     def __init__(self, *args, **kwargs) -> None: ...
-    def get_calendar_holidays(self, year): ...
-    def get_variable_days(self, year): ...
-    def is_working_day(self, day, extra_working_days=None, extra_holidays=None): ...
-    def add_working_days(self, day, delta, extra_working_days=None, extra_holidays=None, keep_datetime: bool = False): ...
-    def sub_working_days(self, day, delta, extra_working_days=None, extra_holidays=None, keep_datetime: bool = False): ...

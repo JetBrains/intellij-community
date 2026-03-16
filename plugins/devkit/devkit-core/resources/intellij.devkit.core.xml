@@ -1,12 +1,15 @@
-<idea-plugin visibility="public" package="org.jetbrains.idea.devkit">
+<idea-plugin visibility="public">
   <dependencies>
     <plugin id="com.intellij.properties"/>
-    <plugin id="com.intellij.java"/>
+    <module name="intellij.java.backend"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.json.backend"/>
     <module name="intellij.properties.backend"/>
     <module name="intellij.properties.backend.psi"/>
     <module name="intellij.libraries.xerces"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.aetherDependencyResolver"/>
+    <!-- endregion -->
   </dependencies>
 
   <resource-bundle>messages.DevKitBundle</resource-bundle>
@@ -30,7 +33,6 @@
     <automaticRenamerFactory implementation="org.jetbrains.idea.devkit.refactoring.InspectionAutomaticRenamerFactory"/>
     <httpRequestHandler implementation="org.jetbrains.idea.devkit.requestHandlers.HttpDebugListener"/>
     <httpRequestHandler implementation="org.jetbrains.idea.devkit.requestHandlers.BuildHttpRequestHandler"/>
-    <httpRequestHandler implementation="org.jetbrains.idea.devkit.requestHandlers.CompileHttpRequestHandler"/>
 
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
     <runConfigurationExtension implementation="org.jetbrains.idea.devkit.run.DevKitApplicationPatcher"/>
@@ -78,6 +80,7 @@
       order="last"
       implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorDomFileSearchScopeProvider"/>
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.PluginModuleReferencesQueryExecutor"/>
+    <referencesSearch implementation="org.jetbrains.idea.devkit.references.PluginAliasReferencesQueryExecutor"/>
     <usageTypeProvider implementation="org.jetbrains.idea.devkit.findUsages.PluginModuleUsageTypeProvider" order="first"/>
 
     <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.productModules.ProductModulesDomFileDescription"
@@ -104,7 +107,11 @@
 
     <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
     <moduleType id="PLUGIN_MODULE" implementationClass="org.jetbrains.idea.devkit.module.PluginModuleType" classpathProvider="true"/>
+    <registryKey key="devkit.web.based.plugin.generator.enabled"
+                 description="Enables the new IDE Plugin module builder based on web backend"
+                 defaultValue="false"/>
     <moduleBuilder builderClass="org.jetbrains.idea.devkit.module.IdePluginModuleBuilder"/>
+    <moduleBuilder builderClass="org.jetbrains.idea.devkit.module.webstarter.IdePluginModuleWebBasedBuilder"/>
     <sdkType implementation="org.jetbrains.idea.devkit.projectRoots.IdeaJdk"/>
     <compileServer.plugin classpath="devkit-jps.jar"/>
 
@@ -119,13 +126,6 @@
 
     <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ExtensionOrderKeywordCompletionContributor"
                             language="XML"/>
-
-    <useScopeEnlarger implementation="org.jetbrains.idea.devkit.driver.RemoteUseScopeEnlarger"/>
-    <methodReferencesSearch implementation="org.jetbrains.idea.devkit.driver.RemoteMethodReferenceSearcher"/>
-    <overridingMethodsSearch implementation="org.jetbrains.idea.devkit.driver.RemoteMethodImplementationSearcher"/>
-    <allOverridingMethodsSearch implementation="org.jetbrains.idea.devkit.driver.RemoteMethodAllImplementationSearcher"/>
-    <directClassInheritorsSearch implementation="org.jetbrains.idea.devkit.driver.RemoteInterfaceDirectImplementationSearcher"/>
-    <classInheritorsSearch implementation="org.jetbrains.idea.devkit.driver.RemoteInterfaceImplementationSearcher"/>
 
     <highlightErrorFilter implementation="org.jetbrains.idea.devkit.highlighting.TestFragmentsErrorFilter"/>
 
@@ -551,6 +551,37 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.ContentModuleNamespaceInspection"
                      key="inspection.content.module.namespace.name"/>
 
+    <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ContentModuleWithoutDedicatedJpsModuleInspection"
+                     key="inspection.content.module.without.dedicated.jps.module.name"/>
+
+    <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     isInternal="true"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.OptionalDependencyViaDependsTagInspection"
+                     key="inspection.optional.dependency.declared.by.depends.tag.name"/>
+
+    <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.WrongPluginModuleAliasInspection"
+                     key="inspection.plugin.module.alias.name"/>
+
+    <localInspection language="UAST"
+                     projectType="INTELLIJ_PLUGIN"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.eel.UseOptimizedEelFunctions"
+                     groupPathKey="inspections.group.path"
+                     groupKey="inspections.group.code"
+                     key="inspection.use.optimized.eel.functions.display.name"/>"
+
     <localInspection language="UAST" projectType="INTELLIJ_PLUGIN" enabledByDefault="true" level="WARNING" shortName="EventLogDescription"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code" key="inspections.event.log.description.display.name"
                      implementationClass="org.jetbrains.idea.devkit.inspections.EventLogDescriptionInspection"/>
@@ -655,7 +686,13 @@
       implementation="org.jetbrains.idea.devkit.references.MessageBundleReferenceContributor$ImplicitUsageProvider"/>
     <codeInsight.implicitSubclassProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitSubclassProvider"/>
 
-    <annotator language="Properties" implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator"/>
+    <localInspection language="Properties"
+                     level="ERROR"
+                     enabledByDefault="true"
+                     key="inspections.plugin.keys.in.platform.registry"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     shortName="PluginKeysAreProhibitedInPlatformRegistry"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesInspection"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
     <backgroundPostStartupActivity
@@ -714,15 +751,13 @@
 
     <!-- INTERNAL -->
     <consoleFilterProvider implementation="org.jetbrains.idea.devkit.run.ModulePathFilterProvider"/>
+    <registryKey key="devkit.module.hyperlink.show.chooser" defaultValue="false"
+                 description="Show file chooser when clicking module names in console (iml + descriptor xml)"/>
 
     <properties.extendedUseScopeProvider implementation="org.jetbrains.idea.devkit.references.BundleExtendedUseScopeProvider"/>
     <properties.spellcheckerMnemonicsTokenizer implementation="org.jetbrains.idea.devkit.spellchecker.DevKitMnemonicsTokenizer"/>
 
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.references.DomTargetUseScopeEnlarger"/>
-
-    <registryKey key="devkit.compose.hot.reload.enabled" defaultValue="false" description="Enable 'Compose Hot Reload' agent for run configurations"/>
-    <registryKey key="devkit.compose.hot.reload.agent.version" defaultValue="" description="'Compose Hot Reload' agent version override"/>
-    <runConfigurationExtension implementation="org.jetbrains.idea.devkit.composeHotReload.ComposeHotReloadCommandLinePatcher" />
 
     <postStartupActivity implementation="org.jetbrains.idea.devkit.templates.UpdateFileTemplatesSchemeToProjectActivity"/>
   </extensions>
@@ -755,11 +790,11 @@
     <addServiceAnnotationProvider
       language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaAddServiceAnnotationProvider"/>
+
+    <LockReqPsiOps
+      language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.threadingModelHelper.java.JavaLockReqPsiOps"/>
   </extensions>
-  <applicationListeners>
-    <listener class="org.jetbrains.idea.devkit.composeHotReload.ComposeHotReloadCommandLinePatcher$ComposeHotReloadRegistryListener"
-              topic="com.intellij.openapi.util.registry.RegistryValueListener" />
-  </applicationListeners>
 
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.inspections.metaInformation.MetaInformationJsonSchemaProviderFactory"/>
@@ -779,6 +814,11 @@
   </extensions>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="DevKit.lang.LockReqPsiOps"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="DevKit.lang.cancellationCheckProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
@@ -879,7 +919,7 @@
       <action id="DevKit.NewAction" class="org.jetbrains.idea.devkit.actions.templates.NewActionAction"
               icon="AllIcons.Actions.RunAnything"/>
       <action id="DevKit.NewService" class="org.jetbrains.idea.devkit.actions.templates.NewServiceAction"
-              icon="org.jetbrains.idea.devkit.DevKitIcons.Service"/>
+              icon="com.intellij.devkit.core.icons.DevkitCoreIcons.Service"/>
       <action id="DevKit.NewState" class="org.jetbrains.idea.devkit.actions.templates.NewPersistentStateAction"
               icon="AllIcons.Ide.ConfigFile"/>
       <action id="DevKit.NewMessageBundleObject" class="org.jetbrains.idea.devkit.actions.templates.NewMessageBundleAction"
@@ -912,11 +952,6 @@
     <action id="UpdateIdeFromSources" class="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateIdeFromSourcesAction">
       <add-to-group group-id="BuildMenu" anchor="last"/>
     </action>
-    <action id="UpdateIdeFromSourcesSettings"
-            class="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateIdeFromSourcesSettingsAction"/>
-
-    <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">
-      <add-to-group group-id="Internal.Dump"/>
-    </action>
+    <action id="UpdateIdeFromSourcesSettings" class="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateIdeFromSourcesSettingsAction"/>
   </actions>
 </idea-plugin>

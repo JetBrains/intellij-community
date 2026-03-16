@@ -22,22 +22,47 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.util.text.nullize
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jdom.Content
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
-import org.jetbrains.idea.maven.model.*
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.model.MavenArtifact
+import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
+import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.model.MavenModel
+import org.jetbrains.idea.maven.model.MavenParent
+import org.jetbrains.idea.maven.model.MavenPlugin
+import org.jetbrains.idea.maven.project.MavenGeneralSettings
+import org.jetbrains.idea.maven.project.MavenImportingSettings
+import org.jetbrains.idea.maven.project.MavenPluginWithArtifact
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectBundle
+import org.jetbrains.idea.maven.project.MavenProjectModelReadHelper
+import org.jetbrains.idea.maven.project.MavenProjectReaderResult
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
+import java.util.IdentityHashMap
+import java.util.Properties
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.isRegularFile
 
 
 @Service(Service.Level.PROJECT)
@@ -403,42 +428,8 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
    */
   private fun resolveProperty(project: MavenProjectData, propertyValue: String): String? {
 
-    var value = propertyValue
-    val recursionProtector = HashSet<String>()
-    while (recursionProtector.add(value)) {
-      val start = value.indexOf("${'$'}{")
-      if (start == -1) return value
-      val end = value.indexOf("}")
-      if (start + 2 >= end) return null // some syntax error probably
-      val variable = value.substring(start + 2, end)
-      val resolvedValue = doResolveVariable(project.properties, variable) ?: return null
-      if (start == 0 && end == value.length - 1) {
-        value = resolvedValue
-        continue
-      }
-      val tail = if (end == value.length - 1) {
-        ""
-      }
-      else {
-        value.substring(end + 1, value.length)
-      }
-      value = value.substring(0, start) + resolvedValue + tail
-    }
-    return value
+   return MavenProjectModelReadHelper.resolveProperty(propertyValue, project.properties)
   }
-
-  private fun doResolveVariable(properties: HashMap<String, String>, variable: String): String? {
-    properties[variable]?.let { return it }
-    if (variable.startsWith("env.")) {
-      val env = variable.substring(4)
-      return when {
-        env.isNotBlank() -> System.getenv(env).nullize(true)
-        else -> null
-      }
-    }
-    return System.getProperty(variable).nullize(true)
-  }
-
 
   private fun CoroutineScope.readRecursively(
     parentModel: Element,
@@ -446,7 +437,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     aggregatorProject: MavenProjectData,
     tree: ProjectTree,
   ): Job = this.launch Read@{
-    val modulesList = parentModel.getChildrenText("modules", "module")
+    val modulesList = aggregatorProject.mavenModel.modules
     modulesList.forEach {
       this.launch {
         try {
@@ -495,8 +486,20 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     mavenModel.name = MavenJDOMUtil.findChildValueByPath(rootModel, "name", id.artifactId)
     mavenModel.build.finalName = MavenJDOMUtil.findChildValueByPath(rootModel, "build.finalName")
 
-    mavenModel.modules = rootModel.getChildrenText("modules", "module")
     mavenModel.packaging = rootModel.getChildTextTrim("packaging") ?: "jar"
+
+    val modulesString = rootModel.getChildrenText("modules", "module")
+    val subprojectsString = rootModel.getChildrenText("subprojects", "subproject")
+    mavenModel.modules = modulesString + subprojectsString
+
+    if (mavenModel.packaging == "pom" &&
+        mavenModel.modules.isEmpty() &&
+        rootModel.getChild("modules") == null &&
+        rootModel.getChild("subprojects") == null &&
+        rootModel.getChildTextTrim("modelVersion") != MavenConstants.MODEL_VERSION_4_0_0
+    ) {
+      mavenModel.modules = scanChildFoldersWithPoms(file)
+    }
 
     val buildDir = MavenJDOMUtil.findChildValueByPath(rootModel, "build.directory") ?: "target"
     mavenModel.build.directory = parentFolder.resolve(buildDir).toString()
@@ -504,14 +507,16 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     mavenModel.build.testOutputDirectory = parentFolder.resolve("$buildDir/test-classes").toString()
 
     declaredDependencies.addAll(
-      MavenJDOMUtil.findChildrenByPath(rootModel, "dependencies", "dependency").map {
+      MavenJDOMUtil.findChildrenByPath(rootModel, "dependencies", "dependency").map
+      {
         DependencyData(extractId(it), it.getChildTextTrim("scope"), it.getChildTextTrim("classifier"))
       }
     )
 
     dependencyManagement.addAll(
       MavenJDOMUtil.findChildrenByPath(rootModel.getChild("dependencyManagement"), "dependencies", "dependency")
-        .map { DependencyData(extractId(it), it.getChildTextTrim("scope"), it.getChildTextTrim("classifier")) }
+        .map
+        { DependencyData(extractId(it), it.getChildTextTrim("scope"), it.getChildTextTrim("classifier")) }
     )
 
     applyReadStateToMavenProject(mavenModel, mavenProject)
@@ -540,6 +545,13 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
       }
     }
 
+  }
+
+  private fun scanChildFoldersWithPoms(file: VirtualFile): List<String> {
+    val parentDir = file.parent ?: return emptyList()
+    return parentDir.children.filter { it.isDirectory }
+      .filter { it.toNioPath().resolve("pom.xml").isRegularFile() }
+      .map { it.name }
   }
 
   private fun applyReadStateToMavenProject(mavenModel: MavenModel, mavenProject: MavenProject) {
@@ -710,6 +722,7 @@ private class ProjectTree {
       managedMavenIds[trimVersion(root.mavenId)] = root
     }
   }
+
   suspend fun replace(newMavenId: MavenId, oldMavenId: MavenId) {
     mutex.withLock {
       val data = fullMavenIds[oldMavenId] ?: return@withLock

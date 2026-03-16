@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.List;
 
 public class EclipseProjectDetectorTest {
-
   @Test
   public void testWorkspaces() throws IOException {
     String[] workspaces = EclipseProjectDetector.getWorkspaces(

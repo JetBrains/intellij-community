@@ -6,7 +6,11 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.util.*;
+import com.intellij.psi.stubs.StubBuildCachedValuesManager.StubBuildCachedValueProvider;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyTokenTypes;
@@ -17,6 +21,8 @@ import com.jetbrains.python.ast.impl.PyUtilCore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueStubBuildOptimized;
 
 
 @ApiStatus.Experimental
@@ -128,10 +134,15 @@ public interface PyAstTargetExpression extends PyAstQualifiedExpression, PsiName
    */
   default @Nullable PyAstExpression findAssignedValue() {
     PyPsiUtilsCore.assertValid(this);
-    return CachedValuesManager.getCachedValue(this,
-                                              () -> CachedValueProvider.Result
-                                                .create(findAssignedValueInternal(), PsiModificationTracker.MODIFICATION_COUNT));
+    return getCachedValueStubBuildOptimized(this, FIND_ASSIGNED_VALUE_PROVIDER);
   }
+
+  StubBuildCachedValueProvider<PyAstExpression, PyAstTargetExpression>
+    FIND_ASSIGNED_VALUE_PROVIDER = new StubBuildCachedValueProvider<>(
+    "python.findAssignedValue",
+    expression -> CachedValueProvider.Result
+      .create(expression.findAssignedValueInternal(), PsiModificationTracker.MODIFICATION_COUNT)
+  );
 
   private @Nullable PyAstExpression findAssignedValueInternal() {
     final PyAstAssignmentStatement assignment = PsiTreeUtil.getParentOfType(this, PyAstAssignmentStatement.class);

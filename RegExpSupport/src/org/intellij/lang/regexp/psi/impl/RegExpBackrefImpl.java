@@ -59,6 +59,11 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
                s.substring(1);
     }
 
+    @Override
+    public boolean isRecursiveGroup() {
+        return getUnescapedText().startsWith("(?");
+    }
+
     private static @NotNull String getPcreNumberedGroupIndexNumberText(String s) {
       return trimEnd(s, ")");
     }

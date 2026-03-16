@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
-import java.util.*
+import java.util.StringTokenizer
 
 @ApiStatus.Internal
 fun checkFileNameInput(inputString: String, fileName: String, directory: PsiDirectory): String? {

@@ -1,29 +1,43 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.ide
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.currentOrNull
 import com.intellij.codeWithMe.ClientId.Companion.withExplicitClientId
-import com.intellij.concurrency.*
+import com.intellij.concurrency.ContextAwareRunnable
+import com.intellij.concurrency.captureThreadContext
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.installThreadContext
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.EventWatcher
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.ide.MnemonicUsageCollector.logMnemonicUsed
-import com.intellij.ide.actions.MaximizeActiveDialogAction
 import com.intellij.ide.dnd.DnDManager
 import com.intellij.ide.dnd.DnDManagerImpl
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.maximize
+import com.intellij.ide.ui.normalize
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ThreadingSupport
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.impl.InternalThreading
 import com.intellij.openapi.application.impl.InvocationUtil
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.application.wrapHighLevelFunctionsInWriteIntent
+import com.intellij.openapi.application.wrapHighLevelInputEventsInWriteIntentLock
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.impl.ad.isRhizomeAdRebornEnabled
 import com.intellij.openapi.editor.impl.ad.util.ThreadLocalRhizomeDB
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
@@ -64,8 +78,28 @@ import org.jetbrains.annotations.VisibleForTesting
 import sun.awt.AppContext
 import sun.awt.PeerEvent
 import sun.awt.SunToolkit
-import java.awt.*
-import java.awt.event.*
+import java.awt.AWTEvent
+import java.awt.AWTException
+import java.awt.Component
+import java.awt.Event
+import java.awt.EventQueue
+import java.awt.KeyboardFocusManager
+import java.awt.Robot
+import java.awt.Toolkit
+import java.awt.TrayIcon
+import java.awt.Window
+import java.awt.event.ActionEvent
+import java.awt.event.ComponentEvent
+import java.awt.event.FocusEvent
+import java.awt.event.HierarchyEvent
+import java.awt.event.InputEvent
+import java.awt.event.InputMethodEvent
+import java.awt.event.InvocationEvent
+import java.awt.event.ItemEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
+import java.awt.event.MouseWheelEvent
+import java.awt.event.WindowEvent
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -74,8 +108,15 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
-import javax.swing.*
+import javax.swing.CellRendererPane
+import javax.swing.JComponent
+import javax.swing.JDialog
+import javax.swing.JTable
+import javax.swing.JTree
+import javax.swing.MenuSelectionManager
+import javax.swing.SwingUtilities
 import javax.swing.plaf.basic.ComboPopup
+import kotlin.coroutines.cancellation.CancellationException
 
 @Suppress("FunctionName")
 class IdeEventQueue private constructor() : EventQueue() {
@@ -94,6 +135,11 @@ class IdeEventQueue private constructor() : EventQueue() {
   @get:Internal
   var popupTriggerTime: Long = -1
     private set
+
+
+  @Internal
+  @Volatile
+  var actuallyWrapInputEventsIntoWriteIntentLock: Boolean = wrapHighLevelInputEventsInWriteIntentLock
 
   /**
    * Counter of processed events. It is used to assert that data context lives only inside a single Swing event.
@@ -141,9 +187,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     assert(isDispatchThread()) { Thread.currentThread() }
     val systemEventQueue = Toolkit.getDefaultToolkit().systemEventQueue
     assert(systemEventQueue !is IdeEventQueue) { systemEventQueue }
-    if (useNonBlockingFlushQueue) {
-      LaterInvocator.initializeNonBlockingFlushQueue(threadingSupport)
-    }
+    LaterInvocator.initializeNonBlockingFlushQueue(threadingSupport)
     systemEventQueue.push(this)
     EDT.updateEdt()
     replaceDefaultKeyboardFocusManager()
@@ -328,8 +372,8 @@ class IdeEventQueue private constructor() : EventQueue() {
           val progressManager = ProgressManager.getInstanceOrNull()
           try {
             runCustomProcessors(finalEvent, preProcessors)
-            performActivity(finalEvent, !nakedRunnable && isPureSwingEventWilEnabled && !threadingSupport.isInsideUnlockedWriteIntentLock()) {
-              if (progressManager == null || (runnable != null && useNonBlockingFlushQueue && InvocationUtil.isFlushNow(runnable))) {
+            performActivity(finalEvent) {
+              if (progressManager == null || (runnable != null && InvocationUtil.isFlushNow(runnable))) {
                 _dispatchEvent(finalEvent)
               }
               else {
@@ -479,7 +523,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     if (isUserActivityEvent(e)) {
       ActivityTracker.getInstance().inc()
     }
-    if (popupManager.isPopupActive && !shouldSkipListeners(e) && threadingSupport.runPreventiveWriteIntentReadAction { popupManager.dispatch(e) }) {
+    if (popupManager.isPopupActive && !shouldSkipListeners(e) && popupManager.dispatch(e)) {
       if (keyEventDispatcher.isWaitingForSecondKeyStroke) {
         keyEventDispatcher.state = KeyState.STATE_INIT
       }
@@ -489,7 +533,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     if (e is WindowEvent) {
       // app activation can call methods that need write intent (like project saving)
       if (wrapHighLevelFunctionsInWriteIntent) {
-        threadingSupport.runPreventiveWriteIntentReadAction { processAppActivationEvent(e) }
+        threadingSupport.runWriteIntentReadAction { processAppActivationEvent(e) }
       }
       else {
         processAppActivationEvent(e)
@@ -505,8 +549,20 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
 
     when {
-      e is MouseEvent -> threadingSupport.runPreventiveWriteIntentReadAction { dispatchMouseEvent(e) }
-      e is KeyEvent -> threadingSupport.runPreventiveWriteIntentReadAction { dispatchKeyEvent(e) }
+      e is MouseEvent -> if (actuallyWrapInputEventsIntoWriteIntentLock) {
+        threadingSupport.runWriteIntentReadAction {
+          dispatchMouseEvent(e)
+        }
+      } else {
+        dispatchMouseEvent(e)
+      }
+      e is KeyEvent -> if (actuallyWrapInputEventsIntoWriteIntentLock) {
+        threadingSupport.runWriteIntentReadAction {
+          dispatchKeyEvent(e)
+        }
+      } else {
+        dispatchKeyEvent(e)
+      }
       appIsLoaded() -> {
         val app = ApplicationManagerEx.getApplicationEx()
         if (e is ComponentEvent) {
@@ -522,7 +578,7 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   // todo: remove when listeners would not acquire WI
   private fun shouldSkipListeners(e: AWTEvent): Boolean {
-    return e is InvocationEvent && e.toString().contains(ThreadingSupport.RunnableWithTransferredWriteAction.NAME)
+    return e is InternalThreading.TransferredWriteActionEvent
   }
 
   private fun isUserActivityEvent(e: AWTEvent): Boolean =
@@ -618,11 +674,11 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
 
     if (dispatchers.isNotEmpty() || hasOldDispatchers) {
-      val result = WriteIntentReadAction.compute<Boolean, Throwable> {
+      val result = WriteIntentReadAction.computeThrowable<Boolean, Throwable> {
         for (eachDispatcher in dispatchers) {
           try {
             if (eachDispatcher.dispatch(e)) {
-              return@compute true
+              return@computeThrowable true
             }
           }
           catch (t: Throwable) {
@@ -633,7 +689,7 @@ class IdeEventQueue private constructor() : EventQueue() {
         for (eachDispatcher in DISPATCHER_EP.extensionsIfPointIsRegistered) {
           try {
             if (eachDispatcher !is NonLockedEventDispatcher && eachDispatcher.dispatch(e)) {
-              return@compute true
+              return@computeThrowable true
             }
           }
           catch (t: Throwable) {
@@ -792,10 +848,10 @@ class IdeEventQueue private constructor() : EventQueue() {
         if (parent is JDialog) {
           invokeLater {
             if (e.keyCode == KeyEvent.VK_UP) {
-              MaximizeActiveDialogAction.maximize(parent)
+              parent.maximize()
             }
             else {
-              MaximizeActiveDialogAction.normalize(parent)
+              parent.normalize()
             }
           }
           return true
@@ -1035,7 +1091,7 @@ private fun isInputEvent(e: AWTEvent): Boolean {
   return e is InputEvent || e is InputMethodEvent || e is WindowEvent || e is ActionEvent
 }
 
-internal fun performActivity(e: AWTEvent, needWIL: Boolean, runnable: () -> Unit) {
+internal fun performActivity(e: AWTEvent, runnable: () -> Unit) {
   var transactionGuard = transactionGuard
   if (transactionGuard == null && appIsLoaded()) {
     val app = ApplicationManager.getApplication()
@@ -1051,18 +1107,7 @@ internal fun performActivity(e: AWTEvent, needWIL: Boolean, runnable: () -> Unit
     runnable()
   }
   else {
-    val runnableWithWIL =
-      if (needWIL) {
-        {
-          WriteIntentReadAction.run {
-            runnable()
-          }
-        }
-      }
-      else {
-        runnable
-      }
-    transactionGuard.performActivity(isInputEvent(e) || e is ItemEvent || e is FocusEvent, runnableWithWIL)
+    transactionGuard.performActivity(isInputEvent(e) || e is ItemEvent || e is FocusEvent, runnable)
   }
 }
 
@@ -1242,7 +1287,9 @@ private class WindowsAltSuppressor : IdeEventQueue.NonLockedEventDispatcher {
     if (uiSettings == null ||
         !SystemInfoRt.isWindows ||
         !Registry.`is`("actionSystem.win.suppressAlt", true) ||
-        !(uiSettings.hideToolStripes || uiSettings.presentationMode)) {
+        // Need to handle Alt to show hidden tool stripes by double Alt or to focus the main menu
+        !(uiSettings.hideToolStripes || uiSettings.presentationMode) &&
+        !Registry.`is`("ide.windows.main.menu.focus.on.alt", false)) {
       return false
     }
 
@@ -1311,7 +1358,7 @@ private fun abracadabraDaberBoreh(eventQueue: IdeEventQueue) {
 }
 
 private fun setImplicitThreadLocalRhizomeIfEnabled() {
-  if (isRhizomeAdEnabled) {
+  if (isRhizomeAdRebornEnabled) {
     // It is a workaround on tricky `updateDbInTheEventDispatchThread()` where
     // the thread local DB is reset by `fleet.kernel.DbSource.ContextElement.restoreThreadContext`
     try {
@@ -1340,7 +1387,9 @@ fun IdeEventQueue.flushExistingEvents() {
         dispatchEvent(nextEvent)
       }
       catch (e: Exception) {
-        Logs.LOG.error(e)
+        if (e !is CancellationException && e !is ControlFlowException) {
+          Logs.LOG.error(e)
+        }
       }
     }
   }

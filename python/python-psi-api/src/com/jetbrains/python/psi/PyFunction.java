@@ -5,7 +5,11 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.util.ArrayFactory;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.ast.*;
+import com.jetbrains.python.ast.PyAstCallExpression;
+import com.jetbrains.python.ast.PyAstExpressionStatement;
+import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.ast.PyAstReferenceExpression;
+import com.jetbrains.python.ast.PyAstStatement;
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
@@ -41,9 +45,9 @@ public interface PyFunction extends PyAstFunction, StubBasedPsiElement<PyFunctio
 
   /**
    * Infers function's return type by analyzing <b>return statements</b> (including implicit returns) and <b>yield expression</b>.
-   * In contrast with {@link TypeEvalContext#getReturnType(PyCallable)} does not consider 
+   * In contrast with {@link TypeEvalContext#getReturnType(PyCallable)} does not consider
    * return type annotations or any other {@link PyTypeProvider}.
-   * 
+   *
    * @apiNote Does not cache the result.
    */
   @ApiStatus.Internal
@@ -55,8 +59,8 @@ public interface PyFunction extends PyAstFunction, StubBasedPsiElement<PyFunctio
    * This includes explicit 'return' statements and statements that can complete
    * normally with an implicit 'return None', excluding statements that raise exceptions.
    *
-   * @see PyFunction#getReturnStatementType(TypeEvalContext) 
    * @return List of exit point statements, in control flow order
+   * @see PyFunction#getReturnStatementType(TypeEvalContext)
    */
   @ApiStatus.Internal
   @NotNull
@@ -78,6 +82,7 @@ public interface PyFunction extends PyAstFunction, StubBasedPsiElement<PyFunctio
   /**
    * Searches for function attributes.
    * See <a href="http://legacy.python.org/dev/peps/pep-0232/">PEP-0232</a>
+   *
    * @return assignment statements for function attributes
    */
   @NotNull

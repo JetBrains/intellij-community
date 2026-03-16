@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * <p>Describes a filetype.</p>
@@ -76,5 +76,12 @@ public interface FileType {
   default @NonNls @Nullable String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
     // TODO see MetadataJsonFileType (it's actually text but tries indexing itself as binary)
     return null;
+  }
+
+  /**
+   * @return true if the charset is hard-coded, false if file type does not restrict encoding
+   */
+  default boolean isCharsetHardcoded() {
+    return false;
   }
 }

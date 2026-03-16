@@ -3,8 +3,8 @@ package com.intellij.ui.popup;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Popup;
+import java.awt.Window;
 
 // This class is intended to be a wrapper over JDK's heavyweight popup, which disables popup recycling
 public final class HeavyWeightPopup extends Popup {

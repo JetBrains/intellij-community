@@ -3,7 +3,11 @@ package org.zmlx.hg4idea;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.SettingsCategory;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 
 @State(
   name = "HgRememberedInputs",

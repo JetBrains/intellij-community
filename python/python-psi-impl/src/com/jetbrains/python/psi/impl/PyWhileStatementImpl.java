@@ -11,7 +11,8 @@ public class PyWhileStatementImpl extends PyElementImpl implements PyWhileStatem
     super(astNode);
   }
 
-  @Override protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyWhileStatement(this);
   }
 }

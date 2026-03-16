@@ -103,7 +103,7 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
             if (descriptor instanceof PsiPresentableMetaDataRenderStrategy renderStrategy && renderStrategy.isRenderExpensive()) {
               element = element.withExpensiveRenderer(new LookupElementRenderer<>() {
                 @Override
-                public void renderElement(LookupElement element, LookupElementPresentation presentation) {
+                public void renderElement(@NotNull LookupElement element, @NotNull LookupElementPresentation presentation) {
                   element.renderElement(presentation);
                   presentation.setIcon(presentableMetaData.getIcon());
                   String typeName = presentableMetaData.getTypeName();

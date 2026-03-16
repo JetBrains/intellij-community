@@ -23,6 +23,7 @@ public final class ServiceDescriptor {
                            String testServiceImplementation,
                            String headlessImplementation,
                            boolean overrides,
+                           boolean open,
                            @Nullable String configurationSchemaKey,
                            @NotNull PreloadMode preload,
                            @Nullable ClientKind client,
@@ -32,6 +33,7 @@ public final class ServiceDescriptor {
     this.testServiceImplementation = testServiceImplementation;
     this.headlessImplementation = headlessImplementation;
     this.overrides = overrides;
+    this.open = open;
     this.configurationSchemaKey = configurationSchemaKey;
     this.preload = preload;
     this.client = client;
@@ -70,10 +72,27 @@ public final class ServiceDescriptor {
   public final String headlessImplementation;
 
   /**
-   * Allows overriding existing registered implementation for given {@link #serviceInterface}.
+   * Declares that this service overrides an existing implementation of the same
+   * {@link #serviceInterface}.
+   * <p>
+   * The overridden service must be marked as {@link #open}.
+   * <p>
+   * This attribute may be used together with {@link #open}, but such usage is
+   * discouraged as it may lead to non-deterministic behavior.
    */
   @Attribute
   public final boolean overrides;
+
+  /**
+   * Declares that this service is eligible to be overridden by another service.
+   * <p>
+   * Only services marked as open may be overridden.
+   * <p>
+   * This attribute may be used together with {@link #overrides}, but such usage
+   * is discouraged as it may lead to non-deterministic behavior.
+   */
+  @Attribute
+  public final boolean open;
 
   /**
    * Cannot be specified as part of {@link State} because to get annotation, class must be loaded, but it cannot be done for performance reasons.
@@ -112,7 +131,7 @@ public final class ServiceDescriptor {
       return headlessImplementation;
     }
     else {
-      return serviceImplementation;
+      return serviceImplementation; // empty serviceImplementation will be replaced with null by the reader
     }
   }
 
@@ -124,6 +143,7 @@ public final class ServiceDescriptor {
            ", testServiceImplementation='" + testServiceImplementation + '\'' +
            ", headlessImplementation='" + headlessImplementation + '\'' +
            ", overrides=" + overrides +
+           ", open=" + open +
            ", configurationSchemaKey='" + configurationSchemaKey + '\'' +
            ", preload=" + preload +
            ", client=" + client +

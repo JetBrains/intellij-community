@@ -1,10 +1,29 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.ResultKind;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -444,7 +463,7 @@ abstract class TerminalOperation extends Operation {
     @Override
     String generate(ChainVariable inVar, StreamToLoopReplacementContext context) {
       mySupplier.transform(context);
-      String candidate = mySupplier.suggestFinalOutputNames(context, myAccumulator.getParameterName(0), "acc").get(0);
+      String candidate = mySupplier.suggestFinalOutputNames(context, myAccumulator.getParameterName(0), "acc").getFirst();
       String acc = context.declareResult(candidate, mySupplier.getResultType(), mySupplier.getText(), ResultKind.FINAL);
       myAccumulator.transform(context, acc, inVar.getName());
       return myAccumulator.getStatementText();
@@ -764,7 +783,7 @@ abstract class TerminalOperation extends Operation {
 
     ToCollectionTerminalOperation(PsiType resultType, FunctionHelper fn, String desiredName) {
       super(resultType, CommonClassNames.JAVA_UTIL_COLLECTION,
-            context -> fn.suggestFinalOutputNames(context, desiredName, "collection").get(0), fn);
+            context -> fn.suggestFinalOutputNames(context, desiredName, "collection").getFirst(), fn);
       myList = InheritanceUtil.isInheritor(resultType, CommonClassNames.JAVA_UTIL_LIST);
     }
 

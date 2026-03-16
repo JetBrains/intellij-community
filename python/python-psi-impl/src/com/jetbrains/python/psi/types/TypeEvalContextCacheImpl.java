@@ -43,7 +43,8 @@ final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
         // This method is called if cache is empty. Create new map for it.
         // Concurrent map allows several threads to call get and put, so it is thread safe but not atomic
         final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = ContainerUtil.createConcurrentSoftValueMap();
-        return new CachedValueProvider.Result<>(map, PyLibraryModificationTracker.Companion.getInstance(project), myLowMemoryModificationTracker);
+        return new CachedValueProvider.Result<>(map, PyLibraryModificationTracker.Companion.getInstance(project),
+                                                myLowMemoryModificationTracker);
       }
     });
 

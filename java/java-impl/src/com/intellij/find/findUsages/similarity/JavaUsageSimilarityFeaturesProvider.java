@@ -2,7 +2,23 @@
 package com.intellij.find.findUsages.similarity;
 
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiConditionalLoopStatement;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiWhileStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider;

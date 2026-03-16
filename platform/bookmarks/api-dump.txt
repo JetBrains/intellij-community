@@ -67,7 +67,6 @@ f:com.intellij.ide.bookmark.providers.LineBookmarkImpl
 - navigate(Z):V
 f:com.intellij.ide.bookmark.providers.LineBookmarkProvider
 - com.intellij.ide.bookmark.BookmarkProvider
-- sf:Companion:com.intellij.ide.bookmark.providers.LineBookmarkProvider$Companion
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - compare(com.intellij.ide.bookmark.Bookmark,com.intellij.ide.bookmark.Bookmark):I
 - f:createBookmark(com.intellij.openapi.editor.Editor,java.lang.Integer):com.intellij.ide.bookmark.FileBookmark
@@ -76,12 +75,9 @@ f:com.intellij.ide.bookmark.providers.LineBookmarkProvider
 - createBookmark(java.util.Map):com.intellij.ide.bookmark.Bookmark
 - bs:createBookmark$default(com.intellij.ide.bookmark.providers.LineBookmarkProvider,com.intellij.openapi.editor.Editor,java.lang.Integer,I,java.lang.Object):com.intellij.ide.bookmark.FileBookmark
 - bs:createBookmark$default(com.intellij.ide.bookmark.providers.LineBookmarkProvider,com.intellij.openapi.vfs.VirtualFile,I,I,java.lang.Object):com.intellij.ide.bookmark.FileBookmark
-- sf:find(com.intellij.openapi.project.Project):com.intellij.ide.bookmark.providers.LineBookmarkProvider
 - getProject():com.intellij.openapi.project.Project
 - getWeight():I
 - prepareGroup(java.util.List):java.util.List
-f:com.intellij.ide.bookmark.providers.LineBookmarkProvider$Companion
-- f:find(com.intellij.openapi.project.Project):com.intellij.ide.bookmark.providers.LineBookmarkProvider
 f:com.intellij.ide.bookmark.providers.LineBookmarkProvider$Util
 - sf:INSTANCE:com.intellij.ide.bookmark.providers.LineBookmarkProvider$Util
 - sf:find(com.intellij.openapi.project.Project):com.intellij.ide.bookmark.providers.LineBookmarkProvider
@@ -107,12 +103,14 @@ f:com.intellij.ide.bookmarks.Bookmark
 - setDescription(java.lang.String):V
 - setMnemonic(C):V
 f:com.intellij.ide.bookmarks.BookmarkManager
+- com.intellij.openapi.Disposable
 - com.intellij.openapi.components.PersistentStateComponent
 - <init>(com.intellij.openapi.project.Project):V
 - addFileBookmark(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
 - addTextBookmark(com.intellij.openapi.vfs.VirtualFile,I,java.lang.String):com.intellij.ide.bookmarks.Bookmark
 - applyNewStateInTestMode(java.util.List):V
 - deleteMnemonic(com.intellij.ide.bookmarks.Bookmark):V
+- dispose():V
 - findBookmarkForMnemonic(C):com.intellij.ide.bookmarks.Bookmark
 - findEditorBookmark(com.intellij.openapi.editor.Document,I):com.intellij.ide.bookmarks.Bookmark
 - findElementBookmark(com.intellij.psi.PsiElement):com.intellij.ide.bookmarks.Bookmark

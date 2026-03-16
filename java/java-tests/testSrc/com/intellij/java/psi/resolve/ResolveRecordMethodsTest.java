@@ -2,7 +2,18 @@
 package com.intellij.java.psi.resolve;
 
 import com.intellij.lang.jvm.JvmParameter;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -35,11 +46,11 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
     assertEquals(target.getTextOffset(), components[0].getTextOffset());
     assertEquals(List.of("F", "M", "T"),
                  ContainerUtil.map(components[0].getAnnotations(), PsiAnnotation::getQualifiedName));
-    assertEquals(List.of("M", "T"), 
+    assertEquals(List.of("M", "T"),
                  ContainerUtil.map(targetMethod.getAnnotations(), PsiAnnotation::getQualifiedName));
-    assertEquals(List.of("M", "T"), 
+    assertEquals(List.of("M", "T"),
                  ContainerUtil.map(targetMethod.getModifierList().getAnnotations(), PsiAnnotation::getQualifiedName));
-    assertEquals(List.of("T1"), 
+    assertEquals(List.of("T1"),
                  ContainerUtil.map(returnType.getAnnotations(), PsiAnnotation::getQualifiedName));
     assertFalse(targetMethod.hasAnnotation("F"));
     assertFalse(targetMethod.getModifierList().hasAnnotation("F"));
@@ -129,7 +140,7 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
         
         public interface @CustomAnnotation {
         }
-      
+        
         """);
       PsiJavaFile file = (PsiJavaFile)myFixture.configureByText("DumbRecord.java",
             """
@@ -154,6 +165,25 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
           }
         }
       }
+    });
+  }
+
+  public void testMethodsDumbModeWithExplicitConstructor() {
+    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
+      String text = """
+        import java.util.List;
+        
+        record R2(List<String> part1, String part2) implements Runnable {
+          R1(List<String> part1, String part2) {
+            this(part1.toString().trim(), part2);
+          }
+        }
+        """;
+      PsiJavaFile file = (PsiJavaFile)myFixture.configureByText("DumbRecord.java", text);
+      PsiClass psiClass = file.getClasses()[0];
+      PsiMethod[] methods = psiClass.getMethods();
+      //1 constructor + 2 component methods
+      assertEquals(3, methods.length);
     });
   }
 }

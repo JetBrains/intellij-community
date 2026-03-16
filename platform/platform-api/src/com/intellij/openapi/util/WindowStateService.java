@@ -7,7 +7,11 @@ import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.GraphicsDevice;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
 
 public abstract class WindowStateService {
   private final Project project;

@@ -46,10 +46,12 @@ fun convertStubToRuntimePackageName(name: QualifiedName): QualifiedName {
  *
  * Requires [withoutStubs] to be False and [dir] to be lib root.
  */
-fun findStubPackage(dir: PsiDirectory,
-                    referencedName: String,
-                    checkForPackage: Boolean,
-                    withoutStubs: Boolean): Set<PsiDirectory>? {
+fun findStubPackage(
+  dir: PsiDirectory,
+  referencedName: String,
+  checkForPackage: Boolean,
+  withoutStubs: Boolean,
+): Set<PsiDirectory>? {
   if (!withoutStubs && dir.virtualFile.let { it == getClassOrContentOrSourceRoot(dir.project, it) }) {
     val stubPackageName = "$referencedName$STUBS_SUFFIX"
     val stubPackage = dir.findSubdirectory(stubPackageName)
@@ -145,7 +147,8 @@ internal fun isInInlinePackage(element: PsiElement, module: Module?): Boolean {
   val cached = element.getUserData(INLINE_PACKAGE_KEY)
   if (cached != null) return cached
 
-  val result = !PyiUtil.isPyiFileOfPackage(element) && (element is PyFile || PyUtil.turnDirIntoInit(element) is PyFile) && getPyTyped(element) != null
+  val result = !PyiUtil.isPyiFileOfPackage(element) && (element is PyFile || PyUtil.turnDirIntoInit(element) is PyFile) && getPyTyped(
+    element) != null
 
   element.putUserData(INLINE_PACKAGE_KEY, result)
   return result

@@ -40,7 +40,7 @@ class PyInlineFunctionTest : PyTestCase() {
         PyInlineFunctionProcessor(myFixture.project, myFixture. editor, element as PyFunction, reference, myInlineThisOnly = true, removeDeclaration = false).run()
       }
       else {
-        PyInlineFunctionHandler.getInstance().inlineElement(myFixture.project, myFixture.editor, element)
+        PyInlineFunctionHandler.Helper.getInstance().inlineElement(myFixture.project, myFixture.editor, element)
       }
       fail("Expected error: $expectedError, but got none")
     }
@@ -110,7 +110,9 @@ class PyInlineFunctionTest : PyTestCase() {
   }
   fun testInvocationOnDeclaration() {
     myFixture.configureByFile("${getTestName(true)}.py")
-    assertNull("Calling inline function on declaration should not return a reference, but did.", PyInlineFunctionHandler.findReference(myFixture.editor))
+    assertNull("Calling inline function on declaration should not return a reference, but did.",
+               PyInlineFunctionHandler.Helper.findReference(myFixture.editor)
+    )
   }
   fun testConstructor() = doTestError("Cannot inline constructor calls")
   fun testBuiltin() = doTestError("Cannot inline builtin functions")
@@ -130,4 +132,5 @@ class PyInlineFunctionTest : PyTestCase() {
   fun testUsedAsDecorator() = doTestError("The function foo is used as a decorator and cannot be inlined. The function definition will not be removed", isReferenceError = true)
   fun testUsedAsReference() = doTestError("The function foo is used as a reference and cannot be inlined. The function definition will not be removed", isReferenceError = true)
   fun testUsesArgumentUnpacking() = doTestError("The function foo uses argument unpacking and cannot be inlined. The function definition will not be removed", isReferenceError = true)
+  fun testNestedIfElseIndentation() = doTest()
 }

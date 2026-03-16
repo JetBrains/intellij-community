@@ -3,7 +3,6 @@ package com.intellij.polySymbols.testFramework
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import kotlin.collections.iterator
 
 open class DebugOutputPrinter {
 

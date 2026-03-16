@@ -70,4 +70,11 @@ object ContentRootAssertions {
     val actualRoots = moduleEntity.contentRoots.map { it.url }
     CollectionAssertions.assertEqualsUnordered(expectedRoots, actualRoots)
   }
+
+  @JvmStatic
+  fun assertContentRootsOrdered(moduleEntity: ModuleEntity, expectedRoots: List<VirtualFileUrl>) {
+    val actualRoots = moduleEntity.contentRoots.map { it.url }
+    CollectionAssertions.assertEqualsOrdered(expectedRoots, actualRoots)
+  }
+
 }

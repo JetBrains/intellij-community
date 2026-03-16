@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
+import java.util.Locale
 import java.util.function.IntPredicate
 
 private val logger = logger<JsonSettingsModel>()

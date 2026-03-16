@@ -9,7 +9,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.javac.rpc.JavacRemoteProto;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileManager;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardLocation;
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;

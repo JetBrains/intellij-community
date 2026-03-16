@@ -6,7 +6,12 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
@@ -48,7 +53,8 @@ import org.jetbrains.annotations.CalledInAny
 import java.awt.Graphics
 import java.awt.Point
 import java.lang.ref.WeakReference
-import java.util.*
+import java.util.BitSet
+import java.util.EventListener
 import javax.swing.JComponent
 
 /**
@@ -88,6 +94,9 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
 
   fun addListener(listener: Listener, disposable: Disposable)
 
+  @ApiStatus.Internal
+  fun addListener(listener: LineStatusTrackerListener, disposable: Disposable)
+
   open class ListenerAdapter : Listener
 
   /**
@@ -112,20 +121,6 @@ abstract class PartialCommitHelper(val content: String) {
 }
 
 class PartialCommitContent(val vcsContent: CharSequence, val currentContent: CharSequence, val rangesToCommit: List<LocalRange>)
-
-enum class ExclusionState { ALL_INCLUDED, ALL_EXCLUDED, PARTIALLY, NO_CHANGES }
-
-class LocalRange internal constructor(line1: Int, line2: Int, vcsLine1: Int, vcsLine2: Int, innerRanges: List<InnerRange>?,
-                                      override val clientIds: List<ClientId>,
-                                      val changelistId: String, val exclusionState: RangeExclusionState)
-  : Range(line1, line2, vcsLine1, vcsLine2, innerRanges), LocalLineStatusTrackerImpl.LstLocalRange {
-  init {
-    if (exclusionState is RangeExclusionState.Partial) {
-      exclusionState.validate(vcsLine2 - vcsLine1, line2 - line1)
-    }
-  }
-}
-
 
 @ApiStatus.Internal
 class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
@@ -156,6 +151,8 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
   private val undoableActions: WeakList<MyUndoableAction> = WeakList()
 
+  private val eventDispatcher = EventDispatcher.create(PartialLocalLineStatusTracker.Listener::class.java)
+
   init {
     defaultMarker = ChangeListMarker(changeListManager.defaultChangeList)
     affectedChangeLists.add(defaultMarker.changelistId)
@@ -164,6 +161,10 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
       document.addDocumentListener(MyUndoDocumentListener(), disposable)
       project.messageBus.connect(disposable).subscribe(CommandListener.TOPIC, MyUndoCommandListener())
       Disposer.register(disposable, Disposable { dropExistingUndoActions() })
+    }
+
+    Disposer.register(disposable) {
+      eventDispatcher.listeners.clear()
     }
 
     documentTracker.addHandler(PartialDocumentTrackerHandler())
@@ -1032,11 +1033,13 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
   }
 
 
-  private val eventDispatcher = EventDispatcher.create(PartialLocalLineStatusTracker.Listener::class.java)
   override fun addListener(listener: PartialLocalLineStatusTracker.Listener, disposable: Disposable) {
     eventDispatcher.addListener(listener, disposable)
   }
 
+  override fun addListener(listener: LineStatusTrackerListener, disposable: Disposable) {
+    listeners.addListener(listener, disposable)
+  }
 
   internal class FullState(virtualFile: VirtualFile,
                            ranges: List<RangeState>,

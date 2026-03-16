@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_propertyRedeclaration-a.kotlin_module
+  test/Prop2Kt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/propertyRedeclaration/a/prop2.kt
+End of files
+------------------------------------------
+Exit code: ERROR

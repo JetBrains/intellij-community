@@ -4,9 +4,9 @@ package com.intellij.java.debugger.impl.shared.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 
-internal class AutoRendererAction : AnAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+internal class AutoRendererAction : AnAction(), SplitDebuggerAction {
   override fun actionPerformed(e: AnActionEvent) {
     setRendererForNodes(e, null)
   }

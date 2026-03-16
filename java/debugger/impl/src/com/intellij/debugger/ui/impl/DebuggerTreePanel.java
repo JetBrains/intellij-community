@@ -26,7 +26,8 @@ import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
 
 public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements UiDataProvider, Disposable {
   public static final DataKey<DebuggerTreePanel> DATA_KEY = DataKey.create("DebuggerPanel");

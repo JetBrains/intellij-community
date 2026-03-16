@@ -5,11 +5,10 @@ import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
+import com.intellij.xdebugger.impl.frame.XStackFrameWithCustomBackgroundColor
 import com.intellij.xdebugger.ui.DebuggerColors
 import com.sun.jdi.Location
 import java.awt.Color
-import java.util.Objects
 
 class InlineStackFrame(
     location: Location?,
@@ -24,7 +23,7 @@ class InlineStackFrame(
             location, variableInlineDepth, frameProxy, inlineScopeNumber, surroundingScopeNumber
         ),
         visibleVariables
-    ), XDebuggerFramesList.ItemWithCustomBackgroundColor {
+    ), XStackFrameWithCustomBackgroundColor {
     init {
         descriptor.name = name
         descriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER)

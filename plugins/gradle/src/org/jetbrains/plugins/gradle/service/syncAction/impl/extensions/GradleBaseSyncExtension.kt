@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.gradle.service.syncAction.impl.extensions
 
 import com.intellij.openapi.externalSystem.util.Order
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.entities
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource

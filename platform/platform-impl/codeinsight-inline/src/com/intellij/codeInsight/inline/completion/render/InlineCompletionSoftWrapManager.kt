@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Key
 import com.intellij.ui.ColorUtil
 import java.awt.Font
-import java.util.*
+import java.util.LinkedList
 
 internal class InlineCompletionSoftWrapManager private constructor(private val editor: Editor) : Disposable {
 

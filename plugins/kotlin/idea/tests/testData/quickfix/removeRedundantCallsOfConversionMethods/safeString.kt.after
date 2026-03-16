@@ -1,0 +1,9 @@
+// "Remove redundant calls of the conversion method" "true"
+// WITH_STDLIB
+// AFTER-WARNING: The expression is unused
+
+fun test() {
+    val foo: String? = null
+    foo
+}
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveRedundantCallsOfConversionMethodsFix

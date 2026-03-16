@@ -2,6 +2,7 @@
 package git4idea.actions;
 
 import com.intellij.dvcs.actions.DvcsCompareWithAction;
+import com.intellij.dvcs.repo.RepositoryExtKt;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -13,8 +14,11 @@ import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.git.repo.GitRepositoriesHolder;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.*;
+import git4idea.GitContentRevision;
+import git4idea.GitReference;
+import git4idea.GitRevisionNumber;
 import git4idea.GitTag;
+import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
@@ -38,7 +42,8 @@ public class GitCompareWithRefAction extends DvcsCompareWithAction<GitRepository
     return new GitCompareWithBranchPopup(project,
                                          new GitCompareWithBranchPopupStep(project,
                                                                            GitRepositoriesHolder.Companion.getInstance(project)
-                                                                             .get(repository.getRpcId()), selectionHandler));
+                                                                             .get(RepositoryExtKt.repositoryId(repository)),
+                                                                           selectionHandler));
   }
 
   @Override

@@ -9,7 +9,7 @@ jvm_library(
   kotlinc_opts = "@community//:k11",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "//libraries/ktor/client",
     "//libraries/io",

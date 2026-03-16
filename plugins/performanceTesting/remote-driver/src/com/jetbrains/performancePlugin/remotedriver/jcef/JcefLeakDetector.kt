@@ -1,7 +1,11 @@
 package com.jetbrains.performancePlugin.remotedriver.jcef
 
 import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier
-import com.intellij.diagnostic.hprof.analysis.*
+import com.intellij.diagnostic.hprof.analysis.AnalysisConfig
+import com.intellij.diagnostic.hprof.analysis.AnalysisContext
+import com.intellij.diagnostic.hprof.analysis.AnalyzeGraph
+import com.intellij.diagnostic.hprof.analysis.GCRootPathsTree
+import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
 import com.intellij.diagnostic.hprof.util.AnalysisReport
 import com.intellij.diagnostic.hprof.util.ListProvider
 import com.intellij.openapi.diagnostic.logger

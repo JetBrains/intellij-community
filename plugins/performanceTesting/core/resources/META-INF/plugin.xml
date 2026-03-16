@@ -43,8 +43,12 @@
       <add-to-group group-id="HelpDiagnosticTools" anchor="last"/>
     </group>
 
-    <action id="SimulateFreeze" internal="true" class="com.jetbrains.performancePlugin.actions.SimulateFreeze"
-            text="Simulate a Freeze"/>
+    <action id="SimulateFreeze" internal="true" class="com.jetbrains.performancePlugin.actions.SimulateFreeze"/>
+    <action id="SimulateRWFreeze" internal="true" class="com.jetbrains.performancePlugin.actions.SimulateRWFreeze"/>
+
+    <reference ref="CaptureMemorySnapShot">
+      <add-to-group group-id="HelpMenu" relative-to-action="CollectZippedLogs" anchor="after"/>
+    </reference>
   </actions>
 
   <extensionPoints>
@@ -92,6 +96,12 @@
 
     <listener class="com.jetbrains.performancePlugin.commands.WaitForFinishedCodeAnalysisListener"
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
+
+    <listener class="com.jetbrains.performancePlugin.commands.BeforeFileOpenLoggerListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
+
+    <listener class="com.jetbrains.performancePlugin.commands.FileOpenLoggerListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.jetbrains.performancePlugin">

@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.macro" />
@@ -46,7 +47,6 @@
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.copyright" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" />
-    <orderEntry type="module" module-name="intellij.ant" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.langInjection" />
@@ -58,15 +58,13 @@
     <orderEntry type="module" module-name="intellij.junit.rt" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="intellij.groovy.jps" />
-    <orderEntry type="module" module-name="intellij.java.byteCodeViewer" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.properties.psi" />
     <orderEntry type="module" module-name="intellij.groovy.psi" exported="" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="module" module-name="intellij.regexp" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.tests" scope="TEST" />
-    <orderEntry type="library" name="protobuf" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
+    <orderEntry type="module" module-name="intellij.libraries.protobuf" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
@@ -82,5 +80,8 @@
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="intellij.java.unscramble" />
+    <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
   </component>
 </module>

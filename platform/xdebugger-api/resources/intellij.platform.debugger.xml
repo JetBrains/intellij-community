@@ -1,0 +1,20 @@
+<!--
+  This file contains only v2 dependencies.
+  All new extensions, actions, services, extension points, etc. should go to intellij.platform.debugger.content.xml
+-->
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <xi:include href="intellij.platform.debugger.content.xml"/>
+</idea-plugin>

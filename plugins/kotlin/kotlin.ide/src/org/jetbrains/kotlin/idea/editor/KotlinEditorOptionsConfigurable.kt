@@ -34,7 +34,7 @@ internal val kotlinEditorOptionsDescriptors
         cbConvertPastedJavaToKotlin,
         cbDontShowJavaToKotlinConversionDialog,
         cbAutoAddValKeywordToCtorParameters
-    ).map(CheckboxDescriptor::asUiOptionDescriptor)
+    ).map(CheckboxDescriptor::asUiOptionDescriptor).toList()
 
 class KotlinEditorOptionsConfigurable : BeanConfigurable<KotlinEditorOptions>(editorOptions, message(ID)) {
 

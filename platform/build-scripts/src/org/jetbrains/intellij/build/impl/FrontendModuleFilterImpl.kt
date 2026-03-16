@@ -1,11 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.serialization.RawProductModules
+import com.intellij.util.xml.dom.readXmlAsModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.FrontendModuleFilter
-import org.jetbrains.intellij.build.JarPackagerDependencyHelper
+import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 import org.jetbrains.intellij.build.impl.moduleBased.JpsProductModeMatcher
+import org.jetbrains.intellij.build.readPluginContentFromDescriptor
 import org.jetbrains.jps.model.JpsNamedElement
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -20,51 +25,45 @@ internal class FrontendModuleFilterImpl private constructor(
   private val includedProjectLibraryNames: Set<String>,
 ): FrontendModuleFilter {
   companion object {
-    suspend fun create(project: JpsProject, productModules: RawProductModules, jarPackagerDependencyHelper: JarPackagerDependencyHelper): FrontendModuleFilter {
+    fun createFrontendModuleFilter(
+      project: JpsProject,
+      productModules: RawProductModules,
+      outputProvider: ModuleOutputProvider,
+    ): FrontendModuleFilter {
       val frontendModeMatcher = JpsProductModeMatcher(ProductMode.FRONTEND)
       val includedModuleNames = LinkedHashSet<String>()
       val includedProjectLibraryNames = LinkedHashSet<String>()
 
       for (rootModuleName in productModules.mainGroupModules) {
         val rootModule = project.findModuleByName(rootModuleName.moduleId.stringId) ?: continue
-        collectTransitiveDependenciesCompatibleWithFrontend(rootModule, frontendModeMatcher, includedModuleNames, includedProjectLibraryNames)
+        collectTransitiveDependenciesCompatibleWithFrontend(
+          module = rootModule,
+          frontendModeMatcher = frontendModeMatcher,
+          includedModuleNames = includedModuleNames,
+          includedProjectLibraryNames = includedProjectLibraryNames
+        )
       }
-      
+
       for (mainModuleId in productModules.bundledPluginMainModules) {
         val module = project.findModuleByName(mainModuleId.stringId) ?: continue
         if (frontendModeMatcher.matches(module)) {
           includedModuleNames.add(module.name)
-          jarPackagerDependencyHelper.readPluginContentFromDescriptor(module, ModuleOutputPatcher())
+          @Suppress("RAW_RUN_BLOCKING")
+          val pluginDescriptor = readXmlAsModel(runBlocking(Dispatchers.IO) {
+            getUnprocessedPluginXmlContent(module = module, outputProvider = outputProvider)
+          })
+          readPluginContentFromDescriptor(pluginDescriptor)
             .mapNotNull { project.findModuleByName(it.first) }
             .filter { frontendModeMatcher.matches(it) }
             .mapTo(includedModuleNames) { it.name }
         }
       }
-      
-      return FrontendModuleFilterImpl(project, frontendModeMatcher, includedModuleNames, includedProjectLibraryNames)
-    }
 
-    private fun collectTransitiveDependenciesCompatibleWithFrontend(
-      module: JpsModule,
-      frontendModeMatcher: JpsProductModeMatcher,
-      includedModuleNames: MutableSet<String>,
-      includedProjectLibraryNames: MutableSet<String>,
-    ) {
-      if (isScrambledWithFrontend(module) || !frontendModeMatcher.matches(module)) {
-        return
-      }
-      if (!includedModuleNames.add(module.name)) {
-        return
-      }
-      JpsJavaExtensionService.dependencies(module).productionOnly().runtimeOnly().processModuleAndLibraries(
-        { depModule ->
-          collectTransitiveDependenciesCompatibleWithFrontend(depModule, frontendModeMatcher, includedModuleNames, includedProjectLibraryNames)
-        },
-        { depLibrary ->
-          if (!isScrambledWithFrontend(depLibrary) && depLibrary.createReference().parentReference !is JpsModuleReference) {
-            includedProjectLibraryNames.add(depLibrary.name)
-          }
-        }
+      return FrontendModuleFilterImpl(
+        project = project,
+        frontendModeMatcher = frontendModeMatcher,
+        includedModuleNames = includedModuleNames,
+        includedProjectLibraryNames = includedProjectLibraryNames,
       )
     }
   }
@@ -106,4 +105,33 @@ internal object EmptyFrontendModuleFilter : FrontendModuleFilter {
   override fun isBackendModule(moduleName: String): Boolean = false
   override fun isBackendProjectLibrary(libraryName: String): Boolean = false
   override fun isModuleCompatibleWithFrontend(moduleName: String): Boolean = false
+}
+
+private fun collectTransitiveDependenciesCompatibleWithFrontend(
+  module: JpsModule,
+  frontendModeMatcher: JpsProductModeMatcher,
+  includedModuleNames: MutableSet<String>,
+  includedProjectLibraryNames: MutableSet<String>,
+) {
+  if (isScrambledWithFrontend(module) || !frontendModeMatcher.matches(module)) {
+    return
+  }
+  if (!includedModuleNames.add(module.name)) {
+    return
+  }
+  JpsJavaExtensionService.dependencies(module).productionOnly().runtimeOnly().processModuleAndLibraries(
+    { depModule ->
+      collectTransitiveDependenciesCompatibleWithFrontend(
+        module = depModule,
+        frontendModeMatcher = frontendModeMatcher,
+        includedModuleNames = includedModuleNames,
+        includedProjectLibraryNames = includedProjectLibraryNames,
+      )
+    },
+    { depLibrary ->
+      if (!isScrambledWithFrontend(depLibrary) && depLibrary.createReference().parentReference !is JpsModuleReference) {
+        includedProjectLibraryNames.add(depLibrary.name)
+      }
+    }
+  )
 }

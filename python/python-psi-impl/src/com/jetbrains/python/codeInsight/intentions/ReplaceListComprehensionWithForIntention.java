@@ -8,7 +8,17 @@ import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyComprehensionComponent;
+import com.jetbrains.python.psi.PyComprehensionForComponent;
+import com.jetbrains.python.psi.PyComprehensionIfComponent;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyForStatement;
+import com.jetbrains.python.psi.PyListCompExpression;
+import com.jetbrains.python.psi.PyPrintStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,17 +67,18 @@ public final class ReplaceListComprehensionWithForIntention extends PsiUpdateMod
     if (parent instanceof PyAssignmentStatement) {
       final PsiElement leftExpr = ((PyAssignmentStatement)parent).getLeftHandSideExpression();
       if (leftExpr == null) return;
-      PyAssignmentStatement initAssignment = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyAssignmentStatement.class,
-                                                                             leftExpr.getText() + " = []");
+      PyAssignmentStatement initAssignment =
+        elementGenerator.createFromText(LanguageLevel.forElement(expression), PyAssignmentStatement.class,
+                                        leftExpr.getText() + " = []");
       PyForStatement forStatement = createForLoop(expression, elementGenerator,
-                                                  leftExpr.getText() + ".append("+ expression.getResultExpression().getText() +")");
+                                                  leftExpr.getText() + ".append(" + expression.getResultExpression().getText() + ")");
 
       parent.getParent().addBefore(initAssignment, parent);
       parent.replace(forStatement);
-
     }
     else if (parent instanceof PyPrintStatement) {
-      PyForStatement forStatement = createForLoop(expression, elementGenerator, "print " + "(" + expression.getResultExpression().getText() +")");
+      PyForStatement forStatement =
+        createForLoop(expression, elementGenerator, "print " + "(" + expression.getResultExpression().getText() + ")");
       parent.replace(forStatement);
     }
   }
@@ -98,6 +109,6 @@ public final class ReplaceListComprehensionWithForIntention extends PsiUpdateMod
     }
     stringBuilder.append(result);
     return elementGenerator.createFromText(LanguageLevel.forElement(expression), PyForStatement.class,
-                             stringBuilder.toString());
+                                           stringBuilder.toString());
   }
 }

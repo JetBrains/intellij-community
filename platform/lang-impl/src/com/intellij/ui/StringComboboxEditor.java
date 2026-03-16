@@ -19,7 +19,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
 
 /**
  * ComboBox with Editor and Strings as item
@@ -49,7 +49,7 @@ public class StringComboboxEditor extends EditorComboBoxEditor {
   }
 
   @Override
-  protected void onEditorCreate(final EditorEx editor) {
+  protected void onEditorCreate(final @NotNull EditorEx editor) {
     Disposer.register(((EditorImpl)editor).getDisposable(), new Disposable() {
       @Override
       public void dispose() {

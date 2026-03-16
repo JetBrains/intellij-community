@@ -2,9 +2,27 @@ package de.plushnikov.intellij.plugin.processor.handler;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
@@ -29,7 +47,15 @@ import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -397,7 +423,9 @@ public class BuilderHandler {
   static @NotNull String getBuilderClassName(@NotNull PsiClass psiClass, @Nullable String returnTypeName) {
     final ConfigDiscovery configDiscovery = ConfigDiscovery.getInstance();
     final String builderClassNamePattern = configDiscovery.getStringLombokConfigProperty(BUILDER_CLASS_NAME, psiClass);
-    return replace(builderClassNamePattern, "*", capitalize(StringUtil.notNullize(returnTypeName)));
+    final String typeName = StringUtil.notNullize(returnTypeName);
+    final boolean isPrimitiveTypeName = TypeConversionUtil.isPrimitive(typeName);
+    return replace(builderClassNamePattern, "*", isPrimitiveTypeName ? capitalize(typeName) : typeName);
   }
 
   static boolean hasMethod(@NotNull PsiClass psiClass, @NotNull String builderMethodName, int paramCount) {
@@ -763,6 +791,16 @@ public class BuilderHandler {
       .withContainingClass(builderClass)
       .withNavigationElement(parentClass)
       .withModifier(getBuilderInnerAccessVisibility(psiAnnotation));
+
+    if (null == psiMethod) {
+      Stream.of(parentClass.getConstructors())
+        .filter(m -> sameParameters(m.getParameterList().getParameters(), builderInfos))
+        .findFirst().ifPresent(methodBuilder::withRelatedMember);
+    }
+    else if (psiMethod.isConstructor()) {
+      methodBuilder.withRelatedMember(psiMethod);
+    }
+
     final String codeBlockText =
       createBuildMethodCodeBlockText(psiMethod, builderClass, returnType, buildMethodPrepare, buildMethodParameters);
     methodBuilder.withBodyText(codeBlockText);

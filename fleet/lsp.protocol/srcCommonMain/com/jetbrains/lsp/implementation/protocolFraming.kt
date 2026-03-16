@@ -3,8 +3,8 @@ package com.jetbrains.lsp.implementation
 import com.jetbrains.lsp.protocol.LSP
 import fleet.util.decodeToStringUtf8
 import fleet.util.encodeToByteArrayUtf8
-import io.ktor.utils.io.*
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -29,7 +29,7 @@ suspend fun withBaseProtocolFraming(
   coroutineScope {
     val (incomingSender, incomingReceiver) = channels<JsonElement>()
     val (outgoingSender, outgoingReceiver) = channels<JsonElement>(Channel.UNLIMITED)
-    val readJob = launch {
+    val readJob = launch(CoroutineName("frame reader")) {
       incomingSender.use {
         while (true) {
           val frame = reader.readFrame()
@@ -41,7 +41,7 @@ suspend fun withBaseProtocolFraming(
         }
       }
     }
-    val writeJob = launch {
+    val writeJob = launch(CoroutineName("frame writer")) {
       outgoingReceiver.consumeEach { frame ->
         val success = writer.writeFrame(frame)
         if (!success) {
@@ -61,7 +61,7 @@ suspend fun withBaseProtocolFraming(
   }
 }
 
-private suspend fun ByteReadChannel.readFrame(): JsonElement? {
+private suspend fun ByteReader.readFrame(): JsonElement? {
   var contentLength = -1
   var readSomething = false
   val buf = try {
@@ -69,27 +69,36 @@ private suspend fun ByteReadChannel.readFrame(): JsonElement? {
       val line = readUTF8Line()
       if (line.isNullOrEmpty()) break
       readSomething = true
-      val (key, value) = line.split(':').map { it.trim() }
-      if (key == "Content-Length") {
-        contentLength = value.toInt()
+      try {
+        val (key, value) = line.split(':').map { it.trim() }
+        if (key == "Content-Length") {
+          contentLength = value.toInt()
+        }
+      }
+      catch (x: Throwable) {
+        throw IllegalStateException("could not read header: $line", x)
       }
     }
     if (!readSomething) return null
     if (contentLength == -1) throw IllegalStateException("Content-Length header not found")
     readByteArray(contentLength)
-  } catch (e: Exception) {
-    when (e) {
-      is IOException -> return null
-      else -> throw e
-    }
   }
-  return LSP.json.decodeFromString(JsonElement.serializer(), buf.decodeToStringUtf8())
+  catch (_: IOException) {
+    return null
+  }
+  val jsonStr = buf.decodeToStringUtf8()
+  return try {
+    LSP.json.decodeFromString(JsonElement.serializer(), jsonStr)
+  }
+  catch (x: Throwable) {
+    throw IllegalStateException("could not decode json: $jsonStr", x)
+  }
 }
 
 /**
  * @return Boolean indicating whether the frame was successfully written (`true`) or the channel was closed (`false`).
  */
-private suspend fun ByteWriteChannel.writeFrame(jsonElement: JsonElement): Boolean {
+private suspend fun ByteWriter.writeFrame(jsonElement: JsonElement): Boolean {
   val str = LSP.json.encodeToString(JsonElement.serializer(), jsonElement)
   val frameStr = buildString {
     // protocol requires string length in bytes

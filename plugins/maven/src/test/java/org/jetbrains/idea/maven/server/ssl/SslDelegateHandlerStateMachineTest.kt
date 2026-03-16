@@ -7,7 +7,7 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ResourceUtil
 import java.io.ByteArrayOutputStream
 import java.security.cert.X509Certificate
-import java.util.*
+import java.util.Scanner
 
 class SslDelegateHandlerStateMachineTest : UsefulTestCase() {
 

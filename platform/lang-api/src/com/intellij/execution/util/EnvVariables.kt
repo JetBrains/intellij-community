@@ -9,12 +9,12 @@ data class EnvVariables(val envs: Map<String, String> = emptyMap(), val envFiles
      *
      * The specification for that string follows.
      *
-     * The string consists of pairs `key=value`, separated by one or more `;` characters, and the whole string terminated by zero or more
-     * `;` characters.
+     * The string consists of pairs `key=value`, separated by one or more `;` or '\n' characters, and the whole string terminated by zero or more
+     * `;` or '\n characters. Entries without '=' are treated as file paths.
      *
      * Each of `key` and `value` might be either
-     * - a sequence of characters excluding `"`, `;` and `=`,
-     * - or a sequence of any characters (including `;` and `=`) inside of double quotes `""`.
+     * - a sequence of characters excluding `"`, `;`, '\n' and `=`,
+     * - or a sequence of any characters (including `;` and `=`) inside double quotes `""`.
      *
      * For the latter case, escape sequences are allowed: character `\` might precede other characters, so that they lose their meta meaning
      * and just become characters included into the `key` or `value`. Escape sequences supported:
@@ -25,7 +25,7 @@ data class EnvVariables(val envs: Map<String, String> = emptyMap(), val envFiles
      * - If an item without '=' can be converted to a valid Path, it's added to the file list
      * - Otherwise, it's treated as an environment variable with an empty value
      *
-     * Note that this method has "quirks mode" behavior for incorrect character sequences, such as unpaired quotes, invalid escape sequences
+     * Note that this method has "quirks mode" behavior for incorrect character sequences, such as unpaired quotes, invalid escape sequences,
      * etc. This behavior is not a part of the method contract.
      */
     @JvmStatic
@@ -69,7 +69,7 @@ data class EnvVariables(val envs: Map<String, String> = emptyMap(), val envFiles
                 index += 1
                 if (index >= content.length) break
                 val next = content[index]
-                if ((endOnEqualSign && next == '=') || next == ';') {
+                if ((endOnEqualSign && next == '=') || next == ';' || next == '\n') {
                   break
                 }
 
@@ -77,7 +77,7 @@ data class EnvVariables(val envs: Map<String, String> = emptyMap(), val envFiles
                 // Means we should treat the remaining text literally as the fallback.
                 while (index < content.length) {
                   c = content[index]
-                  if ((endOnEqualSign && c == '=') || c == ';') break
+                  if ((endOnEqualSign && c == '=') || c == ';' || c == '\n') break
                   buffer.append(c)
                   index += 1
                 }
@@ -91,7 +91,7 @@ data class EnvVariables(val envs: Map<String, String> = emptyMap(), val envFiles
           else {
             while (index < content.length) {
               val c = content[index]
-              if ((endOnEqualSign && c == '=') || c == ';') break
+              if ((endOnEqualSign && c == '=') || c == ';' || c == '\n') break
               buffer.append(c)
               index += 1
             }
@@ -124,7 +124,7 @@ data class EnvVariables(val envs: Map<String, String> = emptyMap(), val envFiles
             possibleFiles.forEach { parsedEnvs.putIfAbsent(it, "") }
             possibleFiles.clear()
           }
-          ';' -> {
+          ';', '\n' -> {
             if (key.isNotBlank()) {
               possibleFiles.add(key)
             }

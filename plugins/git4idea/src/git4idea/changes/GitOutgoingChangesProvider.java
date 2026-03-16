@@ -17,6 +17,7 @@ import git4idea.GitUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import static com.intellij.util.Functions.identity;
 import static com.intellij.util.containers.ContainerUtil.map;
 
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
 public final class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<CommittedChangeList> {
   private static final Logger LOG = Logger.getInstance(GitOutgoingChangesProvider.class);
   private final Project myProject;

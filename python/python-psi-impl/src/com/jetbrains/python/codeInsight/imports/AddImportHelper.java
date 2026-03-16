@@ -11,7 +11,16 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiParserFacade;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -23,9 +32,21 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.psi.PyImportStatementBase;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCodeFragmentWithHiddenImports;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -38,7 +59,11 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.PyUtil.sure;
@@ -64,7 +89,9 @@ public final class AddImportHelper {
   }
 
   public static @NotNull Comparator<String> getImportTextComparator(@NotNull PsiFile settingsAnchor) {
-    return PythonCodeStyleService.getInstance().isOptimizeImportsCaseSensitiveOrder(settingsAnchor) ? String.CASE_INSENSITIVE_ORDER : Comparator.naturalOrder();
+    return PythonCodeStyleService.getInstance().isOptimizeImportsCaseSensitiveOrder(settingsAnchor)
+           ? String.CASE_INSENSITIVE_ORDER
+           : Comparator.naturalOrder();
   }
 
   private static @NotNull List<String> getSortNames(@NotNull PyImportStatementBase importStatement) {
@@ -161,7 +188,6 @@ public final class AddImportHelper {
     if (parentElement != null) {
       parentElement.addBefore(generator.createFromImportStatement(languageLevel, qualifier, name, asName), anchor);
     }
-
   }
 
   public static @Nullable PsiElement getLocalInsertPosition(@NotNull PsiElement anchor) {
@@ -368,7 +394,8 @@ public final class AddImportHelper {
     return getImportPriorityWithReason(importStatement, resolvedFileOrDir);
   }
 
-  static @NotNull ImportPriorityChoice getImportPriorityWithReason(@NotNull PsiElement importLocation, @NotNull PsiFileSystemItem toImport) {
+  static @NotNull ImportPriorityChoice getImportPriorityWithReason(@NotNull PsiElement importLocation,
+                                                                   @NotNull PsiFileSystemItem toImport) {
     final VirtualFile vFile = toImport.getVirtualFile();
     if (vFile == null) {
       return new ImportPriorityChoice(UNRESOLVED_SYMBOL_PRIORITY, toImport + " doesn't have an associated virtual file");
@@ -788,18 +815,28 @@ public final class AddImportHelper {
    * @see #addOrUpdateFromImportStatement
    */
   public static void addImport(@NotNull PsiNamedElement target, @NotNull PsiFile file, @NotNull PyElement element) {
+    if (target.getContainingFile().equals(file)) return;
+    if (PyBuiltinCache.getInstance(element).isBuiltin(target)) return;
+
     if (target instanceof PsiFileSystemItem) {
       addFileSystemItemImport((PsiFileSystemItem)target, file, element);
       return;
     }
 
-    final String name = target.getName();
+    // If target is a class attribute, import the containing class
+    PsiNamedElement elementToImport = target;
+    var parent = ScopeUtil.getScopeOwner(target);
+    if (parent instanceof PyClass pyClass) {
+      elementToImport = pyClass;
+    }
+
+    final String name = elementToImport.getName();
     if (name == null) return;
 
-    final PsiFileSystemItem toImport = target.getContainingFile();
+    final PsiFileSystemItem toImport = elementToImport.getContainingFile();
     if (toImport == null) return;
 
-    final QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(target, element);
+    final QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(elementToImport, element);
     if (importPath == null) return;
 
     final String path = importPath.toString();
@@ -809,7 +846,7 @@ public final class AddImportHelper {
       addImportStatement(file, path, null, priority, element);
 
       final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
-      element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(target), path + "." + name));
+      element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(elementToImport), path + "." + name));
     }
     else {
       addOrUpdateFromImportStatement(file, path, name, null, priority, element);
@@ -833,7 +870,10 @@ public final class AddImportHelper {
       element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(target), path));
     }
     else {
-      addOrUpdateFromImportStatement(file, importPath.removeLastComponent().toString(), target.getName(), null, priority, element);
+      String importedName = importPath.getLastComponent();
+      assert importedName != null;
+      String importSource = importPath.removeLastComponent().toString();
+      addOrUpdateFromImportStatement(file, importSource, importedName, null, priority, element);
     }
   }
 }

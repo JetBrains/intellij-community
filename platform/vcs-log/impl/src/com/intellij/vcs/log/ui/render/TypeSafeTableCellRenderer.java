@@ -4,9 +4,9 @@ package com.intellij.vcs.log.ui.render;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 import java.util.Objects;
 
 @ApiStatus.Internal

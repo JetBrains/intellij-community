@@ -15,7 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.execution.filters
 
-import com.intellij.execution.filters.*
+import com.intellij.execution.filters.ConsoleFilterProvider
+import com.intellij.execution.filters.Filter
+import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.execution.filters.LazyFileHyperlinkInfo
+import com.intellij.execution.filters.RegexpFilter
 import com.intellij.openapi.project.Project
 
 class GrCompilationErrorsFilterProvider : ConsoleFilterProvider {

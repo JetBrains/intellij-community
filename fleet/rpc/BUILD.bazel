@@ -1,6 +1,6 @@
 ### auto-generated section `build fleet.rpc` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_rpc",
@@ -10,8 +10,15 @@ create_kotlinc_options(
     "kotlin.concurrent.atomics.ExperimentalAtomicApi",
   ],
   x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
   x_jvm_default = "all-compatibility",
   x_lambdas = "class"
+)
+
+resourcegroup(
+  name = "rpc_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
 jvm_library(
@@ -19,8 +26,9 @@ jvm_library(
   module_name = "fleet.rpc",
   visibility = ["//visibility:public"],
   srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  resources = [":rpc_resources"],
   kotlinc_opts = ":custom_rpc",
-  exported_compiler_plugins = ["@lib//:rpc-plugin"],
+  exported_compiler_plugins = ["@community//fleet/compiler-plugins/rpc:rpc-plugin"],
   deps = [
     "//fleet/reporting/api",
     "//fleet/reporting/shared",

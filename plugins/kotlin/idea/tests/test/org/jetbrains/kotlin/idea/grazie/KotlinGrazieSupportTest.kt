@@ -6,8 +6,16 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContentTest
 import com.intellij.grazie.text.TextExtractor
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KotlinGrazieSupportTest28 : GrazieTestBase() {
+class KotlinGrazieSupportTest28 : GrazieTestBase(), ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
+
     override val additionalEnabledRules: Set<String> = setOf("UPPERCASE_SENTENCE_START")
 
     override fun runHighlightTestForFile(file: String) {
@@ -39,5 +47,23 @@ class KotlinGrazieSupportTest28 : GrazieTestBase() {
         val file = myFixture.configureByText("a.kt", "val s = \"foo $" + "{injection} bar\" ")
         val content = TextExtractor.findTextAt(file, 10, TextContent.TextDomain.ALL)
         assertEquals("foo | bar", TextContentTest.unknownOffsets(content))
+    }
+
+    fun `test meaningful single suggestion in RenameTo action`() {
+        myFixture.configureByText("a.kt", """
+            class A {
+                // <TYPO descr="Typo: In word 'tagret'">tagret</TYPO>
+                val <TYPO descr="Typo: In word 'tagret'">tag<caret>ret</TYPO> = 1
+            }
+        """)
+        myFixture.checkHighlighting()
+        val intention = myFixture.findSingleIntention("Typo: Rename to 'target'")
+        myFixture.launchAction(intention)
+        myFixture.checkResult("""
+            class A {
+                // target
+                val target = 1
+            }
+        """)
     }
 }

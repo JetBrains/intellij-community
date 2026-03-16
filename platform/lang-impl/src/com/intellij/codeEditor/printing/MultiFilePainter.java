@@ -4,7 +4,7 @@ package com.intellij.codeEditor.printing;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiFile;
 
-import java.awt.*;
+import java.awt.Graphics;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;

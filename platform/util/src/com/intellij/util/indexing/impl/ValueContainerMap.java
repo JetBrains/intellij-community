@@ -2,7 +2,13 @@
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.Processor;
-import com.intellij.util.io.*;
+import com.intellij.util.io.AppendablePersistentMap;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.InlineKeyDescriptor;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.PersistentMapBase;
+import com.intellij.util.io.PersistentMapBuilder;
+import com.intellij.util.io.PersistentMapImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 

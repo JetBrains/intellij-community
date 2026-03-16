@@ -63,7 +63,7 @@ class ClassA(Generic[T, P]):
     good4: ClassVar = 3.1
     # > If the `ClassVar` qualifier is used without any assigned value, the type
     # > should be inferred as `Any`:
-    good5: ClassVar  #E? Type checkers may error on uninitialized ClassVar
+    good5: ClassVar  # E?: Type checkers may error on uninitialized ClassVar
     good6: Annotated[ClassVar[list[int]], ""] = []
 
     def method1(self, a: ClassVar[int]):  # E: ClassVar not allowed here

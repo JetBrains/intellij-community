@@ -40,6 +40,8 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   runtime_deps = ["//platform/backend"]
 )

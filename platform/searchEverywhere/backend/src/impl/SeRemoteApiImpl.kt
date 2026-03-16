@@ -5,8 +5,14 @@ import com.intellij.ide.rpc.DataContextId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.scopes.SearchScopesInfo
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SePreviewInfo
+import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeSession
+import com.intellij.platform.searchEverywhere.SeTransferEvent
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeSortedProviderIds
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -153,5 +159,10 @@ class SeRemoteApiImpl : SeRemoteApi {
   override suspend fun isExtendedInfoEnabled(projectId: ProjectId, session: SeSession, dataContextId: DataContextId, providerIds: List<SeProviderId>, isAllTab: Boolean): Boolean {
     val project = projectId.findProjectOrNull() ?: return false
     return SeBackendService.getInstance(project).isExtendedInfoEnabled(session, dataContextId, providerIds, isAllTab)
+  }
+
+  override suspend fun isCommandsSupported(projectId: ProjectId, session: SeSession, dataContextId: DataContextId, providerIds: List<SeProviderId>, isAllTab: Boolean): Boolean {
+    val project = projectId.findProjectOrNull() ?: return false
+    return SeBackendService.getInstance(project).isCommandsSupported(session, dataContextId, providerIds, isAllTab)
   }
 }

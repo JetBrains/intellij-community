@@ -22,13 +22,17 @@ import com.intellij.sh.run.ShConfigurationType
 import com.intellij.terminal.TerminalExecutionConsole
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.execution.ParametersListUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration
 
-class CommandSession(val sessionId: String, val console: TerminalExecutionConsole)
-val MCP_TERMINAL_KEY: Key<CommandSession> = Key.create("MCP_TERMINAL_KEY")
+internal class CommandSession(val sessionId: String, val console: TerminalExecutionConsole)
+internal val MCP_TERMINAL_KEY: Key<CommandSession> = Key.create("MCP_TERMINAL_KEY")
 
-suspend fun executeShellCommand(
+internal suspend fun executeShellCommand(
   window: ToolWindow?,
   project: Project,
   command: String,
@@ -93,6 +97,9 @@ suspend fun executeShellCommand(
           @Suppress("HardCodedStringLiteral") // visible to LLM only
           exitCode.completeExceptionally(ExecutionException("Terminal tab closed by user"))
           processHandler.destroyProcess()
+        }
+        content.setDisposer {
+          Disposer.dispose(executionConsole)
         }
         if (sessionId != null) {
           content.putUserData(MCP_TERMINAL_KEY, CommandSession(sessionId, executionConsole))

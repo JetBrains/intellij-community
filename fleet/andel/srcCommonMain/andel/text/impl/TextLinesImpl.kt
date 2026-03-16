@@ -1,7 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package andel.text.impl
 
-import andel.text.*
+import andel.text.LineColumnPosition
+import andel.text.Text
+import andel.text.TextLine
+import andel.text.TextLines
+import andel.text.TextView
+import andel.text.line
+import andel.text.lineEndOffset
+import andel.text.textLine
 
 internal class TextLinesImpl(
   val textView: TextView,

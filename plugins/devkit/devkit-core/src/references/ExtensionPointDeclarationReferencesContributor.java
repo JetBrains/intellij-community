@@ -12,7 +12,14 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.patterns.PsiClassPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.UastInjectionHostReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.ProcessingContext;
@@ -33,7 +40,9 @@ import java.util.List;
 import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.patterns.StandardPatterns.string;
-import static com.intellij.patterns.uast.UastPatterns.*;
+import static com.intellij.patterns.uast.UastPatterns.callExpression;
+import static com.intellij.patterns.uast.UastPatterns.injectionHostUExpression;
+import static com.intellij.patterns.uast.UastPatterns.uExpression;
 import static com.intellij.psi.UastReferenceRegistrar.registerUastReferenceProvider;
 
 final class ExtensionPointDeclarationReferencesContributor extends PsiReferenceContributor {

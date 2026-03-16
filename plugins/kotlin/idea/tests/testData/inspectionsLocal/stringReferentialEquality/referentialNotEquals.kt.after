@@ -1,0 +1,6 @@
+// PROBLEM: String comparison using '!==' instead of '!='
+// FIX: Replace '!==' with '!='
+// IGNORE_K1
+fun test(s: String, t: String) {
+    val b = t != s
+}

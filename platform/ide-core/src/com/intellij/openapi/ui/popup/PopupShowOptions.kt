@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup
 
+import com.intellij.openapi.ui.popup.PopupShowOptions.Companion.aboveComponent
 import com.intellij.ui.awt.AnchoredPoint
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component

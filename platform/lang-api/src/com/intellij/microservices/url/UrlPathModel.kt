@@ -8,11 +8,10 @@ import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.psi.util.StringEntry
 import com.intellij.util.containers.headTailOrNull
 import com.intellij.util.text.PlaceholderTextRanges
-import java.util.*
+import java.util.Locale
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 import javax.swing.Icon
-import kotlin.collections.AbstractList
 
 sealed class Authority {
   data class Exact(val text: String) : Authority()

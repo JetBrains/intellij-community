@@ -2,7 +2,13 @@ package com.intellij.driver.sdk.ui.components.common.dialogs
 
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
-import com.intellij.driver.sdk.ui.components.elements.*
+import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
+import com.intellij.driver.sdk.ui.components.elements.JButtonUiComponent
+import com.intellij.driver.sdk.ui.components.elements.button
+import com.intellij.driver.sdk.ui.components.elements.dialog
+import com.intellij.driver.sdk.ui.components.elements.list
+import com.intellij.driver.sdk.ui.components.elements.textField
+import com.intellij.driver.sdk.ui.components.elements.tree
 import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.xQuery
 import java.awt.Point
@@ -16,7 +22,7 @@ fun Finder.customizeMainToolbarDialog(action: CustomizeDialog.() -> Unit) {
 }
 
 class CustomizeDialog(data: ComponentData) : DialogUiComponent(data) {
-  val addButton = button("Add…")
+  val addButton: JButtonUiComponent = button("Add…")
 
   fun addAction(actionName: String, customIcon: String? = null, vararg node: String) {
     tree().clickPath(*node, fullMatch = false)
@@ -32,6 +38,9 @@ class CustomizeDialog(data: ComponentData) : DialogUiComponent(data) {
           arrowButton.click(point = Point(-arrowButton.component.width / 2, arrowButton.component.height / 2))
           dialog(title = "Browse Icon") {
             textField().text = customIcon
+            tree().should("$customIcon is selected in tree") {
+              collectSelectedPaths().single().path.last().contains(customIcon.split("/").last())
+            }
             okButton.click()
           }
         }
@@ -49,7 +58,7 @@ class CustomizeDialog(data: ComponentData) : DialogUiComponent(data) {
     x(xQuery { byAccessibleName("Remove") }).click()
   }
 
-  fun getItemRow(itemName: String) = tree().collectExpandedPaths().singleOrNull {
+  fun getItemRow(itemName: String): Int = tree().collectExpandedPaths().singleOrNull {
     it.path.last().toString() == itemName
   }?.row ?: error("Can't find row: $itemName")
 

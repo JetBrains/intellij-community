@@ -5,12 +5,8 @@
 package com.intellij.psi.search
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
-import com.intellij.codeInsight.multiverse.CodeInsightContextManager
 import com.intellij.codeInsight.multiverse.anyContext
-import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.FileViewProvider
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -219,52 +215,6 @@ fun createContainingContextFileInfo(contexts: Collection<CodeInsightContext>): C
  */
 @ApiStatus.Experimental
 fun NoContextFileInfo(): NoContextFileInfo = NoContextFileInfoImpl
-
-/**
- * @param file must be unwrapped by [com.intellij.notebook.editor.BackedVirtualFile.getOriginFileIfBacked] already
- */
-@ApiStatus.Internal
-fun tryCheckingFileInScope(
-  file: VirtualFile,
-  viewProvider: FileViewProvider,
-  globalScope: GlobalSearchScope,
-  project: Project,
-): Boolean {
-  val contextManager = CodeInsightContextManager.getInstance(project)
-  val cachedContext = contextManager.getCodeInsightContextRaw(viewProvider)
-  if (cachedContext !== anyContext()) {
-    // the file has an assigned context, so we can check it right away
-    return globalScope.contains(file, cachedContext)
-  }
-
-  // The file has "anyContext".
-  // It means the file does not really have an assigned context yet, i.e., nobody has cared about the context of this file yet.
-  // So let's try assigning the context which the scope wants to avoid building additional psi.
-  // This is correct as far as there's no guaranty on the context of a file that is requested via `PsiManager.findFile(vFile)`.
-  when (val contextInfo = globalScope.getFileContextInfo(file)) {
-    is ActualContextFileInfo -> {
-      // todo IJPL-203835 does not support case when this scope contains a file in several contexts
-      val context = contextInfo.contexts.first()
-      @Suppress("DEPRECATION")
-      val actualCodeInsightContext = contextManager.getOrSetContext(viewProvider, context)
-      if (actualCodeInsightContext == context) {
-        return true
-      }
-      else {
-        fileLogger().warn(Throwable("Nondeterministic context assignment: $actualCodeInsightContext vs $context for $viewProvider"))
-
-        return globalScope.contains(file, actualCodeInsightContext)
-      }
-    }
-    is NoContextFileInfo -> {
-      // scope is not aware of contexts, so we don't care as well.
-      return globalScope.contains(file)
-    }
-    is DoesNotContainFileInfo -> {
-      return false
-    }
-  }
-}
 
 // -------------------------------- implementation --------------------------------
 

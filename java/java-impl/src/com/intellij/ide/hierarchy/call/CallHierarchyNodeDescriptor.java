@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -17,13 +17,28 @@ import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.FileTypeUtils;
+import com.intellij.psi.util.JavaPsiRecordUtil;
+import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -156,9 +171,9 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       return;
     }
 
-    PsiReference firstReference = myReferences.get(0);
+    PsiReference firstReference = myReferences.getFirst();
     PsiElement element = firstReference.getElement();
-    PsiElement callElement = element.getParent();
+    PsiElement callElement = (element instanceof PsiNameIdentifierOwner) ? element : element.getParent();
     if (callElement instanceof Navigatable navigatable && navigatable.canNavigate()) {
       navigatable.navigate(requestFocus);
     }
@@ -173,9 +188,10 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     if (editor != null) {
       HighlightManager highlightManager = HighlightManager.getInstance(myProject);
       List<RangeHighlighter> highlighters = new ArrayList<>();
-      for (PsiReference psiReference : myReferences) {
-        PsiElement eachElement = psiReference.getElement();
-        PsiElement eachMethodCall = eachElement.getParent();
+      for (PsiReference ref : myReferences) {
+        PsiElement eachElement = ref.getElement();
+        PsiElement eachMethodCall = 
+          eachElement instanceof PsiNameIdentifierOwner owner ? owner.getNameIdentifier() : eachElement.getParent();
         if (eachMethodCall != null) {
           TextRange textRange = eachMethodCall.getTextRange();
           highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), 
@@ -191,7 +207,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       return getPsiElement() instanceof Navigatable navigatable && navigatable.canNavigate();
     }
     if (myReferences.isEmpty()) return false;
-    PsiReference firstReference = myReferences.get(0);
+    PsiReference firstReference = myReferences.getFirst();
     PsiElement callElement = firstReference.getElement().getParent();
     if (callElement == null || !callElement.isValid()) return false;
     if (!(callElement instanceof Navigatable navigatable) || !navigatable.canNavigate()) {

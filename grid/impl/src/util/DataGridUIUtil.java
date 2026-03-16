@@ -1,6 +1,10 @@
 package com.intellij.database.util;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.SelectionModel;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.EditMaximizedView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -15,8 +19,10 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.InputEvent;
 
 public final class DataGridUIUtil {

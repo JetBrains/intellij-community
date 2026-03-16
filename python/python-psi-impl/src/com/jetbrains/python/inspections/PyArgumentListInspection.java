@@ -11,8 +11,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -23,21 +21,43 @@ import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.inspections.quickfix.PyRemoveArgumentQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRenameArgumentQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PySingleStarParameter;
+import com.jetbrains.python.psi.PySlashParameter;
+import com.jetbrains.python.psi.PyStarArgument;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyABCUtil;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class PyArgumentListInspection extends PyInspection {
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -73,7 +93,8 @@ public final class PyArgumentListInspection extends PyInspection {
         final PyCallableParameter allegedFirstParam = ContainerUtil.getOrElse(params, firstParamOffset - 1, null);
         if (allegedFirstParam == null || allegedFirstParam.isKeywordContainer()) {
           // no parameters left to pass function implicitly, or wrong param type
-          registerProblem(deco, PyPsiBundle.message("INSP.function.lacks.positional.argument", callable.getName())); // TODO: better names for anon lambdas
+          registerProblem(deco, PyPsiBundle.message("INSP.function.lacks.positional.argument",
+                                                    callable.getName())); // TODO: better names for anon lambdas
         }
         else { // possible unfilled params
           for (int i = firstParamOffset; i < params.size(); i++) {
@@ -108,13 +129,6 @@ public final class PyArgumentListInspection extends PyInspection {
       if (callableType != null) {
         final PyCallable callable = callableType.getCallable();
         if (callable instanceof PyFunction function) {
-
-          // Decorate functions may have different parameter lists. We don't match arguments with parameters of decorators yet
-          if (PyKnownDecoratorUtil.hasUnknownOrChangingSignatureDecorator(function, context) ||
-              decoratedClassInitCall(call.getCallee(), function, resolveContext)) {
-            return;
-          }
-
           if (objectMethodCallViaSuper(call, function)) return;
         }
       }
@@ -135,25 +149,6 @@ public final class PyArgumentListInspection extends PyInspection {
       }
     }
     highlightStarArgumentTypeMismatch(node, holder, context);
-  }
-
-  private static boolean decoratedClassInitCall(@Nullable PyExpression callee,
-                                                @NotNull PyFunction function,
-                                                @NotNull PyResolveContext resolveContext) {
-    if (callee instanceof PyReferenceExpression && PyUtil.isInitMethod(function)) {
-      final PsiPolyVariantReference classReference = ((PyReferenceExpression)callee).getReference(resolveContext);
-
-      return Arrays
-        .stream(classReference.multiResolve(false))
-        .map(ResolveResult::getElement)
-        .anyMatch(
-          element ->
-            element instanceof PyClass &&
-            PyKnownDecoratorUtil.hasUnknownOrChangingReturnTypeDecorator((PyClass)element, resolveContext.getTypeEvalContext())
-        );
-    }
-
-    return false;
   }
 
   private static boolean objectMethodCallViaSuper(@NotNull PyCallExpression call, @NotNull PyFunction function) {
@@ -250,7 +245,8 @@ public final class PyArgumentListInspection extends PyInspection {
           final Project project = node.getProject();
           if (callable instanceof PyFunction && !PyPsiIndexUtil.isNotUnderSourceRoot(project, callable.getContainingFile())) {
             final String message = PyPsiBundle.message("INSP.unexpected.arg(s)");
-            holder.registerProblem(node, message, ProblemHighlightType.INFORMATION, PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchedCall(mapping));
+            holder.registerProblem(node, message, ProblemHighlightType.INFORMATION,
+                                   PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchedCall(mapping));
           }
         }
       }

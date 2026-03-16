@@ -6,7 +6,9 @@ import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.c
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.field
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.alsoSet
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.doNotImport
-import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.*
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.PARENS_SEPARATE_LINES
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.PARENS_SEPARATE_LINES_IF_NOT_EMPTY
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.PARENS_SEPARATE_LINES_IF_WRAPPED
 
 internal fun EclipseJavaCodeStyleMappingDefinitionBuilder.addParenthesesPositionsMapping() {
   "parentheses_positions_in_method_delcaration" mapTo

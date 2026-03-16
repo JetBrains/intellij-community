@@ -1,7 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.SourceElement
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PropertyGetterDescriptorImpl
@@ -32,6 +40,7 @@ import org.jetbrains.kotlin.synthetic.SyntheticScopeProviderExtension
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.replaceArgumentsWithStarProjections
 
+@K1Deprecation
 class DebuggerFieldSyntheticScopeProvider : SyntheticScopeProviderExtension {
     override fun getScopes(
         moduleDescriptor: ModuleDescriptor,
@@ -41,6 +50,7 @@ class DebuggerFieldSyntheticScopeProvider : SyntheticScopeProviderExtension {
     }
 }
 
+@K1Deprecation
 class DebuggerFieldSyntheticScope(private val javaSyntheticPropertiesScope: JavaSyntheticPropertiesScope) : SyntheticScope.Default() {
     private val javaSourceElementFactory = JavaSourceElementFactoryImpl()
 

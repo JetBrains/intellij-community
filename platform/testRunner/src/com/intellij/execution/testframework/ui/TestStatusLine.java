@@ -16,11 +16,19 @@ import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.text.html.HTML;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.GridBagLayout;
 import java.util.function.Supplier;
 
 
@@ -169,22 +177,6 @@ public class TestStatusLine extends NonOpaquePanel {
 
   public void setStatus(@NotNull String status) {
     myProgressBar.putClientProperty(ProgressBarUtil.STATUS_KEY, status);
-  }
-
-  /**
-   * @deprecated Use {@link #setStatus(String)} with values from {@link JBUI.CurrentTheme.ProgressBar}.
-   */
-  @Deprecated(forRemoval = true)
-  public void setStatusColor(Color color) {
-    myProgressBar.setForeground(color);
-  }
-
-  /**
-   * @deprecated Use {@link #getStatus()} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public Color getStatusColor() {
-    return myProgressBar.getForeground();
   }
 
   public void setFraction(double v) {

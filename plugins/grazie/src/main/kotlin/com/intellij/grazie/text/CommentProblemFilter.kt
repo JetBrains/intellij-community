@@ -3,9 +3,10 @@ package com.intellij.grazie.text
 import ai.grazie.nlp.tokenizer.sentence.StandardSentenceTokenizer
 import com.intellij.grazie.text.TextContent.TextDomain.COMMENTS
 import com.intellij.grazie.text.TextContent.TextDomain.DOCUMENTATION
+import com.intellij.grazie.utils.ProblemFilterUtil
 import com.intellij.grazie.utils.Text
+import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.openapi.project.DumbService
-import com.intellij.psi.PsiFile
 import com.intellij.psi.search.PsiTodoSearchHelper
 import com.intellij.psi.util.CachedValuesManager
 
@@ -17,7 +18,7 @@ internal class CommentProblemFilter : ProblemFilter() {
     val text = problem.text
     val domain = text.domain
     if (domain == COMMENTS || domain == DOCUMENTATION) {
-      if (isTodoComment(text.containingFile, text)) {
+      if (isTodoComment(text)) {
         return true
       }
       if (problem.rule.globalId.startsWith("LanguageTool.") && isAboutIdentifierParts(problem, text)) {
@@ -32,7 +33,8 @@ internal class CommentProblemFilter : ProblemFilter() {
       if (problem.fitsGroup(RuleGroup(RuleGroup.UNDECORATED_SENTENCE_SEPARATION))) {
         return true
       }
-      if (Text.isSingleSentence(text) && problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE)) {
+      if (Text.isSingleSentence(text) &&
+          (problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE) || ProblemFilterUtil.isMissingArticleIssue(problem))) {
         return true
       }
     }
@@ -48,8 +50,13 @@ internal class CommentProblemFilter : ProblemFilter() {
   }
 
   // the _todo_ word spoils the grammar of what follows
-  private fun isTodoComment(file: PsiFile, text: TextContent): Boolean {
-    if (DumbService.getInstance(file.project).isDumb) return false
+  private fun isTodoComment(text: TextContent): Boolean {
+    val file = text.containingFile
+    if (DumbService.isDumb(file.project)) {
+      return TodoConfiguration.getInstance().todoPatterns
+        .mapNotNull { it.pattern }
+        .any { Text.allOccurrences(it, text).isNotEmpty() }
+    }
     val todos = CachedValuesManager.getProjectPsiDependentCache(file) {
       PsiTodoSearchHelper.getInstance(it.project).findTodoItems(it)
     }

@@ -2,21 +2,60 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.ContentModuleDescriptor
+import com.intellij.ide.plugins.CustomPluginRepositoryService
+import com.intellij.ide.plugins.DynamicPluginEnabler
+import com.intellij.ide.plugins.DynamicPlugins
 import com.intellij.ide.plugins.DynamicPlugins.allowLoadUnloadWithoutRestart
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.InstallPluginRequest
+import com.intellij.ide.plugins.InstalledPluginsState
+import com.intellij.ide.plugins.InstalledPluginsTableModel
+import com.intellij.ide.plugins.PendingDynamicPluginInstall
+import com.intellij.ide.plugins.PluginDependencyIsDisabled
+import com.intellij.ide.plugins.PluginEnableDisableAction
+import com.intellij.ide.plugins.PluginEnabledState
+import com.intellij.ide.plugins.PluginEnabler
+import com.intellij.ide.plugins.PluginInstallOperation
+import com.intellij.ide.plugins.PluginInstaller
+import com.intellij.ide.plugins.PluginMainDescriptor
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.buildPluginIdMap
-import com.intellij.ide.plugins.PluginManagerCore.getLoadingError
+import com.intellij.ide.plugins.PluginManagerCore.getPluginNonLoadReason
 import com.intellij.ide.plugins.PluginManagerCore.getPluginSet
 import com.intellij.ide.plugins.PluginManagerCore.isCompatible
 import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.ide.plugins.PluginManagerCore.isIncompatible
 import com.intellij.ide.plugins.PluginManagerCore.isUpdatedBundledPlugin
 import com.intellij.ide.plugins.PluginManagerCore.looksLikePlatformPluginAlias
+import com.intellij.ide.plugins.PluginManagerMain
+import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.PluginUtils.toPluginDescriptors
 import com.intellij.ide.plugins.api.PluginDto
-import com.intellij.ide.plugins.marketplace.*
+import com.intellij.ide.plugins.getMainDescriptor
+import com.intellij.ide.plugins.isBrokenPlugin
+import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
+import com.intellij.ide.plugins.marketplace.CheckErrorsResult
+import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
+import com.intellij.ide.plugins.marketplace.InitSessionResult
+import com.intellij.ide.plugins.marketplace.InstallPluginResult
+import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.plugins.marketplace.PluginNameAndId
+import com.intellij.ide.plugins.marketplace.PluginReviewComment
+import com.intellij.ide.plugins.marketplace.PluginSearchResult
+import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
+import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginInstallationCustomization.Companion.findPluginInstallationCustomization
-import com.intellij.openapi.application.*
+import com.intellij.ide.plugins.pluginRequiresUltimatePluginButItsDisabled
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -26,8 +65,10 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.PluginAutoUpdateService
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
+import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Pair
@@ -35,15 +76,14 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.io.File
 import java.io.IOException
 import java.nio.file.FileVisitResult
-import java.util.*
+import java.util.EnumMap
+import java.util.UUID
 import javax.swing.JComponent
 import kotlin.coroutines.CoroutineContext
 
@@ -429,7 +469,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   override suspend fun loadDescriptorById(pluginId: PluginId): PluginUiModel? {
-    val updateData = service<UpdateCheckerFacade>().getInternalPluginUpdates(updateablePluginsMap = mutableMapOf(pluginId to null))
+    val updateData = UpdateCheckerFacade.getInstance().getPluginUpdates(plugins = listOf(pluginId))
     return updateData.pluginUpdates.all.asSequence()
       .filter { it.pluginVersion != null }
       .map { it.uiModel ?: PluginUiModelAdapter(it.descriptor) }
@@ -530,7 +570,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   override suspend fun updateDescriptorsForInstalledPlugins() {
-    service<UpdateCheckerFacade>().updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance())
+    UpdateCheckerFacade.getInstance().updateDescriptorsForInstalledPlugins()
   }
 
   override suspend fun performUninstall(sessionId: String, pluginId: PluginId): Boolean {
@@ -686,6 +726,11 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return findSession(sessionId)?.needRestart == true || InstalledPluginsState.getInstance().installedPlugins.isNotEmpty()
   }
 
+  override suspend fun setPluginsAutoUpdateEnabled(enabled: Boolean) {
+    UpdateSettings.getInstance().isPluginsAutoUpdateEnabled = enabled
+    service<PluginAutoUpdateService>().onSettingsChanged()
+  }
+
   override fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean {
     val idMap = buildPluginIdMap()
     val contentModuleIdMap = getPluginSet().buildContentModuleIdMap()
@@ -731,7 +776,6 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       return PluginSearchResult(plugins)
     }
     catch (e: IOException) {
-      currentCoroutineContext().ensureActive()
       LOG.warn(e)
       return PluginSearchResult(emptyList(), e.message)
     }
@@ -792,7 +836,11 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       return CheckErrorsResult()
     }
 
-    val loadingError = getLoadingError(pluginId)
+    if (session.isPluginDisabled(pluginId)) {
+      return CheckErrorsResult() // suppress any errors for plugins that are marked disabled
+    }
+
+    val loadingError = getPluginNonLoadReason(pluginId)
     val disabledDependency = if (loadingError is PluginDependencyIsDisabled) loadingError.dependencyId else null
     if (disabledDependency == null) {
       return CheckErrorsResult(loadingError = loadingError?.shortMessage, isDisabledDependencyError = true)

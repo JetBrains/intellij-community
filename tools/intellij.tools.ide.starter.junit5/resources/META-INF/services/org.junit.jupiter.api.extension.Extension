@@ -1,0 +1,5 @@
+com.intellij.ide.starter.junit5.StarterBusEachTestCallback
+com.intellij.ide.starter.junit5.StarterBusAllTestCallback
+com.intellij.ide.starter.junit5.CurrentTestMethodArgumentsProvider
+com.intellij.ide.starter.junit5.ShutdownListener
+com.intellij.ide.starter.junit5.config.KillOutdatedProcesses

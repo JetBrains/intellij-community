@@ -25,7 +25,7 @@ val s
 // test functions' moving
 fun foo(): MyClass {
   // test references
-    MyExtensionImpl.Companion.MY_CONST
+    MyExtensionImpl.MY_CONST
   s
   return MyClass()
 }

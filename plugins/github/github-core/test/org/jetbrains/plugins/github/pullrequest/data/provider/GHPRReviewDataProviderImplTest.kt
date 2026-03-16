@@ -3,7 +3,13 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.collaboration.util.MainDispatcherRule
 import com.intellij.util.messages.MessageBus
-import io.mockk.*
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.coVerifyAll
+import io.mockk.coVerifySequence
+import io.mockk.confirmVerified
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReviewDTO

@@ -6,7 +6,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.database.datagrid.ModelIndex.*;
+import static com.intellij.database.datagrid.ModelIndex.col2View;
+import static com.intellij.database.datagrid.ModelIndex.forColumn;
+import static com.intellij.database.datagrid.ModelIndex.forRow;
+import static com.intellij.database.datagrid.ModelIndex.row2View;
 
 public abstract class ModelIndexSet<S> extends IndexSet<ModelIndex<S>> {
 

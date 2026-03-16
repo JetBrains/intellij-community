@@ -1,4 +1,5 @@
 // WITH_STDLIB
+// FIX: Replace with 'withIndex()'
 fun LongArray.arrayToString(): String = buildString {
     for (i in <caret>0 until size) {
         if (i > 0) append(", ")

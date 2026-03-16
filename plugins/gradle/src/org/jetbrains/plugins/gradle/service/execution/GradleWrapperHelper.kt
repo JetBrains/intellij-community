@@ -51,7 +51,7 @@ object GradleWrapperHelper {
 
   @JvmStatic
   @JvmOverloads
-  fun ensureInstalledWrapper(context: GradleExecutionContext, gradleVersion: GradleVersion? = null) {
+  fun ensureInstalledWrapper(context: GradleExecutionContextImpl, gradleVersion: GradleVersion? = null) {
 
     val settings = context.settings
     val projectPath = GradleUtil.determineRootProject(context.projectPath)

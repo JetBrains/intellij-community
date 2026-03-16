@@ -1,0 +1,12 @@
+// IMPORT_NESTED_CLASSES: true
+package test
+
+import test.A.AA
+
+class A {
+    class AA
+}
+
+fun usage() {
+    AA
+}

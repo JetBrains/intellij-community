@@ -2,6 +2,7 @@
 package com.intellij.ide.projectWizard
 
 import com.intellij.java.JavaBundle
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.Nls
 
@@ -13,6 +14,11 @@ fun interface ProjectWizardJdkPredicate {
    * @return null if the test passes, an error message else
    */
   fun getError(version: JavaVersion, name: String?): @Nls String?
+
+  /**
+   * Makes it possible to filter out some [JdkItem] from the JDK combo.
+   */
+  fun showJdkItem(jdkItem: JdkItem): Boolean = true
 
   abstract class IsAtLeast(val version: Int) : ProjectWizardJdkPredicate {
     override fun getError(version: JavaVersion, name: String?): @Nls String? {

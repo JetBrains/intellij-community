@@ -67,7 +67,8 @@ public class SimplifyBooleanCheckQuickFix extends PsiUpdateModCommandQuickFix {
                          || isEmpty(rightExpression) || isEmpty(leftExpression);
     if (isTrue(leftExpression) || isFalse(leftExpression) || isNull(leftExpression) || isEmpty(leftExpression)) {
       resultExpression = rightExpression;
-    } else {
+    }
+    else {
       resultExpression = leftExpression;
     }
     return ((positiveCondition) ? "" : "not ") + resultExpression.getText();

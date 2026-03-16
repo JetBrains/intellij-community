@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.opentelemetry.sdk.autoconfigure.spi.jar
+  modules:
+  - name: intellij.libraries.opentelemetry.sdk.autoconfigure.spi
+    libraries:
+      opentelemetry-sdk-autoconfigure-spi:
+      - name: $MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1/opentelemetry-sdk-extension-autoconfigure-spi-1.jar

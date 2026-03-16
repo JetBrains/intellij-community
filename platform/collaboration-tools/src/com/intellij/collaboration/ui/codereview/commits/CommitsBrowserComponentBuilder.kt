@@ -8,7 +8,14 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.*
+import com.intellij.ui.CollectionListModel
+import com.intellij.ui.ListSpeedSearch
+import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.ScrollableContentBorder
+import com.intellij.ui.ScrollingUtil
+import com.intellij.ui.Side
 import com.intellij.ui.components.JBList
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.ListUiUtil
@@ -16,7 +23,11 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.ListCellRenderer
+import javax.swing.ListSelectionModel
+import javax.swing.ScrollPaneConstants
 
 class CommitsBrowserComponentBuilder(private val project: Project,
                                      private val commitsModel: SingleValueModel<List<VcsCommitMetadata>>) {

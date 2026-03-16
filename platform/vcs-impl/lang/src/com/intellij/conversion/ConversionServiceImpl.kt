@@ -26,7 +26,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
-private class ConversionServiceImpl : ConversionService() {
+internal class ConversionServiceImpl : ConversionService() {
   override suspend fun convertSilently(projectPath: Path, conversionListener: ConversionListener): ConversionResult {
     try {
       val context = ConversionContextImpl(projectIdentityFile = projectPath)

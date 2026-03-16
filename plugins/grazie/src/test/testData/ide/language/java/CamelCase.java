@@ -3,7 +3,7 @@ class CamelCase {
   String CANopen, DBtune;
 
   // My name is MacTyppoo, DBtune
-  // Very very long text DBtune1
+  // <GRAMMAR_ERROR descr="RB_RB_COMMA">Very very</GRAMMAR_ERROR> long text DBtune1
   //   there is another word: RESTTful
   int SSIZE_MAX, MacTyppoo;
   boolean <TYPO descr="Typo: In word 'SSSIZE'">SSSIZE</TYPO>_MAX;

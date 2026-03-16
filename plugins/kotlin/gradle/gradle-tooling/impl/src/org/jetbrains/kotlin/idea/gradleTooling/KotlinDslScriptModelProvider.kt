@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import org.gradle.tooling.BuildController
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
@@ -9,7 +10,10 @@ import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer
 
 class KotlinDslScriptModelProvider : ProjectImportModelProvider {
+
     private val kotlinDslScriptModelClass: Class<*> = KotlinDslScriptsModel::class.java
+
+    override fun getPhase(): GradleModelFetchPhase = GradleModelFetchPhase.SCRIPT_MODEL_PHASE
 
     override fun populateModels(
         controller: BuildController,

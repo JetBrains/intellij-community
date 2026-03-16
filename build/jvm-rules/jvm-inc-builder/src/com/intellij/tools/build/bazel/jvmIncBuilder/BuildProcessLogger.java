@@ -19,6 +19,11 @@ public interface BuildProcessLogger {
     @Override
     public void logCompiledPaths(Iterable<Path> files, String builderId, String description) {
     }
+
+    @Override
+    public String getCollectedData() {
+      return "";
+    }
   };
   
   boolean isEnabled();
@@ -26,4 +31,6 @@ public interface BuildProcessLogger {
   void logDeletedPaths(Iterable<String> paths);
 
   void logCompiledPaths(Iterable<Path> files, @NonNls String builderId, @NonNls String description);
+
+  String getCollectedData();
 }

@@ -3,8 +3,10 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
+@PerformanceUnitTest
 public class RootsChangedPerformanceTest extends HeavyPlatformTestCase {
   public void testRootsChangedPerformanceInPresenceOfManyVirtualFilePointers() {
     VirtualFile temp = getTempDir().createVirtualDir();

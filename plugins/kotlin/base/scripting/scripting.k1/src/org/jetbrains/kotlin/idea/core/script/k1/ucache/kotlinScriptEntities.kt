@@ -12,8 +12,9 @@ import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.applyIf
-import org.jetbrains.kotlin.idea.core.script.v1.ScriptAdditionalIdeaDependenciesProvider
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 import java.nio.file.Path
 import kotlin.io.path.pathString
@@ -24,6 +25,7 @@ import kotlin.io.path.relativeToOrNull
  * For technical details, see [this article](https://jetbrains.team/p/wm/documents/Development/a/Workspace-model-custom-entities-creation).
  */
 
+@K1Deprecation
 fun KotlinScriptEntity.listDependencies(project: Project, rootTypeId: KotlinScriptLibraryRootTypeId? = null): List<VirtualFile> {
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
     return dependencies.asSequence()
@@ -35,6 +37,7 @@ fun KotlinScriptEntity.listDependencies(project: Project, rootTypeId: KotlinScri
         .toList()
 }
 
+@K1Deprecation
 fun VirtualFile.findDependentScripts(project: Project): List<KotlinScriptEntity>? {
     val workspaceModel = WorkspaceModel.getInstance(project)
     val storage = workspaceModel.currentSnapshot
@@ -58,6 +61,7 @@ fun VirtualFile.findDependentScripts(project: Project): List<KotlinScriptEntity>
     return null
 }
 
+@K1Deprecation
 fun BuilderSnapshot.syncScriptEntities(
     project: Project,
     scriptFilesToAddOrUpdate: List<VirtualFile>,
@@ -238,6 +242,7 @@ private fun MutableList<KotlinScriptLibraryEntityBuilder>.fillWithIdeSpecificDep
 private fun KotlinScriptLibraryEntity.hasSameRootsAs(dependency: KotlinScriptLibraryEntityBuilder): Boolean =
     this.roots.containsAll(dependency.roots) && dependency.roots.containsAll(this.roots)
 
+@K1Deprecation
 fun VirtualFile.relativeName(project: Project): String =
     if (ScratchUtil.isScratch(this) || this is LightVirtualFile) presentableName
     else toNioPath().relativeToOrNull(Path.of(project.basePath!!))?.pathString

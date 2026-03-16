@@ -4,6 +4,7 @@ package git4idea.inMemory
 import com.intellij.openapi.vcs.VcsException
 
 import com.intellij.platform.util.progress.reportSequentialProgress
+import com.intellij.vcs.log.Hash
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.objects.GitObject
 import git4idea.inMemory.objects.Oid
@@ -15,13 +16,13 @@ import git4idea.inMemory.objects.Oid
  * @throws VcsException if a merge commit is encountered during traversal or [startCommit] is not reached
  */
 internal fun GitObjectRepository.findCommitsRange(
-  startCommit: String,
-  endCommit: String,
+  startCommit: Hash,
+  endCommit: Hash,
 ): List<GitObject.Commit> {
-  var currentCommit = findCommit(Oid.fromHex(endCommit))
+  var currentCommit = findCommit(Oid.fromHash(endCommit))
   val commits = mutableListOf(currentCommit)
 
-  val commitOid = Oid.fromHex(startCommit)
+  val commitOid = Oid.fromHash(startCommit)
   while (currentCommit.oid != commitOid) {
     if (currentCommit.parentsOids.size != 1) {
       throw VcsException(GitBundle.message("rebase.log.multiple.commit.editing.action.specific.commit.root.or.merge",

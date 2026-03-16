@@ -25,7 +25,10 @@ import java.util.Random;
 import java.util.Set;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
-import static java.nio.file.attribute.PosixFilePermission.*;
+import static java.nio.file.attribute.PosixFilePermission.OTHERS_EXECUTE;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_READ;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 

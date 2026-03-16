@@ -23,7 +23,7 @@ import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.openapi.module.Module;
 import com.intellij.util.EventDispatcher;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class LibrariesValidationComponentImpl implements LibrariesValidationComponent {
   private final EventDispatcher<ValidityListener> myDispatcher = EventDispatcher.create(ValidityListener.class);

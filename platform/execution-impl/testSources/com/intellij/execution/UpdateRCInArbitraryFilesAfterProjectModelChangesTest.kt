@@ -3,9 +3,13 @@ package com.intellij.execution
 
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule

@@ -3,26 +3,55 @@ package com.intellij.lang.impl.modcommand;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.template.Expression;
-import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
-import com.intellij.codeInsight.template.TextResult;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.InjectionEditService;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.FutureVirtualFile;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCreateFile;
+import com.intellij.modcommand.ModDeleteFile;
+import com.intellij.modcommand.ModHighlight;
+import com.intellij.modcommand.ModLaunchEditorAction;
+import com.intellij.modcommand.ModNavigate;
+import com.intellij.modcommand.ModNothing;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.ModRegisterTabOut;
+import com.intellij.modcommand.ModShowConflicts;
 import com.intellij.modcommand.ModShowConflicts.Conflict;
+import com.intellij.modcommand.ModStartRename;
+import com.intellij.modcommand.ModStartTemplate;
+import com.intellij.modcommand.ModTemplateBuilder;
+import com.intellij.modcommand.ModUpdateFileText;
+import com.intellij.modcommand.ModUpdateReferences;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -34,7 +63,11 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -47,13 +80,14 @@ final class PsiUpdateImpl {
   private static final Key<PsiFile> ORIGINAL_FILE_FOR_INJECTION = Key.create("ORIGINAL_FILE_FOR_INJECTION");
 
   static @NotNull ModCommand psiUpdate(@NotNull ActionContext context,
+                                       @NotNull Consumer<@NotNull Document> copyCleaner, 
                                        @NotNull Consumer<@NotNull ModPsiUpdater> updater) {
     var runnable = new Runnable() {
       private ModPsiUpdaterImpl myUpdater;
 
       @Override
       public void run() {
-        myUpdater = new ModPsiUpdaterImpl(context);
+        myUpdater = new ModPsiUpdaterImpl(context, copyCleaner);
         updater.accept(myUpdater);
       }
 
@@ -85,12 +119,15 @@ final class PsiUpdateImpl {
     private boolean myDeleted;
     private boolean myGuardModification;
 
-    FileTracker(@NotNull PsiFile origFile, @NotNull Map<PsiFile, FileTracker> changedFiles) {
+    FileTracker(@NotNull PsiFile origFile, @NotNull Map<PsiFile, FileTracker> changedFiles, @NotNull Consumer<@NotNull Document> copyCleaner) {
       Project project = origFile.getProject();
       myCopyFile = copyFile(project, origFile);
       PsiFileImplUtil.setNonPhysicalFileDeleteHandler(myCopyFile, f -> myDeleted = true);
-      myDocument = myCopyFile.getViewProvider().getDocument();
       assert !myCopyFile.getViewProvider().isEventSystemEnabled() : "Event system for " + myCopyFile.getName();
+      myManager = PsiDocumentManager.getInstance(project);
+      myDocument = myCopyFile.getFileDocument();
+      copyCleaner.accept(myDocument);
+      myManager.commitDocument(myDocument);
       InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(project);
       boolean injected = injectionManager.isInjectedFragment(origFile);
       if (injected) {
@@ -124,7 +161,6 @@ final class PsiUpdateImpl {
       myPositionDocument.addDocumentListener(this, this);
       myOrigText = myTargetFile.getText();
       myOrigFile = origFile;
-      myManager = PsiDocumentManager.getInstance(project);
       PostprocessReformattingAspect.getInstance(project).forcePostprocessFormat(myCopyFile, this);
     }
 
@@ -173,8 +209,8 @@ final class PsiUpdateImpl {
       }
       List<ModUpdateFileText.Fragment> intersected = myFragments.subList(insertionPoint, insertionPoint + intersect);
       if (!intersected.isEmpty()) {
-        ModUpdateFileText.Fragment first = intersected.get(0);
-        ModUpdateFileText.Fragment last = intersected.get(intersected.size() - 1);
+        ModUpdateFileText.Fragment first = intersected.getFirst();
+        ModUpdateFileText.Fragment last = intersected.getLast();
         int diff = intersected.stream().mapToInt(f -> f.newLength() - f.oldLength()).sum();
         ModUpdateFileText.Fragment
           mergedFragment = new ModUpdateFileText.Fragment(first.offset(), last.offset() + last.newLength() - diff - first.offset(),
@@ -256,8 +292,12 @@ final class PsiUpdateImpl {
     private int myCaretOffset;
     private int myCaretVirtualEnd;
     private @NotNull TextRange mySelection;
+    private final @NotNull List<@NotNull ModRegisterTabOut> myTabOutCommands = new ArrayList<>();
+    private final Consumer<@NotNull Document> myCopyCleaner;
     private final List<ModHighlight.HighlightInfo> myHighlightInfos = new ArrayList<>();
     private final List<ModStartTemplate.TemplateField> myTemplateFields = new ArrayList<>();
+    private final Map<String, Result> myTemplateValues = new HashMap<>();
+    private final List<ModLaunchEditorAction> myLaunchEditorActions = new ArrayList<>();
     private @NotNull Function<? super @NotNull PsiFile, ? extends @NotNull ModCommand> myTemplateFinishFunction = f -> nop();
     private @Nullable ModStartRename myRenameSymbol;
     private final List<ModUpdateReferences> myTrackedDeclarations = new ArrayList<>();
@@ -300,10 +340,11 @@ final class PsiUpdateImpl {
       }
     }
 
-    private ModPsiUpdaterImpl(@NotNull ActionContext actionContext) {
+    private ModPsiUpdaterImpl(@NotNull ActionContext actionContext, @NotNull Consumer<@NotNull Document> copyCleaner) {
       myActionContext = actionContext;
       myCaretOffset = myCaretVirtualEnd = actionContext.offset();
       mySelection = actionContext.selection();
+      myCopyCleaner = copyCleaner;
     }
     
     private @NotNull FileTracker tracker() {
@@ -315,11 +356,26 @@ final class PsiUpdateImpl {
         myNavigationFile = tracker().myOrigFile.getViewProvider().getVirtualFile();
       }
       return myNavigationFile;
-    } 
+    }
+
+    @Override
+    public @NotNull Project getProject() {
+      return myActionContext.project();
+    }
+
+    @Override
+    public @NotNull Document getDocument() {
+      return tracker().myDocument;
+    }
+
+    @Override
+    public @NotNull PsiFile getPsiFile() {
+      return tracker().myCopyFile;
+    }
 
     private @NotNull FileTracker tracker(@NotNull PsiFile file) {
       FileTracker result = myChangedFiles.computeIfAbsent(file, origFile -> {
-        var tracker = new FileTracker(origFile, myChangedFiles);
+        var tracker = new FileTracker(origFile, myChangedFiles, myActionContext.file() == file ? myCopyCleaner : doc -> {});
         Disposer.register(this, tracker);
         return tracker;
       });
@@ -464,12 +520,17 @@ final class PsiUpdateImpl {
           }
           TextRange rangeForTemplate = templateRange(elementRange, rangeInElement);
           TextRange range = mapRange(rangeForTemplate);
-          Result result = expression.calculateResult(new DummyContext(range, element));
-          myTemplateFields.add(new ModStartTemplate.ExpressionField(range, varName, expression));
+          TemplateImpl.DummyContext context = new TemplateImpl.DummyContext(range, element, getPsiFile());
+          Result result = varName == null
+                          ? expression.calculateResult(context)
+                          : myTemplateValues.computeIfAbsent(varName, v -> expression.calculateResult(context));
           if (result != null) {
             FileTracker tracker = requireNonNull(myTracker); // guarded by getRange call
-            tracker.myDocument.replaceString(rangeForTemplate.getStartOffset(), rangeForTemplate.getEndOffset(), result.toString());
+            String fieldValue = result.toString();
+            tracker.myDocument.replaceString(rangeForTemplate.getStartOffset(), rangeForTemplate.getEndOffset(), fieldValue);
+            range = TextRange.from(range.getStartOffset(), fieldValue.length());
           }
+          myTemplateFields.add(new ModStartTemplate.ExpressionField(range, varName, expression));
           return this;
         }
 
@@ -508,13 +569,7 @@ final class PsiUpdateImpl {
     @Override
     public void moveCaretTo(int offset) {
       myPositionUpdated = true;
-      PsiLanguageInjectionHost host = tracker().getHostCopy();
-      if (host != null) {
-        InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myActionContext.project());
-        PsiFile file = findInjectedFile(instance, host);
-        offset = instance.mapUnescapedOffsetToInjected(file, offset);
-        offset = instance.injectedToHost(file, offset);
-      }
+      offset = mapOffset(offset);
       myCaretOffset = myCaretVirtualEnd = offset;
       if (!mySelection.containsOffset(offset)) {
         mySelection = TextRange.create(offset, offset);
@@ -538,6 +593,11 @@ final class PsiUpdateImpl {
     }
 
     @Override
+    public void editorAction(@NotNull String actionId, boolean optional) {
+      myLaunchEditorActions.add(new ModLaunchEditorAction(actionId, optional));
+    }
+
+    @Override
     public void rename(@NotNull PsiNamedElement element, @Nullable PsiElement nameIdentifier, @NotNull List<@NotNull String> suggestedNames) {
       if (myRenameSymbol != null) {
         throw new IllegalStateException("One element is already registered for rename");
@@ -550,6 +610,15 @@ final class PsiUpdateImpl {
       TextRange identifierRange = nameIdentifier != null ? getRange(nameIdentifier) : null;
       identifierRange = identifierRange == null ? null : mapRange(identifierRange);
       myRenameSymbol = new ModStartRename(navigationFile(), new ModStartRename.RenameSymbolRange(range, identifierRange), suggestedNames);
+    }
+
+    @Override
+    public void registerTabOut(@NotNull TextRange range, int tabOutOffset) {
+      if (tabOutOffset <= range.getEndOffset()) {
+        throw new IllegalArgumentException("Tab out offset must be greater than range end offset: " + tabOutOffset + "; range = " + range);
+      }
+      range = mapRange(range);
+      myTabOutCommands.add(new ModRegisterTabOut(navigationFile(), range.getStartOffset(), range.getEndOffset(), mapOffset(tabOutOffset)));
     }
 
     @Override
@@ -581,7 +650,18 @@ final class PsiUpdateImpl {
 
     @Override
     public int getCaretOffset() {
-      return myCaretOffset;
+      int offset = myCaretOffset;
+      PsiLanguageInjectionHost host = tracker().getHostCopy();
+      if (host != null) {
+        InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myActionContext.project());
+        PsiFile file = findInjectedFile(instance, host);
+        Document document = file.getFileDocument();
+        if (document instanceof DocumentWindow window) {
+          offset = window.hostToInjected(offset);
+          offset = instance.mapInjectedOffsetToUnescaped(file, offset);
+        }
+      }
+      return offset;
     }
 
     @Override
@@ -611,6 +691,17 @@ final class PsiUpdateImpl {
         range = instance.injectedToHost(file, TextRange.create(start, end));
       }
       return range;
+    }
+
+    private int mapOffset(int offset) {
+      PsiLanguageInjectionHost host = tracker().getHostCopy();
+      if (host != null) {
+        InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myActionContext.project());
+        PsiFile file = findInjectedFile(instance, host);
+        offset = instance.mapUnescapedOffsetToInjected(file, offset);
+        offset = instance.injectedToHost(file, offset);
+      }
+      return offset;
     }
 
     private @NotNull PsiFile findInjectedFile(InjectedLanguageManager instance, PsiLanguageInjectionHost host) {
@@ -643,9 +734,14 @@ final class PsiUpdateImpl {
       myTrackedDeclarations.replaceAll(range -> range.withNewRange(updateRange(event, range.newRange())));
       if (myRenameSymbol != null) {
         ModStartRename.RenameSymbolRange renameSymbolRange = myRenameSymbol.symbolRange();
-
         myRenameSymbol = myRenameSymbol.withRange(updateRange(event, renameSymbolRange));
       }
+      myTabOutCommands.replaceAll(command -> {
+        int left = updateOffset(event, command.rangeStart(), true);
+        int right = updateOffset(event, command.rangeEnd(), false);
+        int target = updateOffset(event, command.target(), false);
+        return new ModRegisterTabOut(command.file(), left, right, target);
+      });
     }
 
     private static @NotNull ModStartRename.RenameSymbolRange updateRange(@NotNull DocumentEvent event,
@@ -702,6 +798,8 @@ final class PsiUpdateImpl {
         .andThen(getNavigateCommand()).andThen(getHighlightCommand()).andThen(getTemplateCommand())
         .andThen(myTrackedDeclarations.stream().<ModCommand>map(c -> c).reduce(nop(), ModCommand::andThen))
         .andThen(myRenameSymbol == null ? nop() : myRenameSymbol)
+        .andThen(myTabOutCommands.stream().<ModCommand>map(c -> c).reduce(nop(), ModCommand::andThen))
+        .andThen(myLaunchEditorActions.stream().<ModCommand>map(c -> c).reduce(nop(), ModCommand::andThen))
         .andThen(myInfoMessage == null ? nop() : ModCommand.info(myInfoMessage));
     }
 
@@ -728,40 +826,6 @@ final class PsiUpdateImpl {
     private @NotNull ModCommand getTemplateCommand() {
       if (myTemplateFields.isEmpty()) return nop();
       return new ModStartTemplate(navigationFile(), myTemplateFields, myTemplateFinishFunction);
-    }
-
-    private class DummyContext implements ExpressionContext {
-      private final TextRange myRange;
-      private final @NotNull PsiElement myElement;
-
-      private DummyContext(TextRange range, @NotNull PsiElement element) {
-        myRange = range;
-        myElement = element;
-      }
-
-      @Override
-      public Project getProject() { return myActionContext.project(); }
-
-      @Override
-      public @Nullable Editor getEditor() { return null; }
-
-      @Override
-      public int getStartOffset() { return myRange.getStartOffset(); }
-
-      @Override
-      public int getTemplateStartOffset() { return myRange.getStartOffset(); }
-
-      @Override
-      public int getTemplateEndOffset() { return myRange.getEndOffset(); }
-
-      @Override
-      public <T> T getProperty(Key<T> key) { return null; }
-
-      @Override
-      public @Nullable PsiElement getPsiElementAtStartOffset() { return myElement.isValid() ? myElement : null; }
-
-      @Override
-      public @Nullable TextResult getVariableValue(String variableName) { return null; }
     }
   }
 }

@@ -3,11 +3,15 @@ package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.EditorCustomElementRenderer;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.InlayProperties;
+import com.intellij.openapi.editor.VisualPosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Point;
 import java.util.Collections;
 import java.util.List;
 

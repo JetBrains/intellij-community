@@ -1,6 +1,14 @@
 package com.intellij.editorconfig.common.syntax.psi.impl
 
-import com.intellij.editorconfig.common.syntax.psi.*
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigCharClassPattern
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigDescribableElement
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigHeader
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOption
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOptionValueIdentifier
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigPattern
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigQualifiedKeyPart
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigRootDeclaration
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 

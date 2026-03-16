@@ -1,0 +1,310 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package fleet.kernel
+
+import com.jetbrains.rhizomedb.Attribute
+import com.jetbrains.rhizomedb.DB
+import com.jetbrains.rhizomedb.Datom
+import com.jetbrains.rhizomedb.DbContext
+import com.jetbrains.rhizomedb.DeserializationProblem
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.IndexQuery
+import com.jetbrains.rhizomedb.MissingRequiredAttribute
+import com.jetbrains.rhizomedb.Mut
+import com.jetbrains.rhizomedb.Q
+import com.jetbrains.rhizomedb.asOf
+import com.jetbrains.rhizomedb.attributeByIdent
+import com.jetbrains.rhizomedb.deserializationProblems
+import com.jetbrains.rhizomedb.displayDatom
+import com.jetbrains.rhizomedb.entity
+import com.jetbrains.rhizomedb.entityType
+import com.jetbrains.rhizomedb.impl.EidGen
+import com.jetbrains.rhizomedb.lookupOne
+import com.jetbrains.rhizomedb.message
+import com.jetbrains.rhizomedb.missingRequiredAttrs
+import com.jetbrains.rhizomedb.partition
+import com.jetbrains.rhizomedb.queryIndex
+import com.jetbrains.rhizomedb.retractEntity
+import fleet.fastutil.ints.Int2ObjectOpenHashMap
+import fleet.fastutil.ints.IntOpenHashSet
+import fleet.reporting.shared.tracing.span
+import fleet.reporting.shared.tracing.spannedScope
+import fleet.util.UID
+import fleet.util.async.catching
+import fleet.util.async.use
+import fleet.util.computeIfAbsentShim
+import fleet.util.logging.KLogger
+import fleet.util.logging.logger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlin.reflect.KClass
+import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
+
+private object Storage {
+  val logger = logger<Storage>()
+}
+
+const val DbSnapshotVersion: String = "11"
+
+suspend fun <T> withStorage(
+  storageKey: StorageKey,
+  autoSaveDebounceMs: Long,
+  loadSnapshot: suspend CoroutineScope.() -> DurableSnapshotWithPartitions, // reads snapshot from file
+  saveSnapshot: suspend CoroutineScope.(DurableSnapshotWithPartitions) -> Unit, // writes snapshot to file
+  serializationRestrictions: Set<KClass<*>> = emptySet(),
+  body: suspend CoroutineScope.() -> T,
+): T {
+  val isFailFast = currentCoroutineContext().shouldFailFast
+  return withStorage(
+    storageKey,
+    autoSaveDebounceMs,
+    loadSnapshot,
+    applySnapshot = { snapshotWithPartitions: DurableSnapshotWithPartitions ->
+      applyDurableSnapshotWithPartitions(snapshot = snapshotWithPartitions.snapshot, isFailFast = isFailFast) { uid ->
+        snapshotWithPartitions.partitions[uid]!!
+      }
+    },
+    saveSnapshot = { db: DB ->
+      val (snapshot, snapshotBuildDuration) = measureTimedValue {
+        asOf(db) {
+          durableSnapshotWithPartitions(storageKey, serializationRestrictions)
+        }
+      }
+      val entitiesCount = snapshot.snapshot.entities.size
+      Storage.logger.debug { "snapshot for $storageKey built with $entitiesCount entities, took $snapshotBuildDuration" }
+      val savingDuration = measureTime {
+        coroutineScope { saveSnapshot(snapshot) }
+      }
+      Storage.logger.debug { "successfully saved snapshot for $storageKey, written in $savingDuration" }
+    },
+    body,
+  )
+}
+
+@OptIn(FlowPreview::class)
+suspend fun <T, S:Any> withStorage(
+  storageKey: StorageKey,
+  autoSaveDebounceMs: Long,
+  loadSnapshot: suspend CoroutineScope.() -> S?, // reads snapshot from file
+  applySnapshot: DbContext<Mut>.(S) -> Unit, // applies snapshot to the database
+  saveSnapshot: suspend (DB) -> Unit, // writes snapshot to file
+  body: suspend CoroutineScope.() -> T,
+): T =
+  coroutineScope {
+    catching {
+      Storage.logger.info { "loading snapshot $storageKey" }
+      val snapshot = spannedScope("loadSnapshot") { loadSnapshot() }
+      spannedScope("transact snapshot") {
+        if (snapshot != null) {
+          Storage.logger.info { "applying non-empty snapshot $storageKey" }
+          change {
+            span("apply snapshot") {
+              DbContext.threadBound.ensureMutable {
+                applySnapshot(snapshot)
+              }
+            }
+          }
+        }
+      }
+    }.onFailure { x ->
+      // Throwing exception only if we're in test mode
+      if (coroutineContext.shouldFailFast)
+        throw x
+      else
+        Storage.logger.error(x) { "couldn't restore state for $storageKey" }
+    }
+
+    launch {
+      val storedEntitiesCache = IntOpenHashSet()
+      transactor().log
+        .mapNotNull { event ->
+          when (event) {
+            is SubscriptionEvent.First, is SubscriptionEvent.Reset -> {
+              asOf(event.db) {
+                @Suppress("UNCHECKED_CAST")
+                queryIndex(IndexQuery.LookupMany(Durable.StorageKeyAttr.attr as Attribute<StorageKey>, storageKey))
+                  .forEach { storedEntitiesCache.add(it.eid) }
+              }
+              event.db
+            }
+            is SubscriptionEvent.Next ->
+              event.change.dbAfter.takeIf {
+                event.change.novelty.fold(false) { needToSave, datom ->
+                  when {
+                    // new entities are being added/removed to the store
+                    datom.value == storageKey && datom.attr == Durable.StorageKeyAttr.attr -> {
+                      val eid = datom.eid
+                      when (datom.added) {
+                        true -> storedEntitiesCache.add(eid)
+                        false -> storedEntitiesCache.remove(eid)
+                      }
+                      true
+                    }
+                    // stored entities are being changed
+                    datom.eid in storedEntitiesCache -> true
+                    else -> needToSave
+                  }
+                }
+              }
+          }
+        }
+        .debounce(autoSaveDebounceMs)
+        .collectLatest { db ->
+          Storage.logger.debug { "saving snapshot $storageKey" }
+          saveSnapshot(db)
+        }
+    }.use {
+      body()
+    }.also {
+      Storage.logger.info { "last save for $storageKey " }
+      saveSnapshot(transactor().lastKnownDb)
+    }
+  }
+
+@Suppress("UNCHECKED_CAST")
+private fun storageKeyAttr(): Attribute<StorageKey> {
+  return Durable.StorageKeyAttr.attr as Attribute<StorageKey>
+}
+
+@Serializable
+data class DurableSnapshotWithPartitions(
+  val snapshot: DurableSnapshot,
+  val partitions: Map<UID, Int>,
+) {
+  companion object {
+    val Empty: DurableSnapshotWithPartitions = DurableSnapshotWithPartitions(DurableSnapshot.Empty, emptyMap())
+  }
+}
+
+fun DbContext<Mut>.applyDurableSnapshotWithPartitions(
+  snapshot: DurableSnapshot,
+  isFailFast: Boolean = false,
+  partition: (UID) -> Int,
+) {
+  span("applyDurableSnapshotWithPartitions") {
+    val memoizedEIDs = HashMap<UID, EID>()
+    applySnapshotNew(snapshot) { uid ->
+      val partition = partition(uid)
+      memoizedEIDs.computeIfAbsentShim(uid) { EidGen.freshEID(partition) }
+    }
+
+    val attrIdents = snapshot.entities.flatMapTo(HashSet()) { e -> e.attrs.keys }
+    val deserializationProblems = deserializationProblems(attrIdents.mapNotNull { k -> attributeByIdent(k.ident) })
+    if (isFailFast) {
+      check(deserializationProblems.isEmpty()) { deserializationProblems.joinToString(separator = "\n") }
+    }
+
+    val schemaProblems = uidAttribute().let { uidAttr ->
+      snapshot.entities.flatMap { durableEntity ->
+        lookupOne(uidAttr, durableEntity.uid)?.let { entityEID ->
+          entityType(entityEID)?.let { entityTypeEID ->
+            missingRequiredAttrs(entityEID, entityTypeEID)
+          }
+        } ?: emptyList()
+      }
+    }
+
+    reportDeserializationProblems(deserializationProblems, Storage.logger)
+    reportSchemaProblems(schemaProblems, Storage.logger)
+    if (isFailFast) {
+      check(schemaProblems.isEmpty()) { schemaProblems.joinToString(separator = "\n") }
+    }
+
+    val entitiesToRetract = (deserializationProblems.map { problem -> problem.datom.eid }
+                             + schemaProblems.map(MissingRequiredAttribute::eid))
+    entitiesToRetract.forEach { eid ->
+      retractEntity(eid)
+    }
+  }
+}
+
+data class EntityDatoms(val eid: EID, val datoms: List<Datom>)
+
+fun DbContext<Q>.selectEntityDatomsToStore(
+  storageKey: StorageKey,
+): Iterator<EntityDatoms> {
+  val storageKeyAttr = storageKeyAttr()
+  val skippedEids = IntOpenHashSet()
+  val datomsToStore = Int2ObjectOpenHashMap<EntityDatoms>()
+  val visitedEids = IntOpenHashSet()
+  fun dfs(eid: EID): Boolean =
+    when {
+      skippedEids.contains(eid) -> false
+      datomsToStore.containsKey(eid) -> true
+      !visitedEids.add(eid) -> true
+      queryIndex(IndexQuery.Contains(eid, storageKeyAttr, storageKey)) == null -> {
+        skippedEids.add(eid)
+        false
+      }
+      else -> {
+        val entityDatoms = queryIndex(IndexQuery.Entity(eid))
+        val refDatoms = entityDatoms.filter { it.attr.schema.isRef && it.attr != Entity.Type.attr }
+        val shouldBeSaved = refDatoms.fold(true) { acc, refDatom ->
+          acc && (dfs(refDatom.value as EID) || !refDatom.attr.schema.required)
+        }
+        if (shouldBeSaved) {
+          val datoms = entityDatoms.filterNot { datom ->
+            datom.attr.schema.isRef && skippedEids.contains(datom.value as EID)
+          }
+          datomsToStore[eid] = EntityDatoms(eid, datoms)
+        }
+        else {
+          Storage.logger.warn {
+            "Entity ${entity(eid)} is skipped from durable serialization " +
+            "because it have required property that is not to be saved with the same storageKey"
+          }
+          skippedEids.add(eid)
+        }
+        shouldBeSaved
+      }
+    }
+  queryIndex(IndexQuery.LookupMany(storageKeyAttr, storageKey)).forEach { datom -> dfs(datom.eid) }
+  return datomsToStore.values
+}
+
+private fun durableSnapshotWithPartitions(
+  storageKey: StorageKey,
+  serializationRestrictions: Set<KClass<*>>,
+): DurableSnapshotWithPartitions {
+  return with(DbContext.threadBound) {
+    val uidAttribute = uidAttribute()
+    val datoms = selectEntityDatomsToStore(storageKey).asSequence().map { it.datoms }.toList().flatten()
+    val snapshot = buildDurableSnapshot(datoms.asSequence(), serializationRestrictions)
+    DurableSnapshotWithPartitions(snapshot = snapshot,
+                                  partitions = datoms.mapNotNull { (e, a, v) ->
+                                    when (a) {
+                                      uidAttribute -> v as UID to partition(e)
+                                      else -> null
+                                    }
+                                  }.toMap())
+  }
+}
+
+fun DbContext<Q>.reportDeserializationProblems(problems: List<DeserializationProblem>, kLogger: KLogger) {
+  problems.forEach { problem ->
+    kLogger.error((problem as? DeserializationProblem.Exception)?.throwable) {
+      when (problem) {
+        is DeserializationProblem.Exception -> "Got serialization exception"
+        is DeserializationProblem.GotNull -> "Got null"
+        is DeserializationProblem.Unexpected -> "Not a json element"
+      } + ", datom: ${displayDatom(problem.datom)}"
+    }
+  }
+}
+
+fun DbContext<Q>.reportSchemaProblems(problems: List<MissingRequiredAttribute>, kLogger: KLogger) {
+  if (problems.isNotEmpty()) {
+    kLogger.error {
+      problems.joinToString(separator = "\n",
+                            prefix = "Retracting entities missing required attributes") { p -> message(p) }
+    }
+  }
+}

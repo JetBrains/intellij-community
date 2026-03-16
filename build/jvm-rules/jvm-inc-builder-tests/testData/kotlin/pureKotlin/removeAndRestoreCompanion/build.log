@@ -1,0 +1,32 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_removeAndRestoreCompanion-a.kotlin_module
+  foo/A$Companion.class
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/removeAndRestoreCompanion/a/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_removeAndRestoreCompanion-a.kotlin_module
+  use/UseAbarKt.class
+  use/UseAfooKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/removeAndRestoreCompanion/a/useAbar.kt
+  kotlin/pureKotlin/removeAndRestoreCompanion/a/useAfoo.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_removeAndRestoreCompanion-a.kotlin_module
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/removeAndRestoreCompanion/a/A.kt
+  kotlin/pureKotlin/removeAndRestoreCompanion/a/useAbar.kt
+  kotlin/pureKotlin/removeAndRestoreCompanion/a/useAfoo.kt
+End of files
+------------------------------------------
+Exit code: OK

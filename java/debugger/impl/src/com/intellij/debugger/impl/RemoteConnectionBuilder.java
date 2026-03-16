@@ -13,6 +13,8 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -121,6 +123,16 @@ public class RemoteConnectionBuilder {
 
       if (myAsyncAgent) {
         AsyncStacksUtils.addDebuggerAgent(parameters, myProject, true, null, myMatchWithExecutionTarget);
+      }
+
+      if (DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) {
+        var version = JavaSdkVersionUtil.getJavaSdkVersion(parameters.getJdk());
+        // It's dangerous to set VM options for unknown JDK, so we check for null explicitly,
+        // it's better to have a warning rather than inability to start JVM.
+        if (version != null && version.isAtLeast(JavaSdkVersion.JDK_24)) {
+          var p = "--enable-native-access=ALL-UNNAMED";
+          parameters.getVMParametersList().replaceOrPrepend(p, p);
+        }
       }
 
       parameters.getVMParametersList().replaceOrPrepend("-Xrunjdwp:", "");

@@ -22,5 +22,6 @@ import com.jetbrains.python.psi.stubs.PyStarImportElementStub;
 /**
  * Marks the star in "from foo import *".
  */
-public interface PyStarImportElement extends PyAstStarImportElement, PyImplicitImportNameDefiner, StubBasedPsiElement<PyStarImportElementStub> {
+public interface PyStarImportElement
+  extends PyAstStarImportElement, PyImplicitImportNameDefiner, StubBasedPsiElement<PyStarImportElementStub> {
 }

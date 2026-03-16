@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.html
 
-import com.intellij.polySymbols.html.elements.HtmlElementSymbolDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.polySymbols.html.elements.HtmlElementSymbolDescriptor
 import com.intellij.psi.XmlElementFactory
 import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl

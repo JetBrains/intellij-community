@@ -16,10 +16,21 @@
 package org.jetbrains.jps.model
 
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import org.jetbrains.jps.model.java.*
+import org.jetbrains.jps.model.java.JavaResourceRootProperties
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootProperties
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.java.JpsJavaLibraryType
+import org.jetbrains.jps.model.java.JpsJavaModuleType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir

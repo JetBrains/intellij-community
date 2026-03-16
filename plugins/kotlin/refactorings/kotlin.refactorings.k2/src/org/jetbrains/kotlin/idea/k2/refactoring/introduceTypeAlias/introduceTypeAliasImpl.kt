@@ -28,9 +28,33 @@ import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.matchRanges
 import org.jetbrains.kotlin.idea.refactoring.introduce.insertDeclaration
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
-import org.jetbrains.kotlin.lexer.KtTokens.*
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.lexer.KtTokens.DEFAULT_VISIBILITY_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.INTERNAL_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.PRIVATE_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.PROTECTED_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.PUBLIC_KEYWORD
+import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtClassBody
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNullableType
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtTypeElement
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
+import org.jetbrains.kotlin.psi.psiUtil.isAncestor
+import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 
 sealed class IntroduceTypeAliasAnalysisResult {
     class Error(@NlsContexts.DialogMessage val message: String) : IntroduceTypeAliasAnalysisResult()
@@ -44,7 +68,8 @@ fun analyzeResult(aliasData: IntroduceTypeAliasData): IntroduceTypeAliasAnalysis
         (psiFactory.createBlockCodeFragment("val a: Int", aliasData.targetSibling.parent).getContentElement().children[0] as KtProperty).apply {
             WriteCommandAction.writeCommandAction(project).run<Throwable> {
                 typeReference!!.replace(
-                    aliasData.originalTypeElement.parent as? KtTypeReference
+                    aliasData.originalTypeElement as? KtTypeReference
+                        ?: aliasData.originalTypeElement.parent as? KtTypeReference
                         ?: if (aliasData.originalTypeElement is KtTypeElement) psiFactory.createType(
                             aliasData.originalTypeElement
                         ) else psiFactory.createType(aliasData.originalTypeElement.text)
@@ -96,7 +121,7 @@ private fun findReferencesToReplaceWithTypeParameters(
         if (newReference !in forcedCandidates) { //skip for resolved references
             val originalSymbol = (originalReference.type as? KaClassType)?.symbol
             val newSymbol = (newReference.type as? KaClassType)?.symbol
-            if (originalSymbol == newSymbol) continue
+            if (originalSymbol == newSymbol && originalSymbol != null) continue
         }
 
         with(K2SemanticMatcher) {

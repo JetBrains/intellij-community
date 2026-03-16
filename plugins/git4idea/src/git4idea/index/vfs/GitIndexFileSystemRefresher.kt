@@ -11,6 +11,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -32,7 +33,9 @@ import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.openapi.vfs.encoding.EncodingManagerListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent.REFRESH_REQUESTOR
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.LocalTimeCounter
+import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.MessageBusConnection
@@ -53,7 +56,7 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 @Service(Service.Level.PROJECT)
-class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
+internal class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Git index file system refresher", 1)
   private val disposable = Disposer.newDisposable("Git Index File System")
 
@@ -234,12 +237,25 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
 
   @Throws(IOException::class)
   internal fun readContentFromGit(root: VirtualFile, filePath: FilePath): ByteArray {
-    return try {
-      GitFileUtils.getFileContent(project, root, "", VcsFileUtil.relativePath(root, filePath))
+    val title = GitBundle.message("stage.vfs.read.process", filePath.name)
+    return when {
+      !application.isDispatchThread -> getFileContent(root, filePath)
+      application.isWriteAccessAllowed -> computeUnderPotemkinProgress(project, title) {
+        getFileContent(root, filePath)
+      }
+      else -> runWithModalProgressBlocking(project, title) {
+        getFileContent(root, filePath)
+      }
     }
-    catch (e: VcsException) {
-      throw IOException(e)
-    }
+  }
+
+  @RequiresBackgroundThread
+  fun getFileContent(root: VirtualFile, filePath: FilePath): ByteArray = try {
+    GitFileUtils.getFileContent(project, root, "", VcsFileUtil.relativePath(root, filePath))
+  }
+  catch (e: Exception) {
+    rethrowControlFlowException(e)
+    throw IOException(e)
   }
 
   private fun readMetadataFromGit(root: VirtualFile, filePath: FilePath): GitIndexUtil.StagedFile? {
@@ -308,7 +324,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
       }
     }
 
-    private fun <T> computeUnderPotemkinProgress(project: Project, @NlsContexts.ProgressTitle message: String, computation: () -> T): T {
+    fun <T> computeUnderPotemkinProgress(project: Project, @NlsContexts.ProgressTitle message: String, computation: () -> T): T {
       val result = Ref<T>(null)
       PotemkinProgress(message, project, null, null).runInBackground {
         result.set(computation())
@@ -317,7 +333,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     }
 
     fun <T> computeUnderPotemkinProgressIfEdt(project: Project, @NlsContexts.ProgressTitle message: String, computation: () -> T): T =
-      if (ApplicationManager.getApplication().isDispatchThread) computeUnderPotemkinProgress(project, message, computation) else computation()
+      if (application.isDispatchThread) computeUnderPotemkinProgress(project, message, computation) else computation()
   }
 
   private inner class IndexFileData(

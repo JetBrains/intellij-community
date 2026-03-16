@@ -8,7 +8,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.table.TableColumn;
 import java.util.List;
 

@@ -5,7 +5,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 @ApiStatus.Internal
 class PseudoSplitter extends Splitter {

@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.schemeManager
 
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
+import com.intellij.configurationStore.LOG
+import com.intellij.configurationStore.SchemeNameToFileName
+import com.intellij.configurationStore.SettingsSavingComponent
+import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType
@@ -139,8 +143,7 @@ sealed class SchemeManagerFactoryBase(
   }
 }
 
-@Suppress("unused")
-private class ApplicationSchemeManagerFactory(coroutineScope: CoroutineScope) : SchemeManagerFactoryBase(ApplicationManager.getApplication(), coroutineScope) {
+internal class ApplicationSchemeManagerFactory(coroutineScope: CoroutineScope) : SchemeManagerFactoryBase(ApplicationManager.getApplication(), coroutineScope) {
   override fun checkPath(originalPath: String): String {
     var path = super.checkPath(originalPath)
     if (path.startsWith(ROOT_CONFIG)) {
@@ -160,7 +163,7 @@ private class ApplicationSchemeManagerFactory(coroutineScope: CoroutineScope) : 
 }
 
 @Suppress("unused")
-private class ProjectSchemeManagerFactory(override val project: Project, coroutineScope: CoroutineScope) : SchemeManagerFactoryBase(project, coroutineScope) {
+internal class ProjectSchemeManagerFactory(override val project: Project, coroutineScope: CoroutineScope) : SchemeManagerFactoryBase(project, coroutineScope) {
   override fun createFileChangeSubscriber(): FileChangeSubscriber = { schemeManager ->
     if (!ApplicationManager.getApplication().isUnitTestMode || project.getUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE) == true) {
       project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager, project))

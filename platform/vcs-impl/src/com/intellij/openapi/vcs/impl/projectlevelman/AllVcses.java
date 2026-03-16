@@ -20,7 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.impl.VcsEP;
@@ -30,7 +34,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class AllVcses implements AllVcsesI, Disposable {

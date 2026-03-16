@@ -26,14 +26,6 @@ openpyxl.descriptors.nested.NestedMinMax.__get__
 openpyxl.descriptors.nested.NestedText.__get__
 openpyxl.descriptors.nested.NestedValue.__get__
 
-# Stubtest sees <class T> and type[T] as different: https://github.com/python/mypy/issues/13316
-openpyxl.chart.descriptors.NumberFormatDescriptor.expected_type
-openpyxl.chart.title.TitleDescriptor.expected_type
-openpyxl.drawing.colors.ColorChoiceDescriptor.expected_type
-openpyxl.packaging.relationship.RelationshipList.expected_type
-openpyxl.styles.colors.ColorDescriptor.expected_type
-openpyxl.styles.fills.StopList.expected_type
-
 # Stubtest doesn't like generics here
 openpyxl\.descriptors\.(base\.)?Bool\.allow_none
 openpyxl\.descriptors\.(base\.)?DateTime\.allow_none

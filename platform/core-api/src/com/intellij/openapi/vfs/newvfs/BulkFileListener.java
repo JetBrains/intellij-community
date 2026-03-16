@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +14,7 @@ import java.util.List;
  * Consider using {@link BulkFileListenerBackgroundable} to avoid changes in semantics depending on the version of the Platform.
  * </b>
  * <p>
- * Please use {@link com.intellij.openapi.vfs.AsyncFileListener} instead, unless you absolutely sure you need to receive events synchronously.
+ * Please use {@link com.intellij.openapi.vfs.AsyncFileListener} instead, unless you are absolutely sure you need to receive events synchronously.
  * <p>
  * To register this listener, use e.g. {@code project.getMessageBus().connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, listener)}
  * or define the listener in {@code plugin.xml} as an application listener (the preferred way):

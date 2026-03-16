@@ -3,7 +3,7 @@ package com.intellij.database.datagrid;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface GridFilterAndSortingComponent {
   int FILTER_PREFERRED_SIZE = 300;

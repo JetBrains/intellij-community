@@ -3,7 +3,16 @@ package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.completion.command.commands.AbstractTypeHierarchyCompletionCommandProvider
 import com.intellij.codeInsight.completion.command.getCommandContext
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiNameValuePair
+import com.intellij.psi.PsiReferenceList
+import com.intellij.psi.PsiTypeElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 
 internal class JavaTypeHierarchyCompletionCommandProvider : AbstractTypeHierarchyCompletionCommandProvider() {

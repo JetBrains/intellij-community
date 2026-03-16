@@ -9,12 +9,18 @@ import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiExpressionCodeFragment;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.ref.GCUtil;
 
 @HeavyPlatformTestCase.WrapInCommand

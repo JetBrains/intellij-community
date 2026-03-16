@@ -1,0 +1,58 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <globalInspection groupPath="Java" shortName="UnnecessaryModuleDependencyInspection" bundle="messages.JavaAnalysisBundle"
+                      key="unnecessary.module.dependency.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy" enabledByDefault="true"
+                      level="WARNING"
+                      implementationClass="com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="Java9RedundantRequiresStatement"
+                      groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy"
+                      enabledByDefault="true" level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                      implementationClass="com.intellij.codeInspection.java19modules.Java9RedundantRequiresStatementInspection"
+                      key="inspection.java.9.redundant.requires.statement.display.name" bundle="messages.JavaAnalysisBundle"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="UNUSED_IMPORT" bundle="messages.JavaAnalysisBundle" key="unused.import.display.name"
+                      groupBundle="messages.InspectionsBundle" groupKey="group.names.imports"  editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" enabledByDefault="true" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.unusedImport.UnusedImportInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="MISSORTED_IMPORTS" bundle="messages.JavaAnalysisBundle" key="missorted.imports.inspection.display.name"
+                      groupBundle="messages.InspectionsBundle" groupKey="group.names.imports"  enabledByDefault="true" level="INFORMATION"
+                      implementationClass="com.intellij.codeInspection.unusedImport.MissortedImportsInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="RedundantThrows" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
+                      enabledByDefault="true" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationInspection"
+                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                      key="inspection.redundant.throws.display.name" bundle="messages.JavaAnalysisBundle"/>
+    <globalInspection groupPath="Java" language="UAST" shortName="SameReturnValue" bundle="messages.JavaAnalysisBundle" key="inspection.same.return.value.display.name"
+                      groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.sameReturnValue.SameReturnValueInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="CanBeFinal" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
+                      enabledByDefault="true" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.canBeFinal.CanBeFinalInspection"
+                      key="inspection.can.be.final.display.name" bundle="messages.JavaAnalysisBundle"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="WeakerAccess" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
+                      enabledByDefault="false" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.visibility.VisibilityInspection"
+                      key="inspection.weaker.access.display.name" bundle="messages.JavaAnalysisBundle"/>
+    <globalInspection groupPath="Java" shortName="InconsistentLanguageLevel"
+                      groupKey="group.names.modularization.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="false" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.inconsistentLanguageLevel.InconsistentLanguageLevelInspection"
+                      key="inspection.inconsistent.language.level.display.name" bundle="messages.JavaAnalysisBundle"/>
+    <globalInspection groupPath="Java" shortName="UnusedLibrary" bundle="messages.JavaAnalysisBundle" key="unused.library.display.name"
+                      groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy" enabledByDefault="false" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.unusedLibraries.UnusedLibrariesInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="UnusedReturnValue" bundle="messages.JavaBundle"
+                      key="inspection.unused.return.value.display.name"
+                      groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
+                      level="WARNING"
+                      implementationClass="com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue"/>
+    <globalInspection groupPath="Java" language="UAST" shortName="SameParameterValue" bundle="messages.JavaBundle"
+                      key="inspection.same.parameter.display.name"
+                      groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
+                      level="WARNING"
+                      implementationClass="com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="unused" groupBundle="messages.InspectionsBundle"
+                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.deadCode.UnusedDeclarationInspection"
+                      presentation="com.intellij.codeInspection.deadCode.UnusedDeclarationPresentation" key="inspection.unused.display.name"
+                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                      bundle="messages.JavaBundle"/>
+  </extensions>
+</idea-plugin>

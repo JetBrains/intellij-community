@@ -20,6 +20,7 @@
         <myPlugin.lang.myExtPoint language="" implementationClass="MyLanguageExtension"/>
         <myPlugin.lang.myOwnExtPoint language="" implementationClass="MyLanguageExtension"/>
         <myPlugin.myDependencyModuleClassEp implementation="DependencyModuleClass"/>
+        <applicationService serviceInterface="MyServiceInterface" serviceImplementation="MyServiceImplementation"/>
     </extensions>
     <actions>
         <action class="DependencyModuleAction"/>

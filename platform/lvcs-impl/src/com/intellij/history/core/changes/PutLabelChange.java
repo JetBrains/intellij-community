@@ -13,7 +13,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
 
 public class PutLabelChange extends Change {
   private final @NotNull @NlsContexts.Label String myName;
@@ -54,11 +53,6 @@ public class PutLabelChange extends Change {
   @Override
   public boolean affectsProject(String projectId) {
     return myProjectId.equals(projectId);
-  }
-
-  @Override
-  public boolean affectsMatching(@NotNull Pattern pattern) {
-    return false;
   }
 
   @Override

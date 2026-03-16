@@ -11,18 +11,18 @@ import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.ModuleEntityChangeListener
-import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
-import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.base.util.caching.newEntity
 import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
 import org.jetbrains.kotlin.idea.facet.isKotlinFacet
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
 @Service(Service.Level.PROJECT)
 class ModulePlatformCache(project: Project) :

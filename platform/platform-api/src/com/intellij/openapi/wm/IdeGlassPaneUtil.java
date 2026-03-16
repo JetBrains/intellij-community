@@ -12,8 +12,9 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JRootPane;
+import java.awt.Component;
 import java.awt.event.MouseEvent;
 
 public final class IdeGlassPaneUtil {

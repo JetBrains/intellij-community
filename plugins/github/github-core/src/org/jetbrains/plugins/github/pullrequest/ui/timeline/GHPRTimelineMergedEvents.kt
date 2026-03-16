@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
-import java.util.*
+import java.util.Date
 
 abstract class GHPRTimelineMergedEvents<T : GHPRTimelineEvent> : GHPRTimelineGroupedItems<T>(), GHPRTimelineEvent {
   override val actor: GHActor?

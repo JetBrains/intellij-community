@@ -3,7 +3,11 @@ package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.IContainer;
+import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.lw.ITabbedPane;
+import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

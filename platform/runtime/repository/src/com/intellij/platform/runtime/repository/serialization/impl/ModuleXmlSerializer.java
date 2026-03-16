@@ -1,10 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.repository.serialization.impl;
 
+import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.xml.stream.*;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import javax.xml.stream.XMLStreamWriter;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -22,15 +28,15 @@ final class ModuleXmlSerializer {
     writer.writeStartDocument("UTF-8", "1.0");
     writeEolAndIndent(writer, 0);
     writer.writeStartElement(MODULE_TAG);
-    writer.writeAttribute(NAME_ATTRIBUTE, descriptor.getId());
-    List<String> dependencies = descriptor.getDependencies();
+    writer.writeAttribute(NAME_ATTRIBUTE, descriptor.getModuleId().getStringId());
+    List<RuntimeModuleId> dependencies = descriptor.getDependencyIds();
     if (!dependencies.isEmpty()) {
       writeEolAndIndent(writer, 1);
       writer.writeStartElement("dependencies");
-      for (String dependency : dependencies) {
+      for (RuntimeModuleId dependency : dependencies) {
         writeEolAndIndent(writer, 2);
         writer.writeEmptyElement(MODULE_TAG);
-        writer.writeAttribute(NAME_ATTRIBUTE, dependency);
+        writer.writeAttribute(NAME_ATTRIBUTE, dependency.getStringId());
       }
       writeEolAndIndent(writer, 1);
       writer.writeEndElement();
@@ -62,7 +68,7 @@ final class ModuleXmlSerializer {
 
   public static RawRuntimeModuleDescriptor parseModuleXml(XMLInputFactory factory, InputStream inputStream) throws XMLStreamException {
     XMLStreamReader reader = factory.createXMLStreamReader(inputStream);
-    ArrayList<String> dependencies = new ArrayList<>();
+    ArrayList<RuntimeModuleId> dependencies = new ArrayList<>();
     ArrayList<String> resources = new ArrayList<>();
     String moduleName = null;
     int level = 0;
@@ -75,7 +81,8 @@ final class ModuleXmlSerializer {
           moduleName = XmlStreamUtil.readFirstAttribute(reader, NAME_ATTRIBUTE);
         }
         else if (level == 3 & tagName.equals(MODULE_TAG)) {
-          dependencies.add(XmlStreamUtil.readFirstAttribute(reader, NAME_ATTRIBUTE));
+          String dependencyName = XmlStreamUtil.readFirstAttribute(reader, NAME_ATTRIBUTE);
+          dependencies.add(RuntimeModuleId.raw(dependencyName));
         }
         else if (level == 3 && tagName.equals(RESOURCE_ROOT_TAG)) {
           String relativePath = XmlStreamUtil.readFirstAttribute(reader, PATH_ATTRIBUTE);
@@ -93,6 +100,6 @@ final class ModuleXmlSerializer {
     if (moduleName == null) {
       throw new XMLStreamException("Required attribute 'module' is not specified");
     }
-    return RawRuntimeModuleDescriptor.create(moduleName, resources, dependencies);
+    return RawRuntimeModuleDescriptor.create(RuntimeModuleId.raw(moduleName), resources, dependencies);
   }
 }

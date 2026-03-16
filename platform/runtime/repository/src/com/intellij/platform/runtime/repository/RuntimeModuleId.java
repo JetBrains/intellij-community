@@ -27,7 +27,14 @@ public final class RuntimeModuleId {
   }
 
   /**
-   * Creates ID from a raw string representation as it's written in the runtime module repository. 
+   * Returns a human-readable name of the module. It can be used for debugging and logging purposes only.
+   */
+  public @NotNull String getPresentableName() {
+    return myStringId;
+  }
+
+  /**
+   * Creates ID from a raw string representation as it's written in the runtime module repository.
    * This method is supposed to be used to generate and transform the module repository only, other code should use other methods.
    */
   @ApiStatus.Internal
@@ -57,9 +64,10 @@ public final class RuntimeModuleId {
   }
 
   /**
-   * Creates ID of a runtime module corresponding to the module-level library {@code libraryName} from module {@code moduleName} in intellij 
-   * project configuration.
+   * @deprecated module-level libraries are now merged with corresponding modules at runtime, it doesn't make sense to have separate IDs for
+   * them.
    */
+  @Deprecated(forRemoval = true)
   public static @NotNull RuntimeModuleId moduleLibrary(@NotNull String moduleName, @NotNull String libraryName) {
     return new RuntimeModuleId(LIB_NAME_PREFIX + moduleName + "." + libraryName);
   }

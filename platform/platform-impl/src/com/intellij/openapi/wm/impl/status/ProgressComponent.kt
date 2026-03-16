@@ -21,13 +21,21 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.isUnderDarcula
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.function.Consumer
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JProgressBar
+import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 
 /**
  * This component was copy-pasted from `InlineProgressIndicator` with the following modification:

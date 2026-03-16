@@ -22,7 +22,7 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-tooling/impl",
     "//plugins/kotlin/tests-from-compiler",
     "//plugins/kotlin/util/test-generator-api",
-    "//plugins/kotlin/tests-common",
+    "//plugins/kotlin/tests-common:common-tests",
     "//plugins/kotlin/code-insight/intentions-shared/tests/k2",
     "//plugins/kotlin/code-insight/inspections-k2/tests",
     "//plugins/kotlin/code-insight/intentions-k2/tests",
@@ -41,7 +41,7 @@ jvm_library(
     "//plugins/kotlin/kotlin.searching/kotlin.searching.test.k2:test",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/compiler-reference-index/tests.k2:kotlin-compilerReferenceIndex-tests",
-    "//plugins/kotlin/bundled-compiler-plugins-support",
+    "//plugins/kotlin/bundled-compiler-plugins-support:compilerPlugins-support-bundled",
     "//plugins/kotlin/uast/uast-kotlin-fir/tests",
     "//plugins/kotlin/compiler-plugins/parcelize/tests",
     "//plugins/kotlin/compiler-plugins/parcelize/tests/k2:kotlin-compilerPlugins-parcelize-tests",
@@ -65,6 +65,15 @@ jvm_library(
     "//plugins/kotlin/gradle/code-insight-groovy/tests.k2:kotlin-gradle-codeInsight-groovy-tests",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting",
     "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
+    "//plugins/kotlin/grazie/intellij.kotlin.grazie.tests:kotlin-grazie-tests",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test",
+    "//plugins/kotlin/test-framework",
+    "//plugins/kotlin/base/indices/tests",
+    "//plugins/kotlin/coverage/tests",
+    "//plugins/kotlin/maven/tests",
+    "//plugins/kotlin/project-wizard/tests",
+    "//plugins/kotlin/base/facet/tests",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/tests",
   ]
 )
 ### auto-generated section `build kotlin.fir-all-tests` end

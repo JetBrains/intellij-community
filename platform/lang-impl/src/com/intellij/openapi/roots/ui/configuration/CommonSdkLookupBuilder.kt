@@ -7,10 +7,13 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import org.jetbrains.annotations.Nls
 
 internal data class CommonSdkLookupBuilder(
   override val project: Project? = null,
+  override val eelDescriptor: EelDescriptor? = null,
 
   @ProgressTitle
   override val progressMessageTitle: String? = null,
@@ -38,7 +41,15 @@ internal data class CommonSdkLookupBuilder(
 
   private val lookup: (CommonSdkLookupBuilder) -> Unit
 ) : SdkLookupBuilder, SdkLookupParameters {
-  override fun withProject(project: Project?): CommonSdkLookupBuilder = copy(project = project)
+  override fun withProject(project: Project?): CommonSdkLookupBuilder {
+    ensureDoesNotContradict(eelDescriptor, project)
+    return copy(project = project)
+  }
+
+  override fun withEel(eelDescriptor: EelDescriptor?): SdkLookupBuilder {
+    ensureDoesNotContradict(eelDescriptor, project)
+    return copy(eelDescriptor = eelDescriptor)
+  }
 
   override fun withProgressMessageTitle(@ProgressTitle message: String): CommonSdkLookupBuilder = copy(progressMessageTitle = message)
 
@@ -97,6 +108,15 @@ internal data class CommonSdkLookupBuilder(
     return {
       this(it)
       v(it)
+    }
+  }
+
+  private companion object {
+    fun ensureDoesNotContradict(eelDescriptor: EelDescriptor?, project: Project?) {
+      val projEelDescriptor = project?.getEelDescriptor()
+      if (projEelDescriptor != null && eelDescriptor != null && projEelDescriptor != eelDescriptor) {
+        throw IllegalArgumentException("Eel is $eelDescriptor , project is $projEelDescriptor , they must be the same")
+      }
     }
   }
 }

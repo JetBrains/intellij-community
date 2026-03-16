@@ -22,20 +22,24 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyIfStatement;
+import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User: catherine
- *
+ * <p>
  * QuickFix to replace mutable default argument. For instance,
  * def foo(args=[]):
-     pass
+ * pass
  * replace with:
  * def foo(args=None):
-     if not args: args = []
-     pass
+ * if not args: args = []
+ * pass
  */
 public class PyDefaultArgumentQuickFix extends PsiUpdateModCommandQuickFix {
 
@@ -53,7 +57,7 @@ public class PyDefaultArgumentQuickFix extends PsiUpdateModCommandQuickFix {
     if (function != null && defName != null) {
       final PyElementGenerator generator = PyElementGenerator.getInstance(project);
       final LanguageLevel languageLevel = LanguageLevel.forElement(function);
-      
+
       final PyNamedParameter newParam = generator.createParameter(defName, PyNames.NONE, null, languageLevel);
       param.replace(newParam);
 

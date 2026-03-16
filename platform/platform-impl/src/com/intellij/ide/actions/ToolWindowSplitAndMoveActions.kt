@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.content.Content
 import javax.swing.SwingConstants
 
@@ -20,7 +19,7 @@ internal abstract class ToolWindowSplitAndMoveActionBase(
 
   override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
     val contentManager = content?.manager
-    e.presentation.isEnabledAndVisible = ToolWindowContentUi.isTabsReorderingAllowed(toolWindow) &&
+    e.presentation.isEnabledAndVisible = toolWindow.canSplitTabs() &&
                                          contentManager != null && contentManager.contentCount > 1
   }
 }

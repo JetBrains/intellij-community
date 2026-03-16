@@ -1,0 +1,4 @@
+abstract class Factory {
+  abstract Product create();
+}
+

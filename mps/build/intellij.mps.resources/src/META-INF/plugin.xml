@@ -1,0 +1,14 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" >
+  <id>intellij.mps.resources</id>
+  <name>MPS Application descriptor</name>
+  <vendor>JetBrains</vendor>
+  <module value="com.intellij.modules.java-capable"/>
+  <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
+  <xi:include href="/META-INF/PlatformLangPlugin.xml"/>
+
+  <content namespace="jetbrains">
+    <module name="intellij.platform.tips"/>
+    <module name="intellij.ide.startup.importSettings"/>
+  </content>
+
+</idea-plugin>

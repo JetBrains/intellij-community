@@ -5,13 +5,28 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.FactoryMap;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyPsiFacade;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 
 public class PyTypeProviderBase implements PyTypeProvider {
@@ -35,7 +50,9 @@ public class PyTypeProviderBase implements PyTypeProvider {
   }
 
   @Override
-  public @Nullable Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
+  public @Nullable Ref<PyType> getParameterType(@NotNull PyNamedParameter param,
+                                                @NotNull PyFunction func,
+                                                @NotNull TypeEvalContext context) {
     return null;
   }
 
@@ -45,7 +62,9 @@ public class PyTypeProviderBase implements PyTypeProvider {
   }
 
   @Override
-  public @Nullable Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+  public @Nullable Ref<PyType> getCallType(@NotNull PyFunction function,
+                                           @NotNull PyCallSiteExpression callSite,
+                                           @NotNull TypeEvalContext context) {
     final ReturnTypeDescriptor descriptor;
     synchronized (myMethodToReturnTypeMap) {
       descriptor = myMethodToReturnTypeMap.get(function.getName());
@@ -120,7 +139,9 @@ public class PyTypeProviderBase implements PyTypeProvider {
       myStringToReturnTypeMap.put(classQualifiedName, callback);
     }
 
-    public @Nullable Ref<PyType> get(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+    public @Nullable Ref<PyType> get(@NotNull PyFunction function,
+                                     @Nullable PyCallSiteExpression callSite,
+                                     @NotNull TypeEvalContext context) {
       return Optional
         .ofNullable(function.getContainingClass())
         .map(pyClass -> myStringToReturnTypeMap.get(pyClass.getQualifiedName()))

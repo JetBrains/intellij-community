@@ -7,8 +7,12 @@ import com.intellij.ui.hover.HoverListener;
 import kotlinx.collections.immutable.PersistentList;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;

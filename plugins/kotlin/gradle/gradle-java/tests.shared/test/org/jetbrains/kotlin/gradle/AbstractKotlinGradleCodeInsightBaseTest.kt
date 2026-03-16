@@ -34,7 +34,7 @@ abstract class AbstractKotlinGradleCodeInsightBaseTest: GradleCodeInsightBaseTes
             withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                 setProjectName("kotlin-dsl-empty-project")
             }
-            withBuildFile(gradleDsl = GradleDsl.KOTLIN, content = "")
+            withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN)
         }
     }
 }

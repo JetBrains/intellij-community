@@ -15,7 +15,7 @@ import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.function.Function;
 
 final class ForcedSoftWrapsNotificationProvider implements EditorNotificationProvider, DumbAware {
@@ -25,8 +25,8 @@ final class ForcedSoftWrapsNotificationProvider implements EditorNotificationPro
   public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                 @NotNull VirtualFile file) {
     return fileEditor -> {
-      if (!(fileEditor instanceof TextEditor)) return null;
-      final Editor editor = ((TextEditor)fileEditor).getEditor();
+      if (!(fileEditor instanceof TextEditor te)) return null;
+      final Editor editor = te.getEditor();
       if (!Boolean.TRUE.equals(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS)) ||
           !Boolean.TRUE.equals(editor.getUserData(EditorImpl.SOFT_WRAPS_EXIST)) ||
           PropertiesComponent.getInstance().isTrueValue(DISABLED_NOTIFICATION_KEY)) return null;

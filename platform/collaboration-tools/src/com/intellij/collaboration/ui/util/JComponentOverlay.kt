@@ -2,7 +2,7 @@
 package com.intellij.collaboration.ui.util
 
 import com.intellij.util.ui.SingleComponentCenteringLayout
-import java.awt.*
+import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
 

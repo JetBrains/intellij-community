@@ -8,7 +8,7 @@ fun usage(fromJava: JavaClass<() -> String>) {
 
 // K1_TYPE: value -> <html>Type is unknown</html>
 
-// K2_TYPE: value -> () -&gt; String!
+// K2_TYPE: value -> <b>() -&gt; String!</b>
 
 // FILE: dependency/JavaClass.java
 package dependency;

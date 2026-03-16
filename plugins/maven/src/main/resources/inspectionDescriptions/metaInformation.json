@@ -2,7 +2,7 @@
   "inspections": [
     {
       "id": "MavenDuplicateDependenciesInspection",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "MavenModelInspection",
@@ -10,7 +10,7 @@
     },
     {
       "id": "MavenRedundantGroupId",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "MavenRedundantVersion",
@@ -18,7 +18,7 @@
     },
     {
       "id": "MavenDuplicatePluginInspection",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "MavenParentMissedVersionInspection",
@@ -30,19 +30,27 @@
     },
     {
       "id": "MavenPropertyInParent",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Sanity"
     },
     {
       "id": "MavenModelVersionMissed",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Sanity"
     },
     {
       "id": "MavenNewElementsInOldSchema",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Sanity"
     },
     {
       "id": "MavenNoRootDefined",
       "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MavenNewModelVersionInOldSchema",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "MavenParentMissedGroupIdArtifactIdInspection",
+      "codeQualityCategory": "Sanity"
     }
   ]
 }

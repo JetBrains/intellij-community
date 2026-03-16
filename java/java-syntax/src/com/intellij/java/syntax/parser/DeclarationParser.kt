@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.syntax.parser
 
 import com.intellij.java.syntax.JavaSyntaxBundle
@@ -8,7 +8,6 @@ import com.intellij.java.syntax.element.JavaSyntaxTokenType
 import com.intellij.java.syntax.element.SyntaxElementTypes.CLASS_KEYWORD_BIT_SET
 import com.intellij.java.syntax.element.SyntaxElementTypes.KEYWORD_BIT_SET
 import com.intellij.java.syntax.element.SyntaxElementTypes.MODIFIER_BIT_SET
-import com.intellij.java.syntax.element.SyntaxElementTypes.PARAMETER_MODIFIER_BIT_SET
 import com.intellij.java.syntax.element.SyntaxElementTypes.PRIMITIVE_TYPE_BIT_SET
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
@@ -244,9 +243,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
 
     val declaration = builder.mark()
     val declarationStart = builder.currentOffset
-
-    val modListInfo = parseModifierList(builder)
-    val modList = modListInfo.first
+    val modList = parseModifierList(builder)
 
     if (builder.expect(JavaSyntaxTokenType.AT)) {
       if (builder.tokenType === JavaSyntaxTokenType.INTERFACE_KEYWORD) {
@@ -356,7 +353,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
 
     if (!builder.expect(JavaSyntaxTokenType.IDENTIFIER)) {
       if (context != Context.CODE_BLOCK ||
-          !modListInfo.second ||
+          modList.getStartOffset() != modList.getEndOffset() ||
           (type.isPrimitive && builder.tokenType !== JavaSyntaxTokenType.DOT)
       ) {
         typeParams?.precede()?.errorBefore(message("unexpected.token"), type.marker)
@@ -415,12 +412,8 @@ open class DeclarationParser(private val myParser: JavaParser) {
   }
 
   @JvmOverloads
-  fun parseModifierList(
-    builder: SyntaxTreeBuilder,
-    modifiers: SyntaxElementTypeSet = MODIFIER_BIT_SET
-  ): Pair<SyntaxTreeBuilder.Marker, Boolean> {
+  fun parseModifierList(builder: SyntaxTreeBuilder, modifiers: SyntaxElementTypeSet = MODIFIER_BIT_SET): SyntaxTreeBuilder.Marker {
     val modList = builder.mark()
-    var isEmpty = true
 
     while (true) {
       var tokenType = builder.tokenType ?: break
@@ -436,18 +429,15 @@ open class DeclarationParser(private val myParser: JavaParser) {
         val nonSealed = builder.mark()
         builder.advance(3)
         nonSealed.collapse(JavaSyntaxTokenType.NON_SEALED_KEYWORD)
-        isEmpty = false
       }
       else if (modifiers.contains(tokenType)) {
         builder.advanceLexer()
-        isEmpty = false
       }
       else if (tokenType === JavaSyntaxTokenType.AT) {
         if (KEYWORD_BIT_SET.contains(builder.lookAhead(1))) {
           break
         }
         parseAnnotation(builder)
-        isEmpty = false
       }
       else {
         break
@@ -455,7 +445,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
     }
 
     JavaParserUtil.done(modList, JavaSyntaxElementType.MODIFIER_LIST, languageLevel)
-    return modList to isEmpty
+    return modList
   }
 
   private fun parseMethodFromLeftParenth(
@@ -698,16 +688,13 @@ open class DeclarationParser(private val myParser: JavaParser) {
   ): SyntaxTreeBuilder.Marker? {
     val param = builder.mark()
 
-    val modListInfo = parseModifierList(
-      builder, if (type === JavaSyntaxElementType.PARAMETER) PARAMETER_MODIFIER_BIT_SET else MODIFIER_BIT_SET)
-
-    val typeInfo: ReferenceParser.TypeInfo?
+    val modList: SyntaxTreeBuilder.Marker
     if (typed) {
+      modList = parseModifierList(builder)
       val flags = ReferenceParser.EAT_LAST_DOT or ReferenceParser.WILDCARD or typeFlags
-      typeInfo = myParser.referenceParser.parseTypeInfo(builder, flags)
 
-      if (typeInfo == null) {
-        if (modListInfo.second) {
+      if (myParser.referenceParser.parseTypeInfo(builder, flags) == null) {
+        if (modList.getStartOffset() == modList.getEndOffset()) {
           param.rollbackTo()
           return null
         }
@@ -716,13 +703,9 @@ open class DeclarationParser(private val myParser: JavaParser) {
           JavaParserUtil.emptyElement(builder, JavaSyntaxElementType.TYPE)
         }
       }
-    }
-
-    if (typed) {
       val tokenType = builder.tokenType
       if (tokenType === JavaSyntaxTokenType.THIS_KEYWORD ||
-          tokenType === JavaSyntaxTokenType.IDENTIFIER && builder.lookAhead(1) === JavaSyntaxTokenType.DOT
-      ) {
+          tokenType === JavaSyntaxTokenType.IDENTIFIER && builder.lookAhead(1) === JavaSyntaxTokenType.DOT) {
         val mark = builder.mark()
 
         val expr = myParser.expressionParser.parse(builder)
@@ -735,6 +718,10 @@ open class DeclarationParser(private val myParser: JavaParser) {
         mark.rollbackTo()
       }
     }
+    else {
+      modList = builder.mark() // modifier list is empty for lambda expression with untyped parameters
+      modList.done(JavaSyntaxElementType.MODIFIER_LIST)
+    }
 
     if (builder.expect(JavaSyntaxTokenType.IDENTIFIER)) {
       if (type === JavaSyntaxElementType.PARAMETER || type === JavaSyntaxElementType.RECORD_COMPONENT) {
@@ -746,13 +733,11 @@ open class DeclarationParser(private val myParser: JavaParser) {
     else {
       JavaParserUtil.error(builder, message("expected.identifier"))
       param.drop()
-      return modListInfo.first
+      return modList
     }
 
-    if (JavaParserUtil.expectOrError(builder, JavaSyntaxTokenType.EQ, "expected.eq")) {
-      if (myParser.expressionParser.parse(builder) == null) {
-        JavaParserUtil.error(builder, message("expected.expression"))
-      }
+    if (JavaParserUtil.expectOrError(builder, JavaSyntaxTokenType.EQ, "expected.eq") && myParser.expressionParser.parse(builder) == null) {
+      JavaParserUtil.error(builder, message("expected.expression"))
     }
 
     JavaParserUtil.done(param, JavaSyntaxElementType.RESOURCE_VARIABLE, languageLevel)
@@ -847,10 +832,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
     return declaration
   }
 
-  private fun eatBrackets(
-    builder: SyntaxTreeBuilder,
-    errorKey: @PropertyKey(resourceBundle = JavaSyntaxBundle.BUNDLE) String?
-  ): Boolean {
+  private fun eatBrackets(builder: SyntaxTreeBuilder, errorKey: @PropertyKey(resourceBundle = JavaSyntaxBundle.BUNDLE) String?): Boolean {
     val tokenType = builder.tokenType
     if (tokenType !== JavaSyntaxTokenType.LBRACKET && tokenType !== JavaSyntaxTokenType.AT) return true
 

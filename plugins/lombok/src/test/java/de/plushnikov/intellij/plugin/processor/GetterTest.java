@@ -103,4 +103,8 @@ public class GetterTest extends AbstractLombokParsingTestCase {
   public void testGetter$CommentsInterspersed() {
     doTest(true);
   }
+
+  public void testGetter$FluentAccessorsBoolean() {
+    doTest(true);
+  }
 }

@@ -6,14 +6,16 @@ package com.intellij.java.workspace.entities
 import com.intellij.platform.workspace.storage.*
 
 @GeneratedCodeApiVersion(3)
-interface CompositePackagingElementEntityBuilder<T : CompositePackagingElementEntity> : WorkspaceEntityBuilder<T>, PackagingElementEntity.Builder<T> {
+interface CompositePackagingElementEntityBuilder<T : CompositePackagingElementEntity> : WorkspaceEntityBuilder<T>,
+                                                                                        PackagingElementEntity.Builder<T> {
   override var entitySource: EntitySource
   override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
   var artifact: ArtifactEntityBuilder?
   var children: List<PackagingElementEntityBuilder<out PackagingElementEntity>>
 }
 
-internal object CompositePackagingElementEntityType : EntityType<CompositePackagingElementEntity, CompositePackagingElementEntityBuilder<CompositePackagingElementEntity>>() {
+internal object CompositePackagingElementEntityType :
+  EntityType<CompositePackagingElementEntity, CompositePackagingElementEntityBuilder<CompositePackagingElementEntity>>() {
   override val entityClass: Class<CompositePackagingElementEntity> get() = CompositePackagingElementEntity::class.java
   operator fun invoke(
     entitySource: EntitySource,

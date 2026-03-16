@@ -1,10 +1,26 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiCatchSection
+import com.intellij.psi.PsiDisjunctionType
+import com.intellij.psi.PsiResourceExpression
+import com.intellij.psi.PsiResourceVariable
+import com.intellij.psi.PsiTryStatement
+import com.intellij.psi.PsiTypeElement
 import com.intellij.psi.impl.source.tree.ChildRole
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotated
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UCatchClause
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UTryExpression
+import org.jetbrains.uast.UTypeReferenceExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 class JavaUTryExpression(

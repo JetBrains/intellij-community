@@ -6,6 +6,7 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
+import com.intellij.ide.projectWizard.ProjectWizardJdkPredicate
 import com.intellij.ide.projectWizard.generators.JdkDownloadService
 import com.intellij.ide.projectWizard.projectWizardJdkComboBox
 import com.intellij.ide.wizard.NewProjectWizardBaseData
@@ -23,23 +24,37 @@ import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionC
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.bindEnumStorage
 import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
-import com.intellij.openapi.ui.*
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.getCanonicalPath
+import com.intellij.openapi.ui.getPresentablePath
+import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.ui.validation.CHECK_READABLE_DIRECTORY
 import com.intellij.openapi.ui.validation.WHEN_GRAPH_PROPAGATION_FINISHED
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.COLUMNS_SHORT
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.SegmentedButton
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.trimmedTextValidation
+import com.intellij.ui.dsl.builder.whenItemSelectedFromUi
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.util.minimumWidth
@@ -117,9 +132,13 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     return GradleDataView(data)
   }
 
-  protected fun setupJavaSdkUI(builder: Panel) {
+  protected fun setupJavaSdkUI(
+    builder: Panel,
+    sdkFilter: (Sdk) -> Boolean = { true },
+    jdkPredicate: ProjectWizardJdkPredicate? = null,
+  ) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-      projectWizardJdkComboBox(this, jdkIntentProperty)
+      projectWizardJdkComboBox(this, jdkIntentProperty, sdkFilter, jdkPredicate)
         .validationOnInput { validateJavaSdk(withDialog = false) }
         .validationOnApply { validateJavaSdk(withDialog = true) }
         .whenItemSelectedFromUi { jdkIntent.javaVersion?.let { logSdkChanged(it.feature) } }
@@ -455,14 +474,6 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     return suggestGradleHome(context.project) ?: ""
   }
 
-  private fun startJdkDownloadIfNeeded(module: Module) {
-    val sdkDownloadTask = jdkIntent.downloadTask
-    if (sdkDownloadTask is JdkDownloadTask) {
-      // Download the SDK on project creation
-      module.project.service<JdkDownloadService>().scheduleDownloadJdk(sdkDownloadTask, module, context.isCreatingNewProject)
-    }
-  }
-
   val gradleVersionToUse: GradleVersion by lazy {
     val rawGradleVersion = when (distributionType) {
       WRAPPER -> gradleVersion
@@ -493,8 +504,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   fun setupProjectFromBuilder(project: Project) {
     val builder = object : AbstractGradleModuleBuilder() {}
 
-    val sdk = if (context.isCreatingNewProject) { context.projectJdk } else { jdkIntent.prepareJdk() }
-    builder.moduleJdk = sdk
+    builder.moduleJdk = context.projectJdk
     builder.sdkDownloadTask = jdkIntent.downloadTask
 
     builder.name = parentStep.name
@@ -518,8 +528,9 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     builder.setGradleDistributionType(distributionType.value)
     builder.setGradleHome(gradleHome)
 
+    project.service<JdkDownloadService>().scheduleDownloadSdk(context.projectJdk)
+
     setupProjectFromBuilder(project, builder)
-      ?.also { startJdkDownloadIfNeeded(it) }
   }
 
   class GradleDataView(override val data: ProjectData) : DataView<ProjectData>() {

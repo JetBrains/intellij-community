@@ -10,7 +10,12 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.session.impl.*
+import org.jetbrains.plugins.terminal.session.impl.TerminalFilterResultInfo
+import org.jetbrains.plugins.terminal.session.impl.TerminalHighlightingInfo
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkInfo
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksModelState
+import org.jetbrains.plugins.terminal.session.impl.TerminalInlayInfo
 
 @ApiStatus.Internal
 @Serializable
@@ -30,6 +35,7 @@ data class TerminalHyperlinkInfoDto(
   val style: TerminalTextAttributesDto?,
   val followedStyle: TerminalTextAttributesDto?,
   val hoveredStyle: TerminalTextAttributesDto?,
+  val isInvisibleLink: Boolean,
   val layer: Int,
 ) : TerminalFilterResultInfoDto()
 
@@ -91,6 +97,7 @@ fun TerminalFilterResultInfo.toDto(): TerminalFilterResultInfoDto =
       style = style?.toDto(),
       followedStyle = followedStyle?.toDto(),
       hoveredStyle = hoveredStyle?.toDto(),
+      isInvisibleLink = isInvisibleLink,
       layer = layer,
     )
     is TerminalHighlightingInfo -> TerminalHighlightingInfoDto(
@@ -134,6 +141,7 @@ fun TerminalFilterResultInfoDto.toFilterResultInfo(): TerminalFilterResultInfo =
       style = style?.toTextAttributes(),
       followedStyle = followedStyle?.toTextAttributes(),
       hoveredStyle = hoveredStyle?.toTextAttributes(),
+      isInvisibleLink = isInvisibleLink,
       layer = layer,
     )
     is TerminalHighlightingInfoDto -> TerminalHighlightingInfo(

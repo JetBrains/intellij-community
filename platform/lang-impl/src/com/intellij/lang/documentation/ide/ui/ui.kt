@@ -7,7 +7,9 @@ import com.intellij.codeInsight.documentation.CornerAwareScrollPaneLayout
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.HtmlChunk

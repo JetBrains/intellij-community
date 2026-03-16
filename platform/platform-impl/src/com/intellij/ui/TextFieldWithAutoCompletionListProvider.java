@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.PlainPrefixMatcher;
+import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -17,6 +21,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextCompletionValueDescriptor;
@@ -26,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
@@ -76,16 +82,18 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> extends Default
   public void fillCompletionVariants(@NotNull CompletionParameters parameters,
                                      @NotNull String prefix,
                                      @NotNull CompletionResultSet result) {
-    addCachedItems(parameters, prefix, result);
-    addNonCachedItems(parameters, prefix, result);
+    var cachedItems = addCachedItems(parameters, prefix, result);
+    addNonCachedItems(parameters, prefix, result, cachedItems);
   }
 
-  private void addCachedItems(@NotNull CompletionParameters parameters, @NotNull String prefix, @NotNull CompletionResultSet result) {
+  private Collection<T> addCachedItems(@NotNull CompletionParameters parameters, @NotNull String prefix, @NotNull CompletionResultSet result) {
     Collection<T> items = getItems(prefix, true, parameters);
     addCompletionElements(result, this, items, -10000);
+    return items;
   }
 
-  private void addNonCachedItems(@NotNull CompletionParameters parameters, @NotNull String prefix, @NotNull CompletionResultSet result) {
+  private void addNonCachedItems(@NotNull CompletionParameters parameters, @NotNull String prefix, @NotNull CompletionResultSet result,
+                                 @NotNull Collection<T> cachedItems) {
     final ProgressManager progressManager = ProgressManager.getInstance();
     ProgressIndicator mainIndicator = progressManager.getProgressIndicator();
     final ProgressIndicator indicator = mainIndicator != null ? new SensitiveProgressWrapper(mainIndicator) : new EmptyProgressIndicator();
@@ -94,9 +102,10 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> extends Default
       .executeOnPooledThread(() -> progressManager.runProcess(() -> getItems(prefix, false, parameters), indicator));
 
     try {
-      Collection<T> tasks = ProgressIndicatorUtils.awaitWithCheckCanceled(future, indicator);
-      if (tasks != null) {
-        addCompletionElements(result, this, tasks, 0);
+      Collection<T> items = ProgressIndicatorUtils.awaitWithCheckCanceled(future, indicator);
+      if (items != null) {
+        var toRemove = new HashSet<>(cachedItems);
+        addCompletionElements(result, this, ContainerUtil.filter(items, task -> !toRemove.contains(task)), 0);
       }
     }
     catch (CancellationException e) {

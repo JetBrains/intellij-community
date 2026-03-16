@@ -1,8 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.DefaultInspectionToolResultExporter;
+import com.intellij.codeInspection.GlobalInspectionTool;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.ex.DescriptorComposer;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.HTMLComposerImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.application.ApplicationManager;

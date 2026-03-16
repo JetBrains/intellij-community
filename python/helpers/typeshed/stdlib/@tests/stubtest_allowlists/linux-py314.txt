@@ -1,0 +1,7 @@
+# =========
+# 3.14 only
+# =========
+
+# Starting with Python 3.14.1, these methods accept None for some of their
+# parameters, but would raise a TypeError with Python 3.14.0.
+mmap.mmap.madvise

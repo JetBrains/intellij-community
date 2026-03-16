@@ -61,7 +61,7 @@ class WebpMetadata : IIOMetadata() {
   }
 }
 
-private class WebpMetadataRegistrar : ApplicationLoadListener {
+internal class WebpMetadataRegistrar : ApplicationLoadListener {
   override suspend fun beforeApplicationLoaded(application: Application, configPath: Path) {
     WebpMetadata.ensureWebpRegistered()
   }

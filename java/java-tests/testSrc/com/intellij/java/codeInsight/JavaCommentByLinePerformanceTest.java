@@ -3,8 +3,10 @@ package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.CommentByLineTestBase;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
+@PerformanceUnitTest
 public class JavaCommentByLinePerformanceTest extends CommentByLineTestBase {
   public void testUncommentLargeFilePerformance() {
     StringBuilder source = new StringBuilder("class C {\n");

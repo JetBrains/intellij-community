@@ -7,7 +7,9 @@ import com.intellij.modcommand.ModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiReferenceList.Role
-import com.intellij.psi.PsiReferenceList.Role.*
+import com.intellij.psi.PsiReferenceList.Role.EXTENDS_LIST
+import com.intellij.psi.PsiReferenceList.Role.IMPLEMENTS_LIST
+import com.intellij.psi.PsiReferenceList.Role.PERMITS_LIST
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.groovy.GroovyBundle

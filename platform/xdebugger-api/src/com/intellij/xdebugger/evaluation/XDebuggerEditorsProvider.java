@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class XDebuggerEditorsProvider {
   public abstract @NotNull FileType getFileType();
@@ -33,15 +34,31 @@ public abstract class XDebuggerEditorsProvider {
   public @NotNull Document createDocument(@NotNull Project project,
                                           @NotNull XExpression expression,
                                           @Nullable XSourcePosition sourcePosition,
-                                          @NotNull EvaluationMode mode) {
+                                          @NotNull EvaluationMode mode,
+                                          @Nullable String purpose) {
     return createDocument(project, expression.getExpression(), sourcePosition, mode);
   }
-  
+
+  public @NotNull Document createDocument(@NotNull Project project,
+                                          @NotNull XExpression expression,
+                                          @Nullable XSourcePosition sourcePosition,
+                                          @NotNull EvaluationMode mode) {
+    return createDocument(project, expression, sourcePosition, mode, null);
+  }
+
   public void afterEditorCreated(@Nullable Editor editor) {}
 
   public @NotNull @Unmodifiable Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
     FileType type = getFileType();
     return type instanceof LanguageFileType ? Collections.singleton(((LanguageFileType)type).getLanguage()) : Collections.emptyList();
+  }
+
+  @ApiStatus.Internal
+  public @NotNull CompletableFuture<@NotNull @Unmodifiable Collection<Language>> getSupportedLanguagesAsync(
+    @NotNull Project project,
+    @Nullable XSourcePosition sourcePosition
+  ) {
+    return CompletableFuture.completedFuture(getSupportedLanguages(project, sourcePosition));
   }
 
   public @NotNull XExpression createExpression(@NotNull Project project, @NotNull Document document, @Nullable Language language, @NotNull EvaluationMode mode) {

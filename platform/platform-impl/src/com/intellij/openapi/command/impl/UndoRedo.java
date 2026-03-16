@@ -1,9 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.command.undo.AdjustableUndoableAction;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.ImmutableActionChangeRange;
+import com.intellij.openapi.command.undo.MutableActionChangeRange;
+import com.intellij.openapi.command.undo.UndoableAction;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
@@ -19,7 +24,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 
 abstract class UndoRedo {
@@ -31,6 +42,7 @@ abstract class UndoRedo {
   private final @NotNull SharedUndoRedoStacksHolder sharedStacksHolderReversed;
   private final @NotNull UndoProblemReport undoProblemReport;
   protected final @NotNull UndoableGroup undoableGroup;
+  private final UndoCapabilities undoCapabilities;
   private final boolean isRedo;
 
   protected UndoRedo(
@@ -40,6 +52,7 @@ abstract class UndoRedo {
     @NotNull UndoRedoStacksHolder stacksHolderReversed,
     @NotNull SharedUndoRedoStacksHolder sharedStacksHolder,
     @NotNull SharedUndoRedoStacksHolder sharedStacksHolderReversed,
+    @NotNull UndoCapabilities undoCapabilities,
     boolean isRedo
   ) {
     this.project = project;
@@ -48,9 +61,10 @@ abstract class UndoRedo {
     this.stacksHolderReversed = stacksHolderReversed;
     this.sharedStacksHolder = sharedStacksHolder;
     this.sharedStacksHolderReversed = sharedStacksHolderReversed;
+    this.undoCapabilities = undoCapabilities;
     this.isRedo = isRedo;
     this.undoProblemReport = new UndoProblemReport(project, isRedo);
-    this.undoableGroup = stacksHolder.getLastAction(getDocRefs());
+    this.undoableGroup = Objects.requireNonNull(stacksHolder.getLastAction(getDocRefs()), "undo is not available");
   }
 
   protected abstract @DialogTitle String getActionName();
@@ -110,16 +124,20 @@ abstract class UndoRedo {
       }
     }
 
-    if (!disableConfirmation && undoableGroup.shouldAskConfirmation(isRedo) && !isNeverAskUser()) {
+    if (!(disableConfirmation || !undoCapabilities.isConfirmationSupported()) && undoableGroup.shouldAskConfirmation(isRedo) && !isNeverAskUser()) {
       if (!askUser()) {
         return false;
       }
     }
     else {
-      if (!shouldMove && editor != null && restore(getBeforeState(), true)) {
-        setBeforeState(new EditorAndState(editor, editor.getState(FileEditorStateLevel.UNDO)));
-        if (!isCaretMovementUndoTransparent()) {
-          return true;
+      if (!shouldMove && editor != null) {
+        EditorAndState stateToRestore = getBeforeState();
+        FileEditorState restoredState = restore(stateToRestore, true);
+        if (restoredState != null) {
+          setBeforeState(new EditorAndState(editor, restoredState));
+          if (!isCaretMovementUndoTransparent()) {
+            return true;
+          }
         }
       }
     }
@@ -223,10 +241,10 @@ abstract class UndoRedo {
       }
       stack.removeLast();
       UndoableGroup replacingGroup = new UndoableGroup(
+        undoableGroup.getCommandIds(),
         IdeBundle.message("undo.command.local.name") + undoableGroup.getCommandName(),
         localActions, // only action that changes file locally
         undoableGroup.getConfirmationPolicy(),
-        stacksHolder,
         undoableGroup.getStateBefore(),
         undoableGroup.getStateAfter(),
         null,
@@ -238,10 +256,10 @@ abstract class UndoRedo {
       );
       stack.add(replacingGroup);
       UndoableGroup groupWithoutLocalChanges = new UndoableGroup(
+        undoableGroup.getCommandIds(),
         undoableGroup.getCommandName(),
         nonLocalActions, // all action except local
         undoableGroup.getConfirmationPolicy(),
-        stacksHolder,
         undoableGroup.getStateBefore(),
         undoableGroup.getStateAfter(),
         null,
@@ -297,6 +315,9 @@ abstract class UndoRedo {
   }
 
   boolean confirmSwitchTo(@NotNull UndoRedo other) {
+    if (!undoCapabilities.isConfirmationSupported()) {
+      return true;
+    }
     String message = IdeBundle.message("undo.conflicting.change.confirmation") + "\n" + getActionName(other.undoableGroup.getCommandName()) + "?";
     return showDialog(message);
   }
@@ -314,10 +335,10 @@ abstract class UndoRedo {
     return UndoManagerImpl.ourNeverAskUser;
   }
 
-  private boolean restore(@Nullable EditorAndState pair, boolean onlyIfDiffers) {
+  private @Nullable FileEditorState restore(@Nullable EditorAndState pair, boolean onlyIfDiffers) {
     // editor can be invalid if underlying file is deleted during undo (e.g. after undoing scratch file creation)
     if (pair == null || editor == null || !editor.isValid() || !pair.canBeAppliedTo(editor)) {
-      return false;
+      return null;
     }
 
     FileEditorState stateToRestore = pair.getState();
@@ -327,19 +348,27 @@ abstract class UndoRedo {
     // restore scroll proportion if editor doesn not have scrolling any more.
     FileEditorState currentState = editor.getState(FileEditorStateLevel.UNDO);
     if (onlyIfDiffers && currentState.equals(stateToRestore)) {
-      return false;
+      return null;
     }
 
     editor.setState(stateToRestore);
     FileEditorState newState = editor.getState(FileEditorStateLevel.UNDO);
-    return newState.equals(stateToRestore);
+    return newState.equals(stateToRestore) ? newState : null;
   }
 
   private Collection<DocumentReference> getDocRefs() {
     return editor == null ? Collections.emptySet() : UndoDocumentUtil.getDocumentReferences(editor);
   }
 
-  private static @NotNull Map<DocumentReference, Map<Integer, MutableActionChangeRange>> decompose(@NotNull UndoableGroup group, boolean isRedo) {
+  @Override
+  public String toString() {
+    return (isRedo ? "Redo" : "Undo") + "{" + undoableGroup + "}";
+  }
+
+  private @NotNull Map<DocumentReference, Map<Integer, MutableActionChangeRange>> decompose(@NotNull UndoableGroup group, boolean isRedo) {
+    if (!undoCapabilities.isPerClientSupported()) {
+      return Collections.emptyMap();
+    }
     Map<DocumentReference, Map<Integer, MutableActionChangeRange>> reference2Ranges = new HashMap<>();
     for (UndoableAction action : group.getActions()) {
       if (!(action instanceof AdjustableUndoableAction adjustable)) {
@@ -363,8 +392,9 @@ abstract class UndoRedo {
   /**
    * Returns {@code true} if caret movement is not a separate undo step, see IJPL-28593
    */
-  private static boolean isCaretMovementUndoTransparent() {
+  private boolean isCaretMovementUndoTransparent() {
     return Registry.is("ide.undo.transparent.caret.movement") ||
-           AdvancedSettings.getBoolean("editor.undo.transparent.caret.movement");
+           AdvancedSettings.getBoolean("editor.undo.transparent.caret.movement") ||
+           !undoCapabilities.isEditorStateRestoreSupported();
   }
 }

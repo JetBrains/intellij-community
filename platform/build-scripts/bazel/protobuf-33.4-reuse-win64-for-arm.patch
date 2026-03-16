@@ -1,0 +1,74 @@
+diff --git a/MODULE.bazel b/MODULE.bazel
+index 3f7f47ae0..d97402caf 100644
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -128,6 +128,7 @@ use_repo(
+     "prebuilt_protoc.osx_x86_64",
+     "prebuilt_protoc.win32",
+     "prebuilt_protoc.win64",
++    "prebuilt_protoc.win_aarch_64",
+ )
+ 
+ # However this registration only matters if the config_setting for prefer_prebuilt_protoc is true,
+diff --git a/bazel/private/prebuilt_protoc_extension.bzl b/bazel/private/prebuilt_protoc_extension.bzl
+index 00ac1609e..afc31a0b8 100644
+--- a/bazel/private/prebuilt_protoc_extension.bzl
++++ b/bazel/private/prebuilt_protoc_extension.bzl
+@@ -5,11 +5,12 @@ load("//bazel/private:prebuilt_protoc_toolchain.bzl", "prebuilt_protoc_repo")
+ load("//toolchain:platforms.bzl", "PROTOBUF_PLATFORMS")
+ 
+ def create_all_toolchain_repos(name = "prebuilt_protoc"):
+-    for platform in PROTOBUF_PLATFORMS.keys():
++    for platform, meta in PROTOBUF_PLATFORMS.items():
+         prebuilt_protoc_repo(
+             # We must replace hyphen with underscore to workaround rules_python py_proto_library constraint
+             name = ".".join([name, platform.replace("-", "_")]),
+             platform = platform,
++            artifact_platform = meta.get("artifact_platform", ""),
+         )
+ 
+ protoc = modules.as_extension(create_all_toolchain_repos)
+diff --git a/bazel/private/prebuilt_protoc_toolchain.bzl b/bazel/private/prebuilt_protoc_toolchain.bzl
+index b583e35d6..c857ace35 100644
+--- a/bazel/private/prebuilt_protoc_toolchain.bzl
++++ b/bazel/private/prebuilt_protoc_toolchain.bzl
+@@ -18,9 +18,10 @@ def release_version_to_artifact_name(release_version, platform):
+     )
+ 
+ def _prebuilt_protoc_repo_impl(rctx):
++    download_platform = rctx.attr.artifact_platform if rctx.attr.artifact_platform else rctx.attr.platform
+     filename = release_version_to_artifact_name(
+         RELEASE_VERSION,
+-        rctx.attr.platform,
++        download_platform,
+     )
+     rctx.download_and_extract(
+         url = "https://github.com/protocolbuffers/protobuf/releases/download/{}/{}".format(
+@@ -53,5 +54,11 @@ prebuilt_protoc_repo = repository_rule(
+             mandatory = True,
+             values = PROTOBUF_PLATFORMS.keys(),
+         ),
++        "artifact_platform": attr.string(
++            doc = "Override platform key used for the artifact filename. " +
++                  "If empty, defaults to the platform attr value. " +
++                  "Useful when a platform can run binaries from another (e.g., Windows ARM64 running x86_64).",
++            default = "",
++        ),
+     },
+ )
+diff --git a/toolchain/platforms.bzl b/toolchain/platforms.bzl
+index dbd386a10..09de5e83b 100644
+--- a/toolchain/platforms.bzl
++++ b/toolchain/platforms.bzl
+@@ -61,4 +61,11 @@ PROTOBUF_PLATFORMS = {
+             "@platforms//cpu:x86_64",
+         ],
+     },
++    "win-aarch_64": {
++        "compatible_with": [
++            "@platforms//os:windows",
++            "@platforms//cpu:aarch64",
++        ],
++        "artifact_platform": "win64",
++    },
+ }

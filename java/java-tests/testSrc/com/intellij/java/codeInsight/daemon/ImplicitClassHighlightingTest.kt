@@ -4,7 +4,13 @@ package com.intellij.java.codeInsight.daemon
 import com.intellij.JavaTestUtil
 import com.intellij.pom.java.JavaFeature
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiDeclarationStatement
+import com.intellij.psi.PsiExpressionStatement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiVariable
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.IdeaTestUtil

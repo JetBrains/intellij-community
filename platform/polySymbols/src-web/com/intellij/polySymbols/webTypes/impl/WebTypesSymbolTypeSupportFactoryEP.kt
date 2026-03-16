@@ -4,10 +4,10 @@ package com.intellij.polySymbols.webTypes.impl
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean
 import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.openapi.util.KeyedExtensionCollector
+import com.intellij.polySymbols.webTypes.WebTypesSymbolTypeSupportFactory
 import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.xmlb.annotations.Attribute
-import com.intellij.polySymbols.webTypes.WebTypesSymbolTypeSupportFactory
-import java.util.*
+import java.util.Locale
 
 internal class WebTypesSymbolTypeSupportFactoryEP : CustomLoadingExtensionPointBean<WebTypesSymbolTypeSupportFactory>(),
                                                     KeyedLazyInstance<WebTypesSymbolTypeSupportFactory> {

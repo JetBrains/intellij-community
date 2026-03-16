@@ -2,7 +2,7 @@
 package com.intellij.observable
 
 import com.intellij.openapi.observable.util.transform
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger

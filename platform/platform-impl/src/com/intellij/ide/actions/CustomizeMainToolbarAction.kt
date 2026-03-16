@@ -5,7 +5,9 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.annotations.ApiStatus.Internal
 

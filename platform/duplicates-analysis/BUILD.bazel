@@ -23,6 +23,7 @@ jvm_library(
     "//platform/projectModel-impl",
     "//libraries/fastutil",
     "//platform/util/jdom",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.duplicates.analysis` end

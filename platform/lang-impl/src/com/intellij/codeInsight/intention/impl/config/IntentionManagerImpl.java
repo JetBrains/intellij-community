@@ -15,7 +15,13 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.actions.CleanupAllIntention;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.DisableInspectionToolAction;
+import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
+import com.intellij.codeInspection.ex.EditInspectionToolsSettingsInSuppressedPlaceIntention;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,7 +43,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicReference;
 

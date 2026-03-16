@@ -1,14 +1,30 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.ExplodedDirectoryModuleExtension;
+import org.jetbrains.jps.model.java.JavaModuleIndex;
+import org.jetbrains.jps.model.java.JavaResourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
+import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
+import org.jetbrains.jps.model.java.JpsJavaDependencyExtension;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaModuleExtension;
+import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.java.JpsJavaSdkTypeWrapper;
+import org.jetbrains.jps.model.java.JpsProductionModuleOutputPackagingElement;
+import org.jetbrains.jps.model.java.JpsProductionModuleSourcePackagingElement;
+import org.jetbrains.jps.model.java.JpsTestModuleOutputPackagingElement;
+import org.jetbrains.jps.model.java.LanguageLevel;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.java.impl.compiler.JpsJavaCompilerConfigurationImpl;
 import org.jetbrains.jps.model.java.impl.runConfiguration.JpsApplicationRunConfigurationPropertiesImpl;
@@ -18,7 +34,11 @@ import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
-import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.module.JpsDependencyElement;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleReference;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
+import org.jetbrains.jps.model.module.JpsTestModuleProperties;
 import org.jetbrains.jps.model.module.impl.JpsTestModulePropertiesImpl;
 import org.jetbrains.jps.util.JpsPathUtil;
 
@@ -134,12 +154,12 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
       properties instanceof JavaSourceRootProperties ? ((JavaSourceRootProperties)properties).getPackagePrefix().replace('.', '/') :
       properties instanceof JavaResourceRootProperties ? ((JavaResourceRootProperties)properties).getRelativeOutputPath() : "";
 
-    var normalizedPrefix = StringUtil.trimStart(prefix, "/");
+    var normalizedPrefix = Strings.trimStart(prefix, "/");
     if (!normalizedPrefix.isEmpty() && !normalizedPrefix.endsWith("/")) {
       normalizedPrefix += "/";
     }
 
-    var normalizedRelativePath = StringUtil.trimStart(relativePath, "/");
+    var normalizedRelativePath = Strings.trimStart(relativePath, "/");
     if (normalizedRelativePath.startsWith(normalizedPrefix)) {
       var result = root.getPath().resolve(normalizedRelativePath.substring(normalizedPrefix.length()));
       if (Files.exists(result)) {

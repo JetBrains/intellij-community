@@ -77,14 +77,16 @@ private fun getJavaSourceRoot(project: Project, sourceSet: String): Set<File>? {
     return javaSourceSet?.java?.srcDirs
 }
 
-private fun Task.getKotlinPluginVersion(): String? {
+internal fun Project.getKotlinPluginVersion(): String? {
     try {
-        val pluginWrapperClass = javaClass.classLoader.loadClass(kotlinPluginWrapper)
+        // Ensuring that the proper Gradle classpath with KGP is used by getting KGP/Kotlin extension
+        // otherwise we may get the parent classpath without any 3rd party plugins applied in the project
+        val kotlinExtension = extensions.findByName("kotlin") ?: return null
+        val pluginWrapperClass = kotlinExtension::class.java.classLoader.loadClass(kotlinPluginWrapper)
         val getVersionMethod =
             pluginWrapperClass.getMethod("getKotlinPluginVersion", javaClass.classLoader.loadClass("org.gradle.api.Project"))
         return getVersionMethod.invoke(null, this.project) as String
-    } catch (e: Exception) {
-    }
+    } catch (_: Exception) {}
     return null
 }
 
@@ -98,6 +100,6 @@ fun getKotlinTaskProperties(compileTask: Task, classifier: String?): KotlinTaskP
         compileTask.getIsIncremental(),
         compileTask.getPackagePrefix(),
         compileTask.getPureKotlinSourceRoots(compileTask.getSourceSetName(), classifier),
-        compileTask.getKotlinPluginVersion()
+        compileTask.project.getKotlinPluginVersion()
     )
 }

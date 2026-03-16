@@ -6,15 +6,14 @@ import com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptor
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerLuxActionsApi
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
-import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSplitActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import kotlinx.coroutines.launch
 
-class ShowInstancesByClassAction : XDebuggerTreeActionBase(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+class ShowInstancesByClassAction : XDebuggerTreeSplitActionBase() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }

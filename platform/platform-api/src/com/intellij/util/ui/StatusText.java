@@ -15,9 +15,24 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -607,19 +622,5 @@ public abstract class StatusText {
                                SimpleTextAttributes attrs,
                                ActionListener listener) {
     return appendText(isPrimaryColumn ? 0 : 1, row, null, text, attrs, listener);
-  }
-
-  /**
-   * @deprecated There are no primary and secondary columns anymore, they're 0 and 1.
-   * Use {@link #appendText(int, int, Icon, String, SimpleTextAttributes, ActionListener)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public StatusText appendText(boolean isPrimaryColumn,
-                               int row,
-                               @Nullable Icon icon,
-                               @NlsContexts.StatusText String text,
-                               SimpleTextAttributes attrs,
-                               ActionListener listener) {
-    return appendText(isPrimaryColumn ? 0 : 1, row, icon, text, attrs, listener);
   }
 }

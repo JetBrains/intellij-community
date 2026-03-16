@@ -32,7 +32,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.TreePath;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;

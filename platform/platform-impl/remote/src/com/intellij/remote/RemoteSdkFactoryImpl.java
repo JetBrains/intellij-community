@@ -34,7 +34,7 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
 
     final SdkType sdkType = getSdkType(data);
 
-    final Sdk sdk = createSdk(existingSdks, sdkType, data, name);
+    final Sdk sdk = createSdk(project, existingSdks, sdkType, data, name);
 
     SdkModificator sdkModificator = sdk.getSdkModificator();
     sdkModificator.setVersionString(sdkVersion);
@@ -58,7 +58,7 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
   }
 
   @Override
-  public String generateSdkHomePath(@NotNull T data) {
+  public String generateSdkHomePath(@Nullable Project project, @NotNull T data) {
     return data.getSdkId();
   }
 
@@ -69,12 +69,12 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
   protected abstract @Nullable String getSdkVersion(Project project, @NotNull T data) throws RemoteSdkException;
 
   @Override
-  public @NotNull Sdk createUnfinished(T data, Collection<Sdk> existingSdks) {
+  public @NotNull Sdk createUnfinished(@Nullable Project project, T data, Collection<Sdk> existingSdks) {
     final String name = getDefaultUnfinishedName();
 
     final SdkType sdkType = getSdkType(data);
 
-    final Sdk sdk = createSdk(existingSdks, sdkType, data, name);
+    final Sdk sdk = createSdk(project, existingSdks, sdkType, data, name);
 
     data.setValid(false);
 
@@ -87,16 +87,18 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
    * Note that this method is introduced because of the unavailability of
    * {@code SdkConfigurationUtil.createSdk()}.
    *
+   * @param project      the project for which the SDK is being created
    * @param existingSdks the existing SDKs
    * @param sdkType      the type of SDK
    * @param data         the additional data of SDK
    * @param sdkName      the name of SDK
    * @return the SDK with the corresponding data
    */
-  protected abstract @NotNull Sdk createSdk(@NotNull Collection<Sdk> existingSdks,
-                                              @NotNull SdkType sdkType,
-                                              @NotNull T data,
-                                              @Nullable String sdkName);
+  protected abstract @NotNull Sdk createSdk(@Nullable Project project,
+                                            @NotNull Collection<Sdk> existingSdks,
+                                            @NotNull SdkType sdkType,
+                                            @NotNull T data,
+                                            @Nullable String sdkName);
 
   /**
    * Returns default name for "unfinished" SDK.

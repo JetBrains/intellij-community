@@ -6,7 +6,11 @@ import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
-import com.jetbrains.python.refactoring.surround.surrounders.statements.*;
+import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithIfSurrounder;
+import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithReturnSurrounder;
+import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithTryExceptSurrounder;
+import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithTryFinallySurrounder;
+import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithWhileSurrounder;
 import org.jetbrains.annotations.NotNull;
 
 public final class PyStatementSurroundDescriptor implements SurroundDescriptor {

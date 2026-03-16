@@ -6,12 +6,33 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +71,8 @@ public final class PyRefactoringUtil {
             if (text != null && expr.getStringNodes().size() == 1) {
               final int start = text.indexOf(substring);
               if (start >= 0) {
-                element.putUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE, Pair.create(element, TextRange.from(start, substring.length())));
+                element.putUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE,
+                                    Pair.create(element, TextRange.from(start, substring.length())));
                 occurrences.add(element);
                 return;
               }
@@ -85,15 +107,15 @@ public final class PyRefactoringUtil {
     }
 
     // If it is PyIfPart for example, parent if statement, we should deny
-    if (!(parent instanceof PyExpression)){
+    if (!(parent instanceof PyExpression)) {
       return null;
     }
     // We cannot extract anything within import statements
-    if (PsiTreeUtil.getParentOfType(parent, PyImportStatement.class, PyFromImportStatement.class) != null){
+    if (PsiTreeUtil.getParentOfType(parent, PyImportStatement.class, PyFromImportStatement.class) != null) {
       return null;
     }
     if ((element1 == PsiTreeUtil.getDeepestFirst(parent)) && (element2 == PsiTreeUtil.getDeepestLast(parent))) {
-      return (PyExpression) parent;
+      return (PyExpression)parent;
     }
 
     // Check if selection breaks AST node in binary expression
@@ -282,11 +304,16 @@ public final class PyRefactoringUtil {
     return selectUniqueName(templateName, false, scopeAnchor, PyRefactoringUtil::isValidNewName);
   }
 
-  public static @NotNull String selectUniqueName(@NotNull String templateName, @NotNull PsiElement scopeAnchor, @NotNull BiPredicate<String, PsiElement> isValid) {
+  public static @NotNull String selectUniqueName(@NotNull String templateName,
+                                                 @NotNull PsiElement scopeAnchor,
+                                                 @NotNull BiPredicate<String, PsiElement> isValid) {
     return selectUniqueName(templateName, false, scopeAnchor, isValid);
   }
 
-  private static @NotNull String selectUniqueName(@NotNull String templateName, boolean templateIsType, @NotNull PsiElement scopeAnchor, @NotNull BiPredicate<String, PsiElement> isValid) {
+  private static @NotNull String selectUniqueName(@NotNull String templateName,
+                                                  boolean templateIsType,
+                                                  @NotNull PsiElement scopeAnchor,
+                                                  @NotNull BiPredicate<String, PsiElement> isValid) {
     final Collection<String> suggestions;
     if (templateIsType) {
       suggestions = NameSuggesterUtil.generateNamesByType(templateName);
@@ -309,10 +336,12 @@ public final class PyRefactoringUtil {
    *
    * @param name        initial name
    * @param scopeAnchor PSI element used to determine correct scope
-   * @param predicate used to test if suggested name is valid
+   * @param predicate   used to test if suggested name is valid
    * @return unique name in the scope probably with number suffix appended
    */
-  public static @NotNull String appendNumberUntilValid(@NotNull String name, @NotNull PsiElement scopeAnchor, @NotNull BiPredicate<String, PsiElement> predicate) {
+  public static @NotNull String appendNumberUntilValid(@NotNull String name,
+                                                       @NotNull PsiElement scopeAnchor,
+                                                       @NotNull BiPredicate<String, PsiElement> predicate) {
     int counter = 1;
     String candidate = name;
     while (!predicate.test(candidate, scopeAnchor)) {

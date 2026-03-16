@@ -12,7 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testIntegration.JavaTestFramework;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class JUnitTestFramework extends JavaTestFramework {
   @Override

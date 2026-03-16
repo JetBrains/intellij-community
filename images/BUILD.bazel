@@ -24,12 +24,14 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
     "//libraries/commons/imaging",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
     "//libraries/jcef",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
+    "//platform/core-impl",
     "//xml/xml-parser:parser",
     "//platform/ui.jcef",
     "@lib//:kotlin-stdlib",
@@ -37,6 +39,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//xml/xml-psi-impl:psi-impl",
     "//xml/xml-psi-api:psi",
+    "//platform/util-ex",
   ]
 )
 
@@ -56,6 +59,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
     "//libraries/commons/imaging",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/core-ui",
@@ -65,6 +69,7 @@ jvm_library(
     "@lib//:junit4",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
+    "//platform/core-impl",
     "//xml/xml-parser:parser",
     "//platform/ui.jcef",
     "@lib//:kotlin-stdlib",
@@ -73,6 +78,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//xml/xml-psi-impl:psi-impl",
     "//xml/xml-psi-api:psi",
+    "//platform/util-ex",
   ]
 )
 ### auto-generated section `build intellij.platform.images` end

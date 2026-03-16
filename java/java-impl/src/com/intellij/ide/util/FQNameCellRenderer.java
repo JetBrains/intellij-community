@@ -10,8 +10,10 @@ import com.intellij.psi.PsiClass;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
+import java.awt.Component;
+import java.awt.Font;
 
 public class FQNameCellRenderer extends SimpleColoredComponent implements ListCellRenderer<Object> {
   private final Font FONT;

@@ -9,8 +9,10 @@ import com.intellij.util.ui.MultiResolutionImageProvider;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.KeyStroke;
+import java.awt.AlphaComposite;
+import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;

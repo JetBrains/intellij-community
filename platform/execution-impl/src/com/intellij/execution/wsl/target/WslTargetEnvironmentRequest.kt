@@ -3,11 +3,20 @@ package com.intellij.execution.wsl.target
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Platform
-import com.intellij.execution.target.*
-import com.intellij.execution.target.TargetEnvironment.*
+import com.intellij.execution.target.BaseTargetEnvironmentRequest
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironment.DownloadRoot
+import com.intellij.execution.target.TargetEnvironment.LocalPortBinding
+import com.intellij.execution.target.TargetEnvironment.TargetPortBinding
+import com.intellij.execution.target.TargetEnvironment.UploadRoot
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetPlatform
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.VolumeCopyingRequest
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.ide.IdeBundle
 
+@Deprecated("Use EelTargetEnvironmentRequest instead")
 class WslTargetEnvironmentRequest : BaseTargetEnvironmentRequest, VolumeCopyingRequest {
   override var shouldCopyVolumes: Boolean = false
   override val configuration: WslTargetEnvironmentConfiguration

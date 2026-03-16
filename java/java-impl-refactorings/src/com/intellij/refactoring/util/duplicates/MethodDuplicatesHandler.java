@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.analysis.AnalysisScope;
@@ -29,7 +29,21 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -47,7 +61,16 @@ import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class MethodDuplicatesHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance(MethodDuplicatesHandler.class);
@@ -55,6 +78,10 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
     PsiMember member = findMember(editor, file);
+    return isAvailableOn(member);
+  }
+  
+  public static boolean isAvailableOn(PsiMember member) {
     return member != null && getCannotRefactorMessage(member) == null;
   }
 
@@ -100,7 +127,8 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     final BaseAnalysisActionDialog dlg =
       new BaseAnalysisActionDialog(JavaRefactoringBundle.message("replace.method.duplicates.scope.chooser.title", getRefactoringName()),
-                                   JavaRefactoringBundle.message("replace.method.duplicates.scope.chooser.message"), project, BaseAnalysisActionDialog.standardItems(project, scope, module, element),
+                                   JavaRefactoringBundle.message("replace.method.duplicates.scope.chooser.message"), project, 
+                                   BaseAnalysisActionDialog.standardItems(project, scope, module, element),
                                    AnalysisUIOptions.getInstance(project), false);
     if (dlg.showAndGet()) {
       AnalysisScope selectedScope = dlg.getScope(scope);

@@ -2,7 +2,9 @@
 package fleet.rpc.client
 
 import fleet.rpc.core.RpcMessage
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface RpcInterceptor {
   companion object: RpcInterceptor {
     override suspend fun interceptCallRequest(request: RpcMessage.CallRequest): RpcMessage.CallRequest {
@@ -18,6 +20,7 @@ interface RpcInterceptor {
   suspend fun interceptCallResult(displayName: String, result: RpcMessage.CallResult) {}
 }
 
+@ApiStatus.Internal
 operator fun RpcInterceptor.plus(another: RpcInterceptor): RpcInterceptor {
   val one = this
   return object : RpcInterceptor {

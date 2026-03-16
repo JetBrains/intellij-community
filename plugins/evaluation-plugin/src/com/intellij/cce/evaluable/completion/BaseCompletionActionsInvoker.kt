@@ -53,7 +53,7 @@ abstract class BaseCompletionActionsInvoker(protected val project: Project,
                ?: throw IllegalStateException("Can't find language \"${language.ideaLanguageId}\"")
     val provider = SuggestionsProvider.find(project, suggestionsProviderName)
                    ?: throw IllegalStateException("Can't find suggestions provider \"${suggestionsProviderName}\"")
-    return provider.getSuggestions(expectedLine, editor, lang, this::comparator)
+    return provider.getSuggestions(project, expectedLine, editor, lang, this::comparator)
   }
 
   protected fun LookupImpl.finish(expectedItemIndex: Int, completionLength: Int, forceUndo: Boolean = false): Boolean {

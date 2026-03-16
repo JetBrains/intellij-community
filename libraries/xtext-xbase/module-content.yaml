@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.xtext.xbase.jar
   modules:
   - name: intellij.libraries.xtext.xbase
   library: xtext-xbase

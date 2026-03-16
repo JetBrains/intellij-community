@@ -5,7 +5,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
-import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.documentation.impl.PolySymbolDocumentationBuilderImpl
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
@@ -114,7 +113,7 @@ interface PolySymbolDocumentation {
     else
       this
 
-  fun build(origin: PolySymbolOrigin): DocumentationResult
+  fun build(iconProvider: (String) -> Icon?): DocumentationResult
 
   companion object {
 

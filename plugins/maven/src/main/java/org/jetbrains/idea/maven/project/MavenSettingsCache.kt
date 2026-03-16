@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
@@ -26,16 +25,21 @@ class MavenSettingsCache(val project: Project) {
   }
 
   suspend fun reloadAsync() {
-    val settings = MavenProjectsManager.getInstance(project).generalSettings
+    val settings = MavenWorkspaceSettingsComponent.getInstance(project)
+      .settings
+      .generalSettings
+      .also { it.setProject(project) }
+
     val userSettings = MavenEelUtil.getUserSettingsAsync(project, settings.userSettingsFile, settings.mavenConfig)
     val globalSettings = MavenEelUtil.getGlobalSettingsAsync(project, settings.mavenHomeType.staticOrBundled(), settings.mavenConfig)
-    val localRepo = MavenEelUtil.getLocalRepoAsync(project, settings.localRepository, settings.mavenHomeType.staticOrBundled(), settings.userSettingsFile,
-                                                   settings.mavenConfig)
+    val localRepo =
+      MavenEelUtil.getLocalRepoAsync(project, settings.localRepository, settings.mavenHomeType.staticOrBundled(), userSettings.toString(),
+                                     settings.mavenConfig)
     holder = SettingsHolder(userSettings, globalSettings, localRepo)
   }
 
   private fun holder(): SettingsHolder {
-    return holder ?: runBlockingMaybeCancellable { 
+    return holder ?: runBlockingMaybeCancellable {
       reloadAsync()
       holder!!
     }

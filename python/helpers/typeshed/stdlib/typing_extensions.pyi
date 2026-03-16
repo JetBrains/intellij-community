@@ -30,7 +30,7 @@ from collections.abc import (
 from contextlib import AbstractAsyncContextManager as AsyncContextManager, AbstractContextManager as ContextManager
 from re import Match as Match, Pattern as Pattern
 from types import GenericAlias, ModuleType
-from typing import (  # noqa: Y022,Y037,Y038,Y039,UP035
+from typing import (  # noqa: Y022,Y037,Y038,Y039,UP035,RUF100
     IO as IO,
     TYPE_CHECKING as TYPE_CHECKING,
     AbstractSet as AbstractSet,
@@ -239,7 +239,7 @@ class _TypedDict(Mapping[str, object], metaclass=abc.ABCMeta):
     __readonly_keys__: ClassVar[frozenset[str]]
     __mutable_keys__: ClassVar[frozenset[str]]
     # PEP 728
-    __closed__: ClassVar[bool]
+    __closed__: ClassVar[bool | None]
     __extra_items__: ClassVar[AnnotationForm]
     def copy(self) -> Self: ...
     # Using Never so that only calls using mypy plugin hook that specialize the signature
@@ -376,6 +376,7 @@ else:
         def __init__(self, name: str, tp: AnnotationForm) -> None: ...
         def __call__(self, obj: _T, /) -> _T: ...
         __supertype__: type | NewType
+        __name__: str
         if sys.version_info >= (3, 10):
             def __or__(self, other: Any) -> _SpecialForm: ...
             def __ror__(self, other: Any) -> _SpecialForm: ...
@@ -408,36 +409,43 @@ else:
 
     @runtime_checkable
     class SupportsInt(Protocol, metaclass=abc.ABCMeta):
+        __slots__ = ()
         @abc.abstractmethod
         def __int__(self) -> int: ...
 
     @runtime_checkable
     class SupportsFloat(Protocol, metaclass=abc.ABCMeta):
+        __slots__ = ()
         @abc.abstractmethod
         def __float__(self) -> float: ...
 
     @runtime_checkable
     class SupportsComplex(Protocol, metaclass=abc.ABCMeta):
+        __slots__ = ()
         @abc.abstractmethod
         def __complex__(self) -> complex: ...
 
     @runtime_checkable
     class SupportsBytes(Protocol, metaclass=abc.ABCMeta):
+        __slots__ = ()
         @abc.abstractmethod
         def __bytes__(self) -> bytes: ...
 
     @runtime_checkable
     class SupportsIndex(Protocol, metaclass=abc.ABCMeta):
+        __slots__ = ()
         @abc.abstractmethod
         def __index__(self) -> int: ...
 
     @runtime_checkable
     class SupportsAbs(Protocol[_T_co]):
+        __slots__ = ()
         @abc.abstractmethod
         def __abs__(self) -> _T_co: ...
 
     @runtime_checkable
     class SupportsRound(Protocol[_T_co]):
+        __slots__ = ()
         @overload
         @abc.abstractmethod
         def __round__(self) -> int: ...

@@ -46,7 +46,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
 import java.lang.ref.SoftReference;
 
 import static com.intellij.reference.SoftReference.dereference;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.*;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.areImportsIgnored;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.getAnnotationHint;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processClassesInFile;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processClassesInPackage;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessMembers;
 
 public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFileBase, GrControlFlowOwner {
 

@@ -1,0 +1,75 @@
+### auto-generated section `build intellij.python.test.env.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "core_test_resources",
+  srcs = glob(["gen/**/*"]),
+  strip_prefix = "gen"
+)
+
+resourcegroup(
+  name = "core_test_resources_1",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:jetbrains-annotations",
+    "//python/openapi:community",
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//python/testFramework",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:jackson-databind",
+    "@lib//:jackson",
+    "//platform/lang-impl",
+    "//platform/lang-core",
+  ]
+)
+
+jvm_library(
+  name = "core_test_lib",
+  module_name = "intellij.python.test.env.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [
+    ":core_test_resources",
+    ":core_test_resources_1",
+  ],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//python/testFramework",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:jackson-databind",
+    "@lib//:jackson",
+    "//platform/lang-impl",
+    "//platform/lang-core",
+  ],
+  runtime_deps = [":core"]
+)
+### auto-generated section `build intellij.python.test.env.core` end
+
+### auto-generated section `test intellij.python.test.env.core` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "core_test",
+  runtime_deps = [":core_test_lib"]
+)
+### auto-generated section `test intellij.python.test.env.core` end

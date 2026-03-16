@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.kotlin
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.bazelEnvironment.BazelRunfiles
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.addToClasspathAgent.AddToClasspathUtil
 import java.nio.file.Files
@@ -34,6 +35,11 @@ class KotlinBinaries(private val communityHome: BuildDependenciesCommunityRoot) 
   }
 
   suspend fun loadKotlinJpsPluginToClassPath() {
+    require(!BazelRunfiles.isRunningFromBazel) {
+      "Dynamically loading Kotlin JPS plugin is not supported while running from Bazel. " +
+      "JPS compilation at all is not supported when running from Bazel."
+    }
+
     val required = KotlinCompilerDependencyDownloader.getKotlinJpsPluginVersion(communityHome)
 
     val current = getCurrentKotlinJpsPluginVersionFromClassPath()

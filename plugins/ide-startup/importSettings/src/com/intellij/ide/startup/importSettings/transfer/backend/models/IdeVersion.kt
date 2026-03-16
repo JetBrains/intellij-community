@@ -7,7 +7,7 @@ import com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector
 import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsProvider
-import java.util.*
+import java.util.Date
 import javax.swing.Icon
 
 class IdeVersion(

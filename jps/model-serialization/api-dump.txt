@@ -107,8 +107,7 @@ a:org.jetbrains.jps.model.serialization.facet.JpsFacetConfigurationSerializer
 a:org.jetbrains.jps.model.serialization.library.JpsLibraryPropertiesSerializer
 - org.jetbrains.jps.model.serialization.JpsElementPropertiesSerializer
 - <init>(org.jetbrains.jps.model.library.JpsLibraryType,java.lang.String):V
-- loadProperties(org.jdom.Element):org.jetbrains.jps.model.JpsElement
-- loadProperties(org.jdom.Element,org.jetbrains.jps.model.serialization.JpsPathMapper):org.jetbrains.jps.model.JpsElement
+- a:loadProperties(org.jdom.Element,org.jetbrains.jps.model.serialization.JpsPathMapper):org.jetbrains.jps.model.JpsElement
 a:org.jetbrains.jps.model.serialization.library.JpsSdkPropertiesSerializer
 - org.jetbrains.jps.model.serialization.JpsElementPropertiesSerializer
 - p:<init>(java.lang.String,org.jetbrains.jps.model.library.sdk.JpsSdkType):V

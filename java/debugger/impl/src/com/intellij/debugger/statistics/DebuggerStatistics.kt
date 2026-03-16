@@ -7,29 +7,32 @@ import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.DebugProcessEvents
 import com.intellij.debugger.engine.SteppingAction
 import com.intellij.debugger.impl.DebuggerUtilsImpl
-import com.intellij.debugger.statistics.EvaluationOnPauseStatus.*
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.DEBUGGER_AGENT_HELPER_THREAD_DISABLED_FAILURE
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.DEBUGGER_AGENT_HELPER_THREAD_DISABLED_SUCCESS
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.DEBUGGER_AGENT_HELPER_THREAD_ENABLED_FAILURE
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.DEBUGGER_AGENT_HELPER_THREAD_ENABLED_SUCCESS
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.EVALUATION_ON_PAUSE_DISABLED
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.NO_DEBUGGER_AGENT_FAILURE
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.NO_DEBUGGER_AGENT_SUCCESS
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.EventFields.Int
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
-
 
 @ApiStatus.Internal
 object DebuggerStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("java.debugger", 13)
+  private val GROUP = EventLogGroup("java.debugger", 16)
 
   // fields
 
   /**
    * These are XBreakpointType IDs related to JVM languages.
    *
-   * Use [XBreakpointType.EXTENSION_POINT_NAME.extensions.map { it.id }] to get the full list.
+   * Use `XBreakpointType.EXTENSION_POINT_NAME.extensions.map { it.id }` to get the full list.
    */
   private val breakpointTypeField = EventFields.String("type", listOf(
     "java-exception", "java-collection", "java-wildcard-method",
@@ -39,12 +42,9 @@ object DebuggerStatistics : CounterUsagesCollector() {
 
   private val steppingActionField = EventFields.Enum<SteppingAction>("step_action")
   private val languageField = EventFields.Enum<Engine>("language")
-
-  private val dumpedCoroutinesCounter = Int("coroutines")
-  private val dumpedVirtualThreadsCounter = Int("virtual_threads")
-
-  private val threadDumpTriggeringExceptionField =
-    EventFields.StringValidatedByCustomRule("exception", ThreadDumpTriggeringExceptionValidator::class.java)
+  private val dumpedCoroutinesCounter = EventFields.Int("coroutines")
+  private val dumpedVirtualThreadsCounter = EventFields.Int("virtual_threads")
+  private val threadDumpTriggeringExceptionField = EventFields.String("exception", THREAD_DUMP_TRIGGERING_EXCEPTIONS_TO_LOG)
 
   // events
   /** Reports overhead spent on checking where a breakpoint must be installed. */
@@ -72,6 +72,8 @@ object DebuggerStatistics : CounterUsagesCollector() {
   /** Reports execution time of debugger commands in buckets, updated at the end of a debugger session. */
   private val timeBucketCount = GROUP.registerEvent("debugger.command.time.bucket.updated", EventFields.Int("bucket_upper_limit_ms"), EventFields.Count, EventFields.Boolean("is_remote"))
   internal val bucketUpperLimits = (generateSequence(1L) { it * 2 }.takeWhile { it <= 2048 } + Long.MAX_VALUE).toList().toLongArray()
+
+  private val agentOverheadDetected = GROUP.registerEvent("debugger.agent.overhead.detected", EventFields.Long("passed_since_session_start_ms"))
 
   @JvmStatic
   fun logProcessStatistics(debugProcess: DebugProcess) {
@@ -132,11 +134,11 @@ object DebuggerStatistics : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  fun logEvaluatablePauseSuccess(project: Project?, isDebuggerAgentAvailable: Boolean) =
+  fun logEvaluatablePauseSuccess(project: Project?, isDebuggerAgentAvailable: Boolean): Unit =
     logEvaluatablePauseStatus(project, isDebuggerAgentAvailable, true)
 
   @JvmStatic
-  fun logEvaluatablePauseFailure(project: Project?, isDebuggerAgentAvailable: Boolean) =
+  fun logEvaluatablePauseFailure(project: Project?, isDebuggerAgentAvailable: Boolean): Unit =
     logEvaluatablePauseStatus(project, isDebuggerAgentAvailable, false)
 
   @JvmStatic
@@ -177,6 +179,9 @@ object DebuggerStatistics : CounterUsagesCollector() {
     threadDump.log(project, status, -1, -1)
   }
 
+  fun logAgentOverheadDetected(project: Project, passedSinceSessionStartMs: Long) {
+    agentOverheadDetected.log(project, passedSinceSessionStartMs)
+  }
 
   private val Breakpoint<*>.type: String? get() = xBreakpoint?.type?.id
 }

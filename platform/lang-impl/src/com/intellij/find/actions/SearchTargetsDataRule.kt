@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.UiDataRule
 
-private class SearchTargetsDataRule : UiDataRule {
+internal class SearchTargetsDataRule : UiDataRule {
 
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
     sink.lazyValue(SEARCH_TARGETS) { dataProvider ->

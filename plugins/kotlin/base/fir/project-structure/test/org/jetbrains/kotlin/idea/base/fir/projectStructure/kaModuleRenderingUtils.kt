@@ -1,40 +1,40 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.projectStructure
 
-import org.jetbrains.kotlin.analysis.api.projectStructure.*
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryFallbackDependenciesModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 
-internal fun KaModule.getOneLineModuleDescriptionForRendering(): String? {
-    val string = when (this) {
+internal fun getOneLineModuleDescriptionForRendering(module: KaModule): String? {
+    val string = when (module) {
         is KaBuiltinsModule -> null
-        is KaDanglingFileModule -> this.file.name
-        is KaLibraryModule -> buildString {
-            append(this@getOneLineModuleDescriptionForRendering.getModuleLibraryNameForRendering())
-            if (this@getOneLineModuleDescriptionForRendering is KaScriptDependencyModule) {
-                append(", scriptDependency")
-            }
-        }
-
-        is KaLibrarySourceModule -> "library sources of " + binaryLibrary.getOneLineModuleDescriptionForRendering()
-        is KaLibraryFallbackDependenciesModule -> "fallback dependencies of " + dependentLibrary.getOneLineModuleDescriptionForRendering()
-        is KaNotUnderContentRootModule -> (this.file?.name ?: "NO_FILE")
-        is KaScriptDependencyModule -> (this.file?.name ?: "NO_FILE")
-        is KaScriptModule -> this.file.name
+        is KaDanglingFileModule -> module.file.name
+        is KaLibraryModule -> module.getModuleLibraryNameForRendering()
+        is KaLibrarySourceModule -> "library sources of " + getOneLineModuleDescriptionForRendering(module.binaryLibrary)
+        is KaLibraryFallbackDependenciesModule -> "fallback dependencies of " + getOneLineModuleDescriptionForRendering(module.dependentLibrary)
+        is KaNotUnderContentRootModule -> (module.file?.name ?: "NO_FILE")
+        is KaScriptModule -> module.file.name
         is KaSourceModule -> buildString {
-            append(this@getOneLineModuleDescriptionForRendering.name)
+            append(module.name)
             append(", ")
             append(
-                when (this@getOneLineModuleDescriptionForRendering.sourceModuleKind) {
+                when (module.sourceModuleKind) {
                     KaSourceModuleKind.PRODUCTION -> "production"
                     KaSourceModuleKind.TEST -> "test"
-                    null -> "unknown"
                 }
             )
         }
 
-        else -> error("Unknown module type: ${this::class.java}")
+        else -> error("Unknown module type: ${module::class.java}")
     }
     return string
 }

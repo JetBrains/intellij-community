@@ -13,7 +13,13 @@ import org.intellij.markdown.parser.ProductionHolder
 import org.intellij.markdown.parser.constraints.MarkdownConstraints
 import org.intellij.markdown.parser.constraints.getCharsEaten
 import org.intellij.markdown.parser.markerblocks.MarkerBlockProvider
-import org.intellij.markdown.parser.markerblocks.providers.*
+import org.intellij.markdown.parser.markerblocks.providers.AtxHeaderProvider
+import org.intellij.markdown.parser.markerblocks.providers.BlockQuoteProvider
+import org.intellij.markdown.parser.markerblocks.providers.CodeBlockProvider
+import org.intellij.markdown.parser.markerblocks.providers.HorizontalRuleProvider
+import org.intellij.markdown.parser.markerblocks.providers.HtmlBlockProvider
+import org.intellij.markdown.parser.markerblocks.providers.ListMarkerProvider
+import org.intellij.markdown.parser.markerblocks.providers.SetextHeaderProvider
 import org.intellij.markdown.parser.sequentialparsers.SequentialParser
 import org.intellij.plugins.markdown.lang.parser.blocks.CodeFenceMarkerProvider
 import org.intellij.plugins.markdown.lang.parser.blocks.CommentAwareLinkReferenceDefinitionProvider

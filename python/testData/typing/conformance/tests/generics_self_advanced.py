@@ -9,7 +9,7 @@ class ParentA:
     # Test for property that returns Self.
     @property
     def prop1(self) -> Self:
-        ...
+        raise NotImplementedError
 
 class ChildA(ParentA):
     ...
@@ -26,7 +26,7 @@ class ParentB:
 
     @classmethod
     def method1(cls) -> Self:
-        ...
+        raise NotImplementedError
 
 class ChildB(ParentB):
     b: int = 0

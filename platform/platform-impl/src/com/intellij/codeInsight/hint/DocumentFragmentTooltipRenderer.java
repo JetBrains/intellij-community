@@ -13,8 +13,10 @@ import com.intellij.ui.ScreenUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLayeredPane;
+import javax.swing.SwingUtilities;
+import java.awt.Point;
 
 @ApiStatus.Internal
 public final class DocumentFragmentTooltipRenderer implements TooltipRenderer {

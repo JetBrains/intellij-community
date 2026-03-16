@@ -5,7 +5,6 @@ import com.intellij.DynamicBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -14,6 +13,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.currentJavaVersion
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
@@ -25,6 +25,7 @@ import java.util.zip.ZipException
 import java.util.zip.ZipFile
 import javax.swing.UIManager
 
+@Suppress("UseOptimizedEelFunctions")
 @ApiStatus.Internal
 object UpdateInstaller {
   const val UPDATER_MAIN_CLASS: String = "com.intellij.updater.Runner"
@@ -74,7 +75,7 @@ object UpdateInstaller {
   fun downloadPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): List<PluginDownloader> {
     indicator.text = IdeBundle.message("update.downloading.plugins.progress")
 
-    val updateChecker = service<UpdateCheckerFacade>()
+    val updateChecker = UpdateCheckerFacade.getInstance()
     updateChecker.saveDisabledToUpdatePlugins()
 
     val disabledToUpdate = updateChecker.disabledToUpdate
@@ -155,6 +156,7 @@ object UpdateInstaller {
 
     args += jre.resolve(if (OS.CURRENT == OS.Windows) "bin\\java.exe" else "bin/java").toString()
     args += "-Xmx${2000}m"
+    currentJavaVersion().takeIf { it.feature >= 25 }?.let { args += "--enable-native-access=ALL-UNNAMED" }
     args += "-cp"
     args += patchFiles.last().toString()
 

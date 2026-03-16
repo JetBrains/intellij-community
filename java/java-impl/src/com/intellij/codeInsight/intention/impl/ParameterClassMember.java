@@ -12,7 +12,8 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JTree;
 
 public class ParameterClassMember implements ClassMember {
   public static final ParameterClassMember[] EMPTY_ARRAY = new ParameterClassMember[0];

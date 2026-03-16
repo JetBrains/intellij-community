@@ -1,7 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.palette.impl;
 
-import com.intellij.ide.dnd.*;
+import com.intellij.ide.dnd.DnDAction;
+import com.intellij.ide.dnd.DnDDragStartBean;
+import com.intellij.ide.dnd.DnDEvent;
+import com.intellij.ide.dnd.DnDManager;
+import com.intellij.ide.dnd.DnDSource;
+import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -17,10 +22,27 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.AbstractListModel;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.JList;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicListUI;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.FocusTraversalPolicy;
+import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 
 
 public final class PaletteComponentList extends JBList {

@@ -1,9 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.customElements.impl
 
-import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
-import com.intellij.polySymbols.customElements.json.*
+import com.intellij.polySymbols.customElements.json.ClassField
+import com.intellij.polySymbols.customElements.json.ClassMethod
+import com.intellij.polySymbols.customElements.json.CustomElementsMember
+import com.intellij.polySymbols.customElements.json.MemberBase
+import com.intellij.polySymbols.customElements.json.buildFunctionType
 import com.intellij.polySymbols.js.JS_PROPERTIES
 
 class CustomElementsMemberSymbol private constructor(
@@ -12,7 +16,7 @@ class CustomElementsMemberSymbol private constructor(
   origin: CustomElementsJsonOrigin,
 ) : CustomElementsContributionWithSourceSymbol<CustomElementsMember>(name, member, origin) {
 
-  override val qualifiedKind: PolySymbolQualifiedKind
+  override val kind: PolySymbolKind
     get() = JS_PROPERTIES
 
   override val type: Any?

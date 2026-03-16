@@ -18,7 +18,7 @@ package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.util.xmlb.annotations.Transient;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 abstract class AbstractTab {
 

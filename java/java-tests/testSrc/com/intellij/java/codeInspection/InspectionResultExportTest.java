@@ -4,7 +4,11 @@ package com.intellij.java.codeInspection;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionToolsSupplier;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.util.Disposer;
@@ -113,38 +117,38 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
                                                        <file>Foo.java</file>
                                                        <line>4</line>
                                                        <problem_class>Simplifiable conditional expression</problem_class>
-                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>
+                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0'</description>
                                                      </problem>
                                                      <problem>
                                                        <file>Foo.java</file>
                                                        <line>5</line>
                                                        <problem_class>Simplifiable conditional expression</problem_class>
-                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>
+                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0'</description>
                                                      </problem>
                                                      <problem>
                                                        <file>Foo.java</file>
                                                        <line>6</line>
                                                        <problem_class>Simplifiable conditional expression</problem_class>
-                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>
+                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0'</description>
                                                      </problem>
                                                      <problem>
                                                        <file>Foo.java</file>
                                                        <line>7</line>
                                                        <problem_class>Simplifiable conditional expression</problem_class>
-                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>
+                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0'</description>
                                                      </problem>
                                                      <problem>
                                                        <file>Foo.java</file>
                                                        <line>8</line>
                                                        <problem_class>Simplifiable conditional expression</problem_class>
-                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>
+                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0'</description>
                                                      </problem></problems>""");
 
     InspectionTestUtil.compareWithExpected(expectedDfaResults, dfaResults, false);
     InspectionTestUtil.compareWithExpected(expectedUnnCondResults, unnCondResults, false);
   }
 
-  private static @NotNull Element loadFile(@NotNull Path file) {
+  static @NotNull Element loadFile(@NotNull Path file) {
     try {
       return JDOMUtil.load(file);
     }

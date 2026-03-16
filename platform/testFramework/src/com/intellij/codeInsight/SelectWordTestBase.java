@@ -22,7 +22,11 @@ public abstract class SelectWordTestBase extends LightPlatformCodeInsightTestCas
     final @NonNls String path = "/codeInsight/selectWordAction/" + getTestName(true);
     configureByFile(path + "/before." + ext);
     if (defaultFolding) {
+      // caret might be in the way so folding will not be performed
+      int offset = getEditor().getCaretModel().getOffset();
+      getEditor().getCaretModel().moveToOffset(0);
       EditorTestUtil.buildInitialFoldingsInBackground(getEditor());
+      getEditor().getCaretModel().moveToOffset(offset);
     }
     int i = 1;
     while (true) {

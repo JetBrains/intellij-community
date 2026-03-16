@@ -24,6 +24,7 @@ public final class InternalGradleProject implements GradleProject {
   private InternalProjectIdentifier projectIdentifier;
   private InternalGradleProject parent;
   private Set<InternalGradleProject> children = emptyDomainObjectSet();
+  private String buildTreePath;
 
   @Override
   public String getName() {
@@ -133,6 +134,15 @@ public final class InternalGradleProject implements GradleProject {
   @Override
   public File getProjectDirectory() {
     return this.projectDirectory;
+  }
+
+  @Override
+  public String getBuildTreePath() {
+    return buildTreePath;
+  }
+
+  public void setBuildTreePath(String buildTreePath) {
+    this.buildTreePath = buildTreePath;
   }
 
   public void setProjectDirectory(File projectDirectory) {

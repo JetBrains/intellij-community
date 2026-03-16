@@ -5,23 +5,31 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
+import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import org.jetbrains.uast.*
+import org.jetbrains.uast.DEFAULT_EXPRESSION_TYPES_LIST
+import org.jetbrains.uast.DEFAULT_TYPES_LIST
+import org.jetbrains.uast.UDeclarationsExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.kotlin.internal.KotlinFakeUElement
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiVariable
 
-fun expressionTypes(requiredType: Class<out UElement>?) =
+fun expressionTypes(requiredType: Class<out UElement>?): Array<out Class<out UElement>> =
     requiredType?.let { arrayOf(it) } ?: DEFAULT_EXPRESSION_TYPES_LIST
 
-fun elementTypes(requiredType: Class<out UElement>?) =
+fun elementTypes(requiredType: Class<out UElement>?): Array<Class<out UElement>> =
     requiredType?.let { arrayOf(it) } ?: DEFAULT_TYPES_LIST
 
-fun <T : UElement> Array<out Class<out T>>.nonEmptyOr(default: Array<out Class<out UElement>>) =
+fun <T : UElement> Array<out Class<out T>>.nonEmptyOr(default: Array<out Class<out UElement>>): Array<out Class<out UElement>> =
     takeIf { it.isNotEmpty() } ?: default
 
 inline fun <reified ActualT : UElement> Array<out Class<out UElement>>.el(f: () -> UElement?): UElement? {
@@ -32,9 +40,9 @@ inline fun <reified ActualT : UElement> Array<out Class<out UElement>>.expr(f: (
     return if (isAssignableFrom(ActualT::class.java)) f() else null
 }
 
-fun Array<out Class<out UElement>>.isAssignableFrom(cls: Class<*>) = any { it.isAssignableFrom(cls) }
+fun Array<out Class<out UElement>>.isAssignableFrom(cls: Class<*>): Boolean = any { it.isAssignableFrom(cls) }
 
-val identifiersTokens = setOf(
+val identifiersTokens: Set<KtToken> = setOf(
     KtTokens.IDENTIFIER, KtTokens.CONSTRUCTOR_KEYWORD, KtTokens.OBJECT_KEYWORD,
     KtTokens.THIS_KEYWORD, KtTokens.SUPER_KEYWORD,
     KtTokens.GET_KEYWORD, KtTokens.SET_KEYWORD

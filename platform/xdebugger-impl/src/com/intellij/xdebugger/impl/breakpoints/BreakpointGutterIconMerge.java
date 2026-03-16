@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.breakpoints;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.editor.GutterMarkPreprocessor;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 

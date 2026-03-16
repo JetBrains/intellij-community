@@ -18,6 +18,7 @@ import com.intellij.ide.CliResult
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ApplicationStarterBase
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.ProgressIndicator
@@ -33,7 +34,7 @@ import kotlinx.coroutines.withContext
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 
-private class DiffApplication : ApplicationStarterBase(/* ...possibleArgumentsCount = */ 0, 2, 3) {
+internal class DiffApplication : ApplicationStarterBase(/* ...possibleArgumentsCount = */ 0, 2, 3) {
   override val commandName: String get() = "diff"
   override val usageMessage: String
     get() {
@@ -66,7 +67,9 @@ private class DiffApplication : ApplicationStarterBase(/* ...possibleArgumentsCo
             try {
               e.window.removeWindowListener(this)
               for (file in files) {
-                saveIfNeeded(file)
+                WriteIntentReadAction.run {
+                  saveIfNeeded(file)
+                }
               }
             }
             finally {

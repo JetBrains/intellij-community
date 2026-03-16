@@ -17,7 +17,12 @@ import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.SuperDeclaration
 import org.jetbrains.kotlin.idea.codeInsight.SuperDeclarationProvider
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
 
 class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler {
     companion object {

@@ -6,7 +6,7 @@ import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 
-private class JBCefAppCacheInvalidator : CachesInvalidator() {
+internal class JBCefAppCacheInvalidator : CachesInvalidator() {
 
   override fun getComment(): String = IdeBundle.message("jcef.local.cache.invalidate.comment")
 

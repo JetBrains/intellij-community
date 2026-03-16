@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.memberScope
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaRendererBodyMemberScopeProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KaDeclarationModifiersRenderer
@@ -17,8 +18,18 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.rendere
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.name
+import org.jetbrains.kotlin.analysis.api.symbols.sourcePsi
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -35,7 +46,15 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.types.Variance
@@ -258,16 +277,15 @@ internal fun KaSession.collectConflicts(
     val pullUpData = K2PullUpData(
         sourceClass, targetClass, memberInfos.mapNotNull { it.member })
 
-    with(pullUpData) {
-        for (memberInfo in memberInfos) {
-            val member = memberInfo.member
-            val memberSymbol = member.symbol
+    for (memberInfo in memberInfos) {
+        val member = memberInfo.member
+        val memberSymbol = member.symbol
 
-            checkClashWithSuperDeclaration(pullUpData, member, memberSymbol, conflicts)
-            checkAccidentalOverrides(pullUpData, member, memberSymbol, conflicts)
-            checkInnerClassToInterface(pullUpData, member, memberSymbol, conflicts)
-            checkVisibility(pullUpData, memberInfo, memberSymbol, conflicts)
-        }
+        checkClashWithSuperDeclaration(pullUpData, member, memberSymbol, conflicts)
+        checkAccidentalOverrides(pullUpData, member, memberSymbol, conflicts)
+        checkInnerClassToInterface(pullUpData, member, memberSymbol, conflicts)
+        checkFunInterfaceConstraints(pullUpData, memberInfo, memberSymbol, conflicts)
+        checkVisibility(pullUpData, memberInfo, memberSymbol, conflicts)
     }
     checkVisibilityInAbstractedMembers(memberInfos, conflicts)
 }
@@ -300,3 +318,35 @@ internal fun KaSession.checkVisibilityInAbstractedMembers(
         }
     }
 }
+
+private fun KaSession.checkFunInterfaceConstraints(
+    data: K2PullUpData,
+    memberInfo: KotlinMemberInfo,
+    memberSymbol: KaDeclarationSymbol,
+    conflicts: MultiMap<PsiElement, String>,
+) {
+    val memberName = memberSymbol.name?.takeIf {
+        memberSymbol.modality == KaSymbolModality.ABSTRACT || memberInfo.isToAbstract
+    } ?: return
+
+    val targetClassSymbol = (data.targetClass as? KtClassOrObject)?.classSymbol as? KaNamedClassSymbol ?: return
+    if (!targetClassSymbol.isFun) return
+
+    val key = when (memberSymbol) {
+        is KaPropertySymbol -> "text.fun.interface.cannot.have.abstract.properties"
+        is KaFunctionSymbol ->
+            if (targetClassSymbol.hasSingleAbstractFunction()) "text.fun.interface.must.have.one.abstract.function" else null
+
+        else -> null
+    } ?: return
+
+    val message = KotlinBundle.message(key, memberName, targetClassSymbol.name)
+
+    conflicts.putValue(memberInfo.member, message.capitalize())
+}
+
+context(_: KaSession)
+private fun KaNamedClassSymbol.hasSingleAbstractFunction(): Boolean =
+    memberScope.callables
+        .filterIsInstance<KaFunctionSymbol>()
+        .count { it.modality == KaSymbolModality.ABSTRACT } == 1

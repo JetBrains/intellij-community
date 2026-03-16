@@ -18,7 +18,8 @@ internal class GeneratorContext(
   private val dependencyConfig: DependencyConfig,
   private val properties: Map<String, String>,
   val assets: List<GeneratorAsset>,
-  val outputDirectory: Path
+  val outputDirectory: Path,
+  val includeExamples: Boolean = true,
 ) {
   fun hasLanguage(languageId: String): Boolean {
     return this.languageId == languageId

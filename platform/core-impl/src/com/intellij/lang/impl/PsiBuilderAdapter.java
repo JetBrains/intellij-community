@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.ITokenTypeRemapper;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.WhitespaceSkippedCallback;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.tree.IElementType;

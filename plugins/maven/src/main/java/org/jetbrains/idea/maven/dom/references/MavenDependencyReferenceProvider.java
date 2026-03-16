@@ -3,7 +3,11 @@ package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;

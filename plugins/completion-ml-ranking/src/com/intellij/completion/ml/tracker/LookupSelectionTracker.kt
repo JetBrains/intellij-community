@@ -3,9 +3,9 @@ package com.intellij.completion.ml.tracker
 
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupListener
-import com.intellij.completion.ml.util.idString
 import com.intellij.completion.ml.personalization.session.ElementSessionFactorsStorage
 import com.intellij.completion.ml.storage.LookupStorage
+import com.intellij.completion.ml.util.idString
 
 class LookupSelectionTracker(private val storage: LookupStorage) : LookupListener {
   private var currentElementStorage: ElementSessionFactorsStorage? = null

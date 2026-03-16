@@ -5,14 +5,20 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.ToolbarDecorator
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.CCFlags
+import com.intellij.ui.layout.GrowPolicy
+import com.intellij.ui.layout.SpacingConfiguration
 import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.ConstraintParser
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.JTextArea
+import javax.swing.JTextField
 import javax.swing.text.JTextComponent
 
 @ApiStatus.ScheduledForRemoval

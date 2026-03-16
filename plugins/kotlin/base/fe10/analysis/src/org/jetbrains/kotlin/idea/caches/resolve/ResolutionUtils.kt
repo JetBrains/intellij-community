@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.idea.caches.resolve
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -18,7 +19,17 @@ import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationContainer
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingTraceContext
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -28,6 +39,7 @@ import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
+@K1Deprecation
 fun KtElement.getResolutionFacade(): ResolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacade(this)
 
 /**
@@ -35,6 +47,7 @@ fun KtElement.getResolutionFacade(): ResolutionFacade = KotlinCacheService.getIn
  *
  * **Please, use overload with providing resolutionFacade for stable results of subsequent calls**
  */
+@K1Deprecation
 fun KtDeclaration.unsafeResolveToDescriptor(
     bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
 ): DeclarationDescriptor =
@@ -47,6 +60,7 @@ fun KtDeclaration.unsafeResolveToDescriptor(
  *
  * **Please, use overload with providing resolutionFacade for stable results of subsequent calls**
  */
+@K1Deprecation
 fun KtDeclaration.resolveToDescriptorIfAny(
     bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL
 ): DeclarationDescriptor? =
@@ -55,41 +69,49 @@ fun KtDeclaration.resolveToDescriptorIfAny(
 /**
  * **Please, use overload with providing resolutionFacade for stable results of subsequent calls**
  */
+@K1Deprecation
 fun KtClassOrObject.resolveToDescriptorIfAny(bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL) =
     resolveToDescriptorIfAny(getResolutionFacade(), bodyResolveMode)
 
 /**
  * **Please, use overload with providing resolutionFacade for stable results of subsequent calls**
  */
+@K1Deprecation
 fun KtNamedFunction.resolveToDescriptorIfAny(bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL) =
     resolveToDescriptorIfAny(getResolutionFacade(), bodyResolveMode)
 
 /**
  * **Please, use overload with providing resolutionFacade for stable results of subsequent calls**
  */
+@K1Deprecation
 fun KtProperty.resolveToDescriptorIfAny(bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL) =
     resolveToDescriptorIfAny(getResolutionFacade(), bodyResolveMode)
 
 /**
  * **Please, use overload with providing resolutionFacade for stable results of subsequent calls**
  */
+@K1Deprecation
 fun KtParameter.resolveToParameterDescriptorIfAny(bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL) =
     resolveToParameterDescriptorIfAny(getResolutionFacade(), bodyResolveMode)
 
 /**
  * **Please, use overload with providing resolutionFacade for stable results of subsequent calls**
  */
+@K1Deprecation
 fun KtElement.resolveToCall(bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL) =
     resolveToCall(getResolutionFacade(), bodyResolveMode)
 
+@K1Deprecation
 fun ResolvedCall<out CallableDescriptor>.variableCallOrThis(): ResolvedCall<out CallableDescriptor> =
     (this as? VariableAsFunctionResolvedCall)?.variableCall ?: this
 
+@K1Deprecation
 fun KtFile.resolveImportReference(fqName: FqName): Collection<DeclarationDescriptor> {
     val facade = getResolutionFacade()
     return facade.resolveImportReference(facade.moduleDescriptor, fqName)
 }
 
+@K1Deprecation
 fun KtAnnotationEntry.resolveToDescriptorIfAny(
     bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL_NO_ADDITIONAL
 ): AnnotationDescriptor? =
@@ -116,11 +138,13 @@ fun KtAnnotationEntry.resolveToDescriptorIfAny(
 /**
  * **Please, use overload with providing resolutionFacade for stable results of subsequent calls**
  */
+@K1Deprecation
 @JvmOverloads
 fun KtElement.analyze(
     bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
 ): BindingContext = analyze(getResolutionFacade(), bodyResolveMode)
 
+@K1Deprecation
 @JvmOverloads
 fun KtElement.safeAnalyze(
     bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
@@ -129,13 +153,16 @@ fun KtElement.safeAnalyze(
 /**
  * **Please, use overload with providing resolutionFacade for stable results of subsequent calls**
  */
+@K1Deprecation
 fun KtElement.analyzeAndGetResult(): AnalysisResult = analyzeAndGetResult(getResolutionFacade())
 
 /**
  * **Please, use overload with providing resolutionFacade for stable results of subsequent calls**
  */
+@K1Deprecation
 fun KtElement.analyzeWithContentAndGetResult(): AnalysisResult = analyzeWithContentAndGetResult(getResolutionFacade())
 
+@K1Deprecation
 fun KtElement.findModuleDescriptor(): ModuleDescriptor = getResolutionFacade().moduleDescriptor
 
 // This function is used on declarations to make analysis not only declaration itself but also it content:
@@ -143,6 +170,7 @@ fun KtElement.findModuleDescriptor(): ModuleDescriptor = getResolutionFacade().m
 /**
  * **Please, use overload with providing resolutionFacade for stable results of subsequent calls**
  */
+@K1Deprecation
 fun KtDeclaration.analyzeWithContent(): BindingContext = analyzeWithContent(getResolutionFacade())
 
 // This function is used to make full analysis of declaration container.
@@ -150,6 +178,7 @@ fun KtDeclaration.analyzeWithContent(): BindingContext = analyzeWithContent(getR
 /**
  * **Please, use overload with providing resolutionFacade for stable results of subsequent calls**
  */
+@K1Deprecation
 inline fun <reified T> T.analyzeWithContent(): BindingContext where T : KtDeclarationContainer, T : KtElement =
     analyzeWithContent(getResolutionFacade())
 
@@ -162,8 +191,10 @@ inline fun <reified T> T.analyzeWithContent(): BindingContext where T : KtDeclar
  * @ref [KotlinCacheService]
  * @ref [org.jetbrains.kotlin.idea.caches.resolve.PerFileAnalysisCache]
  */
+@K1Deprecation
 fun KtFile.analyzeWithAllCompilerChecks(vararg extraFiles: KtFile): AnalysisResult = this.analyzeWithAllCompilerChecks(null, *extraFiles)
 
+@K1Deprecation
 fun KtFile.analyzeWithAllCompilerChecks(callback: ((Diagnostic) -> Unit)?, vararg extraFiles: KtFile): AnalysisResult {
     return if (extraFiles.isEmpty()) {
         KotlinCacheService.getInstance(project).getResolutionFacade(this)
@@ -186,6 +217,7 @@ fun KtFile.analyzeWithAllCompilerChecks(callback: ((Diagnostic) -> Unit)?, varar
  * @ref [KotlinCacheService]
  * @ref [org.jetbrains.kotlin.idea.caches.resolve.PerFileAnalysisCache]
  */
+@K1Deprecation
 @ApiStatus.Internal
 @Deprecated(
     "Use either KtFile.analyzeWithAllCompilerChecks() or KtElement.analyzeAndGetResult()",
@@ -194,6 +226,7 @@ fun KtFile.analyzeWithAllCompilerChecks(callback: ((Diagnostic) -> Unit)?, varar
 fun KtElement.analyzeWithAllCompilerChecks(): AnalysisResult = getResolutionFacade().analyzeWithAllCompilerChecks(this)
 
 // this method don't check visibility and collect all descriptors with given fqName
+@K1Deprecation
 @OptIn(FrontendInternals::class)
 fun ResolutionFacade.resolveImportReference(
     moduleDescriptor: ModuleDescriptor,
@@ -210,6 +243,7 @@ fun ResolutionFacade.resolveImportReference(
     )?.getContributedDescriptors() ?: emptyList()
 }
 
+@K1Deprecation
 fun KtReferenceExpression.resolveMainReference(): PsiElement? =
     try {
         mainReference.resolve()

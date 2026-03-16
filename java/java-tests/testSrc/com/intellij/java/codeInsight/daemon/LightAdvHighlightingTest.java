@@ -32,10 +32,19 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -176,7 +185,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
                                       "  }" +
                                       "}");
     try {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       doTest(false);
     }
@@ -208,7 +217,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testMethodCalls() { doTest(false); }
   public void testSingleTypeImportConflicts() {
     createSaveAndOpenFile("sql/Date.java", "package sql; public class Date{}");
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     doTest(false);
   }

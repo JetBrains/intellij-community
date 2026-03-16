@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
-import com.intellij.codeHighlighting.*;
+import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.impl.focusMode.FocusModeProvider;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.application.ApplicationManager;

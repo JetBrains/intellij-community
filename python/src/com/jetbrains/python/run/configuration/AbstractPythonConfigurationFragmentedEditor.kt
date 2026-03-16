@@ -2,7 +2,13 @@
 package com.jetbrains.python.run.configuration
 
 import com.intellij.diagnostic.logging.LogsGroupFragment
-import com.intellij.execution.ui.*
+import com.intellij.execution.ui.BeforeRunComponent
+import com.intellij.execution.ui.BeforeRunFragment
+import com.intellij.execution.ui.CommonParameterFragments
+import com.intellij.execution.ui.CommonTags
+import com.intellij.execution.ui.RunConfigurationFragmentedEditor
+import com.intellij.execution.ui.SettingsEditorFragment
+import com.intellij.execution.ui.SettingsEditorFragmentType
 import com.intellij.openapi.components.service
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.ui.RawCommandLineEditor
@@ -31,6 +37,8 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
     createEnvironmentFragments(fragments, runConfiguration)
     addInterpreterOptions(fragments)
     addContentSourceRoots(fragments)
+
+    addDebuggerOptions(fragments)
 
     runConfiguration.sdk?.takeIf { enableRunTool }
       ?.let { createRunToolTag(it) }
@@ -77,6 +85,18 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
     interpreterOptionsFragment.setHint(PyBundle.message("python.run.configuration.fragments.interpreter.options.hint"))
     interpreterOptionsFragment.actionHint = PyBundle.message("python.run.configuration.fragments.interpreter.options.hint")
     fragments.add(interpreterOptionsFragment)
+  }
+
+  private fun <T : AbstractPythonRunConfiguration<*>> addDebuggerOptions(fragments: MutableList<SettingsEditorFragment<T, *>>) {
+    val justMyCodeElement = SettingsEditorFragment.createTag<T>(
+      "justMyCode",
+      PyBundle.message("python.debugger.configuration.justMyCode.label"),
+      PyBundle.message("python.debugger.configuration.group"),
+      { runConfiguration.shouldDebugJustMyCode() },
+      { config, value -> config.setDebugJustMyCode(value) }
+    )
+    justMyCodeElement.isSelected = runConfiguration.shouldDebugJustMyCode()
+    fragments.add(justMyCodeElement)
   }
 
   private fun <T : AbstractPythonRunConfiguration<*>> addContentSourceRoots(fragments: MutableList<SettingsEditorFragment<T, *>>) {

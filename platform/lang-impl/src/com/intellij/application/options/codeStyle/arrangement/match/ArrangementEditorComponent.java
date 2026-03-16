@@ -8,8 +8,10 @@ import com.intellij.application.options.codeStyle.arrangement.util.CalloutBorder
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Insets;
 
 public final class ArrangementEditorComponent implements ArrangementRepresentationAware, ArrangementAnimationManager.Callback,
                                                          ArrangementEditorAware

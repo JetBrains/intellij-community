@@ -6,7 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public interface PySubscriptionExpression extends PyAstSubscriptionExpression, PyQualifiedExpression, PyCallSiteExpression, PyReferenceOwner {
+public interface PySubscriptionExpression
+  extends PyAstSubscriptionExpression, PyQualifiedExpression, PyCallSiteExpression, PyReferenceOwner {
 
   /**
    * @return For {@code spam[x][y][n]} will return {@code spam} regardless number of its dimensions

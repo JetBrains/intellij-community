@@ -9,16 +9,40 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.api.GlobalOptions;
-import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetIndex;
+import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.Delta;
+import org.jetbrains.jps.dependency.DependencyGraph;
+import org.jetbrains.jps.dependency.DifferentiateParameters;
+import org.jetbrains.jps.dependency.DifferentiateResult;
+import org.jetbrains.jps.dependency.GraphConfiguration;
+import org.jetbrains.jps.dependency.LogConsumer;
+import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.NodeSourcePathMapper;
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.Builder;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.CompileScope;
+import org.jetbrains.jps.incremental.FSOperations;
+import org.jetbrains.jps.incremental.GlobalContextKey;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.ModuleLevelBuilder;
+import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.StopBuildException;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.dependencies.LibraryDef;
 import org.jetbrains.jps.incremental.dependencies.LibraryDependenciesUpdater;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
@@ -44,7 +68,18 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 
@@ -432,12 +467,15 @@ public final class JavaBuilderUtil {
     DependencyGraph dependencyGraph = graphConfig.getGraph();
     NodeSourcePathMapper pathMapper = graphConfig.getPathMapper();
     
-    final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
+    ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
+    Predicate<NodeSource> scopeFilter = s -> moduleBasedFilter.accept(pathMapper.toPath(s).toFile());
+    Predicate<NodeSource> affectionFilter = s -> scopeFilter.test(s) && !LibraryDef.isLibraryPath(s);
     DifferentiateParametersBuilder params = DifferentiateParametersBuilder.create(chunk.getPresentableShortName())
       .compiledWithErrors(errorsDetected)
       .calculateAffected(context.shouldDifferentiate(chunk) && !isForcedRecompilationAllJavaModules(context))
       .processConstantsIncrementally(dataManager.isProcessConstantsIncrementally())
-      .withAffectionFilter(s -> moduleBasedFilter.accept(pathMapper.toPath(s).toFile()) && !LibraryDef.isLibraryPath(s))
+      .withScopeFilter(scopeFilter)
+      .withAffectionFilter(affectionFilter)
       .withChunkStructureFilter(s -> moduleBasedFilter.belongsToCurrentTargetChunk(pathMapper.toPath(s).toFile()))
       .withLogConsumer(LogConsumer.createJULogConsumer(Level.FINE));
     DifferentiateParameters differentiateParams = params.get();
@@ -449,7 +487,7 @@ public final class JavaBuilderUtil {
       // some compilers (and compiler plugins) may produce different outputs for the same set of inputs.
       // This might cause corresponding graph Nodes to be considered as always 'changed'. In some scenarios this may lead to endless build loops
       // This fallback logic detects such loops and recompiles the whole module chunk instead.
-      Set<NodeSource> affectedForChunk = Iterators.collect(Iterators.filter(diffResult.getAffectedSources(), differentiateParams.belongsToCurrentCompilationChunk()::test), new HashSet<>());
+      Set<NodeSource> affectedForChunk = Iterators.collect(Iterators.filter(diffResult.getAffectedSources(), differentiateParams.belongsToCurrentCompilationChunk()), new HashSet<>());
       if (!affectedForChunk.isEmpty() && !getOrCreate(context, ALL_AFFECTED_NODE_SOURCES_KEY, HashSet::new).addAll(affectedForChunk)) {
         // all affected files in this round have already been affected in previous rounds. This might indicate a build cycle => recompiling whole chunk
         LOG.info("Build cycle detected for " + chunk.getName() + "; recompiling whole module chunk");
@@ -738,12 +776,7 @@ public final class JavaBuilderUtil {
       }
       Set<BuildTarget<?>> targetOfFileWithDependencies = myCache.computeIfAbsent(
         targetOfFile,
-        trg -> Iterators.collect(Iterators.recurseDepth(trg, new Iterators.Function<BuildTarget<?>, Iterable<? extends BuildTarget<?>>>() {
-          @Override
-          public Iterable<? extends BuildTarget<?>> fun(BuildTarget<?> t) {
-            return myBuildTargetIndex.getDependencies(t, myContext);
-          }
-        }, false), new HashSet<>())
+        trg -> Iterators.collect(Iterators.recurseDepth(trg, (Function<BuildTarget<?>, Iterable<? extends BuildTarget<?>>>) t -> myBuildTargetIndex.getDependencies(t, myContext), false), new HashSet<>())
       );
       return ContainerUtil.intersects(targetOfFileWithDependencies, myChunkTargets);
     }

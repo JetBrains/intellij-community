@@ -7,8 +7,10 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.Colors
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
+import org.jetbrains.kotlin.K1Deprecation
 import java.awt.Font
 
+@K1Deprecation
 object ReplColors {
     val HISTORY_GUTTER_COLOR: JBColor = JBColor(Gray.xF2, Gray.x41)
     val EDITOR_GUTTER_COLOR: JBColor = JBColor(Gray.xCF, Gray.x31)

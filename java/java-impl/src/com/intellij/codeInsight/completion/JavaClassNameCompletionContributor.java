@@ -20,7 +20,21 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaElementPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -34,10 +48,15 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.codeInsight.completion.JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
@@ -47,8 +66,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, final @NotNull CompletionResultSet _result) {
-    if (parameters.getCompletionType() == CompletionType.CLASS_NAME ||
-      parameters.isExtendedCompletion() && mayContainClassName(parameters)) {
+    if (parameters.isExtendedCompletion() && mayContainClassName(parameters)) {
       addAllClasses(parameters, _result);
     }
   }
@@ -185,9 +203,10 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
                                         new LimitedAccessibleClassPreprocessor(parameters, filterByScope, classProcessor));
   }
 
-  private static @NotNull GlobalSearchScope getReferenceScope(@NotNull CompletionParameters parameters,
-                                                              boolean filterByScope,
-                                                              boolean inPermitsList) {
+  @ApiStatus.Internal
+  public static @NotNull GlobalSearchScope getReferenceScope(@NotNull BaseCompletionParameters parameters,
+                                                             boolean filterByScope,
+                                                             boolean inPermitsList) {
     PsiElement insertedElement = parameters.getPosition();
     PsiFile psiFile = insertedElement.getContainingFile().getOriginalFile();
     Project project = insertedElement.getProject();
@@ -211,7 +230,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
     return GlobalSearchScope.fileScope(psiFile);
   }
 
-  private static @NotNull MultiMap<String, PsiClass> getAllAnnotationClasses(PsiElement context, PrefixMatcher matcher) {
+  public static @NotNull MultiMap<String, PsiClass> getAllAnnotationClasses(PsiElement context, PrefixMatcher matcher) {
     MultiMap<String, PsiClass> map = new MultiMap<>();
     GlobalSearchScope scope = context.getResolveScope();
     Project project = context.getProject();

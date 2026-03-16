@@ -27,7 +27,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsViewModel
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
-import java.util.*
+import java.util.Date
 
 interface GHPRReviewThreadCommentViewModel {
   val avatarIconsProvider: GHAvatarIconsProvider

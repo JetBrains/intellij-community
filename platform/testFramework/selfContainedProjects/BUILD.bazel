@@ -1,0 +1,57 @@
+load("@community//build:tests-options.bzl", "jps_test")
+
+# Additional data files for tests (files at module root that tests need access to)
+filegroup(
+  name = "selfContainedProjects_data",
+  srcs = ["init.gradle.kts"],
+  visibility = ["//visibility:public"],
+)
+
+jps_test(
+  name = "selfContainedProjects_test",
+  runtime_deps = [":selfContainedProjects_test_lib"],
+  data = [
+    ":selfContainedProjects_data",
+  ],
+)
+
+### skip generation section `test intellij.platform.testFramework.selfContainedProjects`
+
+### auto-generated section `build intellij.platform.testFramework.selfContainedProjects` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "selfContainedProjects",
+  module_name = "intellij.platform.testFramework.selfContainedProjects",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:slf4j-api",
+    "@lib//:guava",
+  ]
+)
+
+jvm_library(
+  name = "selfContainedProjects_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":selfContainedProjects"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:slf4j-api",
+    "@lib//:guava",
+    "@lib//:junit5",
+    "//platform/build-scripts/downloader",
+    "@lib//:kotlin-test",
+    "@lib//:kotlin-test-junit5",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/java-runtime:rt",
+  ]
+)
+### auto-generated section `build intellij.platform.testFramework.selfContainedProjects` end

@@ -5,7 +5,15 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UComment
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UImportStatement
+import org.jetbrains.uast.UastLanguagePlugin
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
 @ApiStatus.Internal

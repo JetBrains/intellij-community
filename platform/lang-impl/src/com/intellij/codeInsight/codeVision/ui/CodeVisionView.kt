@@ -14,7 +14,6 @@ import com.intellij.codeInsight.codeVision.ui.popup.CodeVisionPopup
 import com.intellij.codeInsight.codeVision.ui.renderers.BlockCodeVisionInlayRenderer
 import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionInlayRenderer
 import com.intellij.codeInsight.codeVision.ui.renderers.InlineCodeVisionInlayRenderer
-import com.intellij.codeInsight.codeVision.ui.renderers.providers.painter
 import com.intellij.inlinePrompt.isInlinePromptGenerating
 import com.intellij.inlinePrompt.isInlinePromptShown
 import com.intellij.openapi.components.Service
@@ -25,18 +24,12 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.reflection.usingTrueFlag
-import org.jetbrains.annotations.ApiStatus
-
-// Needed for dynamic block inlay height calculation in Rider
-@ApiStatus.Internal
-val LENSES_TO_RENDER_ON_INLAY: Key<List<CodeVisionEntry>> = Key.create("lenses.to.render.on.inlay")
 
 @Service(Service.Level.PROJECT)
 class CodeVisionView(val project: Project) {
@@ -93,7 +86,6 @@ class CodeVisionView(val project: Project) {
         }
         else -> error("Unsupported lens type")
       }
-      inlay.putUserData(LENSES_TO_RENDER_ON_INLAY, lens.value)
       listInlays.add(inlay)
       addCodeLenses(inlay, rangeCodeVisionModel, lens.value, lens.key, lifetime)
     }

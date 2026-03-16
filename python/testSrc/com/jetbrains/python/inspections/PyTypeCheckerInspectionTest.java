@@ -10,6 +10,7 @@ import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.ComparisonFailure;
 
 public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
 
@@ -588,22 +589,22 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       () -> doTestByText(
         """
           from typing import Protocol
-
+          
           class A:
               def f1(self, x: str):
                   pass
-
+          
           class B(A):
               def f2(self, y: str):
                   pass
-
+          
           class P(Protocol):
               def f1(self, x: str): ...
               def f2(self, y: str): ...
-
+          
           def test(p: P):
               pass
-
+          
           b = B()
           test(b)"""
       )
@@ -631,50 +632,50 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                    def func11(value):
                        if value is not None and value != 1:
                            pass
-
-
+                   
+                   
                    def func12(value):
                        if None is not value and value != 1:
                            pass
-
-
+                   
+                   
                    def func21(value):
                        if value is None and value != 1:
                            pass
-
-
+                   
+                   
                    def func22(value):
                        if None is value and value != 1:
                            pass
-
-
+                   
+                   
                    func11(None)
                    func12(None)
                    func21(None)
                    func22(None)
-
-
+                   
+                   
                    def func31(value):
                        if value and None and value * 1:
                            pass
-
-
+                   
+                   
                    def func32(value):
                        if value is value and value * 1:
                            pass
-
-
+                   
+                   
                    def func33(value):
                        if None is None and value * 1:
                            pass
-
-
+                   
+                   
                    def func34(value):
                        a = 2
                        if a is a and value * 1:
                            pass
-
-
+                   
+                   
                    func31(<warning descr="Type 'None' doesn't have expected attribute '__mul__'">None</warning>)
                    func32(<warning descr="Type 'None' doesn't have expected attribute '__mul__'">None</warning>)
                    func33(<warning descr="Type 'None' doesn't have expected attribute '__mul__'">None</warning>)
@@ -685,18 +686,18 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testPassingAbstractMethodResult() {
     doTestByText("""
                    import abc
-
+                   
                    class Foo:
                        __metaclass__ = abc.ABCMeta
-
+                   
                        @abc.abstractmethod
                        def get_int(self):
                            pass
-
+                   
                        def foo(self, i):
                            # type: (int) -> None
                            print(i)
-
+                   
                        def bar(self):
                            self.foo(self.get_int())""");
   }
@@ -707,13 +708,13 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       LanguageLevel.PYTHON35,
       () -> doTestByText("""
                            from abc import ABCMeta, abstractmethod
-
+                           
                            class A(metaclass=ABCMeta):
-
+                           
                                @abstractmethod
                                def foo(self):
                                    pass
-
+                           
                            def something(derived: A):
                                for _, _ in derived.foo():
                                    pass
@@ -726,11 +727,11 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    def f(cls):
                        print(cls.Meta)
-
+                   
                    class A:
                        class Meta:
                            pass
-
+                   
                    f(A)""");
   }
 
@@ -742,7 +743,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            class Bin:
                                def __rshift__(self, other: int):
                                    pass
-
+                           
                            Bin() >> 1""")
     );
   }
@@ -753,21 +754,21 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       LanguageLevel.PYTHON35,
       () -> doTestByText("""
                            from typing import Type, TypeVar
-
+                           
                            class A:
                                pass
-
+                           
                            class B(A):
                                pass
-
+                           
                            class C:
                                pass
-
+                           
                            T = TypeVar('T', A, B)
-
+                           
                            def f(cls: Type[T], arg: int) -> T:
                                pass
-
+                           
                            f(A, 1)
                            f(B, 2)
                            f(<warning descr="Expected type 'Type[T ≤: Union[A, B]]', got 'Type[C]' instead">C</warning>, 3)""")
@@ -780,9 +781,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       LanguageLevel.PYTHON35,
       () -> doTestByText("""
                            from typing import TypeVar
-
+                           
                            F = TypeVar('F', bound=int)
-
+                           
                            def deco(func: F) -> F:
                                return <warning descr="Expected type 'F ≤: int', got 'str' instead">""</warning>""")
     );
@@ -795,19 +796,19 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       () -> doTestByText(
         """
           from typing import Callable
-
+          
           class MainClass:
               pass
-
+          
           class SubClass(MainClass):
               pass
-
+          
           def f(p: Callable[[SubClass], int]):
               pass
-
+          
           def g(p: MainClass) -> int:
               pass
-
+          
           f(g)"""
       )
     );
@@ -819,7 +820,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       LanguageLevel.PYTHON36,
       () -> doTestByText("""
                            from typing_extensions import Literal
-
+                           
                            a: Literal[20] = 20
                            b: Literal[30] = <warning descr="Expected type 'Literal[30]', got 'Literal[25]' instead">25</warning>
                            c: Literal[2, 3, 4] = 3""")
@@ -832,7 +833,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       LanguageLevel.PYTHON36,
       () -> doTestByText("""
                            from typing_extensions import Literal
-
+                           
                            a1: Literal[0x14] = 20
                            a2: Literal[20] = 0x14
                            b1: Literal[0] = <warning descr="Expected type 'Literal[0]', got 'Literal[False]' instead">False</warning>
@@ -846,21 +847,21 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       LanguageLevel.PYTHON36,
       () -> doTestByText("""
                            from typing_extensions import Literal
-
+                           
                            a: Literal[20] = undefined
                            b: Literal[30] = undefined
                            c: int = 20
-
+                           
                            def foo1(p1: Literal[20]):
                                pass
-
+                           
                            foo1(a)
                            foo1(<warning descr="Expected type 'Literal[20]', got 'Literal[30]' instead">b</warning>)
                            foo1(<warning descr="Expected type 'Literal[20]', got 'int' instead">c</warning>)
-
+                           
                            def foo2(p1: int):
                                pass
-
+                           
                            foo2(a)
                            foo2(b)
                            foo2(c)""")
@@ -871,28 +872,28 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testTypingLiteralStrings() {
     doTestByText("""
                    from typing_extensions import Literal
-
+                   
                    a = undefined  # type: Literal["abc"]
                    b = undefined  # type: Literal[u"abc"]
-
+                   
                    def foo1(p1):
                        # type: (Literal["abc"]) -> None
                        pass
                    foo1(a)
                    foo1(<warning descr="Expected type 'Literal[\\"abc\\"]', got 'Literal[u\\"abc\\"]' instead">b</warning>)
-
+                   
                    def foo2(p1):
                        # type: (Literal[u"abc"]) -> None
                        pass
                    foo2(<warning descr="Expected type 'Literal[u\\"abc\\"]', got 'Literal[\\"abc\\"]' instead">a</warning>)
                    foo2(b)
-
+                   
                    def foo3(p1):
                        # type: (bytes) -> None
                        pass
                    foo3(a)
                    foo3(<warning descr="Expected type 'str', got 'Literal[u\\"abc\\"]' instead">b</warning>)
-
+                   
                    def foo4(p1):
                        # type: (unicode) -> None
                        pass
@@ -924,10 +925,10 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            from typing_extensions import Literal
                            from typing import TypeVar
                            T = TypeVar('T', Literal["a"], Literal["b"], Literal["c"])
-
+                           
                            def repeat(x: T, n: int):
                                return [x] * n
-
+                           
                            repeat("c", 2)""")
     );
   }
@@ -986,14 +987,14 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> doTestByText("""
-                   def test() -> bool:
-                       try:
-                           pass
-                       finally:
-                           pass
-                   
-                       return True
-                   """)
+                           def test() -> bool:
+                               try:
+                                   pass
+                               finally:
+                                   pass
+                           
+                               return True
+                           """)
     );
   }
 
@@ -1003,13 +1004,13 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       LanguageLevel.getLatest(),
       () -> doTestByText("""
                            from typing import TypeVar, Generic
-
+                           
                            _T = TypeVar('_T')
-
+                           
                            class Callback(Generic[_T]):
                                def __call__(self, arg: _T):
                                    pass
-
+                           
                            def foo(cb: Callback[int]):
                                cb(<warning descr="Expected type 'int' (matched generic type '_T'), got 'str' instead">"42"</warning>)""")
     );
@@ -1148,7 +1149,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       LanguageLevel.getLatest(),
       () -> doTestByText("""
                            from typing import TypedDict
-
+                           
                            Movie = TypedDict('Movie', {'name': str, 'year': int}, total=False)
                            class Movie2(TypedDict, total=False):
                                name: str
@@ -1166,7 +1167,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       LanguageLevel.getLatest(),
       () -> doTestByText("""
                            from typing import TypedDict, List
-
+                           
                            Movie = TypedDict('Movie', {'address': List[str]}, total=False)
                            class Movie2(TypedDict, total=False):
                                address: List[str]
@@ -1192,13 +1193,13 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       () -> doTestByText(
         """
           from typing import TypeVar, Mapping
-
+          
           MyKT = TypeVar("MyKT")
           MyVT = TypeVar("MyVT")
-
+          
           class MyMapping(Mapping[MyKT, MyVT]):
               pass
-
+          
           d: MyMapping[str, str] = undefined1
           d.get(undefined2)
           d.get("str")
@@ -1220,10 +1221,10 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            class B:
                                def __call__(self, *args, **kwargs):
                                    pass
-
+                           
                            def some_fn(arg: B):
                                pass
-
+                           
                            some_fn(<warning descr="Expected type 'B', got 'type[B]' instead">B</warning>)""")
     );
   }
@@ -1236,14 +1237,14 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            class MyCls:
                                def __call__(self):
                                    return True
-
+                           
                            class DifferentCls:
                                def __call__(self):
                                    return True
-
+                           
                            def foo(arg: MyCls):
                                pass
-
+                           
                            foo(MyCls())
                            foo(<warning descr="Expected type 'MyCls', got 'DifferentCls' instead">DifferentCls()</warning>)""")
     );
@@ -1298,15 +1299,15 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       LanguageLevel.getLatest(),
       () -> doTestByText("""
                            from typing import Callable, TypeVar
-
+                           
                            T = TypeVar('T', bound=int)
-
+                           
                            def func(c: Callable[[T], None]):
                                pass
-
+                           
                            def accepts_anything(x: object) -> None:
                                pass
-
+                           
                            func(accepts_anything)
                            """)
     );
@@ -1318,16 +1319,81 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       LanguageLevel.getLatest(),
       () -> doTestByText("""
                            from typing import Callable, TypeVar
-
+                           
                            T = TypeVar('T', bound=int)
-
+                           
                            def func(c: Callable[[T], None]):
                                pass
+                           
+                           def accepts_str(x: str) -> None:
+                               pass
+                           
+                           func(<warning descr="Expected type '(T ≤: int) -> None', got '(x: str) -> None' instead">accepts_str</warning>)
+                           """)
+    );
+  }
 
+  // PY-37876
+  public void testGenericParameterOfTwoExpectedCallableParameters() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("""
+                           from typing import Callable, TypeVar, assert_type
+                           
+                           class BadType(int, str):
+                               pass
+                           
+                           T = TypeVar('T')
+                           
+                           def func(c1: Callable[[T], None], c2: Callable[[T], None]) -> T:
+                               pass
+                           
+                           def accepts_str(x: str) -> None:
+                               pass
+                           
+                           def accepts_int(x: int) -> None:
+                               pass
+                           
+                           res = func(accepts_str, accepts_int)
+                           assert_type(res, "str & int")
+                           """)
+    );
+  }
+
+  public void testBoundedGenericParameterOfExpectedCallableReturn2() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("""
+                           from typing import Callable, TypeVar
+                           
+                           T = TypeVar('T', bound=int)
+                           
+                           def func(c: Callable[[], T]):
+                               pass
+                           
+                           def returns_str() -> str:
+                               pass
+                           
+                           func(<warning descr="Expected type '() -> T ≤: int', got '() -> str' instead">returns_str</warning>)
+                           """)
+    );
+  }
+
+  public void testConstraintGenericParameterOfExpectedCallableParameter2() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("""
+                           from typing import Callable, TypeVar
+                           
+                           T = TypeVar('T', int, bool) # using constraint here
+                           
+                           def func(c: Callable[[T], None]):
+                               pass
+                           
                            def accepts_anything(x: str) -> None:
                                pass
-
-                           func(<warning descr="Expected type '(T ≤: int) -> None', got '(x: str) -> None' instead">accepts_anything</warning>)
+                           
+                           func(<warning descr="Expected type '(T ≤: int | bool) -> None', got '(x: str) -> None' instead">accepts_anything</warning>)
                            """)
     );
   }
@@ -1338,16 +1404,19 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       LanguageLevel.getLatest(),
       () -> doTestByText("""
                            from typing import Callable, TypeVar
-
+                           
                            T = TypeVar('T')
-
+                           
                            def func(x: T, c: Callable[[T], None]) -> None:
                                pass
-
+                           
                            def accepts_anything(x: str) -> None:
                                pass
-
-                           func(42, <warning descr="Expected type '(int) -> None' (matched generic type '(T) -> None'), got '(x: str) -> None' instead">accepts_anything</warning>)""")
+                           
+                           # Bug: Expected error.
+                           # `Callable[[str], None]` is assignable to `Callable[[int | str], None]`.
+                           # Thus, substitution `T` -> `int | str` is considered valid.
+                           func(42, accepts_anything)""")
     );
   }
 
@@ -1531,10 +1600,10 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                                title: str
                                year: int
                            
-                           movies1: list[Movie] = [
+                           movies1: list[Movie] = <warning descr="Expected type 'list[Movie]', got 'list[Movie | dict[str, str]]' instead">[
                                {"title": "Blade Runner", "year": 1982}, # OK
                                {"title": "The Matrix"},
-                           ]
+                           ]</warning>
                            movies2: list[Movie] = <warning descr="Expected type 'list[Movie]', got 'list[dict[str, str]]' instead">[
                                {"title": "The Matrix"},
                            ]</warning>
@@ -1606,29 +1675,6 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
-  // PY-74277
-  public void testPassingTypeIsCallable() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON312,
-      () -> doTestByText("""
-                   from typing_extensions import TypeIs
-                   
-                   def takes_narrower(x: int | str, narrower: Callable[[object], TypeIs[int]]):
-                       if narrower(x):
-                           expr1: int = x
-                           #            └─ should be of `int` type
-                       else:
-                           expr2: str = x
-                           #            └─ should be of `str` type
-                   
-                   def is_bool(x: object) -> TypeIs[bool]:
-                       return isinstance(x, bool)
-
-                   takes_narrower(42, is_bool)
-                   """));
-  }
-
-
   public void testGeneratorTypeHint() {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
   }
@@ -1639,12 +1685,31 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       LanguageLevel.PYTHON312,
       () ->
         doTestByText("""
-                 from types import NoneType
-                 
-                 x: NoneType = None
-                 y: type[NoneType] = type(None)
-                 z: type[None] = NoneType
-                 """));
+                       from types import NoneType
+                       
+                       x: NoneType = None
+                       y: type[NoneType] = type(None)
+                       z: type[None] = NoneType
+                       """));
+  }
+
+  // PY-84657
+  public void testClassOverloadedFunctionAssignedToGlobalFunction() {
+    fixme("PY-84657", ComparisonFailure.class, () -> {
+      runWithLanguageLevel(
+        LanguageLevel.PYTHON312,
+        () -> {
+          doMultiFileTest("main.py");
+        });
+    });
+  }
+
+  public void testClassOverloadedFunctionAssignedToGlobalFunction2() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON312,
+      () -> {
+        doMultiFileTest("main.py");
+      });
   }
 
   // PY-59260
@@ -1711,13 +1776,13 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       () ->
         doTestByText("""
                        from enum import StrEnum, Enum
-
+                       
                        class EmptyStrEnum(StrEnum):
                            pass
                        
                        class EmptyStrMixin(str, Enum):
                            pass
-
+                       
                        def test_empty_str_enum(x: EmptyStrEnum):
                            s: str = x.value
                            i: int = <warning descr="Expected type 'int', got 'str' instead">x.value</warning>

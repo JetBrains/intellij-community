@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.function.Supplier;
 
 public class DefaultCustomComponentAction extends AnAction implements CustomComponentAction, LightEditCompatible {

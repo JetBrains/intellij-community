@@ -16,9 +16,11 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",
     "//platform/projectModel-api:projectModel",
+    "//platform/core-impl",
     "//platform/vcs-impl",
     "//platform/lang-impl",
     "//platform/vcs-api:vcs",

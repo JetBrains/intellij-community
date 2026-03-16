@@ -1,9 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.util
 
-import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.*
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.findClassForName
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.getGradleClass
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.getMethod
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.getPrivateValue
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.getValue
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.hasMethod
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.invokeMethod
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.loadClassOrNull
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.setValue
 import org.gradle.api.Project
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.assertThrows

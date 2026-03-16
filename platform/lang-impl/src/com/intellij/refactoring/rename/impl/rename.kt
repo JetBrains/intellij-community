@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.codeInsight.actions.VcsFacade
+import com.intellij.find.usages.api.DynamicUsage
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.UndoManager
@@ -17,8 +19,14 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.search.runSearch
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.rename.api.*
-import com.intellij.refactoring.rename.api.ModifiableRenameUsage.*
+import com.intellij.refactoring.rename.api.ModifiableRenameUsage
+import com.intellij.refactoring.rename.api.ModifiableRenameUsage.FileUpdater
+import com.intellij.refactoring.rename.api.ModifiableRenameUsage.ModelUpdate
+import com.intellij.refactoring.rename.api.ModifiableRenameUsage.ModelUpdater
+import com.intellij.refactoring.rename.api.RenameTarget
+import com.intellij.refactoring.rename.api.RenameUsage
+import com.intellij.refactoring.rename.api.RenameValidationResult
+import com.intellij.refactoring.rename.api.RenameValidator
 import com.intellij.refactoring.rename.impl.FileUpdates.Companion.createFileUpdates
 import com.intellij.refactoring.rename.ui.RenameDialog
 import com.intellij.refactoring.rename.ui.commandName
@@ -28,12 +36,23 @@ import com.intellij.util.Query
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.toList
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.fold
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -161,7 +180,10 @@ private suspend fun processUsages(usageChannel: ReceiveChannel<UsagePointer>, ne
     usagePointers += pointer
     val forcePreview: Boolean? = readAction {
       pointer.dereference()?.let { renameUsage ->
-        renameUsage !is ModifiableRenameUsage || renameUsage is TextRenameUsage || renameUsage.conflicts(newName).isNotEmpty()
+        renameUsage !is ModifiableRenameUsage ||
+        (renameUsage is DynamicUsage && renameUsage.isDynamic) ||
+        renameUsage is TextRenameUsage ||
+        renameUsage.conflicts(newName).isNotEmpty()
       }
     }
     if (forcePreview == true) {
@@ -320,7 +342,9 @@ fun renameAndWait(project: Project, target: RenameTarget, newName: String) {
     withTimeout(timeMillis = 1000 * 60 * 10) {
       val renameJob = rename(cs = this@withTimeout, project, targetPointer, newName, options, preview = false)
       while (renameJob.isActive) {
-        UIUtil.dispatchAllInvocationEvents()
+        TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+          UIUtil.dispatchAllInvocationEvents()
+        }
         delay(timeMillis = 10)
       }
     }

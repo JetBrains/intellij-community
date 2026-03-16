@@ -3,7 +3,11 @@ package com.intellij.internal.statistics.logger
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.LogEventDeserializer
+import com.intellij.internal.statistic.eventLog.LogEventRecord
+import com.intellij.internal.statistic.eventLog.LogEventRecordRequest
+import com.intellij.internal.statistic.eventLog.LogEventSerializer
+import com.intellij.internal.statistic.eventLog.MachineId
 import com.intellij.internal.statistic.eventLog.SerializationHelper
 import com.intellij.internal.statistic.eventLog.filters.LogEventTrueFilter
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent

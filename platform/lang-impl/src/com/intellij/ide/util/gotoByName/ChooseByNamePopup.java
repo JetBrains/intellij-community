@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.google.common.util.concurrent.UncheckedTimeoutException;
@@ -9,6 +9,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -29,10 +30,26 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.JLayeredPane;
+import javax.swing.JScrollBar;
+import javax.swing.KeyStroke;
+import javax.swing.LayoutFocusTraversalPolicy;
+import javax.swing.ListModel;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -493,7 +510,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     });
     long start = System.currentTimeMillis();
     while (!semaphore.waitFor(10) && System.currentTimeMillis() - start < 20_000) {
-      UIUtil.dispatchAllInvocationEvents();
+      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+        UIUtil.dispatchAllInvocationEvents();
+      });
     }
     if (!semaphore.waitFor(10)) {
       PerformanceWatcher.dumpThreadsToConsole("Thread dump:");

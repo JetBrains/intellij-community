@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.repository.serialization
 
+import com.intellij.platform.runtime.repository.createModuleDescriptor
 import com.intellij.platform.runtime.repository.serialization.impl.JarFileSerializer
 import com.intellij.platform.runtime.repository.xml
 import com.intellij.testFramework.UsefulTestCase
@@ -20,7 +21,7 @@ class JarRepositorySerializationTest {
 
   @Test
   fun `empty module`() {
-    check(listOf(RawRuntimeModuleDescriptor.create("ij.platform.util", emptyList(), emptyList()))) { 
+    check(listOf(createModuleDescriptor("ij.platform.util", emptyList(), emptyList()))) {
       xml("ij.platform.util.xml", """
         <module name="ij.platform.util">
         </module>
@@ -30,7 +31,7 @@ class JarRepositorySerializationTest {
   
   @Test
   fun `single module`() {
-    check(listOf(RawRuntimeModuleDescriptor.create("ij.platform.util", listOf("ij-util.jar"), emptyList()))) {
+    check(listOf(createModuleDescriptor("ij.platform.util", listOf("ij-util.jar"), emptyList()))) {
       xml("ij.platform.util.xml", """
           <module name="ij.platform.util">
             <resources>
@@ -44,8 +45,8 @@ class JarRepositorySerializationTest {
   @Test
   fun `two modules`() {
     check(listOf(
-      RawRuntimeModuleDescriptor.create("ij.platform.util.rt", listOf("ij-util-rt.jar"), emptyList()),
-      RawRuntimeModuleDescriptor.create("ij.platform.util", emptyList(), listOf("ij.platform.util.rt")),
+      createModuleDescriptor("ij.platform.util.rt", listOf("ij-util-rt.jar"), emptyList()),
+      createModuleDescriptor("ij.platform.util", emptyList(), listOf("ij.platform.util.rt")),
     )) {
       xml("ij.platform.util.xml", """
           <module name="ij.platform.util">
@@ -67,8 +68,8 @@ class JarRepositorySerializationTest {
   @Test
   fun `bootstrap module classpath`() {
     check(listOf(
-      RawRuntimeModuleDescriptor.create("foo", listOf("foo.jar"), emptyList()),
-      RawRuntimeModuleDescriptor.create("bar", listOf("bar.jar"), listOf("foo")),
+      createModuleDescriptor("foo", listOf("foo.jar"), emptyList()),
+      createModuleDescriptor("bar", listOf("bar.jar"), listOf("foo")),
     ), "bar", "bar.jar foo.jar") {
       xml("foo.xml", """
           <module name="foo">
@@ -93,8 +94,8 @@ class JarRepositorySerializationTest {
   @Test
   fun `unresolved dependency`() {
     val descriptors = listOf(
-      RawRuntimeModuleDescriptor.create("ij.foo", emptyList(), emptyList()),
-      RawRuntimeModuleDescriptor.create("ij.bar", emptyList(), listOf("ij.foo", "unresolved")),
+      createModuleDescriptor("ij.foo", emptyList(), emptyList()),
+      createModuleDescriptor("ij.bar", emptyList(), listOf("ij.foo", "unresolved")),
     )
     check(descriptors) {
       xml("ij.foo.xml", """
@@ -147,13 +148,13 @@ class JarRepositorySerializationTest {
 
   private fun checkLoadingFromCompactFile(filePath: Path, expectedDescriptors: List<RawRuntimeModuleDescriptor>) {
     val repositoryData = RuntimeModuleRepositorySerialization.loadFromCompactFile(filePath)
-    val actualDescriptors = repositoryData.allIds.map { repositoryData.findDescriptor(it)!! }
+    val actualDescriptors = repositoryData.allModuleIds.map { repositoryData.findDescriptor(it)!! }
     UsefulTestCase.assertSameElements(actualDescriptors, expectedDescriptors)
   }
 
   private fun checkLoadingFromJar(zipFileSpec: DirectoryContentSpec, expectedDescriptors: List<RawRuntimeModuleDescriptor>) {
     val repositoryData = RuntimeModuleRepositorySerialization.loadFromJar(zipFileSpec.generateInTempDir())
-    val actualDescriptors = repositoryData.allIds.map { repositoryData.findDescriptor(it)!! }
+    val actualDescriptors = repositoryData.allModuleIds.map { repositoryData.findDescriptor(it)!! }
     UsefulTestCase.assertSameElements(actualDescriptors, expectedDescriptors)
   }
 }

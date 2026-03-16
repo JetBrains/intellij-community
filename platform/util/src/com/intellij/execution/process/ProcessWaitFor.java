@@ -8,7 +8,13 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public final class ProcessWaitFor {
   private static final Logger LOG = Logger.getInstance(ProcessWaitFor.class);

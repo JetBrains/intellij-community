@@ -3,7 +3,11 @@ package com.intellij.packageDependencies;
 
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class DependencyVisitorFactory {

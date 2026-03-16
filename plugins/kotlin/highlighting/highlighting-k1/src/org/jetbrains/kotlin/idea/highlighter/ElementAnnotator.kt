@@ -117,7 +117,7 @@ internal class ElementAnnotator(
                 }
             }
 
-            Severity.WARNING, Severity.FIXED_WARNING -> {
+            Severity.WARNING, Severity.FIXED_WARNING, Severity.STRONG_WARNING -> {
                 if (factory == Errors.UNUSED_PARAMETER && shouldSuppressUnusedParameter(element as KtParameter)) {
                     return null
                 }

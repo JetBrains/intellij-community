@@ -11,8 +11,14 @@ import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public class SSLCredentialsDialog extends DialogWrapper {
   private JPanel myPanel;

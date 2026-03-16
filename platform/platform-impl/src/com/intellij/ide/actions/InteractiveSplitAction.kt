@@ -2,7 +2,11 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.actions.OpenFileAction.Companion.openFile
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -11,7 +15,7 @@ import com.intellij.openapi.fileEditor.impl.SplitterService
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.registry.Registry
 
-private class InteractiveSplitAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend, DumbAware {
+internal class InteractiveSplitAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend, DumbAware {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.project != null
                                          && e.getData(CommonDataKeys.VIRTUAL_FILE) != null

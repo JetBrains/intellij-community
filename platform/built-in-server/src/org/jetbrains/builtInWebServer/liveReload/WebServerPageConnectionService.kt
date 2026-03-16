@@ -41,7 +41,7 @@ import org.jetbrains.io.webSocket.WebSocketClient
 import org.jetbrains.io.webSocket.WebSocketHandshakeHandler
 import java.awt.Point
 import java.net.URI
-import java.util.*
+import java.util.Objects
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier

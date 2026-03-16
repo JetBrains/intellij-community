@@ -2,7 +2,7 @@
 package com.intellij.vcs.git.branch.tree
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
+import com.intellij.platform.vcs.impl.shared.RepositoryId
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.vcs.git.branch.popup.GitBranchesPopupBase
 import com.intellij.vcs.git.ref.GitRefUtil

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * User: catherine
- *
+ * <p>
  * Quickfix to introduce variable if statement seems to have no effect
  */
 public class StatementEffectIntroduceVariableQuickFix extends PsiUpdateModCommandQuickFix {
@@ -37,5 +37,5 @@ public class StatementEffectIntroduceVariableQuickFix extends PsiUpdateModComman
     final PyExpression leftHandSideExpression = ((PyAssignmentStatement)element).getLeftHandSideExpression();
     assert leftHandSideExpression != null;
     updater.templateBuilder().field(leftHandSideExpression, "var");
-    }
+  }
 }

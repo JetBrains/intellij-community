@@ -1,0 +1,80 @@
+### auto-generated section `build intellij.xml.emmet.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "xml_emmet_provided",
+  lib = "//xml/emmet"
+)
+
+jvm_provided_library(
+  name = "platform_ide-core_provided",
+  lib = "//platform/ide-core"
+)
+
+jvm_provided_library(
+  name = "platform_lang-impl_provided",
+  lib = "//platform/lang-impl"
+)
+
+jvm_provided_library(
+  name = "platform_util-ui_provided",
+  lib = "//platform/util:util-ui"
+)
+
+jvm_provided_library(
+  name = "platform_java-guiForms-rt_provided",
+  lib = "//platform/forms_rt:java-guiForms-rt"
+)
+
+jvm_provided_library(
+  name = "platform_projectModel_provided",
+  lib = "//platform/projectModel-api:projectModel"
+)
+
+jvm_provided_library(
+  name = "platform_analysis_provided",
+  lib = "//platform/analysis-api:analysis"
+)
+
+jvm_provided_library(
+  name = "platform_core_provided",
+  lib = "//platform/core-api:core"
+)
+
+jvm_provided_library(
+  name = "platform_ide_provided",
+  lib = "//platform/platform-api:ide"
+)
+
+jvm_provided_library(
+  name = "platform_core-ui_provided",
+  lib = "//platform/core-ui"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.xml.emmet.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "@lib//:jetbrains-annotations-provided",
+    ":xml_emmet_provided",
+    ":platform_ide-core_provided",
+    ":platform_lang-impl_provided",
+    ":platform_util-ui_provided",
+    ":platform_java-guiForms-rt_provided",
+    ":platform_projectModel_provided",
+    ":platform_analysis_provided",
+    ":platform_core_provided",
+    ":platform_ide_provided",
+    ":platform_core-ui_provided",
+  ]
+)
+### auto-generated section `build intellij.xml.emmet.backend` end

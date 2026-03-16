@@ -19,7 +19,7 @@ class MockLibraryFacility(
     val classpath: List<File> = emptyList(),
     val libraryName: String = MOCK_LIBRARY_NAME,
     val target: File = KotlinCompilerStandalone.defaultTargetJar(),
-    val frontend: KotlinCompilerFrontend = KotlinCompilerFrontend.K1,
+    val frontend: KotlinCompilerFrontend = KotlinCompilerFrontend.K2,
 ) {
 
     private val options: List<String>
@@ -59,7 +59,7 @@ class MockLibraryFacility(
         classpath: List<File> = emptyList(),
         libraryName: String = MOCK_LIBRARY_NAME,
         target: File = KotlinCompilerStandalone.defaultTargetJar(),
-        frontend: KotlinCompilerFrontend = KotlinCompilerFrontend.K1,
+        frontend: KotlinCompilerFrontend = KotlinCompilerFrontend.K2,
     ) : this(listOf(source), attachSources, platform, options, classpath, libraryName, target, frontend)
 
     companion object {

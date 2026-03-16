@@ -7,7 +7,7 @@ interface InstallationIdProvider {
   fun installationId(): String
 }
 
-private class PermanentInstallationIdProvider : InstallationIdProvider {
+internal class PermanentInstallationIdProvider : InstallationIdProvider {
   override fun installationId(): String {
     try {
       return DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "FUS")

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.gist.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,8 +6,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
@@ -30,11 +30,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
@@ -62,7 +70,7 @@ public final class GistStorageImpl extends GistStorage {
     Path gistsDir = FSRecords.getCacheDir().resolve(HUGE_GISTS_DIR_NAME + "/" + vfsStamp);
     try {
       if (Files.isRegularFile(gistsDir)) {
-        FileUtil.delete(gistsDir);
+        NioFiles.deleteRecursively(gistsDir);
       }
       Files.createDirectories(gistsDir);
       return gistsDir;
@@ -146,7 +154,7 @@ public final class GistStorageImpl extends GistStorage {
           })
           .forEach(outdatedHugeGistsDir -> {
             try {
-              FileUtilRt.deleteRecursively(outdatedHugeGistsDir);
+              NioFiles.deleteRecursively(outdatedHugeGistsDir);
             }
             catch (IOException e) {
               LOG.info("Can't delete old huge-gists dir [" + outdatedHugeGistsDir.toAbsolutePath() + "]", e);
@@ -158,8 +166,8 @@ public final class GistStorageImpl extends GistStorage {
         LOG.info("Can't list huge-gists dir [" + hugeGistsParentDir.toAbsolutePath() + "] children", e);
       }
     }
-    catch (AlreadyDisposedException e) {
-      LOG.info("Can't cleanup old huge-gists: vfs is disposed -> try next time", e);
+    catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") AlreadyDisposedException e) {
+      LOG.info("Can't cleanup old huge-gists: vfs is disposed -> try next time");
     }
   }
 

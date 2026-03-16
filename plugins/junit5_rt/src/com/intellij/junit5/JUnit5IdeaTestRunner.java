@@ -7,7 +7,11 @@ import com.intellij.rt.junit.IdeaTestRunner;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.EngineDescriptor;
-import org.junit.platform.launcher.*;
+import org.junit.platform.launcher.Launcher;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.TestExecutionListener;
+import org.junit.platform.launcher.TestIdentifier;
+import org.junit.platform.launcher.TestPlan;
 import org.junit.platform.launcher.core.LauncherFactory;
 
 import java.lang.reflect.Proxy;
@@ -16,7 +20,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier> {
+public class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier> {
   private final List<JUnit5TestExecutionListener> myExecutionListeners = new ArrayList<>();
   private ArrayList<String> myListeners;
   private Launcher myLauncher;
@@ -49,7 +53,7 @@ public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier
       JUnit5TestExecutionListener listener = myExecutionListeners.get(0);
       listener.initializeIdSuffix(!sendTree);
       final String[] packageNameRef = new String[1];
-      final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, packageNameRef, programParam);
+      final LauncherDiscoveryRequest discoveryRequest = getHelper().buildRequest(args, packageNameRef, programParam);
       List<TestExecutionListener> listeners = new ArrayList<>();
       listeners.add(listener);
       for (String listenerClassName : myListeners) {
@@ -63,7 +67,7 @@ public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier
         }
       }
 
-      myLauncher.execute(discoveryRequest, listeners.toArray(new TestExecutionListener[0]));
+      getHelper().execute(myLauncher, discoveryRequest, listeners.toArray(new TestExecutionListener[0]));
 
       return listener.wasSuccessful() ? 0 : -1;
     }
@@ -81,10 +85,11 @@ public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier
   private static final TestIdentifier FAKE_ROOT = TestIdentifier.from(new EngineDescriptor(UniqueId.forEngine("FAKE_ENGINE"), "FAKE ENGINE"));
   @Override
   public TestIdentifier getTestToStart(String[] args, String name) {
-    final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, new String[1], "");
+    final LauncherDiscoveryRequest discoveryRequest = getHelper().buildRequest(args, new String[1], "");
     myForkedTestPlan = LauncherFactory.create().discover(discoveryRequest);
     final Set<TestIdentifier> roots = myForkedTestPlan.getRoots();
     if (roots.isEmpty()) return null;
+    @SuppressWarnings("SSBasedInspection")
     List<TestIdentifier> nonEmptyRoots = roots.stream()
       .filter(identifier -> !myForkedTestPlan.getChildren(identifier).isEmpty())
       .collect(Collectors.toList());
@@ -115,6 +120,7 @@ public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier
     final TestIdentifier testIdentifier = child;
     final String className = JUnit5TestExecutionListener.getClassName(testIdentifier);
     final String methodSignature = JUnit5TestExecutionListener.getMethodSignature(testIdentifier);
+    //noinspection ConstantValue
     if (methodSignature != null) {
       return className + "," + methodSignature;
     }
@@ -124,6 +130,12 @@ public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier
   @Override
   public String getTestClassName(TestIdentifier child) {
     return child.toString();
+  }
+
+  private final JUnit5TestRunnerHelper myHelper = new JUnit5TestRunnerHelper();
+
+  protected JUnit5TestRunnerHelper getHelper() {
+    return myHelper;
   }
 
   private static class MyCustomListenerWrapper implements TestExecutionListener {

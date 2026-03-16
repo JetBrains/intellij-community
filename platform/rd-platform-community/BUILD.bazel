@@ -8,21 +8,16 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/platform-api:ide",
-    "@lib//:rd-core",
-    "@lib//:rd-framework",
-    "//libraries/rd-text",
-    "@lib//:rd-swing",
+    "//libraries/rd/core",
+    "//libraries/rd/text",
+    "//libraries/rd/swing",
     "//platform/util/progress",
     "//platform/util/concurrency",
     "//platform/core-api:core",
+    "//libraries/rd/framework",
     "//platform/core-impl",
-  ],
-  exports = [
-    "@lib//:rd-core",
-    "@lib//:rd-framework",
-    "@lib//:rd-swing",
   ]
 )
 ### auto-generated section `build intellij.platform.rd.community` end

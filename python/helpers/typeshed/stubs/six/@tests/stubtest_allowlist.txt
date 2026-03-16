@@ -14,7 +14,7 @@ six.get_method_self
 six.viewitems
 six.viewkeys
 six.viewvalues
-# Should be `operator.itemgetter[int]`. But a bug in mypy prevents using TypeVar in itemgetter__call__
+# Should be `byte2int: operator.itemgetter[int]`. But `itemgetter.__call__` returns `Any`
 six.byte2int
 
 # Utils

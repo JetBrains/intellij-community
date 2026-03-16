@@ -3,6 +3,8 @@ package com.siyeh.igtest.controlflow.pointless_null_check;
 public class PointlessNullCheck {
 
     String arg1 = "foo";
+    
+    double sideEffect = Math.random();
 
     public void testMethods(Object obj, Object obj1, Object obj2) {
         if(<warning descr="Unnecessary 'null' check before 'check()' call">obj != null</warning> && check(obj)) {

@@ -22,7 +22,7 @@ import com.intellij.uiDesigner.make.FormSourceCodeGenerator;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public final class GuiDesignerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance(GuiDesignerConfigurable.class);

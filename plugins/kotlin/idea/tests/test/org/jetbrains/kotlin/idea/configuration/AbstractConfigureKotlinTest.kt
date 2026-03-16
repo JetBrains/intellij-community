@@ -15,6 +15,7 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.configuration.ui.KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME
 import org.junit.Assert
+import java.util.concurrent.TimeUnit
 
 abstract class AbstractConfigureKotlinTest : AbstractConfigureKotlinTestBase() {
     protected fun doTestConfigureModulesWithNonDefaultSetup(configurator: KotlinWithLibraryConfigurator<*>) {
@@ -85,7 +86,7 @@ abstract class AbstractConfigureKotlinTest : AbstractConfigureKotlinTestBase() {
         for (module in modules) {
             ReadAction.nonBlocking {
                 configurator.configureModule (module, collector, writeActions)
-            }.submit(AppExecutorUtil.getAppExecutorService()).get()
+            }.submit(AppExecutorUtil.getAppExecutorService()).get(5, TimeUnit.MINUTES)
         }
         ApplicationManager.getApplication().runWriteAction{
             writeActions.forEach { writeAction ->

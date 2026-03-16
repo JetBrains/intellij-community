@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
@@ -13,7 +14,11 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
 import org.jetbrains.kotlin.idea.search.usagesSearch.isCallReceiverRefersToCompanionObject
 import org.jetbrains.kotlin.idea.search.usagesSearch.isKotlinConstructorUsage
 import org.jetbrains.kotlin.idea.util.KotlinPsiDeclarationRenderer
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
@@ -28,6 +33,7 @@ private val FUNCTION_RENDERER = DescriptorRenderer.withOptions {
     parameterNameRenderingPolicy = ParameterNameRenderingPolicy.NONE
 }
 
+@K1Deprecation
 class KotlinFindUsagesSupportImpl : KotlinFindUsagesSupport {
     override fun processCompanionObjectInternalReferences(
         companionObject: KtObjectDeclaration,

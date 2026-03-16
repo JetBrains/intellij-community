@@ -21,7 +21,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PySingleStarParameter;
+import com.jetbrains.python.psi.PySlashParameter;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -174,7 +179,9 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
   }
 
   @Override
-  public @NotNull String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context, @NotNull Predicate<PyType> typeFilter) {
+  public @NotNull String getPresentableText(boolean includeDefaultValue,
+                                            @Nullable TypeEvalContext context,
+                                            @NotNull Predicate<PyType> typeFilter) {
     if (myElement instanceof PyNamedParameter || myElement == null) {
       final StringBuilder sb = new StringBuilder();
 

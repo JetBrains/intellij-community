@@ -17,11 +17,18 @@ import com.intellij.util.containers.MultiMap;
 import git4idea.i18n.GitBundle;
 import git4idea.index.GitIndexUtil;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
+@ApiStatus.Internal
 public class GitBulkMovesOnlyChangesFilter implements BulkMovesOnlyChangesFilter {
   private static final Logger LOG = Logger.getInstance(GitBulkMovesOnlyChangesFilter.class);
 

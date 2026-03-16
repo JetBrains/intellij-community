@@ -55,6 +55,15 @@ public record ActionContext(
   }
 
   /**
+   * @param selection new selection range
+   * @return new context, which has the selection range updated
+   * @see #selection() 
+   */
+  public ActionContext withSelection(TextRange selection) {
+    return new ActionContext(project, file, offset, selection, element);
+  }
+
+  /**
    * @return a context leaf element, if available
    */
   public @Nullable PsiElement findLeaf() {

@@ -2,7 +2,12 @@
 package com.intellij.util.indexing.diagnostic.presentation
 
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
-import kotlinx.html.*
+import kotlinx.html.TD
+import kotlinx.html.TH
+import kotlinx.html.TR
+import kotlinx.html.classes
+import kotlinx.html.td
+import kotlinx.html.th
 import java.nio.charset.StandardCharsets
 
 internal const val NOT_APPLICABLE = "N/A"

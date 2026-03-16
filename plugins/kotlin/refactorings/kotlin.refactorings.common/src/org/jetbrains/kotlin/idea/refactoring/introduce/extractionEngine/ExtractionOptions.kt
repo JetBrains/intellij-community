@@ -9,6 +9,6 @@ data class ExtractionOptions(
     val canWrapInWith: Boolean = false
 ) {
     companion object {
-        val DEFAULT = ExtractionOptions()
+        val DEFAULT: ExtractionOptions = ExtractionOptions()
     }
 }

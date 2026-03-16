@@ -7,8 +7,8 @@ import com.jetbrains.python.debugger.containerview.PyNumericViewUtil;
 import com.jetbrains.python.debugger.dataframe.DataViewCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JTable;
+import java.awt.Color;
 
 /**
  * @author amarch

@@ -15,7 +15,7 @@ import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;

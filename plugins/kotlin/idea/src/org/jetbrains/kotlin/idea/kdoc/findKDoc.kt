@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.kdoc
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 
+@K1Deprecation
 fun DeclarationDescriptor.findKDoc(
     descriptorToPsi: (DeclarationDescriptorWithSource) -> PsiElement? = { DescriptorToSourceUtils.descriptorToDeclaration(it) }
 ): KDocContent? {
@@ -24,6 +26,7 @@ fun DeclarationDescriptor.findKDoc(
 
 private typealias DescriptorToPsi = (DeclarationDescriptorWithSource) -> PsiElement?
 
+@K1Deprecation
 fun KtElement.findKDoc(descriptorToPsi: DescriptorToPsi): KDocContent? {
     return findKDocByPsi()
         ?: this.lookupInheritedKDoc(descriptorToPsi)

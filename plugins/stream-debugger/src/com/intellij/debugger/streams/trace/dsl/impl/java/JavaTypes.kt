@@ -2,7 +2,15 @@
 package com.intellij.debugger.streams.trace.dsl.impl.java
 
 import com.intellij.debugger.streams.core.trace.dsl.Types
-import com.intellij.debugger.streams.core.trace.impl.handler.type.*
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ArrayType
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ArrayTypeImpl
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ClassTypeImpl
+import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericTypeImpl
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ListType
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ListTypeImpl
+import com.intellij.debugger.streams.core.trace.impl.handler.type.MapType
+import com.intellij.debugger.streams.core.trace.impl.handler.type.MapTypeImpl
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiType

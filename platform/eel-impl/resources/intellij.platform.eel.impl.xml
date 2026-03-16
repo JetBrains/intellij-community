@@ -1,4 +1,14 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.hash4j"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.pty4j"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.ide.core"/>
+  </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.platform.eel.provider.LocalWindowsEelApi"
                         serviceImplementation="com.intellij.platform.eel.impl.local.LocalWindowsEelApiImpl"/>
@@ -11,7 +21,7 @@
       description="Using incremental walking transfer for IJent"
       key="ijent.incremental.walking.transfer"
       restartRequired="false"
-      defaultValue="false"/>
+      defaultValue="true"/>
 
     <advancedSetting
       id="container.environments.env.var.shell.mode"

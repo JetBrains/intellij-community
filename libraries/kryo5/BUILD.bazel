@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":kryo5_resources"],
-  exports = ["@lib//:kryo5"],
-  runtime_deps = ["@lib//:kryo5"]
+  exports = ["@lib//:libraries-kryo5-kryo"],
+  runtime_deps = ["@lib//:libraries-kryo5-kryo"]
 )
 ### auto-generated section `build intellij.libraries.kryo5` end

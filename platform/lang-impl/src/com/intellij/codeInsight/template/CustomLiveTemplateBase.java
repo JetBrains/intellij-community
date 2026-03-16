@@ -14,7 +14,7 @@ import java.util.Collections;
 
 public abstract class CustomLiveTemplateBase implements CustomLiveTemplate {
   /**
-   * Implementation should returns {@code true} if it has own lookup item in completion autopopup
+   * Implementation should return {@code true} if it has its own lookup item in the completion autopopup,
    * and it is supposed that template should be expanded while completion auto-popup is active.
    */
   public boolean hasCompletionItem(@NotNull CustomTemplateCallback callback, int offset) {
@@ -22,14 +22,14 @@ public abstract class CustomLiveTemplateBase implements CustomLiveTemplate {
   }
 
   /**
-   * Return lookup elements for popup that appears on ListTemplateAction (Ctrl + J)
+   * Return lookup elements for the popup that appears on ListTemplateAction (Ctrl + J)
    */
   public @NotNull Collection<? extends CustomLiveTemplateLookupElement> getLookupElements(@NotNull PsiFile file, @NotNull Editor editor, int offset) {
     return Collections.emptyList();
   }
 
   /**
-   * Populate completion result set. Used by LiveTemplateCompletionContributor
+   * Populate a completion result set. Used by LiveTemplateCompletionContributor
    */
   public void addCompletions(CompletionParameters parameters, CompletionResultSet result) {
     String prefix = computeTemplateKeyWithoutContextChecking(new CustomTemplateCallback(parameters.getEditor(), parameters.getOriginalFile()));

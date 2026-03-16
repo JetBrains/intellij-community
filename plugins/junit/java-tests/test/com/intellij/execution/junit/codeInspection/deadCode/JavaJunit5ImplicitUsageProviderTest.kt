@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection.deadCode
 
 import com.intellij.junit.testFramework.JUnit5ImplicitUsageProviderTestBase
@@ -157,6 +157,33 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
       class MyTest {
         @org.junit.jupiter.params.ParameterizedTest(name = "{0}")
         void byName(String name) {}
+      }
+   """.trimIndent())
+  }
+
+  fun `test implicit usage of multiple parameters in parameterized test`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.junit.jupiter.params.provider.Arguments;
+      import java.util.stream.Stream;
+      
+      class MyTest {
+        static Stream<Arguments> source() {
+          return Stream.of(Arguments.of("a", 1, true), Arguments.of("b", 2, false));
+        }
+        
+        @org.junit.jupiter.params.ParameterizedTest(name = "{0} vs {1}")
+        @org.junit.jupiter.params.provider.MethodSource("source")
+        void testMultiple(String name, int value, boolean <warning descr="Parameter 'flag' is never used">flag</warning>) {}
+      }
+   """.trimIndent())
+  }
+
+  fun `test unused parameter when not in display name`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class MyTest {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.ValueSource(strings = {"a"})
+        void test(String <warning descr="Parameter 'unused' is never used">unused</warning>) {}
       }
    """.trimIndent())
   }

@@ -19,7 +19,9 @@ import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Cursors;
 
-import java.awt.*;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.util.Collections;
 import java.util.List;
 

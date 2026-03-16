@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
@@ -15,7 +16,8 @@ import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtPrefixExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
-internal class KotlinDoubleNegationInspection : KotlinApplicableInspectionBase.Simple<KtPrefixExpression, Unit>() {
+internal class KotlinDoubleNegationInspection : KotlinApplicableInspectionBase.Simple<KtPrefixExpression, Unit>(),
+    CleanupLocalInspectionTool {
 
     override fun buildVisitor(
         holder: ProblemsHolder,

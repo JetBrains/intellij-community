@@ -24,6 +24,7 @@
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.cglib" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.analysis" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>

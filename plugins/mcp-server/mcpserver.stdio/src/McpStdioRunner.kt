@@ -14,8 +14,15 @@ import kotlinx.io.buffered
 private const val IJ_MCP_PREFIX = "IJ_MCP_"
 const val IJ_MCP_HEADER_PREFIX: String = "${IJ_MCP_PREFIX}HEADER_"
 val IJ_MCP_SERVER_PORT: String = ::IJ_MCP_SERVER_PORT.name
+val IJ_MCP_ALLOWED_TOOLS: String = ::IJ_MCP_ALLOWED_TOOLS.name
 val IJ_MCP_SERVER_PROJECT_PATH: String = ::IJ_MCP_SERVER_PROJECT_PATH.name
 private val IJ_MCP_DEBUG: String = ::IJ_MCP_DEBUG.name
+
+/**
+ * Environment variables for tool filtering:
+ * - IJ_MCP_ALLOWED_TOOLS: Comma-separated list of allowed tool names
+ *   Example: IJ_MCP_ALLOWED_TOOLS="read_file,write_file,grep,list_files"
+ */
 
 suspend fun main() {
   val inputStream = System.`in`

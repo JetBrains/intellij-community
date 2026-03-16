@@ -18,7 +18,22 @@ package com.intellij.refactoring.rename.naming;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -29,7 +44,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class AutomaticVariableRenamer extends AutomaticRenamer {
   private final Set<PsiNamedElement> myToUnpluralize = new HashSet<>();

@@ -41,6 +41,9 @@ com.intellij.ide.fileTemplates.FileTemplate
 - a:setName(java.lang.String):V
 - a:setReformatCode(Z):V
 - a:setText(java.lang.String):V
+a:com.intellij.ide.fileTemplates.FileTemplateManager
+- psf:PROJECT_CONTEXT_VARIABLE:java.lang.String
+- getDefaultContextMap():java.util.Map
 f:com.intellij.ide.impl.OpenProjectTask
 - f:component24():java.nio.file.Path
 - f:component25():Z
@@ -64,6 +67,9 @@ com.intellij.ide.script.IdeScriptEngine
 - a:setStdErr(java.io.Writer):V
 - a:setStdIn(java.io.Reader):V
 - a:setStdOut(java.io.Writer):V
+c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OptionSet
+f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$PropNames
 com.intellij.openapi.fileEditor.impl.EditorTabColorProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName

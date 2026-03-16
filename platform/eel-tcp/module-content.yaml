@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.eel.tcp.jar
+  modules:
+  - name: intellij.platform.eel.tcp

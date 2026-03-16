@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.events.impl;
 
-import com.intellij.build.events.BuildEvents;
 import com.intellij.build.events.BuildEventsNls.Description;
 import com.intellij.build.events.BuildEventsNls.Hint;
 import com.intellij.build.events.BuildEventsNls.Message;
@@ -32,7 +31,7 @@ public final class OutputBuildEventImpl extends AbstractBuildEvent implements Ou
   }
 
   /**
-   * @deprecated Use the {@link BuildEvents#output} event builder function instead.
+   * @deprecated Use the {@link OutputBuildEvent#builder} event builder function instead.
    */
   @Deprecated
   public OutputBuildEventImpl(
@@ -44,7 +43,7 @@ public final class OutputBuildEventImpl extends AbstractBuildEvent implements Ou
   }
 
   /**
-   * @deprecated Use the {@link BuildEvents#output} event builder function instead.
+   * @deprecated Use the {@link OutputBuildEvent#builder} event builder function instead.
    */
   @Deprecated
   public OutputBuildEventImpl(
@@ -57,7 +56,7 @@ public final class OutputBuildEventImpl extends AbstractBuildEvent implements Ou
   }
 
   /**
-   * @deprecated Use the {@link BuildEvents#output} event builder function instead.
+   * @deprecated Use the {@link OutputBuildEvent#builder} event builder function instead.
    */
   @Deprecated
   public OutputBuildEventImpl(
@@ -69,7 +68,7 @@ public final class OutputBuildEventImpl extends AbstractBuildEvent implements Ou
   }
 
   /**
-   * @deprecated Use the {@link BuildEvents#output} event builder function instead.
+   * @deprecated Use the {@link OutputBuildEvent#builder} event builder function instead.
    */
   @Deprecated
   public OutputBuildEventImpl(

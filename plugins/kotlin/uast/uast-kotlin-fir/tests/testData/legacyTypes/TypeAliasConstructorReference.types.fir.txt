@@ -5,21 +5,21 @@ UFile (package = ) [public final class TypeAliasConstructorReferenceKt {...]
             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A("10")] : @org.jetbrains.annotations.NotNull() A
                 UIdentifier (Identifier (AA)) [UIdentifier (Identifier (AA))]
                 USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A]
-                UPolyadicExpression (operator = +) ["10"] : java.lang.String
+                UPolyadicExpression (operator = +) ["10"] : @org.jetbrains.annotations.NotNull() java.lang.String
                     ULiteralExpression (value = "10") ["10"] : java.lang.String
         UField (name = b) [@org.jetbrains.annotations.NotNull private static final var b: A = A("10")]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A("10")] : @org.jetbrains.annotations.NotNull() A
                 UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
                 USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A]
-                UPolyadicExpression (operator = +) ["10"] : java.lang.String
+                UPolyadicExpression (operator = +) ["10"] : @org.jetbrains.annotations.NotNull() java.lang.String
                     ULiteralExpression (value = "10") ["10"] : java.lang.String
         UField (name = c) [@org.jetbrains.annotations.NotNull private static final var c: A = A("10")]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A("10")] : @org.jetbrains.annotations.NotNull() A
                 UIdentifier (Identifier (AAA)) [UIdentifier (Identifier (AAA))]
                 USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A]
-                UPolyadicExpression (operator = +) ["10"] : java.lang.String
+                UPolyadicExpression (operator = +) ["10"] : @org.jetbrains.annotations.NotNull() java.lang.String
                     ULiteralExpression (value = "10") ["10"] : java.lang.String
         UMethod (name = getA) [public static final fun getA() : A = UastEmptyExpression]
         UMethod (name = getB) [public static final fun getB() : A = UastEmptyExpression]

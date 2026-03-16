@@ -2,8 +2,9 @@
 package com.intellij.compose.ide.plugin.resources
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
-import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector.ActionType.*
-import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector.ResourceBaseType.*
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector.ActionType.NAVIGATE
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector.ResourceBaseType.FILE
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector.ResourceBaseType.STRING
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression

@@ -6,12 +6,10 @@ import java.awt.Component
 import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
 import javax.swing.JLayer
+import javax.swing.JScrollBar
 import javax.swing.JScrollPane
 import javax.swing.SwingUtilities
 import kotlin.reflect.KClass
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.DurationUnit
 
 /**
  * Processes Mouse (wheel, motion, click) to handle nested scrolling areas gracefully.
@@ -36,7 +34,15 @@ class NestedScrollingSupportImpl {
 
   private fun isDispatchingInProgress() = dispatchingEvent != null
 
+  /** For preventing occasional diagonal scrolling in the JScrollPane with 2 scrollbars. */
   private val latchingScroll: LatchingScroll by lazy { LatchingScroll() }
+
+  /** For "scroll-stop", when scrolling reaches the end of the scrollable area, we need to have a pause. */
+  private var scrolledPane: JScrollPane? = null
+  private var scrolledPaneTimestamp = 0L
+
+  private val scrollOwnershipTimeout: Long
+    get() = Registry.intValue("jupyter.editor.scroll.mousewheel.timeout", 750).toLong()
 
   fun processMouseWheelEvent(e: MouseWheelEvent) {
     val component = e.component
@@ -60,6 +66,8 @@ class NestedScrollingSupportImpl {
       resetOwner()
     }
 
+    if (e.isConsumed) return
+
     if (owner != null) {
       if (component != owner) {
         redispatchEvent(SwingUtilities.convertMouseEvent(component, e, owner))
@@ -79,7 +87,7 @@ class NestedScrollingSupportImpl {
 
   fun processMouseMotionEvent(e: MouseEvent) {
     val owner = currentMouseWheelOwner
-    if (owner != null && isTimeoutExceeded(100.milliseconds) && !isEventInsideOwner(owner, e)) {
+    if (owner != null && isTimeoutExceeded(100) && !isEventInsideOwner(owner, e)) {
       resetOwner()
     }
   }
@@ -102,25 +110,48 @@ class NestedScrollingSupportImpl {
     }
   }
 
+  private fun getScrollbarAndSize(event: MouseWheelEvent, scrollPane: JScrollPane): Triple<JScrollBar, Int, Int> {
+    return if (event.isShiftDown) {
+      Triple(scrollPane.horizontalScrollBar, scrollPane.viewport.width, scrollPane.viewport.preferredSize.width)
+    }
+    else {
+      Triple(scrollPane.verticalScrollBar, scrollPane.viewport.height, scrollPane.viewport.preferredSize.height)
+    }
+  }
+
   private fun canScroll(event: MouseWheelEvent, owner: JScrollPane): Boolean {
     if (event.source is JScrollPane && latchingScroll.shouldBeIgnored(event)) {
       event.consume()
       return true
     }
 
-    val (scrollBar, size) = if (event.isShiftDown) {
-      owner.horizontalScrollBar to owner.viewport.width
-    }
-    else {
-      owner.verticalScrollBar to owner.viewport.height
-    }
+    val (scrollBar, size, preferredSize) = getScrollbarAndSize(event, owner)
 
-    return if (event.preciseWheelRotation > 0) { // Down / Right
+    // Completely no scrollbar in selected direction.
+    if (size >= preferredSize) return false
+
+    val result = if (event.preciseWheelRotation > 0) { // Down / Right
       scrollBar.maximum > scrollBar.value + size
     }
     else { // Up / Left
       scrollBar.minimum < scrollBar.value
     }
+
+    if (result && scrolledPane == owner) {
+      scrolledPaneTimestamp = System.currentTimeMillis()
+    }
+    else if (!result && scrolledPane == owner) {
+      return if (System.currentTimeMillis() - scrolledPaneTimestamp < scrollOwnershipTimeout) {
+        event.consume()
+        true
+      }
+      else {
+        false
+      }
+    }
+
+    scrolledPane = owner
+    return result
   }
 
   private fun dispatchEventSync(event: MouseWheelEvent, owner: Component) {
@@ -157,8 +188,8 @@ class NestedScrollingSupportImpl {
     if (currentOwner == null) {
       return null
     }
-    val scrollOwnerTimeout = Registry.intValue("jupyter.editor.scroll.mousewheel.timeout", 750).milliseconds
-    return if (isTimeoutExceeded(scrollOwnerTimeout)) {
+
+    return if (isTimeoutExceeded(scrollOwnershipTimeout)) {
       resetOwner()
       null
     }
@@ -185,12 +216,12 @@ class NestedScrollingSupportImpl {
     }
     else {
       val p = SwingUtilities.convertPoint(component, e.point, owner)
-      return owner.contains(p)
+      owner.contains(p)
     }
   }
 
-  private fun isTimeoutExceeded(timeout: Duration): Boolean {
-    return timestamp + timeout.toInt(DurationUnit.NANOSECONDS) < System.nanoTime()
+  private fun isTimeoutExceeded(timeoutMillis: Long): Boolean {
+    return timestamp + timeoutMillis < System.currentTimeMillis()
   }
 
   private fun updateOwner(component: Component?) {
@@ -204,7 +235,7 @@ class NestedScrollingSupportImpl {
 
   private fun replaceOwner(component: Component) {
     _currentMouseWheelOwner = component
-    timestamp = System.nanoTime()
+    timestamp = System.currentTimeMillis()
   }
 
   private fun resetOwner() {

@@ -2,7 +2,9 @@
 package com.intellij.internal.statistics.config
 
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
-import com.intellij.internal.statistic.config.eventLog.EventLogBuildType.*
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType.EAP
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType.RELEASE
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType.UNKNOWN
 import com.jetbrains.fus.reporting.model.config.v4.ConfigurationBucketRange
 import org.junit.Test
 

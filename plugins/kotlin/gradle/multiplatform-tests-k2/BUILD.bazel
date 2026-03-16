@@ -2,21 +2,43 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
+  name = "kotlin-gradle-multiplatform-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/gradle/java",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
+    "//plugins/kotlin/gradle/gradle",
+    "//android/android-plugin:plugin",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlin-tooling-core",
+    "//plugins/kotlin/base/indices",
+  ]
+)
+
+jvm_library(
   name = "kotlin-gradle-multiplatform-tests_test_lib",
   module_name = "intellij.kotlin.gradle.multiplatform.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
+    "//plugins/kotlin/plugin/k2",
     "@lib//:junit4",
     "@lib//:kotlinc-kotlin-jps-common",
+    "//plugins/kotlin/base/project-model",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
-    "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/facet",
     "//java/testFramework",
     "//plugins/kotlin/base/analysis",
@@ -24,7 +46,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/frontend-independent",
     "//plugins/gradle/java",
@@ -33,9 +55,12 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
     "//plugins/kotlin/gradle/gradle",
     "//android/android:core",
+    "//android/android-plugin:plugin",
+    "//android/android-plugin:plugin_test_lib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlin-tooling-core",
     "@lib//:kotlin-test",
+    "//plugins/kotlin/base/indices",
     "@lib//:kotlin-test-junit",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/gradle/java:java-tests_test_lib",
@@ -43,7 +68,8 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "@lib//:kotlinc-analysis-api",
-  ]
+  ],
+  runtime_deps = [":kotlin-gradle-multiplatform-tests"]
 )
 ### auto-generated section `build intellij.kotlin.gradle.multiplatform.tests` end
 

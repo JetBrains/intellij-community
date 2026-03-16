@@ -7,10 +7,8 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.PsiNavigateUtil
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-object UiInspectorImpl {
+internal object UiInspectorImpl {
   @JvmStatic
   fun openClassByFqn(project: Project?, jvmFqn: String, requestFocus: Boolean) {
     val classElement = findClassByFqn(project, jvmFqn) ?: return

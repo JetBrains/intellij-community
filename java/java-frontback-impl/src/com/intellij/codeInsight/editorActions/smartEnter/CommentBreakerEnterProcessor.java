@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.editorActions.smartEnter;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
@@ -23,30 +22,19 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.BasicElementTypes;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
-import com.intellij.psi.tree.ParentAwareTokenSet;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.util.PsiTreeUtil;
 
-import static com.intellij.psi.impl.source.BasicJavaDocElementType.BASIC_DOC_COMMENT;
-
-public class CommentBreakerEnterProcessor implements ASTNodeEnterProcessor {
-
-  private final ParentAwareTokenSet myCommentTypes = ParentAwareTokenSet.orSet(
-    ParentAwareTokenSet.create(BasicElementTypes.BASIC_JAVA_PLAIN_COMMENT_BIT_SET), ParentAwareTokenSet.create(BASIC_DOC_COMMENT)
-  );
-
+public class CommentBreakerEnterProcessor implements EnterProcessor {
   @Override
-  public boolean doEnter(@NotNull Editor editor, @NotNull ASTNode astNode, boolean isModified) {
-    PsiElement psiElement = BasicJavaAstTreeUtil.toPsi(astNode);
-    if (isModified || psiElement == null) return false;
+  public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {
+    if (isModified) return false;
     final PsiElement atCaret = psiElement.getContainingFile().findElementAt(editor.getCaretModel().getOffset());
-    if (atCaret == null) return false;
-    final ASTNode comment = BasicJavaAstTreeUtil.getParentOfType(atCaret.getNode(), myCommentTypes, false);
+    final PsiComment comment = PsiTreeUtil.getParentOfType(atCaret, PsiComment.class, false);
     if (comment != null) {
       plainEnter(editor);
-      if (BasicJavaAstTreeUtil.is(comment, JavaTokenType.END_OF_LINE_COMMENT)) {
+      if (comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
         EditorModificationUtilEx.insertStringAtCaret(editor, "// ");
       }
       return true;

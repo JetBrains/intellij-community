@@ -3,7 +3,12 @@ package com.intellij.vcs.commit
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
@@ -44,11 +49,19 @@ import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil
 import com.intellij.vcs.VcsDisposable
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Font
@@ -78,8 +91,16 @@ private fun JBLabel.setWarning(@NlsContexts.Label warningText: String) {
 }
 
 @OptIn(FlowPreview::class)
-open class CommitProgressPanel(project: Project) : CommitProgressUi, InclusionListener, DocumentListener, Disposable {
+open class CommitProgressPanel(project: Project, parentDisposable: Disposable) : CommitProgressUi, InclusionListener, DocumentListener, Disposable {
   private val scope = VcsDisposable.getInstance(project).coroutineScope.childScope("CommitProgressPanel", Dispatchers.EDT)
+
+  init {
+    Disposer.register(parentDisposable, this)
+  }
+
+  constructor(project: Project, commitWorkflowUi: CommitWorkflowUi, commitMessage: EditorTextComponent) : this(project, commitWorkflowUi) {
+    setup(commitWorkflowUi, commitMessage, empty())
+  }
 
   private val taskInfo = CommitChecksTaskInfo()
   private val progressFlow = MutableStateFlow<InlineCommitChecksProgressIndicator?>(null)
@@ -120,7 +141,6 @@ open class CommitProgressPanel(project: Project) : CommitProgressUi, InclusionLi
     panel.add(failuresPanel)
     panel.border = border
 
-    Disposer.register(commitWorkflowUi, this)
     commitMessage.addDocumentListener(this)
     commitWorkflowUi.addInclusionListener(this, this)
 
@@ -462,7 +482,7 @@ private fun createCommitChecksToolbar(target: JComponent): ActionToolbar =
     component.border = null
   }
 
-private class RerunCommitChecksAction : DumbAwareAction(), TooltipDescriptionProvider {
+internal class RerunCommitChecksAction : DumbAwareAction(), TooltipDescriptionProvider {
   init {
     templatePresentation.apply {
       setText(Presentation.NULL_STRING)

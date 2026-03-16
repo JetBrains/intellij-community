@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.codeStyle;
 
 import com.intellij.application.options.codeStyle.OptionTableWithPreviewPanel;
@@ -7,13 +7,10 @@ import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Dmitry Batkovich
- */
-public class PropertiesCodeStyleSettingsPanel extends OptionTableWithPreviewPanel {
-  public PropertiesCodeStyleSettingsPanel(CodeStyleSettings settings) {
+final class PropertiesCodeStyleSettingsPanel extends OptionTableWithPreviewPanel {
+  PropertiesCodeStyleSettingsPanel(CodeStyleSettings settings) {
     super(settings);
     init();
   }
@@ -29,7 +26,7 @@ public class PropertiesCodeStyleSettingsPanel extends OptionTableWithPreviewPane
   }
 
   @Override
-  public @Nullable Language getDefaultLanguage() {
+  public @NotNull Language getDefaultLanguage() {
     return PropertiesLanguage.INSTANCE;
   }
 }

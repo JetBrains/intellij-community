@@ -12,7 +12,7 @@ import java.net.URL
 private const val OVERRIDE_ENABLED_PROPERTY = "intellij.platform.proxy.override.enabled"
 private val EP_NAME: ExtensionPointName<ProxySettingsOverrideProvider> = ExtensionPointName("com.intellij.proxySettingsOverrideProvider")
 
-internal class OverrideCapableProxySettings : ProxySettings, ProxyConfigurationProvider {
+internal class OverrideCapableProxySettings : ProxySettings {
   /** This class is intended to replace `HttpConfigurable` once the latter becomes ready for retirement. */
   @Suppress("PropertyName")
   internal data class State(

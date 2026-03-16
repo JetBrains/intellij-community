@@ -11,12 +11,23 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.DifferenceFilter;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.NlsContexts.Label;
+import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -25,11 +36,21 @@ import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.PresentableEnum;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -102,7 +123,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    *                          code style extensions is unloaded. Can be {@code false} for temporarily created settings.
    */
   protected CodeStyleSettings(boolean loadExtensions, boolean needsRegistration) {
-    initImportsByDefault();
 
     if (loadExtensions) {
       myCustomCodeStyleSettingsManager.initCustomSettings();
@@ -111,17 +131,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     if (needsRegistration) {
       CodeStyleSettingsManager.registerSettings(this);
     }
-  }
-
-  private void initImportsByDefault() {
-    PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "java.awt", false));
-    PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false,"javax.swing", false));
-    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
-    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
-    IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "javax", true));
-    IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "java", true));
-    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
-    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
   }
 
   public void setParentSettings(@NotNull CodeStyleSettings parent) {
@@ -158,9 +167,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   private void copyCustomSettingsFrom(@NotNull CodeStyleSettings from) {
     myCustomCodeStyleSettingsManager.copyFrom(from);
-
-    PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(from.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
-    IMPORT_LAYOUT_TABLE.copyFrom(from.IMPORT_LAYOUT_TABLE);
 
     OTHER_INDENT_OPTIONS.copyFrom(from.OTHER_INDENT_OPTIONS);
 
@@ -315,16 +321,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   @Deprecated(forRemoval = true)
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
 
-  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PACKAGES_TO_USE_IMPORT_ON_DEMAND */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated(forRemoval = true)
-  public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
-
-  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#IMPORT_LAYOUT_TABLE */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated(forRemoval = true)
-  public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
-
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#isLayoutStaticImportsSeparately()} */
   @Override
   @Deprecated
@@ -407,20 +403,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   @Override
   public void setUseFqClassNames(boolean value) {
     USE_FQ_CLASS_NAMES = value;
-  }
-
-  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#getImportLayoutTable()} */
-  @Deprecated
-  @Override
-  public @NotNull PackageEntryTable getImportLayoutTable() {
-    return IMPORT_LAYOUT_TABLE;
-  }
-
-  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#getPackagesToUseImportOnDemand()} */
-  @Deprecated
-  @Override
-  public @NotNull PackageEntryTable getPackagesToUseImportOnDemand() {
-    return PACKAGES_TO_USE_IMPORT_ON_DEMAND;
   }
 
   // endregion
@@ -555,24 +537,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     myCustomCodeStyleSettingsManager.notifySettingsBeforeLoading();
     myStoredOptions.processOptions(element);
     DefaultJDOMExternalizer.readExternal(this, element);
-    if (LAYOUT_STATIC_IMPORTS_SEPARATELY) {
-      // add <all other static imports> entry if there is none
-      boolean found = false;
-      for (PackageEntry entry : IMPORT_LAYOUT_TABLE.getEntries()) {
-        if (entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY) {
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        PackageEntry last = IMPORT_LAYOUT_TABLE.getEntryCount() == 0 ? null : IMPORT_LAYOUT_TABLE.getEntryAt(IMPORT_LAYOUT_TABLE.getEntryCount() - 1);
-        if (last != PackageEntry.BLANK_LINE_ENTRY) {
-          IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
-        }
-        IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
-      }
-    }
-
     myRepeatAnnotations.clear();
     Element annotations = element.getChild(REPEAT_ANNOTATIONS);
     if (annotations != null) {
@@ -1120,8 +1084,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
         return field.getAnnotation(Deprecated.class) != null;
       }
     });
-    IMPORT_LAYOUT_TABLE.copyFrom(defaults.IMPORT_LAYOUT_TABLE);
-    PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(defaults.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
     myRepeatAnnotations.clear();
   }
 

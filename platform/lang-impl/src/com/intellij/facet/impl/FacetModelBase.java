@@ -10,7 +10,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Objects;
 
 @ApiStatus.Internal
 public abstract class FacetModelBase implements FacetModel {
@@ -56,8 +60,11 @@ public abstract class FacetModelBase implements FacetModel {
       }
       myChildFacets = children.freezeValues();
     }
+    Map<FacetAndType, Collection<Facet<?>>> childFacets = myChildFacets;
+    if (childFacets == null) return Collections.emptyList();
+
     //noinspection unchecked
-    Collection<F> facets = (Collection<F>)myChildFacets.get(new FacetAndType(underlyingFacet, typeId));
+    Collection<F> facets = (Collection<F>)childFacets.get(new FacetAndType(underlyingFacet, typeId));
     return facets != null ? facets : Collections.emptyList();
   }
 
@@ -99,8 +106,11 @@ public abstract class FacetModelBase implements FacetModel {
       myType2Facets = typeToFacets.freezeValues();
     }
 
+    Map<FacetTypeId<?>, Collection<Facet<?>>> facetsByType = myType2Facets;
+    if (facetsByType == null) return Collections.emptyList();
+
     @SuppressWarnings("unchecked")
-    Collection<F> facets = (Collection<F>)myType2Facets.get(typeId);
+    Collection<F> facets = (Collection<F>)facetsByType.get(typeId);
     return facets != null ? facets : Collections.emptyList();
   }
 

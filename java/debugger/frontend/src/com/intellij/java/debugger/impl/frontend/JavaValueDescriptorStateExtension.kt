@@ -7,7 +7,7 @@ import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
 import com.intellij.xdebugger.frame.XDescriptor
 import kotlinx.coroutines.CoroutineScope
 
-private class JavaValueDescriptorStateExtension : FrontendDescriptorStateManagerExtension {
+internal class JavaValueDescriptorStateExtension : FrontendDescriptorStateManagerExtension {
   override fun createState(descriptor: XDescriptor, cs: CoroutineScope): Any? {
     if (descriptor !is JavaValueDescriptor) return null
     return JavaValueDescriptorState(descriptor, cs)

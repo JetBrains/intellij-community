@@ -6,7 +6,12 @@ import com.intellij.ui.util.height
 import com.intellij.ui.util.width
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
 import java.awt.geom.Area
 import java.awt.geom.RoundRectangle2D
 import javax.swing.JPanel

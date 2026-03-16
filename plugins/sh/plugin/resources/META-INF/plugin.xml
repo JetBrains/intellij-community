@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="com.intellij.sh" allow-bundled-update="true">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
   <id>com.jetbrains.sh</id>
   <vendor>JetBrains</vendor>
   <name>Shell Script</name>

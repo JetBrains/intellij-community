@@ -1,4 +1,4 @@
-// IGNORE_K2
+// IGNORE_K1
 package demo;
 
 class Map {

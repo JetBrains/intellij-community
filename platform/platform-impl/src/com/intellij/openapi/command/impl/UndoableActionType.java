@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
-
-import com.intellij.openapi.command.undo.*;
-import org.jetbrains.annotations.ApiStatus.Experimental;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.GlobalUndoableAction;
+import com.intellij.openapi.command.undo.UndoableAction;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 
-@Experimental
 @Internal
 public enum UndoableActionType {
   START_MARK,
@@ -24,15 +23,14 @@ public enum UndoableActionType {
   ;
 
   public static @NotNull UndoableAction getAction(
-    @NotNull String actionType,
+    @NotNull UndoableActionType actionType,
     @Nullable Collection<DocumentReference> docRefs,
     boolean isGlobal
   ) {
     if (docRefs == null) {
       return new MockUndoableAction(docRefs, isGlobal);
     }
-    UndoableActionType type = valueOf(actionType);
-    return switch (type) {
+    return switch (actionType) {
       case START_MARK -> new StartMarkAction(first(docRefs), "", isGlobal);
       case FINISH_MARK -> new FinishMarkAction(first(docRefs), isGlobal);
       case MENTION_ONLY -> new MentionOnlyUndoableAction(docRefs.toArray(DocumentReference.EMPTY_ARRAY));
@@ -66,6 +64,6 @@ public enum UndoableActionType {
   }
 
   private static <T> @NotNull T first(@NotNull Collection<T> collection) {
-    return collection.stream().iterator().next();
+    return collection.iterator().next();
   }
 }

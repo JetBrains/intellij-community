@@ -98,7 +98,7 @@ class MavenProjectAsyncBuilder {
     if (createDummyModule) {
       val previewModule = createPreviewModule(project, rootDirectory)
       // do not update all modules because it can take a lot of time (freeze at project opening)
-      val cs =  project.service<CoroutineService>().coroutineScope
+      val cs = project.service<CoroutineService>().coroutineScope
       cs.launchTracked {
         project.trackActivity(MavenActivityKey) {
           doCommit(project,
@@ -189,9 +189,10 @@ class MavenProjectAsyncBuilder {
 
     val selectedProfiles = getProfilesFromSystemProperties()
 
-    manager.setIgnoredState(projects, false)
-
-    return manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(projects), selectedProfiles, modelsProvider, previewModule, syncProject)
+    return withContext(Dispatchers.IO) {
+      manager.setIgnoredState(projects, false)
+      manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(projects), selectedProfiles, modelsProvider, previewModule, syncProject)
+    }
   }
 
   private fun getProfilesFromSystemProperties(): MavenExplicitProfiles {

@@ -72,7 +72,8 @@ open class WhatsNewInVisionContentProvider {
                            val actions: List<Action>,
                            val html: String,
                            val languages: List<Language>,
-                           val publicVars: List<PublicVar>)
+                           val publicVars: List<PublicVar>,
+                           val multipageIds: List<String> = listOf())
 
   @Serializable
   internal data class Action(val value: String, val description: String)

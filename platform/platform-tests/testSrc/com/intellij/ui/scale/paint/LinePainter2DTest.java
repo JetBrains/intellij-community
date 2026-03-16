@@ -10,7 +10,9 @@ import com.intellij.ui.scale.ScaleContext;
 import junit.framework.TestCase;
 import org.junit.Test;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.geom.Line2D;
 import java.util.EnumSet;
 

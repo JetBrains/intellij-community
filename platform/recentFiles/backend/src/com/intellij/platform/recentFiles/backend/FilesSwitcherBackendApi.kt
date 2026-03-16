@@ -44,7 +44,7 @@ private class FilesSwitcherBackendApi : FileSwitcherApi {
   }
 }
 
-private class RecentFilesBackendApiProvider : RemoteApiProvider {
+internal class RecentFilesBackendApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<FileSwitcherApi>()) {
       FilesSwitcherBackendApi()

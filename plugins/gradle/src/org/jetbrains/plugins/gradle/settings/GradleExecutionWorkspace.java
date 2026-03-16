@@ -14,7 +14,11 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**

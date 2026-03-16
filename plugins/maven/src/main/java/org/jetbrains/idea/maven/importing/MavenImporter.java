@@ -18,11 +18,22 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectChanges;
+import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
+import org.jetbrains.idea.maven.project.SupportedRequestType;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * Deprecated.

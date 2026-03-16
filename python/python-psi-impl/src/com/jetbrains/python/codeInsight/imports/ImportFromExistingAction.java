@@ -11,7 +11,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,9 +39,9 @@ public class ImportFromExistingAction implements QuestionAction {
   private final boolean myImportLocally;
 
   /**
-   * @param target element to become qualified as imported.
-   * @param sources clauses of import to be used.
-   * @param name relevant name ot the target element (e.g. of identifier in an expression).
+   * @param target       element to become qualified as imported.
+   * @param sources      clauses of import to be used.
+   * @param name         relevant name ot the target element (e.g. of identifier in an expression).
    * @param insertBefore import statement should be inserted right before this element. However, if it aims at an insertion statement in
    *                     a group of inserts, a better insertion point belonging the group may be chosen, and it can be after the specified
    *                     node. If null, the position will be chosen automatically.
@@ -201,5 +206,4 @@ public class ImportFromExistingAction implements QuestionAction {
       myOnDoneCallback.run();
     }
   }
-
 }

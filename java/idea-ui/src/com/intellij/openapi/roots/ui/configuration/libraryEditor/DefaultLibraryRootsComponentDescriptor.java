@@ -15,7 +15,11 @@ import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.NativeLibraryOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.ui.*;
+import com.intellij.openapi.roots.libraries.ui.AttachRootButtonDescriptor;
+import com.intellij.openapi.roots.libraries.ui.DescendentBasedRootFilter;
+import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
+import com.intellij.openapi.roots.libraries.ui.OrderRootTypePresentation;
+import com.intellij.openapi.roots.libraries.ui.RootDetector;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.roots.ui.configuration.LibrarySourceRootDetectorUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,8 +32,12 @@ import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.JComponent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponentDescriptor {
   private static final Set<String> NATIVE_LIBRARY_EXTENSIONS = CollectionFactory.createFilePathSet(List.of("dll", "so", "dylib"));

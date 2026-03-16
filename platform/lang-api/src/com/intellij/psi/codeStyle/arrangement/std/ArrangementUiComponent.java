@@ -22,8 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Set;

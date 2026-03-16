@@ -16,7 +16,7 @@ import java.nio.file.attribute.BasicFileAttributes
 
 internal class NoDiskSpaceLeftException(message: String, e: IOException) : RuntimeException(message, e)
 
-internal inline fun <T> checkForNoDiskSpace(context: BuildContext, task: () -> T): T {
+internal inline fun <T> checkForNoDiskSpace(context: CompilationContext, task: () -> T): T {
   try {
     return task()
   }

@@ -6,7 +6,8 @@ package com.intellij.java.workspace.entities
 import com.intellij.platform.workspace.storage.*
 
 @GeneratedCodeApiVersion(3)
-interface ArchivePackagingElementEntityBuilder : WorkspaceEntityBuilder<ArchivePackagingElementEntity>, CompositePackagingElementEntity.Builder<ArchivePackagingElementEntity> {
+interface ArchivePackagingElementEntityBuilder : WorkspaceEntityBuilder<ArchivePackagingElementEntity>,
+                                                 CompositePackagingElementEntity.Builder<ArchivePackagingElementEntity> {
   override var entitySource: EntitySource
   override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
   override var artifact: ArtifactEntityBuilder?

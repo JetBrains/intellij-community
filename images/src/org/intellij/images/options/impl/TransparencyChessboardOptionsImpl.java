@@ -22,7 +22,7 @@ import org.intellij.images.options.DefaultImageEditorSettings;
 import org.intellij.images.options.TransparencyChessboardOptions;
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.Color;
 import java.beans.PropertyChangeSupport;
 
 /**

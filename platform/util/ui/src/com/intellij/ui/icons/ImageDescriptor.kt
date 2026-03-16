@@ -23,6 +23,7 @@ class ImageDescriptor(
     const val HAS_DARK: Int = 2
     const val HAS_DARK_2x: Int = 4
     const val HAS_STROKE: Int = 8
+    const val NO_TREE_PRESENTATION_CACHE: Int = 16
   }
 
   internal fun toSvgMapper(): SvgCacheClassifier = SvgCacheClassifier(scale = scale, isDark = isDark, isStroke = isStroke)

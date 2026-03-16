@@ -7,9 +7,14 @@ import com.intellij.grazie.detection.toAvailableLang
 import com.intellij.grazie.ide.ui.components.utils.html
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
-import com.intellij.grazie.text.*
+import com.intellij.grazie.text.ExternalTextChecker
+import com.intellij.grazie.text.Rule
+import com.intellij.grazie.text.RuleGroup
+import com.intellij.grazie.text.TextContent
+import com.intellij.grazie.text.TextProblem
 import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.grazie.utils.getTextDomain
+import com.intellij.grazie.utils.shouldCheckGrammarStyle
 import com.intellij.grazie.utils.trimToNull
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -34,7 +39,7 @@ import org.languagetool.rules.GenericUnpairedBracketsRule
 import org.languagetool.rules.RuleMatch
 import org.languagetool.rules.en.EnglishUnpairedQuotesRule
 import org.slf4j.LoggerFactory
-import java.util.*
+import java.util.Locale
 import java.util.function.Predicate
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -51,6 +56,7 @@ open class LanguageToolChecker : ExternalTextChecker() {
 
   @OptIn(DelicateCoroutinesApi::class)
   override suspend fun checkExternally(context: ProofreadingContext): List<Problem> {
+    if (!context.shouldCheckGrammarStyle()) return emptyList()
     val domain = context.text.getTextDomain()
     return computeDetached(Dispatchers.Default) {
       try {
@@ -74,6 +80,7 @@ open class LanguageToolChecker : ExternalTextChecker() {
     if (sentences.any { it.length > 1000 }) {
       return emptyList()
     }
+
     val matches = runLT(tool, extracted.toString())
     val disappearsAfterAddingQuotes by lazy { checkQuotedText(extracted, tool) }
     val state = GrazieConfig.get()
@@ -188,6 +195,19 @@ private val sentenceSeparationRules = setOf("LC_AFTER_PERIOD", "PUNT_GEEN_HL", "
 private val openClosedRangeStart = Regex("[\\[(].+?(\\.\\.|:|,|;).+[])]")
 private val openClosedRangeEnd = Regex(".*" + openClosedRangeStart.pattern)
 private val quotedLiteralPattern = Regex("['\"]\\S+['\"]")
+private val suggestionQuotePattern = Regex("(?<![\"'])</?suggestion>(?![\"'])")
+private val nextWordPattern = Regex("\\s+(\\w+)")
+private val an_vs_a_exclusions = mapOf(
+  "an" to listOf(
+    Regex("xlsx", RegexOption.IGNORE_CASE),
+    Regex("mp3", RegexOption.IGNORE_CASE),
+    Regex("url", RegexOption.IGNORE_CASE)
+  ),
+  "a" to listOf(
+    Regex("uint.*", RegexOption.IGNORE_CASE),
+    Regex("SCORM", RegexOption.IGNORE_CASE)
+  )
+)
 
 internal fun grammarRules(tool: JLanguageTool, lang: Lang): List<LanguageToolRule> {
   return tool.allRules.asSequence()
@@ -253,11 +273,29 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
     return true // https://github.com/languagetool-org/languagetool/issues/8285
   }
 
+  // https://github.com/languagetool-org/languagetool/issues/11598
+  if (match.rule.id == "EN_A_VS_AN") {
+    val article = text.substring(match.fromPos, match.toPos)
+    val nextWordMatch = nextWordPattern.find(text.subSequence(match.toPos, text.length))
+    val nextWord = nextWordMatch?.groupValues?.get(1) ?: return false
+    return an_vs_a_exclusions[article.lowercase()]!!.any { regex -> regex.matches(nextWord) }
+  }
+
+  // https://github.com/languagetool-org/languagetool/issues/11839
+  if (match.rule.id == "TYPOGRAPHICAL_APOSTROPHE") {
+    return text.substring(match.fromPos, match.toPos).contains('\u2019')
+  }
+
   return false
 }
 
 private val RuleMatch.messageSanitized
-  get() = message.replace("<suggestion>", "").replace("</suggestion>", "")
+  get(): String {
+    val replacement = if (suggestionQuotePattern.containsMatchIn(message)) "'" else ""
+    return message
+      .replace("<suggestion>", replacement)
+      .replace("</suggestion>", replacement)
+  }
 
 private fun isPartOfQuotedLiteralText(match: RuleMatch, text: TextContent): Boolean {
   return quotedLiteralPattern.findAll(text.toString())

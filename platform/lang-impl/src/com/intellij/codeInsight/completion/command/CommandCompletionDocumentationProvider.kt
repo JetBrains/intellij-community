@@ -10,7 +10,14 @@ import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResul
 import com.intellij.codeInsight.intention.impl.preview.LookupPreviewHandler
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo.Html
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementCustomPreviewHolder
+import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.lookup.LookupListener
+import com.intellij.codeInsight.lookup.LookupManagerListener
+import com.intellij.codeInsight.lookup.LookupMayHaveCustomPreviewProvider
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.Language
 import com.intellij.lang.documentation.DocumentationSettings
@@ -131,7 +138,10 @@ private class CommandCompletionDocumentationTarget(
       }
     }
 
-    return DocumentationContent.content(updatedClearedContent)
+    @Suppress("HardCodedStringLiteral")
+    return DocumentationContent.content("<${DocumentationHtmlUtil.codePreviewFloatingKey} plain=\"true\">" +
+                                        updatedClearedContent +
+                                        "</${DocumentationHtmlUtil.codePreviewFloatingKey}>")
   }
 
   private fun findIconPath(iconId: String, content: HtmlChunk): String? {

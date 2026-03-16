@@ -15,10 +15,10 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.associatedModulePath
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.uv.UvSdkAdditionalData
+import com.jetbrains.python.sdk.uv.uvFlavorData
 import com.jetbrains.python.venvReader.tryResolvePath
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -38,13 +38,14 @@ data class UvRunConfigurationOptions(
   var env: Map<String, String> = mapOf(),
   var checkSync: Boolean = true,
   var uvSdkKey: String? = null,
-  var uvArgs: List<String> = listOf()
+  var uvArgs: List<String> = listOf(),
+  var debugJustMyCode: Boolean = false
 ) {
   val uvSdk: Sdk?
     get() = uvSdkKey?.let { PythonSdkUtil.findSdkByKey(it)}
 
   val workingDirectory: Path?
-    get() = (uvSdk?.sdkAdditionalData as? UvSdkAdditionalData)?.uvWorkingDirectory
+    get() = uvSdk?.uvFlavorData?.uvWorkingDirectory
       ?: tryResolvePath(uvSdk?.associatedModulePath)
 }
 
@@ -81,6 +82,10 @@ class UvRunConfiguration(
 
   override fun getSdk(): Sdk? {
     return options.uvSdk
+  }
+
+  override fun shouldDebugJustMyCode(): Boolean {
+    return options.debugJustMyCode
   }
 }
 

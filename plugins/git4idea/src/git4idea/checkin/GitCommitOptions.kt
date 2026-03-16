@@ -19,7 +19,16 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.JBUI
-import com.intellij.vcs.commit.*
+import com.intellij.vcs.commit.AmendCommitHandler
+import com.intellij.vcs.commit.AmendCommitModeListener
+import com.intellij.vcs.commit.CommitAuthorListener
+import com.intellij.vcs.commit.CommitAuthorTracker
+import com.intellij.vcs.commit.CommitOption
+import com.intellij.vcs.commit.CommitSessionCollector
+import com.intellij.vcs.commit.ToggleAmendCommitOption
+import com.intellij.vcs.commit.commitProperty
+import com.intellij.vcs.commit.freshUnhostedRoots
+import com.intellij.vcs.commit.isNonModalCommit
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.VcsUserEditor
 import com.intellij.vcs.log.VcsUserEditor.Companion.getAllUsers
@@ -36,7 +45,7 @@ import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.HierarchyEvent
 import java.awt.event.HierarchyListener
-import java.util.*
+import java.util.Date
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.UIManager

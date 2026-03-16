@@ -47,7 +47,7 @@ public final class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> 
       }
 
       if (appliedPatch.status == ApplyPatchStatus.SUCCESS) {
-        updateDocumentContent(project, document, appliedPatch.patchedText);
+        updateDocumentContent(project, document, appliedPatch.patchedText, fileToPatch);
         return new Result(appliedPatch.status);
       }
     }
@@ -82,14 +82,15 @@ public final class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> 
     }
 
     String patchText = myPatch.getSingleHunkPatchText();
-    updateDocumentContent(project, document, patchText);
+    updateDocumentContent(project, document, patchText, newFile);
   }
 
   private static void updateDocumentContent(@NotNull Project project,
                                             @NotNull Document document,
-                                            @NotNull String patchedText) {
+                                            @NotNull String patchedText, @NotNull VirtualFile fileToPatch) {
     VcsFacade.getInstance().runHeavyModificationTask(project, document, () -> {
-      document.setText(patchedText);
+      String documentPresentation = TextPresentationTransformers.fromPersistent(patchedText, fileToPatch).toString();
+      document.setText(documentPresentation);
       FileDocumentManager.getInstance().saveDocument(document);
     });
   }

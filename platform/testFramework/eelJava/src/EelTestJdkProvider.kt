@@ -9,6 +9,9 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallRequestInf
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.ReadJdkItemsForWSL
+import com.intellij.platform.testFramework.eelJava.EelTestUtil.getEelFixtureEngineJavaHome
+import com.intellij.platform.testFramework.eelJava.EelTestUtil.getFixtureEngine
+import com.intellij.platform.testFramework.eelJava.EelTestUtil.getTeamcityWslJdkDefinition
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -21,11 +24,11 @@ object EelTestJdkProvider {
   @JvmStatic
   fun getJdkPath(): Path? {
     val engine = getFixtureEngine()
-    if (engine == EelFixtureEngine.NONE) {
+    if (engine == EelTestUtil.EelFixtureEngine.NONE) {
       return null
     }
     val jdkPath = getEelFixtureEngineJavaHome()
-    if (engine == EelFixtureEngine.WSL) {
+    if (engine == EelTestUtil.EelFixtureEngine.WSL) {
       val definition = getTeamcityWslJdkDefinition()
       if (definition != null) {
         val jdkToInstall = readJdkItem(definition)

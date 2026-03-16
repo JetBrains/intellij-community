@@ -54,6 +54,11 @@ public class PyClassNameCompletionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-86175
+  public void testSubpackage() {
+    doTest();
+  }
+
   public void testSubmoduleRegularImport() {  // PY-7887
     doTestWithoutFromImport();
   }
@@ -197,6 +202,24 @@ public class PyClassNameCompletionTest extends PyTestCase {
       assertDoesntContain(variantQNames, "pip._vendor.requests", "pip._vendor.requests.request");
       assertContainsElements(variantQNames, "requests", "requests.request");
     });
+  }
+
+  // PY-80238
+  public void testOldStyleTypeAliasCompletion() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.complete(CompletionType.BASIC, 1);
+    List<String> variants = myFixture.getLookupElementStrings();
+    assertContainsElements(variants, "OldStyleString", "OldStyleNumber", "OldStyleUnion");
+  }
+
+  // PY-80238
+  public void testNewTypeAliasCompletion() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.complete(CompletionType.BASIC, 1);
+    List<String> variants = myFixture.getLookupElementStrings();
+    assertContainsElements(variants, "NewStyleString", "NewStyleNumber", "NewStyleUnion");
   }
 
   @Nullable

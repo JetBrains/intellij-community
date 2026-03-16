@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Image;
 import java.util.Collections;
 import java.util.Map;
 

@@ -14,18 +14,18 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.openapi.project.Project;
-import com.sun.jdi.*;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ArrayType;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 class ArrayAccessEvaluator implements ModifiableEvaluator {
   private final Evaluator myArrayReferenceEvaluator;
   private final Evaluator myIndexEvaluator;
-
-  // TODO remove non-final fields, see IDEA-366793
-  @Deprecated
-  private ArrayReference myEvaluatedArrayReference;
-  @Deprecated
-  private int myEvaluatedIndex;
 
   ArrayAccessEvaluator(Evaluator arrayReferenceEvaluator, Evaluator indexEvaluator) {
     myArrayReferenceEvaluator = arrayReferenceEvaluator;
@@ -33,7 +33,7 @@ class ArrayAccessEvaluator implements ModifiableEvaluator {
   }
 
   @Override
-  public @NotNull ModifiableValue evaluateModifiable(EvaluationContextImpl context) throws EvaluateException {
+  public @NotNull ModifiableValue evaluateModifiable(@NotNull EvaluationContextImpl context) throws EvaluateException {
     if (!(myArrayReferenceEvaluator.evaluate(context) instanceof ArrayReference evaluatedArrayReference)) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.array.reference.expected"));
     }
@@ -45,21 +45,11 @@ class ArrayAccessEvaluator implements ModifiableEvaluator {
 
     try {
       Value value = evaluatedArrayReference.getValue(evaluatedIndex);
-      myEvaluatedArrayReference = evaluatedArrayReference;
-      myEvaluatedIndex = evaluatedIndex;
       return new ModifiableValue(value, new MyModifier(evaluatedArrayReference, evaluatedIndex));
     }
     catch (Exception e) {
       throw EvaluateExceptionUtil.createEvaluateException(e);
     }
-  }
-
-  @Override
-  public Modifier getModifier() {
-    if (myEvaluatedArrayReference != null) {
-      return new MyModifier(myEvaluatedArrayReference, myEvaluatedIndex);
-    }
-    return null;
   }
 
   private static class MyModifier implements Modifier {

@@ -17,7 +17,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 final class ConversionResultImpl implements ConversionResult {
   public static final ConversionResultImpl CONVERSION_NOT_NEEDED = new ConversionResultImpl(false, false, false);

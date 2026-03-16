@@ -925,6 +925,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/SuperTypeWithBoundKotlinCollection.kt"));
         }
 
+        @TestMetadata("SuspendFunctionTypeAsAnnotationArgument.kt")
+        public void testSuspendFunctionTypeAsAnnotationArgument() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/SuspendFunctionTypeAsAnnotationArgument.kt"));
+        }
+
         @TestMetadata("Throws.kt")
         public void testThrows() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/Throws.kt"));
@@ -968,6 +973,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
         @TestMetadata("valueClassMembers.kt")
         public void testValueClassMembers() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/valueClassMembers.kt"));
+        }
+
+        @TestMetadata("valueClassWithCompanion.kt")
+        public void testValueClassWithCompanion() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/valueClassWithCompanion.kt"));
         }
 
         @TestMetadata("valueClassWithDelegatedSuperInterface.kt")

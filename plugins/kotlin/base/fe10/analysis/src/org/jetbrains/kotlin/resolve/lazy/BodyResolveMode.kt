@@ -2,8 +2,10 @@
 
 package org.jetbrains.kotlin.resolve.lazy
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.resolve.BindingTraceFilter
 
+@K1Deprecation
 enum class BodyResolveMode(val bindingTraceFilter: BindingTraceFilter, val doControlFlowAnalysis: Boolean, val resolveAdditionals: Boolean = true) {
     // All body statements are analyzed, diagnostics included
     FULL(BindingTraceFilter.ACCEPT_ALL, doControlFlowAnalysis = true),

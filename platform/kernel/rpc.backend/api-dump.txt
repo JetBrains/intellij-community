@@ -1,0 +1,6 @@
+com.intellij.platform.rpc.backend.RemoteApiProvider
+- sf:Companion:com.intellij.platform.rpc.backend.RemoteApiProvider$Companion
+- a:remoteApis(com.intellij.platform.rpc.backend.RemoteApiProvider$Sink):V
+f:com.intellij.platform.rpc.backend.RemoteApiProvider$Companion
+com.intellij.platform.rpc.backend.RemoteApiProvider$Sink
+- a:remoteApi(fleet.rpc.RemoteApiDescriptor,kotlin.jvm.functions.Function0):V

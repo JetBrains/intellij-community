@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Logical elements have not implement this class, but they can if they want to add some specific logic
+ * Logical elements don't have to implement this class, but they can if they want to add some specific logic
  */
 @ApiStatus.Experimental
 interface ExtendedLogicalObject {
@@ -21,5 +21,10 @@ interface ExtendedLogicalObject {
    * If the element can represent additional elements different from what it is targeting
    */
   fun canRepresentPsiElement(psiElement: PsiElement): Boolean = false
+
+  /**
+   * If the element is referencing to element from another file
+   */
+  fun isTargetToExternalElement(): Boolean = false
 
 }

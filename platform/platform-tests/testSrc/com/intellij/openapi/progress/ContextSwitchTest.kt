@@ -1,9 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
-import com.intellij.concurrency.*
 import com.intellij.concurrency.TestElement
 import com.intellij.concurrency.TestElementKey
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.currentThreadOverriddenContextOrNull
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
@@ -11,7 +12,10 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext

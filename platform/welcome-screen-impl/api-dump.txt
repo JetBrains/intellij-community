@@ -1,0 +1,19 @@
+a:com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.project.DumbAware
+- <init>():V
+- a:createPanel():javax.swing.JPanel
+- a:getActionButton():javax.swing.JButton
+- onPanelSelected():V
+com.intellij.openapi.wm.impl.welcomeScreen.ActionsWithPanelProvider
+f:com.intellij.openapi.wm.impl.welcomeScreen.BottomLineBorder
+- javax.swing.border.EmptyBorder
+- <init>():V
+- paintBorder(java.awt.Component,java.awt.Graphics,I,I,I,I):V
+a:com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector
+- sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- a:detectProjects(java.util.function.Consumer):V
+- logRecentProjectOpened(com.intellij.ide.ProjectGroup):V
+- s:runDetectors(java.util.function.Consumer):V

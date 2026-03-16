@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remoteApi
 
+import com.intellij.dvcs.repo.repositoryId
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.VirtualFileId
@@ -67,6 +68,11 @@ internal class GitWidgetApiImpl : GitWidgetApi {
         LOG.debug("Git repository state changed: $repository. Sending new value")
         notifier.tryEmit(Unit)
       }
+
+      override fun repositoryCreated(repository: GitRepository, info: GitRepoInfo) {
+        LOG.debug("Git repository created: $repository. Sending new value")
+        notifier.tryEmit(Unit)
+      }
     })
     connection.subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener {
       LOG.debug("Git incoming outgoing state changed. Sending new value")
@@ -117,7 +123,7 @@ internal class GitWidgetApiImpl : GitWidgetApi {
       val presentation = GitCurrentBranchPresenter.getPresentation(this)
 
       return GitWidgetState.OnRepository(
-        repository = this.rpcId,
+        repository = this.repositoryId(),
         presentationData = GitWidgetState.RepositoryPresentation(
           icon = presentation.icon?.rpcId(),
           text = presentation.text,

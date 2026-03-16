@@ -6,7 +6,18 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.highlighter.operationReferenceForBinaryExpressionOrThis
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.*
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.AbstractImportCandidatesProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.AnnotationImportCandidatesProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.CallableImportCandidatesProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ClassifierImportCandidatesProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ConstructorReferenceImportCandidatesProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.DefaultImportContext
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.EnumEntryImportCandidatesProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportCandidate
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportContext
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportPositionType
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportPositionTypeAndReceiver
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.TypeAliasedInnerClassImportCandidatesProvider
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
@@ -55,11 +66,16 @@ internal object UnresolvedNameReferenceImportQuickFixFactory : AbstractImportQui
         is ImportPositionType.DefaultCall -> sequenceOf(
             CallableImportCandidatesProvider(importContext),
             ClassifierImportCandidatesProvider(importContext),
+            TypeAliasedInnerClassImportCandidatesProvider(importContext),
             EnumEntryImportCandidatesProvider(importContext),
         )
 
         is ImportPositionType.DotCall,
-        is ImportPositionType.SafeCall,
+        is ImportPositionType.SafeCall -> sequenceOf(
+            CallableImportCandidatesProvider(importContext),
+            TypeAliasedInnerClassImportCandidatesProvider(importContext),
+        )
+
         is ImportPositionType.InfixCall,
         is ImportPositionType.OperatorCall -> sequenceOf(
             CallableImportCandidatesProvider(importContext),
@@ -71,6 +87,7 @@ internal object UnresolvedNameReferenceImportQuickFixFactory : AbstractImportQui
 
         is ImportPositionType.CallableReference -> sequenceOf(
             CallableImportCandidatesProvider(importContext),
+            TypeAliasedInnerClassImportCandidatesProvider(importContext),
             ConstructorReferenceImportCandidatesProvider(importContext),
         )
 

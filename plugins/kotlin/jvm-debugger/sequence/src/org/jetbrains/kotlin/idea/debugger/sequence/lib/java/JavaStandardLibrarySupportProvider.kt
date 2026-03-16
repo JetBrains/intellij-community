@@ -9,6 +9,7 @@ import com.intellij.debugger.streams.core.wrapper.StreamChainBuilder
 import com.intellij.debugger.streams.lib.impl.JvmLibrarySupportProvider
 import com.intellij.debugger.streams.lib.impl.StandardLibrarySupport
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.impl.KotlinChainTransformerImpl
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.impl.PackageBasedCallChecker
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.JavaPeekCallFactory
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinStatementFactory
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.KotlinTraceExpressionBuilder
 
+@K1Deprecation
 class JavaStandardLibrarySupportProvider : JvmLibrarySupportProvider() {
     private val builder: TerminatedChainBuilder = TerminatedChainBuilder(
         KotlinChainTransformerImpl(JavaStreamChainTypeExtractor()),

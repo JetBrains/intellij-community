@@ -2,9 +2,11 @@
 
 package com.intellij.toolWindow
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -15,25 +17,27 @@ class ToolWindowManagerTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun `default layout`(isNewUi: Boolean) = runBlocking {
+  fun `default layout`(isNewUi: Boolean) = runBlocking(Dispatchers.EDT) {
     testDefaultLayout(isNewUi = isNewUi, project = project)
   }
 
   @ParameterizedTest
   @ValueSource(strings = ["left", "bottom"])
-  fun `button layout`(anchor: String) {
+  fun `button layout`(anchor: String) = runBlocking(Dispatchers.EDT) {
     testButtonLayout(isNewUi = true, anchor = ToolWindowAnchor.fromText(anchor))
   }
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun `remove button on setting an available property to false`(isNewUi: Boolean) {
+  fun `remove button on setting an available property to false`(isNewUi: Boolean) = runBlocking(Dispatchers.EDT) {
     ToolWindowManagerTestHelper.available(isNewUi = isNewUi, project = project)
   }
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `show tool window if it was visible last session but became available only after initial registration`(isNewUi: Boolean) {
-    ToolWindowManagerTestHelper.showOnAvailable(isNewUi = isNewUi, project = project)
+    runBlocking(Dispatchers.EDT) {
+      ToolWindowManagerTestHelper.showOnAvailable(isNewUi = isNewUi, project = project)
+    }
   }
 }

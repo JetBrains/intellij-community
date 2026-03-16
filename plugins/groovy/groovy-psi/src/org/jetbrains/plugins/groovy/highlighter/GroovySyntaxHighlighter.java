@@ -24,7 +24,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey;
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_DQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_SQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TDQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TSQ;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENTS;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.BINARY_OPERATORS;
 

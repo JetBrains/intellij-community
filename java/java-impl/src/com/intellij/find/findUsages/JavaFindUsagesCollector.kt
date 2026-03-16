@@ -1,15 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages
 
 import com.intellij.ide.util.scopeChooser.ScopeIdMapper
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.StringEventField
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 internal object JavaFindUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("java.find.usages", 3)
+  private val GROUP = EventLogGroup("java.find.usages", 4)
 
   @JvmField
   val USAGES: BooleanEventField = EventFields.Boolean("usages")
@@ -19,6 +23,9 @@ internal object JavaFindUsagesCollector : CounterUsagesCollector() {
 
   @JvmField
   val SEARCH_SCOPE: StringEventField = EventFields.String("searchScope", ScopeIdMapper.standardNames.toList())
+
+  @JvmField
+  val CONSTRUCTOR_USAGES: BooleanEventField = EventFields.Boolean("constructorUsages")
 
   @JvmField
   val METHOD_USAGES: BooleanEventField = EventFields.Boolean("methodUsages")
@@ -73,6 +80,7 @@ internal object JavaFindUsagesCollector : CounterUsagesCollector() {
 
   @JvmField
   val FIND_CLASS_STARTED: VarargEventId = registerEvent("find.class.started",
+                                                        CONSTRUCTOR_USAGES,
                                                         METHOD_USAGES,
                                                         FIELD_USAGES,
                                                         DERIVED_USAGES,

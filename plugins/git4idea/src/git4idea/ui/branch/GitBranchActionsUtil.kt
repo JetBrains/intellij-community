@@ -24,6 +24,8 @@ import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.update.GitUpdateExecutionProcess
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -39,12 +41,12 @@ internal fun createOrCheckoutNewBranch(project: Project,
   GitBranchCheckoutOperation(project, options.repositories).perform(startPoint, options)
 }
 
-internal fun updateBranches(project: Project, repositories: Collection<GitRepository>, localBranchNames: List<String>) {
+internal fun updateBranches(project: Project, repositories: Collection<GitRepository>, localBranchNames: List<String>): Job {
   val repoToTrackingInfos =
     repositories.associateWith { it.branchTrackInfos.filter { info -> localBranchNames.contains(info.localBranch.name) } }
-  if (repoToTrackingInfos.isEmpty()) return
+  if (repoToTrackingInfos.isEmpty()) return CompletableDeferred(Unit)
 
-  GitDisposable.getInstance(project).coroutineScope.launch {
+  return GitDisposable.getInstance(project).coroutineScope.launch {
     withBackgroundProgress(project, GitBundle.message("branches.updating.process")) {
       // If a branch is checked out, do update via GitUpdateExecutionProcess
       val updateProcessTargets = HashMap<GitRepository, GitBranchPair>()
@@ -94,8 +96,10 @@ internal fun isTrackingInfosExist(branchNames: List<String>, repositories: Colle
     .any { trackingBranchInfo -> branchNames.any { branchName -> branchName == trackingBranchInfo.localBranch.name } }
 
 internal fun hasRemotes(project: Project): Boolean {
-  return GitUtil.getRepositories(project).any { repository -> !repository.remotes.isEmpty() }
+  return hasAnyRemotes(GitUtil.getRepositories(project))
 }
+
+internal fun hasAnyRemotes(repositories: Collection<GitRepository>): Boolean = repositories.any { it.remotes.isNotEmpty() }
 
 internal fun hasTrackingConflicts(conflictingLocalBranches: Map<GitRepository, GitLocalBranch>,
                                   remoteBranchName: String): Boolean =

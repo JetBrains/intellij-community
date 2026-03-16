@@ -20,8 +20,9 @@ data class GitLabProjectCoordinates(override val serverPath: GitLabServerPath, v
 
   companion object {
     fun create(server: GitLabServerPath, remote: GitRemoteUrlCoordinates): GitLabProjectCoordinates? {
-      val projectPath = GitLabProjectPath.create(server, remote) ?: return null
+      val projectPath = GitLabProjectPath.create(server, remote.url) ?: return null
       return GitLabProjectCoordinates(server, projectPath)
     }
+
   }
 }

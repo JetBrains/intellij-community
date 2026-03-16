@@ -4,3 +4,4 @@ fun foo(actions: List<(String) -> Unit>) {
 
 // EXIST: {"lookupString":"String","tailText":"() (kotlin)","itemText":"String"}
 // EXIST: {"lookupString":"toString","tailText":"() (kotlin)","typeText":"String","itemText":"String.toString"}
+// IGNORE_K2

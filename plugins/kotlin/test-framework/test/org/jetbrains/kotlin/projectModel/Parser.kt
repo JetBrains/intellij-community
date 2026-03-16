@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
-import java.io.File
 import java.io.InputStreamReader
 import java.io.Reader
 import java.nio.file.Path

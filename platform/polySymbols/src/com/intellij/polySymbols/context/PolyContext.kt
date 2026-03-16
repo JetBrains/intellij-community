@@ -5,19 +5,16 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.context.impl.PolyContextImpl
 import com.intellij.polySymbols.context.impl.PolyContextProviderExtensionCollector
 import com.intellij.polySymbols.context.impl.findPolyContext
 import com.intellij.psi.PsiElement
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.TestOnly
 
 interface PolyContext {
-
-  val framework: FrameworkId?
-    get() = this[KIND_FRAMEWORK]
 
   operator fun get(kind: PolyContextKind): PolyContextName?
 
@@ -28,9 +25,6 @@ interface PolyContext {
     @JvmField
     val POLY_SYMBOLS_CONTEXT_EP: KeyedExtensionCollector<PolyContextProvider, String> =
       PolyContextProviderExtensionCollector(ExtensionPointName("com.intellij.polySymbols.context"))
-
-    @JvmField
-    val KIND_FRAMEWORK: String = "framework"
 
     @JvmField
     val VALUE_NONE: String = "none"
@@ -48,10 +42,12 @@ interface PolyContext {
     val PKG_MANAGER_SYMFONY_BUNDLES: String = "symfony-bundles"
 
     @JvmStatic
+    @RequiresReadLock
     fun get(kind: PolyContextKind, location: VirtualFile, project: Project): PolyContextName? =
       findPolyContext(kind, location, project)
 
     @JvmStatic
+    @RequiresReadLock
     fun get(kind: PolyContextKind, location: PsiElement): PolyContextName? =
       findPolyContext(kind, location)
 

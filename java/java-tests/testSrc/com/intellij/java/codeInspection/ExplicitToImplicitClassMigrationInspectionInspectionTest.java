@@ -106,7 +106,6 @@ public class ExplicitToImplicitClassMigrationInspectionInspectionTest extends Li
   }
 
   private void doTest() {
-    MigrateToJavaLangIoInspectionTest.addIOClass(myFixture);
     myFixture.enableInspections(new ExplicitToImplicitClassMigrationInspection());
     myFixture.testHighlighting(true, false, true, "before" + getTestName(false) + ".java");
     myFixture.checkPreviewAndLaunchAction(myFixture.findSingleIntention(

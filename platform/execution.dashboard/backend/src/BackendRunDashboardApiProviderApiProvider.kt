@@ -6,7 +6,7 @@ import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceRpc
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
 
-private class BackendRunDashboardApiProviderApiProvider : RemoteApiProvider {
+internal class BackendRunDashboardApiProviderApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<RunDashboardServiceRpc>()) {
       RunDashboardServiceRpcImpl()

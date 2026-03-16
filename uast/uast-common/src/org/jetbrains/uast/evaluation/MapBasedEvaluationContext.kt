@@ -16,12 +16,20 @@
 package org.jetbrains.uast.evaluation
 
 import com.intellij.openapi.progress.ProcessCanceledException
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UastLanguagePlugin
+import org.jetbrains.uast.getContainingUFile
 import org.jetbrains.uast.values.UUndeterminedValue
 import org.jetbrains.uast.values.UValue
 import org.jetbrains.uast.visitor.UastVisitor
 import java.lang.ref.SoftReference
-import java.util.*
+import java.util.WeakHashMap
 
 class MapBasedEvaluationContext(
   override val uastContext: UastLanguagePlugin,

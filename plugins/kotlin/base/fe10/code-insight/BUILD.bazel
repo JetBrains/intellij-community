@@ -9,6 +9,7 @@ create_kotlinc_options(
     "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
     "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+    "org.jetbrains.kotlin.K1Deprecation",
   ]
 )
 
@@ -57,6 +58,7 @@ jvm_library(
     "//platform/core-ui",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/code-insight/api",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build kotlin.base.fe10.code-insight` end

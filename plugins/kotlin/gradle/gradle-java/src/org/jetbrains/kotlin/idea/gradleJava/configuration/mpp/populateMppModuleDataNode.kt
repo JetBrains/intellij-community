@@ -20,15 +20,32 @@ import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.base.externalSystem.find
-import org.jetbrains.kotlin.idea.gradle.configuration.*
+import org.jetbrains.kotlin.idea.gradle.configuration.CompilerArgumentsProvider
+import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleProjectData
+import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetData
+import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetInfo
+import org.jetbrains.kotlin.idea.gradle.configuration.KotlinTargetData
+import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.UnsafeTestSourceSetHeuristicApi
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.predictedProductionSourceSetName
-import org.jetbrains.kotlin.idea.gradleJava.configuration.*
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
+import org.jetbrains.kotlin.idea.gradleJava.configuration.konanTargets
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.KotlinMppGradleProjectResolverExtension.Result.Skip
+import org.jetbrains.kotlin.idea.gradleJava.configuration.resourceType
+import org.jetbrains.kotlin.idea.gradleJava.configuration.sourceType
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.fullName
-import org.jetbrains.kotlin.idea.gradleTooling.*
-import org.jetbrains.kotlin.idea.projectModel.*
+import org.jetbrains.kotlin.idea.gradleJava.configuration.wasmTargets
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinCompilationImpl
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
+import org.jetbrains.kotlin.idea.gradleTooling.compareTo
+import org.jetbrains.kotlin.idea.gradleTooling.isDependsOn
+import org.jetbrains.kotlin.idea.gradleTooling.resolveAllDependsOnSourceSets
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
+import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
+import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
@@ -46,7 +63,6 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 import java.lang.reflect.Proxy
-import java.util.*
 
 /**
  * Creates and adds [GradleSourceSetData] nodes and [KotlinSourceSetInfo] for the given [moduleDataNode]
@@ -56,6 +72,12 @@ internal fun populateMppModuleDataNode(context: KotlinMppGradleProjectResolver.C
     context.initializeModuleData()
     context.createMppGradleSourceSetDataNodes()
 }
+
+internal fun shouldDelegateToOtherPlugin(compilation: KotlinCompilation): Boolean =
+    compilation.platform == KotlinPlatform.ANDROID
+
+internal fun shouldDelegateToOtherPlugin(kotlinSourceSet: KotlinSourceSet): Boolean =
+    kotlinSourceSet.actualPlatforms.platforms.singleOrNull() == KotlinPlatform.ANDROID
 
 internal fun doCreateSourceSetInfo(
     mppModel: KotlinMPPGradleModel,
@@ -272,7 +294,7 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
     val sourceSetToCompilationData = LinkedHashMap<String, MutableSet<GradleSourceSetData>>()
     val sourceSetToCompilationJavaData = LinkedHashMap<String, MutableSet<JavaModuleData>>()
     for (target in mppModel.targets) {
-        if (target.isManagedByComAndroidLibraryPlugin) continue
+        if (shouldDelegateToOtherPlugin(target)) continue
         if (target.name == KotlinTarget.METADATA_TARGET_NAME) continue
         val targetData = KotlinTargetData(target.name).also {
             it.archiveFile = target.jar?.archiveFile
@@ -375,7 +397,7 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
     }
 
     for (sourceSet in mppModel.sourceSetsByName.values) {
-        if (sourceSet.isManagedByComAndroidLibraryPlugin) continue
+        if (shouldDelegateToOtherPlugin(sourceSet)) continue
 
         val platform = sourceSet.actualPlatforms.platforms.singleOrNull()
         val moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx)
@@ -531,6 +553,9 @@ private fun getInternalModuleName(
 //flag for avoid double resolve from KotlinMPPGradleProjectResolver and KotlinAndroidMPPGradleProjectResolver
 private var DataNode<ModuleData>.isMppDataInitialized
         by NotNullableCopyableDataNodeUserDataProperty(Key.create("IS_MPP_DATA_INITIALIZED"), false)
+
+private fun shouldDelegateToOtherPlugin(kotlinTarget: KotlinTarget): Boolean =
+    kotlinTarget.platform == KotlinPlatform.ANDROID
 
 private fun createExternalSourceSet(
     ktSourceSet: KotlinSourceSet,

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi;
 
 import com.intellij.openapi.util.Disposer;
@@ -15,7 +15,7 @@ import com.intellij.openapi.util.Disposer;
  * <p>
  * As a general policy, you shouldn't call the {@link #dispose()} method directly,
  * Instead, register your object in the {@link Disposer} hierarchy of disposable objects via
- * {@link Disposer#register(Disposable, Disposable)} to be automatically disposed along with the the parent object.
+ * {@link Disposer#register(Disposable, Disposable)} to be automatically disposed along with the parent object.
  * </p>
  * <p>
  * If you're 100% sure that you should control your object's disposal manually,
@@ -30,22 +30,21 @@ import com.intellij.openapi.util.Disposer;
 @SuppressWarnings("InterfaceMayBeAnnotatedFunctional") // do not use lambda as a Disposable implementation, because each Disposable instance needs identity to be stored in Disposer hierarchy correctly
 public interface Disposable {
   /**
-   * Usually not invoked directly, see class javadoc.
-   *
+   * Usually is not invoked directly; see the {@link Disposable class' documentation}.
+   * <p>
    * The method shall not throw {@link com.intellij.openapi.progress.ProcessCanceledException} or {@link java.util.concurrent.CancellationException}.
    * This is considered an error.
    */
   void dispose();
 
   interface Default extends Disposable {
-
     @Override
     default void dispose() { }
   }
 
   interface Parent extends Disposable {
     /**
-     * This method is called before {@link #dispose()}
+     * This method is called before {@link #dispose()}.
      */
     void beforeTreeDispose();
   }

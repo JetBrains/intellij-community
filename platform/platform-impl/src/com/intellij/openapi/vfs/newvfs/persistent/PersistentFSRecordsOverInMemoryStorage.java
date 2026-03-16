@@ -18,7 +18,12 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.*;
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.HEADER_ERRORS_ACCUMULATED_OFFSET;
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.HEADER_FLAGS_OFFSET;
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.HEADER_GLOBAL_MOD_COUNT_OFFSET;
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.HEADER_TIMESTAMP_OFFSET;
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.HEADER_VERSION_OFFSET;
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.HeaderOffset;
 import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.WRITE;

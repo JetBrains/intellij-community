@@ -1,0 +1,23 @@
+package mockplugin
+
+import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
+import org.jetbrains.kotlin.config.CompilerConfiguration
+
+@OptIn(ExperimentalCompilerApi::class)
+class MockCompilerPluginRegistrar : CompilerPluginRegistrar() {
+
+    override val supportsK2: Boolean = true
+    override val pluginId: String = MockCommandLineProcessor.PLUGIN_ID
+
+    override fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration) {
+        val enabled = configuration.get(MockCommandLineProcessor.ENABLED_KEY, true)
+        val debug = configuration.get(MockCommandLineProcessor.DEBUG_KEY, false)
+
+        if (debug) {
+            println("[MockPlugin] Registering extensions (K2); enabled=$enabled")
+        }
+
+        // No-op: plugin does nothing
+    }
+}

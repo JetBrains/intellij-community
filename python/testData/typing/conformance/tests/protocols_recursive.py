@@ -74,7 +74,7 @@ class ImplB:
 
 
 def func1(x: ProtoA[Never, T]) -> T:
-    ...
+    raise NotImplementedError
 
 
 v1 = func1(ImplB())

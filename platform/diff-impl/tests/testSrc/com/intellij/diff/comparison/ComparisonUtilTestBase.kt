@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Couple
 import com.intellij.util.IntPair
-import java.util.*
+import java.util.BitSet
 
 abstract class ComparisonUtilTestBase : DiffTestCase() {
   private fun doLineTest(text: Couple<Document>, matchings: Couple<BitSet>?, expected: List<Couple<IntPair>>?, policy: ComparisonPolicy) {
@@ -93,7 +93,7 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
     if (expected != null) checkLineChanges(fragments, expected)
   }
 
-  private fun checkConsistencyLineInner(fragments: List<LineFragment>, before: Document, after: Document) {
+  fun checkConsistencyLineInner(fragments: List<LineFragment>, before: Document, after: Document) {
     assertTrue(fragments.size == 1)
     val fragment = fragments[0]
 
@@ -106,7 +106,7 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
     checkConsistency(fragment.innerFragments!!, before, after)
   }
 
-  private fun checkConsistency(fragments: List<DiffFragment>, before: Document, after: Document) {
+  fun checkConsistency(fragments: List<DiffFragment>, before: Document, after: Document) {
     for (fragment in fragments) {
       assertTrue(fragment.startOffset1 <= fragment.endOffset1)
       assertTrue(fragment.startOffset2 <= fragment.endOffset2)

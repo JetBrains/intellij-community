@@ -6,8 +6,14 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLayeredPane;
+import javax.swing.RootPaneContainer;
+import java.awt.AlphaComposite;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.image.BufferedImage;
 import java.util.LinkedHashMap;
 import java.util.Map;

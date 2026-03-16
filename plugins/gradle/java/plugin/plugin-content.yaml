@@ -1,0 +1,44 @@
+- name: lib/gradle-java-plugin.jar
+  modules:
+  - name: intellij.gradle.java.plugin
+  contentModules:
+  - name: intellij.gradle.java
+- name: lib/gradle-jps.jar
+  modules:
+  - name: intellij.gradle.jps
+    libraries:
+      ant:
+      - name: $MAVEN_REPOSITORY$/org/apache/ant/ant/1/ant-1.jar
+- name: lib/modules/intellij.gradle.analysis.jar
+  contentModules:
+  - name: intellij.gradle.analysis
+- name: lib/modules/intellij.gradle.dependencyUpdater.jar
+  contentModules:
+  - name: intellij.gradle.dependencyUpdater
+- name: lib/modules/intellij.gradle.java.coverage.jar
+  contentModules:
+  - name: intellij.gradle.java.coverage
+- name: lib/modules/intellij.gradle.java.groovy.jar
+  contentModules:
+  - name: intellij.gradle.java.groovy
+- name: lib/modules/intellij.gradle.java.groovy.ml.jar
+  contentModules:
+  - name: intellij.gradle.java.groovy.ml
+- name: lib/modules/intellij.gradle.java.groovy.toml.jar
+  contentModules:
+  - name: intellij.gradle.java.groovy.toml
+- name: lib/modules/intellij.gradle.java.maven.jar
+  contentModules:
+  - name: intellij.gradle.java.maven
+- name: lib/modules/intellij.gradle.java.performance.jar
+  contentModules:
+  - name: intellij.gradle.java.performance
+- name: lib/modules/intellij.gradle.java.properties.jar
+  contentModules:
+  - name: intellij.gradle.java.properties
+- name: lib/modules/intellij.gradle.java.toml.jar
+  contentModules:
+  - name: intellij.gradle.java.toml
+- name: lib/modules/intellij.gradle.profiler.jar
+  contentModules:
+  - name: intellij.gradle.profiler

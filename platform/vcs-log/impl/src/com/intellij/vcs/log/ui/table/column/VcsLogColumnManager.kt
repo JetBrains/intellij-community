@@ -8,7 +8,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.util.EventDispatcher
 import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusProvider
-import java.util.*
+import java.util.EventListener
 
 /**
  * Service stores information about the currently available [VcsLogColumn]s.

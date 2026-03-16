@@ -5,7 +5,14 @@ package com.intellij.util.io.processHandshake
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.*
+import com.intellij.execution.process.BaseOSProcessHandler
+import com.intellij.execution.process.CapturingProcessAdapter
+import com.intellij.execution.process.ProcessAdapter
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.process.ProcessOutput
+import com.intellij.execution.process.ProcessTerminatedListener
+import com.intellij.execution.process.SynchronizedProcessOutput
 import com.intellij.ide.IdeCoreBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -15,11 +22,16 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ExceptionUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.supervisorScope
 import java.io.EOFException
 import java.io.IOException
 import java.util.concurrent.CompletableFuture

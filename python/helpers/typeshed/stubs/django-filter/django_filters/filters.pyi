@@ -2,7 +2,7 @@ from collections.abc import Callable, Iterable
 from typing import Any
 
 from django import forms
-from django.db.models import Q, QuerySet
+from django.db.models import QuerySet
 from django.forms import Field
 from django_stubs_ext import StrOrPromise
 
@@ -131,7 +131,7 @@ class MultipleChoiceFilter(Filter):
     ) -> None: ...
     def is_noop(self, qs: QuerySet[Any], value: Any) -> bool: ...  # Value can be any filter input
     def filter(self, qs: QuerySet[Any], value: Any) -> QuerySet[Any]: ...
-    def get_filter_predicate(self, v: Any) -> Q: ...  # Predicate value can be any filter input type
+    def get_filter_predicate(self, v: Any) -> dict[str, Any]: ...  # Predicate value can be any filter input type
 
 class TypedMultipleChoiceFilter(MultipleChoiceFilter):
     field_class: type[forms.TypedMultipleChoiceField]  # More specific than parent MultipleChoiceField
@@ -292,7 +292,10 @@ class LookupChoiceFilter(Filter):
     def filter(self, qs: QuerySet[Any], lookup: Lookup) -> QuerySet[Any]: ...
 
 class OrderingFilter(BaseCSVFilter, ChoiceFilter):
-    field_class: type[BaseCSVField]  # Inherits CSV field behavior for comma-separated ordering
+    # Inherits CSV field behavior for comma-separated ordering.
+    # BaseCSVFilter constructs a custom ConcreteCSVField class that derives
+    # from BaseCSVField.
+    field_class: type[BaseCSVField]
     descending_fmt: str
     param_map: dict[str, str] | None
     def __init__(
@@ -300,7 +303,7 @@ class OrderingFilter(BaseCSVFilter, ChoiceFilter):
         field_name: str | None = None,
         lookup_expr: str | None = None,
         *,
-        fields: dict[str, str] | Iterable[tuple[str, str]] = ...,
+        fields: dict[str, str] | Iterable[str] | Iterable[tuple[str, str]] = ...,
         field_labels: dict[str, StrOrPromise] = ...,
         # Inherited from ChoiceFilter
         null_value: Any = ...,  # Null value can be any type (None, empty string, etc.)

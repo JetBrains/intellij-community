@@ -1,0 +1,4 @@
+package package2;
+
+public class A { // resolves to "class package2.A"
+}

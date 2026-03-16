@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.io.File
 
 /**
@@ -93,7 +92,7 @@ abstract class WorkspaceModelChecker<V : Any>(private val respectOrder: Boolean)
         // NB: KotlinTestUtils handle non-existent expectedFile fine
         KotlinTestUtils.assertEqualsToFile(
             expectedTestDataFile,
-            actualWorkspaceModelText
+            actualWorkspaceModelText,
         ) { sanitizeExpectedFile(it) }
     }
 

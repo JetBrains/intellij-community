@@ -2,10 +2,10 @@
 package com.intellij.xdebugger.impl.rpc.models
 
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.platform.debugger.impl.rpc.ExecutionEnvironmentId
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
-import com.intellij.xdebugger.impl.rpc.ExecutionEnvironmentId
 import kotlinx.coroutines.CoroutineScope
 
 internal fun ExecutionEnvironmentId.findValue(): ExecutionEnvironment? {

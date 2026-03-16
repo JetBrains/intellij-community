@@ -5,7 +5,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.intellij.vcs.log.graph.api.EdgeFilter.*;
+import static com.intellij.vcs.log.graph.api.EdgeFilter.NORMAL_ALL;
+import static com.intellij.vcs.log.graph.api.EdgeFilter.NORMAL_DOWN;
+import static com.intellij.vcs.log.graph.api.EdgeFilter.NORMAL_UP;
 
 public interface LiteLinearGraph {
   int nodesCount();

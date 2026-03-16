@@ -15,7 +15,19 @@ import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.idea.base.psi.getElementAtOffsetIgnoreWhitespaceAfter
 import org.jetbrains.kotlin.idea.base.psi.getElementAtOffsetIgnoreWhitespaceBefore
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtScript
+import org.jetbrains.kotlin.psi.KtScriptInitializer
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.isTypeConstructorReference
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -25,7 +37,7 @@ enum class ElementKind {
         override val elementClass = KtExpression::class.java
     },
     TYPE_ELEMENT {
-        override val elementClass = KtTypeElement::class.java
+        override val elementClass = KtTypeReference::class.java
     },
     TYPE_CONSTRUCTOR {
         override val elementClass = KtSimpleNameExpression::class.java
@@ -147,7 +159,7 @@ private fun PsiElement.matchesKindOrCanBeSkipped(kind: ElementKind): Boolean =
 
 private fun PsiElement.matchesKind(kind: ElementKind): Boolean =
     kind === ElementKind.EXPRESSION && this is KtExpression ||
-            kind === ElementKind.TYPE_ELEMENT && this is KtTypeElement ||
+            kind === ElementKind.TYPE_ELEMENT && this is KtTypeReference ||
             kind === ElementKind.TYPE_CONSTRUCTOR && isTypeConstructorReference(this)
 
 private fun getTopmostParentInside(element: PsiElement, parent: PsiElement): PsiElement {

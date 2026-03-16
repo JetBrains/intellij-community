@@ -10,7 +10,10 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.ButtonModel;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

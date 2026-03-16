@@ -14,28 +14,35 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
-private val askUserMutex = Mutex()
+private val configureMutex = Mutex()
 
 /**
- * Same as [configureSdkAskingUser] but in a separate coroutine
+ * Same as [configureSdk] but in a separate coroutine
  */
-internal fun configureSdkAskingUserBg(project: Project) {
+internal fun configureSdkBg(project: Project, mode: ModuleConfigurationMode) {
   project.service<MyService>().scope.launch(Dispatchers.Default) {
-    configureSdkAskingUser(project)
+    configureSdk(project, mode)
   }
 }
 
 /**
- * Ask user for list of modules and configure them
+ * Configure SDKs for [project] in [ModuleConfigurationMode] manner (see its doc for the semantics)
  */
-internal suspend fun configureSdkAskingUser(project: Project) {
+internal suspend fun configureSdk(project: Project, mode: ModuleConfigurationMode) {
   withContext(Dispatchers.Default) {
-    askUserMutex.withLock {
-      val moduleToSuggestedSdk = ModulesSdkConfigurator.create(project)
-      val modulesDTO = moduleToSuggestedSdk.modulesDTO
-      if (modulesDTO.isNotEmpty()) {
-        // No need to send empty list
-        SHOW_SDK_CONFIG_UI_TOPIC.sendToClient(project, ModulesDTO(modulesDTO))
+    configureMutex.withLock {
+      when (mode) {
+        ModuleConfigurationMode.AUTOMATIC -> {
+          configureSdkAutomatically(project)
+        }
+        ModuleConfigurationMode.INTERACTIVE -> {
+          val moduleToSuggestedSdk = ModulesSdkConfigurator.create(project)
+          val modulesDTO = moduleToSuggestedSdk.modulesDTO
+          if (modulesDTO.isNotEmpty()) {
+            // No need to send empty list
+            SHOW_SDK_CONFIG_UI_TOPIC.sendToClient(project, ModulesDTO(modulesDTO))
+          }
+        }
       }
     }
   }

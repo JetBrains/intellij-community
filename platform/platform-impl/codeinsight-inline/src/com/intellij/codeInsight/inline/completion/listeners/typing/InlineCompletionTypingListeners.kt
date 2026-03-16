@@ -98,6 +98,8 @@ class InlineCompletionTemplateListener : TemplateManagerListener {
   }
 
   companion object {
-    val TEMPLATE_IN_PROGRESS_KEY = Key.create<Unit>("inline.completion.template.in.progress")
+    private val TEMPLATE_IN_PROGRESS_KEY = Key.create<Unit>("inline.completion.template.in.progress")
+
+    fun isInlineRefactoringInProgress(editor: Editor): Boolean = editor.getUserData(TEMPLATE_IN_PROGRESS_KEY) != null
   }
 }

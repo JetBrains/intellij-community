@@ -18,7 +18,11 @@ package com.intellij.diagnostic.hprof.classstore
 import com.intellij.diagnostic.hprof.navigator.RootReason
 import com.intellij.diagnostic.hprof.parser.HProfEventBasedParser
 import com.intellij.diagnostic.hprof.util.IDMapper
-import com.intellij.diagnostic.hprof.visitors.*
+import com.intellij.diagnostic.hprof.visitors.CollectRootReasonsVisitor
+import com.intellij.diagnostic.hprof.visitors.CollectStringValuesVisitor
+import com.intellij.diagnostic.hprof.visitors.CollectThreadInfoVisitor
+import com.intellij.diagnostic.hprof.visitors.CompositeVisitor
+import com.intellij.diagnostic.hprof.visitors.CreateClassStoreVisitor
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap

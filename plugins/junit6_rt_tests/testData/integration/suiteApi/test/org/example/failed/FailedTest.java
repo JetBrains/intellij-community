@@ -1,0 +1,16 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.example.failed;
+
+import org.junit.jupiter.api.*;
+
+public class FailedTest {
+  @BeforeAll
+  public static void setup() {
+    throw new RuntimeException();
+  }
+
+  @Test
+  public void test() {
+
+  }
+}

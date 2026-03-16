@@ -15,6 +15,7 @@ class RestoreOriginalImageAction : BaseImageAction() {
   ): BufferedImage {
     transformationData.setIsNormalized(false)
     transformationData.applyTransformations(originalImage).also {
+      imageFile.putUserData(CURRENT_OPERATION_MODE_KEY, ImageOperationMode.ORIGINAL_IMAGE)
       ScientificImageActionsCollector.logRestoreOriginalImageInvoked()
       return it
     }

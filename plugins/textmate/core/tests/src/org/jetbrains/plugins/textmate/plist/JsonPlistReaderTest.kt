@@ -6,7 +6,7 @@ import org.jetbrains.plugins.textmate.plist.PListValue.Companion.dict
 import org.jetbrains.plugins.textmate.plist.PListValue.Companion.integer
 import org.jetbrains.plugins.textmate.plist.PListValue.Companion.real
 import org.jetbrains.plugins.textmate.plist.PListValue.Companion.string
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 

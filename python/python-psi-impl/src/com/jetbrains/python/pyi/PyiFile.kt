@@ -49,10 +49,12 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
       baseResults
   }
 
-  override fun processDeclarations(processor: PsiScopeProcessor,
-                                   resolveState: ResolveState,
-                                   lastParent: PsiElement?,
-                                   place: PsiElement): Boolean {
+  override fun processDeclarations(
+    processor: PsiScopeProcessor,
+    resolveState: ResolveState,
+    lastParent: PsiElement?,
+    place: PsiElement,
+  ): Boolean {
     val dunderAll = dunderAll ?: emptyList()
     val completingInPyiStub = PyiUtil.isInsideStub(place)
     val wrapper = object : DelegatingScopeProcessor(processor) {

@@ -36,6 +36,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//jvm/jvm-analysis-quickFix:analysis-quickFix",
     "//java/codeserver/core",
+    "//platform/execution",
   ],
   exports = ["//jvm/jvm-analysis-api:analysis"]
 )

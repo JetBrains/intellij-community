@@ -8,19 +8,30 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.hover.HoverListener
 import com.intellij.util.ui.TableViewModel
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Container
 import java.awt.ItemSelectable
-import java.awt.event.*
+import java.awt.event.ActionListener
+import java.awt.event.ComponentListener
+import java.awt.event.FocusListener
+import java.awt.event.ItemListener
+import java.awt.event.KeyListener
+import java.awt.event.MouseListener
 import java.beans.PropertyChangeListener
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.ListModel
-import javax.swing.event.*
+import javax.swing.event.CaretListener
+import javax.swing.event.ListDataListener
+import javax.swing.event.PopupMenuListener
+import javax.swing.event.TableModelListener
+import javax.swing.event.TreeModelListener
 import javax.swing.text.Document
 import javax.swing.text.JTextComponent
 import javax.swing.tree.TreeModel
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use setObservableProperty instead", ReplaceWith("setObservableProperty(this, value, parentDisposable)"))
 fun <T> ObservableMutableProperty<T>.set(value: T, parentDisposable: Disposable? = null) {
   val oldValue = get()

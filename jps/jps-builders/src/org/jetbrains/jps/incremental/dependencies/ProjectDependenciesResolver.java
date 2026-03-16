@@ -3,7 +3,16 @@ package org.jetbrains.jps.incremental.dependencies;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.BuildOutputConsumer;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetLoader;
+import org.jetbrains.jps.builders.BuildTargetRegistry;
+import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.JpsBuildBundle;
+import org.jetbrains.jps.builders.TargetOutputIndex;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.CompileContext;

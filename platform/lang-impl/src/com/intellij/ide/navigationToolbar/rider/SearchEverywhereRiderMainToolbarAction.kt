@@ -13,7 +13,12 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionResult
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.application.ApplicationManager
@@ -47,7 +52,7 @@ import javax.swing.plaf.basic.BasicGraphicsUtils.drawStringUnderlineCharAt
 /**
  * Search Everywhere action's item on the main Rider toolbar for the classic UI.
  */
-private class SearchEverywhereRiderMainToolbarAction : SearchEverywhereAction(), AnActionListener, DumbAware {
+internal class SearchEverywhereRiderMainToolbarAction : SearchEverywhereAction(), AnActionListener, DumbAware {
   companion object {
     const val SHOW_HOT_KEY_TIP: String = "com.intellij.ide.navigationToolbar.rider.showSearchEverywhereHotKeyTip"
   }

@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.daemon.GutterMark;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.*;
+import java.awt.Point;
 
 @ApiStatus.Internal
 public class GutterIconWithLocation {

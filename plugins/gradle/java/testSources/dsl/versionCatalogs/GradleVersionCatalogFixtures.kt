@@ -6,6 +6,15 @@ import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 
 internal object GradleVersionCatalogFixtures {
+
+  internal val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-base") { gradleVersion ->
+    withSettingsFile(gradleVersion) {
+      include("subproject1")
+    }
+    withBuildFile(gradleVersion, "subproject1")
+    withFile("gradle/libs.versions.toml", "")
+  }
+
   /**
    * In this case, subproject path in `include(...)` is not a literal argument, but a calculated value.
    * For the logic, that relies on `settings.gradle` file parsing to determine version catalogs available to a subproject,
@@ -40,5 +49,18 @@ internal object GradleVersionCatalogFixtures {
         """.trimIndent()
       )
       withBuildFile(gradleVersion, "subprojectsDir/subproject1")
+    }
+
+  internal val VERSION_CATALOG_COMPOSITE_BUILD_FIXTURE =
+    GradleTestFixtureBuilder.create("GradleVersionCatalogs-composite-build") { gradleVersion ->
+      withSettingsFile(gradleVersion) {
+        includeBuild("includedBuild1")
+      }
+      withSettingsFile(gradleVersion, "includedBuild1",) {
+        include("subproject1")
+      }
+      withBuildFile(gradleVersion, "includedBuild1")
+      withBuildFile(gradleVersion, "includedBuild1/subproject1")
+      withFile("includedBuild1/gradle/libs.versions.toml", "")
     }
 }

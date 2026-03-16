@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -37,11 +38,22 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.IconLabelButton
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.COLUMNS_SHORT
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.actionButton
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
@@ -55,7 +67,12 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import java.awt.event.ItemEvent
-import javax.swing.*
+import javax.swing.Box
+import javax.swing.BoxLayout
+import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JEditorPane
 
 private val logger = logger<GrazieStatusBarWidget>()
 
@@ -236,7 +253,9 @@ class GrazieStatusBarWidget(private val project: Project) : CustomStatusBarWidge
       button(text = GrazieBundle.message("grazie.connect.to.cloud.button.text")) {
         if (!GrazieCloudConnector.askUserConsentForCloud()) return@button
         logger.debug { "Connect to Grazie Cloud button started from widget" }
-        GrazieCloudConnector.connect(project)
+        ApplicationManager.getApplication().runWriteIntentReadAction(ThrowableComputable {
+          GrazieCloudConnector.connect(project)
+        })
       }.apply {
         applyToComponent {
           defaultButton()

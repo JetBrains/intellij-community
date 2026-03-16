@@ -4,7 +4,12 @@ package com.intellij.lang.properties.structureView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
+import com.intellij.ide.util.treeView.smartTree.Group;
+import com.intellij.ide.util.treeView.smartTree.Grouper;
+import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.editor.PropertyStructureViewElement;
@@ -18,7 +23,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class GroupByWordPrefixes implements Grouper, Sorter {
   private static final Logger LOG = Logger.getInstance(GroupByWordPrefixes.class);

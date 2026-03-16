@@ -6,9 +6,9 @@ import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.injection.KotlinInjectionTestBase
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.test.util.invalidateCaches
 
 class K2KotlinInjectionTest: KotlinInjectionTestBase() {
 
@@ -67,5 +67,25 @@ class K2KotlinInjectionTest: KotlinInjectionTestBase() {
         withCustomCompilerOptions(file.text, project, module) {
             myFixture.checkHighlighting()
         }
+    }
+
+    fun testInjectKotlinInJava() {
+        myFixture.configureByText(
+            "a.java",
+            """
+                
+                import org.intellij.lang.annotations.Language;
+                
+                class Main {
+                  {
+                     @Language("kotlin")
+                     var kotlinCode = "package foo; class A"; 
+                  }
+                }
+            """.trimIndent()
+        )
+
+        myFixture.checkHighlighting()
+
     }
 }

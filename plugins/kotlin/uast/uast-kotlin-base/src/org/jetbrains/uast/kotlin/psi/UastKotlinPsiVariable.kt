@@ -3,15 +3,30 @@ package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeElement
 import com.intellij.psi.impl.light.LightTypeElement
+import com.intellij.psi.impl.light.LightVariableBuilder
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.asJava.elements.LightVariableBuilder
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UNINITIALIZED_UAST_PART
+import org.jetbrains.uast.UastErrorType
+import org.jetbrains.uast.getParentOfType
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.KotlinUDeclarationsExpression
 import org.jetbrains.uast.kotlin.orAnonymous
@@ -25,7 +40,7 @@ class UastKotlinPsiVariable private constructor(
     psiParentProducer: () -> PsiElement?,
     val containingElement: UElement,
     val ktElement: KtElement
-) : LightVariableBuilder(
+) : LightVariableBuilder<UastKotlinPsiVariable>(
     manager,
     name,
     UastErrorType, // Type is calculated lazily
@@ -60,15 +75,15 @@ class UastKotlinPsiVariable private constructor(
 
     override fun getTextRange(): TextRange = ktElement.textRange
 
-    override fun getParent() = psiParent
+    override fun getParent(): PsiElement? = psiParent
 
-    override fun hasInitializer() = ktInitializer != null
+    override fun hasInitializer(): Boolean = ktInitializer != null
 
     override fun getInitializer(): PsiExpression? = psiInitializer
 
-    override fun getTypeElement() = psiTypeElement
+    override fun getTypeElement(): PsiTypeElement = psiTypeElement
 
-    override fun setInitializer(initializer: PsiExpression?) = throw NotImplementedError()
+    override fun setInitializer(initializer: PsiExpression?): Nothing = throw NotImplementedError()
 
     override fun getContainingFile(): PsiFile? = ktElement.containingFile
 
@@ -80,7 +95,7 @@ class UastKotlinPsiVariable private constructor(
 
     override fun isEquivalentTo(another: PsiElement?): Boolean = this == another || ktElement.isEquivalentTo(another)
 
-    override fun hashCode() = ktElement.hashCode()
+    override fun hashCode(): Int = ktElement.hashCode()
 
     companion object {
         fun create(

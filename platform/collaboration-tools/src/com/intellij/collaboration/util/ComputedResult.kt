@@ -11,7 +11,7 @@ import java.util.concurrent.CancellationException
  */
 @JvmInline
 value class ComputedResult<out T> internal constructor(
-  val result: Result<T>?
+  val result: Result<T>?,
 ) {
   val isSuccess: Boolean get() = result != null && result.isSuccess
   val isInProgress: Boolean get() = result == null
@@ -32,6 +32,8 @@ value class ComputedResult<out T> internal constructor(
       catch (e: Exception) {
         failure(e)
       }
+
+    fun <T> fromResult(result: Result<T>): ComputedResult<T> = ComputedResult(result)
   }
 }
 

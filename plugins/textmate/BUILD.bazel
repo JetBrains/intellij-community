@@ -17,6 +17,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
+    "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
     "//platform/ide-core-impl",
@@ -35,6 +36,7 @@ jvm_library(
     "//fleet/fastutil",
     "//libraries/fastutil",
     "//platform/util/xmlDom",
+    "//platform/lang-api:lang",
   ],
   exports = [
     "//plugins/textmate/core",

@@ -8,3 +8,4 @@ class X {
 var <T> List<T>.property: T by <caret>
 
 // EXIST: X
+// IGNORE_K2

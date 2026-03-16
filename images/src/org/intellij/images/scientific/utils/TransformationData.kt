@@ -8,7 +8,6 @@ import kotlinx.coroutines.withContext
 import java.awt.image.BufferedImage
 
 class ImageTransformationData(
-  private val originalImage: BufferedImage,
   private var rotationAngle: Int = 0,
   private var isNormalized: Boolean = false
 ) {
@@ -18,10 +17,9 @@ class ImageTransformationData(
     val CURRENT_NOT_NORMALIZED_IMAGE_KEY: Key<BufferedImage> = Key("CURRENT_NOT_NORMALIZED_IMAGE")
     val CURRENT_ANGLE_KEY: Key<Int> = Key("CURRENT_ANGLE")
 
-    fun getInstance(imageFile: VirtualFile?): ImageTransformationData? {
-      val originalImage = imageFile?.getUserData(ORIGINAL_IMAGE_KEY) ?: return null
-      return imageFile.getUserData(IMAGE_TRANSFORMATION_DATA_KEY) ?: ImageTransformationData(originalImage).also {
-        imageFile.putUserData(IMAGE_TRANSFORMATION_DATA_KEY, it)
+    fun getInstance(imageFile: VirtualFile?): ImageTransformationData {
+      return imageFile?.getUserData(IMAGE_TRANSFORMATION_DATA_KEY) ?: ImageTransformationData().also {
+        imageFile?.putUserData(IMAGE_TRANSFORMATION_DATA_KEY, it)
       }
     }
   }

@@ -5,7 +5,11 @@ import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
-import com.intellij.openapi.externalSystem.autoimport.*
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectListener
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectReloadContext
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener

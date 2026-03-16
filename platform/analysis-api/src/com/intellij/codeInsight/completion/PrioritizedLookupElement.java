@@ -5,7 +5,9 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.openapi.util.ClassConditionKey;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Using {@code PrioritizedLookupElement} allows plugging into 3 {@link CompletionWeigher}s: "priority", "explicitProximity" and
@@ -27,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see CompletionContributor
  */
-public final class PrioritizedLookupElement<T extends LookupElement> extends LookupElementDecorator<T> implements TransparentForInsertHandling {
+public final class PrioritizedLookupElement<T extends LookupElement> extends LookupElementDecorator<T> implements LookupElementWithEffectiveInsertHandler {
   @SuppressWarnings({"unchecked", "rawtypes"})
   public static final ClassConditionKey<PrioritizedLookupElement<?>> CLASS_CONDITION_KEY =
     (ClassConditionKey)ClassConditionKey.create(PrioritizedLookupElement.class);
@@ -53,6 +55,12 @@ public final class PrioritizedLookupElement<T extends LookupElement> extends Loo
 
   public int getExplicitProximity() {
     return myExplicitProximity;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable InsertHandler<?> getEffectiveInsertHandler() {
+    return getDelegateEffectiveInsertHandler();
   }
 
   /**

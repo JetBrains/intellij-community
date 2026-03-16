@@ -1,0 +1,53 @@
+package org.example;
+
+import java.util.LinkedList;
+import java.util.Queue;
+
+public class TestWithoutDebugName {
+   private Queue<String> queue = new LinkedList();
+
+   public TestWithoutDebugName() {
+      super();// 6
+   }// 8
+
+   public Queue<String> getQueue() {
+      return this.queue;// 11
+   }
+
+   public void setQueue(Queue<String> var1) {
+      this.queue = var1;// 15
+   }// 16
+}
+
+class 'org/example/TestWithoutDebugName' {
+   method '<init> ()V' {
+      1      9
+      2      9
+      3      9
+      f      10
+   }
+
+   method 'getQueue ()Ljava/util/Queue;' {
+      0      13
+      1      13
+      2      13
+      3      13
+      4      13
+   }
+
+   method 'setQueue (Ljava/util/Queue;)V' {
+      0      17
+      1      17
+      2      17
+      3      17
+      4      17
+      5      18
+   }
+}
+
+Lines mapping:
+6 <-> 10
+8 <-> 11
+11 <-> 14
+15 <-> 18
+16 <-> 19

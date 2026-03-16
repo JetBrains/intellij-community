@@ -12,8 +12,8 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
+import org.jetbrains.kotlin.idea.refactoring.loadTestConfiguration
 import org.jetbrains.kotlin.idea.refactoring.move.withConfiguredRuntime
-import org.jetbrains.kotlin.idea.refactoring.rename.loadTestConfiguration
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
@@ -41,8 +41,8 @@ abstract class AbstractK2CheckDescriptorMultiModuleMoveTest : KotlinMultiFileTes
                         config: JsonObject
                     ) {
                         allowAnalysisOnEdt {
-                            val elementAtCaret = elementsAtCaret.single()
-                            val editor = elementAtCaret.findExistingEditor()
+                            val firstElementAtCaret = elementsAtCaret.first()
+                            val editor = firstElementAtCaret.findExistingEditor()
                             val moveModel = K2MoveModel.create(elementsAtCaret.toTypedArray<PsiElement>(), null, editor)
                                 ?: error("Failed to create move model")
                             configureMoveModel(moveModel)

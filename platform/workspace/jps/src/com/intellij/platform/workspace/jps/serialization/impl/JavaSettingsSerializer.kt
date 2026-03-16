@@ -6,7 +6,11 @@ import com.intellij.java.workspace.entities.JavaModuleSettingsEntityBuilder
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
 import com.intellij.platform.workspace.storage.EntitySource
 import org.jdom.Element
-import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.EXCLUDE_OUTPUT_TAG
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.INHERIT_COMPILER_OUTPUT_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.MODULE_LANGUAGE_LEVEL_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.OUTPUT_TAG
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.TEST_OUTPUT_TAG
 
 internal object JavaSettingsSerializer {
   fun saveJavaSettings(javaSettings: JavaModuleSettingsEntity?, rootManagerElement: Element, context: SerializationContext) {

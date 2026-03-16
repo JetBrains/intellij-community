@@ -7,7 +7,12 @@ import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.FrameworkLibraryVersionFilter;
 import com.intellij.framework.library.FrameworkSupportWithLibrary;
-import com.intellij.ide.util.frameworkSupport.*;
+import com.intellij.ide.util.frameworkSupport.FrameworkRole;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
+import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
+import com.intellij.ide.util.frameworkSupport.OldCustomLibraryDescription;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -21,7 +26,8 @@ import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.util.List;
 
 public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModuleProvider {

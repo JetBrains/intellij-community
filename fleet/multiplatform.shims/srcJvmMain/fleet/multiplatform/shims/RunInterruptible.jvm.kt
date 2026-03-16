@@ -4,5 +4,5 @@ package fleet.multiplatform.shims
 import fleet.util.multiplatform.Actual
 import kotlin.coroutines.CoroutineContext
 
-@Actual("runInterruptibleImpl")
+@Actual
 suspend fun runInterruptibleImplJvm(context: CoroutineContext, block: () -> Any?) = kotlinx.coroutines.runInterruptible<Any?>(context, block)

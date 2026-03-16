@@ -1,0 +1,14 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_sealedClassesWhenExpression-a.kotlin_module
+  test/A.class
+  test/B.class
+  test/Base.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/sealedClassesWhenExpression/a/A.kt
+  kotlin/pureKotlin/sealedClassesWhenExpression/a/B.kt
+  kotlin/pureKotlin/sealedClassesWhenExpression/a/Base.kt
+End of files
+------------------------------------------
+Exit code: OK

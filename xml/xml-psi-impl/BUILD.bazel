@@ -30,6 +30,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//xml/xml-psi-api:psi",
     "//platform/core-api:core",
+    "//platform/projectModel-impl",
     "//platform/core-impl",
     "//xml/xml-parser:parser",
     "//platform/ide-core-impl",

@@ -17,7 +17,11 @@
 package org.jetbrains.builtInWebServer.ssi;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * Converts dates to strings using the same format specifiers as strftime

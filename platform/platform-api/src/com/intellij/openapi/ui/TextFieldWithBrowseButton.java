@@ -19,7 +19,7 @@ import com.intellij.util.ui.SwingUndoUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentListener;
 import java.awt.event.ActionListener;
 

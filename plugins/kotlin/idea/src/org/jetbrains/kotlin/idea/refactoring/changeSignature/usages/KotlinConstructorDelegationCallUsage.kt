@@ -3,11 +3,13 @@
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.usages
 
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 
+@K1Deprecation
 class KotlinConstructorDelegationCallUsage(
     call: KtConstructorDelegationCall,
     changeInfo: KotlinChangeInfo

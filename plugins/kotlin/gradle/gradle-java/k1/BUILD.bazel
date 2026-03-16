@@ -1,5 +1,14 @@
 ### auto-generated section `build kotlin.gradle.gradle-java.k1` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_k1",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
 
 resourcegroup(
   name = "k1_resources",
@@ -13,6 +22,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":k1_resources"],
+  kotlinc_opts = ":custom_k1",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -42,7 +52,7 @@ jvm_library(
     "//plugins/gradle/java",
     "//libraries/kotlin/reflect",
     "//plugins/kotlin/native",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:kotlin-tooling-core",
     "@lib//:kotlin-gradle-plugin-idea",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
@@ -57,6 +67,7 @@ jvm_library(
   name = "k1_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_k1",
   associates = [":k1"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -81,7 +92,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//libraries/guava",
     "@lib//:junit4",
-    "@lib//:kotlin-test",
+    "//libraries/kotlin/test:libraries-kotlinTest",
     "//plugins/kotlin/plugin/k1",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
@@ -112,7 +123,7 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-java",
     "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
     "//plugins/groovy/groovy-psi:psi",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/gradle/java",
     "//plugins/gradle:gradle-tests_test_lib",
@@ -120,7 +131,7 @@ jvm_library(
     "//plugins/gradle/java:java-tests_test_lib",
     "//plugins/kotlin/native",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:kotlin-tooling-core",
     "//plugins/kotlin/run-configurations/jvm",
     "//plugins/groovy",

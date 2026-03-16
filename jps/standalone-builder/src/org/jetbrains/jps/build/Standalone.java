@@ -11,7 +11,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
-import org.jetbrains.jps.cmdline.*;
+import org.jetbrains.jps.cmdline.BuildRunner;
+import org.jetbrains.jps.cmdline.JpsModelLoader;
+import org.jetbrains.jps.cmdline.JpsModelLoaderImpl;
+import org.jetbrains.jps.cmdline.LogSetup;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
@@ -23,7 +27,12 @@ import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;

@@ -17,7 +17,11 @@ package org.jetbrains.uast.evaluation
 
 import com.intellij.lang.Language
 import com.intellij.psi.PsiMethod
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UastPostfixOperator
+import org.jetbrains.uast.UastPrefixOperator
+import org.jetbrains.uast.UastQualifiedExpressionAccessType
 import org.jetbrains.uast.values.UUndeterminedValue
 import org.jetbrains.uast.values.UValue
 

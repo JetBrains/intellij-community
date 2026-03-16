@@ -9,7 +9,11 @@ import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.externalSystem.util.environment.TestEnvironment
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
-import com.intellij.openapi.roots.ui.configuration.*
+import com.intellij.openapi.roots.ui.configuration.SdkComboBox
+import com.intellij.openapi.roots.ui.configuration.SdkComboBoxTestCase
+import com.intellij.openapi.roots.ui.configuration.SdkListItem
+import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
+import com.intellij.openapi.roots.ui.configuration.SdkLookupProviderImpl
 import com.intellij.testFramework.replaceService
 
 abstract class ExternalSystemJdkComboBoxUtilTestCase : SdkComboBoxTestCase() {

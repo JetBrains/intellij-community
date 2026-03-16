@@ -38,6 +38,6 @@ object HatchConfiguration {
     return result
   }
 
-  suspend fun detectHatchExecutable(eelApi: EelApi): Path? = detectTool("hatch", eelApi).successOrNull
+  suspend fun detectHatchExecutable(eelApi: EelApi): Path? = detectTool("hatch", eelApi)
 }
 

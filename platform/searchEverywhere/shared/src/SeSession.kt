@@ -5,6 +5,10 @@ import fleet.kernel.DurableRef
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Search Everywhere session.
+ * The life duration is bound to the Search Everywhere popup window.
+ */
 @ApiStatus.Experimental
 @Serializable
 sealed interface SeSession

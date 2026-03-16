@@ -29,7 +29,8 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     .put("PyQt4", "http://pyqt.sourceforge.net/Docs/PyQt4/{class.name.lower}.html#{function.name}")
     .put("PyQt5", "http://doc.qt.io/qt-5/{class.name.lower}.html#{functionToProperty.name}{functionIsProperty?-prop}")
     .put("PySide", "http://pyside.github.io/docs/pyside/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}")
-    .put("gtk","http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}")
+    .put("gtk",
+         "http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}")
     .put("wx", "http://www.wxpython.org/docs/api/{module.name}.{class.name}-class.html#{function.name}")
     .put("kivy", "http://kivy.org/docs/api-{module.name}.html")
     .put("matplotlib", "http://matplotlib.org/api/{module.basename}_api.html#{element.qname}")

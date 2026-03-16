@@ -4,7 +4,6 @@ package com.intellij.python.community.interpreters.impl
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.validatePythonAndGetInfo
@@ -41,7 +40,7 @@ internal object InterpreterServiceImpl : InterpreterService {
   }
 
   override suspend fun getForModule(module: Module): Interpreter? {
-    val pythonSdk = ModuleRootManager.getInstance(module).sdk?.takeIf { isPythonSdk(it) } ?: return null
+    val pythonSdk = PythonSdkUtil.findPythonSdk(module)?.takeIf { isPythonSdk(it) } ?: return null
     val data = pythonSdk.getOrCreateAdditionalData()
 
     return findInterpreter(data, pythonSdk)
@@ -98,7 +97,7 @@ private suspend fun <T : PyFlavorData> createInterpreter(provider: InterpreterPr
   }
 }
 
-private class VanillaInterpreterProvider : InterpreterProvider<PyFlavorData.Empty> {
+internal class VanillaInterpreterProvider : InterpreterProvider<PyFlavorData.Empty> {
   override val ui: PyToolUIInfo? = null
   override val flavorDataClass: Class<PyFlavorData.Empty> = PyFlavorData.Empty::class.java
 

@@ -16,7 +16,7 @@ import com.intellij.platform.eel.provider.EelInitialization
  * It means that the suitable way to initialize Eel is right before the initialization of a project (when we can decide if we should access the environment),
  * and not earlier.
  */
-private class EelProjectPreInit : InitProjectActivity {
+internal class EelProjectPreInit : InitProjectActivity {
   override suspend fun run(project: Project) {
     EelInitialization.runEelInitialization(project)
   }

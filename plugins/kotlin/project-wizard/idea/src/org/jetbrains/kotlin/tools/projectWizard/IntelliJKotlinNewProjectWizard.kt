@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.impl.LibraryScopeCache
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import com.intellij.util.indexing.DumbModeAccessType
@@ -71,8 +70,7 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                     .bindSelected(useCompactProjectStructureProperty)
                     .whenStateChangedFromUi { logUseCompactProjectStructureChanged(it) }
                     .onApply { logUseCompactProjectStructureFinished(useCompactProjectStructure) }
-                    .gap(RightGap.SMALL)
-                contextHelp(KotlinNewProjectWizardUIBundle.message("tooltip.project.wizard.new.project.use.compact.project.structure"))
+                    .contextHelp(KotlinNewProjectWizardUIBundle.message("tooltip.project.wizard.new.project.use.compact.project.structure"))
             }
         }
 

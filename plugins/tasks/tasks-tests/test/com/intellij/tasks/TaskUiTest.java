@@ -16,7 +16,15 @@
 package com.intellij.tasks;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUiKind;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -28,7 +36,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 /**

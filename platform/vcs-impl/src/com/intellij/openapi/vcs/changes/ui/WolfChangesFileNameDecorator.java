@@ -10,7 +10,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 
 @ApiStatus.Internal
 public final class WolfChangesFileNameDecorator extends ChangesFileNameDecorator {

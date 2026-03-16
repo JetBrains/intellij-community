@@ -47,6 +47,5 @@ internal class GitBranchPopupFetchAction : GitFetch() {
 
   private fun isBusy(project: Project): Boolean {
     return GitFetchSupport.fetchSupport(project).isFetchRunning
-           || GitBranchIncomingOutgoingManager.getInstance(project).isUpdating
   }
 }

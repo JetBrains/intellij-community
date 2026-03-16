@@ -23,14 +23,24 @@ import com.intellij.util.containers.ContainerUtil;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.generate.element.*;
+import org.jetbrains.java.generate.element.ClassElement;
+import org.jetbrains.java.generate.element.Element;
+import org.jetbrains.java.generate.element.ElementComparator;
+import org.jetbrains.java.generate.element.ElementFactory;
+import org.jetbrains.java.generate.element.ElementUtils;
+import org.jetbrains.java.generate.element.FieldElement;
+import org.jetbrains.java.generate.element.GenerationHelper;
 import org.jetbrains.java.generate.exception.GenerateCodeException;
 import org.jetbrains.java.generate.exception.PluginException;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 import org.jetbrains.java.generate.velocity.VelocityFactory;
 
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public final class GenerationUtil {
   private static final Logger LOG = Logger.getInstance(GenerationUtil.class);

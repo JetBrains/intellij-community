@@ -5,21 +5,16 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.ParamsGroup;
-import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.xdebugger.XDebuggerTestUtil;
-import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
-import com.jetbrains.python.debugger.PyDebugRunner;
-import com.jetbrains.python.run.*;
+import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import com.jetbrains.python.run.PythonConfigurationType;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 

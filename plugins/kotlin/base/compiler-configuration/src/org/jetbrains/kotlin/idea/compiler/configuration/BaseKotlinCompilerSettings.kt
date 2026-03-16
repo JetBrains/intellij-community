@@ -14,7 +14,13 @@ import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SerializationFilterBase
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
-import org.jetbrains.kotlin.cli.common.arguments.*
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.Freezable
+import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.K2JsArgumentConstants
+import org.jetbrains.kotlin.cli.common.arguments.collectProperties
+import org.jetbrains.kotlin.cli.common.arguments.frozen
+import org.jetbrains.kotlin.cli.common.arguments.unfrozen
 import kotlin.reflect.KClass
 
 abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(private val project: Project) :

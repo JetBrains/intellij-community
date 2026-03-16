@@ -72,13 +72,22 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
     catch (ExecutionException e) {
       throw new IOException("Failed to run " + commandLine.getCommandLineString(), e);
     }
-    // Windows Subsystem for Linux has no installed distributions
-    if (output.getExitCode() != 0 && output.getStdout().trim().endsWith("https://aka.ms/wslstore")) {
-      LOG.info("Windows Subsystem for Linux has no installed distributions");
+    if (!isWslInstalled(output)) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("WSL is not installed or has no installed distributions: " + output);
+      }
+      else {
+        LOG.info("WSL is not installed or has no installed distributions");
+      }
       return Collections.emptyList();
     }
     if (isWslDisabled(output)) {
-      LOG.info("WSL is disabled in the system");
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("WSL is disabled in the system: " + output);
+      }
+      else {
+        LOG.info("WSL is disabled in the system");
+      }
       return Collections.emptyList();
     }
     if (output.isTimeout() || output.getExitCode() != 0 || !output.getStderr().isEmpty()) {
@@ -97,6 +106,16 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
     }
     String stdout = output.getStdout();
     return stdout.contains("--install") && stdout.contains("--list") && stdout.contains("--help");
+  }
+
+  private static boolean isWslInstalled(@NotNull ProcessOutput output) {
+    if (output.getExitCode() == 0) {
+      return true;
+    }
+    String std = output.getStdout() + "\n" + output.getStderr();
+    return !std.contains("wsl.exe --install") &&
+           !std.contains("https://aka.ms/wslstore") &&
+           !std.contains("https://aka.ms/wslinstall");
   }
 
   /**

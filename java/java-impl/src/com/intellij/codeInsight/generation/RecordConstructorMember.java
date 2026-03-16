@@ -4,7 +4,15 @@ package com.intellij.codeInsight.generation;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.AccessModifier;
@@ -14,7 +22,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 public class RecordConstructorMember implements ClassMember {
   private final PsiClass myRecord;

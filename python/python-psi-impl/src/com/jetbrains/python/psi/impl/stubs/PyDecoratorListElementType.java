@@ -41,7 +41,8 @@ public class PyDecoratorListElementType extends PyStubElementType<PyDecoratorLis
   }
 
   @Override
-  public @NotNull PyDecoratorListStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public @NotNull PyDecoratorListStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub)
+    throws IOException {
     return new PyDecoratorListStubImpl(parentStub);
   }
 }

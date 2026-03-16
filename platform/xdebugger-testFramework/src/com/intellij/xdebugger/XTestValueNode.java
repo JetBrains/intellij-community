@@ -10,7 +10,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.concurrent.Semaphore;
 
 public class XTestValueNode extends XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl {

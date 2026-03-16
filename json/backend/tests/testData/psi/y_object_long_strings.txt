@@ -1,0 +1,30 @@
+JsonFile: y_object_long_strings.json
+  JsonObject
+    PsiElement({)('{')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"x"')
+      PsiElement(:)(':')
+      JsonArray
+        PsiElement([)('[')
+        JsonObject
+          PsiElement({)('{')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"id"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"')
+          PsiElement(})('}')
+        PsiElement(])(']')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"id"')
+      PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"')
+    PsiElement(})('}')

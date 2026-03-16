@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.execution.target;
 
 import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.execution.target.TargetProgressIndicator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

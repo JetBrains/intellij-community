@@ -4,6 +4,7 @@ package com.intellij.util.concurrency
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.virtualThreads.IntelliJVirtualThreads
 import com.intellij.concurrency.virtualThreads.asyncAsVirtualThread
+import com.intellij.concurrency.virtualThreads.inVirtualThread
 import com.intellij.concurrency.virtualThreads.launchAsVirtualThread
 import com.intellij.concurrency.virtualThreads.virtualThread
 import com.intellij.diagnostic.dumpCoroutines
@@ -11,8 +12,16 @@ import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.job
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -21,7 +30,11 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.CoroutineContext
-import kotlin.test.*
+import kotlin.test.assertContains
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 @TestApplication
 class VirtualThreadTest {
@@ -209,5 +222,15 @@ class VirtualThreadTest {
 
   fun interestingStackTrace(action: () -> Unit) {
     action()
+  }
+
+  @Test
+  fun `inVirtualThread runs computations in a virtual thread`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val x = inVirtualThread {
+      assertContains(Thread.currentThread().toString(), "DefaultDispatcher")
+      assertContains(Thread.currentThread().toString(), "VirtualThread")
+      42
+    }
+    assertEquals(42, x)
   }
 }

@@ -22,10 +22,15 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.matching.MatchingMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class JavaTestFinder implements TestFinder {
   @Override
@@ -102,7 +107,7 @@ public class JavaTestFinder implements TestFinder {
     if (klassName.isEmpty()) {
       klassName = klass.getName();
     }
-    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + klassName, NameUtil.MatchingCaseSensitivity.NONE);
+    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + klassName, MatchingMode.IGNORE_CASE);
     for (String eachName : ContainerUtil.newHashSet(cache.getAllClassNames())) {
       if (matcher.matches(eachName)) {
         for (PsiClass eachClass : cache.getClassesByName(eachName, scope)) {

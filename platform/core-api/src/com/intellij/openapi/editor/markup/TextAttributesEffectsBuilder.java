@@ -6,12 +6,27 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.util.*;
+import java.awt.Color;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.function.BiConsumer;
 
-import static com.intellij.openapi.editor.markup.EffectType.*;
-import static com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder.EffectSlot.*;
+import static com.intellij.openapi.editor.markup.EffectType.BOLD_DOTTED_LINE;
+import static com.intellij.openapi.editor.markup.EffectType.BOLD_LINE_UNDERSCORE;
+import static com.intellij.openapi.editor.markup.EffectType.BOXED;
+import static com.intellij.openapi.editor.markup.EffectType.FADED;
+import static com.intellij.openapi.editor.markup.EffectType.LINE_UNDERSCORE;
+import static com.intellij.openapi.editor.markup.EffectType.ROUNDED_BOX;
+import static com.intellij.openapi.editor.markup.EffectType.SLIGHTLY_WIDER_BOX;
+import static com.intellij.openapi.editor.markup.EffectType.STRIKEOUT;
+import static com.intellij.openapi.editor.markup.EffectType.WAVE_UNDERSCORE;
+import static com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder.EffectSlot.FOREGROUND_SLOT;
+import static com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder.EffectSlot.FRAME_SLOT;
+import static com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder.EffectSlot.STRIKE_SLOT;
+import static com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder.EffectSlot.UNDERLINE_SLOT;
 
 /**
  * Allows to build effects for the TextAttributes. Allows to cover effects on the current state and slip effects under it.

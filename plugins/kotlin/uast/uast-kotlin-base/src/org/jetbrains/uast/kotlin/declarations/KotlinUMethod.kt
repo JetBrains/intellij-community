@@ -3,19 +3,47 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.psi.*
+import com.intellij.psi.NavigatablePsiElement
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiTypes
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.elements.isGetter
 import org.jetbrains.kotlin.asJava.elements.isSetter
 import org.jetbrains.kotlin.name.JvmStandardClassIds.JVM_STATIC_FQ_NAME
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addIfNotNull
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnchorOwner
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UTypeReferenceExpression
+import org.jetbrains.uast.UastErrorType
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 
 @ApiStatus.Internal
@@ -56,9 +84,9 @@ open class KotlinUMethod(
 
     override val psi: PsiMethod = unwrap<UMethod, PsiMethod>(psi)
 
-    override val javaPsi = psi
+    override val javaPsi: PsiMethod = psi
 
-    override fun getSourceElement() = sourcePsi ?: this
+    override fun getSourceElement(): NavigatablePsiElement = sourcePsi ?: this
 
     private val kotlinOrigin = getKotlinMemberOrigin(psi.originalElement) ?: sourcePsi
 
@@ -67,7 +95,7 @@ open class KotlinUMethod(
         return unwrapFakeFileForLightClass(psi.containingFile)
     }
 
-    override fun getNameIdentifier() = UastLightIdentifier(psi, kotlinOrigin)
+    override fun getNameIdentifier(): UastLightIdentifier = UastLightIdentifier(psi, kotlinOrigin)
 
     override val uAnnotations: List<UAnnotation>
         get() = uAnnotationsPart.getOrBuild {
@@ -122,7 +150,7 @@ open class KotlinUMethod(
                 if (!isConstructor && returnType != PsiTypes.voidType()) {
                     append("return ")
                 }
-                append(jvmOverload!!.name)
+                append(jvmOverload!!.name.quoteIfNeeded())
                 callArguments.joinTo(this, prefix = "(", postfix = ")", separator = ", ")
             }
         val trampoline = KtPsiFactory.contextual(sourcePsi ?: javaPsi).createExpression(trampolineText)

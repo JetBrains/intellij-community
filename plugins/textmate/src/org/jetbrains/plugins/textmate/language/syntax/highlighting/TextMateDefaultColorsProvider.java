@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 
-import java.awt.*;
+import java.awt.Font;
 import java.util.Map;
 import java.util.Set;
 

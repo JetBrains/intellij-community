@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.pycharm
 
 import org.jetbrains.intellij.build.ApplicationInfoProperties
+import org.jetbrains.intellij.build.FileAssociation
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.MacDistributionCustomizer
@@ -9,10 +10,13 @@ import java.nio.file.Path
 
 open class PyCharmMacDistributionCustomizer(projectHome: Path) : MacDistributionCustomizer() {
   init {
-    icnsPath = "$projectHome/python/build/resources/PyCharmCore.icns"
-    icnsPathForEAP = "$projectHome/python/build/resources/PyCharmCore_EAP.icns"
+    icnsPath = projectHome.resolve("python/build/resources/PyCharmCore.icns")
+    icnsPathForEAP = projectHome.resolve("python/build/resources/PyCharmCore_EAP.icns")
     bundleIdentifier = "com.jetbrains.pycharm.ce"
-    dmgImagePath = "$projectHome/python/build/resources/dmg_background.tiff"
+    dmgImagePath = projectHome.resolve("python/build/resources/dmg_background.tiff")
+    fileAssociations = PyCharmPropertiesBase.SUPPORTED_FILE_EXTENSIONS.map {
+      FileAssociation(it)
+    }
   }
 
   override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
@@ -25,6 +29,7 @@ open class PyCharmMacDistributionCustomizer(projectHome: Path) : MacDistribution
     PyCharmBuildUtils.copySkeletons(context, targetDir, "skeletons-mac*.zip")
   }
 
-  override fun getCustomIdeaProperties(appInfo: ApplicationInfoProperties): Map<String, String> =
-    mapOf("ide.mac.useNativeClipboard" to "false")
+  override fun getCustomIdeaProperties(appInfo: ApplicationInfoProperties): Map<String, String> {
+    return mapOf("ide.mac.useNativeClipboard" to "false")
+  }
 }

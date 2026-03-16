@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.util.DocumentUtil
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalPromptModel
 import org.jetbrains.plugins.terminal.block.TerminalPromotedEditorAction
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalPromptModel
 import kotlin.math.max
 
 /**

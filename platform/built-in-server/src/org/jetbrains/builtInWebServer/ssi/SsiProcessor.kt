@@ -8,7 +8,8 @@ import com.intellij.util.text.CharArrayUtil
 import io.netty.buffer.ByteBufUtf8Writer
 import java.io.IOException
 import java.nio.file.Path
-import java.util.*
+import java.util.Date
+import java.util.Locale
 import kotlin.io.path.fileSize
 import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.inputStream

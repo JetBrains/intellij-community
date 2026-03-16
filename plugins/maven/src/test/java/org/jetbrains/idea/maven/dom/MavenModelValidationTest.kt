@@ -12,6 +12,8 @@ import org.jetbrains.idea.maven.dom.inspections.MavenModelVersionMissedInspectio
 import org.junit.Test
 
 class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
+  override fun skipPluginResolution() = false
+
   override fun setUp() = runBlocking {
     super.setUp()
     importProjectAsync("""

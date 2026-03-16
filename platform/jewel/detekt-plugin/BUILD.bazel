@@ -42,7 +42,7 @@ jvm_library(
   resources = [":detekt-plugin_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "@lib//:platform-jewel-detekt_plugin-jetbrains-kotlin-compiler-embeddable",
     "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-api",
@@ -57,7 +57,7 @@ jvm_library(
   associates = [":detekt-plugin"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "@lib//:platform-jewel-detekt_plugin-jetbrains-kotlin-compiler-embeddable",
     "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-api",

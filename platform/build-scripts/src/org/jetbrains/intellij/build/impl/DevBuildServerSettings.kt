@@ -4,6 +4,8 @@ package org.jetbrains.intellij.build.impl
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.intellij.openapi.application.PathManager
+import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import kotlin.io.path.exists
@@ -17,6 +19,7 @@ data class DevBuildServerSettings(
   val enabledForModules: List<String>,
   val disabledForModules: List<String>,
   val jvmArgs: List<String>,
+  val envs: List<String>,
 ) {
   companion object {
     private val runners: List<DevBuildServerSettings> by lazy {
@@ -36,6 +39,7 @@ data class DevBuildServerSettings(
           enabledForModules = it.path("enabledForModules").map(JsonNode::asText),
           disabledForModules = it.path("disabledForModules").map(JsonNode::asText),
           jvmArgs = it.path("jvmArgs").map(JsonNode::asText),
+          envs = it.path("envs").map(JsonNode::asText),
         )
       }
     }
@@ -59,10 +63,21 @@ data class DevBuildServerSettings(
       }
   }
 
-  fun apply(mainModule: String, args: MutableList<String>) {
-    args.addAll(jvmArgs.map {
-      it.replace($$"$TEST_MODULE_NAME$", mainModule)
+  fun apply(mainClass: String, mainModule: String, args: MutableList<String>, environment: MutableMap<String, String>) {
+    environment.putAll(envs.map {
+      val (key, value) = it.split('=', limit = 2)
+      key to value.replacePlaceholders(mainModule)
     })
-    args.add(mainClass)
+
+    args.addAll(jvmArgs.map {
+      it.replacePlaceholders(mainModule)
+    })
+    val entryPointClass = System.getProperty("idea.dev.build.test.entry.point.class").nullize(nullizeSpaces = true) ?: mainClass
+    args.add("-Didea.dev.build.test.entry.point.class=$entryPointClass")
+    args.add(this.mainClass)
   }
+
+  private fun String.replacePlaceholders(mainModule: String) =
+    this.replace("${'$'}TEST_MODULE_NAME$", mainModule)
+      .replace("${'$'}TEST_PROJECT_BASE_PATH$", PathManager.getHomeDir().toString())
 }

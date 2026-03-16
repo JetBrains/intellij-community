@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.search
 
-import com.intellij.find.*
+import com.intellij.find.FindManager
+import com.intellij.find.FindModel
+import com.intellij.find.FindUtil
+import com.intellij.find.SearchReplaceComponent
+import com.intellij.find.SearchSession
 import com.intellij.find.editorHeaderActions.NextOccurrenceAction
 import com.intellij.find.editorHeaderActions.PrevOccurrenceAction
 import com.intellij.find.editorHeaderActions.StatusTextAction

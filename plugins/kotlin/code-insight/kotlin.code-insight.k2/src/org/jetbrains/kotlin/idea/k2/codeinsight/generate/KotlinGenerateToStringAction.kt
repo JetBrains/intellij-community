@@ -12,11 +12,11 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinPsiElementMemberChooserObject
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinPsiElementMemberChooserObject.Companion.getKotlinMemberChooserObject
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinEqualsHashCodeToStringSymbolUtils.findToStringMethodForClass
+import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinEqualsHashCodeToStringSymbolUtils.getPropertiesToUseInGeneratedMember
 import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.GenerateEqualsAndHashCodeUtils.confirmMemberRewrite
-import org.jetbrains.kotlin.idea.k2.codeinsight.generate.GenerateEqualsAndHashCodeUtils.findToStringMethodForClass
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.GenerateEqualsAndHashCodeUtils.generateToString
-import org.jetbrains.kotlin.idea.k2.codeinsight.generate.GenerateEqualsAndHashCodeUtils.getPropertiesToUseInGeneratedMember
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtClass
@@ -46,7 +46,7 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
     public override fun prepareMembersInfo(klass: KtClassOrObject, project: Project, editor: Editor): Info? {
         val (preInfo, existsToString) = analyzeInModalWindow(klass, KotlinBundle.message("fix.change.signature.prepare")) {
             val classSymbol = klass.symbol as? KaClassSymbol ?: return@analyzeInModalWindow null
-            val toStringMethod = findToStringMethodForClass(classSymbol)
+            val toStringMethod = this.findToStringMethodForClass(classSymbol)
             val existsToString = toStringMethod?.containingSymbol == classSymbol && toStringMethod.origin == KaSymbolOrigin.SOURCE
 
             val properties = getPropertiesToUseInGeneratedMember(klass)

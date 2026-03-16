@@ -6,7 +6,7 @@ import com.intellij.lang.properties.psi.Property
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vfs.VirtualFile
 
-private class MavenWrapperImplicitPropertyUsageProvider : ImplicitPropertyUsageProvider {
+internal class MavenWrapperImplicitPropertyUsageProvider : ImplicitPropertyUsageProvider {
   override fun isUsed(property: Property): Boolean {
     val file = property.containingFile.virtualFile
     return nameEqual(file, "maven-wrapper.properties") && nameEqual(file?.parent, "wrapper")

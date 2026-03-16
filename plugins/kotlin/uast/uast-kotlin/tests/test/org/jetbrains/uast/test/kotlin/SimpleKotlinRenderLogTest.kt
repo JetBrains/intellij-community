@@ -2,10 +2,15 @@
 package org.jetbrains.uast.test.kotlin
 
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UFile
 import org.junit.Test
 
 class SimpleKotlinRenderLogTest : AbstractKotlinUastTest(), AbstractKotlinRenderLogTest {
+
+    override fun checkLeak(node: UElement) {
+        checkDescriptorsLeak(node)
+    }
 
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K1

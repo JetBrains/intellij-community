@@ -11,7 +11,13 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSign
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtContextParameterList
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
@@ -22,7 +28,7 @@ object ContextParameterUtils {
      */
     fun isConvertibleContextParameter(ktParameter: KtParameter): Boolean {
         if (!ktParameter.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) return false
-        val contextParameterList = ktParameter.parent as? KtContextReceiverList ?: return false
+        val contextParameterList = ktParameter.parent as? KtContextParameterList ?: return false
         val contextParameterListOwner = contextParameterList.ownerDeclaration
         return contextParameterListOwner is KtCallableDeclaration
     }
@@ -84,11 +90,7 @@ object ContextParameterUtils {
      * The utility mitigates the awkward declaration of context parameters in the Kotlin PSI hierarchy.
      */
     fun KtCallableDeclaration.getContextParameters(): List<KtParameter>? {
-        return when (this) {
-            is KtNamedFunction -> contextReceiverList?.contextParameters()
-            is KtProperty -> contextReceiverList?.contextParameters()
-            else -> null
-        }
+        return takeIf { this is KtNamedFunction || this is KtProperty }?.contextParameters
     }
 
     /**

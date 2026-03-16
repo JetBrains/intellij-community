@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package andel.intervals.impl
 
-import andel.intervals.*
+import andel.intervals.Interval
+import andel.intervals.Intervals
+import andel.intervals.IntervalsFactory
+import andel.intervals.getById
+import andel.intervals.keyed
 import andel.operation.Operation
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf

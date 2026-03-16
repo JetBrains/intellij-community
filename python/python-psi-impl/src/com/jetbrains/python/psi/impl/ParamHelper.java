@@ -20,7 +20,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.ast.PyAstSingleStarParameter;
 import com.jetbrains.python.ast.PyAstSlashParameter;
 import com.jetbrains.python.ast.impl.ParamHelperCore;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PySingleStarParameter;
+import com.jetbrains.python.psi.PySlashParameter;
+import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.PyCallableType;
@@ -43,6 +49,7 @@ public final class ParamHelper {
   /**
    * Runs a {@link ParamWalker ParamWalker} down the array of parameters, recursively descending into tuple parameters.
    * If the array is from PyParamaterList.getParameters(), parameters are visited in the order of textual appearance
+   *
    * @param params where to walk
    * @param walker the walker with callbacks.
    */
@@ -136,7 +143,9 @@ public final class ParamHelper {
   public static @NotNull String getNameInSignature(@NotNull PyCallableParameter parameter) {
     final StringBuilder sb = new StringBuilder();
 
-    if (parameter.isPositionalContainer()) sb.append("*");
+    if (parameter.isPositionalContainer()) {
+      sb.append("*");
+    }
     else if (parameter.isKeywordContainer()) sb.append("**");
 
     final String name = parameter.getName();
@@ -178,8 +187,11 @@ public final class ParamHelper {
 
   public static boolean isSelfArgsKwargsCallable(@NotNull PyCallableType type, @NotNull TypeEvalContext context) {
     final List<PyCallableParameter> parameters = type.getParameters(context);
-    return parameters != null
-           && parameters.size() == 3 &&
+    return parameters != null && isSelfArgsKwargsSignature(parameters);
+  }
+
+  public static boolean isSelfArgsKwargsSignature(@NotNull List<PyCallableParameter> parameters) {
+    return parameters.size() == 3 &&
            parameters.get(0).isSelf() &&
            parameters.get(1).isPositionalContainer() &&
            parameters.get(2).isKeywordContainer();
@@ -187,8 +199,11 @@ public final class ParamHelper {
 
   public static boolean isArgsKwargsCallable(@NotNull PyCallableType type, @NotNull TypeEvalContext context) {
     final List<PyCallableParameter> parameters = type.getParameters(context);
-    return parameters != null
-           && parameters.size() == 2 &&
+    return parameters != null && isArgsKwargsSignature(parameters);
+  }
+
+  public static boolean isArgsKwargsSignature(@NotNull List<PyCallableParameter> parameters) {
+    return parameters.size() == 2 &&
            parameters.get(0).isPositionalContainer() &&
            parameters.get(1).isKeywordContainer();
   }
@@ -196,25 +211,28 @@ public final class ParamHelper {
   public interface ParamWalker {
     /**
      * Is called when a tuple parameter is encountered, before visiting any parameters nested in it.
+     *
      * @param param the parameter
      * @param first true iff it is the first in the list
-     * @param last true it is the last in the list
+     * @param last  true it is the last in the list
      */
     void enterTupleParameter(PyTupleParameter param, boolean first, boolean last);
 
     /**
      * Is called when all nested parameters of a given tuple parameter are visited.
+     *
      * @param param the parameter
      * @param first true iff it is the first in the list
-     * @param last true it is the last in the list
+     * @param last  true it is the last in the list
      */
     void leaveTupleParameter(PyTupleParameter param, boolean first, boolean last);
 
     /**
      * Is called when a named parameter is encountered.
+     *
      * @param param the parameter
      * @param first true iff it is the first in the list
-     * @param last true it is the last in the list
+     * @param last  true it is the last in the list
      */
     void visitNamedParameter(PyNamedParameter param, boolean first, boolean last);
 
@@ -259,5 +277,4 @@ public final class ParamHelper {
     );
     return result;
   }
-
 }

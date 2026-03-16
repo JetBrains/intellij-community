@@ -3,6 +3,9 @@ package com.intellij.platform.testFramework.junit5.projectStructure.fixture.impl
 
 import com.intellij.openapi.projectRoots.SdkType
 
-internal class SdkBuilderImpl(val name: String, val type: SdkType, path: String, projectStructure: ProjectStructure) : DirectoryBuilderBase(path, projectStructure) {
-
-}
+internal class SdkBuilderImpl(
+  val name: String,
+  val type: SdkType,
+  path: String,
+  projectStructure: ProjectStructure,
+) : DirectoryBuilderBase(path, projectStructure)

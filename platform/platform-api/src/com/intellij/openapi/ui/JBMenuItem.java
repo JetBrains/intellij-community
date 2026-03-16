@@ -17,8 +17,10 @@ package com.intellij.openapi.ui;
 
 import com.intellij.util.ui.GraphicsUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JMenuItem;
+import java.awt.Graphics;
 
 /**
  * @author ignatov

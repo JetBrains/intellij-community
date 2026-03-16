@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="BKt" type="JetRunConfigurationType" nameIsGenerated="true">
+  <configuration default="false" name="BKt" type="Application" nameIsGenerated="true">
     <option name="MAIN_CLASS_NAME" value="module2.BKt" />
     <module name="module2" />
     <shortenClasspath name="NONE" />

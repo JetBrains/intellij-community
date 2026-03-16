@@ -20,7 +20,13 @@ import com.intellij.uast.UastVisitorAdapter
 import com.intellij.usageView.UsageViewTypeLocation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.USuperExpression
+import org.jetbrains.uast.getContainingUClass
+import org.jetbrains.uast.getContainingUMethod
 
 private inline val ANNOTATION_NAME get() = ApiStatus.OverrideOnly::class.java.canonicalName!!
 

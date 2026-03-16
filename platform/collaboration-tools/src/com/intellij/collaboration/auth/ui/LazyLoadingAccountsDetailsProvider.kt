@@ -9,10 +9,14 @@ import com.intellij.collaboration.ui.icon.CachingIconsProvider
 import com.intellij.collaboration.ui.items
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.ImageUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import java.awt.Image
 import java.util.concurrent.ConcurrentHashMap

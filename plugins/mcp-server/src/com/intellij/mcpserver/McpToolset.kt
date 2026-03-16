@@ -52,5 +52,10 @@ import kotlin.coroutines.CoroutineContext
 interface McpToolset {
   companion object {
     val EP: ExtensionPointName<McpToolset> = ExtensionPointName<McpToolset>("com.intellij.mcpServer.mcpToolset")
+
+    val enabledToolsets: List<McpToolset>
+      get() = EP.extensionList.filter { it.isEnabled() }
   }
+
+  fun isEnabled(): Boolean = true
 }

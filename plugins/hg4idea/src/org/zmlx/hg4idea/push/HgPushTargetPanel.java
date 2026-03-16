@@ -22,7 +22,7 @@ import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.util.List;
 
 public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {

@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_privateValAccessorChanged-a.kotlin_module
+  test/ClassA.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/privateValAccessorChanged/a/ClassA.kt
+End of files
+------------------------------------------
+Exit code: OK

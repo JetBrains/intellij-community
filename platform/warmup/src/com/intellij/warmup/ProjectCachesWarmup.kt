@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup
 
 import com.intellij.ide.environment.impl.EnvironmentUtil
@@ -15,11 +15,24 @@ import com.intellij.platform.util.ArgsParser
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistory
 import com.intellij.util.indexing.diagnostic.ProjectIndexingActivityHistoryListener
-import com.intellij.warmup.util.*
-import kotlinx.coroutines.*
+import com.intellij.warmup.util.ConsoleLog
+import com.intellij.warmup.util.WarmupLogger
+import com.intellij.warmup.util.WarmupProjectArgs
+import com.intellij.warmup.util.WarmupProjectArgsImpl
+import com.intellij.warmup.util.importOrOpenProjectAsync
+import com.intellij.warmup.util.initLogger
+import com.intellij.warmup.util.isPredicateBasedWarmup
+import com.intellij.warmup.util.runTaskAndLogTime
+import com.intellij.warmup.util.withLoggingProgresses
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 import kotlin.system.exitProcess
@@ -217,7 +230,7 @@ private fun parseCommandLineArguments(args: List<String>): WarmupProjectArgs {
 
 private suspend fun buildProject(project: Project, commandArgs: WarmupProjectArgs) {
   val buildMode = getBuildMode(commandArgs)
-  val builders = System.getenv()["IJ_WARMUP_BUILD_BUILDERS"]?.split(";")?.toHashSet()
+  val builders = System.getenv("IJ_WARMUP_BUILD_BUILDERS")?.split(";")?.toHashSet()
   if (buildMode != null) {
     waitForBuilders(project, buildMode, builders)
   }
@@ -259,4 +272,3 @@ private suspend fun exitApplication() {
     ApplicationManager.getApplication().exit(false, true, false)
   }
 }
-

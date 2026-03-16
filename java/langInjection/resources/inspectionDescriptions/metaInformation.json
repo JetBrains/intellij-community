@@ -2,23 +2,23 @@
   "inspections": [
     {
       "id": "InjectionNotApplicable",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "PatternNotApplicable",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "UnknownLanguage",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "LanguageMismatch",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "PatternOverriddenByNonAnnotatedMethod",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "PatternValidation",

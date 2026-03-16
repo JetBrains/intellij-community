@@ -15,6 +15,7 @@ jvm_library(
   resources = [":maven_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/external-system-impl:externalSystem-impl",
@@ -28,6 +29,8 @@ jvm_library(
     "//platform/observable",
     "//platform/platform-impl:ide-impl",
     "//plugins/maven",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/maven",
   ]
 )
 ### auto-generated section `build intellij.kotlin.projectWizard.maven` end

@@ -1,0 +1,3 @@
+fun abc() {
+    ""<caret>.toString()
+}

@@ -33,10 +33,12 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.statistics.GradleActionsUsagesCollector;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
+import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;

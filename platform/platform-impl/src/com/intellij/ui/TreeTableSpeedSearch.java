@@ -66,19 +66,6 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
     myToStringConvertor = toStringConvertor;
   }
 
-  /**
-   * @deprecated Use the static method {@link TreeTableSpeedSearch#installOn(TreeTable)} to install a speed search.
-   * <p>
-   * For inheritance use the non-deprecated constructor.
-   * <p>
-   * Also, note that non-deprecated constructor is side effect free, and you should call for {@link TreeTableSpeedSearch#setupListeners()}
-   * method to enable speed search
-   */
-  @Deprecated(forRemoval = true)
-  public TreeTableSpeedSearch(TreeTable tree) {
-    this(tree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING);
-  }
-
   public void setCanExpand(boolean canExpand) {
     myCanExpand = canExpand;
   }

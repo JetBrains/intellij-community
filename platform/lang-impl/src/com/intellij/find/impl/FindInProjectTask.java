@@ -30,7 +30,12 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.DiskQueryRelay;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VirtualFileUtil;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
@@ -67,7 +72,14 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -77,7 +89,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
-import static com.intellij.find.impl.FindInProjectUtil.FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE;
 import static com.intellij.openapi.roots.impl.FilesScanExecutor.processOnAllThreadsInReadActionWithRetries;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 
@@ -89,7 +100,7 @@ final class FindInProjectTask {
       .thenComparing(VirtualFile::getName) // in case files without id are also searched
       .thenComparing(VirtualFile::getPath);
 
-  /** Total size of processed files before asking user 'too many files, should we continue?' */
+  /** Total size of processed files before asking the user 'too many files, should we continue?' */
   private static final int TOTAL_FILES_SIZE_LIMIT_BEFORE_ASKING = 70 * 1024 * 1024; // megabytes.
 
   private final FindModel findModel;
@@ -174,27 +185,27 @@ final class FindInProjectTask {
    * Find all usages of a given pattern in a given set of files, and deliver them to the usageProcessor. The pattern, set of files,
    * and most other details are defined by {@link #findModel}.
    * <p>
-   * To better understand find usage code take into account that find usage is not an abstract task -- it is very much tailored to
+   * To better understand find usage code take into account that find usage is not an abstract task -- it is heavily tailored to
    * the specific needs and user's expectations of FindUsage UX.
    * <p>
    * The find usages process is split into two phases:
    * <ol>
    *   <li>
    *     'Fast search': query the {@link #searchers} for a list of candidate files. Searchers represent a 'fast' way of finding
-   *     the matching candidates -- i.e. some kind of index. The files returned by the searchers are only candidates -- they
-   *     still must be checked against file mask, and looked up for the pattern.
+   *     the matching candidates -- i.e., some kind of index. The files returned by the searchers are only candidates -- they
+   *     still must be checked against the file mask and the pattern.
    *     On this stage we also scan through {@link #filesToScanInitially} -- those are files that were found previously. We
-   *     re-check them so that files that match before and still match now are remains at the top. This provides better UX
-   *     then search pattern is expanded as user types additional symbols.
+   *     re-check them so that the files, which match before and still match now, are remaining at the top. This provides better
+   *     UX then the search pattern is expanded as the user types additional symbols.
    *   </li>
    *   <li>
-   *     'Brute force search': query all files in the scope defined by {@link #findModel} (including files that were already
-   *     found by searchers on the 1st phase!), and process them, multi-threaded, against fileMask, and the pattern. On this
-   *     phase we skip files already processed on 1st phase.
+   *     'Brute force search': query all files in the scope defined by {@link #findModel} (including files that searchers already
+   *     found on the 1st phase!), and process them, multithreaded, against fileMask, and the pattern. On this phase we skip files
+   *     already processed on the 1st phase.
    *   </li>
    * </ol>
    * Those 2 phases combined give us the chance to deliver indexed files results almost instantly, keep top results consistent
-   * as user continues typing in the search pattern, and still search extensively over (partially-)not-indexed scopes -- slower,
+   * as the user continues typing in the search pattern, and still search extensively over (partially-)not-indexed scopes -- slower,
    * but still.
    */
   void findUsages(@NotNull FindUsagesProcessPresentation processPresentation,
@@ -617,10 +628,16 @@ final class FindInProjectTask {
       //Don't wrap those files in cache-avoiding wrappers: indexable files are scanned, and hence (will be) cached in VFS anyway:
       searchItems.addAll(indexes.getIndexableFilesProviders(project));
 
-      if (Boolean.TRUE.equals(project.getUserData(FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE))) {
+      if (Registry.is("find.in.files.in.non.indexable.enable")) {
+        boolean searchInLibraries = switch (customScope) {
+          case null -> false; // default scope is 'Project', no libraries there
+          case GlobalSearchScope globalSearchScope -> globalSearchScope.isSearchInLibraries();
+          default -> true;
+        };
+
         //MAYBE RC: currently nonIndexableFiles() returns transient files already -- but maybe it is safer to return _regular_ files
         //          from nonIndexableFiles(), and wrap them all into transient here, in a unified way?
-        searchItems.add(ReadAction.nonBlocking(() -> FilesDeque.nonIndexableDequeue(project)).executeSynchronously());
+        searchItems.add(ReadAction.nonBlocking(() -> FilesDeque.nonIndexableDequeue(project, searchInLibraries)).executeSynchronously());
       }
     }
 

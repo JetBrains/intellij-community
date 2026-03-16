@@ -15,10 +15,25 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyStringFormatParser;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyTupleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.PyTypeUtil;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +66,7 @@ public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentio
     while (scanner.find(index)) {
       if (scanner.start() > 1) {
         // handle escaping sequences PY-977
-        if ("{".equals(scanner.group(0)) && "\\N".equals(source.subSequence(scanner.start()-2, scanner.start()).toString())) {
+        if ("{".equals(scanner.group(0)) && "\\N".equals(source.subSequence(scanner.start() - 2, scanner.start()).toString())) {
           skipClosingBrace = true;
           target.append(source.subSequence(index, scanner.end()));
           index = scanner.end();
@@ -66,8 +81,12 @@ public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentio
       }
 
       target.append(source.subSequence(index, scanner.start()));
-      if ("{".equals(scanner.group(0))) target.append("{{");
-      else target.append("}}");
+      if ("{".equals(scanner.group(0))) {
+        target.append("{{");
+      }
+      else {
+        target.append("}}");
+      }
       index = scanner.end();
     }
     target.append(source.subSequence(index, source.length()));
@@ -75,6 +94,7 @@ public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentio
 
   /**
    * Converts format expressions inside a string
+   *
    * @return a pair of string builder with resulting string expression and a flag which is true if formats inside use mapping by name.
    */
   private static Pair<StringBuilder, Boolean> convertFormat(PyStringLiteralExpression stringLiteralExpression, String prefix) {
@@ -97,12 +117,12 @@ public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentio
       sure("\"'".indexOf(quote) >= 0);
       if (text.length() - openPos >= 6) {
         // triple-quoted?
-        if (text.charAt(openPos+1) == quote && text.charAt(openPos+2) == quote) {
+        if (text.charAt(openPos + 1) == quote && text.charAt(openPos + 2) == quote) {
           openPos += 2;
         }
       }
       int index = openPos + 1; // from quote to first in-string char
-      StringBuilder out = new StringBuilder(text.subSequence(0, openPos+1));
+      StringBuilder out = new StringBuilder(text.subSequence(0, openPos + 1));
       if (!hasPrefix) out.insert(0, prefix);
       Matcher scanner = FORMAT_PATTERN.matcher(text);
       while (scanner.find(index)) {
@@ -136,7 +156,9 @@ public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentio
           if (f_width != null) {
             out.append(f_width);
           }
-          if ("i".equals(fConversion) || "u".equals(fConversion)) out.append("d");
+          if ("i".equals(fConversion) || "u".equals(fConversion)) {
+            out.append("d");
+          }
           else if (!"s".equals(fConversion) && !"r".equals(fConversion)) out.append(fConversion);
 
           final int lastIndexOf = out.lastIndexOf(":");
@@ -164,7 +186,7 @@ public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentio
       int left = prev_range.getEndOffset() - full_start;
       int right = next_range.getStartOffset() - full_start;
       if (left < right) {
-        constants.get(fragment_no-1).append(full_text.subSequence(left, right));
+        constants.get(fragment_no - 1).append(full_text.subSequence(left, right));
       }
       fragment_no += 1;
       prev_range = next_range;
@@ -173,7 +195,7 @@ public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentio
     final int right = full_range.getEndOffset() - full_start;
     if (left < right) {
       // the barely possible case of last dangling "\"
-      constants.get(constants.size()-1).append(full_text.subSequence(left, right));
+      constants.get(constants.size() - 1).append(full_text.subSequence(left, right));
     }
 
     // join everything
@@ -219,12 +241,13 @@ public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentio
       return false;
     }
 
-    PyBinaryExpression binaryExpression  =
+    PyBinaryExpression binaryExpression =
       PsiTreeUtil.getParentOfType(psiFile.findElementAt(editor.getCaretModel().getOffset()), PyBinaryExpression.class, false);
     if (binaryExpression == null) {
       return false;
     }
-    if (binaryExpression.getLeftExpression() instanceof PyStringLiteralExpression str && binaryExpression.getOperator() == PyTokenTypes.PERC) {
+    if (binaryExpression.getLeftExpression() instanceof PyStringLiteralExpression str &&
+        binaryExpression.getOperator() == PyTokenTypes.PERC) {
       if ((!str.getText().isEmpty() && Character.toUpperCase(str.getText().charAt(0)) == 'B')) {
         return false;
       }
@@ -290,7 +313,9 @@ public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentio
     else if (PyTypeUtil.isDict(rhsType)) {
       target.append("(**").append(paramText).append(")");
     }
-    else target.append("(").append(paramText).append(")"); // tuple is ok as is
+    else {
+      target.append("(").append(paramText).append(")"); // tuple is ok as is
+    }
     // Correctly handle multiline implicitly concatenated string literals (PY-9176)
     target.insert(0, '(').append(')');
     final PyExpression parenthesized = elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), target.toString());
@@ -313,13 +338,15 @@ public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentio
     String separator = ""; // detect nontrivial whitespace around the "%"
     Pair<String, PsiElement> crop = collectWhitespace(leftExpression);
     String maybeSeparator = crop.getFirst();
-    if (maybeSeparator != null && !maybeSeparator.isEmpty() && !" ".equals(maybeSeparator))
+    if (maybeSeparator != null && !maybeSeparator.isEmpty() && !" ".equals(maybeSeparator)) {
       separator = maybeSeparator;
+    }
     else { // after "%"
       crop = collectWhitespace(crop.getSecond());
       maybeSeparator = crop.getFirst();
-      if (maybeSeparator != null && !maybeSeparator.isEmpty() && !" ".equals(maybeSeparator))
+      if (maybeSeparator != null && !maybeSeparator.isEmpty() && !" ".equals(maybeSeparator)) {
         separator = maybeSeparator;
+      }
     }
     return separator;
   }
@@ -329,8 +356,12 @@ public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentio
     PsiElement seeker = start;
     while (seeker != null) {
       seeker = seeker.getNextSibling();
-      if (seeker instanceof PsiWhiteSpace) sb.append(seeker.getText());
-      else break;
+      if (seeker instanceof PsiWhiteSpace) {
+        sb.append(seeker.getText());
+      }
+      else {
+        break;
+      }
     }
     return Pair.create(sb.toString(), seeker);
   }

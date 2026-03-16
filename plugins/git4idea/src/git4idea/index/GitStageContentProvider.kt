@@ -3,20 +3,17 @@ package git4idea.index
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.openapi.vcs.changes.ui.subscribeOnVcsToolWindowLayoutChanges
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.Content
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.vcs.commit.ChangesViewCommitTabTitleUpdater
 import git4idea.index.GitStageContentProvider.Companion.STAGING_AREA_TAB_NAME
 import git4idea.index.ui.GitStagePanel
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
-import java.util.function.Supplier
 import javax.swing.JComponent
 
 internal class GitStageContentProvider(private val project: Project) : ChangesViewContentProvider {
@@ -31,7 +28,6 @@ internal class GitStageContentProvider(private val project: Project) : ChangesVi
     val busConnection = project.messageBus.connect(disposable)
     busConnection.subscribeOnVcsToolWindowLayoutChanges { gitStagePanel.updateLayout() }
 
-    content.displayName = message("tab.title.commit")
     content.component = gitStagePanel
     content.setDisposer(disposable)
   }
@@ -44,8 +40,9 @@ internal class GitStageContentProvider(private val project: Project) : ChangesVi
   }
 }
 
-class GitStageContentPreloader : ChangesViewContentProvider.Preloader {
+internal class GitStageContentPreloader(private val project: Project) : ChangesViewContentProvider.Preloader {
   override fun preloadTabContent(content: Content) {
+    ChangesViewCommitTabTitleUpdater(project, STAGING_AREA_TAB_NAME).init(content)
     content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
                         ChangesViewContentManager.TabOrderWeight.LOCAL_CHANGES.weight + 1)
   }
@@ -53,10 +50,6 @@ class GitStageContentPreloader : ChangesViewContentProvider.Preloader {
 
 internal class GitStageContentVisibilityPredicate : Predicate<Project> {
   override fun test(project: Project) = isStagingAreaAvailable(project)
-}
-
-internal class GitStageDisplayNameSupplier : Supplier<String> {
-  override fun get(): @Nls String = VcsBundle.message("tab.title.commit")
 }
 
 @RequiresEdt

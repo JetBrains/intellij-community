@@ -15,9 +15,10 @@
  */
 package com.intellij.spellchecker;
 
-import com.intellij.openapi.project.DumbService;
-import com.intellij.psi.*;
 import com.intellij.codeInsight.DumbAwareAnnotationUtil;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiMethod;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import org.jetbrains.annotations.NotNull;
 

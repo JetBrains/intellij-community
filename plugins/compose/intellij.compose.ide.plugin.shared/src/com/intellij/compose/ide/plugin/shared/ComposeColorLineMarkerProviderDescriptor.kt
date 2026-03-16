@@ -23,6 +23,7 @@ import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
 import com.intellij.codeInsight.daemon.impl.LineMarkersPass
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -41,19 +42,28 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.parsing.parseNumericLiteral
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtValueArgument
 import java.awt.Color
 import java.awt.MouseInfo
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.Locale
 
 private const val ICON_SIZE = 8
 
 @ApiStatus.Internal
 abstract class ComposeColorLineMarkerProviderDescriptor : LineMarkerProviderDescriptor() {
+
+  override fun getOptions(): Array<Option> = OPTIONS
+
   override fun getName(): String = ComposeIdeBundle.message("compose.color.picker.name")
 
   override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
+    if (!ENABLE_OPTION.isEnabled) return null
     if (element.elementType != KtTokens.IDENTIFIER) return null
 
     val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return null
@@ -186,6 +196,17 @@ abstract class ComposeColorLineMarkerProviderDescriptor : LineMarkerProviderDesc
   }
 
   protected abstract fun KtExpression.evaluateToConstantOrNullImpl(): Any?
+
+  companion object {
+
+    private val ENABLE_OPTION = Option(
+      "cmp.color.picker",
+      ComposeIdeBundle.message("compose.color.picker.enable.option"),
+      AllIcons.Actions.Colors
+    )
+
+    private val OPTIONS = arrayOf(ENABLE_OPTION)
+  }
 }
 
 /**

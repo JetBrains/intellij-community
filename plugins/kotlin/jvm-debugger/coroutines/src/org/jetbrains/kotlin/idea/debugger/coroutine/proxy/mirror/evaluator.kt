@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
-import com.sun.jdi.*
+import com.sun.jdi.ClassType
+import com.sun.jdi.Field
+import com.sun.jdi.Method
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.Value
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 
 sealed class MethodEvaluator<T>(val method: Method?) {

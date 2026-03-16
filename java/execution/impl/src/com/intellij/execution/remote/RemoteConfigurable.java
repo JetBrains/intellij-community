@@ -5,6 +5,7 @@ import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -29,10 +30,16 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.Arrays;
@@ -143,7 +150,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     myTransportCombo.setSelectedItem(Transport.SOCKET);
 
     myPort.setMinimumSize(myPort.getPreferredSize());
-    new ComponentValidator(project).withValidator(() -> {
+    new ComponentValidator(JavaPluginDisposable.getInstance(project)).withValidator(() -> {
       String pt = myPort.getText();
       if (StringUtil.isNotEmpty(pt)) {
         try {

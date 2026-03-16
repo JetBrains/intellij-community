@@ -5,5 +5,5 @@ import fleet.util.multiplatform.Actual
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 
-@Actual("DispatchersIO")
+@Actual
 internal fun DispatchersIOWasmJs(): CoroutineDispatcher = Dispatchers.Default

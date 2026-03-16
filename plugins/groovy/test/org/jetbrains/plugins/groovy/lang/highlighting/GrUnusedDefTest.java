@@ -4,7 +4,10 @@ package org.jetbrains.plugins.groovy.lang.highlighting;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.testFramework.LightProjectDescriptor;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection;
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection;
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection;
@@ -13,6 +16,11 @@ import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
  * @author Max Medvedev
  */
 public class GrUnusedDefTest extends GrHighlightingTestBase {
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return GroovyProjectDescriptors.GROOVY_LATEST;
+  }
+
   @Override
   public InspectionProfileEntry[] getCustomInspections() {
     return new InspectionProfileEntry[]{new UnusedDefInspection(), new GrUnusedIncDecInspection(), new GroovyUnusedDeclarationInspection(),
@@ -48,6 +56,8 @@ public class GrUnusedDefTest extends GrHighlightingTestBase {
   public void testUsedInCatch() { doTest(); }
 
   public void testGloballyUnusedSymbols() { doTest(); }
+
+  public void testUnusedTypeDefinitions() { doTest(); }
 
   public void testGloballyUnusedInnerMethods() {
     myFixture.addClass("package junit.framework; public class TestCase {}");

@@ -14,14 +14,32 @@ import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaModuleGraphHelper;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiJavaModuleReference;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiPackageAccessibilityStatement;
+import com.intellij.psi.PsiRequiresStatement;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.PsiJavaModuleModificationTracker;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.JavaModuleSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.JavaMultiReleaseUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,7 +55,19 @@ import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.jar.JarFile;
 
@@ -48,6 +78,8 @@ import static java.util.Objects.requireNonNullElse;
  * Utilities related to JPMS modules
  */
 public final class JavaPsiModuleUtil {
+  private JavaPsiModuleUtil() { }
+
   /**
    * @param element PSI element that belongs to the module
    * @return JPMS module the supplied element belongs to; null if no module definition is found
@@ -502,12 +534,20 @@ public final class JavaPsiModuleUtil {
       source = getPhysicalModule(source);
       destination = getPhysicalModule(destination);
       Collection<PsiJavaModule> nodes = myGraph.getNodes();
-      if (nodes.contains(destination) && nodes.contains(source)) {
+      if (!nodes.contains(destination) || !nodes.contains(source)) {
+        return false;
+      }
+
+      UniqueBuffer<PsiJavaModule> buffer = new UniqueBuffer<>();
+      buffer.add(destination);
+      while (!buffer.isEmpty()) {
+        destination = buffer.poll();
         Iterator<PsiJavaModule> directReaders = myGraph.getOut(destination);
         while (directReaders.hasNext()) {
           PsiJavaModule next = directReaders.next();
-          if (source.equals(next) || myTransitiveEdges.contains(key(destination, next)) && reads(source, next)) {
-            return true;
+          if (source.equals(next)) return true;
+          if (myTransitiveEdges.contains(key(destination, next)) && !next.equals(destination)) {
+            buffer.add(next);
           }
         }
       }
@@ -590,6 +630,29 @@ public final class JavaPsiModuleUtil {
       if (!(file.getOriginalFile() instanceof PsiJavaFile origin)) return from;
       if (origin.getModuleDeclaration() instanceof PsiJavaModule result) return result;
       return from;
+    }
+
+    /**
+     * FIFO queue that prevents duplicate additions.
+     * Once added, an element cannot be added again even after being polled.
+     */
+    private static class UniqueBuffer<T> {
+      private final Set<T> myUnique = new HashSet<>();
+      private final Queue<T> myBuffer = new ArrayDeque<>();
+
+      public void add(T value) {
+        if (myUnique.add(value)) {
+          myBuffer.add(value);
+        }
+      }
+
+      public T poll() {
+        return myBuffer.poll();
+      }
+
+      public boolean isEmpty() {
+        return myBuffer.isEmpty();
+      }
     }
   }
 

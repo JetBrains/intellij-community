@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.commons.lang3.jar
   modules:
   - name: intellij.libraries.commons.lang3
   library: commons-lang3

@@ -2,7 +2,11 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.psi.PsiElement;

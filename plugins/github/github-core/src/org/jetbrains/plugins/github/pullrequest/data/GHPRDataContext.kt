@@ -12,7 +12,11 @@ import kotlinx.coroutines.awaitCancellation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHReactionContent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.pullrequest.data.service.*
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCreationService
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRDetailsService
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRPersistentInteractionState
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 
 @ApiStatus.Internal

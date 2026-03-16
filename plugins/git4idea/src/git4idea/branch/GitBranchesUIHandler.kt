@@ -18,7 +18,7 @@ interface GitBranchesUIHandler {
   }
 }
 
-private class GitBranchesUIHandlerImpl(
+internal class GitBranchesUIHandlerImpl(
   private val project: Project,
 ) : GitBranchesUIHandler {
   override fun compare(repositories: List<GitRepository>, branchName: String, otherBranchName: String) {

@@ -8,3 +8,5 @@ import fleet.util.multiplatform.linkToActual
  * see implementation [com.intellij.util.currentJavaVersionPlatformSpecificJvm], [com.intellij.util.currentJavaVersionPlatformSpecificWasmJs]
  */
 internal fun currentJavaVersionPlatformSpecific(): JavaVersion = linkToActual()
+
+internal val DefaultJavaVersion: JavaVersion = JavaVersion.compose(21, 0, 0, 0, false)

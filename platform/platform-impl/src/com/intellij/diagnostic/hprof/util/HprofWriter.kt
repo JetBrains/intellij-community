@@ -15,7 +15,12 @@
  */
 package com.intellij.diagnostic.hprof.util
 
-import com.intellij.diagnostic.hprof.parser.*
+import com.intellij.diagnostic.hprof.parser.ConstantPoolEntry
+import com.intellij.diagnostic.hprof.parser.HeapDumpRecordType
+import com.intellij.diagnostic.hprof.parser.InstanceFieldEntry
+import com.intellij.diagnostic.hprof.parser.RecordType
+import com.intellij.diagnostic.hprof.parser.StaticFieldEntry
+import com.intellij.diagnostic.hprof.parser.Type
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import org.jetbrains.annotations.ApiStatus

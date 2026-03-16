@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.resolveFromRootOrRelative
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.util.PathUtil
-import com.intellij.util.SystemProperties
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath

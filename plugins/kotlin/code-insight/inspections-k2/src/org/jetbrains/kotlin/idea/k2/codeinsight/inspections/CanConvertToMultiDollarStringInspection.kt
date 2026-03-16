@@ -14,7 +14,12 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.*
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.MultiDollarConversionInfo
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.convertToMultiDollarString
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.findTextRangesInParentForEscapedDollars
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.isEscapedDollar
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.prepareMultiDollarConversionInfo
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.simplifyDollarEntries
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid

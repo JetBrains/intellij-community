@@ -4,7 +4,32 @@ package org.jetbrains.plugins.groovy.lang.parser;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.APPLICATION_ARGUMENT_LIST;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ARGUMENT_LIST;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ARRAY_DECLARATION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ARRAY_TYPE_ELEMENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BAND_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BOR_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLOSURE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLOSURE_SWITCH_AWARE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CODE_REFERENCE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CONSTRUCTOR_BLOCK;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.INDEX_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LAND_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LEFT_SHIFT_SIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LOR_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.METHOD_CALL_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.PRIMITIVE_TYPE_ELEMENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.PROPERTY_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.RIGHT_SHIFT_SIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.RIGHT_SHIFT_UNSIGNED_SIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_CONTENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_INJECTION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.TERNARY_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.TRADITIONAL_FOR_CLAUSE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.TYPE_ARGUMENT_LIST;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.WILDCARD_TYPE_ELEMENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.XOR_EXPRESSION;
 
 /**
  * Utility interface that contains all Groovy non-token element types

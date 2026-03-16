@@ -10,7 +10,11 @@ import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
-import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleReference;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleType;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 public abstract class JpsElementFactory {

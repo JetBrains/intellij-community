@@ -3,7 +3,12 @@ package com.intellij.refactoring.safeDelete.usageInfo;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiImportStaticReferenceElement;
+import com.intellij.psi.PsiStatement;
 import com.intellij.refactoring.safeDelete.ImportSearcher;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;

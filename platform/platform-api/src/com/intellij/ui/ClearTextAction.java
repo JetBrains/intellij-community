@@ -9,7 +9,7 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Component;
 
 public final class ClearTextAction extends AnAction implements DumbAware {
   public ClearTextAction() {

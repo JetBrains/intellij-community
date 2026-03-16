@@ -10,17 +10,36 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.RefGroup;
+import com.intellij.vcs.log.TimedVcsCommit;
+import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogProperties;
+import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsLogProviderRequirementsEx;
+import com.intellij.vcs.log.VcsLogRefManager;
+import com.intellij.vcs.log.VcsLogRefresher;
+import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsRefType;
+import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -40,7 +59,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
     }
   };
   private static final String SAMPLE_SUBJECT = "Sample subject";
-  public static final VcsUser DEFAULT_USER = new VcsUserImpl("John Smith", "John.Smith@mail.com");
+  public static final VcsUser DEFAULT_USER = VcsUserUtil.createUser("John Smith", "John.Smith@mail.com");
 
   private final @NotNull List<TimedVcsCommit> myCommits;
   private final @NotNull Set<VcsRef> myRefs;

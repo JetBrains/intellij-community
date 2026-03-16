@@ -5,7 +5,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -106,6 +110,19 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   @ApiStatus.Experimental
   public boolean allChildrenLoaded() {
     return false;//= safe, but not good for performance
+  }
+
+  /**
+   * @return true if VFS _thinks_ it already knows all the children of this file, false otherwise.
+   * It doesn't mean there are no yet-uncached children in the actual underlying FS: VFS may catch up changes
+   * in the underlying FS with delay -- it just means VFS _thinks_ it knows all the children, i.e., it _was_
+   * all the children in the folder at some moment.
+   * It also doesn't mean all those children are now loaded in memory -- they could be in VFS persistent
+   * storage yet.
+   */
+  @ApiStatus.Experimental
+  public boolean allChildrenCached() {
+    return false;
   }
 
   /**

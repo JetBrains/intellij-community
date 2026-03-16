@@ -7,7 +7,7 @@ import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
-import javax.swing.*;
+import javax.swing.JSplitPane;
 
 public final class SplitPaneLayoutCodeGenerator extends LayoutCodeGenerator {
   private final Type mySplitPaneType = Type.getType(JSplitPane.class);

@@ -15,7 +15,13 @@
  */
 package com.siyeh.ig.j2me;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.PsiConditionalLoopStatement;
+import com.intellij.psi.PsiDoWhileStatement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiWhileStatement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;

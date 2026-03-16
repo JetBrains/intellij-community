@@ -22,7 +22,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import java.beans.PropertyChangeListener
-import java.util.*
+import java.util.EventListener
 
 interface ReaderModeListener : EventListener {
   fun modeChanged(project: Project)
@@ -72,7 +72,7 @@ class ReaderModeSettingsListener : ReaderModeListener {
   }
 }
 
-private class ReaderModeEditorSettingsListener : ProjectActivity {
+internal class ReaderModeEditorSettingsListener : ProjectActivity {
   override suspend fun execute(project: Project) {
     val propertyChangeListener = PropertyChangeListener { event ->
       when (event.propertyName) {

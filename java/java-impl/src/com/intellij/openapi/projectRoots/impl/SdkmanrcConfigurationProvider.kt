@@ -8,7 +8,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.io.File
-import java.util.*
+import java.util.Properties
 
 private val LOG = logger<SdkmanrcConfigurationProvider>()
 

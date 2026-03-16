@@ -1,4 +1,4 @@
-from typing import Any
+from _typeshed import Incomplete
 
 class ConnectionUsage:
     open_sockets: int
@@ -26,11 +26,11 @@ class ConnectionUsage:
     restartable_successes: int
     servers_from_pool: int
     def reset(self) -> None: ...
-    initial_connection_start_time: Any
-    open_socket_start_time: Any
-    connection_stop_time: Any
-    last_transmitted_time: Any
-    last_received_time: Any
+    initial_connection_start_time: Incomplete
+    open_socket_start_time: Incomplete
+    connection_stop_time: Incomplete
+    last_transmitted_time: Incomplete
+    last_received_time: Incomplete
     def __init__(self) -> None: ...
     def __iadd__(self, other): ...
     def update_transmitted_message(self, message, length) -> None: ...

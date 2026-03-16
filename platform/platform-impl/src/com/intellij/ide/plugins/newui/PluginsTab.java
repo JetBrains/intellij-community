@@ -4,7 +4,11 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.MultiPanel;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,6 +16,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.TextComponentEmptyText;
 import com.intellij.ui.components.labels.LinkListener;
@@ -23,15 +28,20 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 @ApiStatus.Internal
 public abstract class PluginsTab {
+  private static final int DEFAULT_PANEL = 0;
+  private static final int SEARCH_PANEL = 1;
+
   private final SingleEdtTaskScheduler searchUpdateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
 
   private PluginDetailsPageComponent detailsPage;
@@ -54,12 +64,12 @@ public abstract class PluginsTab {
     searchTextField.setTextIgnoreEvents(query);
     IdeFocusManager.getGlobalInstance()
       .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(searchTextField, true));
-    searchPanel.setEmpty();
+    searchPanel.setEmptyQuery();
     showSearchPanel(query);
   };
 
   private final Consumer<PluginsGroupComponent> mySelectionListener = panel -> {
-    int key = searchPanel.getPanel() == panel ? 1 : 0;
+    int key = searchPanel.getPanel() == panel ? SEARCH_PANEL : DEFAULT_PANEL;
     if (cardPanel.getKey() == key) {
       detailsPage.showPlugins(panel.getSelection());
     }
@@ -79,10 +89,10 @@ public abstract class PluginsTab {
 
       @Override
       protected JComponent create(Integer key) {
-        if (key == 0) {
+        if (key == DEFAULT_PANEL) {
           return createPluginsPanel(mySelectionListener);
         }
-        if (key == 1) {
+        if (key == SEARCH_PANEL) {
           return searchPanel.createVScrollPane();
         }
         return super.create(key);
@@ -90,6 +100,7 @@ public abstract class PluginsTab {
     };
 
     JPanel listPanel = new JPanel(new BorderLayout());
+    listPanel.setBorder(new CustomLineBorder(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR, JBUI.insetsTop(1)));
     listPanel.add(searchTextField, BorderLayout.NORTH);
     listPanel.add(cardPanel);
 
@@ -106,7 +117,7 @@ public abstract class PluginsTab {
 
     searchPanel = createSearchPanel(mySelectionListener);
 
-    cardPanel.select(0, true);
+    cardPanel.select(DEFAULT_PANEL, true);
 
     return splitter;
   }
@@ -119,20 +130,18 @@ public abstract class PluginsTab {
         int id = event.getID();
 
         if (keyCode == KeyEvent.VK_ENTER || event.getKeyChar() == '\n') {
-          if (id == KeyEvent.KEY_PRESSED &&
-              (searchPanel.controller == null || !searchPanel.controller.handleEnter(event))) {
+          if (id == KeyEvent.KEY_PRESSED && !searchPanel.controller.handleEnter(event)) {
             String text = getText();
             if (!text.isEmpty()) {
-              if (searchPanel.controller != null) {
-                searchPanel.controller.hidePopup();
-              }
+              searchPanel.controller.hidePopup();
               showSearchPanel(text);
             }
           }
           return true;
         }
-        if ((keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_UP) && id == KeyEvent.KEY_PRESSED &&
-            searchPanel.controller != null && searchPanel.controller.handleUpDown(event)) {
+        if ((keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_UP) &&
+            id == KeyEvent.KEY_PRESSED &&
+            searchPanel.controller.handleUpDown(event)) {
           return true;
         }
         return super.preprocessEventForTextField(event);
@@ -157,7 +166,7 @@ public abstract class PluginsTab {
 
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            if (searchPanel.controller != null && searchPanel.controller.isPopupShow()) {
+            if (searchPanel.controller.isPopupShow()) {
               searchPanel.controller.hidePopup();
             }
             else {
@@ -175,7 +184,7 @@ public abstract class PluginsTab {
 
       @Override
       protected void showCompletionPopup() {
-        if (searchPanel.controller != null && !searchPanel.controller.isPopupShow()) {
+        if (!searchPanel.controller.isPopupShow()) {
           showSearchPopup();
         }
       }
@@ -194,22 +203,16 @@ public abstract class PluginsTab {
         if (StringUtil.isEmptyOrSpaces(text)) {
           hideSearchPanel();
         }
-        else if (searchPanel.controller == null) {
-          showSearchPanel(text);
-        }
         else {
           searchPanel.controller.handleShowPopup();
         }
       }
     });
 
-    searchTextField.setBorder(JBUI.Borders.customLine(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR));
-
     JBTextField editor = searchTextField.getTextEditor();
     editor.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(6));
     editor.putClientProperty("JTextField.Search.GapEmptyText", JBUIScale.scale(-1));
     editor.putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, (Predicate<JBTextField>)field -> field.getText().isEmpty());
-    editor.setBorder(JBUI.Borders.empty(0, 6));
     editor.setOpaque(true);
     editor.setBackground(PluginManagerConfigurable.SEARCH_BG_COLOR);
     editor.getAccessibleContext().setAccessibleName(IdeBundle.message("plugin.manager.search.accessible.name"));
@@ -229,7 +232,7 @@ public abstract class PluginsTab {
   protected abstract @NotNull SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
 
   public @Nullable String getSearchQuery() {
-    if (searchPanel == null || searchPanel.isEmpty()) {
+    if (searchPanel == null || searchPanel.isQueryEmpty()) {
       return null;
     }
     String query = searchPanel.getQuery();
@@ -247,8 +250,8 @@ public abstract class PluginsTab {
   }
 
   public void showSearchPanel(@NotNull String query) {
-    if (searchPanel.isEmpty()) {
-      cardPanel.select(1, true);
+    if (searchPanel.isQueryEmpty()) {
+      cardPanel.select(SEARCH_PANEL, true);
       detailsPage.showPlugin(null);
     }
     searchPanel.setQuery(query);
@@ -256,27 +259,23 @@ public abstract class PluginsTab {
   }
 
   public void hideSearchPanel() {
-    if (!searchPanel.isEmpty()) {
+    if (!searchPanel.isQueryEmpty()) {
       onSearchReset();
-      cardPanel.select(0, true);
+      cardPanel.select(DEFAULT_PANEL, true);
       searchPanel.setQuery("");
       updateMainSelection(mySelectionListener);
     }
-    if (searchPanel.controller != null) {
-      searchPanel.controller.hidePopup();
-    }
+    searchPanel.controller.hidePopup();
   }
 
   protected abstract void onSearchReset();
 
   private void showSearchPopup() {
-    if (searchPanel.controller != null) {
-      if (StringUtil.isEmptyOrSpaces(searchTextField.getText())) {
-        searchPanel.controller.showAttributesPopup(null, 0);
-      }
-      else {
-        searchPanel.controller.handleShowPopup();
-      }
+    if (StringUtil.isEmptyOrSpaces(searchTextField.getText())) {
+      searchPanel.controller.showAttributesPopup(null, 0);
+    }
+    else {
+      searchPanel.controller.handleShowPopup();
     }
   }
 

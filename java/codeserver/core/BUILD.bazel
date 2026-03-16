@@ -28,6 +28,7 @@ jvm_library(
     "//java/java-psi-impl:psi-impl",
     "//platform/workspace/storage",
     "//java/java-indexing-api:indexing",
-  ]
+  ],
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.java.codeserver.core` end

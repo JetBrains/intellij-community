@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -10,10 +11,10 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
-public class SkipAutopopupInStrings extends CompletionConfidence {
+public final class SkipAutopopupInStrings extends CompletionConfidence {
 
   @Override
-  public @NotNull ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+  public @NotNull ThreeState shouldSkipAutopopup(@NotNull Editor editor, @NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
     if (isInStringLiteral(contextElement)) {
       return ThreeState.YES;
     }

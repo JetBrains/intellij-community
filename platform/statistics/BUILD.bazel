@@ -37,14 +37,14 @@ jvm_library(
     "//libraries/jackson/databind",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//libraries/kotlin/reflect",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
-    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-fus-api",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ],
   exports = [
-    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-fus-api",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ]
 )
@@ -79,16 +79,16 @@ jvm_library(
     "//libraries/jackson/databind",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//libraries/kotlin/reflect",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:junit5",
     "@lib//:assert_j",
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
-    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-fus-api",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ],
   exports = [
-    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-fus-api",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ]
 )

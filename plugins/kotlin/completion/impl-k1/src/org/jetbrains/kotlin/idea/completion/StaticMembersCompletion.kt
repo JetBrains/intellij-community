@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
@@ -24,8 +25,8 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindExclude
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
 import org.jetbrains.kotlin.types.KotlinType
-import java.util.*
 
+@K1Deprecation
 class StaticMembersCompletion(
     private val prefixMatcher: PrefixMatcher,
     private val resolutionFacade: ResolutionFacade,

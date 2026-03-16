@@ -42,5 +42,5 @@ public interface PyAstCallSiteExpression extends PyAstExpression {
   PyAstExpression getReceiver(@Nullable PyAstCallable resolvedCallee);
 
   @NotNull
-  List<? extends PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee);
+  List<? extends @NotNull PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee);
 }

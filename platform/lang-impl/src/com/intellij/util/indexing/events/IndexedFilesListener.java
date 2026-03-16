@@ -1,12 +1,22 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.events;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.AsyncFileListener;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -17,10 +27,10 @@ import java.util.List;
 
 @Internal
 public abstract class IndexedFilesListener implements AsyncFileListener {
-  private final @NotNull VfsEventsMerger myEventMerger = new VfsEventsMerger();
+  private final @NotNull VfsEventsMerger eventMerger = new VfsEventsMerger();
 
   public @NotNull VfsEventsMerger getEventMerger() {
-    return myEventMerger;
+    return eventMerger;
   }
 
   public void scheduleForIndexingRecursively(@NotNull VirtualFile file, boolean onlyContentDependent) {
@@ -35,10 +45,6 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
     else {
       recordFileEvent(file, onlyContentDependent);
     }
-  }
-
-  protected void recordFileEvent(@NotNull VirtualFile fileOrDir, boolean onlyContentDependent) {
-    myEventMerger.recordFileEvent(fileOrDir, onlyContentDependent);
   }
 
   protected abstract void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator);
@@ -85,10 +91,6 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
     };
   }
 
-  protected void recordFileRemovedEvent(@NotNull VirtualFile file) {
-    myEventMerger.recordFileRemovedEvent(file);
-  }
-
   private void processAfterEvents(@NotNull List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
       VirtualFile fileToIndex = null;
@@ -131,5 +133,13 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
         scheduleForIndexingRecursively(fileToIndex, onlyContentDependent);
       }
     }
+  }
+
+  protected void recordFileEvent(@NotNull VirtualFile fileOrDir, boolean onlyContentDependent) {
+    eventMerger.recordFileEvent(fileOrDir, onlyContentDependent);
+  }
+
+  protected void recordFileRemovedEvent(@NotNull VirtualFile file) {
+    eventMerger.recordFileRemovedEvent(file);
   }
 }

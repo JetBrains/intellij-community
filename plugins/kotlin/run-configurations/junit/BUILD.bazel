@@ -19,6 +19,7 @@ jvm_library(
     "//java/java-indexing-api:indexing",
     "//platform/core-api:core",
     "//platform/execution-impl",
+    "//platform/execution",
     "//platform/indexing-api:indexing",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/facet",

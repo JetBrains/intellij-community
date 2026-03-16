@@ -16,7 +16,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.util.TextFieldCompletionProvider;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class MethodBrowser extends BrowseModuleValueActionListener<JComponent> {
 

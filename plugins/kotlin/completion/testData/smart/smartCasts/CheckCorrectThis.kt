@@ -19,3 +19,4 @@ fun f(s: String){}
 // EXIST: v3
 // EXIST: v4
 // EXIST: c
+// IGNORE_K2

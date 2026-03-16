@@ -13,7 +13,9 @@ import com.jetbrains.JBR;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Window;
 
 @ApiStatus.Internal
 public class MoveWindowBuiltinDisplayAction extends DumbAwareAction {

@@ -11,7 +11,12 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.jetbrains.jdi.MethodImpl;
-import com.sun.jdi.*;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ClassLoaderReference;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Method;
+import com.sun.jdi.StringReference;
+import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -42,7 +47,6 @@ public final class ClassLoadingUtils {
   public static void defineClass(String name,
                                  byte[] bytes,
                                  EvaluationContextImpl context,
-                                 DebugProcess process,
                                  ClassLoaderReference classLoader) throws EvaluateException {
     try {
       VirtualMachineProxyImpl proxy = context.getVirtualMachineProxy();
@@ -51,13 +55,13 @@ public final class ClassLoadingUtils {
       StringReference nameString = DebuggerUtilsEx.mirrorOfString(name, context);
       ArrayReference byteArray = DebuggerUtilsEx.mirrorOfByteArray(bytes, context);
       try {
-        ((DebugProcessImpl)process).invokeInstanceMethod(context, classLoader, Objects.requireNonNull(defineMethod),
-                                                         Arrays.asList(nameString,
-                                                                       byteArray,
-                                                                       proxy.mirrorOf(0),
-                                                                       proxy.mirrorOf(bytes.length)),
-                                                         MethodImpl.SKIP_ASSIGNABLE_CHECK,
-                                                         true);
+        context.getDebugProcess().invokeInstanceMethod(context, classLoader, Objects.requireNonNull(defineMethod),
+                                                       Arrays.asList(nameString,
+                                                                     byteArray,
+                                                                     proxy.mirrorOf(0),
+                                                                     proxy.mirrorOf(bytes.length)),
+                                                       MethodImpl.SKIP_ASSIGNABLE_CHECK,
+                                                       true);
       }
       finally {
         enableCollection(nameString);

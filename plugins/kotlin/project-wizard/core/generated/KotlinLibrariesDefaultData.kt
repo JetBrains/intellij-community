@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.tools.projectWizard.compatibility
 
@@ -12,6 +12,7 @@ internal val DEFAULT_KOTLIN_LIBRARIES_DATA = KotlinLibrariesCompatibilityState(
             groupId = "org.jetbrains.kotlinx",
             artifactId = "kotlinx-coroutines-core",
             versions = mapOf(
+                    "2.4" to "1.10.2",
                     "2.0" to "1.9.0",
                     "2.1" to "1.10.2",
                     "2.3" to "1.10.2",

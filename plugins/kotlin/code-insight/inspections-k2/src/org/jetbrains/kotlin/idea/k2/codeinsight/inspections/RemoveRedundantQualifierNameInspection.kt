@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
@@ -9,17 +10,26 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
-import org.jetbrains.kotlin.analysis.api.components.collectPossibleReferenceShorteningsInElement
 import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.ShortenCommandForIde
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsInElementForIde
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtUserType
 
-internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection() {
+internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
         if (file !is KtFile) return null
 
@@ -46,9 +56,12 @@ internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection
      * special treatment for enums.
      */
     context(_: KaSession)
-    private fun collectShortenings(declaration: KtElement): ShortenCommand =
-        collectPossibleReferenceShorteningsInElement(
+    private fun collectShortenings(declaration: KtElement): ShortenCommandForIde =
+        collectPossibleReferenceShorteningsInElementForIde(
             declaration,
+            shortenOptions = ShortenOptionsForIde.DEFAULT.copy(
+                removeExplicitCompanionReferences = false,
+            ),
             classShortenStrategy = { classSymbol ->
                 if (classSymbol.isEnumCompanionObject()) {
                     ShortenStrategy.DO_NOT_SHORTEN

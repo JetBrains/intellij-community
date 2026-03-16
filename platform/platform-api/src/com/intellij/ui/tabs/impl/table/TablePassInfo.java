@@ -4,11 +4,16 @@ package com.intellij.ui.tabs.impl.table;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 /**
  * @deprecated use {@link com.intellij.ui.tabs.impl.multiRow.MultiRowLayout}
@@ -16,6 +21,7 @@ import java.util.*;
  */
 @SuppressWarnings("removal")
 @Deprecated(forRemoval = true)
+@ApiStatus.Internal
 public final class TablePassInfo extends LayoutPassInfo {
   final List<TableRow> table = new ArrayList<>();
   public final Rectangle toFitRec;

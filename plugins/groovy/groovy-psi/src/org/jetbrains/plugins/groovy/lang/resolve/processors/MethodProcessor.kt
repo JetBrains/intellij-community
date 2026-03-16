@@ -1,7 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.processors
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.ElementClassHint.DeclarationKind
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult

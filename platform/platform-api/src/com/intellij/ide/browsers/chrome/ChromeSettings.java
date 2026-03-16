@@ -11,7 +11,11 @@ import com.intellij.util.xmlb.annotations.XMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public final class ChromeSettings extends BrowserSpecificSettings {
   public static final String USER_DATA_DIR_ARG = "--user-data-dir=";

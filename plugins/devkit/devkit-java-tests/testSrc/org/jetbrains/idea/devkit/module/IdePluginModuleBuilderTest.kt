@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.module
 
 import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.setupTestModule
@@ -131,6 +131,53 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_21)
   }
 
   @Test
+  fun pluginKotlinK2Compatibility() {
+    genModuleWithDependencies("kotlin")
+
+    fixture.configureFromTempProjectFile("build.gradle.kts")
+    assertNoUnprocessedTemplates()
+
+    expectFile(PLUGIN_XML_LOCATION,
+      /* language=XML */
+      """
+      <!-- Plugin Configuration File: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+      <idea-plugin>
+          <!-- Unique identifier of the plugin. It should be FQN, cannot be changed between the plugin versions. -->
+          <id>com.example.demo</id>
+      
+          <!-- Public plugin name should be written in Title Case.
+               Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name -->
+          <name>Demo</name>
+      
+          <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+          <vendor url="https://www.yourcompany.com">YourCompany</vendor>
+      
+          <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+               Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
+          <description><![CDATA[
+              Enter short description for your plugin here.<br>
+              <em>most HTML tags may be used</em>
+          ]]></description>
+      
+          <!-- Product and plugin compatibility requirements.
+               Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+      
+          <depends>org.jetbrains.kotlin</depends>
+          <resource-bundle>messages.MyMessageBundle</resource-bundle>
+          <!-- Extensions defined by the plugin.
+               Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+          <extensions defaultExtensionNs="com.intellij">
+              <toolWindow id="MyToolWindow" factoryClass="com.example.demo.MyToolWindowFactory"
+                          icon="AllIcons.Toolwindows.ToolWindowPalette"/>
+          </extensions>
+          <extensions defaultExtensionNs="org.jetbrains.kotlin">
+              <supportsKotlinPluginMode supportsK2="true"/>
+          </extensions>
+      </idea-plugin>
+    """.trimIndent())
+  }
+
+  @Test
   fun pluginJavaDependencies() {
     genModuleWithDependencies("java")
 
@@ -217,6 +264,18 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_21)
   }
 
   @Test
+  fun pluginPropertiesDependencies() {
+    genModuleWithDependencies("properties")
+
+    fixture.configureFromTempProjectFile("build.gradle.kts")
+    assertBuildGradlePlugins("com.intellij.properties")
+
+    assertPluginXmlDependencies(
+      "com.intellij.properties"
+    )
+  }
+
+  @Test
   fun themeProject() {
     val builder = IdePluginModuleBuilder()
     builder.setPluginType(PluginType.THEME)
@@ -242,7 +301,7 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_21)
           <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
           <vendor url="https://www.yourcompany.com">YourCompany</vendor>
       
-          <idea-version since-build="252.25557"/>
+          <idea-version since-build="253"/>
       
           <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
                Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->

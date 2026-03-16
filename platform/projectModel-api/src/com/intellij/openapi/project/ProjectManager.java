@@ -88,6 +88,10 @@ public abstract class ProjectManager {
    * Loads and opens a project with the specified path. If the project file is from an older IDEA
    * version, prompts the user to convert it to the latest version. If the project file is from a
    * newer version, shows a message box telling the user that the load failed.
+   * <p>
+   * This method opens the project as-is.
+   * If the project is new and should be imported, use {@link com.intellij.ide.impl.ProjectUtil#openOrImportAsync} or
+   * {@link com.intellij.ide.impl.ProjectUtil#openOrImport} instead.
    *
    * @param filePath the .ipr file path
    * @return the opened project file, or null if the project failed to load because of version mismatch

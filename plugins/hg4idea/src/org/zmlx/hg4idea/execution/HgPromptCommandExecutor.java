@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
 
-import java.awt.*;
+import java.awt.EventQueue;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;

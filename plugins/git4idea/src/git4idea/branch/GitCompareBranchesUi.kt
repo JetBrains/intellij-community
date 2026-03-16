@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch
 
 import com.intellij.openapi.Disposable
@@ -35,7 +35,7 @@ import git4idea.i18n.GitBundleExtensions.html
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.UUID
 import java.util.function.Consumer
 import javax.swing.JComponent
 
@@ -100,7 +100,7 @@ class GitCompareBranchesUi(
     }
   }
 
-  private class MyVcsLogUi(id: String, logData: VcsLogData, colorManager: VcsLogColorManager,
+  internal class MyVcsLogUi(id: String, logData: VcsLogData, colorManager: VcsLogColorManager,
                            uiProperties: MainVcsLogUiProperties, refresher: VisiblePackRefresher,
                            rangeFilter: VcsLogRangeFilter, rootFilter: VcsLogRootFilter?,
                            isEditorDiffPreview: Boolean) :

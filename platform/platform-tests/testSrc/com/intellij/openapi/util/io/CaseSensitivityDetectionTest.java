@@ -14,9 +14,19 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static com.intellij.openapi.util.io.IoTestUtil.*;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeLinux;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeMacOS;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeWorkingWslDistribution;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeWslPresence;
+import static com.intellij.openapi.util.io.IoTestUtil.getUnicodeName;
+import static com.intellij.openapi.util.io.IoTestUtil.setCaseSensitivity;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 /** Tests low-level functions for reading file case-sensitivity attributes in {@link FileSystemUtil} */

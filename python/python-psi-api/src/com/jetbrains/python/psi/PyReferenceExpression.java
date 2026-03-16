@@ -43,7 +43,7 @@ public interface PyReferenceExpression extends PyAstReferenceExpression, PyQuali
    * <i>Note: the returned list does not contain null values.</i>
    */
   default @NotNull List<QualifiedRatedResolveResult> multiFollowAssignmentsChain(@NotNull PyResolveContext resolveContext) {
-    return multiFollowAssignmentsChain(resolveContext, __->true);
+    return multiFollowAssignmentsChain(resolveContext, __ -> true);
   }
 
   /**
@@ -51,7 +51,7 @@ public interface PyReferenceExpression extends PyAstReferenceExpression, PyQuali
    * Starts at this, expecting it to resolve to a target of an assignment.
    *
    * @param resolveContext resolve context
-   * @param follow predicate to test if target should be followed
+   * @param follow         predicate to test if target should be followed
    * @return the values that could be assigned to this element via a chain of assignments, or an empty list.
    * <i>Note: the returned list does not contain null values.</i>
    */

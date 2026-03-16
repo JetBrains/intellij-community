@@ -2,7 +2,7 @@
 package com.intellij.application.options;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.ImportsLayoutSettings;
+import com.intellij.psi.codeStyle.JavaImportsLayoutSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.TableUtil;
@@ -10,9 +10,11 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.table.AbstractTableModel;
-import java.awt.*;
+import java.awt.BorderLayout;
 
 public abstract class CodeStyleImportsPanelBase extends JPanel {
   private final PackageEntryTable myPackageList = new PackageEntryTable();
@@ -56,7 +58,7 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
     ImportLayoutPanel.resizeColumns(packageTable, table, myImportLayoutPanel.areStaticImportsEnabled());
   }
 
-  public void resetLayoutSettings(ImportsLayoutSettings settings) {
+  public void resetLayoutSettings(JavaImportsLayoutSettings settings) {
     kotlinUI.reset(settings);
 
     myImportLayoutPanel.getImportLayoutList().copyFrom(settings.getImportLayoutTable());
@@ -79,7 +81,7 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
     }
   }
 
-  public void applyLayoutSettings(ImportsLayoutSettings settings) {
+  public void applyLayoutSettings(JavaImportsLayoutSettings settings) {
     stopTableEditing();
 
     settings.setLayoutStaticImportsSeparately(myImportLayoutPanel.areStaticImportsEnabled());
@@ -89,7 +91,7 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
     settings.getPackagesToUseImportOnDemand().copyFrom(getCopyWithoutEmptyPackages(myPackageList));
   }
 
-  public boolean isModifiedLayoutSettings(ImportsLayoutSettings settings) {
+  public boolean isModifiedLayoutSettings(JavaImportsLayoutSettings settings) {
     boolean isModified = isModified(myImportLayoutPanel.getCbLayoutStaticImportsSeparately(), settings.isLayoutStaticImportsSeparately());
     isModified |= kotlinUI.isModified(settings);
 

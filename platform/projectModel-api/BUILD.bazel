@@ -24,6 +24,8 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//platform/util/xmlDom",
+    "//platform/eel",
+    "//platform/eel-provider",
   ]
 )
 ### auto-generated section `build intellij.platform.projectModel` end

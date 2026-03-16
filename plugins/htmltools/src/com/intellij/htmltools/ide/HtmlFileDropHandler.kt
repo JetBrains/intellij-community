@@ -10,7 +10,11 @@ import com.intellij.lang.Language
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.FileDropEvent
+import com.intellij.openapi.editor.FileDropHandler
+import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.util.io.FileUtil

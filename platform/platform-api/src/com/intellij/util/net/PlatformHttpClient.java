@@ -21,7 +21,11 @@ import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSession;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.*;
+import java.net.Authenticator;
+import java.net.CookieHandler;
+import java.net.HttpURLConnection;
+import java.net.ProxySelector;
+import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
@@ -37,7 +41,12 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Flow;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -45,10 +54,11 @@ import java.util.zip.GZIPInputStream;
  * <p>
  * Example:
  * <pre>
- *   var client = PlatformHttpClient.client();
- *   var request = PlatformHttpClient.request(uri);
- *   var response = PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.ofString()));
- *   var content = response.body();
+ *   try (var client = PlatformHttpClient.client()) {
+ *     var request = PlatformHttpClient.request(uri);
+ *     var response = PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.ofString()));
+ *     var content = response.body();
+ *   }
  * </pre>
  * <p>
  * Notable differences with {@link HttpRequests}:
@@ -63,6 +73,7 @@ import java.util.zip.GZIPInputStream;
 public final class PlatformHttpClient {
   /**
    * Returns a preconfigured {@link HttpClient}. For more customization, use {@link #clientBuilder()}.
+   * The resulting client is expected to be eventually {@link HttpClient#close() closed}.
    */
   public static @NotNull HttpClient client() {
     return clientBuilder().build();
@@ -70,6 +81,7 @@ public final class PlatformHttpClient {
 
   /**
    * Returns a preconfigured {@link HttpClient.Builder}.
+   * The resulting client is expected to be eventually {@link HttpClient#close() closed}.
    */
   public static HttpClient.@NotNull Builder clientBuilder() {
     var builder = new DelegatingHttpClientBuilder()
@@ -79,7 +91,7 @@ public final class PlatformHttpClient {
     if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred()) {
       var app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
-        CertificateManager certificateManager = app.getServiceIfCreated(CertificateManager.class);
+        var certificateManager = app.getServiceIfCreated(CertificateManager.class);
         if (certificateManager != null) {
           builder = builder.sslContext(certificateManager.getSslContext());
         }
@@ -196,7 +208,7 @@ public final class PlatformHttpClient {
 
   private static Charset findCharset(HttpHeaders headers) {
     return headers.firstValue("Content-Type").map(v -> {
-      int p = v.indexOf("charset=");
+      var p = v.indexOf("charset=");
       if (p > 0) {
         try {
           return Charset.forName(v.substring(p + 8).trim());
@@ -367,7 +379,7 @@ public final class PlatformHttpClient {
         var result = new CompletableFuture<HttpResponse<T>>();
         delegate.executor().orElseGet(() -> ExecutorsKt.asExecutor(Dispatchers.getIO())).execute(() -> {
           try {
-            var data = Files.readAllBytes(Path.of(request.uri()));
+            @SuppressWarnings("UseOptimizedEelFunctions") var data = Files.readAllBytes(Path.of(request.uri()));
             completeResult(responseHandler, fhr, data, result);
           }
           catch (NoSuchFileException e) {

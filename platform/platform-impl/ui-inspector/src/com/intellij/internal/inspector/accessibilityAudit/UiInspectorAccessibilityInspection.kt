@@ -3,13 +3,10 @@ package com.intellij.internal.inspector.accessibilityAudit
 
 import com.intellij.icons.AllIcons
 import com.intellij.internal.InternalActionsBundle
-import org.jetbrains.annotations.ApiStatus
 import javax.accessibility.Accessible
 import javax.accessibility.AccessibleRole
 import javax.swing.Icon
 
-@ApiStatus.Internal
-@ApiStatus.Experimental
 interface UiInspectorAccessibilityInspection {
   val propertyName: String
 
@@ -37,8 +34,6 @@ interface UiInspectorAccessibilityInspection {
   fun passesInspection(accessible: Accessible?): Boolean
 }
 
-@ApiStatus.Internal
-@ApiStatus.Experimental
 enum class Severity {
   WARNING,
   RECOMMENDATION,

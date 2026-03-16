@@ -13,7 +13,9 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.platform.WasmPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
+import org.jetbrains.kotlin.platform.konan.NativePlatform
 
 abstract class DeclarationBasedExtension(
   protected val pluginContext: IrPluginContext,
@@ -62,6 +64,10 @@ abstract class DeclarationBasedExtension(
    * This returns true if the current target includes any non-JVM specific code.
    */
   protected fun includesNonJvmTarget() = pluginContext.platform?.any { it !is JvmPlatform } == true
+
+  protected fun isIosTarget() = pluginContext.platform?.any { it is NativePlatform } == true
+
+  protected fun isWasmTarget() = pluginContext.platform?.any { it is WasmPlatform } == true
 
   protected fun IrClass.jvmLikeName(): String {
     return when (val thisParent = parent) {

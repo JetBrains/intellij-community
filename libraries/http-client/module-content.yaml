@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.http.client.jar
   modules:
   - name: intellij.libraries.http.client
   library: http-client

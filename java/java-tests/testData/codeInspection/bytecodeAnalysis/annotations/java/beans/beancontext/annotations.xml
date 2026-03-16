@@ -8,9 +8,6 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.beans.beancontext.BeanContextServicesSupport java.util.Iterator getCurrentServiceSelectors(java.lang.Class)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.beans.beancontext.BeanContextServicesSupport void bcsPreDeserializationHook(java.io.ObjectInputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>

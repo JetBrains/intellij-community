@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -13,14 +14,22 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.view.CaretData;
 import com.intellij.openapi.editor.impl.view.IterationState;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.EditorTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.awt.*;
-import java.util.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class IterationStateTest extends AbstractEditorTest {
   private Color DEFAULT_BACKGROUND;
@@ -31,6 +40,8 @@ public class IterationStateTest extends AbstractEditorTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
+
+    Registry.get("editor.old.full.horizontal.selection.enabled").setValue(true);
     EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
     DEFAULT_BACKGROUND = new DebugColor("DEFAULT_BACKGROUND", colorsScheme.getDefaultBackground());
     CARET_ROW_BACKGROUND = new DebugColor(EditorColors.CARET_ROW_COLOR);
@@ -382,8 +393,7 @@ public class IterationStateTest extends AbstractEditorTest {
                                    new TextAttributes(new Color(random, random, random++), new Color(random, random, random++),
                                    null, null, Font.PLAIN), HighlighterTargetArea.EXACT_RANGE);
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).severity(severity).range(1, 3).createUnconditionally();
-    highlighter.setErrorStripeTooltip(info);
-    info.setHighlighter((RangeHighlighterEx)highlighter);
+    BackgroundUpdateHighlightersUtil.associateInfoAndHighlighter(info, (RangeHighlighterEx)highlighter);
     return highlighter;
   }
 

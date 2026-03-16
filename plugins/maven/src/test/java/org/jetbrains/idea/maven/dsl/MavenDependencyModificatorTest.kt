@@ -2,12 +2,12 @@
 package org.jetbrains.idea.maven.dsl
 
 import com.intellij.buildsystem.model.DeclaredDependency
-import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class MavenDependencyModificatorTest : MavenTestCase() {
+class MavenDependencyModificatorTest : MavenMultiVersionImportingTestCase() {
   override fun runInDispatchThread() = false
 
   @Test
@@ -26,6 +26,7 @@ class MavenDependencyModificatorTest : MavenTestCase() {
           </dependency>
       </dependencies>
     """.trimIndent())
+    importProjectAsync()
     val dependencyList = dep.declaredDependencies(file)
     assertDependencies(dependencyList, "org.test:test-dep:2.0")
   }
@@ -69,6 +70,7 @@ class MavenDependencyModificatorTest : MavenTestCase() {
       
      
     """.trimIndent())
+    importProjectAsync()
     val dependencyList = dep.declaredDependencies(moduleFile)
     assertDependencies(dependencyList, "org.test:test-dep:2.0")
   }

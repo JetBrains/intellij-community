@@ -31,6 +31,7 @@ kotlin {
     "-Xconsistent-data-class-copy-visibility",
     "-Xcontext-parameters",
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
+    "-progressive",
   )
   jvm {}
   sourceSets.jvmTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../src")) }
@@ -49,22 +50,17 @@ kotlin {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
     }
-    implementation(jps.com.intellij.platform.kotlinx.coroutines.core.jvm134738847.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
+    implementation(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.core.jvm930800474.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
       isTransitive = false
-    }
-    implementation(jps.org.jetbrains.kotlin.kotlin.test542871666.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
     implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.core.jvm1739247612.get().let { "${it.group}:kotlinx-serialization-core:${it.version}" }) {
       isTransitive = false
     }
+    implementation(project(":fleet.test.runtime"))
     implementation(project(":fleet.codecache"))
     implementation(project(":fleet.bundles"))
     implementation(project(":fleet.util.network"))
     implementation(project(":fleet.ktor.client.core"))
-  }
-  sourceSets.jvmTest.dependencies {
-    implementation(project(":fleet.junit4"))
   }
   // KOTLIN__MARKER_END
 }

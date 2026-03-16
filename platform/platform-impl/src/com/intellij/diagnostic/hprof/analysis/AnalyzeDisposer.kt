@@ -24,9 +24,16 @@ import com.intellij.diagnostic.hprof.util.TreeNode
 import com.intellij.diagnostic.hprof.util.TreeVisualizer
 import com.intellij.diagnostic.hprof.util.TruncatingPrintBuffer
 import com.intellij.util.ExceptionUtil
-import it.unimi.dsi.fastutil.longs.*
+import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.longs.LongArrayList
+import it.unimi.dsi.fastutil.longs.LongCollection
+import it.unimi.dsi.fastutil.longs.LongList
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import java.util.*
+import java.util.ArrayDeque
+import java.util.Collections
+import java.util.Stack
 import java.util.function.LongConsumer
 
 class AnalyzeDisposer(private val analysisContext: AnalysisContext) {

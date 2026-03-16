@@ -5,7 +5,12 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 // Model of a strongly connected component, the entrypoint (header), and the backedges to the entrypoint.
 // This allows us to find endpoint cycles to better calculate postdominance

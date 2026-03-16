@@ -16,11 +16,15 @@ import com.intellij.openapi.ui.BrowseFolderRunnable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.getPresentablePath
-import com.intellij.ui.*
+import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.ExpandableItemsHandlerFactory
+import com.intellij.ui.ExpandedItemListCellRendererWrapper
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.ui.JBInsets
 import java.awt.event.ActionEvent
-import java.util.*
+import java.util.Optional
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.AbstractAction
 import javax.swing.JList

@@ -7,7 +7,38 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.HierarchicalMethodSignature;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
@@ -18,7 +49,11 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo.ApplicabilityLevelConstant;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -27,7 +62,14 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public class JavaMethodsConflictResolver implements PsiConflictResolver {
   private static final Logger LOG = Logger.getInstance(JavaMethodsConflictResolver.class);
@@ -70,7 +112,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver {
     checkSameSignatures(conflicts, map);
     if (conflicts.size() == 1) return conflicts.get(0);
 
-    checkAccessStaticLevels(conflicts, true);
+    checkAccessStaticLevels(conflicts);
     if (conflicts.size() == 1) return conflicts.get(0);
 
     checkParametersNumber(conflicts, getActualParametersLength(), map, false);
@@ -154,7 +196,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver {
     return false;
   }
 
-  protected static void checkAccessStaticLevels(@NotNull List<? extends CandidateInfo> conflicts, boolean checkAccessible) {
+  protected static void checkAccessStaticLevels(@NotNull List<? extends CandidateInfo> conflicts) {
     int conflictsCount = conflicts.size();
 
     int maxCheckLevel = -1;
@@ -163,7 +205,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver {
     for (CandidateInfo conflict : conflicts) {
       ProgressManager.checkCanceled();
       final MethodCandidateInfo method = (MethodCandidateInfo)conflict;
-      final int level = checkAccessible ? getCheckAccessLevel(method) : getCheckStaticLevel(method);
+      final int level = getCheckAccessLevel(method);
       checkLevels[index++] = level;
       maxCheckLevel = Math.max(maxCheckLevel, level);
     }
@@ -404,12 +446,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver {
 
   private static int getCheckAccessLevel(@NotNull MethodCandidateInfo method) {
     return method.isAccessible() ? 1 : 0;
-  }
-
-  private static int getCheckStaticLevel(@NotNull MethodCandidateInfo method) {
-    boolean available = method.isStaticsScopeCorrect();
-    return (available ? 1 : 0) << 1 |
-           (method.getCurrentFileResolveScope() instanceof PsiImportStaticStatement ? 0 : 1);
   }
 
   private int getActualParametersLength() {
@@ -702,9 +738,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver {
     for (CandidateInfo conflict : conflicts) {
       ProgressManager.checkCanceled();
       final PsiMethod method = (PsiMethod)conflict.getElement();
-      final int parametersCount = method.getParameterList().getParametersCount();
+      PsiParameterList list = method.getParameterList();
+      final int parametersCount = list.getParametersCount();
       if (method.isVarArgs() && parametersCount - 1 == argumentsCount) {
-        final PsiType type = method.getParameterList().getParameters()[parametersCount - 1].getType();
+        final PsiType type = Objects.requireNonNull(list.getParameter(parametersCount - 1)).getType();
         final PsiType componentType = ((PsiArrayType)type).getComponentType();
         final PsiClassType classType = PsiType.getJavaLangObject(method.getManager(), GlobalSearchScope.allScope(method.getProject()));
         if (Comparing.equal(componentType, classType)) {
@@ -718,8 +755,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver {
         ProgressManager.checkCanceled();
         PsiMethod method = (PsiMethod)conflict.getElement();
         if (method != objectVararg.getElement() && method.isVarArgs()) {
-          final int paramsCount = method.getParameterList().getParametersCount();
-          final PsiType type = method.getParameterList().getParameters()[paramsCount - 1].getType();
+          PsiParameterList list = method.getParameterList();
+          final int paramsCount = list.getParametersCount();
+          final PsiType type = Objects.requireNonNull(list.getParameter(paramsCount - 1)).getType();
           final PsiType componentType = ((PsiArrayType)type).getComponentType();
           if (argumentsCount == paramsCount - 1 && componentType instanceof PsiPrimitiveType) {
             conflicts.remove(objectVararg);

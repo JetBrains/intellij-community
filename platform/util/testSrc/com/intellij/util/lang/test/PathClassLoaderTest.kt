@@ -75,4 +75,40 @@ class PathClassLoaderTest {
       System.clearProperty(PathClassLoader.RESET_CLASSPATH_FROM_MANIFEST_PROPERTY)
     }
   }
+
+  @Test
+  fun `single jar with manifest with relative classpath entries`(@TempDir dir: Path) {
+    val jarAbsolutePath = dir.resolve("lib-wth-relative-classpath-entries-as-manifest.jar")
+    Compressor.Zip(jarAbsolutePath).use { compressor ->
+      compressor.addFile("META-INF/MANIFEST.MF", """
+          Manifest-Version: 1.0
+          Class-Path: ../my%20lib/core.jar ../../lib%2b/utils.jar ../../libs/plugi
+           n.jar
+          Created-By: Bazel
+        """.trimIndent().toByteArray())
+    }
+
+    // Test that the system property functionality works
+    try {
+      System.setProperty(PathClassLoader.RESET_CLASSPATH_FROM_MANIFEST_PROPERTY, "true")
+
+      val classLoader = PathClassLoader(UrlClassLoader.build().files(listOf(jarAbsolutePath)).parent(null))
+      val files = classLoader.getFiles()
+
+      // Should have 3 files now from the manifest classpath
+      assertThat(files.size).isEqualTo(3)
+      assertThat(files[0].fileName.toString()).isEqualTo("core.jar")
+      assertThat(files[0].parent.fileName.toString()).isEqualTo("my lib")
+      assertThat(files[0].parent.parent.fileName.toString()).isEqualTo(jarAbsolutePath.parent.parent.fileName.toString())
+      assertThat(files[1].fileName.toString()).isEqualTo("utils.jar")
+      assertThat(files[1].parent.fileName.toString()).isEqualTo("lib+")
+      assertThat(files[1].parent.parent.fileName.toString()).isEqualTo(jarAbsolutePath.parent.parent.parent.fileName.toString())
+      assertThat(files[2].fileName.toString()).isEqualTo("plugin.jar")
+      assertThat(files[2].parent.fileName.toString()).isEqualTo("libs")
+      assertThat(files[2].parent.parent.fileName.toString()).isEqualTo(jarAbsolutePath.parent.parent.parent.fileName.toString())
+    }
+    finally {
+      System.clearProperty(PathClassLoader.RESET_CLASSPATH_FROM_MANIFEST_PROPERTY)
+    }
+  }
 }

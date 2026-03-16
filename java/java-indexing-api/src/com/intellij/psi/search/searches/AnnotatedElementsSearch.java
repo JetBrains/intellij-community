@@ -2,7 +2,12 @@
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.InstanceofQuery;
 import com.intellij.util.Query;

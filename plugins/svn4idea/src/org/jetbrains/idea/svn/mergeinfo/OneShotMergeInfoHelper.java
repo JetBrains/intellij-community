@@ -22,12 +22,22 @@ import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
 
 import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.util.text.StringUtil.toUpperCase;
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.exists;
+import static com.intellij.util.containers.ContainerUtil.find;
+import static com.intellij.util.containers.ContainerUtil.or;
 import static java.util.Collections.reverseOrder;
 import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
 

@@ -18,7 +18,7 @@ import com.intellij.util.lang.JavaVersion
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.Nls
 import java.io.StringReader
-import java.util.*
+import java.util.Properties
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import java.util.function.Supplier

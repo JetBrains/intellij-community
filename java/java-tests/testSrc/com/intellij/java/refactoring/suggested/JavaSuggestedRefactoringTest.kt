@@ -11,8 +11,12 @@ import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.BaseRefactoringProcessor
+import com.intellij.refactoring.RefactoringBundle.message
 import com.intellij.refactoring.suggested.BaseSuggestedRefactoringTest
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution
+import com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl
+import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
+import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 import com.intellij.refactoring.suggested._suggestedChangeSignatureNewParameterValuesForTests
 
 class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
@@ -1315,7 +1319,41 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
       executeCommand(project) { type(", int p2") }
     }
   }
-  
+
+  fun testBrokenParameters() {
+    doTest(
+      initialText = """
+          interface I {
+              void foo(<caret>);
+          }
+        """.trimIndent(),
+      actionName = message("suggested.refactoring.change.signature.intention.text", "usages"),
+      textAfterRefactoring = """
+          interface I {
+              void foo(String s<caret>);
+          }
+        """.trimIndent(),
+      checkPresentation = {
+        var state = SuggestedRefactoringProviderImpl.getInstance(this.project).state!!
+        val oldSignature = state.oldSignature
+        state = state.withOldSignature(Signature.create(oldSignature.name, oldSignature.type,
+                                                oldSignature.parameters.let {
+                                                  val list = it.toMutableList()
+                                                  list.add(Parameter("s", "s", "String"))
+                                                  list
+                                                },
+                                                oldSignature.additionalData)!!)
+        state = state.refactoringSupport.availability.refineSignaturesWithResolve(state)
+        val refactoringSupport = state.refactoringSupport
+        val refactoring = refactoringSupport.availability.detectAvailableRefactoring(state)
+        assertNull(refactoring)
+      },
+      editingActions = {
+        type("String s")
+      }
+    )
+  }
+
   private fun addFileWithAnnotations() {
     myFixture.addFileToProject(
       "Annotations.java",

@@ -17,6 +17,7 @@ class InvertChannelsAction : BaseImageAction() {
     transformationData.setIsNormalized(false)
     val transformedImage = transformationData.applyTransformations(originalImage)
     applyInvertChannels(transformedImage).also {
+      imageFile.putUserData(CURRENT_OPERATION_MODE_KEY, ImageOperationMode.INVERTED_IMAGE)
       ScientificImageActionsCollector.logInvertChannelsInvoked()
       return it
     }

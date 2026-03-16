@@ -1,0 +1,12 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.java.backend"/>
+    <plugin id="com.intellij.mcpServer"/>
+    <module name="intellij.devkit.core"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij.mcpServer">
+    <mcpToolset implementation="com.intellij.devkit.mcp.DevKitMcpToolset" />
+  </extensions>
+
+</idea-plugin>

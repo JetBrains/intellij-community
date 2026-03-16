@@ -21,12 +21,10 @@ fun codepointClass(codepoint: Int): CodepointClass =
     codepoint == '\r'.code -> CodepointClass.NEWLINE
     codepoint == '_'.code -> CodepointClass.UNDERSCORE
     codepoint <= maxSeparatorCode && separatorCodes[codepoint] -> CodepointClass.SEPARATOR
-    Codepoint.isWhitespace(codepoint) -> CodepointClass.SPACE
-    Codepoint.isUpperCase(codepoint) -> CodepointClass.UPPERCASE
+    isWhitespace(codepoint) -> CodepointClass.SPACE
+    isUpperCase(codepoint) -> CodepointClass.UPPERCASE
     else -> CodepointClass.LOWERCASE // treat all lowercase and unicode symbols as lowercase
   }
-
-
 
 // Code points are derived from:
 // https://unicode.org/Public/UNIDATA/EastAsianWidth.txt

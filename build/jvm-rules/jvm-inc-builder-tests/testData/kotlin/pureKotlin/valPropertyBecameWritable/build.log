@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  Foo.class
+  META-INF/kotlin_pureKotlin_valPropertyBecameWritable-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/valPropertyBecameWritable/a/foo.kt
+End of files
+Cleaning output files:
+  AppKt.class
+  META-INF/kotlin_pureKotlin_valPropertyBecameWritable-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/valPropertyBecameWritable/a/app.kt
+End of files
+------------------------------------------
+Exit code: ERROR

@@ -30,7 +30,12 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class DependencyConfigFileConverter extends PathReferenceConverter {
 

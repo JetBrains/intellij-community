@@ -19,6 +19,7 @@ import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities.registryUtils.impl.PrivateRegistryRoot
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.util.createDocumentBuilder
 import com.intellij.util.io.systemIndependentPath
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.sun.jna.platform.win32.Win32Exception
@@ -28,11 +29,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 import java.time.format.DateTimeFormatter
-import java.util.*
-import javax.xml.parsers.DocumentBuilderFactory
+import java.util.Date
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.isDirectory
+import kotlin.io.path.name
 
 class VSRegistryParserNew private constructor(val hive: VSHive) {
   companion object {
@@ -315,9 +319,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
     if (!configFile.exists()) return null
     val document =
       try {
-        val factory = DocumentBuilderFactory.newInstance()
-        val builder = factory.newDocumentBuilder()
-        builder.parse(configFile.toFile())
+        createDocumentBuilder().parse(configFile.toFile())
       }
       catch (e: Throwable) {
         logger.info("Error reading the XML config file.", e)

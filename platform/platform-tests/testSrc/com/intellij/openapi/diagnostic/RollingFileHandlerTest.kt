@@ -5,7 +5,9 @@ import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.text.allOccurrencesOf
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Files

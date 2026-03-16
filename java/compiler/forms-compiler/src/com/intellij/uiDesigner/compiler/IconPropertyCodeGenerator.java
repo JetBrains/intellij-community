@@ -6,7 +6,7 @@ import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
-import javax.swing.*;
+import javax.swing.ImageIcon;
 
 public class IconPropertyCodeGenerator extends PropertyCodeGenerator {
   private static final Type ourImageIconType = Type.getType(ImageIcon.class);

@@ -5,8 +5,8 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.PythonFlavorProvider
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -18,7 +18,7 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 object CondaEnvSdkFlavor : CPythonSdkFlavor<PyCondaFlavorData>() {
-  override fun getIcon(): Icon = PythonIcons.Python.Anaconda
+  override fun getIcon(): Icon = PythonCommunityImplCondaIcons.Anaconda
 
   override fun getFlavorDataClass(): Class<PyCondaFlavorData> = PyCondaFlavorData::class.java
 

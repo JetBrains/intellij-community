@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
-import jdk.jfr.*;
+import jdk.jfr.Category;
+import jdk.jfr.Description;
+import jdk.jfr.Event;
+import jdk.jfr.Label;
+import jdk.jfr.Name;
+import jdk.jfr.StackTrace;
 
 @SuppressWarnings({"FieldCanBeLocal", "unused"})
 @Name("com.intellij.platform.CheckCanceledEvent")
@@ -36,17 +41,34 @@ class CheckCanceledEvent extends Event {
   private final boolean cancelled;
 
 
-  CheckCanceledEvent(boolean nonCancellable,
-                     boolean hasProgressIndicator,
-                     boolean hasContextJob,
-                     boolean hasNoneBehavior,
-                     boolean hasOnlyHooksBehavior,
-                     boolean cancelled) {
+  private CheckCanceledEvent(boolean nonCancellable,
+                             boolean hasProgressIndicator,
+                             boolean hasContextJob,
+                             boolean hasNoneBehavior,
+                             boolean hasOnlyHooksBehavior,
+                             boolean cancelled) {
     this.nonCancellable = nonCancellable;
     this.hasProgressIndicator = hasProgressIndicator;
     this.hasContextJob = hasContextJob;
     this.hasNoneBehavior = hasNoneBehavior;
     this.hasOnlyHooksBehavior = hasOnlyHooksBehavior;
     this.cancelled = cancelled;
+  }
+
+  static void commit(boolean nonCancellable,
+                     boolean hasProgressIndicator,
+                     boolean hasContextJob,
+                     boolean hasNoneBehavior,
+                     boolean hasOnlyHooksBehavior,
+                     boolean cancelled) {
+    CheckCanceledEvent event = new CheckCanceledEvent(nonCancellable,
+                                                      hasProgressIndicator,
+                                                      hasContextJob,
+                                                      hasNoneBehavior,
+                                                      hasOnlyHooksBehavior,
+                                                      cancelled);
+    if (event.isEnabled() && event.shouldCommit()) {
+      event.commit();
+    }
   }
 }

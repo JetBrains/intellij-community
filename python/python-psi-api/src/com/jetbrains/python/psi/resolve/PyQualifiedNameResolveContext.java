@@ -32,42 +32,62 @@ import org.jetbrains.annotations.Nullable;
 public interface PyQualifiedNameResolveContext {
   @Nullable
   PsiElement getFoothold();
+
   int getRelativeLevel();
+
   @Nullable
   Sdk getSdk();
+
   @Nullable
   Module getModule();
+
   @NotNull
   Project getProject();
+
   boolean getWithoutRoots();
+
   boolean getWithoutForeign();
+
   boolean getWithoutStubs();
+
   @NotNull
   PsiManager getPsiManager();
+
   boolean getWithMembers();
+
   boolean getWithPlainDirectories();
+
   boolean getVisitAllModules();
+
   @Nullable
   Sdk getEffectiveSdk();
 
   boolean isValid();
+
   @Nullable
   PsiFile getFootholdFile();
+
   @Nullable
   PsiDirectory getContainingDirectory();
 
   @NotNull
   PyQualifiedNameResolveContext copyWithoutForeign();
+
   @NotNull
   PyQualifiedNameResolveContext copyWithMembers();
+
   @NotNull
   PyQualifiedNameResolveContext copyWithPlainDirectories();
+
   @NotNull
   PyQualifiedNameResolveContext copyWithRelative(int relativeLevel);
+
   @NotNull
   PyQualifiedNameResolveContext copyWithoutRoots();
+
   @NotNull
   PyQualifiedNameResolveContext copyWithRoots();
+
   @NotNull
   PyQualifiedNameResolveContext copyWithoutStubs();
 }

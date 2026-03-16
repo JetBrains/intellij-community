@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.codeInsight.KotlinRunLineMarkerHider
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
@@ -25,6 +26,8 @@ internal class KotlinRunLineMarkerContributor : RunLineMarkerContributor() {
         val function = element.parent as? KtNamedFunction ?: return null
         if (function.nameIdentifier != element) return null
 
+        if (KotlinRunLineMarkerHider.shouldHideRunLineMarker(element)) return null
+
         val detector = KotlinMainFunctionDetector.getInstanceDumbAware(element.project)
         if (!detector.isMain(function)) return null
 
@@ -33,6 +36,7 @@ internal class KotlinRunLineMarkerContributor : RunLineMarkerContributor() {
         val module = function.containingKtFile.module ?: return null
         if (module.isTestModule) return null
         if (!module.platform.idePlatformKind.tooling.acceptsAsEntryPoint(function)) return null
+
 
         val icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.TestStateRun)
         return Info(icon, ExecutorAction.getActions(Int.MAX_VALUE), null)

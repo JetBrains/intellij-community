@@ -3,7 +3,12 @@ package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import org.intellij.lang.regexp.psi.*;
+import org.intellij.lang.regexp.psi.RegExpAtom;
+import org.intellij.lang.regexp.psi.RegExpBackref;
+import org.intellij.lang.regexp.psi.RegExpConditional;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
 
 
 public class RegExpConditionalImpl extends RegExpElementImpl implements RegExpConditional {

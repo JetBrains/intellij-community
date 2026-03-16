@@ -6,9 +6,25 @@ package com.intellij.concurrency.virtualThreads
 
 import com.intellij.concurrency.installThreadContext
 import com.intellij.diagnostic.recordVirtualThreadForCoroutine
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import kotlin.coroutines.*
+import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 /**
  * Creates a new [virtual thread][Thread.Builder.OfVirtual] that runs the specified [block] of code.
@@ -64,7 +80,7 @@ fun <T> CoroutineScope.asyncAsVirtualThread(
     val currentJob = coroutineContext.job
     // we do not use suspendCancellableCoroutine here by design -- we do not need to trigger prompt cancellation of the outer `async`,
     // because the virtual thread might still be running
-    @Suppress("SSBasedInspection")
+    @Suppress("SuspendCoroutineLacksCancellationGuarantees")
     suspendCoroutine { externalContinuation ->
       val newContext = (externalContinuation.context + context).minusKey(ContinuationInterceptor.Key)
 
@@ -107,4 +123,18 @@ fun CoroutineScope.launchAsVirtualThread(
   action: () -> Unit,
 ): Job {
   return asyncAsVirtualThread(context, start, action)
+}
+
+/**
+ * Executes [action] in a virtual thread on top of [Dispatchers.Default].
+ *
+ * If [action] gets blocked on a [java.util.concurrent.locks.LockSupport.park],
+ * the virtual thread will be unmounted and the underlying platform thread will be reused. It is helpful to avoid thread starvation and CPU underutilization.
+ *
+ * Even if this function runs on a [Dispatchers.Default] dispatcher, there will be a forceful redispatch because a virtual threads needs to be created.
+ */
+suspend fun <T> inVirtualThread(action: () -> T): T {
+  return coroutineScope {
+    asyncAsVirtualThread(action = action).await()
+  }
 }

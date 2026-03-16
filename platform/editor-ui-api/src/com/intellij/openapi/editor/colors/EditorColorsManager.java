@@ -5,7 +5,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class EditorColorsManager {
 

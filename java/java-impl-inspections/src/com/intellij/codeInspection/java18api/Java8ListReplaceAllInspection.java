@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -14,7 +14,20 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
@@ -25,7 +38,13 @@ import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.CountingLoop;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.IndexedContainer;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -167,7 +186,7 @@ public final class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalIn
 
     private static @NotNull String generateParameterName(PsiStatement body, List<PsiMethodCallExpression> getCalls) {
       if (getCalls.isEmpty()) return "ignored";
-      return new VariableNameGenerator(body, VariableKind.PARAMETER).byExpression(getCalls.get(0)).generate(true);
+      return new VariableNameGenerator(body, VariableKind.PARAMETER).byExpression(getCalls.getFirst()).generate(true);
     }
 
     private static void inlineVariable(PsiLocalVariable variable, PsiStatement body) {

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <orderEntry type="jdk" jdkName="jbr-17" jdkType="JavaSDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="dokka-core" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.dokka:dokka-core:1.4.10.2-dev-52-SNAPSHOT">
+        </properties>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../mylibs/dokka-core-1.4.10.2-dev-52-SNAPSHOT.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+  </component>
+</module>

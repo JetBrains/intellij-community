@@ -19,10 +19,13 @@ import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
 import com.intellij.vcs.log.graph.impl.print.elements.EdgePrintElementImpl
 import com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl
 import com.intellij.vcs.log.graph.impl.print.elements.TerminalEdgePrintElement
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils.*
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils.asNormalEdge
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils.intEqual
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils.isEdgeDown
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils.isEdgeUp
 import com.intellij.vcs.log.graph.utils.NormalEdge
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
+import java.util.Collections
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sqrt

@@ -21,3 +21,5 @@ class B(
     }
 }
 // PRODUCED_CLASS_NAMES: B
+// IGNORE_K2
+// IGNORE_K2_K1

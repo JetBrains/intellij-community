@@ -1,12 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run
 
-import com.intellij.codeInsight.hints.presentation.*
+import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.Filter.ResultItem
 import com.intellij.execution.impl.InlayProvider
 import com.intellij.ide.actions.OpenFileAction
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.editor.Editor
@@ -18,8 +24,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.actions.RenameElementAction
-import com.jetbrains.python.extensions.toPsi
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.extensions.toPsi
 import java.awt.Point
 import java.awt.event.MouseEvent
 

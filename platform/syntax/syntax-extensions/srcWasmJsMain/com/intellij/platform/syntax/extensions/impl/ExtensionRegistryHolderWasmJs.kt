@@ -4,5 +4,5 @@ package com.intellij.platform.syntax.extensions.impl
 import com.intellij.platform.syntax.extensions.ExtensionSupport
 import fleet.util.multiplatform.Actual
 
-@Actual("instantiateExtensionRegistry")
+@Actual
 internal fun instantiateExtensionRegistryWasmJs(): ExtensionSupport = ExtensionRegistryImpl()

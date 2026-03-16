@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -6,6 +6,7 @@ import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -26,7 +27,11 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.ui.*;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckboxTreeBase;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
@@ -38,13 +43,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.awt.*;
-import java.util.*;
+import java.awt.BorderLayout;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrapper {
   private final M myMethod;
@@ -261,7 +275,9 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
                                     int row,
                                     boolean hasFocus) {
         if (value instanceof MemberNodeBase) {
-          ((MemberNodeBase<?>)value).customizeRenderer(getTextRenderer());
+          WriteIntentReadAction.run(() -> {
+            ((MemberNodeBase<?>)value).customizeRenderer(getTextRenderer());
+          });
         }
       }
     };

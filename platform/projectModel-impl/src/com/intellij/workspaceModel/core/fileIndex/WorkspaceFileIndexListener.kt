@@ -1,10 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex
 
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 /**
  * Defines a listener for changes that occur in the [WorkspaceFileIndex].
@@ -31,8 +32,7 @@ interface WorkspaceFileIndexListener : EventListener {
 
 @ApiStatus.Internal
 class WorkspaceFileIndexChangedEvent(
-  val removedFileSets: Collection<WorkspaceFileSet>,
   val registeredFileSets: Collection<WorkspaceFileSet>,
-  val storageBefore: EntityStorage,
+  val removedExclusions: Collection<VirtualFile>,
   val storageAfter: EntityStorage,
 )

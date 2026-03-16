@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.gradle.toml` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_toml",
+  opt_in = [
+    "kotlinx.serialization.InternalSerializationApi",
+    "kotlinx.serialization.ExperimentalSerializationApi",
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+  ]
+)
+
+resourcegroup(
+  name = "toml_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "toml",
+  module_name = "intellij.gradle.toml",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":toml_resources"],
+  kotlinc_opts = ":custom_toml",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//plugins/toml",
+    "//platform/analysis-api:analysis",
+    "//plugins/toml/core",
+    "//plugins/repository-search/common",
+    "//plugins/gradle/completion",
+    "//plugins/gradle",
+  ]
+)
+### auto-generated section `build intellij.gradle.toml` end

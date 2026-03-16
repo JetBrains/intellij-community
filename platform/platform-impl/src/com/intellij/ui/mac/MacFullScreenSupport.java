@@ -8,8 +8,8 @@ import com.intellij.ui.FullScreenSupport;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.RootPaneContainer;
+import java.awt.Window;
 
 /**
  * Please don't remove this class.

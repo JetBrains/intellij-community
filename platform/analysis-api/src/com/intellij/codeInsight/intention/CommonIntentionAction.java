@@ -10,11 +10,14 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A common interface for two ways to define a registered intention action
- * (visible in <em>Settings | Editor | Intentions</em>): either legacy {@link IntentionAction},
- * or new {@link com.intellij.modcommand.ModCommandAction}.
+ * (visible in <a href="jetbrains://idea/settings?name=Editor--Intentions">Settings | Editor | Intentions</a>):
+ * <ul>
+ *   <li>{@link IntentionAction} (legacy)</li>
+ *   <li>{@link ModCommandAction} (new)</li>
+ * </ul>
  *
  * @see IntentionAction
- * @see com.intellij.modcommand.ModCommandAction
+ * @see ModCommandAction
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-inspections-and-intentions.html">Code Inspection and Intentions (IntelliJ Platform Docs)</a>
  */
 @ApiStatus.NonExtendable

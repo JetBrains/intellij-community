@@ -6,7 +6,13 @@ import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiVariable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UTypeReferenceExpression
+import org.jetbrains.uast.UVariableEx
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiVariable
 
 @ApiStatus.Internal
@@ -18,7 +24,7 @@ class KotlinLocalFunctionUVariable(
 
     private val uastInitializerPart = UastLazyPart<UExpression?>()
 
-    override val psi get() = javaPsi
+    override val psi: PsiVariable get() = javaPsi
     override val sourcePsi: PsiElement = (javaPsi as? UastKotlinPsiVariable?)?.ktElement ?: javaPsi
 
     override val uastInitializer: UExpression?

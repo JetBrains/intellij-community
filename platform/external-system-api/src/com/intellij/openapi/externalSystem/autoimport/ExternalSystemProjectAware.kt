@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.autoimport
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.ReloadStatus
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration
 
@@ -13,9 +14,10 @@ interface ExternalSystemProjectAware {
 
   /**
    * Collects settings files which will be watched.
-   * This property can be called from any thread context to reduce UI freezes and CPU usage.
-   * Result will be cached, so settings files should be equals between reloads.
+   * These property is read each time after [reloadProject] gets called, new file was added
+   * or [ExternalSystemProjectListener.onSettingsFilesListChange] event happened.
    */
+  @get:RequiresBackgroundThread
   val settingsFiles: Set<String>
 
   fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable)

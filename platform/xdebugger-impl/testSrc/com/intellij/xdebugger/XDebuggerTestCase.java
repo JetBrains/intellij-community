@@ -5,7 +5,11 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import org.jetbrains.annotations.NotNull;
 

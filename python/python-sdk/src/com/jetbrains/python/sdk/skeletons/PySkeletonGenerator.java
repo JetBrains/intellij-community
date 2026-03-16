@@ -1,7 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.skeletons;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.BaseProcessHandler;
@@ -18,7 +22,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -114,7 +122,6 @@ public abstract class PySkeletonGenerator {
    */
   public abstract class Builder {
     protected final List<String> myExtraSysPath = new ArrayList<>();
-    protected final List<String> myAssemblyRefs = new ArrayList<>();
     protected final List<String> myExtraArgs = new ArrayList<>();
     protected String myWorkingDir;
     protected String myTargetModuleName;
@@ -128,11 +135,6 @@ public abstract class PySkeletonGenerator {
 
     public @NotNull Builder extraSysPath(@NotNull List<String> roots) {
       myExtraSysPath.addAll(roots);
-      return this;
-    }
-
-    public @NotNull Builder assemblyRefs(@NotNull List<String> assemblyRefs) {
-      myAssemblyRefs.addAll(assemblyRefs);
       return this;
     }
 
@@ -158,16 +160,6 @@ public abstract class PySkeletonGenerator {
     public @NotNull Builder targetModule(@NotNull String name, @Nullable String path) {
       myTargetModuleName = name;
       myTargetModulePath = path;
-      return this;
-    }
-
-    public @NotNull Builder timeout(int timeout) {
-      myTimeout = timeout;
-      return this;
-    }
-
-    public @NotNull Builder stdin(@NotNull String content) {
-      myStdin = content;
       return this;
     }
 
@@ -242,7 +234,7 @@ public abstract class PySkeletonGenerator {
 
       @Override
       public void onStderrLine(@NotNull String line) {
-        Run.LOG.info(StringUtil.trimTrailing(line));
+        Run.LOG.debug(StringUtil.trimTrailing(line));
       }
     };
 

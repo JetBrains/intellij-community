@@ -40,12 +40,20 @@ class GHCachingAccountInformationProvider(serviceCs: CoroutineScope) {
   /**
    * Will either schedule loading with the supplied executor or await the running request
    */
-  suspend fun loadInformation(executor: GithubApiRequestExecutor, account: GithubAccount): GithubAuthenticatedUser =
-    informationCache.get(account) {
+  suspend fun loadInformation(executor: GithubApiRequestExecutor, account: GithubAccount): GithubAuthenticatedUser {
+    val deferred = informationCache.get(account) {
       cs.async {
         executor.executeSuspend(GithubApiRequests.CurrentUser.get(account.server))
       }
-    }.await()
+    }
+    try {
+      return deferred.await()
+    }
+    catch (e: Exception) {
+      informationCache.asMap().remove(account, deferred)
+      throw e
+    }
+  }
 
   companion object {
     @JvmStatic

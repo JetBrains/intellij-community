@@ -16,7 +16,7 @@ import com.intellij.util.lang.JavaVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Properties
 import kotlin.io.path.div
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isExecutable

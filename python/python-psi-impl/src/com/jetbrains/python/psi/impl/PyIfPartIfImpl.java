@@ -12,5 +12,4 @@ public class PyIfPartIfImpl extends PyConditionalStatementPartImpl implements Py
   public PyIfPartIfImpl(ASTNode astNode) {
     super(astNode);
   }
-
 }

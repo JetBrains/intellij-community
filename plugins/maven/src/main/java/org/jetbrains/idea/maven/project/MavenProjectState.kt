@@ -3,10 +3,18 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.util.Comparing
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.idea.maven.model.*
+import org.jetbrains.idea.maven.model.MavenArtifact
+import org.jetbrains.idea.maven.model.MavenArtifactInfo
+import org.jetbrains.idea.maven.model.MavenArtifactNode
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
+import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.model.MavenPlugin
+import org.jetbrains.idea.maven.model.MavenProjectProblem
+import org.jetbrains.idea.maven.model.MavenRemoteRepository
+import org.jetbrains.idea.maven.model.MavenSource
 import java.io.File
 import java.io.Serializable
-import java.util.*
+import java.util.Properties
 
 @ApiStatus.Experimental
 data class MavenPluginWithArtifact(val plugin: MavenPlugin, val artifact: MavenArtifact?) : Serializable

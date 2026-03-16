@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
 import com.intellij.psi.util.findParentOfType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
+@K1Deprecation
 object CreateNextFunctionActionFactory : CreateCallableMemberFromUsageFactory<KtForExpression>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtForExpression? {
         return diagnostic.psiElement.findParentOfType(strict = false)

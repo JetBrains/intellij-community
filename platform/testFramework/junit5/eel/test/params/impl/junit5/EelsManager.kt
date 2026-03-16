@@ -12,7 +12,11 @@ import com.intellij.platform.testFramework.junit5.eel.params.impl.junit5.EelsMan
 import com.intellij.platform.testFramework.junit5.eel.params.spi.EelIjentTestProvider.StartResult.Skipped
 import com.intellij.platform.testFramework.junit5.eel.params.spi.EelIjentTestProvider.StartResult.Started
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.extension.ExtensionContext

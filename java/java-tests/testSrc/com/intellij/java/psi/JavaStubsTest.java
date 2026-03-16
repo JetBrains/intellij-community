@@ -6,10 +6,32 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiAnnotationMethod;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -461,6 +483,19 @@ public class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
       int i = 10;
       static {} // not allowed by spec, but we parse""");
     PsiTestUtil.checkStubsMatchText(psiFile);
+  }
+
+  public void test_implicit_class_index_updated_after_file_rename() throws Exception {
+    PsiFile psiFile = myFixture.addFileToProject("Hello.java", "void main() {}");
+    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+
+    assertFalse(JavaImplicitClassIndex.getInstance().getElements("Hello", getProject(), scope).isEmpty());
+    assertTrue(JavaImplicitClassIndex.getInstance().getElements("World", getProject(), scope).isEmpty());
+
+    WriteAction.run(() -> psiFile.getVirtualFile().rename(this, "World.java"));
+
+    assertTrue(JavaImplicitClassIndex.getInstance().getElements("Hello", getProject(), scope).isEmpty());
+    assertFalse(JavaImplicitClassIndex.getInstance().getElements("World", getProject(), scope).isEmpty());
   }
 
   public void test_array_type_use_annotation_stubbing() {

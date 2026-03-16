@@ -1,8 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
-import com.intellij.collaboration.async.*
-import com.intellij.collaboration.util.*
+import com.intellij.collaboration.async.MappingScopedItemsContainer
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.mapStatefulToStateful
+import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
+import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.collaboration.util.computeEmitting
+import com.intellij.collaboration.util.filePath
+import com.intellij.collaboration.util.getOrNull
+import com.intellij.collaboration.util.onFailure
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
@@ -20,17 +30,21 @@ import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.createVcsChange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
-import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.viewedStateComputationState
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewUnifiedPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 
@@ -66,7 +80,6 @@ interface GHPRReviewFileEditorViewModel {
   fun cancelNewComment(lineIdx: Int)
 
   fun requestNewComment(lineRange: LineRange, focus: Boolean)
-  fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange)
 
   fun showDiff(lineIdx: Int?)
 
@@ -180,8 +193,8 @@ internal class GHPRReviewFileEditorViewModelImpl(
    * We don't really care about the left-sided line number. It needs to be at the beginning to make sure
    * the first comment on the line is picked though.
    */
-  private fun lineToUnified(line: Int): GHPRReviewUnifiedPosition =
-    GHPRReviewUnifiedPosition(change, leftLine = -1, rightLine = line)
+  private fun lineToUnified(line: Int): UnifiedCodeReviewItemPosition =
+    UnifiedCodeReviewItemPosition(change, leftLine = -1, rightLine = line)
 
   private fun threadIsVisible(threadId: String): Boolean =
     allMappedThreads.value[threadId]?.let { it.isVisible && it.line != null && it.change?.filePathAfter != null } ?: false
@@ -197,24 +210,13 @@ internal class GHPRReviewFileEditorViewModelImpl(
   }
 
   override fun requestNewComment(lineRange: LineRange, focus: Boolean) {
-    val position = GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.MultiLine(Side.RIGHT, lineRange.start, lineRange.end))
+    val position = GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.MultiLine(Side.RIGHT, lineRange.start, Side.RIGHT, lineRange.end))
     val sharedVm = threadsVm.requestNewComment(position)
     if (focus) {
       cs.launchNow {
         newCommentsContainer.addIfAbsent(sharedVm).requestFocus()
       }
     }
-  }
-
-  override fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange) {
-    val newComment = threadsVm.newComments.value.firstOrNull {
-      when (val loc = it.position.value.location) {
-        is GHPRReviewCommentLocation.SingleLine -> loc.lineIdx == oldLineRange.end
-        is GHPRReviewCommentLocation.MultiLine -> loc.startLineIdx == oldLineRange.start && loc.lineIdx == oldLineRange.end
-      }
-    } ?: return
-    newComment.updateLineRange(newLineRange)
-    GHPRStatisticsCollector.logResizedComments(project)
   }
 
   override fun cancelNewComment(lineIdx: Int) =

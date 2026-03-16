@@ -7,6 +7,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface CodeReviewNavigableEditorViewModel {
+  val canNavigate: Boolean
+
   @RequiresEdt
   fun canGotoNextComment(threadId: String): Boolean
   @RequiresEdt

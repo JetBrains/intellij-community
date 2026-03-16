@@ -53,7 +53,7 @@ enum class LanguageToolDescriptor(
   GERMAN(listOf("GermanyGerman", "AustrianGerman", "SwissGerman"), 20, LanguageISO.DE, DE_CHECKSUM),
   GREEK(listOf("Greek"), 1, LanguageISO.EL, EL_CHECKSUM),
   ENGLISH(
-    listOf("BritishEnglish", "AmericanEnglish", "CanadianEnglish"),
+    listOf("BritishEnglish", "AmericanEnglish", "CanadianEnglish", "AustralianEnglish"),
     16,
     LanguageISO.EN,
     EN_CHECKSUM

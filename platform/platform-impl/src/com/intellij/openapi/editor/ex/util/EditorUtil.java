@@ -7,11 +7,14 @@ import com.intellij.ide.actions.DistractionFreeModeController;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.modcommand.ModPsiNavigator;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandEvent;
@@ -19,7 +22,29 @@ import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretAction;
+import com.intellij.openapi.editor.CaretActionListener;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.openapi.editor.EditorCoreUtil;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
+import com.intellij.openapi.editor.EditorThreading;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.InlayProperties;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -28,7 +53,12 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.*;
+import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.FontInfo;
+import com.intellij.openapi.editor.impl.Interval;
+import com.intellij.openapi.editor.impl.ScrollingModelImpl;
+import com.intellij.openapi.editor.impl.TextRangeInterval;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
@@ -37,10 +67,15 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ScalableIcon;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.util.CoroutineScopeKt;
 import com.intellij.util.DocumentUtil;
@@ -54,15 +89,21 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPasswordField;
+import javax.swing.JScrollBar;
+import javax.swing.JViewport;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
@@ -87,7 +128,7 @@ public final class EditorUtil {
   }
 
   public static @Nullable EditorEx getEditorEx(@Nullable FileEditor fileEditor) {
-    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
+    Editor editor = fileEditor instanceof TextEditor te ? te.getEditor() : null;
     return editor instanceof EditorEx ? (EditorEx)editor : null;
   }
 
@@ -1279,44 +1320,6 @@ public final class EditorUtil {
       if (project != null) sink.set(PROJECT, project);
       else sink.setNull(PROJECT);
     });
-  }
-
-  /**
-   * Adapts editor to a {@link ModPsiNavigator} interface, so
-   * the code that wants to update editor position can work uniformly
-   * both within {@link com.intellij.modcommand.ModCommand#psiUpdate(PsiElement, Consumer)}
-   * and with a physical editor instance.
-   * 
-   * @param editor editor to adapt
-   * @return new {@code ModPsiNavigator} adapter.
-   */
-  public static @NotNull ModPsiNavigator asPsiNavigator(@NotNull Editor editor) {
-    return new ModPsiNavigator() {
-      @Override
-      public void select(@NotNull PsiElement element) {
-        select(element.getTextRange());
-      }
-
-      @Override
-      public void select(@NotNull TextRange range) {
-        editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-      }
-
-      @Override
-      public void moveCaretTo(int offset) {
-        editor.getCaretModel().moveToOffset(offset);
-      }
-
-      @Override
-      public void moveCaretTo(@NotNull PsiElement element) {
-        moveCaretTo(element.getTextRange().getStartOffset());
-      }
-
-      @Override
-      public int getCaretOffset() {
-        return editor.getCaretModel().getOffset();
-      }
-    };
   }
 
   private static final class EditorNotification {

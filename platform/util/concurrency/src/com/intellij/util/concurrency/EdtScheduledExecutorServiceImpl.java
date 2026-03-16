@@ -21,7 +21,7 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
   static final EdtScheduledExecutorService INSTANCE = new EdtScheduledExecutorServiceImpl();
 
   private EdtScheduledExecutorServiceImpl() {
-    super(EdtExecutorServiceImpl.INSTANCE, ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).getDelayQueue());
+    super(EdtExecutorServiceImpl.INSTANCE);
   }
 
   @Override
@@ -31,14 +31,13 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
       null,
       triggerTime(delay, unit)) {
       @Override
-      public boolean executeMeInBackendExecutor() {
+      public void executeMeInBackendExecutor() {
         // optimization: can be cancelled already
         if (!isDone()) {
           ApplicationManager.getApplication().invokeLater(this, modalityState, __ -> {
             return isCancelled();
           });
         }
-        return true;
       }
     });
   }

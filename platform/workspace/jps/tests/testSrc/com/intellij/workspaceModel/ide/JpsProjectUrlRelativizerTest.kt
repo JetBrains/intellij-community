@@ -4,7 +4,11 @@ package com.intellij.workspaceModel.ide
 import com.intellij.facet.mock.AnotherMockFacetType
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
-import com.intellij.java.workspace.entities.*
+import com.intellij.java.workspace.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity
+import com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity
+import com.intellij.java.workspace.entities.FileCopyPackagingElementEntity
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -28,7 +32,11 @@ import com.intellij.workspaceModel.ide.impl.createJpsProjectUrlRelativizer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.LoadedProjectData
 import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
 import com.intellij.workspaceModel.ide.impl.jps.serialization.sampleFileBasedProjectFile
-import org.junit.*
+import org.junit.After
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import org.junit.jupiter.api.fail
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

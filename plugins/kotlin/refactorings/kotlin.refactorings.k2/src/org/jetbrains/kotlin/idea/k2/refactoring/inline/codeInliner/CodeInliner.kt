@@ -16,9 +16,22 @@ import org.jetbrains.kotlin.analysis.api.components.isIntType
 import org.jetbrains.kotlin.analysis.api.components.isLongType
 import org.jetbrains.kotlin.analysis.api.components.isShortType
 import org.jetbrains.kotlin.analysis.api.components.render
-import org.jetbrains.kotlin.analysis.api.resolution.*
-import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -29,21 +42,80 @@ import org.jetbrains.kotlin.idea.base.searching.usages.ReferencesSearchScopeHelp
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.k2.refactoring.util.LambdaToAnonymousFunctionUtil
 import org.jetbrains.kotlin.idea.k2.refactoring.util.createReplacementForContextArgument
-import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.*
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractCodeInliner
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AnnotationEntryReplacementPerformer
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CommentHolder
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.ExpressionReplacementPerformer
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.NEW_DECLARATION_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.RECEIVER_VALUE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.USER_CODE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.WAS_CONVERTED_TO_FUNCTION_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.WAS_FUNCTION_LITERAL_ARGUMENT_KEY
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.NonLocalJumpToken
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.SuperTypeCallEntryReplacementPerformer
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.collectDescendantsOfType
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtBreakExpression
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
+import org.jetbrains.kotlin.psi.KtContinueExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtLoopExpression
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.LambdaArgument
+import org.jetbrains.kotlin.psi.buildExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
+import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addIfNotNull
 
@@ -117,6 +189,10 @@ class CodeInliner(
         val ktFile = elementToBeReplaced.containingKtFile
         for ((path, target) in codeToInline.fqNamesToImport) {
             val (fqName, allUnder, alias) = path
+            if (fqName.isRoot) {
+                continue
+            }
+
             if (fqName.startsWith(FqName.fromSegments(listOf("kotlin")))) {
                 //todo https://youtrack.jetbrains.com/issue/KTIJ-25928
                 continue
@@ -225,8 +301,11 @@ class CodeInliner(
         }
 
         val importDeclarations = codeToInline.fqNamesToImport.mapNotNull { importPath ->
+            val path = importPath.importPath
+            if (path.fqName.isRoot) return@mapNotNull null
+
             val target =
-                psiFactory.createImportDirective(importPath.importPath).mainReference?.resolve() as? KtNamedDeclaration
+                psiFactory.createImportDirective(path).mainReference?.resolve() as? KtNamedDeclaration
                     ?: return@mapNotNull null
             importPath to target
         }
@@ -325,7 +404,7 @@ class CodeInliner(
             elementType.isDoubleType -> "kotlin.doubleArrayOf"
             elementType.isFloatType -> "kotlin.floatArrayOf"
             elementType is KaErrorType -> "kotlin.arrayOf"
-            else -> "kotlin.arrayOf<" + elementType.render(position = Variance.INVARIANT) + ">"
+            else -> "kotlin.arrayOf"
         }
     }
 
@@ -491,10 +570,21 @@ class CodeInliner(
     }
 
     override fun KtDeclaration.valueParameters(): List<KtParameter> =
-        (this as? KtModifierListOwner)?.modifierList?.contextReceiverList?.contextParameters().orEmpty() +
+      (this as? KtModifierListOwner)?.modifierList?.contextParameterList?.contextParameters.orEmpty() +
                 (this as? KtDeclarationWithBody)?.valueParameters.orEmpty()
 
-    override fun KtParameter.name(): Name = nameAsSafeName
+    override fun KtParameter.name(): Name {
+        val originalDeclaration = replacement.originalDeclaration
+        val isAnonymousFunction = originalDeclaration is KtNamedFunction && originalDeclaration.nameIdentifier == null
+        val isAnonymousFunctionWithReceiver = isAnonymousFunction && originalDeclaration.receiverTypeReference != null
+
+        return if (isAnonymousFunction && ownerDeclaration == originalDeclaration) {
+            val shift = if (isAnonymousFunctionWithReceiver) 2 else 1
+            Name.identifier("p${parameterIndex() + shift}")
+        } else {
+            nameAsSafeName
+        }
+    }
 
     override fun introduceValue(
         value: KtExpression,

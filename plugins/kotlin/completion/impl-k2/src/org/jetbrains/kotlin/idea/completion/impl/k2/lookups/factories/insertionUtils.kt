@@ -1,6 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.completion.lookups.factories
+package org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories
 
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.openapi.util.TextRange
@@ -11,16 +11,25 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.components.QualifierToShortenInfo
-import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ThisLabelToShortenInfo
 import org.jetbrains.kotlin.analysis.api.components.TypeToShortenInfo
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.CompanionReferenceToShorten
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.ShortenCommandForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
-import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
+import org.jetbrains.kotlin.idea.completion.impl.k2.doPostponedOperationsAndUnblockDocument
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtContextParameterList
+import org.jetbrains.kotlin.psi.KtContextReceiver
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationModifierList
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunctionType
+import org.jetbrains.kotlin.psi.KtTypeReference
 
 /**
  * Inserts [string] and shortens fully qualified references in it.
@@ -38,7 +47,7 @@ import org.jetbrains.kotlin.psi.*
  */
 internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySuffix(
     string: String,
-    shortenCommand: ShortenCommand? = null,
+    shortenCommand: ShortenCommandForIde? = null,
 ) {
     val file = file as? KtFile
         ?: return
@@ -73,7 +82,7 @@ internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySu
 
     val defaultReferenceShortening by lazy {
         allowAnalysisFromWriteActionInEdt(file) {
-            collectPossibleReferenceShortenings(
+            collectPossibleReferenceShorteningsForIde(
                 file = file,
                 selection = TextRange(startOffset, fqNameEndOffset),
             )
@@ -84,7 +93,7 @@ internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySu
         && editor.caretModel.caretCount == 1
     ) {
         try {
-            ShortenCommandWrapper(
+            ShortenCommandForIdeWrapper(
                 delegate = shortenCommand,
                 copy = file,
             )
@@ -119,10 +128,10 @@ private fun InsertionContext.caretInTheMiddleOfElement(): Boolean {
 
 private fun PsiElement.isContextReceiverWithoutOwnerDeclaration(): Boolean {
     val contextReceiver = parentOfType<KtContextReceiver>()
-    val contextReceiverList = contextReceiver?.parent as? KtContextReceiverList
+    val contextParameterList = contextReceiver?.parent as? KtContextParameterList
         ?: return false
 
-    val modifierList = contextReceiverList.parent
+    val modifierList = contextParameterList.parent
     if (modifierList is KtDeclarationModifierList) {
         // dangling modifier list
         return false
@@ -136,17 +145,17 @@ private fun PsiElement.isContextReceiverWithoutOwnerDeclaration(): Boolean {
 
 private fun PsiElement.isContextReceiverWithoutFunctionalTypeDeclaration(): Boolean {
     val contextReceiver = parentOfType<KtContextReceiver>()
-    val contextReceiverList = contextReceiver?.parent as? KtContextReceiverList
+    val contextParameterList = contextReceiver?.parent as? KtContextParameterList
         ?: return false
 
-    return contextReceiverList.parent.let { it is KtTypeReference || it?.parent is KtTypeReference }
+    return contextParameterList.parent.let { it is KtTypeReference || it?.parent is KtTypeReference }
 }
 
 @OptIn(KaImplementationDetail::class)
-private class ShortenCommandWrapper(
-    delegate: ShortenCommand,
+private class ShortenCommandForIdeWrapper(
+    delegate: ShortenCommandForIde,
     private val copy: KtFile,
-) : ShortenCommand {
+) : ShortenCommandForIde {
 
     override val targetFile: SmartPsiElementPointer<KtFile> =
         copy.createSmartPointer()
@@ -181,6 +190,13 @@ private class ShortenCommandWrapper(
     override val kDocQualifiersToShorten: List<SmartPsiElementPointer<KDocName>> =
         delegate.kDocQualifiersToShorten
             .mapNotNull { it.findSameElementInCopy() }
+
+    override val companionReferencesToShorten: List<CompanionReferenceToShorten> =
+        delegate.companionReferencesToShorten
+            .mapNotNull { (companionReferenceToShorten) ->
+                companionReferenceToShorten.findSameElementInCopy()
+                    ?.let { CompanionReferenceToShorten(it) }
+            }
 
     private fun <T : KtElement> T.findSameElementInCopy(): T? =
         PsiTreeUtil.findSameElementInCopy(this, copy)

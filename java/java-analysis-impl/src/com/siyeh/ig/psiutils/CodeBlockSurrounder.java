@@ -9,7 +9,60 @@ import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLabeledStatement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiResourceList;
+import com.intellij.psi.PsiResourceListElement;
+import com.intellij.psi.PsiResourceVariable;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
+import com.intellij.psi.PsiTemplate;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiWhileStatement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.PsiYieldStatement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -326,11 +379,11 @@ public abstract class CodeBlockSurrounder {
       }
       return null;
     }
-    if (parent instanceof PsiField) {
-      if (parent.getParent() instanceof PsiImplicitClass) {
-        return null;
-      }
-      return new ExtractFieldInitializerSurrounder(expression, (PsiField)parent);
+    if (parent instanceof PsiField field) {
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null || containingClass instanceof PsiImplicitClass || containingClass.isInterface()) return null;
+      if (containingClass.isRecord() && !field.hasModifierProperty(PsiModifier.STATIC)) return null;
+      return new ExtractFieldInitializerSurrounder(expression, field);
     }
 
     return null;
@@ -580,12 +633,10 @@ public abstract class CodeBlockSurrounder {
     @Override
     @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
       myField.normalizeDeclaration();
-      PsiClassInitializer initializer =
-        tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(myField), PsiClassInitializer.class);
-      boolean isStatic = myField.hasModifierProperty(PsiModifier.STATIC);
-      if (initializer == null || initializer.hasModifierProperty(PsiModifier.STATIC) != isStatic) {
+      PsiClassInitializer initializer = findInitializer();
+      if (initializer == null) {
         initializer = factory.createClassInitializer();
-        if (isStatic) {
+        if (myField.hasModifierProperty(PsiModifier.STATIC)) {
           Objects.requireNonNull(initializer.getModifierList()).setModifierProperty(PsiModifier.STATIC, true);
         }
         initializer = (PsiClassInitializer)myField.getParent().addAfter(initializer, myField);
@@ -609,6 +660,30 @@ public abstract class CodeBlockSurrounder {
       rExpression.replace(fieldInitializer);
       Objects.requireNonNull(myField.getInitializer()).delete();
       return assignment;
+    }
+
+    private @Nullable PsiClassInitializer findInitializer() {
+      PsiElement current = myField;
+      boolean isStatic = myField.hasModifierProperty(PsiModifier.STATIC);
+      while (true) {
+        current = PsiTreeUtil.skipWhitespacesAndCommentsForward(current);
+        if (current instanceof PsiClassInitializer initializer) {
+          if (initializer.hasModifierProperty(PsiModifier.STATIC) == isStatic) {
+            return initializer;
+          }
+          continue;
+        }
+        if (current instanceof PsiField field) {
+          if (field.hasModifierProperty(PsiModifier.STATIC) != isStatic) {
+            continue;
+          }
+          PsiExpression initializer = field.getInitializer();
+          if (initializer == null || 
+              ExpressionUtils.isSafelyRecomputableExpression(initializer) &&
+              !VariableAccessUtils.variableIsUsed(myField, initializer)) continue;
+        }
+        return null;
+      }
     }
 
     @Override

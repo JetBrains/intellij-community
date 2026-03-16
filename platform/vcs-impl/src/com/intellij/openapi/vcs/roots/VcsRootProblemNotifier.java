@@ -15,7 +15,12 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vcs.VcsRootError;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.configurable.VcsMappingConfigurable;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -23,16 +28,28 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.ROOTS_INVALID;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.ROOTS_REGISTERED;
 import static com.intellij.openapi.vcs.VcsRootError.Type.UNREGISTERED_ROOT;
 import static com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG;
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.exists;
+import static com.intellij.util.containers.ContainerUtil.filter;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.util.containers.ContainerUtil.map;
+import static com.intellij.util.containers.ContainerUtil.sorted;
 import static com.intellij.util.ui.UIUtil.BR;
 
 /**

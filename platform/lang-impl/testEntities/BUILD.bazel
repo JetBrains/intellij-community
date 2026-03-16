@@ -4,7 +4,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "testEntities",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/workspace/storage",
+  ]
 )
 
 jvm_library(
@@ -18,7 +22,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/workspace/storage",
     "//platform/projectModel-impl",
-  ]
+  ],
+  runtime_deps = [":testEntities"]
 )
 ### auto-generated section `build intellij.platform.lang.testEntities` end
 

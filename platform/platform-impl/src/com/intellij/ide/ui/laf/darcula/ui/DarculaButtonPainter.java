@@ -12,16 +12,40 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.JComponent;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Paint;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
-import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.*;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BUTTON_ARC;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.LW;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.Outline;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.computeOutlineFor;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintFocusOval;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintOutlineBorder;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintTag;
+import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.AVOID_EXTENDING_BORDER_GRAPHICS;
+import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.HELP_BUTTON_DIAMETER;
+import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.getCustomButtonInsets;
+import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.isContrastGotIt;
+import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.isContrastGotItOnlyButton;
+import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.isDefaultButton;
+import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.isGotItButton;
+import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.isSmallVariant;
+import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.isTag;
 
 /**
  * @author Konstantin Bulenkov

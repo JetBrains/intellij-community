@@ -21,7 +21,7 @@ open class UastKotlinPsiParameterBase<T : KtElement>(
     val ktDefaultValue: KtExpression? = null,
     typeProvider: () -> PsiType,
 ) : LightParameter(name, parent, typeProvider, KotlinLanguage.INSTANCE, isVarArgs) {
-    protected val typePart = UastLazyPart<PsiType>()
+    protected val typePart: UastLazyPart<PsiType> = UastLazyPart<PsiType>()
 
     override fun getType(): PsiType {
         return typePart.getOrBuild { super.type }

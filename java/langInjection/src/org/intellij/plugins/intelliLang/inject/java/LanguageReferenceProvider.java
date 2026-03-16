@@ -17,7 +17,17 @@ package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.StandardPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiLiteral;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.UastInjectionHostReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;

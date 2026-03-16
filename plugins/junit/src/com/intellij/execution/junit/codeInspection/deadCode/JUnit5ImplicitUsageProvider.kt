@@ -1,9 +1,18 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection.deadCode
 
 import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiArrayInitializerMemberValue
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
@@ -14,7 +23,13 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
-import com.siyeh.ig.junit.JUnitCommonClassNames.*
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_IO_TEMPDIR
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE_SHORT
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ENUM_SOURCE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_FIELD_SOURCE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.getParentOfType
 import org.jetbrains.uast.toUElement
@@ -27,8 +42,8 @@ private fun parameterIsUsedByParameterizedTest(parameter: PsiParameter): Boolean
     val attributeValue = annotation.findDeclaredAttributeValue("name")
     if (attributeValue is PsiExpression) {
       val indexInDisplayName = "{" + declarationScope.parameterList.getParameterIndex(parameter) + "}"
-      val value = JavaConstantExpressionEvaluator.computeConstantExpression(attributeValue as PsiExpression?, null, false)
-      return indexInDisplayName == value
+      val value = JavaConstantExpressionEvaluator.computeConstantExpression(attributeValue as PsiExpression?, null, false) as? String
+      return value?.contains(indexInDisplayName) == true
     }
   }
   return false

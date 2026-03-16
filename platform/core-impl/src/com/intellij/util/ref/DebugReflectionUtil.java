@@ -1,9 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ref;
 
 import com.intellij.ReviseWhenPortedToJDK;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ReflectionUtil;
@@ -22,7 +20,15 @@ import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 public final class DebugReflectionUtil {
@@ -97,13 +103,16 @@ public final class DebugReflectionUtil {
   }
 
   private static boolean isTrivial(@NotNull Class<?> type) {
-    return type.isPrimitive() || type == String.class || type == Class.class || type.isArray() && isTrivial(type.getComponentType());
+    return type.isPrimitive() || type == String.class || type.isArray() && isTrivial(type.getComponentType());
   }
 
   @VisibleForTesting
   @ApiStatus.Internal
-  public static boolean isInitialized(ClassLoader classLoader, @NotNull String rootName) {
+  public static boolean isLoaded(ClassLoader classLoader, @NotNull String rootName) {
     boolean isInitialized = false;
+    if (classLoader == null) {
+      return false;
+    }
     try {
       isInitialized = ClassLoader_findLoadedClass.invoke(classLoader, rootName) != null;
     }
@@ -113,8 +122,6 @@ public final class DebugReflectionUtil {
     }
     return isInitialized;
   }
-
-  private static final Key<Boolean> REPORTED_LEAKED = Key.create("REPORTED_LEAKED");
 
   public static <V> boolean walkObjects(int maxDepth,
                                         @NotNull Map<Object, String> startRoots,
@@ -131,6 +138,7 @@ public final class DebugReflectionUtil {
                                         @NotNull PairProcessor<? super V, ? super BackLink<?>> leakProcessor) {
     IntSet visited = new IntOpenHashSet(1000);
     Deque<BackLink<?>> toVisit = new ArrayDeque<>(1000);
+    Map<Object, String> alreadyReported = new IdentityHashMap<>();
 
     for (Map.Entry<Object, String> entry : startRoots.entrySet()) {
       Object startRoot = entry.getKey();
@@ -154,7 +162,8 @@ public final class DebugReflectionUtil {
         continue;
       }
       Object value = backLink.value;
-      if (lookFor.isAssignableFrom(value.getClass()) && markLeaked(value) && !leakProcessor.process((V)value, backLink)) {
+      //noinspection unchecked
+      if (lookFor.isAssignableFrom(value.getClass()) && alreadyReported.put(value, "") == null && !leakProcessor.process((V)value, backLink)) {
         return false;
       }
 
@@ -192,6 +201,7 @@ public final class DebugReflectionUtil {
     }
     if (rootClass.isArray()) {
       try {
+        //noinspection DataFlowIssue
         Object[] objects = (Object[])root;
         for (int i = 0; i < objects.length; i++) {
           Object value = objects[i];
@@ -201,8 +211,8 @@ public final class DebugReflectionUtil {
       catch (ClassCastException ignored) {
       }
     }
-    // check for objects leaking via static fields. process initialized classes only
-    if (root instanceof Class && isInitialized(((Class<?>)root).getClassLoader(), ((Class<?>)root).getName())) {
+    // check for objects leaking via static fields. process loaded classes only
+    if (root instanceof Class && isLoaded(((Class<?>)root).getClassLoader(), ((Class<?>)root).getName())) {
         for (Field field : getAllFields((Class<?>)root)) {
           if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
           try {
@@ -228,10 +238,6 @@ public final class DebugReflectionUtil {
     if (shouldExamineValue.test(value) && queue.size() < maxQueueSize) {
       queue.addLast(new BackLink<>(value, field, arrayIndex, backLink));
     }
-  }
-
-  private static boolean markLeaked(Object leaked) {
-    return !(leaked instanceof UserDataHolderEx) || ((UserDataHolderEx)leaked).replace(REPORTED_LEAKED, null, Boolean.TRUE);
   }
 
   public static class BackLink<V> {

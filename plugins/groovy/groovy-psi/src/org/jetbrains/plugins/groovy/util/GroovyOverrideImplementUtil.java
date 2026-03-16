@@ -16,7 +16,17 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NonNls;
@@ -36,7 +46,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public final class GroovyOverrideImplementUtil {
   private static final Logger LOG = Logger.getInstance(GroovyOverrideImplementUtil.class);
@@ -147,11 +161,11 @@ public final class GroovyOverrideImplementUtil {
     if (returnType != null) {
       returnTypeText = returnType.getPresentableText();
     }
-    Properties properties = FileTemplateManager.getInstance(project).getDefaultProperties();
+    Map<String, Object> properties = FileTemplateManager.getInstance(project).getDefaultContextMap();
 
-    properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnTypeText);
-    properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType));
-    properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(method, resultMethod));
+    properties.put(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnTypeText);
+    properties.put(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType));
+    properties.put(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(method, resultMethod));
     JavaTemplateUtil.setClassAndMethodNameProperties(properties, method.getContainingClass(), resultMethod);
 
     try {

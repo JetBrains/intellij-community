@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.fir.completion
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.test.util.invalidateCaches
 import java.nio.charset.Charset
 
 class FirCompletionOutsideSourceRootTest : KotlinLightCodeInsightFixtureTestCase() {

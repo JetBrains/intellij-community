@@ -18,7 +18,11 @@ package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;

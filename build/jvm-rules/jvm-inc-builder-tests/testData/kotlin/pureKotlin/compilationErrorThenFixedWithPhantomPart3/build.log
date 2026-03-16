@@ -1,0 +1,22 @@
+================ Step #1 =================
+Cleaning output files:
+  B.class
+  META-INF/kotlin_pureKotlin_compilationErrorThenFixedWithPhantomPart3-a.kotlin_module
+  UsageKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/compilationErrorThenFixedWithPhantomPart3/a/other.kt
+  kotlin/pureKotlin/compilationErrorThenFixedWithPhantomPart3/a/usage.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_compilationErrorThenFixedWithPhantomPart3-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/compilationErrorThenFixedWithPhantomPart3/a/other.kt
+  kotlin/pureKotlin/compilationErrorThenFixedWithPhantomPart3/a/usage.kt
+End of files
+------------------------------------------
+Exit code: OK

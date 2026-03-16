@@ -1,4 +1,4 @@
-// "Replace with 'computeIfAbsent' method call" "true"
+// "Replace with 'computeIfAbsent()' call" "true"
 import java.util.Map;
 
 public class Main {

@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.gradle.java.groovy.ml` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "ml_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ml",
+  module_name = "intellij.gradle.java.groovy.ml",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ml_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//plugins/gradle/java",
+    "//platform/analysis-api:analysis",
+    "//platform/lang-api:lang",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/completion-ml-ranking",
+    "//plugins/groovy/groovy-psi:psi",
+    "//java/java-psi-api:psi",
+    "//plugins/gradle/java/groovy",
+  ]
+)
+### auto-generated section `build intellij.gradle.java.groovy.ml` end

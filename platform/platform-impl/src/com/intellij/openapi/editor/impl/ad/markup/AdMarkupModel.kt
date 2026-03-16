@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.markup
 
 import com.intellij.openapi.Disposable
@@ -14,10 +14,8 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Key
 import com.intellij.util.Consumer
 import com.intellij.util.Processor
-import org.jetbrains.annotations.ApiStatus.Experimental
 
 
-@Experimental
 internal class AdMarkupModel(private val debugName: String, private val entity: AdMarkupEntity): MarkupModelEx {
 
   override fun processRangeHighlightersOverlappingWith(start: Int, end: Int, processor: Processor<in RangeHighlighterEx>): Boolean {
@@ -104,11 +102,11 @@ internal class AdMarkupModel(private val debugName: String, private val entity: 
     TODO("Not yet implemented")
   }
 
-  override fun <T : Any?> getUserData(key: Key<T?>): T? {
+  override fun <T> getUserData(key: Key<T?>): T? {
     TODO("Not yet implemented")
   }
 
-  override fun <T : Any?> putUserData(key: Key<T?>, value: T?) {
+  override fun <T> putUserData(key: Key<T?>, value: T?) {
     TODO("Not yet implemented")
   }
 

@@ -8,7 +8,7 @@ UFile (package = ) [public final class DestructuringDeclarationKt {...]
                     ULocalVariable (name = var268d41a5) [@org.jetbrains.annotations.NotNull var var268d41a5: kotlin.Pair<? extends java.lang.String,? extends java.lang.Integer> = "foo" <other> 1]
                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                         UBinaryExpression (operator = <other>) ["foo" <other> 1] : @org.jetbrains.annotations.NotNull() kotlin.Pair<? extends @org.jetbrains.annotations.NotNull() java.lang.String, ? extends @org.jetbrains.annotations.NotNull() java.lang.Integer>
-                            UPolyadicExpression (operator = +) ["foo"] : java.lang.String
+                            UPolyadicExpression (operator = +) ["foo"] : @org.jetbrains.annotations.NotNull() java.lang.String
                                 ULiteralExpression (value = "foo") ["foo"] : java.lang.String
                             ULiteralExpression (value = 1) [1] : int
                     ULocalVariable (name = a) [@org.jetbrains.annotations.NotNull var a: java.lang.String = var268d41a5.UIdentifier (Identifier (component1))()]
@@ -28,7 +28,7 @@ UFile (package = ) [public final class DestructuringDeclarationKt {...]
                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                         UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "UNCHECKED_CAST")]
                             UNamedExpression (name = names) [names = "UNCHECKED_CAST"]
-                                UPolyadicExpression (operator = +) ["UNCHECKED_CAST"] : java.lang.String
+                                UPolyadicExpression (operator = +) ["UNCHECKED_CAST"] : @org.jetbrains.annotations.NotNull() java.lang.String
                                     ULiteralExpression (value = "UNCHECKED_CAST") ["UNCHECKED_CAST"] : java.lang.String
                         UBinaryExpressionWithType [data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>] : @org.jetbrains.annotations.NotNull() kotlin.Pair<? extends @org.jetbrains.annotations.NotNull() java.lang.String, ? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                             USimpleNameReferenceExpression (identifier = data) [data] : @org.jetbrains.annotations.NotNull() java.lang.Object

@@ -12,7 +12,13 @@ import com.intellij.psi.util.PsiCacheKey;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
+import com.jetbrains.python.psi.PyReferenceOwner;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -109,7 +115,8 @@ public final class NameResolverTools {
    * @param functionName function to find
    * @return parent call or null if not found
    */
-  public static @Nullable PyCallExpression findCallExpParent(final @NotNull PsiElement anchor, final @NotNull FQNamesProvider functionName) {
+  public static @Nullable PyCallExpression findCallExpParent(final @NotNull PsiElement anchor,
+                                                             final @NotNull FQNamesProvider functionName) {
     final PsiElement parent = PsiTreeUtil.findFirstParent(anchor, new MyFunctionCondition(functionName));
     if (parent instanceof PyCallExpression) {
       return (PyCallExpression)parent;
@@ -151,7 +158,7 @@ public final class NameResolverTools {
   /**
    * Checks if some string contains last component one of name
    *
-   * @param text  test to check
+   * @param text test to check
    */
   public static boolean isContainsName(final @NotNull String text, final @NotNull FQNamesProvider names) {
     for (final String lastComponent : getLastComponents(names)) {
@@ -165,7 +172,7 @@ public final class NameResolverTools {
   /**
    * Checks if some file contains last component one of name
    *
-   * @param file  file to check
+   * @param file file to check
    */
   public static boolean isContainsName(final @NotNull PsiFile file, final @NotNull FQNamesProvider names) {
     return isContainsName(file.getText(), names);

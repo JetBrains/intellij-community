@@ -17,7 +17,7 @@ jvm_library(
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/plugin/k2",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
@@ -28,7 +28,8 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//java/openapi:java",
-  ]
+  ],
+  runtime_deps = [":kotlin.lombok.tests"]
 )
 ### auto-generated section `build intellij.kotlin.lombok.tests` end
 

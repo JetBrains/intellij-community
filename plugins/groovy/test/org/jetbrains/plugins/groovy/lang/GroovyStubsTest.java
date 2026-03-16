@@ -6,8 +6,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -47,7 +53,7 @@ public class GroovyStubsTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testStubIndexMismatch() {
-    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject())).disableBackgroundCommit(myFixture.getTestRootDisposable());
+    ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(getProject())).disableBackgroundCommit(myFixture.getTestRootDisposable());
 
     VirtualFile vFile = myFixture.getTempDirFixture().createFile("foo.groovy");
     final Project project = myFixture.getProject();

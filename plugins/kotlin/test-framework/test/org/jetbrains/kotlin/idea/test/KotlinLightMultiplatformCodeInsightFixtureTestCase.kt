@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.testFramework.VfsTestUtil
-import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.test.util.slashedPath
 import java.io.File
 

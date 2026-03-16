@@ -13,7 +13,7 @@ import com.intellij.util.TimeoutUtil
 import java.awt.event.ActionEvent.CTRL_MASK
 import java.awt.event.ActionEvent.SHIFT_MASK
 import java.io.RandomAccessFile
-import java.util.*
+import java.util.Random
 
 private const val TEST_LOGGER = "TEST.LOGGER"
 private const val TEST_MESSAGE = "test exception; please ignore"
@@ -30,7 +30,7 @@ internal class DropAnErrorAction : DumbAwareAction() {
     }
     else {
       ApplicationManager.getApplication().executeOnPooledThread {
-        (1..3).forEach {
+        repeat(3) {
           Logger.getInstance(TEST_LOGGER).error(TEST_MESSAGE, Exception(randomString()))
           TimeoutUtil.sleep(200)
         }
@@ -58,6 +58,7 @@ internal class DropAnErrorWithAttachmentsAction : DumbAwareAction() {
     Logger.getInstance(TEST_LOGGER).error(TEST_MESSAGE, Exception(randomString()), *attachments)
   }
 
+  @Suppress("UsagesOfObsoleteApi", "IO_FILE_USAGE")
   private fun getLargeAttachment(): Array<Attachment> {
     val size = 300 * 1024 * 1024
     val file = FileUtil.createTempFile("large-attachment", ".bin", true)

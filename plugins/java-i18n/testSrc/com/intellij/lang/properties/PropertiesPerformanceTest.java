@@ -7,10 +7,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +23,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+@PerformanceUnitTest
 public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
   @Override
   protected void setUp() throws Exception {

@@ -8,8 +8,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.MalformedPatternException;
+import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.ReplacementVariableDefinition;
+import com.intellij.structuralsearch.StructuralReplaceTestCase;
+import com.intellij.structuralsearch.UnsupportedPatternException;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
@@ -2109,6 +2114,7 @@ public class JavaStructuralReplaceTest extends StructuralReplaceTestCase {
     }
   }
 
+  @PerformanceUnitTest
   public void testReformatAndShortenClassRefPerformance() throws IOException {
     options.setToReformatAccordingToStyle(true);
 

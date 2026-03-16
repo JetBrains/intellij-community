@@ -1,6 +1,0 @@
-<idea-plugin package="org.jetbrains.plugins.groovy.copyright">
-  <extensions defaultExtensionNs="com.intellij.copyright">
-    <updater filetype="Groovy" implementationClass="org.jetbrains.plugins.groovy.copyright.UpdateGroovyCopyrightsProvider"/>
-    <variablesProvider filetype="Groovy" implementationClass="org.jetbrains.plugins.groovy.copyright.GroovyCopyrightVariablesProvider"/>
-  </extensions>
-</idea-plugin>

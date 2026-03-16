@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="intellij.java.codeserver.core" />
     <orderEntry type="module" module-name="intellij.java.frontback.impl" />
+    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
   </component>
 </module>

@@ -1,9 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor.settings
 
 import com.intellij.CommonBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
@@ -26,8 +30,6 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.tabs.impl.TabLabel
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
-import java.awt.event.KeyEvent
-import javax.swing.KeyStroke
 
 
 @ApiStatus.Internal
@@ -104,7 +106,7 @@ class SettingsFileEditorProvider : FileEditorProvider, FileStatusProvider, Edito
     return CommonBundle.settingsTitle()
   }
 
-  private class GotItAwareCloseTab(
+  internal class GotItAwareCloseTab(
     private val closeTabAction: CloseTab,
     private val currentTabLabelComponent: TabLabel,
     private val gotItTooltip: GotItTooltip,
@@ -113,9 +115,6 @@ class SettingsFileEditorProvider : FileEditorProvider, FileStatusProvider, Edito
     private var clicked = false
     init {
       copyFrom(closeTabAction)
-      val shortcut: Shortcut = KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false), null)
-      shortcutSet = CustomShortcutSet(shortcut)
-      registerCustomShortcutSet(shortcutSet, settingsFile.getOrCreateDialog().editor)
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread {

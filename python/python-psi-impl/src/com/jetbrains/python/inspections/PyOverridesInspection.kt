@@ -13,16 +13,18 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyOverridesInspection : PyInspection() {
 
-  override fun buildVisitor(holder: ProblemsHolder,
-                            isOnTheFly: Boolean,
-                            session: LocalInspectionToolSession): PsiElementVisitor =
+  override fun buildVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+    session: LocalInspectionToolSession,
+  ): PsiElementVisitor =
     Visitor(holder, PyInspectionVisitor.getContext(session))
 
   private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPyFunction(node: PyFunction) {
       super.visitPyFunction(node)
-      
+
       if (node.containingClass?.getAncestorTypes(myTypeEvalContext)?.contains(null) ?: false) return
 
       val overrideDecorator = node.decoratorList?.decorators?.firstOrNull { decorator ->

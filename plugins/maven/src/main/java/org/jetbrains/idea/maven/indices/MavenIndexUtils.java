@@ -19,7 +19,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.split;
@@ -114,7 +122,10 @@ public final class MavenIndexUtils {
       return Collections.emptyList();
     }
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    Set<MavenRemoteRepository> repositories = projectsManager.getRemoteRepositories();
+    Set<MavenRemoteRepository> repositories = new HashSet<>();
+    if (projectsManager.isMavenizedProject()) {
+      repositories.addAll(projectsManager.getRemoteRepositories());
+    }
 
     Set<MavenRemoteRepository> remoteRepositories = new HashSet<>(repositories);
     for (MavenRepositoryProvider repositoryProvider : MavenRepositoryProvider.EP_NAME.getExtensionList()) {
@@ -147,7 +158,8 @@ public final class MavenIndexUtils {
     if (local != null) {
       all.add(local);
     }
-    all.addAll(ContainerUtil.map(getRemoteRepositoriesNoResolve(project), rr -> new MavenRepositoryInfo(rr.getId(), rr.getName(), rr.getUrl(), RepositoryKind.REMOTE)));
+    all.addAll(ContainerUtil.map(getRemoteRepositoriesNoResolve(project),
+                                 rr -> new MavenRepositoryInfo(rr.getId(), rr.getName(), rr.getUrl(), RepositoryKind.REMOTE)));
     return all;
   }
 

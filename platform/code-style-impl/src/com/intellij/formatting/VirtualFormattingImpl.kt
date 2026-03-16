@@ -12,7 +12,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.FormattingDocumentModelImpl
 import org.jetbrains.annotations.ApiStatus
 
-
 private val formattingListenerKey = Key.create<VirtualFormattingListener?>("VIRTUAL_FORMATTING_CHANGE_LISTENER")
 
 var PsiElement.virtualFormattingListener: VirtualFormattingListener?

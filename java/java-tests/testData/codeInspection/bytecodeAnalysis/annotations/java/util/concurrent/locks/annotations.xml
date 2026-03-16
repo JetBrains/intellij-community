@@ -67,12 +67,6 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer java.lang.Thread fullGetFirstQueuedThread()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer java.lang.Thread getFirstQueuedThread()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer java.util.Collection&lt;java.lang.Thread&gt; getExclusiveQueuedThreads()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;-&gt;new&quot;"/>
@@ -217,9 +211,6 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.concurrent.locks.ReentrantLock java.lang.Thread getOwner()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.util.concurrent.locks.ReentrantLock java.util.Collection&lt;java.lang.Thread&gt; getWaitingThreads(java.util.concurrent.locks.Condition) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -229,9 +220,6 @@
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.concurrent.locks.ReentrantLock.Sync java.lang.Thread getOwner()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.concurrent.locks.ReentrantLock.Sync java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject newCondition()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -259,9 +247,6 @@
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.concurrent.locks.ReentrantReadWriteLock java.lang.Thread getOwner()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.concurrent.locks.ReentrantReadWriteLock java.util.Collection&lt;java.lang.Thread&gt; getWaitingThreads(java.util.concurrent.locks.Condition) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -313,9 +298,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='java.util.concurrent.locks.ReentrantReadWriteLock.Sync java.lang.Thread getOwner()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.concurrent.locks.ReentrantReadWriteLock.Sync java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject newCondition()'>
         <annotation name='org.jetbrains.annotations.Contract'>

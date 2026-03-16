@@ -6,8 +6,8 @@ import com.intellij.openapi.extensions.ExtensionPointName
 
 interface BuildSystemKotlinNewProjectWizard : NewProjectWizardMultiStepFactory<KotlinNewProjectWizard.Step> {
     companion object {
-        const val DEFAULT_KOTLIN_VERSION: String = "1.9.0"
+        const val DEFAULT_KOTLIN_VERSION: String = "2.3.10"
 
-        val EP_NAME: ExtensionPointName<BuildSystemKotlinNewProjectWizard> = ExtensionPointName<BuildSystemKotlinNewProjectWizard>("com.intellij.newProjectWizard.kotlin.buildSystem")
+        val EP_NAME: ExtensionPointName<BuildSystemKotlinNewProjectWizard> = ExtensionPointName("com.intellij.newProjectWizard.kotlin.buildSystem")
     }
 }

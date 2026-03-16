@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.idea.intentions.getApplicableUseSiteTargets
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtFile
 
+@K1Deprecation
 class AddAnnotationUseSiteTargetFix(
     annotationEntry: KtAnnotationEntry,
     @SafeFieldForPreview

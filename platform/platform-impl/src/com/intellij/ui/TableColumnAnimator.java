@@ -4,7 +4,9 @@ package com.intellij.ui;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.JTable;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.table.TableColumn;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

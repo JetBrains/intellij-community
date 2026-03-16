@@ -19,13 +19,15 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.ConcurrentFactoryMap
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
+import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
 import com.intellij.workspaceModel.ide.legacyBridge.findLibraryEntity
 import com.intellij.workspaceModel.ide.legacyBridge.findModule
 import org.jetbrains.annotations.ApiStatus
@@ -34,12 +36,27 @@ import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBuiltinsModuleImpl
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
-import org.jetbrains.kotlin.analysis.api.projectStructure.*
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.danglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.AbstractKlibLibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NativeKlibLibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
 import org.jetbrains.kotlin.idea.base.util.isOutsiderFile
@@ -326,6 +343,11 @@ class ProjectStructureProviderIdeImpl(private val project: Project) : IDEProject
     override fun getKaLibraryModule(sdk: Sdk): KaLibraryModule {
         val moduleInfo = SdkInfo(project, sdk)
         return getKtModuleByModuleInfo(moduleInfo) as KaLibraryModule
+    }
+
+    override fun getKaLibraryModule(sdkId: SdkId): KaLibraryModule {
+        val sdk = ModifiableRootModelBridge.findSdk(sdkId.name, sdkId.type)!!
+        return getKaLibraryModule(sdk)
     }
 
     override fun getAssociatedKaModules(virtualFile: VirtualFile): List<KaModule> {

@@ -5,26 +5,35 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.log.*
+import com.intellij.util.ui.EDT
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogObjectsFactory
+import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.index.IndexedDetails
 import com.intellij.vcs.log.data.index.VcsLogIndex
+import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
-import it.unimi.dsi.fastutil.ints.*
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.ints.IntConsumer
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.annotations.ApiStatus
-import java.awt.EventQueue
 
-class MiniDetailsGetter internal constructor(project: Project,
-                                             storage: VcsLogStorage,
-                                             logProviders: Map<VirtualFile, VcsLogProvider>,
-                                             private val topCommitsDetailsCache: TopCommitsCache,
-                                             private val index: VcsLogIndex,
-                                             parentDisposable: Disposable) :
+class MiniDetailsGetter internal constructor(
+  project: Project,
+  storage: VcsLogStorage,
+  logProviders: Map<VirtualFile, VcsLogProvider>,
+  private val topCommitsDetailsCache: TopCommitsCache,
+  private val index: VcsLogIndex,
+  parentDisposable: Disposable,
+) :
   AbstractDataGetter<VcsCommitMetadata>(storage, logProviders, parentDisposable) {
 
   private val factory = project.getService(VcsLogObjectsFactory::class.java)
@@ -49,7 +58,7 @@ class MiniDetailsGetter internal constructor(project: Project,
     val details = getFromCacheAndCleanOldPlaceholder(commit)
     if (details != null) return details
 
-    if (!EventQueue.isDispatchThread()) {
+    if (!EDT.isCurrentThreadEdt()) {
       thisLogger().assertTrue(commitsToLoad.none(), "Requesting loading commits in background thread is not supported.")
       return createPlaceholderCommit(commit, 0 /*not used as this commit is not cached*/)
     }
@@ -66,7 +75,7 @@ class MiniDetailsGetter internal constructor(project: Project,
   }
 
   private fun getFromCacheAndCleanOldPlaceholder(commit: VcsLogCommitStorageIndex): VcsCommitMetadata? {
-    if (!EventQueue.isDispatchThread()) {
+    if (!EDT.isCurrentThreadEdt()) {
       return cache.getIfPresent(commit) ?: topCommitsDetailsCache[commit]
     }
     val details = cache.getIfPresent(commit)
@@ -134,23 +143,19 @@ class MiniDetailsGetter internal constructor(project: Project,
 
   @RequiresBackgroundThread
   @Throws(VcsException::class)
-  override fun doLoadCommitsDataFromProvider(logProvider: VcsLogProvider,
-                                             root: VirtualFile,
-                                             hashes: List<String>,
-                                             consumer: Consumer<in VcsCommitMetadata>) {
+  override fun doLoadCommitsDataFromProvider(
+    logProvider: VcsLogProvider,
+    root: VirtualFile,
+    hashes: List<String>,
+    consumer: Consumer<in VcsCommitMetadata>,
+  ) {
     logProvider.readMetadata(root, hashes, consumer)
   }
 
   private fun createPlaceholderCommit(commit: VcsLogCommitStorageIndex, taskNumber: Long): VcsCommitMetadata {
-    val dataGetter = index.dataGetter
-    return if (dataGetter != null && Registry.`is`("vcs.log.use.indexed.details")) {
-      IndexedDetails(dataGetter, storage, commit, taskNumber)
-    }
-    else {
-      logProviders.keys.singleOrNull()?.let {
-        LoadingDetailsWithRoot(storage, commit, it, taskNumber)
-      } ?: LoadingDetailsImpl(storage, commit, taskNumber)
-    }
+    return logProviders.keys.singleOrNull()?.let {
+      LoadingDetailsWithRoot(storage, commit, it, taskNumber)
+    } ?: LoadingDetailsImpl(storage, commit, taskNumber)
   }
 
   /**

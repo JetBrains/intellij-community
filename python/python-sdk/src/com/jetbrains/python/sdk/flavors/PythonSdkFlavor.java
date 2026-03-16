@@ -17,19 +17,29 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.ui.EDT;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.CommandLinePatcher;
-import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.CustomSdkHomePattern;
+import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
+import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonEnvUtil;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -187,7 +197,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     if (executable != null) {
       return executable;
     }
-    var error = SwingUtilities.isEventDispatchThread()
+    var error = EDT.isCurrentThreadEdt()
                 ? getFileExecutionErrorOnEdt(fullPath, targetEnvConfig)
                 : getFileExecutionError(fullPath, targetEnvConfig);
     if (error != null) {

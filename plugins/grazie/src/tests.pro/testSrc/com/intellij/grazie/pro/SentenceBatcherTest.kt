@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicInteger
 
 @RunInEdt(allMethods = true, writeIntent = true)

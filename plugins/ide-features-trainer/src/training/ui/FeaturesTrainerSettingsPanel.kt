@@ -16,7 +16,7 @@ import training.util.SHOW_NEW_LESSONS_NOTIFICATION
 import training.util.getActionById
 import training.util.resetPrimaryLanguage
 
-private class FeaturesTrainerSettingsPanel : BoundConfigurable(LearnBundle.message("learn.options.panel.name"), null) {
+internal class FeaturesTrainerSettingsPanel : BoundConfigurable(LearnBundle.message("learn.options.panel.name"), null) {
   override fun createPanel(): DialogPanel = panel {
     val languagesExtensions = LangManager.getInstance().supportedLanguagesExtensions.sortedBy { it.language }
     if (languagesExtensions.isNotEmpty()) {

@@ -1,12 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.aether;
 
-import org.eclipse.aether.repository.*;
+import org.eclipse.aether.repository.Authentication;
+import org.eclipse.aether.repository.AuthenticationContext;
+import org.eclipse.aether.repository.AuthenticationDigest;
 import org.eclipse.aether.repository.Proxy;
 import org.eclipse.aether.repository.ProxySelector;
+import org.eclipse.aether.repository.RemoteRepository;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.*;
+import java.net.Authenticator;
+import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.SocketAddress;
+import java.net.URI;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;

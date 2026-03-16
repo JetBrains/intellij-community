@@ -24,7 +24,9 @@ import java.io.File;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.*;
+import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.collapsePath;
+import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.readFields;
+import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.writeField;
 import static com.intellij.util.ArrayUtil.EMPTY_BYTE_ARRAY;
 
 @ApiStatus.Internal

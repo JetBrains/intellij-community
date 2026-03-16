@@ -2,7 +2,9 @@
 package com.intellij.ide.plugins
 
 import com.intellij.util.graph.Graph
-import java.util.*
+import java.util.AbstractMap
+import java.util.Collections
+import java.util.IdentityHashMap
 
 /**
  * A graph which determines the order in which modules from the platform and the plugins are processed.

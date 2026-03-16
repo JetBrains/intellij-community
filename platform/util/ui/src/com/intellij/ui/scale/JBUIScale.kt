@@ -15,7 +15,14 @@ import com.intellij.util.ui.JBScalableIcon
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.awt.*
+import java.awt.Component
+import java.awt.Font
+import java.awt.Graphics2D
+import java.awt.GraphicsConfiguration
+import java.awt.GraphicsDevice
+import java.awt.GraphicsEnvironment
+import java.awt.HeadlessException
+import java.awt.Toolkit
 import java.awt.geom.AffineTransform
 import java.awt.geom.Point2D
 import java.beans.PropertyChangeListener

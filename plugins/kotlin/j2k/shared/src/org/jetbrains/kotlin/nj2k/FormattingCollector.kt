@@ -3,7 +3,13 @@
 package org.jetbrains.kotlin.nj2k
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiCompiledElement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiKeyword
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.javadoc.PsiDocComment
 import org.jetbrains.kotlin.idea.j2k.IdeaDocCommentConverter
 import org.jetbrains.kotlin.nj2k.tree.JKComment

@@ -1,0 +1,14 @@
+================ Step #1 =================
+Cleaning output files:
+  Base.class
+  Derived.class
+  META-INF/kotlin_pureKotlin_changeTypealiasTypeWithHierarhy-a.kotlin_module
+  TypesKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/changeTypealiasTypeWithHierarhy/a/Base.kt
+  kotlin/pureKotlin/changeTypealiasTypeWithHierarhy/a/Derived.kt
+  kotlin/pureKotlin/changeTypealiasTypeWithHierarhy/a/types.kt
+End of files
+------------------------------------------
+Exit code: OK

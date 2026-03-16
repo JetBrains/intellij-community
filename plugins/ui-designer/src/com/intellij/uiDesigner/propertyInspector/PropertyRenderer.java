@@ -17,7 +17,7 @@ package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface PropertyRenderer<V> {
   /**

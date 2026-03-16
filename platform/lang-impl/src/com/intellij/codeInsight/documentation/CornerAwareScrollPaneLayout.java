@@ -5,8 +5,10 @@ import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JScrollBar;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Rectangle;
 
 @Internal
 public final class CornerAwareScrollPaneLayout extends JBScrollPane.Layout {

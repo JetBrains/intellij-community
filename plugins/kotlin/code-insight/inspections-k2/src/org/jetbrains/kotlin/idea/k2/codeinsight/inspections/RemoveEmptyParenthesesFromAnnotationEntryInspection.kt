@@ -52,7 +52,7 @@ internal class RemoveEmptyParenthesesFromAnnotationEntryInspection : KotlinAppli
         return annotationClassSymbol
             .declaredMemberScope
             .constructors.all { constructor ->
-                constructor.valueParameters.any { !it.hasDefaultValue }
+                constructor.valueParameters.any { !it.hasDeclaredDefaultValue }
             }
             .not()
             .asUnit

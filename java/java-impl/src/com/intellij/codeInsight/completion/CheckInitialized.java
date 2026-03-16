@@ -5,7 +5,18 @@ import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.java.syntax.parser.JavaKeywords;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -13,6 +24,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,16 +32,17 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-class CheckInitialized implements ElementFilter {
+@ApiStatus.Internal
+public class CheckInitialized implements ElementFilter {
   private final Set<PsiField> myNonInitializedFields;
   private final boolean myInsideConstructorCall;
 
-  CheckInitialized(@NotNull PsiElement position) {
+  public CheckInitialized(@NotNull PsiElement position) {
     myNonInitializedFields = getNonInitializedFields(position);
     myInsideConstructorCall = isInsideConstructorCall(position);
   }
 
-  static boolean isInsideConstructorCall(@NotNull PsiElement position) {
+  public static boolean isInsideConstructorCall(@NotNull PsiElement position) {
     return JavaPsiConstructorUtil.isConstructorCall(PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class)) &&
            !JavaKeywordCompletion.AFTER_DOT.accepts(position);
   }

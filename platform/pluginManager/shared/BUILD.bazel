@@ -21,7 +21,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//libraries/kotlinx/serialization/core",
     "//platform/util",
-    "//platform/plugins/parser/impl",
+    "//platform/pluginSystem/parser/impl",
     "//platform/core-impl",
     "//platform/project/shared:project",
     "//platform/platform-impl/update-checker",

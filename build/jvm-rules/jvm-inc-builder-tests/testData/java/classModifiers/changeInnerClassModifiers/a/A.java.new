@@ -1,0 +1,7 @@
+public class A {
+    public static class Inner1 {
+    }
+    
+    public class Inner2 {
+    }
+}

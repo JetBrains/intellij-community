@@ -12,8 +12,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="com.intellij.openapi.roots.libraries.LibraryKindRegistry"/>
-    <applicationService serviceInterface="com.intellij.openapi.roots.ExternalProjectSystemRegistry"
+    <applicationService serviceImplementation="com.intellij.openapi.roots.libraries.LibraryKindRegistry" open="true"/>
+    <applicationService serviceInterface="com.intellij.openapi.roots.ExternalProjectSystemRegistry" open="true"
                         serviceImplementation="com.intellij.openapi.roots.impl.EmptyProjectSystemRegistry"/>
   </extensions>
 </idea-plugin>

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.openapi.application.ApplicationManager
@@ -18,7 +18,12 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableMet
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.types.Variance
 
@@ -90,7 +95,7 @@ class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDesc
             analyze(callable) {
                 val params = mutableListOf< KotlinParameterInfo>()
                 var oldParamIndex = 0
-                callable.modifierList?.contextReceiverList?.contextParameters()?.forEach { p ->
+                callable.modifierList?.contextParameterList?.contextParameters?.forEach { p ->
                     val parameterInfo = KotlinParameterInfo(
                         originalIndex = oldParamIndex++,
                         originalType = KotlinTypeInfo(p.returnType, callable),

@@ -9,8 +9,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public class ChooseByNamePanel extends ChooseByNameBase implements Disposable {
   private final JPanel myPanel = new JPanel();

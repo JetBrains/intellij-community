@@ -7,3 +7,5 @@ fun bar(b: Boolean, s: String){
 
 // ELEMENT: s
 // CHAR: \t
+
+// IGNORE_K2

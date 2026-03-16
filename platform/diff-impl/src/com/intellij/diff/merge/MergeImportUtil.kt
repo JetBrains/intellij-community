@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.*
 
 @Internal
 class MergeImportUtil {
@@ -63,12 +62,12 @@ class MergeImportUtil {
     }
 
     @JvmStatic
-    fun getImportMergeRange(project: Project?, psiFiles: MutableList<PsiFile>): MergeRange? {
+    fun getImportMergeRange(project: Project?, psiFiles: List<PsiFile>): MergeRange? {
       if (project == null || psiFiles.size != 3) return null
 
       val ranges = ArrayList<LineRange>()
       for (side in ThreeSide.entries) {
-        val psiFile = side.select(psiFiles) ?: return null
+        val psiFile = side.select(psiFiles)
         val importRange = getImportLineRange(psiFile) ?: return null
         ranges.add(importRange)
       }
@@ -143,7 +142,8 @@ internal class ResolveConflictsInImportsToggleAction : ToggleAction() {
       return
     }
 
-    e.presentation.isEnabled = viewer.myResolveImportsPossible && MergeImportUtil.isEnabledFor(viewer.project, viewer.editor.document)
+    e.presentation.isEnabledAndVisible = viewer.myResolveImportsPossible
+                                         && MergeImportUtil.isEnabledFor(viewer.project, viewer.editor.document)
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {

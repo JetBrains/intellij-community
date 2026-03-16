@@ -1,15 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.pyproject
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.readText
+import com.intellij.psi.PsiManager
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.jetbrains.python.Result
-import com.jetbrains.python.Result.Companion.success
 import com.jetbrains.python.sdk.findAmongRoots
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.tuweni.toml.Toml
 import org.apache.tuweni.toml.TomlParseError
+import org.apache.tuweni.toml.TomlParseResult
 import org.apache.tuweni.toml.TomlTable
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
@@ -32,6 +40,7 @@ const val PY_PROJECT_TOML_DEPENDENCY_GROUPS: String = "dependency-groups"
 
 @Internal
 const val PY_PROJECT_TOML_TOOL_PREFIX: String = "tool"
+
 
 /**
  * Represents an issue that could occur in [PyProjectToml.parse].
@@ -78,7 +87,7 @@ data class PyProjectToml(
   /**
    * An instance of [TomlTable] provided by the TOML parser.
    */
-  val toml: TomlTable,
+  val toml: TomlParseResult,
 ) {
   /**
    * Gets a specific tool from an object implementing [PyProjectToolFactory].
@@ -102,10 +111,26 @@ data class PyProjectToml(
   }
 
   companion object {
+    private val CACHE_KEY = Key.create<CachedValue<PyProjectToml>>("PyProjectTomlCache")
+
     /**
+     * Parses and caches [pyProjectFile] content. Cache is invalidated automatically when the file changes.
+     */
+    @Internal
+    suspend fun parseCached(project: Project, pyProjectFile: VirtualFile): PyProjectToml? {
+      return readAction {
+        val psiFile = PsiManager.getInstance(project).findFile(pyProjectFile) ?: return@readAction null
+        CachedValuesManager.getManager(project).getCachedValue(psiFile, CACHE_KEY, {
+          CachedValueProvider.Result.create(parse(pyProjectFile.readText()), pyProjectFile)
+        }, false)
+      }
+    }
+
+    /**
+     * TODO: REDOC
      * Attempts to parse [inputStream] and construct an instance of [PyProjectToml].
      * On success, returns an instance of [Result.Success] with an instance of [PyProjectToml].
-     * On failure, returns an instance of [Result.Failure] with a list of [TomlParseError]s.
+     * On failure, returns an instance of [Result.Failure] with a list of [TomlParseError]s and [TomlTable] itself.
      *
      * Example:
      *
@@ -115,18 +140,15 @@ data class PyProjectToml(
      * val hatch = pyProject.getTool(HatchPyProject)
      * ```
      */
-    fun parse(tomlFileContent: String): Result<PyProjectToml, List<TomlParseError>> {
+    fun parse(tomlFileContent: String): PyProjectToml {
       val issues = mutableListOf<PyProjectIssue>()
       val toml = Toml.parse(tomlFileContent)
 
-      if (toml.hasErrors()) {
-        return Result.failure(toml.errors())
-      }
 
       val projectTable = toml.safeGet<TomlTable>(PY_PROJECT_TOML_PROJECT).getOrIssue(issues)
 
       if (projectTable == null) {
-        return success(PyProjectToml(null, issues, toml))
+        return PyProjectToml(null, issues, toml)
       }
 
       val name = projectTable.safeGet<String>("name").getOrIssue(issues) {
@@ -205,33 +227,31 @@ data class PyProjectToml(
       val guiScripts = projectTable.parseMap("gui-scripts", issues)
       val urls = projectTable.parseMap("urls", issues)
 
-      return success(
-        PyProjectToml(
-          PyProjectTable(
-            name,
-            version,
-            requiresPython,
-            authors,
-            maintainers,
-            description,
-            readme,
-            license,
-            licenseFiles,
-            keywords,
-            classifiers,
-            dynamic,
-            PyProjectDependencies(
-              projectDependencies,
-              devDependencies,
-              optionalDependencies
-            ),
-            scripts,
-            guiScripts,
-            urls,
+      return PyProjectToml(
+        PyProjectTable(
+          name,
+          version,
+          requiresPython,
+          authors,
+          maintainers,
+          description,
+          readme,
+          license,
+          licenseFiles,
+          keywords,
+          classifiers,
+          dynamic,
+          PyProjectDependencies(
+            projectDependencies,
+            devDependencies,
+            optionalDependencies
           ),
-          issues,
-          toml,
-        )
+          scripts,
+          guiScripts,
+          urls,
+        ),
+        issues,
+        toml,
       )
     }
 
@@ -239,10 +259,7 @@ data class PyProjectToml(
      * Attempts to find the `pyproject.toml` file in the provided module.
      * Returns null if not found.
      */
-    suspend fun findFile(module: Module): VirtualFile? =
-      withContext(Dispatchers.IO) {
-        findAmongRoots(module, PY_PROJECT_TOML)
-      }
+    suspend fun findFile(module: Module): VirtualFile? = findAmongRoots(module, PY_PROJECT_TOML)
 
     suspend fun findInRoot(moduleBasePath: Path): Path? = withContext(Dispatchers.IO) {
       moduleBasePath.resolve(PY_PROJECT_TOML).takeIf { it.isRegularFile() }

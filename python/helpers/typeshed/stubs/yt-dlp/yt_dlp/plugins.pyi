@@ -5,7 +5,7 @@ from collections.abc import Iterator
 from importlib.machinery import ModuleSpec
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, Final
 
 from .globals import Indirect
 
@@ -19,8 +19,8 @@ __all__ = [
     "register_plugin_spec",
 ]
 
-PACKAGE_NAME: str = "yt_dlp_plugins"
-COMPAT_PACKAGE_NAME: str = "ytdlp_plugins"
+PACKAGE_NAME: Final = "yt_dlp_plugins"
+COMPAT_PACKAGE_NAME: Final = "ytdlp_plugins"
 
 @dataclasses.dataclass
 class PluginSpec:

@@ -57,6 +57,8 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       isUserDefinedName = false,
       shellCommand = null,
       workingDirectory = null,
+      envVariables = null,
+      processType = null,
       sessionId = null,
       portForwardingId = null,
     )
@@ -92,6 +94,8 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       val updatedTab = tab.copy(
         shellCommand = result.configuredOptions.initialShellCommand?.command ?: options.shellCommand,
         workingDirectory = result.configuredOptions.workingDirectory,
+        envVariables = options.envVariables,  // Remember env variables requested by the client, not the resulting ones.
+        processType = result.configuredOptions.processType,
         sessionId = result.sessionId,
         portForwardingId = portForwardingId,
       )
@@ -164,7 +168,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       outputFlow.collect { events ->
         for (event in events) {
           if (event is TerminalStateChangedEvent) {
-            val newCurrentDirectory = convertRemoteDirectoryToHost(event.state.currentDirectory, eelDescriptor)
+            val newCurrentDirectory = event.state.currentDirectory?.let { convertRemoteDirectoryToHost(it, eelDescriptor) }
             if (newCurrentDirectory != currentDirectory) {
               currentDirectory = newCurrentDirectory
               updateTabsAndStore { tabs ->
@@ -217,6 +221,8 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       isUserDefinedName = isUserDefinedName,
       shellCommand = shellCommand,
       workingDirectory = workingDirectory,
+      envVariables = envVariables,
+      processType = processType,
     )
   }
 
@@ -227,6 +233,8 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       isUserDefinedName = isUserDefinedName,
       shellCommand = shellCommand,
       workingDirectory = workingDirectory,
+      envVariables = envVariables,
+      processType = processType,
       sessionId = null,
       portForwardingId = null,
     )

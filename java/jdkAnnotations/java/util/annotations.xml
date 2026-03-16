@@ -2856,6 +2856,11 @@
   <item name='java.util.Comparator java.util.Comparator&lt;T&gt; thenComparingLong(java.util.function.ToLongFunction&lt;? super T&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.Date Date()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.util.Date Date(int, int, int)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
@@ -3280,6 +3285,26 @@
       <val name="targetIsContainer" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.Hashtable Hashtable()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Hashtable Hashtable(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Hashtable Hashtable(int, float)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Hashtable Hashtable(java.util.Map&lt;? extends K,? extends V&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.util.Iterator E next()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
@@ -3290,11 +3315,56 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.LinkedHashMap LinkedHashMap(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.LinkedHashMap LinkedHashMap(int, float)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.LinkedHashMap LinkedHashMap(int, float, boolean)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.LinkedHashMap LinkedHashMap(java.util.Map&lt;? extends K,? extends V&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.LinkedHashSet LinkedHashSet()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.LinkedHashSet LinkedHashSet(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.LinkedHashSet LinkedHashSet(int, float)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.LinkedHashSet LinkedHashSet(java.util.Collection&lt;? extends E&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.util.LinkedHashSet LinkedHashSet(java.util.Collection&lt;? extends E&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.intellij.lang.annotations.Flow'>
       <val name="sourceIsContainer" val="true"/>
       <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.LinkedList LinkedList(java.util.Collection&lt;? extends E&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name='java.util.LinkedList LinkedList(java.util.Collection&lt;? extends E&gt;) 0'>
@@ -4696,6 +4766,101 @@
   <item name='java.util.Scanner java.util.Scanner useLocale(java.util.Locale) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.SequencedCollection E getFirst()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.SequencedCollection E getLast()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.SequencedCollection E removeFirst()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.SequencedCollection E removeLast()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.SequencedCollection java.util.SequencedCollection&lt;E&gt; reversed()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.SequencedCollection void addFirst(E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.SequencedCollection void addLast(E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.SequencedMap V putFirst(K, V)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.SequencedMap V putLast(K, V)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.SequencedMap java.util.Map.Entry&lt;K,V&gt; firstEntry()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.SequencedMap java.util.Map.Entry&lt;K,V&gt; lastEntry()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.SequencedMap java.util.Map.Entry&lt;K,V&gt; pollFirstEntry()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.SequencedMap java.util.Map.Entry&lt;K,V&gt; pollLastEntry()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.SequencedMap java.util.SequencedCollection&lt;V&gt; sequencedValues()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.SequencedMap java.util.SequencedMap&lt;K,V&gt; reversed()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.SequencedMap java.util.SequencedSet&lt;K&gt; sequencedKeySet()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.SequencedMap java.util.SequencedSet&lt;java.util.Map.Entry&lt;K,V&gt;&gt; sequencedEntrySet()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.SequencedSet java.util.SequencedSet&lt;E&gt; reversed()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.Set T[] toArray(T[])'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -5008,6 +5173,11 @@
       <val name="to" val="java.lang.Long.MAX_VALUE"/>
     </annotation>
   </item>
+  <item name='java.util.Stack Stack()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.util.TimeZone java.util.TimeZone getTimeZone(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls"/>
   </item>
@@ -5061,11 +5231,51 @@
   <item name="java.util.UUID">
     <annotation name="org.jetbrains.annotations.NonNls"/>
   </item>
+  <item name='java.util.Vector Vector()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Vector Vector(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Vector Vector(int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Vector Vector(java.util.Collection&lt;? extends E&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.util.Vector Vector(java.util.Collection&lt;? extends E&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.intellij.lang.annotations.Flow'>
       <val name="sourceIsContainer" val="true"/>
       <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.WeakHashMap WeakHashMap()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.WeakHashMap WeakHashMap(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.WeakHashMap WeakHashMap(int, float)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.WeakHashMap WeakHashMap(java.util.Map&lt;? extends K,? extends V&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
 </root>

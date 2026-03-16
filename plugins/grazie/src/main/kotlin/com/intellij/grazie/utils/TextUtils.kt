@@ -2,10 +2,15 @@
 package com.intellij.grazie.utils
 
 import ai.grazie.rules.RuleClient
+import ai.grazie.rules.code.CodeDetector
 import ai.grazie.rules.settings.TextStyle
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContent.TextDomain
-import com.intellij.grazie.utils.TextStyleDomain.*
+import com.intellij.grazie.utils.TextStyleDomain.AIPrompt
+import com.intellij.grazie.utils.TextStyleDomain.CodeComment
+import com.intellij.grazie.utils.TextStyleDomain.CodeDocumentation
+import com.intellij.grazie.utils.TextStyleDomain.Commit
+import com.intellij.grazie.utils.TextStyleDomain.Other
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.ui.CommitMessage
 import java.util.regex.Matcher
@@ -27,7 +32,7 @@ object Text {
   fun isQuote(char: Char) = char == '\'' || char == '\"'
 
   @JvmStatic
-  fun isSingleSentence(text: CharSequence) = !text.contains(Regex("\\.\\s"))
+  fun isSingleSentence(text: CharSequence): Boolean = !text.contains(Regex("[.?!]\\s"))
 
   @JvmStatic
   fun findParagraphRange(text: CharSequence, range: TextRange): TextRange {
@@ -50,51 +55,8 @@ object Text {
     return TextRange(start.coerceAtLeast(0), end.coerceAtMost(text.length))
   }
 
-  private const val id = "[a-zA-Z_$][a-zA-Z0-9_$]*"
-  private const val assignment = "= ['\"]"
-  private const val idChain = "$id\\.$id\\.$id"
-  private const val pyFString = "\\bf\""
-  private const val call = "$id\\(.*\\)"
-  private const val commonCharEscape = "\\\\[ntbru]"
-  private const val keyColonValue = "\n *[a-zA-Z0-9_\$'\"-]+: *[a-zA-Z0-9_\$'\"-]+"
-
-  private const val cSharpTypeOrValueTuple = "($id|\\($id(, *$id)+\\))"
-  private const val cSharpGenericTypeParameter = "(((in|out) +)?$cSharpTypeOrValueTuple)"
-  private const val cSharpGenericMethod = "$id\\<$cSharpGenericTypeParameter(, *$cSharpGenericTypeParameter)*\\>\\("
-  private const val scalaTodo = "= ?\\?\\?\\?"
-  private val codeLikePattern = Regex("$assignment|$idChain|$pyFString|$call|$commonCharEscape|$keyColonValue|$cSharpGenericMethod|$scalaTodo")
-
-  private val javaVariable = Regex("\\b([A-Z])($id) ([a-z])(\\2) ?[;:,)=]")
-
-  fun CharSequence.looksLikeCode(): Boolean {
-    if (codeLikePattern.find(this) != null) return true
-
-    val matcher = javaVariable.find(this)
-    if (matcher != null && matcher.groups[1]!!.value == matcher.groups[3]!!.value.uppercase()) {
-      return true
-    }
-
-    if (this.any { it.code > 127 }) return false
-
-    var codeChars = 0
-    var textTokens = 0
-    var inToken = false
-    for (c in this) {
-      if (c.isLetterOrDigit()) {
-        if (!inToken) {
-          inToken = true
-          textTokens++
-        }
-      }
-      else {
-        inToken = false
-        if ("(){}[]<>=+-*/%|&!;,.:\\@$#^".contains(c)) {
-          codeChars++
-        }
-      }
-    }
-    return codeChars > 0 && textTokens < codeChars
-  }
+  @Suppress("unused")
+  fun CharSequence.looksLikeCode(): Boolean = CodeDetector.looksLikeCode(this)
 
   /** @return all non-intersecting occurrences of the given pattern in the given text */
   @JvmStatic

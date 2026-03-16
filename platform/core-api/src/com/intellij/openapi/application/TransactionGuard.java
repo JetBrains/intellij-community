@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -33,6 +33,7 @@ import java.util.function.Supplier;
  * <ul>
  * <li/> Consider simplifying the code. For example, if the outer code is known to be run on EDT, "invokeLater(AndWait)IfNeeded" call can be removed. If it's in a pooled thread, the "IfNeeded" part can be removed. "invokeAndWaitIfNeeded" can be safely unwrapped, if already on EDT.
  * <li/> Consider making the code synchronous. "invokeLater" from EDT rarely makes sense and can often be replaced with synchronous execution (which will likely be inside a user activity: a write-safe context).
+ * <li/> If you are the owner of {@link Application#invokeLater}, and you expect this "invokeLater" to run with write-safe modality, insert {@link TransactionGuard#assertWriteSafeContext(ModalityState)} <b>before</b> this "invokeLater"
  * <li/> If you get the assertion from synchronous document commit or VFS refresh, consider making them asynchronous. For documents, use {@link com.intellij.psi.PsiDocumentManager#performLaterWhenAllCommitted(Runnable)}.
  * You can also try to get rid of them at all, by making your code work only with VFS and PSI and assuming
  * they're refreshed/committed often enough by some other code.

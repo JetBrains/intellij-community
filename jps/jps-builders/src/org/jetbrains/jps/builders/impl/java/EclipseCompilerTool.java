@@ -11,7 +11,7 @@ import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;

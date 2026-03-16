@@ -150,7 +150,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testResolvingByRelativePathWithProperties() = runBlockingNoSync {
-
+    projectsManager.initForTests()
     val parent = createModulePom("parent",
                                  """
                                            <groupId>test</groupId>

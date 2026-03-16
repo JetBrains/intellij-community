@@ -28,10 +28,6 @@ public abstract class AbstractJavadocTypedHandlerFunctionalTest extends LightPla
     doTest('@');
   }
 
-  public void testStartMarkdownComment() {
-    doTest('/');
-  }
-
   private void doTest(char typedChar) {
     String testName = getTestName(true);
     configureByFile(BASE_PATH + testName + ".java");

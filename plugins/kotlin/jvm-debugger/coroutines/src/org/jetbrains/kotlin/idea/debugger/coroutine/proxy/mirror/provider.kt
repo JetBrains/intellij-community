@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
 import com.intellij.debugger.engine.DebuggerUtils
-import com.sun.jdi.*
+import com.sun.jdi.ReferenceType
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty

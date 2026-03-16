@@ -16,7 +16,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.ExportableComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.ServiceBean
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.StateSplitterEx
+import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.OptionsBundle
@@ -38,7 +45,7 @@ import java.io.IOException
 import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.MissingResourceException
 import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isRegularFile

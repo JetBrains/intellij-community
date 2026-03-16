@@ -11,3 +11,5 @@ fun foo(x: X) {
 }
 
 // ELEMENT: x
+
+// IGNORE_K2

@@ -18,7 +18,11 @@ import com.intellij.remoteServer.impl.runtime.ui.RemoteServersServiceViewContrib
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServerTreeNodeExpander;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNodeSelector;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure.RemoteServerNode;
-import com.intellij.remoteServer.runtime.*;
+import com.intellij.remoteServer.runtime.ConnectionStatus;
+import com.intellij.remoteServer.runtime.Deployment;
+import com.intellij.remoteServer.runtime.ServerConnection;
+import com.intellij.remoteServer.runtime.ServerConnectionListener;
+import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.ui.RemoteServersView;
 import com.intellij.remoteServer.util.CloudApplicationRuntime;
 import com.intellij.util.Alarm;
@@ -27,7 +31,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;

@@ -30,7 +30,13 @@ import org.jetbrains.idea.maven.dom.plugin.MavenDomParameter;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 
 import java.lang.annotation.Annotation;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 public final class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomConfiguration> {
@@ -240,9 +246,9 @@ public final class MavenPluginConfigurationDomExtender extends DomExtender<Maven
     if (singularName == null) singularName = parameterName;
 
     List<String> result = new ArrayList<>();
-    String[] parts = NameUtil.splitNameIntoWords(singularName);
-    for (int i = 0; i < parts.length; i++) {
-      result.add(StringUtil.decapitalize(StringUtil.join(parts, i, parts.length, "")));
+    List<@NotNull String> parts = NameUtil.splitNameIntoWordList(singularName);
+    for (int i = 0; i < parts.size(); i++) {
+      result.add(StringUtil.decapitalize(StringUtil.join(parts.subList(i, parts.size()), "")));
     }
     return result;
   }

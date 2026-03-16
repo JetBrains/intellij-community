@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.project.ProjectStoreOwner
 import java.nio.file.Path
 
-private class DefaultTrustedProjectsLocator : TrustedProjectsLocator {
+internal class DefaultTrustedProjectsLocator : TrustedProjectsLocator {
   override fun getProjectRoots(project: Project): List<Path> {
     if (project !is ProjectStoreOwner) {
       return emptyList()

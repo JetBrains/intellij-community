@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.DfaNullability;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.Mutability;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.java.JavaBundle;
@@ -12,7 +16,12 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 final class DfGenericObjectType extends DfAntiConstantType<Object> implements DfReferenceType {
   private final @NotNull TypeConstraint myConstraint;

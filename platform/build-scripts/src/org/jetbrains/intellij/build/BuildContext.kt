@@ -98,9 +98,9 @@ interface BuildContext : CompilationContext {
 
   /**
    * Returns main modules' names of plugins bundled with the product.
-   * In IDEs, which use path-based loader, this list is specified manually in [ProductModulesLayout.bundledPluginModules] property.
+   * In IDEs, which use path-based loader, this list is specified manually in [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.bundledPluginModules] property.
    */
-  suspend fun getBundledPluginModules(): List<String>
+  fun getBundledPluginModules(): List<String>
 
   /**
    * See [BuildOptions.PROVIDED_MODULES_LIST_STEP]
@@ -117,7 +117,7 @@ interface BuildContext : CompilationContext {
   /**
    * [nonBundledPlugins]/auto-uploading/
    *
-   * See [ProductModulesLayout.buildAllCompatiblePlugins]
+   * See [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.buildAllCompatiblePlugins]
    */
   val nonBundledPluginsToBePublished: Path
 
@@ -148,12 +148,12 @@ interface BuildContext : CompilationContext {
   fun findApplicationInfoModule(): JpsModule
 
   suspend fun signFiles(files: List<Path>, options: PersistentMap<String, String> = persistentMapOf()) {
-    proprietaryBuildTools.signTool.signFiles(files, context = this, options)
+    proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
   }
 
-  suspend fun getFrontendModuleFilter(): FrontendModuleFilter
+  fun getFrontendModuleFilter(): FrontendModuleFilter
   
-  suspend fun getContentModuleFilter(): ContentModuleFilter
+  fun getContentModuleFilter(): ContentModuleFilter
 
   val isEmbeddedFrontendEnabled: Boolean
 
@@ -161,11 +161,7 @@ interface BuildContext : CompilationContext {
 
   fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean
 
-  suspend fun createCopyForProduct(
-    productProperties: ProductProperties,
-    projectHomeForCustomizers: Path,
-    prepareForBuild: Boolean = true,
-  ): BuildContext
+  suspend fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path, prepareForBuild: Boolean = true): BuildContext
 
   fun reportDistributionBuildNumber()
 
@@ -174,8 +170,6 @@ interface BuildContext : CompilationContext {
   /**
    * Creates an instance of [IntellijProductRunner] which can be used to run the IDE being built with some command.
    * @param additionalPluginModules main modules of non-bundled plugins, which should be loaded inside the IDE process
-   * @param forceUseDevBuild if `true`, the 'dev build' approach will be used to run the IDE even if it uses the module-based loader
-   * which supports running the IDE without running the build scripts.
    */
   suspend fun createProductRunner(additionalPluginModules: List<String> = emptyList()): IntellijProductRunner
 
@@ -245,7 +239,7 @@ sealed interface DistFileContent {
   fun readAsStringForDebug(): String
 }
 
-data class LocalDistFileContent(@JvmField val file: Path, val isExecutable: Boolean = false) : DistFileContent {
+data class LocalDistFileContent(@JvmField val file: Path, @JvmField val isExecutable: Boolean = false) : DistFileContent {
   override fun readAsStringForDebug(): String = Files.newInputStream(file).readNBytes(1024).decodeToString()
 
   override fun toString(): String = "LocalDistFileContent(file=$file, isExecutable=$isExecutable)"

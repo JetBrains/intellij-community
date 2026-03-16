@@ -1,0 +1,71 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_sequentualAddingAndDeletingOfPropertyAndUsage-a.kotlin_module
+  MainKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/sequentualAddingAndDeletingOfPropertyAndUsage/a/main.kt
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #2 =================
+Cleaning output files:
+  DatClass.class
+  META-INF/kotlin_pureKotlin_sequentualAddingAndDeletingOfPropertyAndUsage-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/sequentualAddingAndDeletingOfPropertyAndUsage/a/DataClass.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_sequentualAddingAndDeletingOfPropertyAndUsage-a.kotlin_module
+  MainKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/sequentualAddingAndDeletingOfPropertyAndUsage/a/main.kt
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #3 =================
+Cleaning output files:
+  DatClass.class
+  META-INF/kotlin_pureKotlin_sequentualAddingAndDeletingOfPropertyAndUsage-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/sequentualAddingAndDeletingOfPropertyAndUsage/a/DataClass.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_sequentualAddingAndDeletingOfPropertyAndUsage-a.kotlin_module
+  MainKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/sequentualAddingAndDeletingOfPropertyAndUsage/a/main.kt
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #4 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_sequentualAddingAndDeletingOfPropertyAndUsage-a.kotlin_module
+  MainKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/sequentualAddingAndDeletingOfPropertyAndUsage/a/main.kt
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #5 =================
+Cleaning output files:
+  DatClass.class
+  META-INF/kotlin_pureKotlin_sequentualAddingAndDeletingOfPropertyAndUsage-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/sequentualAddingAndDeletingOfPropertyAndUsage/a/DataClass.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_sequentualAddingAndDeletingOfPropertyAndUsage-a.kotlin_module
+  MainKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/sequentualAddingAndDeletingOfPropertyAndUsage/a/main.kt
+End of files
+------------------------------------------
+Exit code: ERROR

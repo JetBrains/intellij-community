@@ -10,8 +10,8 @@ import com.intellij.platform.syntax.extensions.ExtensionRegistry
  * Threadsafe.
  */
 internal class ExtensionRegistryImpl : ExtensionRegistry {
-  private val ourExtensions: ConcurrentMultiMap<ExtensionPointKey<*>, Any> = newConcurrentMultiMap()
-  private val ourLanguageExtensions: ConcurrentMap<ExtensionPointKey<*>, ConcurrentMultiMap<SyntaxLanguage, Any>> = newConcurrentMap()
+  private val ourExtensions: MultiplatformConcurrentMultiMap<ExtensionPointKey<*>, Any> = newConcurrentMultiMap()
+  private val ourLanguageExtensions: MultiplatformConcurrentMap<ExtensionPointKey<*>, MultiplatformConcurrentMultiMap<SyntaxLanguage, Any>> = newConcurrentMap()
 
   override fun <T : Any> registerExtension(extensionPoint: ExtensionPointKey<T>, extension: T) {
     ourExtensions.putValue(extensionPoint, extension)

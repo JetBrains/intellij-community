@@ -8,17 +8,17 @@ import org.jetbrains.uast.UastSpecialExpressionKind
 @ApiStatus.Internal
 object KotlinSpecialExpressionKinds {
     @JvmField
-    val WHEN = UastSpecialExpressionKind("when")
+    val WHEN: UastSpecialExpressionKind = UastSpecialExpressionKind("when")
 
     @JvmField
-    val WHEN_ENTRY = UastSpecialExpressionKind("when_entry")
+    val WHEN_ENTRY: UastSpecialExpressionKind = UastSpecialExpressionKind("when_entry")
 
     @JvmField
-    val CLASS_BODY = UastSpecialExpressionKind("class_body")
+    val CLASS_BODY: UastSpecialExpressionKind = UastSpecialExpressionKind("class_body")
 
     @JvmField
-    val ELVIS = UastSpecialExpressionKind("elvis")
+    val ELVIS: UastSpecialExpressionKind = UastSpecialExpressionKind("elvis")
 
     @JvmField
-    val SUPER_DELEGATION = UastSpecialExpressionKind("super_delegation")
+    val SUPER_DELEGATION: UastSpecialExpressionKind = UastSpecialExpressionKind("super_delegation")
 }

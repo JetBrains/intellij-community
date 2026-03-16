@@ -1,0 +1,15 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <plugin id="com.intellij.copyright"/>
+    <module name="intellij.java.psi"/>
+
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij.copyright">
+    <updater filetype="JAVA" implementationClass="com.intellij.copyright.UpdateJavaFileCopyright$UpdateJavaCopyrightsProvider"/>
+    <updater filetype="SPI" implementationClass="com.intellij.copyright.UpdateSPIFileCopyright"/>
+
+    <variablesProvider filetype="JAVA" implementationClass="com.intellij.copyright.JavaCopyrightVariablesProvider"/>
+  </extensions>
+</idea-plugin>

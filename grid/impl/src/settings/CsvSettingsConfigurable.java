@@ -12,7 +12,7 @@ import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class CsvSettingsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private ConfigurableUi<CsvFormatsSettings> ui;

@@ -4,11 +4,25 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.*
+import com.intellij.ide.ProjectWidgetGradientLocationService
+import com.intellij.ide.ProjectWindowCustomizerService
+import com.intellij.ide.RecentProjectListActionProvider
+import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManager.RecentProjectsChange
+import com.intellij.ide.ReopenProjectAction
+import com.intellij.ide.UpdatesInfoProviderManager
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
-import com.intellij.openapi.actionSystem.*
+import com.intellij.ide.userScaledProjectIconSize
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
@@ -16,7 +30,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.openapi.ui.popup.ListPopupStep
+import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.ui.popup.SpeedSearchFilter
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
@@ -25,8 +44,11 @@ import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
 import com.intellij.project.ProjectStoreOwner
-import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.GroupHeaderSeparator
+import com.intellij.ui.IconManager
+import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.AlignX
@@ -42,8 +64,13 @@ import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.util.maximumWidth
 import com.intellij.util.IconUtil
-import com.intellij.util.ui.*
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
+import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.awaitCancellation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -57,7 +84,14 @@ import java.beans.PropertyChangeListener
 import java.util.function.Function
 import java.util.function.Predicate
 import java.util.function.Supplier
-import javax.swing.*
+import javax.swing.BoxLayout
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
+import javax.swing.SwingUtilities
 import kotlin.io.path.invariantSeparatorsPathString
 
 private const val MAX_RECENT_COUNT = 100

@@ -27,7 +27,6 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "//fleet/util/core",
     "@lib//:jetbrains-annotations",
-    "//fleet/ktor/network/tls",
     "@lib//:kotlinx-io-core",
   ]
 )

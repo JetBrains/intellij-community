@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":logging_resources"],
-  exports = ["@lib//:commons-logging"],
-  runtime_deps = ["@lib//:commons-logging"]
+  exports = ["@lib//:libraries-commons-logging-commons-logging"],
+  runtime_deps = ["@lib//:libraries-commons-logging-commons-logging"]
 )
 ### auto-generated section `build intellij.libraries.commons.logging` end

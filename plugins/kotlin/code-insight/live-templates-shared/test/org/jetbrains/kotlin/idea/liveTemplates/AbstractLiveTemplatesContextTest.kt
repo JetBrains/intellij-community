@@ -4,7 +4,12 @@ package org.jetbrains.kotlin.idea.liveTemplates
 import com.intellij.codeInsight.template.impl.TemplateContextTypes
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.*
+import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.Comment
+import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.Expression
+import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.Generic
+import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.ObjectDeclaration
+import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.Statement
+import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.TopLevel
 import org.jetbrains.kotlin.test.TestMetadata
 
 abstract class AbstractLiveTemplatesContextTest : NewLightKotlinCodeInsightFixtureTestCase() {

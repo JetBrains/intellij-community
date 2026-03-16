@@ -15,7 +15,13 @@
  */
 package com.intellij.diagnostic.hprof.visitors
 
-import com.intellij.diagnostic.hprof.parser.*
+import com.intellij.diagnostic.hprof.parser.ConstantPoolEntry
+import com.intellij.diagnostic.hprof.parser.HProfVisitor
+import com.intellij.diagnostic.hprof.parser.HeapDumpRecordType
+import com.intellij.diagnostic.hprof.parser.InstanceFieldEntry
+import com.intellij.diagnostic.hprof.parser.RecordType
+import com.intellij.diagnostic.hprof.parser.StaticFieldEntry
+import com.intellij.diagnostic.hprof.parser.Type
 import java.nio.ByteBuffer
 
 class CompositeVisitor(private vararg val visitors: HProfVisitor) : HProfVisitor() {

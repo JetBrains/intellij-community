@@ -6,10 +6,36 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyConditionalExpression
+import com.jetbrains.python.psi.PyDictCompExpression
+import com.jetbrains.python.psi.PyDictLiteralExpression
+import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyEllipsisLiteralExpression
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFormattedStringElement
+import com.jetbrains.python.psi.PyKeyValueExpression
+import com.jetbrains.python.psi.PyListCompExpression
+import com.jetbrains.python.psi.PyListLiteralExpression
+import com.jetbrains.python.psi.PyLiteralExpression
+import com.jetbrains.python.psi.PyNoneLiteralExpression
+import com.jetbrains.python.psi.PyNumericLiteralExpression
+import com.jetbrains.python.psi.PyPlainStringElement
+import com.jetbrains.python.psi.PyPrefixExpression
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PySetCompExpression
+import com.jetbrains.python.psi.PySetLiteralExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PySubscriptionExpression
+import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.types.PyTypeUtil.getEffectiveBound
+import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -18,7 +44,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 class PyLiteralType private constructor(cls: PyClass, val expression: PyExpression) : PyClassTypeImpl(cls, false) {
 
-  override fun getName(): String = "Literal[${expression.text}]"
+  override val name: String = "Literal[${expression.text}]"
 
   override fun toString(): String = "PyLiteralType: ${expression.text}"
 
@@ -27,12 +53,12 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
   }
 
   override fun hashCode(): Int = 31 * pyClass.hashCode()
-  
-  override fun <T : Any?> acceptTypeVisitor(visitor: PyTypeVisitor<T?>): T? {
+
+  override fun <T> acceptTypeVisitor(visitor: PyTypeVisitor<T>): T? {
     if (visitor is PyTypeVisitorExt) {
       return visitor.visitPyLiteralType(this)
     }
-    return visitor.visitPyClassType(this)  
+    return visitor.visitPyClassType(this)
   }
 
   companion object {
@@ -114,7 +140,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
       private fun promoteDictLiteralOrDictComprehension(
         expectedType: PyType?,
         anchor: PyElement,
-        elements: Collection<PyKeyValueExpression>
+        elements: Collection<PyKeyValueExpression>,
       ): PyType? {
         val (expectedKeyType, expectedValueType) = if (expectedType is PyCollectionType && expectedType.classQName == PyNames.DICT) {
           expectedType.elementTypes[0] to expectedType.elementTypes[1]
@@ -160,7 +186,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
         return expected.expression.name == actual.expression.name
       }
       return PyEvaluator.evaluateNoResolve(expected.expression, Any::class.java) ==
-             PyEvaluator.evaluateNoResolve(actual.expression, Any::class.java)
+        PyEvaluator.evaluateNoResolve(actual.expression, Any::class.java)
     }
 
     /**
@@ -168,12 +194,14 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
      * then tries to infer `typing.Literal[...]` for [expression],
      * otherwise returns type inferred by [context].
      */
-    fun promoteToLiteral(expression: PyExpression,
-                         expected: PyType?,
-                         context: TypeEvalContext,
-                         substitutions: PyTypeChecker.GenericSubstitutions?): PyType? {
+    fun promoteToLiteral(
+      expression: PyExpression,
+      expected: PyType?,
+      context: TypeEvalContext,
+      substitutions: PyTypeChecker.GenericSubstitutions?,
+    ): PyType? {
       val substitution = if (substitutions != null) PyTypeChecker.substitute(expected, substitutions, context) else expected
-      val substitutionOrBound = if (substitution is PyTypeVarType) PyTypeUtil.getEffectiveBound(substitution) else substitution
+      val substitutionOrBound = if (substitution is PyTypeVarType) substitution.getEffectiveBound() else substitution
       if (substitutionOrBound == null) return null
       return TypePromoter(context, containsLiteral(substitutionOrBound)).promoteToType(substitutionOrBound, expression)
     }
@@ -198,7 +226,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
 
       if (expression is PyReferenceExpression || expression is PySubscriptionExpression) {
         val subLiteralType = Ref.deref(PyTypingTypeProvider.getType(expression, context))
-        if (PyTypeUtil.toStream(subLiteralType).all { it is PyLiteralType }) return subLiteralType
+        if (subLiteralType.toStream().all { it is PyLiteralType }) return subLiteralType
       }
 
       return literalType(expression, context, true)

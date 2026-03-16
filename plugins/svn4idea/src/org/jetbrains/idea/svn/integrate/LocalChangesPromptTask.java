@@ -30,10 +30,14 @@ import java.util.Set;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.Conditions.alwaysTrue;
 import static com.intellij.openapi.vcs.VcsBundle.message;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getBeforePath;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getPaths;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 import static java.util.stream.Collectors.toSet;
-import static org.jetbrains.idea.svn.SvnUtil.*;
+import static org.jetbrains.idea.svn.SvnUtil.append;
+import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
+import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 import static org.jetbrains.idea.svn.integrate.Intersection.isEmpty;
 import static org.jetbrains.idea.svn.integrate.LocalChangesAction.continueMerge;
 

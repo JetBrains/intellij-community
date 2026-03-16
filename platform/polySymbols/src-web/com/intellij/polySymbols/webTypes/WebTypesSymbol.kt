@@ -8,10 +8,14 @@ import com.intellij.polySymbols.js.JS_PROPERTIES
 import com.intellij.polySymbols.js.JS_STRING_LITERALS
 import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import org.jetbrains.annotations.ApiStatus
 
 interface WebTypesSymbol : PsiSourcedPolySymbol, PolySymbolScope {
 
   val location: Location?
+
+  @get:ApiStatus.Internal
+  val origin: WebTypesJsonOrigin
 
   override fun createPointer(): Pointer<out WebTypesSymbol>
 
@@ -87,7 +91,7 @@ interface WebTypesSymbol : PsiSourcedPolySymbol, PolySymbolScope {
 }
 
 internal val WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS = setOf(
-  JS_PROPERTIES.kind, JS_STRING_LITERALS.kind
+  JS_PROPERTIES.kindName, JS_STRING_LITERALS.kindName
 )
 
 private data class ModuleExportData(

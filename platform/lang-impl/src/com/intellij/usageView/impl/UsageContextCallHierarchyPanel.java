@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usageView.impl;
 
-import com.intellij.ide.hierarchy.*;
+import com.intellij.ide.hierarchy.CallHierarchyBrowserBase;
+import com.intellij.ide.hierarchy.HierarchyBrowser;
+import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
+import com.intellij.ide.hierarchy.HierarchyProvider;
+import com.intellij.ide.hierarchy.LanguageCallHierarchy;
 import com.intellij.ide.hierarchy.actions.BrowseHierarchyActionBase;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
@@ -13,7 +17,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usages.*;
+import com.intellij.usages.PsiElementUsageTarget;
+import com.intellij.usages.UsageContextPanel;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsageContextPanelBase;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,8 +29,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
 import java.util.List;
 
 @ApiStatus.Internal

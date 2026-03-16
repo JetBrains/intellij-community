@@ -2,7 +2,17 @@
 package org.jetbrains.kotlin.j2k.k2.postProcessings
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.*
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.ArgumentTypeMismatch
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.AssignmentTypeMismatch
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.InitializerTypeMismatch
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.IteratorOnNullable
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.ReturnTypeMismatch
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.SmartcastImpossible
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.UnnecessaryNotNullAssertion
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.UnsafeCall
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.UnsafeInfixCall
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.UnsafeOperatorCall
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.UselessCast
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddExclExclCallFixFactories
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.TypeMismatchFactories

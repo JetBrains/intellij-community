@@ -3,7 +3,9 @@ package com.intellij.codeInspection
 
 import com.intellij.codeInsight.options.JavaClassValidator
 import com.intellij.codeInspection.options.OptPane
-import com.intellij.codeInspection.options.OptPane.*
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.codeInspection.options.OptPane.stringList
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.InheritanceUtil
 import com.siyeh.InspectionGadgetsBundle

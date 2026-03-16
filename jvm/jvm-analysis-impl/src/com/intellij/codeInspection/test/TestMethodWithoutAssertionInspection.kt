@@ -15,11 +15,19 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.asSafely
 import com.siyeh.InspectionGadgetsBundle
-import com.siyeh.ig.junit.JUnitCommonClassNames.*
+import com.siyeh.ig.junit.JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_ASSERT
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS_KT
 import com.siyeh.ig.psiutils.MethodMatcher
 import com.siyeh.ig.psiutils.TestUtils
 import org.jdom.Element
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UObjectLiteralExpression
+import org.jetbrains.uast.resolveToUElementOfType
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 

@@ -14,10 +14,7 @@ import org.jetbrains.annotations.Nls;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
-/**
-* @author Max Medvedev
-*/
-class InlineGroovyFieldDialog extends InlineOptionsDialog {
+final class InlineGroovyFieldDialog extends InlineOptionsDialog {
   private final PsiField myField;
 
   InlineGroovyFieldDialog(Project project, PsiField field, boolean invokedOnReference) {

@@ -10,7 +10,7 @@ import com.intellij.ui.content.Content
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-@Deprecated("Use TerminalToolWindowManager instead", ReplaceWith("TerminalToolWindowManager"))
+@Deprecated("Use TerminalToolWindowTabsManager instead", ReplaceWith("TerminalToolWindowTabsManager"))
 @ApiStatus.ScheduledForRemoval
 @Suppress("unused", "DEPRECATION")
 @Service(Service.Level.PROJECT)
@@ -62,7 +62,7 @@ class TerminalView(private val project: Project) {
   }
 
   companion object {
-    @Deprecated("Use TerminalToolWindowManager.getInstance() instead", ReplaceWith("TerminalToolWindowManager.getInstance(project)"))
+    @Deprecated("Use TerminalToolWindowTabsManager.getInstance(project) instead", ReplaceWith("TerminalToolWindowTabsManager.getInstance(project)"))
     @JvmStatic
     fun getInstance(project: Project): TerminalView {
       return project.service<TerminalView>()

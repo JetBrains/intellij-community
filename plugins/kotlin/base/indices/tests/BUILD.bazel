@@ -4,7 +4,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/kotlin/base/indices",
+  ]
 )
 
 jvm_library(
@@ -14,7 +18,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/kotlin/plugin/k1",
+    "//plugins/kotlin/plugin/k2",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-ui",
@@ -27,7 +31,10 @@ jvm_library(
     "//java/openapi:java",
     "//java/testFramework",
     "//plugins/kotlin/base/indices",
-  ]
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.base.indices.tests` end
 

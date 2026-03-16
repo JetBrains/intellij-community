@@ -1,6 +1,4 @@
-psutil._pslinux
 psutil._psosx
-
-psutil._psutil_linux
+psutil._pslinux
 psutil._psutil_osx
-psutil._psutil_posix
+psutil._psutil_linux

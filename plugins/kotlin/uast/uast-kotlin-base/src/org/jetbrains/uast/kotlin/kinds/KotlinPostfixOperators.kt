@@ -8,5 +8,5 @@ import org.jetbrains.uast.UastPostfixOperator
 @ApiStatus.Internal
 object KotlinPostfixOperators {
     @JvmField
-    val EXCLEXCL = UastPostfixOperator("!!")
+    val EXCLEXCL: UastPostfixOperator = UastPostfixOperator("!!")
 }

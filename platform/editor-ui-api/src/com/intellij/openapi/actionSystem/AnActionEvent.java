@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.PlaceProvider;
+import kotlinx.coroutines.CoroutineScope;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -35,6 +36,7 @@ public class AnActionEvent implements PlaceProvider {
   private final int myModifiers;
 
   private @NotNull UpdateSession myUpdateSession = UpdateSession.EMPTY;
+  private @Nullable CoroutineScope myPerformCoroutineScope = null;
 
   /** @deprecated Use {@link #createEvent(DataContext, Presentation, String, ActionUiKind, InputEvent)} or
    * {@link #AnActionEvent(DataContext, Presentation, String, ActionUiKind, InputEvent, int, ActionManager)} instead. */
@@ -86,7 +88,11 @@ public class AnActionEvent implements PlaceProvider {
     if (myDataContext == dataContext) return this;
     AnActionEvent event = new AnActionEvent(dataContext, myPresentation, myPlace, myUiKind, myInputEvent,
                                             myModifiers, myActionManager);
-    event.setUpdateSession(myUpdateSession);
+    if (myPerformCoroutineScope != null) {
+      event.installCoroutineScope(myPerformCoroutineScope);
+    } else {
+      event.setUpdateSession(myUpdateSession);
+    }
     return event;
   }
 
@@ -319,6 +325,33 @@ public class AnActionEvent implements PlaceProvider {
 
   public final void setUpdateSession(@NotNull UpdateSession updateSession) {
     myUpdateSession = updateSession;
+    myPerformCoroutineScope = null;
+  }
+
+  // used only by implementation of the action subsystem
+  // avoid naming like `setCoroutineScope` to not look like a mutable property in Kotlin
+  @ApiStatus.Internal
+  public final void installCoroutineScope(@NotNull CoroutineScope scope) {
+    myUpdateSession = UpdateSession.EMPTY;
+    myPerformCoroutineScope = scope;
+  }
+
+  /**
+   * Returns a coroutine scope associated with the context of {@link AnAction#actionPerformed}. Use this scope to initiate suspending computations in actions.
+   * <p>
+   * This scope has the same lifetime as the scope of {@link AnAction} where it is used.
+   * <ul>
+   *   <li>By default, this scope gets canceled on the closing of {@link Project}. </li>
+   *   <li>If an action is bound to the {@link com.intellij.openapi.application.Application} (via {@link Presentation#setApplicationScope}), then the scope lives as long as the application is opened.</li>
+   * </ul>
+   */
+  @ApiStatus.Experimental
+  public final @NotNull CoroutineScope getCoroutineScope() {
+    CoroutineScope scope = myPerformCoroutineScope;
+    if (scope == null) {
+      throw new IllegalStateException("Coroutine scope is supported only for `actionPerformed`");
+    }
+    return scope;
   }
 
   @ApiStatus.Internal

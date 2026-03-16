@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInspection.RedundantRecordConstructorInspection;
@@ -12,7 +12,37 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaParserFacade;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightModifierList;
@@ -47,7 +77,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.RecordConstructorCandidate;
@@ -103,7 +139,7 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       String backingFieldName = fieldAccessorCandidate.backingField().getName();
 
       List<PsiMethod> methods = substituteWithSuperMethodsIfPossible(fieldAccessorCandidate.method());
-      RenamePsiElementProcessor methodRenameProcessor = RenamePsiElementProcessor.forElement(methods.get(0));
+      RenamePsiElementProcessor methodRenameProcessor = RenamePsiElementProcessor.forElement(methods.getFirst());
       methods.forEach(method -> {
         myAllRenames.put(method, backingFieldName);
         methodRenameProcessor.prepareRenaming(method, backingFieldName, myAllRenames);

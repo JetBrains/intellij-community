@@ -2,8 +2,17 @@
 package org.jetbrains.plugins.groovy.lang.sam
 
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
+import com.intellij.psi.HierarchicalMethodSignature
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.util.CachedValueProvider
@@ -18,7 +27,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil.isTrait
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
-import org.jetbrains.plugins.groovy.lang.resolve.api.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.CallParameter
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExplicitRuntimeTypeArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.PsiCallParameter
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpectedType
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint

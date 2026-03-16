@@ -6,8 +6,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Allows viewing binary files (i.e. those with {@link FileType#isBinary} returning {@code true}) in an editor.
- * Registration is via {@code "com.intellij.filetype.decompiler"} extension point (see {@link BinaryFileTypeDecompilers#EP_NAME}).
+ * Allows viewing binary files (files whose those with {@link FileType#isBinary} returns {@code true}) in an editor.
+ * <p>
+ * Registration is done via {@code com.intellij.filetype.decompiler} extension point (see {@link BinaryFileTypeDecompilers#EP_NAME}).
  */
 public interface BinaryFileDecompiler {
   /**

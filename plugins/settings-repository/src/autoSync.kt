@@ -13,7 +13,11 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal class AutoSyncManager(private val icsManager: IcsManager) {
   @Volatile
@@ -21,7 +25,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
 
   @Volatile var enabled = true
 
-  suspend fun waitAutoSync() = reportRawProgress { reporter ->
+  suspend fun waitAutoSync(): Unit = reportRawProgress { reporter ->
     val autoFuture = autoSyncFuture ?: return
     if (autoFuture.isCompleted) {
       autoSyncFuture = null
@@ -128,7 +132,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
   }
 }
 
-internal inline fun catchAndLog(asWarning: Boolean = false, runnable: () -> Unit) {
+internal inline fun catchAndLog(asWarning: Boolean = false, runnable: () -> Unit): Unit {
   try {
     runnable()
   }

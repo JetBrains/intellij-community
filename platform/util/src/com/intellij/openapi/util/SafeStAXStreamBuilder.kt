@@ -4,7 +4,13 @@ package com.intellij.openapi.util
 
 import com.intellij.util.xml.dom.createXmlStreamReader
 import org.codehaus.stax2.XMLStreamReader2
-import org.jdom.*
+import org.jdom.Attribute
+import org.jdom.CDATA
+import org.jdom.Document
+import org.jdom.Element
+import org.jdom.Namespace
+import org.jdom.Text
+import org.jdom.Verifier
 import org.jetbrains.annotations.ApiStatus
 import java.io.Reader
 import java.nio.file.Files

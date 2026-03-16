@@ -23,35 +23,21 @@ Before you start, make sure you:
 We strongly recommend following this commit message format:
 
    ```
-      [<subsystem>] <YouTrack ticket ID/category keyword for non-production changes (see allowed list below)> short description
-
-      detailed description
+   <YouTrack ticket ID>( <YouTrack ticket ID>)* (<subsystem>: )? <subject>
+        
+   <detailed description>?
    ```
 
 E.g.:
 
    ```
-      [groovy] IDEA-125730 Declare explicit type 
+   IDEA-125730 Groovy: declare explicit type 
 
-      Broken template should revert all its changes and move the caret back to the original position
+   Broken template should revert all its changes and move the caret back to the original position
    ```
 
 Avoid including links to any discussions in commit messages (Slack, https://platform.jetbrains.com/, etc.). Instead, summarize the
-discussion right in the commit message,
-or create a YouTrack issue and summarize it there.
-
-1. If the commit changes a product's distribution, always include a link to the corresponding YouTrack ticket.
-2. If the commit does not change a product's distribution (e.g., tests, documentation, formatting, etc.), it should contain category keyword
-   instead of ticket id.
-   Possible keywords:
-   - `tests`, `test`
-   - `cleanup`, `typo`
-   - `refactor`, `refactoring` for small refactorings (e.g., renaming a local variable, extracting private method, changes which don't
-   affect public API signatures)
-   - `docs`, `doc`
-   - `format`, `style`
-
-   Example: ```[ui] typo “accross” → “across”```
+discussion right in the commit message, or create a YouTrack ticket and summarize it there.
 
 ## Building the IDE
 

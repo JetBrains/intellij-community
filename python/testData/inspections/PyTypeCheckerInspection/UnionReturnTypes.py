@@ -16,7 +16,7 @@ def test(c):
         :type x: int
         """
     x1 = f1(c)
-    f2(x1)  # Weaker union types
+    f2(<warning descr="Expected type 'str', got 'Union[List[Any], str, None]' instead">x1</warning>)
     f3(<warning descr="Expected type 'int', got 'Union[List[Any], str, None]' instead">x1</warning>)
 
     f2(<warning descr="Expected type 'str', got 'int' instead">x1.count('')</warning>)

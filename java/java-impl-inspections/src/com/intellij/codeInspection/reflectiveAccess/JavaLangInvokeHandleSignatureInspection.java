@@ -1,11 +1,20 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupEvent;
+import com.intellij.codeInsight.lookup.LookupEx;
+import com.intellij.codeInsight.lookup.LookupListener;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -16,7 +25,23 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil;
 import com.intellij.psi.util.InheritanceUtil;
@@ -28,13 +53,42 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectVarHandleInvocationChecker.ARRAY_ELEMENT_VAR_HANDLE;
 import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectVarHandleInvocationChecker.JAVA_LANG_INVOKE_METHOD_HANDLES;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
-import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_CONSTRUCTOR;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_GETTER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_SETTER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_SPECIAL;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_STATIC;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_STATIC_GETTER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_STATIC_SETTER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_STATIC_VAR_HANDLE;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_VAR_HANDLE;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_VIRTUAL;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.HANDLE_FACTORY_METHOD_NAMES;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveClass;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveSignature;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveType;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.composeMethodSignature;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.computeConstantExpression;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.findDefinition;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getMethodSignature;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getMethodTypeExpressionText;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getReflectiveClass;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getReflectiveType;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getTypeText;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.isCallToMethod;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.isClassWithName;
 
 public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Key<ReflectiveSignature> DEFAULT_SIGNATURE = Key.create("DEFAULT_SIGNATURE");
@@ -402,7 +456,7 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
     @Override
     public @NotNull String getText() {
       if (mySignatures.size() == 1) {
-        final String declarationText = getDeclarationText(mySignatures.get(0));
+        final String declarationText = getDeclarationText(mySignatures.getFirst());
         return JavaBundle.message(myIsConstructor
                                          ? "inspection.handle.signature.use.constructor.fix.name"
                                          : "inspection.handle.signature.use.method.fix.name",
@@ -437,7 +491,7 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
       }
 
       if (mySignatures.size() == 1) {
-        applyFix(project, startElement, mySignatures.get(0));
+        applyFix(project, startElement, mySignatures.getFirst());
       }
       else if (editor != null) {
         showLookup(project, editor);
@@ -448,7 +502,7 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
     public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
       if (mySignatures.isEmpty()) return IntentionPreviewInfo.EMPTY;
       // Show first even if lookup is displayed
-      ReflectiveSignature signature = mySignatures.get(0);
+      ReflectiveSignature signature = mySignatures.getFirst();
       PsiElement element = PsiTreeUtil.findSameElementInCopy(getStartElement(), psiFile);
       if (element == null) return IntentionPreviewInfo.EMPTY;
       applyFix(project, element, signature);

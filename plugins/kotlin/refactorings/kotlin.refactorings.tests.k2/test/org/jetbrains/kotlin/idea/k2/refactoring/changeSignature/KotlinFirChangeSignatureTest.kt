@@ -20,7 +20,14 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.BaseKotlinChangeSignatureTest
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.test.Diagnostic
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPsiFactory
 
 class KotlinFirChangeSignatureTest :
     BaseKotlinChangeSignatureTest<KotlinChangeInfo, KotlinParameterInfo, KotlinTypeInfo, Visibility, KotlinMethodDescriptor>() {
@@ -33,8 +40,11 @@ class KotlinFirChangeSignatureTest :
     }
 
     override fun checkErrorsAfter(): Boolean {
-        return false // todo
+        return true
     }
+
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    override fun getDiagnosticProvider(): (KtFile) -> List<Diagnostic> = { emptyList() }
 
     override fun doTestInvokePosition(code: String) {
         doTestTargetElement<KtNamedFunction>(code)

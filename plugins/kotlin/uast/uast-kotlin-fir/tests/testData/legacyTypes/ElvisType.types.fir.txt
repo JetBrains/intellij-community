@@ -7,10 +7,10 @@ UFile (package = ) [public final class ElvisTypeKt {...]
                 UReturnExpression [return bar(elvis {...})]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar(elvis {...})] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                         UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
-                        UExpressionList (elvis) [elvis {...}] : java.lang.String
+                        UExpressionList (elvis) [elvis {...}] : @org.jetbrains.annotations.Nullable() java.lang.String
                             UDeclarationsExpression [var var63c495f9: java.lang.String = text]
                                 ULocalVariable (name = var63c495f9) [var var63c495f9: java.lang.String = text]
-                                    USimpleNameReferenceExpression (identifier = text) [text] : java.lang.String
+                                    USimpleNameReferenceExpression (identifier = text) [text] : @org.jetbrains.annotations.Nullable() java.lang.String
                             UIfExpression [if (var63c495f9 != null) var63c495f9 else return]
                                 UBinaryExpression (operator = !=) [var63c495f9 != null]
                                     USimpleNameReferenceExpression (identifier = var63c495f9) [var63c495f9]

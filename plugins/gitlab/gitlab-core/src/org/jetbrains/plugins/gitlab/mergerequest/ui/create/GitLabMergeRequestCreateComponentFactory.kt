@@ -3,16 +3,20 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.create
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.LabeledListComponentsFactory
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.bindValueIn
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder
 import com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewLayoutBuilder
 import com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewUIUtil
 import com.intellij.collaboration.ui.codereview.create.CodeReviewTitleDescriptionComponentFactory
+import com.intellij.collaboration.ui.util.bindSelected
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.ui.branch.MergeDirectionComponentFactory
 import git4idea.ui.branch.MergeDirectionModel
@@ -31,7 +35,7 @@ import javax.swing.JComponent
 
 internal object GitLabMergeRequestCreateComponentFactory {
   fun create(project: Project, cs: CoroutineScope, createVm: GitLabMergeRequestCreateViewModel): JComponent {
-    val directionModel = GitLabMergeRequestCreateDirectionModel(createVm.projectsManager, createVm.projectData.projectMapping)
+    val directionModel = GitLabMergeRequestCreateDirectionModel(createVm)
     cs.launchNow {
       createVm.branchState.filterNotNull().collect { branchState ->
         directionModel.baseBranch = branchState.baseBranch
@@ -50,9 +54,14 @@ internal object GitLabMergeRequestCreateComponentFactory {
     val directionSelector = createDirectionSelector(directionModel)
     val commitsLoadingPanel = createCommitsPanel(project, cs, createVm)
     val textPanel = cs.createTextPanel(project, createVm)
-    val reviewersPanel = GitLabMergeRequestCreateReviewersComponentFactory.create(cs, createVm)
+    val metadataPanel = createMetadataPanel(createVm)
+    val togglesPanel = createTogglesPanel(createVm)
     val statusPanel = GitLabMergeRequestCreateStatusComponentFactory.create(cs, createVm)
     val actionsPanel = GitLabMergeRequestCreateActionsComponentFactory.create(project, cs, createVm)
+    val statusAndActionsPanel = VerticalListPanel(10).apply {
+      add(statusPanel)
+      add(actionsPanel)
+    }
 
     return CodeReviewCreateReviewLayoutBuilder()
       .addComponent(directionSelector, zeroMinWidth = true)
@@ -60,12 +69,26 @@ internal object GitLabMergeRequestCreateComponentFactory {
       .addSeparator()
       .addComponent(textPanel, zeroMinWidth = true, stretchYWithWeight = 0.3f, withoutBorder = true)
       .addSeparator()
-      .addComponent(reviewersPanel, zeroMinWidth = true)
+      .addComponent(metadataPanel, zeroMinWidth = true)
       .addSeparator()
-      .addComponent(statusPanel)
-      .addComponent(actionsPanel, withListBackground = false)
+      .addComponent(togglesPanel, zeroMinWidth = true)
+      .addSeparator()
+      .addComponent(statusAndActionsPanel, withListBackground = false)
       .build()
   }
+
+  private fun createTogglesPanel(vm: GitLabMergeRequestCreateViewModel) =
+    panel {
+      row {
+        checkBox(GitLabBundle.message("merge.request.create.squash.commits"))
+          .bindSelected(vm.squashBeforeMerge, vm::setSquashBeforeMerge)
+          .enabled(!vm.squashBeforeMergeReadOnly)
+      }
+      row {
+        checkBox(GitLabBundle.message("merge.request.create.delete.source.branch"))
+          .bindSelected(vm.removeSourceBranch, vm::setRemoveSourceBranch)
+      }
+    }
 
   private fun CoroutineScope.createTextPanel(project: Project, createVm: GitLabMergeRequestCreateViewModel): JComponent {
     val cs = this
@@ -139,5 +162,15 @@ internal object GitLabMergeRequestCreateComponentFactory {
       .create()
 
     return CollaborationToolsUIUtil.wrapWithProgressStripe(cs, createVm.commits.map { it == null }, commitsPanel)
+  }
+
+  private fun createMetadataPanel(createVm: GitLabMergeRequestCreateViewModel): JComponent {
+    val lists = buildList {
+      add(GitLabMergeRequestCreateMetadataComponentFactory.createAssigneesListPanelHandle(createVm))
+      add(GitLabMergeRequestCreateMetadataComponentFactory.createReviewersListPanelHandle(createVm))
+      add(GitLabMergeRequestCreateMetadataComponentFactory.createLabelsListPanelHandle(createVm))
+    }
+
+    return LabeledListComponentsFactory.createGrid(lists)
   }
 }

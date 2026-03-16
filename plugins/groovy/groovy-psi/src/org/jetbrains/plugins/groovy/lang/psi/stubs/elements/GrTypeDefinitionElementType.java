@@ -3,7 +3,11 @@ package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.IndexSink;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;

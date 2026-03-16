@@ -1,9 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.generation.*;
+import com.intellij.codeInsight.generation.JavaOverrideImplementMemberChooser;
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.OverrideOrImplementOptions;
+import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -12,7 +16,13 @@ import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiEnumConstantInitializer;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,32 +61,28 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
   @Override
   public void invoke(@NotNull Project project,
                      @NotNull PsiFile psiFile,
-                     final @Nullable Editor editor,
+                     @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    final PsiElement myPsiElement = startElement;
-
-    if (editor == null || !FileModificationService.getInstance().prepareFileForWrite(myPsiElement.getContainingFile())) return;
-    if (myPsiElement instanceof PsiEnumConstant) {
-      final boolean hasClassInitializer = ((PsiEnumConstant)myPsiElement).getInitializingClass() != null;
-      chooseMethodsToImplement(editor, startElement,
-                               ((PsiEnumConstant)myPsiElement).getContainingClass(),
-                               hasClassInitializer, chooser -> {
+    if (editor == null || !FileModificationService.getInstance().prepareFileForWrite(startElement.getContainingFile())) return;
+    if (startElement instanceof PsiEnumConstant constant) {
+      final PsiEnumConstantInitializer aClass = constant.getInitializingClass();
+      final boolean hasInitializer = aClass != null;
+      chooseMethodsToImplement(editor, startElement, hasInitializer ? aClass : constant.getContainingClass(), hasInitializer , chooser -> {
           if (chooser == null) return;
 
           final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
           if (selectedElements == null || selectedElements.isEmpty()) return;
 
           WriteCommandAction.writeCommandAction(project, psiFile).run(() -> {
-            final PsiClass psiClass = ((PsiEnumConstant)myPsiElement).getOrCreateInitializingClass();
+            final PsiClass psiClass = constant.getOrCreateInitializingClass();
             OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, psiClass, selectedElements, chooser.getOptions());
           });
         });
     }
     else {
-      OverrideImplementUtil.chooseAndImplementMethods(project, editor, (PsiClass)myPsiElement);
+      OverrideImplementUtil.chooseAndImplementMethods(project, editor, (PsiClass)startElement);
     }
-
   }
 
   @Override

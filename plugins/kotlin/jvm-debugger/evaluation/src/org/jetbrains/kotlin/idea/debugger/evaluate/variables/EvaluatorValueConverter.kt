@@ -1,9 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.variables
 
 import com.intellij.debugger.engine.DebuggerUtils
-import com.sun.jdi.*
+import com.sun.jdi.ClassType
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.PrimitiveValue
+import com.sun.jdi.StringReference
+import com.sun.jdi.Value
+import com.sun.jdi.VoidValue
 import org.jetbrains.kotlin.fileClasses.internalNameWithoutInnerClasses
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.base.util.findMethod
@@ -72,7 +77,7 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
         return unwrappedActualType == unwrappedRequestedType
     }
 
-    fun coerce(value: Value?, type: AsmType): Result? {
+    internal fun coerce(value: Value?, type: AsmType): Result? {
         val unrefResult = coerceRef(value, type)
         return coerceBoxing(unrefResult.value, type)
     }

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.mutability
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ClassReference
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ContextCollector
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.State
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.psi.KtTypeElement
 
+@K1Deprecation
 class MutabilityContextCollector(
     resolutionFacade: ResolutionFacade,
     private val converterContext: ConverterContext

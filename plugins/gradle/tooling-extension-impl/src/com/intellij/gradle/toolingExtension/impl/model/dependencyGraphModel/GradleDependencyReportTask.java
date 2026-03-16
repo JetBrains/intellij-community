@@ -4,29 +4,21 @@ package com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel;
 import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyScopeNode;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
-import org.gradle.api.tasks.Input;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 public class GradleDependencyReportTask extends DefaultTask {
-
-  private byte[] content;
   private Path outputPath;
 
-  @Input
-  public byte[] getContent() {
-    return content;
-  }
-
-  public void setContent(byte[] content) {
-    this.content = content;
-  }
+  final Provider<String> reportContent = getProject().getProviders().provider(() -> collectDependencies(getProject()));
 
   @OutputFile
   public Path getOutputPath() {
@@ -39,16 +31,23 @@ public class GradleDependencyReportTask extends DefaultTask {
 
   @TaskAction
   public void generate() throws IOException {
+    byte[] content = reportContent.get().getBytes(StandardCharsets.UTF_8);
     Files.write(outputPath, content);
   }
 
-  public static byte[] collectDependencies(Project project) {
+  public String collectDependencies(Project project) {
     GradleDependencyReportGenerator generator = new GradleDependencyReportGenerator();
     List<DependencyScopeNode> dependencyScopes = new ArrayList<>();
     project.getConfigurations().all(configuration -> {
       if (configuration.isCanBeResolved()) {
-        DependencyScopeNode dependencyScope = generator.buildDependencyGraph(configuration, project);
-        dependencyScopes.add(dependencyScope);
+        try {
+          DependencyScopeNode dependencyScope = generator.buildDependencyGraph(configuration, project);
+          dependencyScopes.add(dependencyScope);
+        }
+        catch (Exception ignored) {
+          // Some plugins (e.g., Quarkus) may expose special configurations that cannot be safely resolved
+          // in this context. Skip such configurations to keep the report generation resilient.
+        }
       }
     });
     return GradleDependencyNodeDeserializer.toJson(dependencyScopes);

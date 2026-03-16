@@ -6,14 +6,16 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.vcs.impl.shared.rhizome.GroupingItemEntity
 import com.intellij.platform.vcs.impl.shared.rhizome.GroupingItemsEntity
-import fleet.kernel.rete.*
+import fleet.kernel.rete.asQuery
+import fleet.kernel.rete.collect
+import fleet.kernel.rete.each
 import fleet.kernel.rete.get
+import fleet.kernel.rete.tokensFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.set
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)

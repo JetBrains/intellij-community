@@ -5,7 +5,14 @@ import com.google.common.collect.Collections2;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.NotNullPredicate;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +66,7 @@ class InstanceFieldsManager extends FieldsManager {
    * @return newly created fields
    */
   private static @NotNull List<PyAssignmentStatement> copyInstanceFields(final @NotNull Collection<PyAssignmentStatement> members,
-                                                                final @NotNull PyClass to) {
+                                                                         final @NotNull PyClass to) {
     //We need __init__ method, and if there is no any -- we need to create it
     PyFunction toInitMethod = PyUtil.getInitMethod(to);
     if (toInitMethod == null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WSLDistribution
@@ -7,7 +7,13 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.SdkTypeId
-import com.intellij.openapi.ui.*
+import com.intellij.openapi.ui.BrowseFolderRunnable
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.TextComponentAccessor
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
@@ -158,6 +164,7 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Bo
         .asSequence()
         .filter { it.product !in includedProducts }
         .filter { it !in groupItems }
+        .filter { CpuArch.fromString(it.arch) == CpuArch.CURRENT || Registry.`is`("jdk.downloader.show.other.arch", false) }
         .groupBy { it.product }
         .mapValues { (_, jdkItems) ->
           val comparator = Comparator.comparing(Function<JdkItem, String> { it.jdkVersion }, VersionComparatorUtil.COMPARATOR)
@@ -175,8 +182,12 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Bo
         .mapNotNull { it.value }
         .map { JdkVersionVendorItem(item = it) }
 
+      val defaultSelectedItem = includedItems.firstOrNull { it.item.isDefaultItem }
+                                ?: includedItems.firstOrNull { !it.item.isPreview }
+                                ?: includedItems.firstOrNull()
+
       JdkVersionItem(jdkVersion,
-                     includedItems.firstOrNull() ?: error("Empty group of includeItems for $jdkVersion"),
+                     defaultSelectedItem ?: error("Empty group of includeItems for $jdkVersion"),
                      includedItems.sortedForUI(),
                      excludedItems.sortedForUI())
     }

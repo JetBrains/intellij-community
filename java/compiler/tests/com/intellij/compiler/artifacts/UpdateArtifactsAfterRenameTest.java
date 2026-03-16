@@ -2,8 +2,11 @@
 package com.intellij.compiler.artifacts;
 
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.JavaModuleType;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;

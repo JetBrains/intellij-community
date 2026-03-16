@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 open class PythonDocumentationHighlightingService {
-  companion object{
+  companion object {
     @JvmStatic
     fun getInstance(): PythonDocumentationHighlightingService {
       return service()

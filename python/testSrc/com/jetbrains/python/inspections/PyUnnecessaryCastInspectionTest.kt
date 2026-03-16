@@ -52,7 +52,7 @@ from typing import cast
         cast(B, C())  # ok
         
         a: int | str
-        b = <weak_warning descr="Unnecessary cast; type is already 'str'">cast(str,</weak_warning> a)  # ok
+        b = cast(str, a)  # ok
       """.trimIndent()
     )
   }

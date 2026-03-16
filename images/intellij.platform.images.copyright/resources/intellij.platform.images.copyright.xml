@@ -1,4 +1,4 @@
-<idea-plugin package="org.intellij.images.copyright">
+<idea-plugin>
   <dependencies>
     <plugin id="com.intellij.copyright"/>
   </dependencies>

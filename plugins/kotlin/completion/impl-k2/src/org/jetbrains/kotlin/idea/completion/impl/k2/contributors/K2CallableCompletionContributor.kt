@@ -2,15 +2,44 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.util.parents
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.containers.sequenceOfNotNull
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.*
+import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResult
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
+import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKindImpl
+import org.jetbrains.kotlin.analysis.api.components.asCompositeScope
+import org.jetbrains.kotlin.analysis.api.components.asSignature
+import org.jetbrains.kotlin.analysis.api.components.callableSymbol
+import org.jetbrains.kotlin.analysis.api.components.canBeAnalysed
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.components.declarationScope
+import org.jetbrains.kotlin.analysis.api.components.defaultType
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isDenotable
+import org.jetbrains.kotlin.analysis.api.components.isStringType
+import org.jetbrains.kotlin.analysis.api.components.memberScope
+import org.jetbrains.kotlin.analysis.api.components.packageScope
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.components.scope
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.components.smartCastInfo
+import org.jetbrains.kotlin.analysis.api.components.staticMemberScope
+import org.jetbrains.kotlin.analysis.api.components.substitute
+import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -18,15 +47,32 @@ import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
+import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.*
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForExplicitReceiverExpression
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isIgnoredExpectDeclaration
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeUsedAsExtension
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
@@ -34,23 +80,47 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributo
 import org.jetbrains.kotlin.idea.completion.impl.k2.allowsOnlyNamedArguments
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.CallableMetadataProvider
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtOutsideTowerScopeKinds
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.ShadowedCallablesFilter
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.collectLocalAndMemberNonExtensionsFromScopeContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.collectNonExtensionsForType
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.collectNonExtensionsFromScope
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.getAliasNameIfExists
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.staticScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WithImportInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
-import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
-import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionInsertionHelper
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionOptions
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionStrategy
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.FunctionInsertionHelper
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.reference
-import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.core.NotPropertiesService
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.positionContext.*
+import org.jetbrains.kotlin.idea.util.positionContext.KDocLinkNamePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinInfixCallPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinWithSubjectEntryPositionContext
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.nextSiblingOfSameType
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addToStdlib.plusIfNotNull
@@ -120,17 +190,28 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
 
         val explicitReceiverTypeHint: KaType? get() = withValidityAssertion { _explicitReceiverTypeHint }
 
-        val itemText: @NlsSafe String?
-            get() {
-                val callableId = signature.takeIf { showReceiver }
-                    ?.callableId
-                    ?: return null
+        context(_: KaSession)
+        fun getItemText(): @NlsSafe String? {
+            val callableId = signature.takeIf { showReceiver }
+                ?.callableId
+                ?: return null
 
-                val className = callableId.className
-                    ?: return null
+            var className = callableId.className
+                ?: return null
 
-                return "$className.${callableId.callableName}"
+            // We do not want to use the reference shortener here as using it is expensive, but we want to
+            // remove redundant companion object references cheaply in most cases.
+            // This is good enough for the ItemText. When the item is inserted, the
+            // reference shortener is used to do expensive full shortening correctly.
+            if (className.shortNameOrSpecial().asString() == "Companion") {
+                val containingSymbol = signature.symbol.containingSymbol
+                if (containingSymbol is KaClassSymbol && containingSymbol.classKind == KaClassKind.COMPANION_OBJECT) {
+                    className = className.parent()
+                }
             }
+
+            return "$className.${callableId.callableName}"
+        }
     }
 
     private fun K2CompletionSectionContext<P>.isWithTrailingLambda(): Boolean =
@@ -142,13 +223,14 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
     ): Sequence<LookupElement> =
         filterIfInsideAnnotationEntryArgument(context.positionContext.position, context.weighingContext.expectedType)
             .mapNotNull(shadowIfNecessary(context, shadowedCallablesFilter))
+            .filter { filterVariadicCallables(it.signature) }
             .filterNot(isUninitializedCallable(context))
             .flatMap { callableWithMetadata ->
                 createCallableLookupElements(
                     signature = callableWithMetadata.signature,
                     options = callableWithMetadata.options,
                     scopeKind = callableWithMetadata.scopeKind,
-                    presentableText = callableWithMetadata.itemText,
+                    presentableText = callableWithMetadata.getItemText(),
                     withTrailingLambda = context.isWithTrailingLambda(),
                     aliasName = callableWithMetadata.aliasName,
                 ).map { builder ->
@@ -182,7 +264,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         if (receiver == null) return
         val elements = collectDotCompletionFromLocalScope(receiver)
         elements.createFilteredLookupElements(shadowedCallablesFilter)
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<P>)
@@ -200,6 +282,29 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
             )
         }
 
+    /**
+     * Returns all top-level callables from index, included nested ones, both from Java and Kotlin.
+     * Applicable Kotlin callables are returned before Java ones.
+     */
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
+    private fun getAllTopLevelCallablesFromIndex(): Sequence<KaCallableSymbol> {
+        val scopeNameFilter = context.completionContext.getIndexNameFilter()
+        val kotlinCallables = context.symbolFromIndexProvider.getKotlinCallableSymbolsByNameFilter(scopeNameFilter) {
+            if (!context.visibilityChecker.canBeVisible(it)) return@getKotlinCallableSymbolsByNameFilter false
+            // We should not show class members when we do not have a receiver.
+            val containingSymbol = it.symbol.containingSymbol
+            containingSymbol !is KaClassSymbol || containingSymbol.classKind.isObject
+        }
+
+        val javaCallables = context.symbolFromIndexProvider
+            .getJavaCallablesByNameFilter(nameFilter = scopeNameFilter) {
+                // We only show static members
+                context.visibilityChecker.canBeVisible(it) && it.hasModifier(JvmModifier.STATIC)
+            }
+
+        return kotlinCallables + javaCallables
+    }
+
     context(_: KaSession, context: K2CompletionSectionContext<P>)
     private fun completeWithoutReceiverFromIndex(): Sequence<CallableWithMetadataForCompletion> = sequence {
         val prefix = context.prefixMatcher.prefix
@@ -209,12 +314,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
 
         if (prefix.isNotEmpty()) {
             val callablesFromIndex = if (invocationCount > 1) {
-                context.symbolFromIndexProvider.getKotlinCallableSymbolsByNameFilter(context.completionContext.scopeNameFilter) {
-                    if (!context.visibilityChecker.canBeVisible(it)) return@getKotlinCallableSymbolsByNameFilter false
-                    // We should not show class members when we do not have a receiver.
-                    val containingSymbol = it.symbol.containingSymbol
-                    containingSymbol !is KaClassSymbol || containingSymbol.classKind.isObject
-                }
+                getAllTopLevelCallablesFromIndex()
             } else {
                 context.symbolFromIndexProvider.getTopLevelCallableSymbolsByNameFilter(context.completionContext.scopeNameFilter) {
                     context.visibilityChecker.canBeVisible(it)
@@ -243,7 +343,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
             collectDotCompletionFromIndex(receiver)
         }
         elements.createFilteredLookupElements(shadowedCallablesFilter)
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<P>)
@@ -519,6 +619,13 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         context: K2CompletionSectionContext<P>,
         candidate: KaCallableSymbol,
     ): ApplicableExtension? {
+        val explicitReceiver = context.positionContext.explicitReceiver
+        if (explicitReceiver is KtConstantExpression && explicitReceiver.iElementType == KtNodeTypes.NULL) {
+            // Technically, we can call extension functions on `null` but the use case for this is basically non-existent.
+            // It is much more likely the user wants to complete something else (commands, postfix), so we hide the extension results.
+            return null
+        }
+
         val applicabilityResult = context.extensionChecker?.computeApplicability(candidate) as? KaExtensionApplicabilityResult.Applicable
             ?: return null
 
@@ -660,6 +767,18 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         }
     }
 
+    /**
+     * For variadic callables, we want to only allow the representative callable with the lowest number of arguments.
+     * This completion item will then be rendered with a variadic presentation for its parameters.
+     */
+    context(_: KaSession)
+    private fun filterVariadicCallables(signature: KaCallableSignature<*>): Boolean {
+        val variadicCallableId = signature.getVariadicCallable() ?: return true
+        val functionSymbol = signature.symbol as? KaNamedFunctionSymbol ?: return true
+
+        return variadicCallableId.lowestNumberOfArguments == functionSymbol.valueParameters.size
+    }
+
     context(_: KaSession)
     private fun Sequence<CallableWithMetadataForCompletion>.filterIfInsideAnnotationEntryArgument(
         position: PsiElement,
@@ -731,7 +850,56 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
 
         createAndFilterMetadataForMemberCallables(enumEntries)
             .createFilteredLookupElements(shadowedCallablesFilter)
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
+    }
+
+    /**
+     * Checks whether the position of the [context] can access the scope of the [classSymbol].
+     */
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
+    fun isPositionInsideClass(classSymbol: KaNamedClassSymbol): Boolean {
+        val positionParents = context.positionContext.position.parentsWithSelf
+        val classId = classSymbol.classId
+
+        return positionParents.any { psiParent ->
+            val psiClass = psiParent as? KtClass ?: return@any false
+            val namedClassSymbol = psiClass.symbol as? KaNamedClassSymbol ?: return@any false
+            namedClassSymbol.classId == classId
+        }
+    }
+
+    /**
+     * Completion section responsible for completing values from the companion object
+     * of the expected type.
+     */
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
+    fun completeCompanionObjectValues(
+        shadowedCallablesFilter: ShadowedCallablesFilter,
+    ) {
+        if (context.positionContext.explicitReceiver != null) return
+        val expectedType = context.weighingContext.expectedType ?: return
+        val symbol = expectedType.symbol as? KaNamedClassSymbol ?: return
+        if (isPositionInsideClass(symbol)) {
+            // We are already in a scope that should have the companion object values available
+            return
+        }
+
+        val companionObjectSymbol = symbol.companionObject ?: return
+        val staticScope = companionObjectSymbol.staticScope ?: return
+
+        val availableCompanionObjectValues = collectNonExtensionsFromScope(
+            parameters = context.parameters,
+            positionContext = context.positionContext,
+            scope = staticScope.scope,
+            visibilityChecker = context.visibilityChecker,
+            scopeNameFilter = context.completionContext.scopeNameFilter,
+            symbolFilter = { filter(it) },
+        ).filter { it.returnType.semanticallyEquals(expectedType) }
+            .map { signature -> signature.symbol }
+
+        createAndFilterMetadataForMemberCallables(availableCompanionObjectValues)
+            .createFilteredLookupElements(shadowedCallablesFilter)
+            .forEach { addElement(it) }
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<P>)
@@ -752,7 +920,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
             }
 
         availableLocalAndMemberNonExtensions.createFilteredLookupElements(shadowedCallablesFilter)
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<P>)
@@ -781,7 +949,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
 
         (extensionsWhichCanBeCalled + availableStaticAndTopLevelNonExtensions)
             .createFilteredLookupElements(shadowedCallablesFilter)
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<P>)
@@ -834,7 +1002,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         }
         createAndFilterMetadataForMemberCallables(enumEntries + enumConstants)
             .createFilteredLookupElements(shadowedCallablesFilter)
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<P>)
@@ -844,6 +1012,9 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         val shadowedCallablesFilter = ShadowedCallablesFilter()
         context.completeLaterInSameSession("Enum Entries from PSI", priority = K2ContributorSectionPriority.HEURISTIC) {
             completeEnumEntriesFromPsi(shadowedCallablesFilter)
+        }
+        context.completeLaterInSameSession("Companion object values for expected type", priority = K2ContributorSectionPriority.HEURISTIC) {
+            completeCompanionObjectValues(shadowedCallablesFilter)
         }
         context.completeLaterInSameSession("Local Variables", priority = K2ContributorSectionPriority.HEURISTIC) {
             completeLocalVariables(shadowedCallablesFilter)
@@ -903,7 +1074,7 @@ internal class K2CallableCompletionContributor : K2AbstractCallableCompletionCon
                 signature = signature,
                 options = callableWithMetadata.options,
                 scopeKind = callableWithMetadata.scopeKind,
-                presentableText = callableWithMetadata.itemText,
+                presentableText = callableWithMetadata.getItemText(),
                 withTrailingLambda = true,
             ).map {
                 it.withChainedInsertHandler(WithImportInsertionHandler(listOf(nameToImport)))

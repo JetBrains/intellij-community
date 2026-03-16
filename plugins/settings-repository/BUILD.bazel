@@ -35,7 +35,7 @@ jvm_library(
     "//platform/core-impl",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/vcs-api:vcs",
     "//platform/statistics",
     "//platform/core-ui",
@@ -54,6 +54,25 @@ jvm_library(
 ### auto-generated section `build intellij.settingsRepository` end
 
 ### auto-generated section `build intellij.settingsRepository.tests` start
+jvm_library(
+  name = "settingsRepository-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/vcs-impl",
+    "//platform/projectModel-impl",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jna",
+    "//platform/core-impl",
+    "//platform/vcs-api:vcs",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//plugins/settings-repository",
+    "//platform/workspace/jps",
+  ]
+)
+
 jvm_library(
   name = "settingsRepository-tests_test_lib",
   module_name = "intellij.settingsRepository.tests",
@@ -82,11 +101,12 @@ jvm_library(
     "//platform/credential-store-ui:credentialStore-ui",
     "//platform/testFramework/extensions:testExtensions",
     "//platform/configuration-store-impl:configurationStore-tests_test_lib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/fastutil",
     "//platform/util/jdom",
     "//platform/workspace/jps",
-  ]
+  ],
+  runtime_deps = [":settingsRepository-tests"]
 )
 ### auto-generated section `build intellij.settingsRepository.tests` end
 

@@ -9,7 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction
 /**
  * Restores the default settings. In remote development, this action is updated and performed on the frontend.
  */
-private class RestoreDefaultSettingsAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+internal class RestoreDefaultSettingsAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
     DefaultSettingsService.getInstance().restoreDefaultSettings(e.project)
   }

@@ -3,8 +3,13 @@ package org.jetbrains.plugins.gitlab.notification
 
 import com.intellij.notification.impl.NotificationIdsHolder
 
+
+internal object GitLabNotificationIds {
+  const val GL_NOTIFICATION_UPLOAD_FILE_ERROR = "gitlab.upload.file.action.error"
+}
+
 class GitLabNotificationIdsHolder : NotificationIdsHolder {
-  override fun getNotificationIds(): List<String> {
-    return listOf()
-  }
+  override fun getNotificationIds(): List<String> = listOf(
+    GitLabNotificationIds.GL_NOTIFICATION_UPLOAD_FILE_ERROR,
+  )
 }

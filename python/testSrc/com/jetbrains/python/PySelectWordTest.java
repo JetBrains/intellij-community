@@ -38,6 +38,11 @@ public class PySelectWordTest extends PyTestCase {
     doTest();
   }
 
+  // PY-83580
+  public void testFStringFragmentExpressionTypeConversionAndFormatSelection() {
+    doTest();
+  }
+
   private void doTest() {
     CodeInsightTestUtil.doWordSelectionTestOnDirectory(myFixture, "selectWord/" + getTestName(true), "py");
   }

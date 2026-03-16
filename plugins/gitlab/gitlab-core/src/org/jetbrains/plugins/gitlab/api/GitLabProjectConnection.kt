@@ -12,10 +12,11 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLazyProject
+import org.jetbrains.plugins.gitlab.data.GitLabProjectDetails
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProjectImpl
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
-import java.util.*
+import java.util.UUID
 
 /**
  * A low-level helper representing a GitLab project, to which the app was authorized to connect
@@ -24,6 +25,7 @@ class GitLabProjectConnection(
   project: Project,
   private val scope: CoroutineScope,
   override val repo: GitLabProjectMapping,
+  projectDetails: GitLabProjectDetails,
   override val account: GitLabAccount,
   val currentUser: GitLabUserDTO,
   apiClient: GitLabApi,
@@ -34,8 +36,18 @@ class GitLabProjectConnection(
 
   val tokenRefreshFlow: Flow<Unit> = tokenState.drop(1).map { }
 
-  val projectData: GitLabProject = GitLabLazyProject(project, scope, apiClient, glMetadata, repo, currentUser, tokenRefreshFlow)
-  val imageLoader: GitLabImageLoader = GitLabImageLoader(apiClient, repo.repository.serverPath)
+  val imageLoader: GitLabImageLoader = GitLabImageLoader(apiClient)
+
+  val projectData: GitLabProject = GitLabProjectImpl(project,
+                                                     scope,
+                                                     apiClient,
+                                                     glMetadata,
+                                                     projectDetails,
+                                                     currentUser,
+                                                     tokenRefreshFlow,
+                                                     // handle the project rename
+                                                     repo.repository.copy(projectPath = projectDetails.path),
+                                                     repo.remote)
 
   val serverVersion: GitLabVersion? = glMetadata?.version
 

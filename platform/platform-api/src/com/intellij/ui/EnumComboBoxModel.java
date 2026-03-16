@@ -3,7 +3,8 @@ package com.intellij.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractListModel;
+import javax.swing.ComboBoxModel;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;

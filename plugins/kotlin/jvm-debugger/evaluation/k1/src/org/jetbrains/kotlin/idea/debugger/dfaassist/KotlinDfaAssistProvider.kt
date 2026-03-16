@@ -26,16 +26,31 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
-import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator
+import org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
-import org.jetbrains.kotlin.idea.inspections.dfa.*
+import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
+import org.jetbrains.kotlin.idea.inspections.dfa.KotlinConstantConditionsInspection
+import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem
+import org.jetbrains.kotlin.idea.inspections.dfa.KtClassDef
+import org.jetbrains.kotlin.idea.inspections.dfa.KtThisDescriptor
+import org.jetbrains.kotlin.idea.inspections.dfa.KtVariableDescriptor
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
+import org.jetbrains.kotlin.psi.KtPostfixExpression
+import org.jetbrains.kotlin.psi.KtPrefixExpression
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import java.util.*
+import java.util.IdentityHashMap
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 private class KotlinDfaAssistProvider : DfaAssistProvider {
@@ -44,8 +59,7 @@ private class KotlinDfaAssistProvider : DfaAssistProvider {
         return readAction {
             val file = element.containingFile
             if (file !is KtFile) return@readAction false
-            val classNames = ClassNameCalculator.getClassNames(file)
-            element.parentsWithSelf.any { e -> classNames[e] == jdiClassName }
+            jdiClassName in ClassNameProvider().getCandidatesForElement(element)
         }
     }
 

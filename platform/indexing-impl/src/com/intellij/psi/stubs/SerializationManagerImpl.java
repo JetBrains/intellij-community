@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.LanguageParserDefinitions;
@@ -25,7 +25,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -70,7 +74,6 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     myUnmodifiable = unmodifiable;
     initialize();
     StubElementTypeHolderEP.EP_NAME.addChangeListener(coroutineScope, this::dropSerializerData);
-    // todo IJPL-562 is this correct???
     StubElementRegistryServiceImplKt.STUB_REGISTRY_EP.addChangeListener(coroutineScope, this::dropSerializerData);
     ExtensionPoint<@NotNull KeyedLazyInstance<@NotNull LanguageStubDefinition>> point = StubElementRegistryServiceImplKt.STUB_DEFINITION_EP.getPoint();
     if (point != null) {

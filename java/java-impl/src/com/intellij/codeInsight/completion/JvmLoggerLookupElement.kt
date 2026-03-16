@@ -5,7 +5,11 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.lang.logging.JvmLogger
 import com.intellij.lang.logging.JvmLoggerFieldDelegate
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.util.parentOfType
 import com.intellij.ui.logging.JvmLoggingConfigurable.Companion.LOG_MAX_NAME_LENGTH

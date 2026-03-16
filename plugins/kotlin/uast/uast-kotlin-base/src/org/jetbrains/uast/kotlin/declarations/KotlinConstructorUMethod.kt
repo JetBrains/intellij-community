@@ -4,10 +4,22 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.PsiMethod
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 open class KotlinConstructorUMethod(
@@ -26,7 +38,7 @@ open class KotlinConstructorUMethod(
     private val uastBodyPart = UastLazyPart<UExpression?>()
     private val uastAnchorPart = UastLazyPart<UIdentifier?>()
 
-    override val javaPsi = psi
+    override val javaPsi: PsiMethod = psi
 
     internal val isPrimary: Boolean
         get() = sourcePsi is KtPrimaryConstructor || sourcePsi is KtClassOrObject

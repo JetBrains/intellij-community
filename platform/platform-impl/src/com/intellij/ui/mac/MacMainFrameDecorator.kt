@@ -31,7 +31,7 @@ import kotlinx.coroutines.withContext
 import java.awt.Frame
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.EventListener
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
 import kotlin.coroutines.resume
@@ -192,7 +192,7 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
     val rootPane = frame.rootPane
     if (rootPane != null) {
       rootPane.putClientProperty(FULL_SCREEN, if (state) true else null)
-      if (rootPane.border != null) {
+      if (state && rootPane.border != null) {
         rootPane.setBorder(null)
       }
     }

@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 
-private class FileBasedIndexLoader : ApplicationInitializedListener {
+internal class FileBasedIndexLoader : ApplicationInitializedListener {
   init {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()

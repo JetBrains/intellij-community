@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.util.UUID
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
@@ -14,8 +15,9 @@ class TraceContext(
   val parentTraceContext: TraceContext?,
 ) : AbstractCoroutineContextElement(TraceContext) {
   val timestamp: Long = System.currentTimeMillis()
+  val uuid: UUID = UUID.randomUUID()
 
-  constructor(title: @Nls String, coroutineScope: CoroutineScope): this(title, coroutineScope.coroutineContext[Key])
+  constructor(title: @Nls String, coroutineScope: CoroutineScope) : this(title, coroutineScope.coroutineContext[Key])
 
   override fun toString(): String = "TraceContext($title, $timestamp)\n\t-> $parentTraceContext"
 

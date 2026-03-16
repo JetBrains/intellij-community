@@ -36,7 +36,7 @@ class Linker:
 # or `html5lib` token might be reused
 _Token: TypeAlias = dict[str, Any]
 
-class LinkifyFilter(Filter):
+class LinkifyFilter(Filter[_Token]):
     callbacks: Iterable[_Callback]
     skip_tags: Container[str]
     parse_email: bool

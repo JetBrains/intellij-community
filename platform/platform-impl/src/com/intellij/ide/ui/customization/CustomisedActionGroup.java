@@ -1,7 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionGroupWrapper;
+import com.intellij.openapi.actionSystem.ActionUpdaterInterceptor;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.DynamicActionGroup;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;

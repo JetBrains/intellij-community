@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.MavenPrinter
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModulePath
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
-import java.util.*
+import java.util.Locale
 
 interface DependencyIR : BuildSystemIR {
     val dependencyType: DependencyType

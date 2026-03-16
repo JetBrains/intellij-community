@@ -16,7 +16,7 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 
-private class UnknownSdkStartupChecker : ProjectActivity {
+internal class UnknownSdkStartupChecker : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       // avoid crazy background activity in tests

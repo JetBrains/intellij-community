@@ -1,79 +1,46 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.zombie
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.event.EditorFactoryEvent
-import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.rd.util.userData
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.UserDataHolderEx
-import com.intellij.openapi.util.getOrMaybeCreateUserData
 import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.*
+import com.intellij.util.concurrency.ThreadingAssertions
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
+import kotlin.time.Duration.Companion.minutes
 
-private val LOG: Logger = logger<Necropolis>()
-
-private val NECROMANCER_EP = ExtensionPointName<NecromancerAwaker<Zombie>>("com.intellij.textEditorNecromancerAwaker")
-
-internal fun necropolisPath(): Path {
-  return PathManager.getSystemDir().resolve("editor")
-}
-
-// https://liquipedia.net/warcraft/Blight
-class BlightMark(val blightHolder: EditorEx) {
-
-  private val blightLock = ReentrantLock()
-  private val blightAwaiters = mutableListOf<(EditorEx) -> Unit>()
-
-  private var isBlighted: Boolean = false
-
-  fun blight() {
-    blightLock.withLock {
-      if (!isBlighted) {
-        isBlighted = true
-        blightAwaiters.forEach { it(blightHolder) }
-        blightAwaiters.clear()
-      }
-    }
-  }
-
-  fun onceBlightedOrNow(action: (EditorEx) -> Unit) {
-    blightLock.withLock {
-      if (isBlighted) {
-        action(blightHolder)
-      }
-      else {
-        blightAwaiters.add(action)
-      }
-    }
-  }
-}
-
-val BLIGHT_MARK_KEY: Key<BlightMark?> = Key.create<BlightMark>("necropolis.blight.mark")
-var EditorEx.blightMark: BlightMark? by userData(BLIGHT_MARK_KEY)
 
 /**
  * Service managing all necromancers.
@@ -82,6 +49,35 @@ var EditorEx.blightMark: BlightMark? by userData(BLIGHT_MARK_KEY)
  */
 @Service(Service.Level.PROJECT)
 class Necropolis(private val project: Project, private val coroutineScope: CoroutineScope) : Disposable {
+
+  companion object {
+    private val LOG: Logger = logger<Necropolis>()
+    private val NECROMANCER_EP = ExtensionPointName<NecromancerAwaker<Zombie>>("com.intellij.textEditorNecromancerAwaker")
+
+    @JvmStatic
+    fun getInstance(project: Project, onlyIfCreated: Boolean = false): Necropolis? {
+      return if (isEnabled()) {
+        if (onlyIfCreated) {
+          project.serviceIfCreated<Necropolis>()
+        } else {
+          project.service<Necropolis>()
+        }
+      } else {
+        null
+      }
+    }
+
+    @JvmStatic
+    suspend fun getInstanceAsync(project: Project): Necropolis? {
+      return if (isEnabled()) project.serviceAsync<Necropolis>() else null
+    }
+
+    internal fun necropolisPath(): Path {
+      return PathManager.getSystemDir().resolve("editor")
+    }
+
+    private fun isEnabled(): Boolean = !AppMode.isRemoteDevHost()
+  }
 
   private val necromancersDeferred: Deferred<List<Necromancer<Zombie>>>
   private val necromancersRef: AtomicReference<List<Necromancer<Zombie>>> = AtomicReference()
@@ -95,7 +91,6 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
         }
       }.awaitAll()
       necromancersRef.set(necromancers)
-      subscribeEditorClosed(necromancers)
       necromancers
     }
   }
@@ -118,19 +113,21 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
       val recipe = SpawnRecipe(project, fileId, file, document, modStamp, editorSupplier, highlighterReady)
       coroutineScope {
         for (necromancer in necromancersDeferred.await()) {
-          launch(CoroutineName(necromancer.name())) {
-            try {
-              if (!project.isDisposed && necromancer.shouldSpawnZombie(recipe)) {
-                val zombie = exhumeZombieIfValid(recipe, necromancer, fingerprint)
-                necromancer.spawnZombie(recipe, zombie)
+          if (necromancer.enoughMana(recipe)) {
+            launch(CoroutineName(necromancer.name())) {
+              try {
+                if (!project.isDisposed && necromancer.shouldSpawnZombie(recipe)) {
+                  val zombie = exhumeZombieIfValid(recipe, necromancer, fingerprint)
+                  necromancer.spawnZombie(recipe, zombie)
+                }
+              } catch (e: CancellationException) {
+                throw e
+              } catch (e: Throwable) {
+                LOG.warn(
+                  "Exception during editor loading",
+                  if (e is ControlFlowException) RuntimeException(e) else e
+                )
               }
-            } catch (e: CancellationException) {
-              throw e
-            } catch (e: Throwable) {
-              LOG.warn(
-                "Exception during editor loading",
-                if (e is ControlFlowException) RuntimeException(e) else e
-              )
             }
           }
         }
@@ -138,69 +135,83 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
     }
   }
 
-  private fun subscribeEditorClosed(necromancers: List<Necromancer<Zombie>>) {
-    val fileIdAdapter = FileIdAdapter.getInstance()
-    EditorFactory.getInstance().addEditorFactoryListener(
-      object : EditorFactoryListener {
-        override fun editorReleased(event: EditorFactoryEvent) {
-          val recipe = createTurningRecipe(event, fileIdAdapter)
-          if (recipe != null) {
-            //maybe readaction
-            WriteIntentReadAction.run {
-              turnIntoZombiesAndBury(necromancers, recipe)
-            }
-
-            val editorEx = event.editor as? EditorEx ?: return
-            val editorAsUserDataHolderEx = editorEx as? UserDataHolderEx ?: return
-            val blightMark = editorAsUserDataHolderEx.getOrMaybeCreateUserData(BLIGHT_MARK_KEY) { BlightMark(editorEx) } ?: return
-
-            blightMark.blight()
-          }
+  fun turnIntoZombiesAndBury(editor: Editor) {
+    ThreadingAssertions.assertEventDispatchThread()
+    require(editor.project == this.project)
+    val necromancers = necromancersRef.get()
+    if (necromancers != null) {
+      val recipe = createTurningRecipe(editor)
+      if (recipe != null) {
+        //maybe readaction
+        WriteIntentReadAction.run {
+          turnIntoZombiesAndBury(necromancers, recipe)
         }
-      },
-      this,
-    )
+      }
+    }
   }
 
-  private fun createTurningRecipe(event: EditorFactoryEvent, fileIdAdapter: FileIdAdapter): TurningRecipe? {
-    val editor = event.editor
-    if (editor.editorKind == EditorKind.MAIN_EDITOR && editor.project == project) {
+  private fun createTurningRecipe(editor: Editor): TurningRecipe? {
+    if (editor.editorKind == EditorKind.MAIN_EDITOR) {
       val document = editor.document
-      val file = FileDocumentManager.getInstance().getFile(document) ?: return null
-      val fileId = fileIdAdapter.getId(file) ?: return null
-      return TurningRecipe(project, fileId, file, document, document.modificationStamp, editor)
+      val file = FileDocumentManager.getInstance().getFile(document)
+      if (file != null) {
+        val fileId = FileIdAdapter.getInstance().getId(file)
+        if (fileId != null) {
+          return TurningRecipe(project, fileId, file, document, document.modificationStamp, editor)
+        }
+      }
     }
     return null
   }
 
   private fun turnIntoZombiesAndBury(necromancers: List<Necromancer<Zombie>>, recipe: TurningRecipe) {
-    val zombies = necromancers.mapNotNull { necromancer ->
-      necromancer.turnIntoZombie(recipe)?.let { zombie ->
-        necromancer to zombie
-      }
-    }.toList()
+    val zombies = turnIntoZombies(necromancers, recipe)
     if (LOG.isDebugEnabled) {
       LOG.debug("Turned into zombies for ${recipe.fileId}: ${zombies.map { it.first.name() }}")
     }
     if (zombies.isNotEmpty()) {
       coroutineScope.launch {
-        val documentContent = readActionBlocking {
-          if (recipe.isValid()) {
-            recipe.document.immutableCharSequence
-          } else {
-            LOG.debug("Invalid recipe for ${recipe.fileId}}")
-            null
+        withContext(NonCancellable) {
+          withTimeout(1.minutes) {
+            buryZombies(zombies, recipe)
           }
         }
-        if (documentContent != null) {
-          val fingerprint = FingerprintedZombieImpl.captureFingerprint(documentContent)
-          for ((necromancer, zombie) in zombies) {
-            launch(CoroutineName(necromancer.name())) {
-              if (recipe.isValid() && necromancer.shouldBuryZombie(recipe, zombie)) {
-                necromancer.buryZombie(recipe.fileId, FingerprintedZombieImpl(fingerprint, zombie))
-                LOG.debug("Buried ${necromancer.name()} for ${recipe.fileId}")
-              }
-            }
+      }
+    }
+  }
+
+  private fun turnIntoZombies(
+    necromancers: List<Necromancer<Zombie>>,
+    recipe: TurningRecipe,
+  ): List<Pair<Necromancer<Zombie>, Zombie>> {
+    return necromancers
+      .filter { it.enoughMana(recipe) }
+      .mapNotNull { necromancer ->
+        necromancer.turnIntoZombie(recipe)?.let { zombie ->
+          necromancer to zombie
+        }
+      }.toList()
+  }
+
+  private suspend fun CoroutineScope.buryZombies(
+    zombies: List<Pair<Necromancer<Zombie>, Zombie>>,
+    recipe: TurningRecipe,
+  ) {
+    val documentContent = readActionBlocking {
+      if (recipe.isValid()) {
+        recipe.document.immutableCharSequence
+      } else {
+        LOG.debug("Invalid recipe for ${recipe.fileId}}")
+        null
+      }
+    }
+    if (documentContent != null) {
+      val fingerprint = FingerprintedZombieImpl.captureFingerprint(documentContent)
+      for ((necromancer, zombie) in zombies) {
+        launch(CoroutineName(necromancer.name())) {
+          if (recipe.isValid() && necromancer.shouldBuryZombie(recipe, zombie)) {
+            necromancer.buryZombie(recipe.fileId, FingerprintedZombieImpl(fingerprint, zombie))
+            LOG.debug("Buried ${necromancer.name()} for ${recipe.fileId}")
           }
         }
       }
@@ -260,7 +271,7 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
   }
 
   override fun toString(): String {
-    val necromancersStr = getNecromancers().joinToString(", ") { it.name() }
+    val necromancersStr = necromancersRef.get()?.joinToString(", ") { it.name() }
     return "Necropolis(project=${project.name}, necromancers=[$necromancersStr])"
   }
 }

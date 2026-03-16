@@ -28,7 +28,14 @@ import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.IToken;
 import com.jetbrains.python.console.pydev.PyCodeCompletionImages;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 

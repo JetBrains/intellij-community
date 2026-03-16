@@ -18,7 +18,12 @@ package com.intellij.openapi.vcs;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.openapi.vcs.actions.ShortNameType.*;
+import static com.intellij.openapi.vcs.actions.ShortNameType.EMAIL;
+import static com.intellij.openapi.vcs.actions.ShortNameType.FIRSTNAME;
+import static com.intellij.openapi.vcs.actions.ShortNameType.INITIALS;
+import static com.intellij.openapi.vcs.actions.ShortNameType.LASTNAME;
+import static com.intellij.openapi.vcs.actions.ShortNameType.NONE;
+import static com.intellij.openapi.vcs.actions.ShortNameType.shorten;
 
 public class AnnotationShortNameTest extends TestCase {
   public void testShortNames() {

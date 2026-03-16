@@ -23,8 +23,9 @@ jvm_library(
     "//platform/core-ui",
     "//platform/ide-core-impl",
     "//platform/ide-core/plugins",
-    "@lib//:rd-core",
-    "@lib//:rd-swing",
+    "//platform/core-impl",
+    "//libraries/rd/core",
+    "//libraries/rd/swing",
     "//platform/projectModel-api:projectModel",
     "//platform/rd-platform-community:rd-community",
     "//platform/configuration-store-impl:configurationStore-impl",
@@ -47,7 +48,7 @@ jvm_library(
     "//platform/util/progress",
     "//platform/platform-impl/ui",
     "//platform/platform-impl/initial-config-import",
-    "//platform/plugins/parser/impl",
+    "//platform/pluginSystem/parser/impl",
   ]
 )
 
@@ -66,8 +67,9 @@ jvm_library(
     "//platform/core-ui",
     "//platform/ide-core-impl",
     "//platform/ide-core/plugins",
-    "@lib//:rd-core",
-    "@lib//:rd-swing",
+    "//platform/core-impl",
+    "//libraries/rd/core",
+    "//libraries/rd/swing",
     "//platform/projectModel-api:projectModel",
     "//platform/rd-platform-community:rd-community",
     "//platform/configuration-store-impl:configurationStore-impl",
@@ -96,8 +98,8 @@ jvm_library(
     "//platform/util/progress",
     "//platform/platform-impl/ui",
     "//platform/platform-impl/initial-config-import",
-    "//platform/plugins/parser/impl",
-    "//platform/plugins/parser/impl:impl_test_lib",
+    "//platform/pluginSystem/parser/impl",
+    "//platform/pluginSystem/parser/impl:impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.ide.startup.importSettings` end

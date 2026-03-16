@@ -17,10 +17,20 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.psi.JavaTokenType.*;
+import static com.intellij.psi.JavaTokenType.AND;
+import static com.intellij.psi.JavaTokenType.ANDAND;
+import static com.intellij.psi.JavaTokenType.ASTERISK;
+import static com.intellij.psi.JavaTokenType.MINUS;
+import static com.intellij.psi.JavaTokenType.OR;
+import static com.intellij.psi.JavaTokenType.OROR;
+import static com.intellij.psi.JavaTokenType.PLUS;
 
 /**
  * @author Fabrice TIERCELIN

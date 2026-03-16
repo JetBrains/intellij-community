@@ -15,6 +15,8 @@
  */
 package com.siyeh.ipp.functional;
 
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
@@ -84,6 +86,14 @@ public class ExtractToMethodReferenceTest extends IPPTestCase {
   
   public void testAnnotatedLambdaParameterVar() {
     doTest();
+  }
+
+  public void testLambdaInImplicitClass() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), this::doTest);
+  }
+
+  public void testStaticLambdaInImplicitClass() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), this::assertIntentionNotAvailable);
   }
 
   @Override

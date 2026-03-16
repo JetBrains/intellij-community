@@ -8,15 +8,14 @@ import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.UsefulTestCase
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.junit.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class MavenSearchTest : MavenMultiVersionImportingTestCase() {
   @Test
@@ -49,14 +48,22 @@ class MavenSearchTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>""")
     importProjectAsync()
 
-    withContext(Dispatchers.EDT) {
-      writeIntentReadAction {
-        val m1Psi = PsiManager.getInstance(project).findFile(m1File)
-        val m2Psi = PsiManager.getInstance(project).findFile(m2File)
-        UsefulTestCase.assertContainsElements(lookForFiles("module1"), m1Psi)
-        UsefulTestCase.assertContainsElements(lookForFiles("module2"), m2Psi)
-      }
+    runInEdtSmartMode {
+      val m1Psi = PsiManager.getInstance(project).findFile(m1File)
+      val m2Psi = PsiManager.getInstance(project).findFile(m2File)
+      UsefulTestCase.assertContainsElements(lookForFiles("module1"), m1Psi)
+      UsefulTestCase.assertContainsElements(lookForFiles("module2"), m2Psi)
     }
+  }
+
+  private fun runInEdtSmartMode(action: () -> Unit) {
+    val latch = CountDownLatch(1)
+    DumbService.getInstance(project).smartInvokeLater {
+      action()
+      latch.countDown()
+    }
+    val actionPerformed = latch.await(1, TimeUnit.MINUTES)
+    assertTrue("Action has not been performed in 1 minute", actionPerformed)
   }
 
   private fun lookForFiles(pattern: String): List<Any> =

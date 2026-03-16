@@ -7,7 +7,7 @@ import com.intellij.lang.properties.structureView.PropertiesFileStructureViewMod
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 public class PropertiesFileTreeStructureTest extends BasePlatformTestCase {
   public void testGrouping() {

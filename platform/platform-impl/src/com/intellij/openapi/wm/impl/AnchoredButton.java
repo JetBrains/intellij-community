@@ -4,7 +4,9 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JToggleButton;
 
 public abstract class AnchoredButton extends JToggleButton {
   protected AnchoredButton(@NlsContexts.Button String text, Icon icon, boolean selected) {

@@ -3,10 +3,8 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.ui.SearchTextField;
-import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.Collections;
 
 /**
@@ -22,18 +20,6 @@ public class PluginSearchTextField extends SearchTextField {
   }
 
   protected void showCompletionPopup() {
-  }
-
-  @Override
-  public void setBounds(int x, int y, int width, int height) {
-    super.setBounds(x - 1, y, width + 2, height);
-  }
-
-  @Override
-  public Dimension getPreferredSize() {
-    Dimension size = super.getPreferredSize();
-    size.height = JBUIScale.scale(38);
-    return size;
   }
 
   @Override

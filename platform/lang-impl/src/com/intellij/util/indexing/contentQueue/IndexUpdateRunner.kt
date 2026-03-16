@@ -4,6 +4,7 @@
 package com.intellij.util.indexing.contentQueue
 
 import com.intellij.openapi.application.readActionUndispatched
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.ThrottledLogger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -32,9 +33,13 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.SystemProperties.getBooleanProperty
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexImpl
+import com.intellij.util.indexing.FileIndexingResult
 import com.intellij.util.indexing.IndexingFlag.unlockFile
+import com.intellij.util.indexing.IndexingStamp
 import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles
+import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.indexing.contentQueue.dev.IndexWriter
 import com.intellij.util.indexing.contentQueue.dev.TOTAL_WRITERS_NUMBER
 import com.intellij.util.indexing.dependencies.FileIndexingStamp
@@ -44,13 +49,15 @@ import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.events.FileIndexingRequest
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.FileNotFoundException
@@ -208,14 +215,16 @@ class IndexUpdateRunner(
 
                 ensureActive()
               }
+              LOG.debug("Coroutine $workerNo has finished gracefully")
             }
-            //FIXME RC: for profiling, remove afterwards
             catch (e: Throwable) {
-              LOG.info("Coroutine $workerNo finished exceptionally", e)
+              if (e !is ControlFlowException) {
+                LOG.warn("Coroutine $workerNo finished exceptionally", e)
+              }
+              else {
+                LOG.warn("Coroutine $workerNo finished exceptionally: ${e.message}")
+              }
               throw e
-            }
-            finally {
-              LOG.info("Coroutine $workerNo finished gracefully")
             }
           }
         }
@@ -292,7 +301,7 @@ class IndexUpdateRunner(
       statistics: IndexingFileSetStatistics,
     ) {
       val file = fileIndexingRequest.file
-      if( !fileIndexingRequest.isDeleteRequest && !file.isValid ){
+      if (!fileIndexingRequest.isDeleteRequest && !file.isValid) {
         //this is a bandage for the annoying 'Alien file...' errors in tests: in real life it shouldn't be possible to come
         //  here with an invalid file, but in a (badly isolated) tests it could happen
         LOG.warn("Invalid (alien?) file: #${(file as VirtualFileWithId).id}")
@@ -309,7 +318,14 @@ class IndexUpdateRunner(
         val workspaceFileIndex = WorkspaceFileIndex.getInstance(project)
         val excluded = readActionUndispatched {
           val isIndexable = workspaceFileIndex.isIndexable(file)
-          val belongsToNonIndexable = workspaceFileIndex.findFileSet(file, true, false, includeContentNonIndexableSets = true, false, false, false) != null
+          val belongsToNonIndexable = workspaceFileIndex.findFileSet(file,
+                                                                     true,
+                                                                     false,
+                                                                     includeContentNonIndexableSets = true,
+                                                                     false,
+                                                                     false,
+                                                                     includeExternalNonIndexableSets = true,
+                                                                     false) != null
           // We don't want to just exclude all !isIndexable,
           // because they may be contributed by an indexing contributor while WorkspaceFileIndex is not aware about it.
           // We only want to exclude the files that are explicitly registered as non indexable.

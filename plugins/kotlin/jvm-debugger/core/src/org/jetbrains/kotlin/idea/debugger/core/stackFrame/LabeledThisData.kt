@@ -8,12 +8,12 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.descriptors.data.DescriptorData
 import com.intellij.debugger.impl.descriptors.data.DisplayKey
 import com.intellij.debugger.impl.descriptors.data.SimpleDisplayKey
-import com.intellij.debugger.ui.impl.watch.*
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiExpression
 import com.intellij.util.IncorrectOperationException
-import com.sun.jdi.*
+import com.sun.jdi.Value
 
 class LabeledThisData(val label: String, val name: String, val value: Value?) : DescriptorData<ValueDescriptorImpl>() {
     override fun createDescriptorImpl(project: Project): ValueDescriptorImpl {

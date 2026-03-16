@@ -10,10 +10,10 @@ import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApiHelpers
 import com.intellij.platform.eel.spawnProcess
 import com.intellij.util.PathUtil
-import com.intellij.util.SystemProperties
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.io.File
 import java.nio.file.Files
@@ -39,7 +39,7 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
 
   private companion object {
     private fun getClassPathForClass(clazz: Class<*>): String {
-      val mavenPath = Path(SystemProperties.getUserHome()).resolve(".m2").resolve("repository").toString()
+      val mavenPath = getMavenRepositoryPath()
       val helperModuleName = getJpsModuleNameForClass(clazz)
       logger.value.info("helper module name: $helperModuleName")
 

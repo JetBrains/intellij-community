@@ -6,7 +6,7 @@ import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Collections;
 import java.util.List;
 
@@ -19,11 +19,6 @@ public final class SingletonRefGroup implements RefGroup {
 
   public SingletonRefGroup(@NotNull VcsRef ref) {
     myRef = ref;
-  }
-
-  @Override
-  public boolean isExpanded() {
-    return false;
   }
 
   @Override

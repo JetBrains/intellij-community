@@ -2,7 +2,13 @@
 
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.FCTSBackedLighterAST;
+import com.intellij.lang.FileASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.TreeBackedLighterAST;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.StackOverflowPreventedException;
 import com.intellij.psi.PsiElement;
@@ -11,7 +17,11 @@ import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.LanguageStubDefinition;
+import com.intellij.psi.stubs.LanguageStubDescriptor;
+import com.intellij.psi.stubs.LightLanguageStubDefinition;
+import com.intellij.psi.stubs.StubElementFactory;
+import com.intellij.psi.stubs.StubElementRegistryService;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;

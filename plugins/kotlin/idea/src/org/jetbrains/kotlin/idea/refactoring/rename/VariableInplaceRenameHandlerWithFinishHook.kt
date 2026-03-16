@@ -6,7 +6,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class VariableInplaceRenameHandlerWithFinishHook(private val onFinish: () -> Unit) : KotlinVariableInplaceRenameHandler() {
     override fun createRenamer(elementToRename: PsiElement, editor: Editor): VariableInplaceRenamer {
         return object : RenamerImpl(elementToRename as PsiNamedElement, editor) {

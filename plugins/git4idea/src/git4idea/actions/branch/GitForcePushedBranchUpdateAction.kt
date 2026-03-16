@@ -35,14 +35,19 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.reset.GitResetMode
 import git4idea.reset.GitResetOperation
-import git4idea.update.*
+import git4idea.update.GitUpdateExecutionProcess
+import git4idea.update.GitUpdateInfoAsLog
 import git4idea.update.GitUpdateInfoAsLog.NotificationData
+import git4idea.update.GitUpdateProcess
+import git4idea.update.GitUpdateResult
+import git4idea.update.GitUpdateSession
+import git4idea.update.GitUpdatedRanges
 import git4idea.util.GitPreservingProcess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.UUID
 
 /**
  * Executes update for possible force pushed current branch for Git repositories in the current project.

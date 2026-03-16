@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections.migration
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.CleanupLocalInspectionTool
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 
 
+@K1Deprecation
 class WarningOnMainUnusedParameterMigrationInspection :
     AbstractDiagnosticBasedMigrationInspection<KtParameter>(KtParameter::class.java),
     MigrationFix,

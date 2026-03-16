@@ -5,24 +5,48 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configuration.ConfigurationFactoryEx
-import com.intellij.execution.configurations.*
+import com.intellij.execution.configurations.ConfigurationCreationListener
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.ConfigurationTypeUtil.isEditableInDumbMode
+import com.intellij.execution.configurations.LocatableConfiguration
+import com.intellij.execution.configurations.LocatableConfigurationBase
+import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.configurations.UnknownConfigurationType
+import com.intellij.execution.configurations.VirtualConfigurationType
 import com.intellij.execution.impl.RunConfigurable.Companion.collectNodesRecursively
-import com.intellij.execution.impl.RunConfigurableNodeKind.*
+import com.intellij.execution.impl.RunConfigurableNodeKind.CONFIGURATION
+import com.intellij.execution.impl.RunConfigurableNodeKind.CONFIGURATION_TYPE
+import com.intellij.execution.impl.RunConfigurableNodeKind.FOLDER
+import com.intellij.execution.impl.RunConfigurableNodeKind.TEMPORARY_CONFIGURATION
+import com.intellij.execution.impl.RunConfigurableNodeKind.UNKNOWN
 import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.dnd.TransferableList
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
-import com.intellij.openapi.options.SettingsEditorConfigurable
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.PossiblyDumbAware
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.AlignedPopup
 import com.intellij.openapi.ui.popup.util.PopupUtil
@@ -31,9 +55,23 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Trinity
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance
-import com.intellij.ui.*
-import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
+import com.intellij.ui.AnActionButton
+import com.intellij.ui.AnActionButtonRunnable
+import com.intellij.ui.AnActionButtonUpdater
+import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.IconManager
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.JBSplitter
+import com.intellij.ui.PlatformIcons
+import com.intellij.ui.RowsDnDSupport
+import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.ABOVE
+import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.BELOW
+import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.INTO
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
+import com.intellij.ui.ToolbarDecorator
+import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.mac.touchbar.Touchbar
@@ -54,10 +92,20 @@ import java.awt.BorderLayout
 import java.awt.datatransfer.Transferable
 import java.awt.event.MouseEvent
 import java.util.function.ToIntFunction
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTextField
+import javax.swing.JTree
+import javax.swing.SwingUtilities
+import javax.swing.TransferHandler
 import javax.swing.event.DocumentEvent
 import javax.swing.event.TreeSelectionListener
-import javax.swing.tree.*
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.MutableTreeNode
+import javax.swing.tree.TreeNode
+import javax.swing.tree.TreePath
 import kotlin.math.max
 
 private val LOG = logger<RunConfigurable>()
@@ -147,7 +195,7 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
                                 allTypes: List<ConfigurationType>,
                                 hideVirtualConfigurations : Boolean = false): List<ConfigurationType> =
       getTypesToShow(project, showApplicableTypesOnly, allTypes, hideVirtualConfigurations)
-        .sortedWith(kotlin.Comparator { type1, type2 -> compareTypesForUi(type1!!, type2!!) })
+        .sortedWith(Comparator { type1, type2 -> compareTypesForUi(type1!!, type2!!) })
 
     fun getTypesToShow(project: Project, showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>, hideVirtualConfigurations : Boolean = false): List<ConfigurationType> {
       val allVisibleTypes = if (hideVirtualConfigurations) allTypes.filter { it !is VirtualConfigurationType } else allTypes
@@ -305,21 +353,25 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
   }
 
   private fun findNode(configuration: RunConfiguration): DefaultMutableTreeNode? {
+    fun Any.extractConfiguration(): RunConfiguration? = when (this) {
+      is SingleConfigurationConfigurable<*> -> this.configuration
+      is RunnerAndConfigurationSettings     -> this.configuration
+      else                                  -> null
+    }
+    var firstNameMatch: DefaultMutableTreeNode? = null
     val enumeration = root.breadthFirstEnumeration()
     while (enumeration.hasMoreElements()) {
       val node = enumeration.nextElement() as DefaultMutableTreeNode
-      var userObject = node.userObject
-      if (userObject is SettingsEditorConfigurable<*>) {
-        userObject = userObject.settings
-      }
-      if (userObject is RunnerAndConfigurationSettingsImpl) {
-        val otherConfiguration = (userObject as RunnerAndConfigurationSettings).configuration
-        if (otherConfiguration.factory?.type?.id == configuration.factory?.type?.id && otherConfiguration.name == configuration.name) {
-          return node
-        }
+      val userObject = node.userObject
+      val cfg = userObject.extractConfiguration() ?: continue
+      if (cfg === configuration) return node
+      // Remember a name match as a fallback (old behavior)
+      if (cfg.factory?.type?.id == configuration.factory?.type?.id && cfg.name == configuration.name) {
+        if (firstNameMatch == null) firstNameMatch = node
       }
     }
-    return null
+    // Fall back to name-based match if identity was not found
+    return firstNameMatch
   }
 
   private fun showTemplateConfigurable(factory: ConfigurationFactory) {
@@ -431,7 +483,18 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
                 val snapshot = editor.snapshot.configuration as LocatableConfiguration
                 val generatedName = snapshot.suggestedName()
                 if (!generatedName.isNullOrEmpty()) {
-                  info.nameText = generatedName
+                  val currentNode = findNode(info.configuration)
+                  val typeNode = currentNode?.let { getConfigurationTypeNode(getType(it)!!) }
+                  info.nameText = if (currentNode != null && typeNode != null) {
+                    createUniqueName(
+                      typeNode = typeNode,
+                      excludeNode = currentNode,
+                      baseName = generatedName,
+                      CONFIGURATION, TEMPORARY_CONFIGURATION
+                    )
+                  } else {
+                    RunManager.suggestUniqueName(generatedName, emptyList())
+                  }
                   changed = false
                 }
               }
@@ -1482,16 +1545,30 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
   }
 }
 
-private fun createUniqueName(typeNode: DefaultMutableTreeNode, @Nls baseName: String?, vararg kinds: RunConfigurableNodeKind): String {
+private fun createUniqueName(
+  typeNode: DefaultMutableTreeNode,
+  @Nls baseName: String?,
+  vararg kinds: RunConfigurableNodeKind
+): String {
+  return createUniqueName(typeNode = typeNode, excludeNode = null, baseName = baseName, *kinds)
+}
+
+private fun createUniqueName(
+  typeNode: DefaultMutableTreeNode,
+  excludeNode: DefaultMutableTreeNode?,
+  @Nls baseName: String?,
+  vararg kinds: RunConfigurableNodeKind
+): String {
   val str = baseName ?: ExecutionBundle.message("run.configuration.unnamed.name.prefix")
   val configurationNodes = ArrayList<DefaultMutableTreeNode>()
   collectNodesRecursively(typeNode, configurationNodes, *kinds)
-  val currentNames = ArrayList<String>()
-  for (node in configurationNodes) {
+  val currentNames = configurationNodes.mapNotNull { node ->
     when (val userObject = node.userObject) {
-      is SingleConfigurationConfigurable<*> -> currentNames.add(userObject.nameText)
-      is RunnerAndConfigurationSettingsImpl -> currentNames.add((userObject as RunnerAndConfigurationSettings).name)
-      is String -> currentNames.add(userObject)
+      else if (node === excludeNode) -> null
+      is SingleConfigurationConfigurable<*> -> userObject.nameText
+      is RunnerAndConfigurationSettingsImpl -> userObject.name
+      is String -> userObject
+      else -> null
     }
   }
   return RunManager.suggestUniqueName(str, currentNames)

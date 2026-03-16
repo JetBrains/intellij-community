@@ -22,9 +22,9 @@ import org.jetbrains.annotations.NotNull;
  * Creates view and presenter allowing them to have links to each other.
  * Implement it and pass to {@link ViewPresenterUtils#linkViewWithPresenterAndLaunch(Class, Class, Creator)}
  *
- * @author Ilya.Kazakevich
  * @param <V> view interface
  * @param <P> presenter interface
+ * @author Ilya.Kazakevich
  */
 public interface Creator<V, P extends Presenter> {
 
@@ -45,5 +45,4 @@ public interface Creator<V, P extends Presenter> {
    */
   @NotNull
   V createView(@NotNull P presenter);
-
 }

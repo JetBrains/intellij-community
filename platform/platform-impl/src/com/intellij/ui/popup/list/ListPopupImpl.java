@@ -5,7 +5,11 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,21 +18,36 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.ListPopupStepEx;
+import com.intellij.openapi.ui.popup.MultiSelectionListPopupStep;
+import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.ui.*;
+import com.intellij.ui.ListActions;
+import com.intellij.ui.MouseMovementTracker;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SeparatorWithText;
+import com.intellij.ui.UiInterceptors;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.*;
+import com.intellij.ui.popup.ActionGroupPopupActivity;
+import com.intellij.ui.popup.ActionPopupStep;
+import com.intellij.ui.popup.ClosableByLeftArrow;
+import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.ui.popup.NextStepHandler;
+import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.async.AsyncPopupStep;
 import com.intellij.ui.popup.async.AsyncPopupWaiter;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.PopupImplUtil;
+import com.intellij.ui.wayland.WaylandUtilKt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,13 +60,34 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.DefaultListSelectionModel;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import javax.swing.TransferHandler;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.util.Comparator;
 import java.util.Objects;
 
@@ -628,7 +668,15 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     if (!UiInterceptors.tryIntercept(myChild)) {
       // Intercept child popup in tests because it is impossible to calculate location on screen there
-      myChild.show(container, container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y, true);
+      var childLocation = new Point(container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y);
+      if (ClientSystemInfo.isWaylandToolkit()) {
+        SwingUtilities.convertPointFromScreen(childLocation, container);
+        var childBounds = new Rectangle(childLocation, myChild.getPreferredContentSize());
+        WaylandUtilKt.moveToFitChildPopupX(childBounds, container);
+        childLocation = childBounds.getLocation();
+        SwingUtilities.convertPointToScreen(childLocation, container);
+      }
+      myChild.show(container, childLocation.x, childLocation.y, true);
     }
     setIndexForShowingChild(myList.getSelectedIndex());
     myMouseMovementTracker.reset();
@@ -641,6 +689,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
   @Override
   public void onModelChanged() {
+    if (isDisposed()) return;
+
     boolean updateEmptyModel = myListModel.getSize() == 0;
     myListModel.syncModel();
     if (updateEmptyModel) {

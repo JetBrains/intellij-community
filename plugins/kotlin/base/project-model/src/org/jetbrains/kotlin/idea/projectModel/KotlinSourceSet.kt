@@ -8,6 +8,7 @@ interface KotlinSourceSet : KotlinComponent, HasMutableExtras {
     val languageSettings: KotlinLanguageSettings
     val sourceDirs: Set<File>
     val resourceDirs: Set<File>
+    val generatedKotlinDirs: Set<File>
     val actualPlatforms: KotlinPlatformContainer
 
     /**
@@ -45,14 +46,12 @@ interface KotlinSourceSet : KotlinComponent, HasMutableExtras {
     @KotlinGradlePluginVersionDependentApi("This field is only available for Kotlin Gradle Plugin 1.8 or higher")
     val androidSourceSetInfo: KotlinAndroidSourceSetInfo?
 
-    val isManagedByComAndroidLibraryPlugin: Boolean
-
     companion object {
-        const val COMMON_MAIN_SOURCE_SET_NAME = "commonMain"
-        const val COMMON_TEST_SOURCE_SET_NAME = "commonTest"
+        const val COMMON_MAIN_SOURCE_SET_NAME: String = "commonMain"
+        const val COMMON_TEST_SOURCE_SET_NAME: String = "commonTest"
 
         // Note. This method could not be deleted due to usage in KotlinAndroidGradleMPPModuleDataService from IDEA Core
         @Suppress("unused")
-        fun commonName(forTests: Boolean) = if (forTests) COMMON_TEST_SOURCE_SET_NAME else COMMON_MAIN_SOURCE_SET_NAME
+        fun commonName(forTests: Boolean): String = if (forTests) COMMON_TEST_SOURCE_SET_NAME else COMMON_MAIN_SOURCE_SET_NAME
     }
 }

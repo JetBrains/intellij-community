@@ -6,11 +6,22 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -247,7 +258,9 @@ public final class RecursionManager {
 
     @Override
     public String toString() {
-      return guardId + "->" + userObject;
+      // Refrain from calling userObject.toString() to avoid potential recursion. The reason is that
+      // userObject.toString() can invoke arbitrary other calls that in turn may cause this recursion.
+      return guardId + "->" + userObject.getClass().getName() + "@" + myHashCode;
     }
   }
 

@@ -1,3 +1,5 @@
+<!-- @skip-dependency-generation -->
+<!-- todo convert test scope to proper runtime one -->
 <idea-plugin>
   <dependencies>
     <module name="intellij.libraries.skiko" />

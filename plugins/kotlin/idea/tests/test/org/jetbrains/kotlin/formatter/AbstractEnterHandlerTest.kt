@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.formatter
 
-import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.FileUtil
@@ -14,7 +13,6 @@ import org.jetbrains.kotlin.idea.formatter.KotlinLineIndentProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightPlatformCodeInsightTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert
 import java.io.File
 

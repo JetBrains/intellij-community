@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -9,8 +10,7 @@ import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
-import com.jetbrains.python.sdk.rootManager
-import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
+import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.Flow
@@ -26,7 +26,7 @@ import java.nio.file.Path
  */
 class PythonAddLocalInterpreterPresenter(
   val moduleOrProject: ModuleOrProject,
-  val envReader: VirtualEnvReader = VirtualEnvReader.Instance,
+  val envReader: VirtualEnvReader = VirtualEnvReader(),
   val errorSink: ErrorSink,
   val bestGuessCreateSdkInfo: Deferred<CreateSdkInfoWithTool?>,
 ) {
@@ -36,7 +36,7 @@ class PythonAddLocalInterpreterPresenter(
    */
   val pathForVEnv: Path
     get() = when (moduleOrProject) {
-              is ModuleOrProject.ModuleAndProject -> moduleOrProject.module.rootManager.contentRoots.firstOrNull()?.toNioPath()
+              is ModuleOrProject.ModuleAndProject -> ModuleRootManager.getInstance(moduleOrProject.module).contentRoots.firstOrNull()?.toNioPath()
                                                      ?: moduleOrProject.project.basePath?.toNioPathOrNull()
               is ModuleOrProject.ProjectOnly -> moduleOrProject.project.basePath?.toNioPathOrNull()
             } ?: envReader.getVEnvRootDir()
@@ -44,14 +44,13 @@ class PythonAddLocalInterpreterPresenter(
   private val _sdkShared = MutableSharedFlow<Sdk>(1)
   val sdkCreatedFlow: Flow<Sdk> = _sdkShared.asSharedFlow()
 
-  suspend fun okClicked(addEnvironment: PythonAddEnvironment<PathHolder.Eel>) {
+  suspend fun okClicked(addEnvironment: PythonAddEnvironment<PathHolder.Eel>): Unit = moduleOrProject.project.pythonSdkConfigurationMutex.withLock {
     when (val r = addEnvironment.getOrCreateSdkWithModal(moduleOrProject)) {
       is Result.Failure -> {
         errorSink.emit(r.error, moduleOrProject.project)
-        return
+        return@withLock
       }
       is Result.Success -> {
-        moduleOrProject.project.pySdkService.persistSdk(r.result)
         val isPreviouslyConfigured = addEnvironment.createStatisticsInfo(PythonInterpreterCreationTargets.LOCAL_MACHINE).previouslyConfigured
         PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(r.result, isPreviouslyConfigured)
         _sdkShared.emit(r.result)

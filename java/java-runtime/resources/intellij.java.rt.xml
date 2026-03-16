@@ -1,2 +1,4 @@
+<!-- @skip-dependency-generation -->
+<!-- not clear - junit4 is a provided dependency -->
 <idea-plugin visibility="public">
 </idea-plugin>

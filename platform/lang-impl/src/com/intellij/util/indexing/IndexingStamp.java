@@ -1,11 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.indexing.impl.perFileVersion.AutoRefreshingOnVfsCloseRef;
 import com.intellij.util.indexing.impl.perFileVersion.IntFileAttribute;
@@ -17,11 +15,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
-import java.util.*;
+import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentIntObjectMap;
+import static com.intellij.util.SystemProperties.getIntProperty;
 
 /**
  * A file has three indexed states (per particular index): indexed (with particular index_stamp which monotonically increases), outdated and (trivial) unindexed.
@@ -74,13 +80,19 @@ public final class IndexingStamp {
     update(fileId, id, HAS_NO_INDEXED_DATA_STAMP);
   }
 
-  private static final int INDEXING_STAMP_CACHE_CAPACITY = SystemProperties.getIntProperty("index.timestamp.cache.size", 100);
+  private static final int INDEXING_STAMP_CACHE_CAPACITY = getIntProperty("index.timestamp.cache.size", 100);
+
   //MAYBE RC: do we still need in-memory cache (fileId->Timestamps)? With new fast-attributes + fast enumerator
   //          access may be fast enough even without caching -- or, at least, it may be worth caching enumerator
   //          records (which are 100-1000 records at max) _only_
-  private static final ConcurrentIntObjectMap<Timestamps> ourTimestampsCache =
-    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
-  private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<>(INDEXING_STAMP_CACHE_CAPACITY);
+  private static final ConcurrentIntObjectMap<Timestamps> timestampsCache = createConcurrentIntObjectMap();
+  private static final BlockingQueue<Integer> finishedFiles = new ArrayBlockingQueue<>(INDEXING_STAMP_CACHE_CAPACITY);
+
+  /**
+   * The lock protects reading/modifying the {@link Timestamps} state for fileId.
+   * It doesn't protect {@link #timestampsCache} -- it is a concurrent map itself, doesn't need protection.
+   */
+  private static final StripedLock timestampsPerFileLock = new StripedLock();
 
   private static final AutoRefreshingOnVfsCloseRef<IndexingStampStorage> storage =
     new AutoRefreshingOnVfsCloseRef<>(IndexingStamp::createStorage);
@@ -101,11 +113,11 @@ public final class IndexingStamp {
   @TestOnly
   public static void dropTimestampMemoryCaches() {
     flushCaches();
-    ourTimestampsCache.clear();
+    timestampsCache.clear();
   }
 
   public static long getIndexStamp(int fileId, ID<?, ?> indexName) {
-    return ourLock.withReadLock(fileId, () -> {
+    return timestampsPerFileLock.withReadLock(fileId, () -> {
       Timestamps stamp = createOrGetTimeStamp(fileId);
       return stamp.get(indexName);
     });
@@ -113,7 +125,7 @@ public final class IndexingStamp {
 
   @TestOnly
   public static void dropIndexingTimeStamps(int fileId) throws IOException {
-    ourTimestampsCache.remove(fileId);
+    timestampsCache.remove(fileId);
     storage.invoke().writeTimestamps(fileId, TimestampsImmutable.EMPTY);
   }
 
@@ -124,7 +136,7 @@ public final class IndexingStamp {
   @Contract("_, true->!null")
   private static Timestamps getTimestamp(int id, boolean createIfNoneSaved) {
     assert id > 0;
-    Timestamps timestamps = ourTimestampsCache.get(id);
+    Timestamps timestamps = timestampsCache.get(id);
     if (timestamps == null) {
       TimestampsImmutable immutable = storage.invoke().readTimestamps(id);
       if (immutable == null) {
@@ -139,7 +151,7 @@ public final class IndexingStamp {
         timestamps = immutable.toMutableTimestamps();
       }
     }
-    ourTimestampsCache.cacheOrGet(id, timestamps);
+    timestampsCache.cacheOrGet(id, timestamps);
     return timestamps;
   }
 
@@ -151,7 +163,7 @@ public final class IndexingStamp {
 
   public static void update(int fileId, @NotNull ID<?, ?> indexName, final long indexCreationStamp) {
     assert fileId > 0;
-    ourLock.withWriteLock(fileId, () -> {
+    timestampsPerFileLock.withWriteLock(fileId, () -> {
       Timestamps stamp = createOrGetTimeStamp(fileId);
       stamp.set(indexName, indexCreationStamp);
       return null;
@@ -164,7 +176,7 @@ public final class IndexingStamp {
    * "unindexed" is not included.
    */
   public static @NotNull List<ID<?, ?>> getNontrivialFileIndexedStates(int fileId) {
-    return ourLock.withReadLock(fileId, () -> {
+    return timestampsPerFileLock.withReadLock(fileId, () -> {
       try {
         Timestamps stamp = createOrGetTimeStamp(fileId);
         if (stamp.hasIndexingTimeStamp()) {
@@ -183,27 +195,28 @@ public final class IndexingStamp {
     flushLock.writeLock().unlock();
   }
 
+  /** Persist cached data {@link Timestamps} for finishedFile */
   public static void flushCache(int finishedFile) {
-    boolean exit = ourLock.withReadLock(finishedFile, () -> {
-      Timestamps timestamps = ourTimestampsCache.get(finishedFile);
+    boolean exit = timestampsPerFileLock.withReadLock(finishedFile, () -> {
+      Timestamps timestamps = timestampsCache.get(finishedFile);
       if (timestamps == null) return true;
       if (!timestamps.isDirty()) {
-        ourTimestampsCache.remove(finishedFile);
+        timestampsCache.remove(finishedFile);
         return true;
       }
       return false;
     });
     if (exit) return;
 
-    while (!ourFinishedFiles.offer(finishedFile)) {
+    while (!finishedFiles.offer(finishedFile)) {
       doFlush();
     }
   }
 
   @TestOnly
   public static int @NotNull [] dumpCachedUnfinishedFiles() {
-    return ourLock.withAllLocksWriteLocked(() -> {
-      int[] cachedKeys = ourTimestampsCache
+    return timestampsPerFileLock.withAllLocksWriteLocked(() -> {
+      int[] cachedKeys = timestampsCache
         .entrySet()
         .stream()
         .filter(e -> e.getValue().isDirty())
@@ -215,7 +228,7 @@ public final class IndexingStamp {
       }
       else {
         IntSet cachedIds = new IntArraySet(cachedKeys);
-        Set<Integer> finishedIds = new HashSet<>(ourFinishedFiles);
+        Set<Integer> finishedIds = new HashSet<>(finishedFiles);
         cachedIds.removeAll(finishedIds);
         return cachedIds.toIntArray();
       }
@@ -225,30 +238,30 @@ public final class IndexingStamp {
   private static void doFlush() {
     flushLock.readLock().lock();
     try {
-      List<Integer> files = new ArrayList<>(ourFinishedFiles.size());
-      ourFinishedFiles.drainTo(files);
+      List<Integer> files = new ArrayList<>(finishedFiles.size());
+      finishedFiles.drainTo(files);
 
       if (!files.isEmpty()) {
         for (Integer fileId : files) {
-          RuntimeException exception = ourLock.withWriteLock(fileId, () -> {
+          IOException exception = timestampsPerFileLock.withWriteLock(fileId, () -> {
             try {
-              final Timestamps timestamp = ourTimestampsCache.remove(fileId);
+              Timestamps timestamp = timestampsCache.remove(fileId);
               if (timestamp == null) return null;
 
               if (timestamp.isDirty() /*&& file.isValid()*/) {
-                //RC: now I don't see the benefits of implementing timestamps write via raw attribute bytebuffer access
-                //    doFlush() is mostly outside the critical path, while implementing timestamps.writeToBuffer(buffer)
-                //    is complicated with all those variable-sized numbers used.
+                //RC: writeTimestamps() _could_ be re-implemented via raw attribute bytebuffer access, but now I don't see the benefits
+                //    for now: doFlush() is mostly outside the critical path, while implementing timestamps.writeToBuffer(buffer) is
+                //    complicated with all those variable-sized numbers used.
                 storage.invoke().writeTimestamps(fileId, timestamp.toImmutable());
               }
               return null;
             }
             catch (IOException e) {
-              return new RuntimeException(e);
+              return e;
             }
           });
           if (exception != null) {
-            throw exception;
+            throw new UncheckedIOException(exception);
           }
         }
       }
@@ -259,10 +272,8 @@ public final class IndexingStamp {
   }
 
   static boolean isDirty() {
-    return !ourFinishedFiles.isEmpty();
+    return !finishedFiles.isEmpty();
   }
-
-  private static final StripedLock ourLock = new StripedLock();
 
   static void close() {
     flushCaches();

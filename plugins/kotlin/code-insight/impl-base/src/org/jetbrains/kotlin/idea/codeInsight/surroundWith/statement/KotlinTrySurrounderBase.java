@@ -3,13 +3,20 @@
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement;
 
 import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModPsiNavigator;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.MoveDeclarationsOutHelperKt;
-import org.jetbrains.kotlin.psi.*;
+import org.jetbrains.kotlin.name.ClassId;
+import org.jetbrains.kotlin.psi.KtBlockExpression;
+import org.jetbrains.kotlin.psi.KtElement;
+import org.jetbrains.kotlin.psi.KtParameter;
+import org.jetbrains.kotlin.psi.KtPsiFactory;
+import org.jetbrains.kotlin.psi.KtTryExpression;
+
+import java.util.List;
 
 import static org.jetbrains.kotlin.idea.codeInsight.surroundWith.SurroundWithUtilKt.addStatementsInBlock;
 
@@ -31,7 +38,8 @@ public abstract class KotlinTrySurrounderBase<SELECTION extends KtElement> exten
         if (statements.length == 0) return;
 
         Project project = context.project();
-        KtTryExpression tryExpression = (KtTryExpression) new KtPsiFactory(project).createExpression(getCodeTemplate());
+        List<ClassId> exceptionClasses = TryCatchExceptionUtil.collectPossibleExceptions(statements[0]);
+        KtTryExpression tryExpression = (KtTryExpression) new KtPsiFactory(project).createExpression(getCodeTemplate(exceptionClasses));
         tryExpression = (KtTryExpression) container.addAfter(tryExpression, statements[statements.length - 1]);
 
         // TODO move a comment for first statement
@@ -43,16 +51,19 @@ public abstract class KotlinTrySurrounderBase<SELECTION extends KtElement> exten
         // Delete statements from original code
         container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
+        // Shorten fully qualified exception types in catch clauses to match the expected test output
+        ShortenReferencesFacility.Companion.getInstance().shorten(tryExpression);
+
         applyNavigation(context, updater, getSelectionElement(tryExpression));
     }
 
-    protected void applyNavigation(@NotNull ActionContext context, @NotNull ModPsiNavigator navigator, SELECTION element) {
+    protected void applyNavigation(@NotNull ActionContext context, @NotNull ModPsiUpdater navigator, SELECTION element) {
         if (element != null) {
             navigator.select(element);
         }
     }
 
-    protected abstract String getCodeTemplate();
+    protected abstract String getCodeTemplate(List<ClassId> exceptionClasses);
 
     protected abstract SELECTION getSelectionElement(@NotNull KtTryExpression expression);
 

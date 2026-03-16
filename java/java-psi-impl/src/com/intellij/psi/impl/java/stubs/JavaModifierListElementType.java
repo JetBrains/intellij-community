@@ -2,24 +2,13 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.java.ModifierListElement;
 import com.intellij.psi.tree.ICompositeElementType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.ParentProviderElementType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.Set;
-
-public class JavaModifierListElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType {
+public class JavaModifierListElementType extends JavaStubElementType implements ICompositeElementType {
   public JavaModifierListElementType() {
     super("MODIFIER_LIST");
-  }
-
-  @Override
-  public @NotNull Set<IElementType> getParents() {
-    return Collections.singleton(BasicJavaElementType.BASIC_MODIFIER_LIST);
   }
 
   @Override

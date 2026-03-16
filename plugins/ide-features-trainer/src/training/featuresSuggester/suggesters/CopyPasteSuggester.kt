@@ -11,7 +11,7 @@ import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.BeforeEditorCopyAction
 import training.featuresSuggester.actions.EditorCopyAction
 import java.awt.datatransfer.Transferable
-import java.util.*
+import java.util.Queue
 
 class CopyPasteSuggester : AbstractFeatureSuggester() {
   override val id: String = "Paste from history"

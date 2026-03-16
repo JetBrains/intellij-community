@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
@@ -15,16 +15,16 @@ public abstract class TailTypeDecorator<T extends LookupElement> extends LookupE
     super(delegate);
   }
 
-  public static <T extends LookupElement> TailTypeDecorator<T> withTail(T element, final TailType type) {
+  public static <T extends LookupElement> @NotNull TailTypeDecorator<T> withTail(@NotNull T element, @Nullable TailType type) {
     return new TailTypeDecorator<>(element) {
       @Override
-      protected TailType computeTailType(InsertionContext context) {
+      protected TailType computeTailType(@NotNull InsertionContext context) {
         return type;
       }
     };
   }
 
-  protected abstract @Nullable TailType computeTailType(InsertionContext context);
+  protected abstract @Nullable TailType computeTailType(@NotNull InsertionContext context);
 
   @Override
   public void handleInsert(@NotNull InsertionContext context) {

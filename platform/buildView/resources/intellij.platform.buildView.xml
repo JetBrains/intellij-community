@@ -1,5 +1,9 @@
 <idea-plugin>
   <actions>
     <group id="BuildTree" class="com.intellij.platform.buildView.BuildTreeContextMenuActionGroup"/>
+    <group id="BuildView" class="com.intellij.platform.buildView.BuildViewToolbarActionGroup"/>
   </actions>
+  <extensions defaultExtensionNs="com.intellij">
+    <remote.customDataContextSerializer implementation="com.intellij.platform.buildView.BuildIdDataContextSerializer"/>
+  </extensions>
 </idea-plugin>

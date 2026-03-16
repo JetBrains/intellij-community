@@ -18,7 +18,7 @@ package org.jetbrains.idea.svn.update;
 import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.idea.svn.SvnConfiguration;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 
 public interface SvnPanel {
   void reset(SvnConfiguration conf);

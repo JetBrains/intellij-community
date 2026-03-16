@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.CommonBundle;
@@ -8,9 +8,16 @@ import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -26,15 +33,28 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.tree.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTree;
+import javax.swing.TransferHandler;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
+import java.awt.Color;
+import java.awt.GridBagLayout;
 import java.awt.datatransfer.Transferable;
 import java.util.Enumeration;
 import java.util.List;
@@ -407,7 +427,9 @@ public final class ExistingTemplatesComponent {
 
       final var configuration = ((DefaultMutableTreeNode)selection).getUserObject();
       if (configuration instanceof Configuration) {
-        consumer.accept((Configuration)configuration);
+        WriteIntentReadAction.run(() -> {
+          consumer.accept((Configuration)configuration);
+        });
       }
     });
   }

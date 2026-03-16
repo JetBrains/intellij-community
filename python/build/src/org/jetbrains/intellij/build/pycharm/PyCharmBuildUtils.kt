@@ -12,11 +12,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.div
 
-
 object PyCharmBuildUtils {
-  const val SKELETONS_COPY_STEP = "skeletons_copy"
+  internal const val SKELETONS_COPY_STEP = "skeletons_copy"
 
-  @JvmStatic
   suspend fun copySkeletons(context: BuildContext, targetDirectory: Path, mask: String) {
     context.executeStep(TraceManager.spanBuilder("copying skeletons"), SKELETONS_COPY_STEP) {
       val skeletonsDir = context.paths.projectHome.resolve("skeletons")

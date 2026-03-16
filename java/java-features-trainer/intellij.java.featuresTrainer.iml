@@ -34,5 +34,6 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" />
+    <orderEntry type="module" module-name="intellij.platform.execution" />
   </component>
 </module>

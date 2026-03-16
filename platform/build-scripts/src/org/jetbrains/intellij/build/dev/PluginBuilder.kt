@@ -6,24 +6,22 @@ package org.jetbrains.intellij.build.dev
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.OsFamily
-import org.jetbrains.intellij.build.PluginBuildDescriptor
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.impl.DistributionBuilderState
-import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.SupportedDistribution
-import org.jetbrains.intellij.build.impl.buildPlugins
+import org.jetbrains.intellij.build.impl.buildPlatformSpecificPluginResources
 import org.jetbrains.intellij.build.impl.copyAdditionalPlugins
 import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
-import org.jetbrains.intellij.build.impl.handleCustomPlatformSpecificAssets
+import org.jetbrains.intellij.build.impl.plugins.buildPlugins
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.satisfiesBundlingRequirements
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -31,16 +29,19 @@ import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
 import java.nio.file.Path
 
-internal suspend fun buildPlugins(
+internal data class PluginsLayoutResult(
+  @JvmField val pluginEntries: List<PluginBuildDescriptor>,
+  @JvmField val additionalPlugins: List<Pair<Path, List<Path>>>?,
+)
+
+internal suspend fun buildPluginsForDevMode(
   request: BuildRequest,
   context: BuildContext,
   runDir: Path,
   platformLayout: Deferred<PlatformLayout>,
-  artifactTask: Job,
   searchableOptionSet: SearchableOptionSetDescriptor?,
-  buildPlatformJob: Job,
-  moduleOutputPatcher: ModuleOutputPatcher,
-): Pair<List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, List<Pair<Path, List<Path>>>?> {
+  platformEntriesProvider: suspend () -> List<DistributionFileEntry>,
+): PluginsLayoutResult {
   val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)
 
   val pluginRootDir = runDir.resolve("plugins")
@@ -52,33 +53,30 @@ internal suspend fun buildPlugins(
     Files.createDirectories(pluginRootDir)
   }
 
-  artifactTask.join()
-
   val platform = platformLayout.await()
   val pluginEntries = spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), plugins.size.toLong()).use {
     val targetPlatform = SupportedDistribution(os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch, libcImpl = LibcImpl.current(OsFamily.currentOs))
     buildPlugins(
-      moduleOutputPatcher = moduleOutputPatcher,
       plugins = plugins,
-      targetDir = pluginRootDir,
-      state = DistributionBuilderState(platform = platform, pluginsToPublish = emptySet(), context = context),
-      context = context,
-      buildPlatformJob = buildPlatformJob,
-      searchableOptionSet = searchableOptionSet,
       os = null,
-      pluginBuilt = { layout, pluginDirOrFile ->
-        handleCustomPlatformSpecificAssets(
-          layout = layout,
-          targetPlatform = targetPlatform,
-          context = context,
-          pluginDir = pluginDirOrFile,
-          isDevMode = true,
-        )
-      },
-    )
+      arch = null,
+      targetDir = pluginRootDir,
+      state = DistributionBuilderState(platformLayout = platform, pluginsToPublish = emptySet(), context = context),
+      platformEntriesProvider = platformEntriesProvider,
+      searchableOptionSet = searchableOptionSet,
+      descriptorCacheContainer = platform.descriptorCacheContainer,
+      context = context,
+    ) { layout, pluginDirOrFile ->
+      buildPlatformSpecificPluginResources(
+        plugin = layout,
+        pluginDirs = listOf(targetPlatform to pluginDirOrFile),
+        context = context,
+        isDevMode = true,
+      )
+    }
   }
-  val additionalPlugins = copyAdditionalPlugins(context, pluginRootDir)
-  return pluginEntries to additionalPlugins
+  val additionalPlugins = copyAdditionalPlugins(pluginRootDir, context)
+  return PluginsLayoutResult(pluginEntries, additionalPlugins)
 }
 
 private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: PluginLayout, context: BuildContext): Boolean {
@@ -94,7 +92,7 @@ private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: Plug
          satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = JvmArchitecture.currentJvmArch, context = context)
 }
 
-private suspend fun getBundledMainModuleNames(context: BuildContext, additionalModules: List<String>): Set<String> {
+private fun getBundledMainModuleNames(context: BuildContext, additionalModules: List<String>): Set<String> {
   val bundledPluginModules = context.getBundledPluginModules()
   val result = LinkedHashSet<String>(bundledPluginModules.size + additionalModules.size)
   result.addAll(bundledPluginModules)

@@ -10,7 +10,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Insets;
 
 public abstract class AbstractInsetsProperty<T extends RadComponent> extends Property<T, Insets> {
   private final Property[] myChildren;

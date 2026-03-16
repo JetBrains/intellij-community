@@ -11,7 +11,11 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
-import com.intellij.openapi.externalSystem.util.*;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
+import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,10 +24,13 @@ import com.intellij.ui.HideableTitledPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.GridBagLayout;
 
 /**
  * A control which knows how to manage settings of external project being imported.

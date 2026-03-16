@@ -31,7 +31,12 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class SpellCheckerDictionaryGenerator {
   private static final Logger LOG = Logger.getInstance(SpellCheckerDictionaryGenerator.class);

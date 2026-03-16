@@ -13,5 +13,7 @@ interface XpathDataModelExtension {
 
   val isRemDevExtension: Boolean
 
+  fun filterChildItems(component: Component, filteredItems: List<Component>, onlyVisibleItems: Boolean): List<Component> = filteredItems
+
   fun postProcessElement(doc: Document, component: Component, element: Element, parentElement: Element)
 }

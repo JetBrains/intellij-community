@@ -1,0 +1,32 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
+<!-- Source: see moduleSet("vcs") function in CommunityModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
+<idea-plugin>
+  <content namespace="jetbrains">
+    <!-- region nested: vcs.shared -->
+    <module name="intellij.platform.vcs.core" loading="embedded"/>
+    <module name="intellij.platform.vcs.shared" loading="embedded"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+    <!-- endregion -->
+
+    <!-- region nested: vcs.frontend -->
+    <module name="intellij.platform.vcs.impl.frontend"/>
+    <!-- endregion -->
+
+    <!-- region direct modules -->
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.impl.exec"/>
+    <module name="intellij.platform.vcs.impl.lang"/>
+    <module name="intellij.platform.vcs.impl.lang.actions"/>
+    <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.vcs.log.impl"/>
+    <module name="intellij.platform.vcs.log.graph"/>
+    <module name="intellij.platform.vcs.log.graph.impl"/>
+    <module name="intellij.platform.vcs.dvcs"/>
+    <module name="intellij.platform.vcs.dvcs.impl"/>
+    <module name="intellij.platform.vcs" loading="embedded"/>
+    <!-- endregion -->
+  </content>
+</idea-plugin>

@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.internal.IconsLoadTime;
 import com.intellij.internal.IconsLoadTime.StatData;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.icons.ImageCacheKt;
 import com.intellij.ui.scale.ScaleContext;
@@ -29,6 +30,7 @@ import static org.junit.Assume.assumeTrue;
  *
  * @author tav
  */
+@PerformanceUnitTest
 public class IconsLoadTimePerformanceTest {
   private static final Logger LOG = Logger.getInstance(IconsLoadTimePerformanceTest.class);
   private static final int SVG_ICON_AVERAGE_LOAD_TIME_EXPECTED_NO_CACHE = 100; // ms

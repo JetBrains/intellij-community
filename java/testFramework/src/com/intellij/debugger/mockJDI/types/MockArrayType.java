@@ -4,7 +4,15 @@
  */
 package com.intellij.debugger.mockJDI.types;
 
-import com.sun.jdi.*;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ArrayType;
+import com.sun.jdi.ClassLoaderReference;
+import com.sun.jdi.Field;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;

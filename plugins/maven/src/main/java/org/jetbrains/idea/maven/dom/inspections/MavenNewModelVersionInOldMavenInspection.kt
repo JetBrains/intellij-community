@@ -13,7 +13,6 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.util.xml.DomFileElement
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
-import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.dom.MavenDomBundle
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
@@ -32,7 +31,11 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.isDirectory
+import kotlin.io.path.name
+import kotlin.io.path.writeText
 
 
 private val VERSION_TO_UPDATE_TO = "4.0.0-rc-5"

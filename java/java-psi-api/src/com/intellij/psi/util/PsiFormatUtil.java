@@ -5,12 +5,37 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.PsiVariable;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -466,7 +491,12 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     return builder.toString();
   }
 
-  public static String getPackageDisplayName(@NotNull PsiClass psiClass) {
+  /**
+   * @param psiClass class to get the package name from
+   * @return user-friendly additional information about class location. Usually, a package name, 
+   * but could be also a containing class of a type parameter or something like "local class".
+   */
+  public static @Nls String getPackageDisplayName(@NotNull PsiClass psiClass) {
     if (psiClass instanceof PsiTypeParameter) {
       PsiTypeParameterListOwner owner = ((PsiTypeParameter)psiClass).getOwner();
       String ownerName = null;
@@ -479,17 +509,18 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
       else if (owner instanceof PsiMethod) {
         ownerName = owner.getName();
       }
-      return ownerName == null ? "type parameter" : "type parameter of " + ownerName;
+      return ownerName == null ? JavaPsiBundle.message("element.type.parameter") :
+             JavaPsiBundle.message("type.parameter.of", ownerName);
     }
 
     if (PsiUtil.isLocalClass(psiClass)) {
-      return "local class";
+      return JavaPsiBundle.message("local.class");
     }
 
     String packageName = psiClass.getQualifiedName();
     packageName = packageName == null || packageName.lastIndexOf('.') <= 0 ? "" : packageName.substring(0, packageName.lastIndexOf('.'));
     if (packageName.isEmpty()) {
-      packageName = "default package";
+      packageName = JavaPsiBundle.message("default.package");
     }
     return packageName;
   }

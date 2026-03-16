@@ -25,11 +25,11 @@ fun <K, V> startGitLabRestETagListLoaderIn(
   requestRefreshFlow: Flow<Unit>? = null,
   requestChangeFlow: Flow<Change<V>>? = null,
 
-  shouldTryToLoadAll: Boolean = false,
+  shouldTryToLoadAll: Boolean,
 
   performRequest: suspend (uri: URI, eTag: String?) -> HttpResponse<out List<V>?>
 ): ReloadablePotentiallyInfiniteListLoader<V> {
-  val loader = GitLabRestETagListLoader(cs, initialURI, extractKey, shouldTryToLoadAll, performRequest)
+  val loader = GitLabRestETagListLoader(initialURI, extractKey, shouldTryToLoadAll, performRequest)
 
   cs.launchNow { requestReloadFlow?.collect { loader.reload() } }
   cs.launch { requestRefreshFlow?.collect { loader.refresh() } }
@@ -39,7 +39,6 @@ fun <K, V> startGitLabRestETagListLoaderIn(
 }
 
 private class GitLabRestETagListLoader<K, V>(
-  cs: CoroutineScope,
   private val initialURI: URI,
   extractKey: (V) -> K,
 
@@ -62,7 +61,7 @@ private class GitLabRestETagListLoader<K, V>(
 
   override suspend fun performRequestAndProcess(
     pageInfo: PageInfo,
-    f: (pageInfo: PageInfo?, results: List<V>?) -> Page<PageInfo, V>?
+    createPage: (pageInfo: PageInfo?, results: List<V>?) -> Page<PageInfo, V>?
   ): Page<PageInfo, V>? {
     val response = try {
       performRequest(pageInfo.link, pageInfo.etag)
@@ -87,6 +86,6 @@ private class GitLabRestETagListLoader<K, V>(
         URIUtil.createUriWithCustomScheme(it, initialURI.scheme)
       }
 
-    return f(pageInfo.copy(nextLink = nextLink, etag = newEtag), results)
+    return createPage(pageInfo.copy(nextLink = nextLink, etag = newEtag), results)
   }
 }

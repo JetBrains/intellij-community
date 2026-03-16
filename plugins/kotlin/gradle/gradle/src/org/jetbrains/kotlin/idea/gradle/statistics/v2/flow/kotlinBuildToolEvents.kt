@@ -33,7 +33,8 @@ val kotlinBuildToolsFusEvenList = listOf(
             KotlinBuildToolFusMetricName.ENABLED_COMPILER_PLUGIN_NO_ARG,
             KotlinBuildToolFusMetricName.ENABLED_COMPILER_PLUGIN_SAM_WITH_RECEIVER,
             KotlinBuildToolFusMetricName.JVM_DEFAULTS,
-            KotlinBuildToolFusMetricName.USE_OLD_BACKEND
+            KotlinBuildToolFusMetricName.USE_OLD_BACKEND,
+            KotlinBuildToolFusMetricName.ENABLED_COMPILER_REFERENCE_INDEX
         )
     ),
 
@@ -54,7 +55,10 @@ val kotlinBuildToolsFusEvenList = listOf(
         GradleStatisticsEventGroups.MPP, listOf(
             KotlinBuildToolFusMetricName.MPP_PLATFORMS,
             KotlinBuildToolFusMetricName.ENABLED_HMPP,
-            KotlinBuildToolFusMetricName.JS_COMPILER_MODE
+            KotlinBuildToolFusMetricName.JS_COMPILER_MODE,
+            KotlinBuildToolFusMetricName.KOTLIN_CROSS_COMPILATION_DISABLED,
+            KotlinBuildToolFusMetricName.KOTLIN_CROSS_COMPILATION_NOT_SUPPORTED,
+            KotlinBuildToolFusMetricName.KOTLIN_NATIVE_CACHE_DISABLED
         )
     ),
 
@@ -90,7 +94,8 @@ val kotlinBuildToolsFusEvenList = listOf(
             KotlinBuildToolFusMetricName.KOTLIN_REFLECT_VERSION,
             KotlinBuildToolFusMetricName.KOTLIN_COROUTINES_VERSION,
             KotlinBuildToolFusMetricName.KOTLIN_SERIALIZATION_VERSION,
-            KotlinBuildToolFusMetricName.ANDROID_GRADLE_PLUGIN_VERSION
+            KotlinBuildToolFusMetricName.ANDROID_GRADLE_PLUGIN_VERSION,
+            KotlinBuildToolFusMetricName.KOTLIN_GRADLE_PLUGIN_VERSION
         ), addIDEPluginVersion = true
     ),
     FusFlowSendingStep(
@@ -103,7 +108,8 @@ val kotlinBuildToolsFusEvenList = listOf(
             KotlinBuildToolFusMetricName.GRADLE_WORKER_API_USED,
             KotlinBuildToolFusMetricName.KOTLIN_OFFICIAL_CODESTYLE,
             KotlinBuildToolFusMetricName.KOTLIN_PROGRESSIVE_MODE,
-            KotlinBuildToolFusMetricName.KOTLIN_KTS_USED
+            KotlinBuildToolFusMetricName.KOTLIN_KTS_USED,
+            KotlinBuildToolFusMetricName.KOTLIN_BTA_USED
         )
     ),
     FusFlowSendingStep(

@@ -1,8 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.serviceView
 
-import com.intellij.execution.services.*
-import com.intellij.openapi.actionSystem.*
+import com.intellij.execution.services.ServiceViewDefaultDeleteProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataSnapshot
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.actionSystem.UiDataRule
 import com.intellij.util.containers.ContainerUtil
 
 

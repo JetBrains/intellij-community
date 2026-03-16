@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
-import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.declarative.InlayActionData
+import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
+import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHandler
+import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.ApiStatus
@@ -11,10 +15,24 @@ import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
-import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
+import org.jetbrains.kotlin.analysis.api.types.KaDynamicType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
+import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
+import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObjectToSupertypeOrSelf
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
@@ -92,6 +110,15 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
                 text(KtTokens.SUSPEND_KEYWORD.value)
                 text(" ")
             }
+            val contextReceivers = type.contextReceivers
+            if (contextReceivers.isNotEmpty()) {
+                text("context(")
+                contextReceivers.forEachIndexed { index, context ->
+                    if (index != 0) text(", ")
+                    printKtType(context.type)
+                }
+                text(") ")
+            }
             type.receiverType?.let {
                 printKtType(it)
                 text(".")
@@ -122,18 +149,20 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
     if (markedNullable) text("?")
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, anotherType: KaClassType? = null) {
-    val truncatedName = truncatedName(type)
+    val classType = type.approximateAnonymousObjectToSupertypeOrSelf() as KaClassType
+    val truncatedName = truncatedName(classType)
     if (truncatedName.isNotEmpty()) {
-        if (type.classId.isLocal) {
-            printSymbolPsi(type.symbol, truncatedName)
+        if (classType.classId.isLocal) {
+            printSymbolPsi(classType.symbol, truncatedName)
         } else {
-            printClassId(type.classId, truncatedName)
+            printClassId(classType.classId, truncatedName)
         }
     }
 
-    val ownTypeArguments = type.typeArguments
+    val ownTypeArguments = classType.typeArguments
     if (ownTypeArguments.isNotEmpty()) {
         text("<")
 
@@ -246,12 +275,10 @@ private fun truncatedName(classType: KaClassType): String {
     val names = classType.qualifiers
         .mapNotNull {
             val symbol = it.symbol
-            symbol.takeUnless {
-                (it as? KaNamedClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT &&
-                        it.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT
-            }?.name ?: symbol.takeIf { (symbol as? KaClassSymbol)?.classKind == KaClassKind.ANONYMOUS_OBJECT }?.let {
-                SpecialNames.ANONYMOUS
-            }
+            symbol.takeUnless { classifierSymbol ->
+                (classifierSymbol as? KaNamedClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT &&
+                        classifierSymbol.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT
+            }?.name
         }
 
     names.joinToString(".", transform = Name::asString)

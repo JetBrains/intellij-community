@@ -2,6 +2,7 @@
 package git4idea.roots;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,10 +47,10 @@ final class GitRootChecker extends VcsRootChecker {
   }
 
   @Override
-  public boolean isIgnored(@NotNull VirtualFile root, @NotNull VirtualFile checkForIgnore) {
+  public boolean isIgnored(@NotNull Project project, VirtualFile root, @NotNull VirtualFile checkForIgnore) {
     // check-ignore was introduced in 1.8.2,
     // executing the command for older Gits will fail with exit code 1, which we'll treat as "not ignored" for simplicity
-    GitLineHandler handler = new GitLineHandler(null, root, GitCommand.CHECK_IGNORE);
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.CHECK_IGNORE);
     handler.addParameters("--quiet"); // Don't output anything, just set exit status: 0 if ignored
     handler.addRelativeFiles(Collections.singletonList(checkForIgnore));
     return Git.getInstance().runCommand(handler).success();

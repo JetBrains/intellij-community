@@ -21,8 +21,16 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.block.ui.*
-import org.jetbrains.plugins.terminal.view.*
+import org.jetbrains.plugins.terminal.block.ui.TerminalUi
+import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
+import org.jetbrains.plugins.terminal.block.ui.doTerminalOutputScrollChangingAction
+import org.jetbrains.plugins.terminal.block.ui.doWithoutScrollingAnimation
+import org.jetbrains.plugins.terminal.block.ui.isTerminalOutputScrollChangingActionInProgress
+import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
+import org.jetbrains.plugins.terminal.view.TerminalCursorOffsetChangeEvent
+import org.jetbrains.plugins.terminal.view.TerminalOffset
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import kotlin.math.max
 
 /**

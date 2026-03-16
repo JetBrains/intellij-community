@@ -6,6 +6,7 @@ import com.intellij.TestCaseLoader;
 import com.intellij.java.codeInsight.completion.ml.JavaCompletionFeaturesTest;
 import com.intellij.java.codeInsight.template.postfix.templates.PostfixTemplateTestCase;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -53,6 +54,6 @@ public class JavaCompletionTestSuite extends TestSuite {
                               "its name contains 'Completion' substring but it doesn't implement TestIndexingModeSupporter"));
       }
     }
-    return suite;
+    return TestFrameworkUtil.flattenSuite(suite);
   }
 }

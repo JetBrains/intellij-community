@@ -1,18 +1,28 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.toolWindow
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.DesktopLayout
+import com.intellij.openapi.wm.impl.UnifiedToolWindowWeights
+import com.intellij.openapi.wm.impl.WindowInfoImpl
+import com.intellij.openapi.wm.impl.WindowManagerImpl
+import com.intellij.openapi.wm.impl.normalizeOrder
 import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.ui.ExperimentalUI
 import kotlinx.serialization.Serializable
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Rectangle
 
 @Service(Service.Level.APP)
@@ -23,7 +33,6 @@ import java.awt.Rectangle
 class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   : PersistentStateComponentWithModificationTracker<ToolWindowLayoutStorageManagerState> {
   companion object {
-    @JvmStatic
     fun getInstance(): ToolWindowDefaultLayoutManager = service()
 
     const val INITIAL_LAYOUT_NAME: String = "Custom"
@@ -78,13 +87,13 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     state = state.withoutLayout(name)
   }
 
-  @ApiStatus.Internal
+  @Internal
   override fun getState(): ToolWindowLayoutStorageManagerState = state
 
-  @ApiStatus.Internal
+  @Internal
   override fun getStateModificationCount(): Long = tracker.modificationCount
 
-  @ApiStatus.Internal
+  @Internal
   override fun noStateLoaded() {
     if (!isNewUi) {
       (WindowManager.getInstance() as? WindowManagerImpl)?.oldLayout?.let {
@@ -99,7 +108,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     state = state.withUpdatedLayout(INITIAL_LAYOUT_NAME, getDefaultLayoutToolWindowDescriptors(isNewUi), isNewUi)
   }
 
-  @ApiStatus.Internal
+  @Internal
   override fun loadState(state: ToolWindowLayoutStorageManagerState) {
     val newState = if (state.layouts.isEmpty() && (state.v1.isNotEmpty() || state.v2.isNotEmpty())) { // migrating from 2022.3
       ToolWindowLayoutStorageManagerState(layouts = mapOf(INITIAL_LAYOUT_NAME to ToolWindowLayoutDescriptor(v1 = state.v1, v2 = state.v2)))
@@ -118,14 +127,14 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
  * Rider uses default layout for per-app toolwindows feature, so we need to migrate the default layout
  */
 @Serializable
-@ApiStatus.Internal
+@Internal
 data class ToolWindowLayoutStorageManagerStateV1(
   val v1: List<ToolWindowDescriptor> = emptyList(),
   val v2: List<ToolWindowDescriptor> = emptyList()
 )
 
 @Serializable
-@ApiStatus.Internal
+@Internal
 data class ToolWindowLayoutStorageManagerState(
   val activeLayoutName: String = ToolWindowDefaultLayoutManager.INITIAL_LAYOUT_NAME,
   val layouts: Map<String, ToolWindowLayoutDescriptor> = emptyMap(),
@@ -174,7 +183,7 @@ data class ToolWindowLayoutStorageManagerState(
 }
 
 @Serializable
-@ApiStatus.Internal
+@Internal
 data class ToolWindowLayoutDescriptor(
   val v1: List<ToolWindowDescriptor> = emptyList(),
   val v2: List<ToolWindowDescriptor> = emptyList(),

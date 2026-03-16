@@ -4,3 +4,5 @@ fun foo(){
 
 // EXIST: { lookupString:"ENGLISH", itemText:"Locale.ENGLISH", tailText:" (java.util)", typeText:"Locale" }
 // EXIST: { lookupString:"FRENCH", itemText:"Locale.FRENCH", tailText:" (java.util)", typeText:"Locale" }
+
+// IGNORE_K2

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring
 
 import com.intellij.psi.PsiElement
@@ -24,11 +24,35 @@ import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
 import org.jetbrains.kotlin.idea.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.nameDeterminant
 import org.jetbrains.kotlin.idea.refactoring.rename.KtReferenceMutateServiceBase
-import org.jetbrains.kotlin.idea.references.*
+import org.jetbrains.kotlin.idea.references.KDocReference
+import org.jetbrains.kotlin.idea.references.KtArrayAccessReference
+import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
+import org.jetbrains.kotlin.idea.references.KtForLoopInReference
+import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
+import org.jetbrains.kotlin.idea.references.KtReference
+import org.jetbrains.kotlin.idea.references.KtReferenceMutateService
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
+import org.jetbrains.kotlin.idea.references.KtSimpleReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.tail
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtUnaryExpression
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementOrCallableRef
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
@@ -56,16 +80,20 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                 is KtInvokeFunctionReference -> bindUnnamedReference(ktReference, element, OperatorNameConventions.INVOKE)
                 is KtArrayAccessReference -> bindUnnamedReference(ktReference, element, OperatorNameConventions.GET)
                 is KtForLoopInReference -> bindUnnamedReference(ktReference, element, OperatorNameConventions.ITERATOR)
-                is KtDestructuringDeclarationReference -> bindUnnamedReference(ktReference, element, ktReference.resolvesByNames.singleOrNull() ?: return ktReference.element)
+                is KtDestructuringDeclarationReference -> bindUnnamedReference(ktReference, element, ktReference.resolvesByNames)
                 else -> throw IncorrectOperationException("Unsupported reference type: $ktReference")
             }
         }
     }
 
     private fun bindUnnamedReference(reference: KtReference, targetElement: PsiElement?, resolvedName: Name): PsiElement {
+        return bindUnnamedReference(reference, targetElement, listOf(resolvedName))
+    }
+
+    private fun bindUnnamedReference(reference: KtReference, targetElement: PsiElement?, resolvedName: Collection<Name>): PsiElement {
         val expression = reference.element
         if (targetElement !is KtNamedFunction) return expression
-        if (targetElement.nameAsName != resolvedName) return expression
+        if (targetElement.nameAsName !in resolvedName) return expression
         val fqName = targetElement.kotlinFqName ?: return targetElement
         return expression.containingKtFile.addImport(fqName)
     }

@@ -2,7 +2,11 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.*;
+import com.intellij.codeHighlighting.MainHighlightingPassFactory;
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;

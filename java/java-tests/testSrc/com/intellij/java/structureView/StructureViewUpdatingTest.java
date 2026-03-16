@@ -20,7 +20,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import com.intellij.util.IncorrectOperationException;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
 

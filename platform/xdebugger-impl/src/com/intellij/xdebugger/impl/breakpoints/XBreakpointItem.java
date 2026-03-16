@@ -13,22 +13,29 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.debugger.impl.rpc.XBreakpointId;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
-import com.intellij.xdebugger.impl.rpc.XBreakpointId;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-
-import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
+import javax.swing.Icon;
+import java.awt.Color;
 
 @ApiStatus.Internal
 public class XBreakpointItem extends BreakpointItem {
@@ -36,8 +43,8 @@ public class XBreakpointItem extends BreakpointItem {
   private final XBreakpointManagerProxy myBreakpointManagerProxy;
   private XLightBreakpointPropertiesPanel myPropertiesPanel;
 
-  public XBreakpointItem(XBreakpointBase<?, ?, ?> breakpoint, XBreakpointManagerProxy breakpointManagerProxy) {
-    myBreakpointProxy = asProxy(breakpoint);
+  public XBreakpointItem(XBreakpoint<?> breakpoint, XBreakpointManagerProxy breakpointManagerProxy) {
+    myBreakpointProxy = XDebuggerEntityConverter.asProxy(breakpoint);
     myBreakpointManagerProxy = breakpointManagerProxy;
   }
 

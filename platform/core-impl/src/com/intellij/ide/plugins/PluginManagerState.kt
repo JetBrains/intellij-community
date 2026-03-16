@@ -4,10 +4,14 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 
-// todo merge into PluginSetState?
 @ApiStatus.Internal
-data class PluginManagerState internal constructor(
-  @JvmField val pluginSet: PluginSet,
-  @JvmField val pluginIdsToDisable: Set<PluginId>,
-  @JvmField val pluginIdsToEnable: Set<PluginId>,
+class PluginManagerState internal constructor(
+  val pluginSet: PluginSet,
+  val pluginToDisable: List<PluginStateChangeData>,
+  val pluginToEnable: List<PluginStateChangeData>,
+  val incompletePluginsForLogging: List<PluginMainDescriptor>, // TODO refactor
+  val shadowedBundledPlugins: Set<PluginId>,
 )
+
+@ApiStatus.Internal
+class PluginStateChangeData(val pluginId: PluginId, val pluginName: String)

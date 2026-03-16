@@ -1,9 +1,7 @@
 package ru.adelf.idea.dotenv.psi;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;

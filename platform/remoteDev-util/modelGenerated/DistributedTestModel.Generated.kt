@@ -61,7 +61,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = 217769322142192170L
+        const val serializationHash = -8620132101972150534L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -118,6 +118,17 @@ data class RdAgentInfo (
     val testMethodNonParameterizedName: String,
     val testMethodParametersArrayString: String
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(id)
+        buffer.writeInt(launchNumber)
+        buffer.writeEnum(agentType)
+        buffer.writeEnum(productType)
+        buffer.writeString(testIdeProductCode)
+        buffer.writeString(testQualifiedClassName)
+        buffer.writeString(testMethodNonParameterizedName)
+        buffer.writeString(testMethodParametersArrayString)
+    }
     //companion
     
     companion object : IMarshaller<RdAgentInfo> {
@@ -138,14 +149,7 @@ data class RdAgentInfo (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdAgentInfo)  {
-            buffer.writeString(value.id)
-            buffer.writeInt(value.launchNumber)
-            buffer.writeEnum(value.agentType)
-            buffer.writeEnum(value.productType)
-            buffer.writeString(value.testIdeProductCode)
-            buffer.writeString(value.testQualifiedClassName)
-            buffer.writeString(value.testMethodNonParameterizedName)
-            buffer.writeString(value.testMethodParametersArrayString)
+            value.write(ctx, buffer)
         }
         
         
@@ -239,6 +243,11 @@ data class RdAllureStartStepInfo (
     val uuid: String,
     val name: String
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(uuid)
+        buffer.writeString(name)
+    }
     //companion
     
     companion object : IMarshaller<RdAllureStartStepInfo> {
@@ -253,8 +262,7 @@ data class RdAllureStartStepInfo (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdAllureStartStepInfo)  {
-            buffer.writeString(value.uuid)
-            buffer.writeString(value.name)
+            value.write(ctx, buffer)
         }
         
         
@@ -304,6 +312,11 @@ data class RdAllureStopStepInfo (
     val uuid: String,
     val status: String
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(uuid)
+        buffer.writeString(status)
+    }
     //companion
     
     companion object : IMarshaller<RdAllureStopStepInfo> {
@@ -318,8 +331,7 @@ data class RdAllureStopStepInfo (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdAllureStopStepInfo)  {
-            buffer.writeString(value.uuid)
-            buffer.writeString(value.status)
+            value.write(ctx, buffer)
         }
         
         
@@ -369,6 +381,11 @@ data class RdAllureUpdateStepInfo (
     val uuid: String,
     val status: String
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(uuid)
+        buffer.writeString(status)
+    }
     //companion
     
     companion object : IMarshaller<RdAllureUpdateStepInfo> {
@@ -383,8 +400,7 @@ data class RdAllureUpdateStepInfo (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdAllureUpdateStepInfo)  {
-            buffer.writeString(value.uuid)
-            buffer.writeString(value.status)
+            value.write(ctx, buffer)
         }
         
         
@@ -434,6 +450,11 @@ data class RdProductInfo (
     val productCode: String,
     val productVersion: String
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(productCode)
+        buffer.writeString(productVersion)
+    }
     //companion
     
     companion object : IMarshaller<RdProductInfo> {
@@ -448,8 +469,7 @@ data class RdProductInfo (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdProductInfo)  {
-            buffer.writeString(value.productCode)
-            buffer.writeString(value.productVersion)
+            value.write(ctx, buffer)
         }
         
         
@@ -524,6 +544,11 @@ data class RdTestActionParameters (
     val title: String,
     val parameters: List<String>?
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(title)
+        buffer.writeNullable(parameters) { buffer.writeList(it) { v -> buffer.writeString(v) } }
+    }
     //companion
     
     companion object : IMarshaller<RdTestActionParameters> {
@@ -538,8 +563,7 @@ data class RdTestActionParameters (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestActionParameters)  {
-            buffer.writeString(value.title)
-            buffer.writeNullable(value.parameters) { buffer.writeList(it) { v -> buffer.writeString(v) } }
+            value.write(ctx, buffer)
         }
         
         
@@ -589,6 +613,11 @@ data class RdTestComponentData (
     val width: Int,
     val height: Int
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeInt(width)
+        buffer.writeInt(height)
+    }
     //companion
     
     companion object : IMarshaller<RdTestComponentData> {
@@ -603,8 +632,7 @@ data class RdTestComponentData (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestComponentData)  {
-            buffer.writeInt(value.width)
-            buffer.writeInt(value.height)
+            value.write(ctx, buffer)
         }
         
         
@@ -674,6 +702,32 @@ class RdTestSession private constructor(
     private val _projectsAreInitialised: RdCall<Unit, Boolean>,
     private val _getProductCodeAndVersion: RdCall<Unit, RdProductInfo>
 ) : RdBindableBase() {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        RdAgentInfo.write(ctx, buffer, rdAgentInfo)
+        buffer.writeBool(runTestMethod)
+        buffer.writeList(traceCategories) { v -> buffer.writeString(v) }
+        buffer.writeList(debugCategories) { v -> buffer.writeString(v) }
+        RdProperty.write(ctx, buffer, _ready)
+        RdSignal.write(ctx, buffer, _sendException)
+        RdSignal.write(ctx, buffer, _startAllureStep)
+        RdSignal.write(ctx, buffer, _updateAllureStep)
+        RdSignal.write(ctx, buffer, _stopAllureStep)
+        RdSignal.write(ctx, buffer, _exitApp)
+        RdSignal.write(ctx, buffer, _showNotification)
+        RdCall.write(ctx, buffer, _forceLeaveAllModals)
+        RdCall.write(ctx, buffer, _closeAllOpenedProjects)
+        RdCall.write(ctx, buffer, _runNextAction)
+        RdCall.write(ctx, buffer, _requestFocus)
+        RdCall.write(ctx, buffer, _isFocused)
+        RdCall.write(ctx, buffer, _visibleFrameNames)
+        RdCall.write(ctx, buffer, _projectsNames)
+        RdCall.write(ctx, buffer, _makeScreenshot)
+        RdCall.write(ctx, buffer, _isResponding)
+        RdCall.write(ctx, buffer, _projectsAreInitialised)
+        RdCall.write(ctx, buffer, _getProductCodeAndVersion)
+    }
     //companion
     
     companion object : IMarshaller<RdTestSession> {
@@ -709,29 +763,7 @@ class RdTestSession private constructor(
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSession)  {
-            value.rdid.write(buffer)
-            RdAgentInfo.write(ctx, buffer, value.rdAgentInfo)
-            buffer.writeBool(value.runTestMethod)
-            buffer.writeList(value.traceCategories) { v -> buffer.writeString(v) }
-            buffer.writeList(value.debugCategories) { v -> buffer.writeString(v) }
-            RdProperty.write(ctx, buffer, value._ready)
-            RdSignal.write(ctx, buffer, value._sendException)
-            RdSignal.write(ctx, buffer, value._startAllureStep)
-            RdSignal.write(ctx, buffer, value._updateAllureStep)
-            RdSignal.write(ctx, buffer, value._stopAllureStep)
-            RdSignal.write(ctx, buffer, value._exitApp)
-            RdSignal.write(ctx, buffer, value._showNotification)
-            RdCall.write(ctx, buffer, value._forceLeaveAllModals)
-            RdCall.write(ctx, buffer, value._closeAllOpenedProjects)
-            RdCall.write(ctx, buffer, value._runNextAction)
-            RdCall.write(ctx, buffer, value._requestFocus)
-            RdCall.write(ctx, buffer, value._isFocused)
-            RdCall.write(ctx, buffer, value._visibleFrameNames)
-            RdCall.write(ctx, buffer, value._projectsNames)
-            RdCall.write(ctx, buffer, value._makeScreenshot)
-            RdCall.write(ctx, buffer, value._isResponding)
-            RdCall.write(ctx, buffer, value._projectsAreInitialised)
-            RdCall.write(ctx, buffer, value._getProductCodeAndVersion)
+            value.write(ctx, buffer)
         }
         
         private val __BoolNullableSerializer = FrameworkMarshallers.Bool.nullable()
@@ -903,12 +935,25 @@ class RdTestSession private constructor(
  */
 data class RdTestSessionException (
     val type: String,
-    val messageWithStacktrace: String,
-    val message: String?,
+    val messageWithDetails: String,
+    val messageForTestHistoryConsistency: String,
+    val messageForDiogen: String?,
+    val printToStringForDiogen: String,
     val stacktrace: List<RdTestSessionStackTraceElement>,
     val cause: RdTestSessionLightException?,
     val suppressedExceptions: List<RdTestSessionLightException>?
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(type)
+        buffer.writeString(messageWithDetails)
+        buffer.writeString(messageForTestHistoryConsistency)
+        buffer.writeNullable(messageForDiogen) { buffer.writeString(it) }
+        buffer.writeString(printToStringForDiogen)
+        buffer.writeList(stacktrace) { v -> RdTestSessionStackTraceElement.write(ctx, buffer, v) }
+        buffer.writeNullable(cause) { RdTestSessionLightException.write(ctx, buffer, it) }
+        buffer.writeNullable(suppressedExceptions) { buffer.writeList(it) { v -> RdTestSessionLightException.write(ctx, buffer, v) } }
+    }
     //companion
     
     companion object : IMarshaller<RdTestSessionException> {
@@ -918,21 +963,18 @@ data class RdTestSessionException (
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdTestSessionException  {
             val type = buffer.readString()
-            val messageWithStacktrace = buffer.readString()
-            val message = buffer.readNullable { buffer.readString() }
+            val messageWithDetails = buffer.readString()
+            val messageForTestHistoryConsistency = buffer.readString()
+            val messageForDiogen = buffer.readNullable { buffer.readString() }
+            val printToStringForDiogen = buffer.readString()
             val stacktrace = buffer.readList { RdTestSessionStackTraceElement.read(ctx, buffer) }
             val cause = buffer.readNullable { RdTestSessionLightException.read(ctx, buffer) }
             val suppressedExceptions = buffer.readNullable { buffer.readList { RdTestSessionLightException.read(ctx, buffer) } }
-            return RdTestSessionException(type, messageWithStacktrace, message, stacktrace, cause, suppressedExceptions)
+            return RdTestSessionException(type, messageWithDetails, messageForTestHistoryConsistency, messageForDiogen, printToStringForDiogen, stacktrace, cause, suppressedExceptions)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSessionException)  {
-            buffer.writeString(value.type)
-            buffer.writeString(value.messageWithStacktrace)
-            buffer.writeNullable(value.message) { buffer.writeString(it) }
-            buffer.writeList(value.stacktrace) { v -> RdTestSessionStackTraceElement.write(ctx, buffer, v) }
-            buffer.writeNullable(value.cause) { RdTestSessionLightException.write(ctx, buffer, it) }
-            buffer.writeNullable(value.suppressedExceptions) { buffer.writeList(it) { v -> RdTestSessionLightException.write(ctx, buffer, v) } }
+            value.write(ctx, buffer)
         }
         
         
@@ -949,8 +991,10 @@ data class RdTestSessionException (
         other as RdTestSessionException
         
         if (type != other.type) return false
-        if (messageWithStacktrace != other.messageWithStacktrace) return false
-        if (message != other.message) return false
+        if (messageWithDetails != other.messageWithDetails) return false
+        if (messageForTestHistoryConsistency != other.messageForTestHistoryConsistency) return false
+        if (messageForDiogen != other.messageForDiogen) return false
+        if (printToStringForDiogen != other.printToStringForDiogen) return false
         if (stacktrace != other.stacktrace) return false
         if (cause != other.cause) return false
         if (suppressedExceptions != other.suppressedExceptions) return false
@@ -961,8 +1005,10 @@ data class RdTestSessionException (
     override fun hashCode(): Int  {
         var __r = 0
         __r = __r*31 + type.hashCode()
-        __r = __r*31 + messageWithStacktrace.hashCode()
-        __r = __r*31 + if (message != null) message.hashCode() else 0
+        __r = __r*31 + messageWithDetails.hashCode()
+        __r = __r*31 + messageForTestHistoryConsistency.hashCode()
+        __r = __r*31 + if (messageForDiogen != null) messageForDiogen.hashCode() else 0
+        __r = __r*31 + printToStringForDiogen.hashCode()
         __r = __r*31 + stacktrace.hashCode()
         __r = __r*31 + if (cause != null) cause.hashCode() else 0
         __r = __r*31 + if (suppressedExceptions != null) suppressedExceptions.hashCode() else 0
@@ -973,8 +1019,10 @@ data class RdTestSessionException (
         printer.println("RdTestSessionException (")
         printer.indent {
             print("type = "); type.print(printer); println()
-            print("messageWithStacktrace = "); messageWithStacktrace.print(printer); println()
-            print("message = "); message.print(printer); println()
+            print("messageWithDetails = "); messageWithDetails.print(printer); println()
+            print("messageForTestHistoryConsistency = "); messageForTestHistoryConsistency.print(printer); println()
+            print("messageForDiogen = "); messageForDiogen.print(printer); println()
+            print("printToStringForDiogen = "); printToStringForDiogen.print(printer); println()
             print("stacktrace = "); stacktrace.print(printer); println()
             print("cause = "); cause.print(printer); println()
             print("suppressedExceptions = "); suppressedExceptions.print(printer); println()
@@ -995,6 +1043,12 @@ data class RdTestSessionLightException (
     val message: String?,
     val stacktrace: List<RdTestSessionStackTraceElement>
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(type)
+        buffer.writeNullable(message) { buffer.writeString(it) }
+        buffer.writeList(stacktrace) { v -> RdTestSessionStackTraceElement.write(ctx, buffer, v) }
+    }
     //companion
     
     companion object : IMarshaller<RdTestSessionLightException> {
@@ -1010,9 +1064,7 @@ data class RdTestSessionLightException (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSessionLightException)  {
-            buffer.writeString(value.type)
-            buffer.writeNullable(value.message) { buffer.writeString(it) }
-            buffer.writeList(value.stacktrace) { v -> RdTestSessionStackTraceElement.write(ctx, buffer, v) }
+            value.write(ctx, buffer)
         }
         
         
@@ -1067,6 +1119,13 @@ data class RdTestSessionStackTraceElement (
     val fileName: String,
     val lineNumber: Int
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(declaringClass)
+        buffer.writeString(methodName)
+        buffer.writeString(fileName)
+        buffer.writeInt(lineNumber)
+    }
     //companion
     
     companion object : IMarshaller<RdTestSessionStackTraceElement> {
@@ -1083,10 +1142,7 @@ data class RdTestSessionStackTraceElement (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSessionStackTraceElement)  {
-            buffer.writeString(value.declaringClass)
-            buffer.writeString(value.methodName)
-            buffer.writeString(value.fileName)
-            buffer.writeInt(value.lineNumber)
+            value.write(ctx, buffer)
         }
         
         

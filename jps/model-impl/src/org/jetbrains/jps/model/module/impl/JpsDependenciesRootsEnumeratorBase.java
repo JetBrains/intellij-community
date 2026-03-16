@@ -5,7 +5,13 @@ import com.intellij.util.CollectConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
-import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.module.JpsDependenciesRootsEnumerator;
+import org.jetbrains.jps.model.module.JpsDependencyElement;
+import org.jetbrains.jps.model.module.JpsLibraryDependency;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleDependency;
+import org.jetbrains.jps.model.module.JpsModuleSourceDependency;
+import org.jetbrains.jps.model.module.JpsSdkDependency;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;

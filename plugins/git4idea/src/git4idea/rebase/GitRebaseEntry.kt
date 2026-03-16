@@ -8,7 +8,7 @@ import org.jetbrains.annotations.PropertyKey
 import java.awt.event.KeyEvent
 import java.util.function.Supplier
 
-internal open class GitRebaseEntry(val action: Action, val commit: String, val subject: String) {
+open class GitRebaseEntry(val action: Action, val commit: String, val subject: String) {
   override fun toString() = "$action $commit $subject"
 
   sealed class Action(val command: String,

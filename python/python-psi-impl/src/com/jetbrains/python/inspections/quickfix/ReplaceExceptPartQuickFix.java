@@ -45,11 +45,11 @@ public class ReplaceExceptPartQuickFix extends PsiUpdateModCommandQuickFix {
       }
       assert element != null;
       PyTryExceptStatement newElement =
-        elementGenerator.createFromText(LanguageLevel.forElement(exceptPart), PyTryExceptStatement.class, "try:  pass except a as b:  pass");
+        elementGenerator.createFromText(LanguageLevel.forElement(exceptPart), PyTryExceptStatement.class,
+                                        "try:  pass except a as b:  pass");
       ASTNode node = newElement.getExceptParts()[0].getNode().findChildByType(PyTokenTypes.AS_KEYWORD);
       assert node != null;
       element.replace(node.getPsi());
     }
   }
-
 }

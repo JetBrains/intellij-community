@@ -10,7 +10,40 @@ resourcegroup(
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/testFramework",
+    "//java/java-runtime:rt",
+    "//platform/configuration-store-impl:configurationStore-tests",
+    "//plugins/terminal",
+    "//plugins/terminal/backend",
+    "//plugins/terminal/frontend",
+    "//plugins/terminal/completion",
+    "//plugins/terminal/sh",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-impl",
+    "//platform/execution-impl",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/analysis-api:analysis",
+    "//platform/lang-api:lang",
+    "//platform/util-ex",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/coroutines",
+    "//platform/platform-impl/internal",
+    "//plugins/sh/plugin",
+    "//platform/code-style-api:codeStyle",
+    "@lib//:assert_j",
+    "//libraries/jediterm-core",
+    "//libraries/jediterm-ui",
+    "//libraries/pty4j",
+    "//libraries/guava",
+    "@lib//:junit4",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+  ]
 )
 
 jvm_library(
@@ -23,6 +56,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//java/java-runtime:rt",
     "//platform/configuration-store-impl:configurationStore-tests",
     "//platform/configuration-store-impl:configurationStore-tests_test_lib",
     "//plugins/terminal",
@@ -58,7 +92,14 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/platform-impl/eel:ide-impl-wsl",
-  ]
+    "//platform/execution",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:mockito",
+    "@lib//:mockito-kotlin",
+    "@lib//:commons-lang3",
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.terminal.tests` end
 

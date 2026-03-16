@@ -6,12 +6,27 @@ import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.container.ComponentProvider
 import org.jetbrains.kotlin.container.get
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.test.ConfigurationKind
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestWithEnvironment
-import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnonymousInitializer
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunctionType
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.renderer.AnnotationArgumentsRenderingPolicy
 import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
@@ -113,7 +128,7 @@ abstract class AbstractDescriptorRendererTest : KotlinTestWithEnvironment() {
         val renderedDescriptors = descriptors.map { renderer.render(it) }.joinToString(separator = "\n")
 
         val document = DocumentImpl(psiFile.text)
-        KtUsefulTestCase.assertSameLines(KotlinTestUtils.getLastCommentedLines(document), renderedDescriptors)
+        KotlinTestUtils.assertSameLines(KotlinTestUtils.getLastCommentedLines(document), renderedDescriptors)
     }
 
     override fun createEnvironment(): KotlinCoreEnvironment {

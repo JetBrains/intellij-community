@@ -18,7 +18,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.components.Service.Level.PROJECT;

@@ -2,7 +2,15 @@
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames

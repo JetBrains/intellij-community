@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
@@ -10,8 +14,18 @@ import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.util.system.OS
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
-import kotlinx.coroutines.*
-import java.awt.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import java.awt.AWTException
+import java.awt.Component
+import java.awt.Graphics2D
+import java.awt.Rectangle
+import java.awt.Robot
+import java.awt.Toolkit
+import java.awt.Window
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.IOException
@@ -114,7 +128,7 @@ internal fun takeFullScreenshot(childFolder: String? = null): String? {
   // On Wayland it triggers system dialog about granting permissions each time, and it can't be disabled.
   if (StartupUiUtil.isWayland) return null
 
-  var screenshotPath = File(PathManager.getLogPath() + "/screenshots/" + (childFolder ?: "default"))
+  var screenshotPath = PathManager.getOriginalLogDir().resolve("screenshots").resolve(childFolder ?: "default").toFile()
   screenshotPath = getNextFolder(screenshotPath)
   val screenshotPathWithFile = screenshotPath.resolve("full_screen.png")
   takeScreenshotWithAwtRobot(screenshotPathWithFile.absolutePath, "png")
@@ -129,7 +143,7 @@ internal suspend fun takeScreenshotOfAllWindows(childFolder: String? = null) {
   if (ApplicationManager.getApplication().isHeadlessEnvironment) return
 
   val projects = ProjectManager.getInstance().openProjects
-  var screenshotPath = File(PathManager.getLogPath() + "/screenshots/" + (childFolder ?: "default"))
+  var screenshotPath = PathManager.getOriginalLogDir().resolve("screenshots").resolve(childFolder ?: "default").toFile()
   screenshotPath = getNextFolder(screenshotPath)
 
   for (project in projects) {

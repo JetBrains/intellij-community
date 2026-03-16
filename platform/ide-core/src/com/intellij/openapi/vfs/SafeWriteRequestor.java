@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
-import com.intellij.ide.ui.IdeUiService;
+import com.intellij.ide.GeneralSettings;
 
 /**
  * A marker interface for {@link VirtualFile#getOutputStream(Object)} to take extra caution w.r.t. an existing content.
@@ -11,6 +11,6 @@ import com.intellij.ide.ui.IdeUiService;
  */
 public interface SafeWriteRequestor {
   static boolean shouldUseSafeWrite(Object requestor) {
-    return requestor instanceof SafeWriteRequestor && IdeUiService.getInstance().isUseSafeWrite();
+    return requestor instanceof SafeWriteRequestor && GeneralSettings.getInstance().isUseSafeWrite();
   }
 }

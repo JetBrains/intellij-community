@@ -10,7 +10,11 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.UI
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -38,7 +42,14 @@ import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
-import java.awt.*
+import java.awt.Component
+import java.awt.Frame
+import java.awt.GraphicsDevice
+import java.awt.GraphicsEnvironment
+import java.awt.KeyboardFocusManager
+import java.awt.Rectangle
+import java.awt.Shape
+import java.awt.Window
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
@@ -46,6 +57,7 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JDialog
 import javax.swing.JFrame
 import javax.swing.JOptionPane
+import javax.swing.JRootPane
 import javax.swing.JWindow
 
 private val LOG = logger<WindowManagerImpl>()
@@ -309,7 +321,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
         releasedFrameHelper.storeStateForReuse()
         val frame = releasedFrameHelper.frame
         frameToReuse.set(frame)
-        frame.doSetRootPane(null)
+        frame.doSetRootPane(JRootPane())
         frame.setFrameHelper(null)
         if (JOptionPane.getRootFrame() === frame) {
           JOptionPane.setRootFrame(null)

@@ -28,6 +28,8 @@ jvm_library(
     "//platform/dvcs-impl/shared",
     "//platform/vcs-impl/shared",
     "//fleet/kernel",
+    "//platform/searchEverywhere/frontend",
+    "//platform/scopes",
   ]
 )
 ### auto-generated section `build intellij.vcs.git.frontend` end

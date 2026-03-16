@@ -4,7 +4,7 @@ package com.intellij.ui.content;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface ContentUI {
   JComponent getComponent();

@@ -2,8 +2,12 @@
 package com.intellij.grazie.ide.inspection.grammar.quickfix
 
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
-import com.intellij.codeInsight.intention.*
 import com.intellij.codeInsight.intention.CustomizableIntentionAction.RangeToHighlight
+import com.intellij.codeInsight.intention.EventTrackingIntentionAction
+import com.intellij.codeInsight.intention.FileModifier
+import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
@@ -12,6 +16,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.grazie.GrazieBundle
+import com.intellij.grazie.grammar.LanguageToolChecker
 import com.intellij.grazie.ide.fus.AcceptanceRateTracker
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.ui.components.dsl.msg
@@ -171,12 +176,26 @@ object GrazieReplaceTypoQuickFix {
   @VisibleForTesting
   @JvmStatic
   fun toFileReplacements(replacementRange: TextRange, suggestion: CharSequence, text: TextContent): List<Pair<SmartPsiFileRange, String>> {
-    val replacedText = replacementRange.subSequence(text)
     val file = text.containingFile
     val spm = SmartPointerManager.getInstance(file.project)
+    return toRangeReplacements(replacementRange, suggestion, text)
+      .map { (range, replacement) -> spm.createSmartPsiFileRangePointer(file, range) to replacement }
+  }
+
+  @JvmStatic
+  fun toRangeReplacements(replacementRange: TextRange, suggestion: CharSequence, problem: TextProblem): List<Pair<TextRange, String>> =
+    if (problem is LanguageToolChecker.Problem) {
+      toRangeReplacements(replacementRange, suggestion, problem.text)
+    } else {
+      listOf(problem.text.textRangeToFile(replacementRange) to suggestion.toString())
+    }
+
+  @JvmStatic
+  fun toRangeReplacements(replacementRange: TextRange, suggestion: CharSequence, text: TextContent): List<Pair<TextRange, String>> {
+    val replacedText = replacementRange.subSequence(text)
     if (replacedText.contains(Regex("(- *\n)|(\n *-)"))) {
       val fileRange = text.textRangeToFile(replacementRange)
-      return listOf(spm.createSmartPsiFileRangePointer(file, fileRange) to suggestion.toString())
+      return listOf(fileRange to suggestion.toString())
     }
     val commonPrefix = commonPrefixLength(suggestion, replacedText)
     val commonSuffix =
@@ -192,7 +211,7 @@ object GrazieReplaceTypoQuickFix {
     }
 
     val best = if (isWordMiddle(text, localRange.endOffset)) shreds.last() else shreds.first()
-    return shreds.map { spm.createSmartPsiFileRangePointer(file, it) to (if (it === best) replacement else "") }
+    return shreds.map { it to (if (it === best) replacement else "") }
   }
 
   private fun removalWouldGlueUnrelatedTokens(removedRange: TextRange, text: TextContent): Boolean {

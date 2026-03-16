@@ -10,11 +10,10 @@ import com.intellij.testFramework.runInEdtAndGet
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.TestFeatureWithFileMarkup
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.kdoc.findKDoc
+import org.jetbrains.kotlin.idea.kdoc.findKDocByPsi
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import java.io.File
@@ -73,10 +72,12 @@ object DocumentationChecker : TestFeatureWithFileMarkup<DocumentationCheckerConf
                     ?: error("element at caret is not found in the file '$relativePath'[$line:$offset]")
                 val referenceExpression = caretElement.parent as? KtNameReferenceExpression
                     ?: error("caret is expected at reference expression")
-                val element = referenceExpression.mainReference.resolve() as KtElement
+                val element = referenceExpression.mainReference.resolve() as KtDeclaration
                 val navigationElement = element.navigationElement as? KtDeclaration
                     ?: error("documentation can be only on KtDeclaration")
-                val docText: String? = navigationElement.findKDoc { DescriptorToSourceUtilsIde.getAnyDeclaration(testProject, it) }?.contentTag?.getContent()
+                val docText: String? =
+                    (navigationElement.findKDocByPsi()
+                        ?: (ExpectActualUtils.liftToExpect(element)?.navigationElement as? KtDeclaration)?.findKDocByPsi())?.contentTag?.getContent()
                 return@map """
                     |$relativePath:$line:$offset
                     |$docText

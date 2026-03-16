@@ -32,7 +32,7 @@ import java.util.List;
 
 /**
  * User: ktisha
- *
+ * <p>
  * pylint W0601
  */
 public final class PyGlobalUndefinedInspection extends PyInspection {
@@ -49,6 +49,7 @@ public final class PyGlobalUndefinedInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyGlobalStatement(@NotNull PyGlobalStatement node) {
       final PyTargetExpression[] globals = node.getGlobals();

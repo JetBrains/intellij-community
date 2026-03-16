@@ -1,18 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.perFileVersion
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.outputStream
 import com.jetbrains.rd.util.parseLong
 import com.jetbrains.rd.util.putLong
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.isRegularFile
 
-@ApiStatus.Internal
-class VfsCreationStampChecker(private val vfsCreationTimestampPath: Path) {
+internal class VfsCreationStampChecker(private val vfsCreationTimestampPath: Path) {
   fun runIfVfsCreationStampMismatch(expectedVfsCreationTimestamp: Long, cleanup: (reason: String) -> Unit) {
     if (vfsCreationTimestampPath.parent.exists()) {
       // directory exists. Check VFS creation timestamp and drop the file if it is outdated

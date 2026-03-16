@@ -6,3 +6,5 @@ fun foo(s: String) {
 }
 
 // ELEMENT: else
+
+// IGNORE_K2

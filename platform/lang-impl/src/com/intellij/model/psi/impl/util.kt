@@ -20,6 +20,6 @@ internal fun mockEditor(file: PsiFile): Editor? {
     override fun getVirtualFile(): VirtualFile? = file.virtualFile
     override fun toString(): String = "API compatibility editor"
   }
-  EditorContextManager.getInstance(file.project).setEditorContext(editor, SingleEditorContext(file.codeInsightContext))
+  (EditorContextManager.getInstance(project)).setEditorContextNoFire(editor, SingleEditorContext(file.codeInsightContext))
   return editor
 }

@@ -264,7 +264,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       import java.time.Duration;
       
       class Main {
-        {
+        static {
           try {
             Thread.sl<caret>eep(Duration.ofSeconds(5));
           } catch (InterruptedException e) { }
@@ -329,14 +329,12 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
 
   fun `test language level 24 with JDK 25`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_24)
-    addPreviewFeature()
-    addStableValue()
     myFixture.testHighlighting(JvmLanguage.JAVA, """
-      import java.util.concurrent.StructuredTaskScope;
+      import <error descr="java.util.concurrent.StructuredTaskScope is a preview API and is disabled by default">java.util.concurrent.StructuredTaskScope</error>;
 
         class Main {
           static void main() {
-              StructuredTaskScope a; // JEP 505
+              <error descr="java.util.concurrent.StructuredTaskScope is a preview API and is disabled by default">StructuredTaskScope</error> a; // JEP 505
               <error descr="Usage of preview API documented as @since 25+"><error descr="java.lang.StableValue is a preview API and is disabled by default">StableValue<String></error></error> b = <error descr="Usage of preview API documented as @since 25+"><error descr="java.lang.StableValue is a preview API and is disabled by default">StableValue</error></error>.<caret>of("foo");
           }
       }
@@ -348,8 +346,6 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
 
   fun `test language level 24 preview with JDK 25`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_24_PREVIEW)
-    addPreviewFeature()
-    addStableValue()
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.util.concurrent.StructuredTaskScope;
 
@@ -365,52 +361,48 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     assertEquals(LanguageLevel.JDK_25_PREVIEW, LanguageLevelUtil.getEffectiveLanguageLevel(myFixture.module))
   }
 
-  private fun addStableValue() {
-    myFixture.addClass("""
-        package java.lang;
-        
-        import jdk.internal.javac.PreviewFeature;
-        
-        /**
-         * @since 25
-         */
-        @PreviewFeature(feature = PreviewFeature.Feature.STABLE_VALUES)
-        public class StableValue<T> {
-          private StableValue(T value) {}
-          public static <X> StableValue<X> of(X value) {
-            return new StableValue<>(value);
+  fun `test gatherer language level 22 with JDK 25`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_22)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.util.stream.Gatherers;
+      
+      class Main {
+          public static void main(String[] args) {
+              <error descr="Usage of API documented as @since 24+">Gatherers</error> gatherers = null;
           }
-        }
-      """.trimIndent())
+      }
+    """.trimIndent())
   }
 
-  private fun addPreviewFeature() {
-    // This code is copied from JDK sources
-    myFixture.addClass("""
-        package jdk.internal.javac;
-        
-        import java.lang.annotation.*;
-        
-        @Target({ElementType.METHOD,
-                 ElementType.CONSTRUCTOR,
-                 ElementType.FIELD,
-                 ElementType.PACKAGE,
-                 ElementType.TYPE})
-         // CLASS retention will hopefully be sufficient for the purposes at hand
-        @Retention(RetentionPolicy.RUNTIME)
-        // *Not* @Documented
-        public @interface PreviewFeature {
-            /**
-             * Name of the preview feature the annotated API is associated
-             * with.
-             */
-            public Feature feature();
-        
-            public enum Feature {
-              PEM_API,
-              STABLE_VALUES
-            }
-        }
-      """.trimIndent())
+  fun `test gatherer language level 22 preview with JDK 25`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_22_PREVIEW)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.util.stream.Gatherers;
+      
+      class Main {
+          public static void main(String[] args) {
+              Gatherers gatherers = null;
+          }
+      }
+    """.trimIndent())
+  }
+
+  fun `test method that will be overridden in a future Java version`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_1_7)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.util.Comparator;
+      
+      class MyComparator implements Comparator<String> {
+          @Override
+          public int compare(String o1, String o2) {
+              return 0;
+          }
+      
+          // this method is introduced in Java 8
+          public Comparator<String> reversed() { 
+              return this;
+          }
+      }
+    """)
   }
 }

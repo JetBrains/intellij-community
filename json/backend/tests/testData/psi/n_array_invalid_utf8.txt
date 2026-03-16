@@ -1,0 +1,6 @@
+JsonFile: n_array_invalid_utf8.json
+  JsonArray
+    PsiElement([)('[')
+    PsiErrorElement:<value> expected, got '�'
+      PsiElement(BAD_CHARACTER)('�')
+    PsiElement(])(']')

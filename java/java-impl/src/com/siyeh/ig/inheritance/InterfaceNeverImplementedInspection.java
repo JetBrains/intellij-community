@@ -15,7 +15,9 @@ import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public final class InterfaceNeverImplementedInspection extends BaseInspection {
 

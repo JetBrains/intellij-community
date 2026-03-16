@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInsight.options.JavaClassValidator
 import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.codeInspection.options.OptPane.stringList
 import com.intellij.codeInspection.options.OptionController
@@ -32,6 +33,8 @@ internal class PluginXmlRegistrationCheckInspection : DevKitPluginXmlInspectionB
 
   @XCollection
   var pluginsModules: MutableList<PluginModuleSet> = ArrayList()
+
+  var checkAllPossibleClasses: Boolean = false
 
   private val myPluginModuleSetByModuleName = SynchronizedClearableLazy {
     val result: MutableMap<String, PluginModuleSet> = HashMap()
@@ -63,7 +66,8 @@ internal class PluginXmlRegistrationCheckInspection : DevKitPluginXmlInspectionB
       stringList("ignoreClasses", DevKitBundle.message("inspections.plugin.xml.ignore.classes.title"),
                  JavaClassValidator().withTitle(DevKitBundle.message("inspections.plugin.xml.add.ignored.class.title"))),
       stringList("pluginsModules", DevKitBundle.message("inspections.plugin.xml.plugin.modules.label"))
-        .description(DevKitBundle.message("inspections.plugin.xml.plugin.modules.description"))
+        .description(DevKitBundle.message("inspections.plugin.xml.plugin.modules.description")),
+      checkbox("checkAllPossibleClasses", DevKitBundle.message("inspections.plugin.xml.check.all.possible"))
     )
   }
 
@@ -83,6 +87,10 @@ internal class PluginXmlRegistrationCheckInspection : DevKitPluginXmlInspectionB
     val registrationChecker =
       ComponentModuleRegistrationChecker(myPluginModuleSetByModuleName, ignoreClasses, holder)
     if (!registrationChecker.isIdeaPlatformModule(element.module)) return
+
+    if (checkAllPossibleClasses) {
+      registrationChecker.checkProperXmlFileForClassesIncludingDependency(element)
+    }
 
     when (element) {
       is Extension -> {

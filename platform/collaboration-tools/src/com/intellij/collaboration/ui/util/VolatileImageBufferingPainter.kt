@@ -5,7 +5,13 @@ import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ui.GraphicsUtil
 import org.intellij.lang.annotations.MagicConstant
-import java.awt.*
+import java.awt.AWTException
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.GraphicsConfiguration
+import java.awt.ImageCapabilities
+import java.awt.Transparency
 import java.awt.image.VolatileImage
 
 /**

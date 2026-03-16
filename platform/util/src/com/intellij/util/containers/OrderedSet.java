@@ -5,7 +5,11 @@ import com.intellij.util.IncorrectOperationException;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.RandomAccess;
+import java.util.Set;
 
 // have to extend ArrayList because otherwise the spliterator() methods declared in Set and List are in conflict
 public class OrderedSet<T> extends ArrayList<T> implements Set<T>, RandomAccess {

@@ -3,7 +3,11 @@ package com.intellij.platform.testFramework.monorepo.api
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
-import com.intellij.tools.apiDump.*
+import com.intellij.tools.apiDump.API
+import com.intellij.tools.apiDump.ApiClass
+import com.intellij.tools.apiDump.ClassMembers
+import com.intellij.tools.apiDump.ClassName
+import com.intellij.tools.apiDump.dumpApiAndGroupByClasses
 import com.intellij.util.diff.Diff
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
@@ -22,7 +26,7 @@ fun performApiCheckTest(cs: CoroutineScope, wantedModules: List<JpsModule>): Lis
   val modules = wantedModules.prepareModuleList()
 
   val exposedThirdPartyApiFilter: FileApiClassFilter = globalExposedThirdPartyClasses(modules)
-  val moduleApi = ModuleApi(cs)
+  val projectApi = ProjectApi(cs)
   for (module in modules) {
     val contentRootPath = module.firstContentRoot() ?: continue
     val stableApiDumpPath = contentRootPath.stableApiDumpPath()
@@ -31,11 +35,11 @@ fun performApiCheckTest(cs: CoroutineScope, wantedModules: List<JpsModule>): Lis
       continue
     }
     val experimentalApiDumpPath = contentRootPath.experimentalApiDumpPath() // may not exist
-    moduleApi.discoverModule(module)
+    projectApi.discoverModule(module)
     this += DynamicTest.dynamicTest(module.getTestName()) {
       val moduleName = module.name
       val api = runBlocking {
-        moduleApi.moduleApi(module)
+        projectApi.moduleApi(module)
       }
       val checks = ArrayList<() -> Unit>(7)
       checks.addAll(checkModuleDump(moduleName, stableApiDumpPath, unreviewedApiDumpPath, api.stableApi))

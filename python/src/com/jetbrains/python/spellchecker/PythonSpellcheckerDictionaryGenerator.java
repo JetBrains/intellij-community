@@ -11,7 +11,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spellchecker.generator.SpellCheckerDictionaryGenerator;
 import com.intellij.spellchecker.inspections.IdentifierSplitter;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;

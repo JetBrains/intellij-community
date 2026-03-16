@@ -3,7 +3,11 @@ package com.intellij.ide.util.projectWizard.importSources.impl;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.DelegatingProgressIndicator;
-import com.intellij.ide.util.importProject.*;
+import com.intellij.ide.util.importProject.JavaModuleInsight;
+import com.intellij.ide.util.importProject.LibrariesDetectionStep;
+import com.intellij.ide.util.importProject.ModuleInsight;
+import com.intellij.ide.util.importProject.ModulesDetectionStep;
+import com.intellij.ide.util.importProject.ProjectDescriptor;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectJdkStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
@@ -15,7 +19,7 @@ import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
 

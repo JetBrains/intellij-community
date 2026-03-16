@@ -77,11 +77,6 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  fun logSuggestedVenvDirFixUsed() {
-    USE_SUGGESTED_VENV_DIR_FIX.log()
-  }
-
-  @JvmStatic
   fun logExistingVenvFixUsed() {
     USE_EXISTING_VENV_FIX.log()
   }

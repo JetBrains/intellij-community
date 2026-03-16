@@ -5,15 +5,14 @@ package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.compiler.e
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
+import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.getIfEnabledOn
+import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.runIfEnabledOn
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.LazyClassContext
 import org.jetbrains.kotlin.resolve.lazy.declarations.ClassMemberDeclarationProvider
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.getIfEnabledOn
-import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.runIfEnabledOn
 import org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationResolveExtension
-import java.util.*
 
 class SerializationIDEResolveExtension : SerializationResolveExtension() {
     override fun getSyntheticNestedClassNames(thisDescriptor: ClassDescriptor): List<Name> =

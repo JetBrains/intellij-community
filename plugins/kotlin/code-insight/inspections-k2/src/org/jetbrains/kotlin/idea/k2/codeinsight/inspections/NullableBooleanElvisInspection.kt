@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
@@ -16,7 +17,18 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtUnaryExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.KtWhenCondition
+import org.jetbrains.kotlin.psi.KtWhileExpressionBase
+import org.jetbrains.kotlin.psi.buildExpression
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 /**
@@ -27,7 +39,8 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
  *   - `!(nb ?: false)` => `nb != true`
  * See plugins/kotlin/code-insight/descriptions/resources-en/inspectionDescriptions/NullableBooleanElvis.html for details.
  */
-internal class NullableBooleanElvisInspection : KotlinApplicableInspectionBase.Simple<KtBinaryExpression, Unit>() {
+internal class NullableBooleanElvisInspection : KotlinApplicableInspectionBase.Simple<KtBinaryExpression, Unit>(),
+    CleanupLocalInspectionTool {
 
     override fun buildVisitor(
         holder: ProblemsHolder,

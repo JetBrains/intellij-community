@@ -1,8 +1,10 @@
 <!--suppress PluginXmlValidity -->
 <idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.gradleTooling">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="com.intellij.gradle"/>
+    <module name="intellij.gradle.toolingExtension"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint

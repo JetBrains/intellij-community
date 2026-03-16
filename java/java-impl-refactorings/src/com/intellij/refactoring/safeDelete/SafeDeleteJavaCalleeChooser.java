@@ -92,7 +92,7 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
     }
 
     @Override
-    protected void customizeRendererText(ColoredTreeCellRenderer renderer) {
+    protected void customizeRendererText(@NotNull ColoredTreeCellRenderer renderer) {
       PsiElement member = getMember();
       if (member instanceof PsiMember) {
         JavaMemberNode.customizeRendererText(renderer, (PsiMember)member, isEnabled());

@@ -5,7 +5,11 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TitledHandler;
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,22 +19,22 @@ import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class DeleteAction extends AnAction implements DumbAware, LightEditCompatible,
-                                                      ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+public class DeleteAction extends AnAction implements DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   private static final Logger LOG = Logger.getInstance(DeleteAction.class);
 
   public DeleteAction() { }
 
+  @SuppressWarnings("ActionPresentationInstantiatedInCtor")
   public DeleteAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
     super(text, description, icon);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    DeleteProvider provider = getDeleteProvider(dataContext);
+    var dataContext = e.getDataContext();
+    var provider = getDeleteProvider(dataContext);
     if (provider == null) return;
     try {
       provider.deleteElement(dataContext);
@@ -46,7 +50,7 @@ public class DeleteAction extends AnAction implements DumbAware, LightEditCompat
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Presentation presentation = e.getPresentation();
+    var presentation = e.getPresentation();
     presentation.putClientProperty(ActionRemoteBehavior.SKIP_FALLBACK_UPDATE, null);
 
     if (e.isFromContextMenu()) {
@@ -55,8 +59,9 @@ public class DeleteAction extends AnAction implements DumbAware, LightEditCompat
     else {
       presentation.setText(IdeBundle.messagePointer("action.delete"));
     }
-    if (e.isFromActionToolbar() && e.getPresentation().getIcon() == null) {
-      e.getPresentation().setIcon(IconUtil.getRemoveIcon());
+
+    if (e.isFromActionToolbar() && presentation.getIcon() == null) {
+      presentation.setIcon(IconUtil.getRemoveIcon());
     }
 
     if (e.getProject() == null) {
@@ -67,12 +72,12 @@ public class DeleteAction extends AnAction implements DumbAware, LightEditCompat
     CopyAction.updateWithProvider(e, getDeleteProvider(e.getDataContext()), false, provider -> {
       // if a provider is found on the frontend, don't look for it on the backend
       presentation.putClientProperty(ActionRemoteBehavior.SKIP_FALLBACK_UPDATE, true);
-      boolean isPopupPlace = e.isFromContextMenu();
-      boolean enabled = provider.canDeleteElement(e.getDataContext());
+      var isPopupPlace = e.isFromContextMenu();
+      var enabled = provider != null && provider.canDeleteElement(e.getDataContext());
       presentation.setEnabled(enabled);
       presentation.setVisible(!isPopupPlace || enabled);
-      if (provider instanceof TitledHandler) {
-        presentation.setText(((TitledHandler)provider).getActionTitle());
+      if (provider instanceof TitledHandler th) {
+        presentation.setText(th.getActionTitle());
       }
     });
    }

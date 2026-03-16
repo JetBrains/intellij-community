@@ -8,9 +8,11 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.intentions.calleeName
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -18,8 +20,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.dotQualifiedExpressionVisitor
 
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-
+@K1Deprecation
 class ReplaceToWithInfixFormInspection : AbstractKotlinInspection() {
     private val compatibleNames = setOf("to")
 
@@ -44,6 +45,7 @@ class ReplaceToWithInfixFormInspection : AbstractKotlinInspection() {
     }
 }
 
+@K1Deprecation
 class ReplaceToWithInfixFormQuickfix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("replace.to.with.infix.form.quickfix.text")
 

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.memberInfo
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.runReadAction
 import com.intellij.refactoring.classMembers.MemberInfoModel
 import com.intellij.refactoring.ui.AbstractMemberSelectionTable
 import com.intellij.ui.RowIcon
@@ -25,12 +26,13 @@ class KotlinMemberSelectionTable(
 
         val member = memberInfo.member
         if (member !is KtNamedFunction && member !is KtProperty && member !is KtParameter) return null
-
-        if (member.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
-            myMemberInfoModel.isFixedAbstract(memberInfo)?.let { return it }
+        return runReadAction {
+            if (member.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
+                myMemberInfoModel.isFixedAbstract(memberInfo)?.let { return@runReadAction it }
+            }
+            if (myMemberInfoModel.isAbstractEnabled(memberInfo)) return@runReadAction memberInfo.isToAbstract
+            myMemberInfoModel.isAbstractWhenDisabled(memberInfo)
         }
-        if (myMemberInfoModel.isAbstractEnabled(memberInfo)) return memberInfo.isToAbstract
-        return myMemberInfoModel.isAbstractWhenDisabled(memberInfo)
     }
 
     override fun isAbstractColumnEditable(rowIndex: Int): Boolean {
@@ -41,11 +43,13 @@ class KotlinMemberSelectionTable(
         val member = memberInfo.member
         if (member !is KtNamedFunction && member !is KtProperty && member !is KtParameter) return false
 
-        if (member.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
-            myMemberInfoModel.isFixedAbstract(memberInfo)?.let { return false }
-        }
+        return runReadAction {
+            if (member.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
+                myMemberInfoModel.isFixedAbstract(memberInfo)?.let { return@runReadAction false }
+            }
 
-        return memberInfo.isChecked && myMemberInfoModel.isAbstractEnabled(memberInfo)
+            memberInfo.isChecked && myMemberInfoModel.isAbstractEnabled(memberInfo)
+        }
     }
 
     override fun setVisibilityIcon(memberInfo: KotlinMemberInfo, icon: RowIcon) {

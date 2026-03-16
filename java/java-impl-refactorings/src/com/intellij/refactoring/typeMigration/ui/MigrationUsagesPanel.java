@@ -23,7 +23,7 @@ import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.usageView.UsageInfo;
 
-import java.awt.*;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;

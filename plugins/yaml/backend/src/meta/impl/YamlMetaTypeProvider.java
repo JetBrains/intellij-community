@@ -20,7 +20,14 @@ import org.jetbrains.yaml.meta.model.Field;
 import org.jetbrains.yaml.meta.model.ModelAccess;
 import org.jetbrains.yaml.meta.model.YamlArrayType;
 import org.jetbrains.yaml.meta.model.YamlMetaType;
-import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.YAMLDocument;
+import org.jetbrains.yaml.psi.YAMLFile;
+import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLMapping;
+import org.jetbrains.yaml.psi.YAMLScalar;
+import org.jetbrains.yaml.psi.YAMLSequence;
+import org.jetbrains.yaml.psi.YAMLSequenceItem;
+import org.jetbrains.yaml.psi.YAMLValue;
 
 import java.util.function.Supplier;
 

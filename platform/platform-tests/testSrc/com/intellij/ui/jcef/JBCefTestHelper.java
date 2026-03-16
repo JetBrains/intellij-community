@@ -12,8 +12,9 @@ import org.cef.misc.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import java.awt.BorderLayout;
+import java.awt.EventQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;

@@ -7,7 +7,6 @@ import org.gradle.tooling.ModelBuilder
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
-import java.io.File
 
 internal class TargetModelBuilder<T>(
   private val connection: TargetProjectConnection,

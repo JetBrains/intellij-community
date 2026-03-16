@@ -5,8 +5,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.BorderLayout;
 
 public final class DumbUnawareHider extends JBPanelWithEmptyText {
   private final JComponent myDumbUnawareContent;

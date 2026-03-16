@@ -56,19 +56,14 @@ class PyRequirementVisitor(
 
     val sdk = module.pythonSdk ?: return
     val manager = PythonPackageManager.forSdk(module.project, sdk)
-    val requirementsManager = manager.getDependencyManager() ?: return
-    if (requirementsManager.getDependenciesFile() == null)
+    if (manager.getDependencyFile() == null)
       return
     val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPackages, manager)
     val packageName = installedNotDeclaredChecker.getUndeclaredPackageName(importedPyModule = importedPyModule) ?: return
 
 
-    val fixes = if (requirementsManager.isAddDependencyPossible()) {
-      arrayOf(PyAddToDeclaredPackagesQuickFix(requirementsManager, packageName),
-              IgnoreRequirementFix(setOf(packageName)))
-    }
-    else
-      arrayOf()
+    val fixes = arrayOf(PyAddToDeclaredPackagesQuickFix(manager, packageName),
+                        IgnoreRequirementFix(setOf(packageName)))
 
     registerProblem(
       packageReferenceExpression,

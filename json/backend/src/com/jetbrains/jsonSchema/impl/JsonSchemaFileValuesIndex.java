@@ -2,18 +2,22 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.JsonFileType;
-import com.intellij.json.syntax.JsonSyntaxElementTypes;
 import com.intellij.json.json5.Json5FileType;
-import com.intellij.json.syntax.json5.Json5SyntaxLexer;
+import com.intellij.json.syntax.JsonSyntaxElementTypes;
 import com.intellij.json.syntax.JsonSyntaxLexer;
-import com.intellij.platform.syntax.SyntaxElementType;
-import com.intellij.platform.syntax.element.SyntaxTokenTypes;
-import com.intellij.platform.syntax.lexer.Lexer;
+import com.intellij.json.syntax.json5.Json5SyntaxLexer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.indexing.*;
+import com.intellij.platform.syntax.SyntaxElementType;
+import com.intellij.platform.syntax.element.SyntaxTokenTypes;
+import com.intellij.platform.syntax.lexer.Lexer;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -97,16 +101,16 @@ public final class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<Str
     while (!(idFound && schemaFound && obsoleteIdFound) && lexer.getTokenStart() < lexer.getBufferEnd()) {
       SyntaxElementType token = lexer.getTokenType();
       // Nesting level can only change at curly braces.
-      if (token == JsonSyntaxElementTypes.L_CURLY) {
+      if (token == JsonSyntaxElementTypes.INSTANCE.getL_CURLY()) {
         nesting++;
       }
-      else if (token == JsonSyntaxElementTypes.R_CURLY) {
+      else if (token == JsonSyntaxElementTypes.INSTANCE.getR_CURLY()) {
         nesting--;
       }
       else if (nesting == 1 &&
-               (token == JsonSyntaxElementTypes.DOUBLE_QUOTED_STRING
-                || token == JsonSyntaxElementTypes.SINGLE_QUOTED_STRING
-                || token == JsonSyntaxElementTypes.IDENTIFIER)) {
+               (token == JsonSyntaxElementTypes.INSTANCE.getDOUBLE_QUOTED_STRING()
+                || token == JsonSyntaxElementTypes.INSTANCE.getSINGLE_QUOTED_STRING()
+                || token == JsonSyntaxElementTypes.INSTANCE.getIDENTIFIER())) {
         // We are looking for two special properties at the root level.
         switch (lexer.getTokenText()) {
           case "$id", "\"$id\"", "'$id'" -> idFound |= captureValueIfString(lexer, map, JsonCachedValues.ID_CACHE_KEY);
@@ -126,10 +130,10 @@ public final class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<Str
     SyntaxElementType token;
     lexer.advance();
     token = skipWhitespacesAndGetTokenType(lexer);
-    if (token == JsonSyntaxElementTypes.COLON) {
+    if (token == JsonSyntaxElementTypes.INSTANCE.getCOLON()) {
       lexer.advance();
       token = skipWhitespacesAndGetTokenType(lexer);
-      if (token == JsonSyntaxElementTypes.DOUBLE_QUOTED_STRING || token == JsonSyntaxElementTypes.SINGLE_QUOTED_STRING) {
+      if (token == JsonSyntaxElementTypes.INSTANCE.getDOUBLE_QUOTED_STRING() || token == JsonSyntaxElementTypes.INSTANCE.getSINGLE_QUOTED_STRING()) {
         String text = lexer.getTokenText();
         destMap.put(key, text.length() <= 1 ? "" : text.substring(1, text.length() - 1));
         return true;
@@ -140,8 +144,8 @@ public final class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<Str
 
   private static @Nullable SyntaxElementType skipWhitespacesAndGetTokenType(@NotNull Lexer lexer) {
     while ( lexer.getTokenType() == SyntaxTokenTypes.getWHITE_SPACE() ||
-           lexer.getTokenType() == JsonSyntaxElementTypes.LINE_COMMENT ||
-           lexer.getTokenType() == JsonSyntaxElementTypes.BLOCK_COMMENT) {
+           lexer.getTokenType() == JsonSyntaxElementTypes.INSTANCE.getLINE_COMMENT() ||
+           lexer.getTokenType() == JsonSyntaxElementTypes.INSTANCE.getBLOCK_COMMENT()) {
       lexer.advance();
     }
     return lexer.getTokenType();

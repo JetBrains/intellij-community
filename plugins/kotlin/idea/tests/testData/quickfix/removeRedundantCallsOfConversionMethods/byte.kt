@@ -1,0 +1,4 @@
+// "Remove redundant calls of the conversion method" "true"
+// WITH_STDLIB
+val foo = Byte.MAX_VALUE.toByte()<caret>
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveRedundantCallsOfConversionMethodsFix

@@ -1,18 +1,18 @@
-from typing import Any
+from _typeshed import Incomplete
 
 class PersistentSearch:
-    connection: Any
-    changes_only: Any
-    notifications: Any
-    message_id: Any
-    base: Any
-    filter: Any
-    scope: Any
-    dereference_aliases: Any
-    attributes: Any
-    size_limit: Any
-    time_limit: Any
-    controls: Any
+    connection: Incomplete
+    changes_only: Incomplete
+    notifications: Incomplete
+    message_id: Incomplete
+    base: Incomplete
+    filter: Incomplete
+    scope: Incomplete
+    dereference_aliases: Incomplete
+    attributes: Incomplete
+    size_limit: Incomplete
+    time_limit: Incomplete
+    controls: Incomplete
     def __init__(
         self,
         connection,

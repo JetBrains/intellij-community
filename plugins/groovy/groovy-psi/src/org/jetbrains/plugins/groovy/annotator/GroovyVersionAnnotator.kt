@@ -5,7 +5,15 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.*
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY1_7
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY1_8
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY2_3
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY2_5
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY3_0
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY4_0
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY5_0
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.NO_VERSION
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.compareSdkVersions
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 
 class GroovyVersionAnnotator : Annotator {

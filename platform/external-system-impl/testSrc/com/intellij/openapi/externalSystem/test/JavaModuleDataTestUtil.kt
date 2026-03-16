@@ -2,8 +2,9 @@
 package com.intellij.openapi.externalSystem.test
 
 import com.intellij.externalSystem.JavaModuleData
-import com.intellij.platform.externalSystem.testFramework.*
 import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.platform.externalSystem.testFramework.AbstractNode
+import com.intellij.platform.externalSystem.testFramework.Module
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.execution.ParametersListUtil
 

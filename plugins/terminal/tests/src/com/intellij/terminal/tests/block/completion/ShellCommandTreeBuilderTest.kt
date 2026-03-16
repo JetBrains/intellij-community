@@ -6,39 +6,51 @@ import com.intellij.terminal.completion.ShellCommandTreeBuilderFixture
 import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellCommandParserOptions
 import com.intellij.terminal.completion.spec.ShellCommandResult
+import com.intellij.terminal.completion.spec.ShellFileInfo
+import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.plugins.terminal.TerminalEngine
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellFileInfo
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellAliasSuggestion
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellFileSystemSupport
 import org.jetbrains.plugins.terminal.block.session.ShellIntegrationFunctions.GET_DIRECTORY_FILES
 import org.jetbrains.plugins.terminal.testFramework.completion.impl.TestCommandSpecsManager
 import org.jetbrains.plugins.terminal.testFramework.completion.impl.TestGeneratorsExecutor
 import org.jetbrains.plugins.terminal.testFramework.completion.impl.TestRuntimeContextProvider
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.runners.Parameterized
 import java.io.File
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-@RunWith(JUnit4::class)
-internal class ShellCommandTreeBuilderTest {
+@RunWith(Parameterized::class)
+internal class ShellCommandTreeBuilderTest(private val engine: TerminalEngine) {
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun engine(): List<TerminalEngine> = TerminalTestUtil.enginesWithCompletionSupport()
+  }
+
   private val commandName = "command"
   private var filePathSuggestions: Map<String, List<String>> = emptyMap()
+  private val separator = File.separatorChar
 
   private val spec = ShellCommandSpec(commandName) {
     option("-a", "--asd")
     option("--bcde")
     option("--argum") {
       argument {
-        isOptional = true
+        optional()
         suggestions("someArg")
       }
     }
 
     argument {
-      isOptional = true
+      optional()
       suggestions("aaa", "bbb")
     }
 
@@ -49,7 +61,7 @@ internal class ShellCommandTreeBuilderTest {
             option("--manyArgs") {
               argument()
               argument {
-                isOptional = true
+                optional()
                 suggestions("a2")
               }
             }
@@ -59,7 +71,7 @@ internal class ShellCommandTreeBuilderTest {
         option("-a")
 
         argument {
-          isOptional = true
+          optional()
           suggestions {
             listOf(
               ShellAliasSuggestion("alias-1", "al --manyArgs somearg"),
@@ -81,23 +93,23 @@ internal class ShellCommandTreeBuilderTest {
         }
         option("--withOptArg") {
           argument {
-            isOptional = true
+            optional()
           }
         }
         option("--manyArgs") {
           argument()
           argument {
-            isOptional = true
+            optional()
             suggestions("a2")
           }
         }
         option("--skippedArg") {
           argument {
-            isOptional = true
+            optional()
           }
           argument()
           argument {
-            isOptional = true
+            optional()
             suggestions("opt2")
           }
         }
@@ -106,20 +118,24 @@ internal class ShellCommandTreeBuilderTest {
           suggestions("somePath")
         }
         argument {
-          isOptional = true
+          optional()
           suggestions("arg1", "arg2")
         }
       }
 
       subcommand("nonPosix") {
-        parserOptions = ShellCommandParserOptions.create(flagsArePosixNonCompliant = true)
+        parserOptions(
+          ShellCommandParserOptions.builder()
+            .flagsArePosixNonCompliant(true)
+            .build()
+        )
         option("-a")
         option("-b")
       }
 
       subcommand("sep") {
         option("--withSeparator") {
-          separator = "="
+          separator("=")
           argument()
         }
       }
@@ -260,7 +276,7 @@ internal class ShellCommandTreeBuilderTest {
 
   @Test
   fun `option with file argument`() {
-    mockFilePathsSuggestions("." to listOf("file.txt", "folder${File.separatorChar}", "file"))
+    mockFilePathsSuggestions("." to listOf("file.txt", "folder${separator}", "file"))
     doTest("withFiles", "-o", "file.txt") {
       assertSubcommandOf("withFiles", commandName)
       assertOptionOf("-o", "withFiles")
@@ -270,8 +286,8 @@ internal class ShellCommandTreeBuilderTest {
 
   @Test
   fun `option with file argument prefixed with directory name`() {
-    val dir = "someDir${File.separatorChar}"
-    mockFilePathsSuggestions(dir to listOf("file.txt", "folder${File.separatorChar}", "file"))
+    val dir = "someDir${separator}"
+    mockFilePathsSuggestions(dir to listOf("file.txt", "folder${separator}", "file"))
     doTest("withFiles", "-o", "${dir}file") {
       assertSubcommandOf("withFiles", commandName)
       assertOptionOf("-o", "withFiles")
@@ -281,8 +297,8 @@ internal class ShellCommandTreeBuilderTest {
 
   @Test
   fun `subcommand with directory argument`() {
-    val dirSuggestion = "dir${File.separatorChar}"
-    mockFilePathsSuggestions(dirSuggestion to listOf("file.txt", "folder${File.separatorChar}", "file"))
+    val dirSuggestion = "dir${separator}"
+    mockFilePathsSuggestions(dirSuggestion to listOf("file.txt", "folder${separator}", "file"))
     doTest("withFiles", dirSuggestion) {
       assertSubcommandOf("withFiles", commandName)
       assertArgumentOfSubcommand(dirSuggestion, "withFiles")
@@ -291,8 +307,8 @@ internal class ShellCommandTreeBuilderTest {
 
   @Test
   fun `subcommand with directory without ending slash`() {
-    val dir = "someDir${File.separatorChar}"
-    mockFilePathsSuggestions(dir to listOf("file.txt", "folder${File.separatorChar}", "file"))
+    val dir = "someDir${separator}"
+    mockFilePathsSuggestions(dir to listOf("file.txt", "folder${separator}", "file"))
     doTest("withFiles", "${dir}folder") {
       assertSubcommandOf("withFiles", commandName)
       assertArgumentOfSubcommand("${dir}folder", "withFiles")
@@ -301,7 +317,6 @@ internal class ShellCommandTreeBuilderTest {
 
   @Test
   fun `subcommand with two directory arguments`() {
-    val separator = File.separatorChar
     val someDir = "someDir$separator"
     val otherDir = "otherDir$separator"
     val nestedDir = "nestedDir$separator"
@@ -355,6 +370,63 @@ internal class ShellCommandTreeBuilderTest {
     }
   }
 
+  @Test
+  fun `subcommand in quotes is resolved`() {
+    doTest("'sub'") {
+      assertSubcommandOf("'sub'", commandName)
+    }
+  }
+
+
+  @Test
+  fun `option in quotes is resolved`() {
+    doTest("'--argum'") {
+      assertOptionOf("'--argum'", commandName)
+    }
+  }
+
+  @Test
+  fun `argument in quotes is resolved`() {
+    doTest("--argum", "'someArg'") {
+      assertOptionOf("--argum", commandName)
+      assertArgumentOfOption("'someArg'", "--argum")
+    }
+  }
+
+  @Test
+  fun `options and arguments in quotes are resolved`() {
+    doTest("--argum", "'someArg'", "'bbb'") {
+      assertOptionOf("--argum", commandName)
+      assertArgumentOfOption("'someArg'", "--argum")
+      assertArgumentOfSubcommand("'bbb'", commandName)
+    }
+  }
+
+  @Test
+  fun `file path in quotes is resolved`() {
+    mockFilePathsSuggestions("dir${separator}" to listOf("file.txt", "folder${separator}", "file"))
+    doTest("withFiles", "'dir${separator}'") {
+      assertSubcommandOf("withFiles", commandName)
+      assertArgumentOfSubcommand("'dir${separator}'", "withFiles")
+    }
+  }
+
+  @Test
+  fun `option is resolved after unknown token`() {
+    doTest("unknown", "--bcde") {
+      assertUnknown("unknown", commandName)
+      assertOptionOf("--bcde", commandName)
+    }
+  }
+
+  @Test
+  fun `argument is resolved after unknown token`() {
+    doTest("unknown", "aaa") {
+      assertUnknown("unknown", commandName)
+      assertArgumentOfSubcommand("aaa", commandName)
+    }
+  }
+
   private fun doTest(vararg arguments: String, assertions: ShellCommandTreeAssertions.() -> Unit) =
     runBlocking {
       doTestImpl(arguments.toList(), assertions)
@@ -380,10 +452,28 @@ internal class ShellCommandTreeBuilderTest {
         else ShellCommandResult.create("", exitCode = 1)
       }
     }
+
+    val fileSystemSupport = object : ShellFileSystemSupport {
+      override suspend fun listDirectoryFiles(path: String): List<ShellFileInfo> {
+        val key = filePathSuggestions.keys.find { path.endsWith(it) || "$path${separator}".endsWith(it) }
+        return if (key != null) {
+          val suggestions = filePathSuggestions[key]!!
+          suggestions.map { it.toShellFileInfo(separator) }
+        }
+        else emptyList()
+      }
+    }
+
+    val runtimeContextProvider = TestRuntimeContextProvider(
+      isReworkedTerminal = engine == TerminalEngine.REWORKED,
+      generatorCommandsRunner = generatorCommandsRunner,
+      fileSystemSupport = fileSystemSupport,
+    )
+
     val fixture = ShellCommandTreeBuilderFixture(
       TestCommandSpecsManager(spec),
       TestGeneratorsExecutor(),
-      TestRuntimeContextProvider(generatorCommandsRunner = generatorCommandsRunner)
+      runtimeContextProvider,
     )
     fixture.buildCommandTreeAndTest(spec, arguments.toList(), assertions)
   }

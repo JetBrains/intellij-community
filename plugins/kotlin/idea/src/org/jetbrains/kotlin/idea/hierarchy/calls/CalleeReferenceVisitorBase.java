@@ -9,7 +9,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor;
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor;
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor;
-import org.jetbrains.kotlin.psi.*;
+import org.jetbrains.kotlin.psi.KtCallElement;
+import org.jetbrains.kotlin.psi.KtClassOrObject;
+import org.jetbrains.kotlin.psi.KtElement;
+import org.jetbrains.kotlin.psi.KtNamedFunction;
+import org.jetbrains.kotlin.psi.KtProperty;
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression;
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid;
 import org.jetbrains.kotlin.resolve.BindingContext;
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils;
 

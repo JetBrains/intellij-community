@@ -4,7 +4,12 @@ package com.intellij.platform.lang.lsWidget.impl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.LafManager
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -12,6 +17,7 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
+import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.platform.lang.lsWidget.LanguageServicePopupSection.ForCurrentFile
 import com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItem
 import com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItemsProvider
@@ -23,7 +29,10 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.Icon
+import javax.swing.JPanel
 
 private const val maxIconsInStatusBar = 4
 
@@ -37,6 +46,9 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
   private var cachedWidgetItems: List<LanguageServiceWidgetItem> = emptyList()
 
   override fun ID(): String = LANGUAGE_SERVICES_WIDGET_ID
+
+  // Create a custom TextPanel that returns a fixed accessible name instead of the text value
+  override fun createComponent(): JPanel = LanguageServiceTextPanel()
 
   override fun createInstance(project: Project): StatusBarWidget = LanguageServiceWidget(project, scope)
 
@@ -137,5 +149,19 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
     }
 
     override fun actionPerformed(e: AnActionEvent) {}
+  }
+
+  private class LanguageServiceTextPanel : TextPanel.WithIconAndArrows() {
+    override fun getAccessibleContext(): AccessibleContext {
+      if (accessibleContext == null) {
+        accessibleContext = LanguageServiceAccessibleTextPanel()
+      }
+      return accessibleContext
+    }
+
+    private inner class LanguageServiceAccessibleTextPanel : AccessibleJComponent() {
+      override fun getAccessibleRole(): AccessibleRole = AccessibleRole.LABEL
+      override fun getAccessibleName(): String = LangBundle.message("language.services.widget.button")
+    }
   }
 }

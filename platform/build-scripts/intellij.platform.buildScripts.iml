@@ -4,13 +4,13 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlin.RequiresOptIn -opt-in=kotlinx.serialization.ExperimentalSerializationApi -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlin.RequiresOptIn -opt-in=kotlinx.serialization.ExperimentalSerializationApi -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="21" />
-            <stringArg name="apiVersion" arg="2.2" />
-            <stringArg name="languageVersion" arg="2.2" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
@@ -52,7 +52,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson.jr.objects" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
-    <orderEntry type="library" name="protobuf" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.protobuf" />
     <orderEntry type="module" module-name="intellij.devkit.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
@@ -68,7 +68,7 @@
     <orderEntry type="library" name="zstd-jni" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.blockmap" />
     <orderEntry type="module" module-name="intellij.libraries.commons.io" />
@@ -227,7 +227,7 @@
     <orderEntry type="library" name="netty-tcnative-boringssl" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
-    <orderEntry type="library" name="com.jetbrains.fus.reporting.api" level="project" />
+    <orderEntry type="library" name="com.jetbrains.fus.reporting.fus-api" level="project" />
     <orderEntry type="library" name="com.jetbrains.fus.reporting.ap.validation.all" level="project" />
     <orderEntry type="module-library">
       <library name="netty" type="repository">
@@ -419,5 +419,10 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
+    <orderEntry type="module" module-name="intellij.platform.pluginSystem.parser.impl" />
+    <orderEntry type="module" module-name="intellij.libraries.maven.resolver.provider" />
+    <orderEntry type="module" module-name="intellij.platform.pluginGraph" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.api" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.productDsl" exported="" />
   </component>
 </module>

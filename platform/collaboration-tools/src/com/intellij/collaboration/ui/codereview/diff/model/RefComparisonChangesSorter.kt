@@ -6,7 +6,11 @@ import com.intellij.collaboration.util.filePath
 import com.intellij.collaboration.util.fileStatus
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.AbstractChangesBrowserFilePathNode
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental

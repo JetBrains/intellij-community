@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.ide.util.ExportToFileUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -16,8 +17,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.unscramble.ThreadDumpPanel;
 import com.intellij.threadDumpParser.ThreadState;
+import com.intellij.unscramble.ThreadDumpPanel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -39,7 +40,7 @@ public class ExportThreadsAction extends AnAction {
         managerThread.schedule(new DebuggerCommandImpl() {
           @Override
           protected void action() {
-            final List<ThreadState> threads = ThreadDumpAction.buildThreadStates(process.getVirtualMachineProxy());
+            final List<ThreadState> threads = ThreadDumpAction.buildThreadStates(VirtualMachineProxyImpl.getCurrent());
             ApplicationManager.getApplication().invokeLater(() -> ExportToFileUtil.chooseFileAndExport(project, ThreadDumpPanel.createToFileExporter(project, threads)), ModalityState.nonModal());
           }
         });

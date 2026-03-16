@@ -3,13 +3,18 @@ package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -24,7 +29,7 @@ import java.util.function.Consumer;
 /**
  * @author anna
  */
-public class PushDownTest extends LightRefactoringTestCase {
+public class PushDownTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/refactoring/pushDown/";
 
   public void testTypeParameter() { doTest(); }

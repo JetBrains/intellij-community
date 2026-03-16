@@ -3,7 +3,11 @@ package com.intellij.internal.validation
 
 import com.intellij.util.ui.TextTransferable
 import java.awt.datatransfer.Transferable
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JFrame
+import javax.swing.JTree
+import javax.swing.TransferHandler
+import javax.swing.WindowConstants
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeCellRenderer
 

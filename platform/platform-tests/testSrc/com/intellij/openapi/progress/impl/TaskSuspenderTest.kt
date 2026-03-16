@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.asContextElement
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineSuspender
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.ide.progress.suspender.TaskSuspenderElement
@@ -18,20 +17,16 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import junit.framework.TestCase.assertFalse
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 open class TaskSuspenderTest : BasePlatformTestCase() {
-
-  override fun setUp() {
-    super.setUp()
-    Registry.get("rhizome.progress").setValue(true)
-  }
-
-  override fun tearDown() {
-    Registry.get("rhizome.progress").resetToDefault()
-    super.tearDown()
-  }
 
   fun testSuspendResumeTask(): Unit = timeoutRunBlocking {
     val mayStop = CompletableDeferred<Unit>()

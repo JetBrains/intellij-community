@@ -9,6 +9,8 @@ import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
 import org.junit.Test
 
 class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
+  override fun skipPluginResolution() = false
+
   override fun createIndicesFixture(): MavenIndicesTestFixture {
     return MavenIndicesTestFixture(dir, project, testRootDisposable,"plugins")
   }

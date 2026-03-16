@@ -11,8 +11,8 @@ import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
 
 public abstract class ColorAndFontDescription extends TextAttributes implements EditorSchemeAttributeDescriptorWithPath {
   private final String myName;

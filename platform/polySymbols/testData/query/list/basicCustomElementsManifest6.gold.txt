@@ -1,7 +1,7 @@
 [
  {
   matchedName: "css/parts/foo",
-  origin: "basic@null (<none>)",
+  origin: "basic (<none>)",
   complete: true,
   description: "<p>The <code>foo</code>.",
   priority: NORMAL,

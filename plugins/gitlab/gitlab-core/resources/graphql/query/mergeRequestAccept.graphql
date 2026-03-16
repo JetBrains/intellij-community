@@ -1,8 +1,9 @@
-mutation ($projectId: ID!, $mergeRequestId: String!, $commitMessage: String, $sha: String!, $withSquash: Boolean, $shouldRemoveSourceBranch: Boolean) {
+mutation ($projectId: ID!, $mergeRequestId: String!, $commitMessage: String, $squashCommitMessage: String, $sha: String!, $withSquash: Boolean, $shouldRemoveSourceBranch: Boolean) {
   mergeRequestAccept(input: {
     projectPath: $projectId,
     iid: $mergeRequestId,
     commitMessage: $commitMessage,
+    squashCommitMessage: $squashCommitMessage,
     sha: $sha,
     squash: $withSquash,
     shouldRemoveSourceBranch: $shouldRemoveSourceBranch

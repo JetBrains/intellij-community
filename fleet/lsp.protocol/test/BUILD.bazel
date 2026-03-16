@@ -1,0 +1,55 @@
+### auto-generated section `build fleet.lsp.protocol.test` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_test",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlinx.serialization.ExperimentalSerializationApi",
+    "kotlin.concurrent.atomics.ExperimentalAtomicApi",
+  ],
+  x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
+  x_lambdas = "class"
+)
+
+jvm_library(
+  name = "test",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-io-core",
+  ]
+)
+
+jvm_library(
+  name = "test_test_lib",
+  module_name = "fleet.lsp.protocol.test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_test",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-io-core",
+    "//fleet/ktor/client/cio",
+    "//fleet/ktor/client/core",
+    "//fleet/ktor/network/tls",
+    "//fleet/lsp.protocol",
+    "//fleet/test-runtime",
+  ],
+  runtime_deps = [":test"]
+)
+### auto-generated section `build fleet.lsp.protocol.test` end
+
+### auto-generated section `test fleet.lsp.protocol.test` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "test_test",
+  runtime_deps = [":test_test_lib"]
+)
+### auto-generated section `test fleet.lsp.protocol.test` end

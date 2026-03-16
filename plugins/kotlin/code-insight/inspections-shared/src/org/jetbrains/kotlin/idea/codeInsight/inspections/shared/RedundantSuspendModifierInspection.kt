@@ -28,11 +28,16 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
-import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
+import org.jetbrains.kotlin.idea.quickfix.ChangeModifiersFix.Companion.removeModifierFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.namedFunctionVisitor
 
 internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -50,7 +55,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
                 holder.registerProblem(
                     suspendModifier,
                     KotlinBundle.message("redundant.suspend.modifier"),
-                    RemoveModifierFixBase(function, KtTokens.SUSPEND_KEYWORD, isRedundant = true).asQuickFix(),
+                    removeModifierFix(function, KtTokens.SUSPEND_KEYWORD, isRedundant = true).asQuickFix(),
                 )
             }
         })

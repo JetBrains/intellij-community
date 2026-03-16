@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.Configurable.NoScroll
@@ -24,21 +23,20 @@ internal class GeneralSvnConfigurable(private val project: Project) : BoundSearc
   SvnConfigurable.getGroupDisplayName(),
   SvnConfigurable.HELP_ID,
   SvnConfigurable.ID
-), NoScroll, Disposable {
+), NoScroll {
 
-  private val commandLineClient = TextFieldWithBrowseButton(null, this)
-  private val configurationDirectoryText = TextFieldWithBrowseButton(null, this)
+  private lateinit var configurationDirectoryText: TextFieldWithBrowseButton
   private lateinit var useCustomConfigurationDirectory: JBCheckBox
-
-  init {
-    commandLineClient.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-      .withTitle(SvnBundle.message("dialog.title.select.path.to.subversion.executable"))
-      .withDescription(SvnBundle.message("label.select.path.to.subversion.executable")))
-  }
 
   override fun createPanel(): DialogPanel {
     val settings = SvnConfiguration.getInstance(project)
     lateinit var result: DialogPanel
+
+    val commandLineClient = TextFieldWithBrowseButton(null, disposable)
+    commandLineClient.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+      .withTitle(SvnBundle.message("dialog.title.select.path.to.subversion.executable"))
+      .withDescription(SvnBundle.message("label.select.path.to.subversion.executable")))
+    configurationDirectoryText = TextFieldWithBrowseButton(null, disposable)
 
     result = panel {
       row(SvnBundle.message("label.path.to.svn.executable")) {
@@ -132,8 +130,5 @@ internal class GeneralSvnConfigurable(private val project: Project) : BoundSearc
     }
     configurationDirectoryText.setText(path)
     useCustomConfigurationDirectory.setSelected(!settings.isUseDefaultConfiguration)
-  }
-
-  override fun dispose() {
   }
 }

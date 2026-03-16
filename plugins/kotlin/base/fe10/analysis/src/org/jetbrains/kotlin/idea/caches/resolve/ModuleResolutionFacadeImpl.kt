@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.caches.resolve
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.analyzer.ResolverForProject
 import org.jetbrains.kotlin.container.get
@@ -12,8 +13,8 @@ import org.jetbrains.kotlin.container.getService
 import org.jetbrains.kotlin.container.tryGetService
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.diagnostics.DiagnosticSink
+import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.project.ResolveElementCache
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -143,11 +144,13 @@ internal class ModuleResolutionFacadeImpl(
     }
 }
 
+@K1Deprecation
 fun ResolutionFacade.findModuleDescriptor(ideaModuleInfo: IdeaModuleInfo): ModuleDescriptor {
     return (this as ResolutionFacadeModuleDescriptorProvider).findModuleDescriptor(ideaModuleInfo)
 }
 
 
+@K1Deprecation
 interface ResolutionFacadeModuleDescriptorProvider {
     fun findModuleDescriptor(ideaModuleInfo: IdeaModuleInfo): ModuleDescriptor
 }

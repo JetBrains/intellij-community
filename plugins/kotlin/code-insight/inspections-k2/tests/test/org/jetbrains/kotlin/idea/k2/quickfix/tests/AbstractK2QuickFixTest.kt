@@ -5,13 +5,13 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.actionsListDirectives
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.test.util.invalidateCaches
 import java.io.File
 
 abstract class AbstractK2QuickFixTest : AbstractQuickFixTest() {

@@ -1,12 +1,14 @@
+@file:Suppress("DEPRECATION")
+
 package com.intellij.tools.build.bazel.jvmIncBuilder
 
-import com.intellij.openapi.diagnostic.DefaultLogger
-import com.intellij.openapi.diagnostic.LogLevel
-import com.intellij.openapi.diagnostic.Logger
+import org.jetbrains.kotlin.com.intellij.openapi.diagnostic.DefaultLogger
+import org.jetbrains.kotlin.com.intellij.openapi.diagnostic.LogLevel
+import org.jetbrains.kotlin.com.intellij.openapi.diagnostic.Logger
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import org.apache.log4j.Level
+import org.jetbrains.kotlin.org.apache.log4j.Level
 import java.io.PrintStream
 
 @Suppress("DEPRECATION")
@@ -63,6 +65,8 @@ internal class IJPrintStreamLogger(category: String, private val stream: PrintSt
     throw UnsupportedOperationException()
   }
 
+  @Deprecated("Deprecated in Java")
+  @Suppress("UnstableApiUsage")
   override fun setLevel(p0: Level) {
     throw UnsupportedOperationException()
   }

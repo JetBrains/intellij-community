@@ -23,7 +23,7 @@ import git4idea.commands.GitHttpAuthenticator;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 
 public class GitHttpAuthTestService extends GitHttpAuthService {
@@ -37,7 +37,7 @@ public class GitHttpAuthTestService extends GitHttpAuthService {
   @Override
   public GitHttpAuthenticator createAuthenticator(@NotNull Project project,
                                                   @NotNull Collection<String> urls,
-                                                  @NotNull File workingDirectory,
+                                                  @NotNull Path workingDirectory,
                                                   @NotNull AuthenticationGate authenticationGate,
                                                   @NotNull AuthenticationMode authenticationMode) {
     return myAuthenticator;

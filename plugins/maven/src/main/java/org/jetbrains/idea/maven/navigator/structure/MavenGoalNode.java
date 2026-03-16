@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.project.MavenProject;
 
-import java.awt.*;
+import java.awt.Color;
 
 import static icons.ExternalSystemIcons.Task;
 

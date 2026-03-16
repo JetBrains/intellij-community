@@ -21,6 +21,16 @@ resourcegroup(
 )
 
 jvm_library(
+  name = "jewel-intUi-standalone-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+  ]
+)
+
+jvm_library(
   name = "jewel-intUi-standalone-tests_test_lib",
   module_name = "intellij.platform.jewel.intUi.standalone.tests",
   visibility = ["//visibility:public"],
@@ -32,7 +42,8 @@ jvm_library(
     "@lib//:kotlin-test",
     "@lib//:junit5",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
-  ]
+  ],
+  runtime_deps = [":jewel-intUi-standalone-tests"]
 )
 ### auto-generated section `build intellij.platform.jewel.intUi.standalone.tests` end
 

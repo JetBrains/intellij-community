@@ -23,7 +23,28 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.MathUtil;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyAssignmentExpression;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyConditionalExpression;
+import com.jetbrains.python.psi.PyDictLiteralExpression;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyKeyValueExpression;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyLambdaExpression;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyPrefixExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStarArgument;
+import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PySubscriptionExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyType;
@@ -35,8 +56,32 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.jetbrains.python.PyStringFormatParser.*;
-import static com.jetbrains.python.PyTokenTypes.*;
+import static com.jetbrains.python.PyStringFormatParser.SubstitutionChunk;
+import static com.jetbrains.python.PyStringFormatParser.filterSubstitutions;
+import static com.jetbrains.python.PyStringFormatParser.getFormatValueExpression;
+import static com.jetbrains.python.PyStringFormatParser.getNewStyleFormatValueExpression;
+import static com.jetbrains.python.PyStringFormatParser.parseNewStyleFormat;
+import static com.jetbrains.python.PyStringFormatParser.parsePercentFormat;
+import static com.jetbrains.python.PyStringFormatParser.substitutionsToRanges;
+import static com.jetbrains.python.PyTokenTypes.AND;
+import static com.jetbrains.python.PyTokenTypes.AND_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.AT;
+import static com.jetbrains.python.PyTokenTypes.AWAIT_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.COMPARISON_OPERATIONS;
+import static com.jetbrains.python.PyTokenTypes.DIV;
+import static com.jetbrains.python.PyTokenTypes.EXP;
+import static com.jetbrains.python.PyTokenTypes.FLOORDIV;
+import static com.jetbrains.python.PyTokenTypes.GTGT;
+import static com.jetbrains.python.PyTokenTypes.LTLT;
+import static com.jetbrains.python.PyTokenTypes.MINUS;
+import static com.jetbrains.python.PyTokenTypes.MULT;
+import static com.jetbrains.python.PyTokenTypes.NOT_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.OR;
+import static com.jetbrains.python.PyTokenTypes.OR_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.PERC;
+import static com.jetbrains.python.PyTokenTypes.PLUS;
+import static com.jetbrains.python.PyTokenTypes.TILDE;
+import static com.jetbrains.python.PyTokenTypes.XOR;
 
 /**
  * @author Dennis.Ushakov
@@ -54,7 +99,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
   public static final Key<Pair<PsiElement, TextRange>> SELECTION_BREAKS_AST_NODE =
     new Key<>("python.selection.breaks.ast.node");
 
-  private PyReplaceExpressionUtil() {}
+  private PyReplaceExpressionUtil() { }
 
   /**
    * @param oldExpr old expression that will be substituted
@@ -433,7 +478,9 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
     int priority = 0;
     if (expr instanceof PyReferenceExpression ||
         expr instanceof PySubscriptionExpression ||
-        expr instanceof PyCallExpression) priority = 1;
+        expr instanceof PyCallExpression) {
+      priority = 1;
+    }
     else if (expr instanceof PyPrefixExpression) {
       final IElementType opType = getOperationType(expr);
       if (opType == AWAIT_KEYWORD) priority = 2;
@@ -442,9 +489,9 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
     }
     else if (expr instanceof PyBinaryExpression) {
       final IElementType opType = getOperationType(expr);
-      if (opType == EXP) priority =  4;
-      if (opType == MULT || opType == AT || opType == DIV || opType == PERC || opType == FLOORDIV) priority =  5;
-      if (opType == PLUS || opType == MINUS) priority =  6;
+      if (opType == EXP) priority = 4;
+      if (opType == MULT || opType == AT || opType == DIV || opType == PERC || opType == FLOORDIV) priority = 5;
+      if (opType == PLUS || opType == MINUS) priority = 6;
       if (opType == LTLT || opType == GTGT) priority = 7;
       if (opType == AND) priority = 8;
       if (opType == XOR) priority = 9;
@@ -453,8 +500,12 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
       if (opType == AND_KEYWORD) priority = 13;
       if (opType == OR_KEYWORD) priority = 14;
     }
-    else if (expr instanceof PyConditionalExpression) priority = 15;
-    else if (expr instanceof PyLambdaExpression) priority = 16;
+    else if (expr instanceof PyConditionalExpression) {
+      priority = 15;
+    }
+    else if (expr instanceof PyLambdaExpression) {
+      priority = 16;
+    }
     else if (expr instanceof PyAssignmentExpression) priority = 17;
 
     return -priority;

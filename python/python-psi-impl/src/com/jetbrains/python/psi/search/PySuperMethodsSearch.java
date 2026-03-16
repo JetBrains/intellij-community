@@ -31,15 +31,16 @@ public final class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElemen
   public static final PySuperMethodsSearch INSTANCE = new PySuperMethodsSearch();
 
   private static PyFunction getBaseMethod(List<PsiElement> superMethods,
-                                         PyClass containingClass) {
+                                          PyClass containingClass) {
 
     for (PyClass ancestor : containingClass.getAncestorClasses(null)) {
       for (PsiElement method : superMethods) {
-        if (ancestor.equals(((PyFunction)method).getContainingClass()))
+        if (ancestor.equals(((PyFunction)method).getContainingClass())) {
           return (PyFunction)method;
+        }
       }
     }
-    return (PyFunction) superMethods.get(superMethods.size()-1);
+    return (PyFunction)superMethods.get(superMethods.size() - 1);
   }
 
   public static PyFunction findDeepestSuperMethod(PyFunction function) {
@@ -85,7 +86,9 @@ public final class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElemen
     return INSTANCE.createUniqueResultsQuery(parameters);
   }
 
-  public static Query<PsiElement> search(final PyFunction derivedMethod, final boolean deepSearch, final @Nullable TypeEvalContext context) {
+  public static Query<PsiElement> search(final PyFunction derivedMethod,
+                                         final boolean deepSearch,
+                                         final @Nullable TypeEvalContext context) {
     final SearchParameters parameters = new SearchParameters(derivedMethod, deepSearch, context);
     return INSTANCE.createUniqueResultsQuery(parameters);
   }

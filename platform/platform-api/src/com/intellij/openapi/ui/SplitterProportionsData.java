@@ -6,7 +6,7 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.Component;
 
 public interface SplitterProportionsData extends JDOMExternalizable {
   void saveSplitterProportions(Component root);

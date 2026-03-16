@@ -6,7 +6,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.FlowLayout;
 
 @Service(Service.Level.PROJECT)
 public final class VGapProperty extends AbstractIntProperty<RadContainer> {

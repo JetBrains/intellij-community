@@ -12,7 +12,11 @@ import java.nio.file.FileVisitor
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.regex.Pattern
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.getLastModifiedTime
+import kotlin.io.path.name
+import kotlin.io.path.pathString
+import kotlin.io.path.visitFileTree
 
 /**
  * Return paths to files which matches the given [pathPattern] in Ant format.

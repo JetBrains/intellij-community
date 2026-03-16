@@ -3,7 +3,6 @@ package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.java.refactoring.LightRefactoringTestCase;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -11,10 +10,11 @@ import com.intellij.refactoring.inline.InlineParameterExpressionProcessor;
 import com.intellij.refactoring.inline.InlineParameterHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class InlineParameterTest extends LightRefactoringTestCase {
+public class InlineParameterTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {

@@ -18,7 +18,7 @@ jvm_library(
     "//java/java-psi-impl:psi-impl",
     "//uast/uast-java:java-uast",
     "@lib//:kotlinc-analysis-api",
-    "//plugins/kotlin/uast/uast-kotlin-base",
+    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base",
   ]
 )
 ### auto-generated section `build kotlin.uast.uast-kotlin` end

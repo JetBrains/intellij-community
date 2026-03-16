@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.psi
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.FlexibleType
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 object KotlinPsiUtil {
     fun getTypeName(type: KotlinType): String {
         if (type is FlexibleType) {
@@ -30,6 +32,7 @@ object KotlinPsiUtil {
 
 internal fun KtCallExpression.callName(): String = this.calleeExpression!!.text
 
+@K1Deprecation
 fun KtCallExpression.previousCall(): KtCallExpression? {
     val parent = this.parent as? KtDotQualifiedExpression ?: return null
     val receiverExpression = parent.receiverExpression
@@ -38,6 +41,7 @@ fun KtCallExpression.previousCall(): KtCallExpression? {
     return null
 }
 
+@K1Deprecation
 @Deprecated(
     "Use org.jetbrains.kotlin.idea.core.analyze() instead.",
     ReplaceWith("resolveType()", "org.jetbrains.kotlin.idea.core.analyze"),

@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.DumbAwareToggleAction
 import org.jetbrains.annotations.ApiStatus
 
-private class EditorSplitGroup : DefaultActionGroup() {
+internal class EditorSplitGroup : DefaultActionGroup() {
   override fun update(e: AnActionEvent) {
     val editor = e.getEditorWithPreview()
     e.presentation.isEnabledAndVisible = editor != null
@@ -42,6 +42,6 @@ internal fun AnActionEvent.getEditorWithPreview(): TextEditorWithPreview? {
   return TextEditorWithPreview.getParentSplitEditor(getData(PlatformCoreDataKeys.FILE_EDITOR))
 }
 
-private class SplitVerticallyAction : ChangeEditorSplitAction(false)
+internal class SplitVerticallyAction : ChangeEditorSplitAction(false)
 
-private class SplitHorizontallyAction : ChangeEditorSplitAction(true)
+internal class SplitHorizontallyAction : ChangeEditorSplitAction(true)

@@ -3,7 +3,7 @@ package fleet.multiplatform.shims
 
 import fleet.util.multiplatform.Actual
 
-@Actual("threadLocalImpl")
+@Actual
 internal fun threadLocalImplWasmJs(supplier: () -> Any?): ThreadLocal<Any?> = threadLocal(supplier)
 
 private fun <T> threadLocal(supplier: () -> T) = object : ThreadLocal<T> {

@@ -20,7 +20,10 @@ class Class1(metaclass=Meta1):
         return super().__new__(cls)
 
 
-assert_type(Class1(), NoReturn)
+# This needs to be in a separate scope, because some type checkers might mark
+# the statements after it as unreachable.
+if bool():
+    assert_type(Class1(), NoReturn)
 
 
 class Meta2(type):

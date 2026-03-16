@@ -6,9 +6,11 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
-public class HtmlUnknownBooleanAttributeInspection extends HtmlUnknownBooleanAttributeInspectionBase {
+public final class HtmlUnknownBooleanAttributeInspection extends HtmlUnknownBooleanAttributeInspectionBase {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(

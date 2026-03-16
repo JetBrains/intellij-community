@@ -3,27 +3,33 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.IntentionWrapper
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.core.targetDescriptors
-import org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.core.targetDescriptors
+import org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider
 import org.jetbrains.kotlin.idea.quickfix.ReplaceObsoleteLabelSyntaxFix
 import org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFixBase
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
@@ -36,6 +42,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 
+@K1Deprecation
 class KotlinCleanupInspection : LocalInspectionTool(), CleanupLocalInspectionTool {
     // required to simplify the inspection registration in tests
     override fun getDisplayName(): String = KotlinBundle.message("usage.of.redundant.or.deprecated.syntax.or.deprecated.symbols")

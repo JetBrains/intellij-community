@@ -28,8 +28,8 @@ public abstract class EqualsHashCodeTemplatesManagerBase extends TemplatesManage
   public static final @NonNls String INTELLI_J_DEFAULT = "IntelliJ Default";
   protected static final String DEFAULT_EQUALS = "/com/intellij/codeInsight/generation/defaultEquals.vm";
   protected static final String DEFAULT_HASH_CODE = "/com/intellij/codeInsight/generation/defaultHashCode.vm";
-  private static final String EQUALS_SUFFIX = "equals";
-  private static final String HASH_CODE_SUFFIX = "hashCode";
+  protected static final String EQUALS_SUFFIX = "equals";
+  protected static final String HASH_CODE_SUFFIX = "hashCode";
 
   public TemplateResource getDefaultEqualsTemplate() {
     return getEqualsTemplate(getDefaultTemplate());

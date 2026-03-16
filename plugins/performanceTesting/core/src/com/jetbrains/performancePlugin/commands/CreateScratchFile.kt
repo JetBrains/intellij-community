@@ -4,8 +4,8 @@ package com.jetbrains.performancePlugin.commands
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.lang.Language
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter

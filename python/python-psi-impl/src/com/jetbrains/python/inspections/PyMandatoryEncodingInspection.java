@@ -34,7 +34,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.function.Function;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.dropdown;
+import static com.intellij.codeInspection.options.OptPane.option;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * User : catherine
@@ -52,6 +55,7 @@ public final class PyMandatoryEncodingInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyFile(@NotNull PyFile node) {
       if (!(myAllPythons || LanguageLevel.forElement(node).isPython2())) return;

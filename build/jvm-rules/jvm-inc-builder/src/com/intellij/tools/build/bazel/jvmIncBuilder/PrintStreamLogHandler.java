@@ -1,6 +1,6 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder;
 
-import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.kotlin.com.intellij.openapi.util.text.StringUtil;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.trace.Span;

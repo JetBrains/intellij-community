@@ -3,6 +3,9 @@ plugins {
 }
 
 kotlin {
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
+    applyDefaultHierarchyTemplate()
+
     jvm()
     linuxX64 {
         binaries {
@@ -11,19 +14,19 @@ kotlin {
             }
         }
     }
+    macosArm64 {
+        binaries {
+            executable {
+                entryPoint = "main"
+            }
+        }
+    }
 
     sourceSets {
-        val commonMain by getting
-        val commonTest by getting {
+        commonTest {
             dependencies {
                 implementation(kotlin("test"))
             }
         }
-
-        val jvmMain by getting
-        val jvmTest by getting
-
-        val linuxX64Main by getting
-        val linuxX64Test by getting
     }
 }

@@ -19,6 +19,7 @@ internal class BuiltInServerConfigurableUi(@ConfigurableName private val display
     group(displayName) {
       row(BuiltInServerBundle.message("setting.value.builtin.server.port.label")) {
         builtInServerPort = cell(PortField())
+          .contextHelp(BuiltInServerBundle.message("setting.builtin.server.tip"))
           .applyToComponent {
             min = 1024
             addChangeListener {
@@ -29,7 +30,6 @@ internal class BuiltInServerConfigurableUi(@ConfigurableName private val display
                 else BuiltInServerBundle.message("checkbox.tooltip.can.t.be.enabled.for.default.port")
             }
           }.component
-        contextHelp(BuiltInServerBundle.message("setting.builtin.server.tip"))
       }
       row {
         builtInServerAvailableExternallyCheckBox = checkBox(BuiltInServerBundle.message("setting.value.can.accept.external.connections")).component

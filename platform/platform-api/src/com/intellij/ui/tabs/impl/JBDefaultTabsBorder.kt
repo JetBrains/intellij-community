@@ -5,7 +5,11 @@ package com.intellij.ui.tabs.impl
 
 import com.intellij.ui.tabs.JBTabsBorder
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.*
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Point
+import java.awt.Rectangle
 
 @Internal
 open class JBDefaultTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {

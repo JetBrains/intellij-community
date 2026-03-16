@@ -2,7 +2,11 @@
 package org.editorconfig.configmanagement
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.editorconfig.common.EditorConfigBundle.message
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -105,7 +109,6 @@ internal class EditorConfigEncodingInspection : LocalInspectionTool() {
 
   private fun getMainPsi(psiFile: PsiFile): PsiFile {
     val baseLanguage = psiFile.viewProvider.baseLanguage
-    return psiFile.viewProvider.getPsi(baseLanguage)
+    return psiFile.viewProvider.getPsi(baseLanguage)!!
   }
-
 }

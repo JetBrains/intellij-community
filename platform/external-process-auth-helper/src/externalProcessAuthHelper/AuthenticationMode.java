@@ -7,6 +7,9 @@ package com.intellij.externalProcessAuthHelper;
  * (Also, native credential helper should be disabled manually as a command parameter);
  * SILENT: the IDE will look for passwords in the common password storages. if no password is found, no authentication will be performed;
  * FULL: the IDE will look for passwords in the common password storages. If no password is found, an authentication dialog will be displayed.
+ * <p>
+ * Note that even if the authentication mode is set to {@link AuthenticationMode#SILENT},
+ * the IDE can still trigger the OS prompt for authentication (e.g., macOS Keychain).
  */
 public enum AuthenticationMode {
   NONE, SILENT, FULL

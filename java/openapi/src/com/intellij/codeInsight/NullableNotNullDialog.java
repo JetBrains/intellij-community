@@ -8,7 +8,8 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 

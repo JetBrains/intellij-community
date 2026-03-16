@@ -14,7 +14,10 @@ import java.util.Objects;
 
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static com.intellij.util.containers.ContainerUtil.map;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;

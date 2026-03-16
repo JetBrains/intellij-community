@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.BuildPaths.Companion.ULTIMATE_HOME
-import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.createBuildContext
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
 import org.junit.Assert
 import org.junit.Test
@@ -13,7 +13,7 @@ class MavenArtifactsBuilderTest {
   private val builder by lazy {
     runBlocking {
       MavenArtifactsBuilder(
-        BuildContextImpl.createContext(
+        createBuildContext(
           projectHome = ULTIMATE_HOME,
           productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
           setupTracer = false,

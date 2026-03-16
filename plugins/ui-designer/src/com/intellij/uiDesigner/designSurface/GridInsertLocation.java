@@ -14,7 +14,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 
 
 public class GridInsertLocation extends GridDropLocation {

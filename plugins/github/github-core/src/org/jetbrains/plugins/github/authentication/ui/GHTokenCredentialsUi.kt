@@ -8,6 +8,7 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.layout.ComponentPredicate
 import kotlinx.coroutines.Dispatchers
@@ -40,7 +41,7 @@ internal class GHTokenCredentialsUi(
     row(message("credentials.server.field")) { cell(serverTextField).align(AlignX.FILL) }
     row(message("credentials.token.field")) {
       cell(tokenTextField)
-        .comment(CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GHSecurityUtil.MASTER_SCOPES))
+        .comment(CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GHSecurityUtil.MASTER_SCOPES), maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
         .align(AlignX.FILL)
         .resizableColumn()
       button(message("credentials.button.generate")) { browseNewTokenUrl() }

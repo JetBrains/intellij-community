@@ -12,8 +12,19 @@ import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.fi
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.nj2k.isObjectOrCompanionObject
 import org.jetbrains.kotlin.nj2k.psi
-import org.jetbrains.kotlin.nj2k.tree.*
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.nj2k.tree.JKClass
+import org.jetbrains.kotlin.nj2k.tree.JKClassBody
+import org.jetbrains.kotlin.nj2k.tree.JKEnumConstant
+import org.jetbrains.kotlin.nj2k.tree.JKMethod
+import org.jetbrains.kotlin.nj2k.tree.JKOtherModifiersOwner
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier
+import org.jetbrains.kotlin.nj2k.tree.hasOtherModifier
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 

@@ -31,7 +31,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.VcsDataKeys.*;
+import static com.intellij.openapi.vcs.VcsDataKeys.CHANGE_LISTS;
+import static com.intellij.openapi.vcs.VcsDataKeys.VCS_FILE_REVISIONS;
+import static com.intellij.openapi.vcs.VcsDataKeys.VCS_REVISION_NUMBER;
 
 /**
  * {@link VcsDataKeys#VCS_REVISION_NUMBERS}

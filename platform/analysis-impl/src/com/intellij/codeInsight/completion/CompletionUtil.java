@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailTypes;
@@ -16,7 +16,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.CharPattern;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.UnmodifiableIterator;
@@ -31,20 +35,22 @@ import java.util.Iterator;
 import java.util.List;
 
 public final class CompletionUtil {
-
-  private static final CompletionData ourGenericCompletionData = new CompletionData() {
-    {
-      CompletionVariant variant = new CompletionVariant(PsiElement.class, TrueFilter.INSTANCE);
-      variant.addCompletionFilter(TrueFilter.INSTANCE, TailTypes.noneType());
-      registerVariant(variant);
-    }
-  };
+  private static volatile CompletionData ourGenericCompletionData;
   public static final @NonNls String DUMMY_IDENTIFIER = CompletionInitializationContext.DUMMY_IDENTIFIER;
   public static final @NonNls String DUMMY_IDENTIFIER_TRIMMED = CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
 
   @ApiStatus.Internal
   public static @Nullable CompletionData getCompletionDataByElement(@Nullable PsiElement position, @NotNull PsiFile originalFile) {
     if (position == null) return null;
+    if (ourGenericCompletionData == null) {
+      ourGenericCompletionData = new CompletionData() {
+        {
+          CompletionVariant variant = new CompletionVariant(PsiElement.class, TrueFilter.INSTANCE);
+          variant.addCompletionFilter(TrueFilter.INSTANCE, TailTypes.noneType());
+          registerVariant(variant);
+        }
+      };
+    }
     return ourGenericCompletionData;
   }
 

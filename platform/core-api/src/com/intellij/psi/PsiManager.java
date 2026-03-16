@@ -37,6 +37,9 @@ public abstract class PsiManager extends UserDataHolderBase {
 
   /**
    * Returns the PSI file corresponding to the specified virtual file.
+   * <p>
+   * It's not allowed to pass invalid virtual files as an argument.
+   * An error will be logged in this case.
    *
    * @param file the file for which the PSI is requested.
    * @return the PSI file, or {@code null} if {@code file} is a directory, an invalid virtual file,
@@ -47,6 +50,17 @@ public abstract class PsiManager extends UserDataHolderBase {
   public abstract @Nullable PsiFile findFile(@NotNull VirtualFile file);
 
 
+  /**
+   * Returns the PSI file corresponding to the specified virtual file with the specified context.
+   * <p>
+   * It's not allowed to pass invalid virtual files as an argument.
+   * An error will be logged in this case.
+   *
+   * @param file the file for which the PSI is requested.
+   * @param context the context for the PSI file.
+   * @return the PSI file, or {@code null} if {@code file} is a directory, an invalid virtual file,
+   * or the current project is a dummy or default project.
+   */
   @ApiStatus.Experimental
   @RequiresReadLock
   @RequiresBackgroundThread(generateAssertion = false)
@@ -105,7 +119,7 @@ public abstract class PsiManager extends UserDataHolderBase {
   /**
    * Adds a listener for receiving notifications about all changes in the PSI tree of the project.
    * This listener will be invoked <b>on EDT</b>.
-   *
+   * <p>
    * Obsolescence notice: consider using {@link #addPsiTreeChangeListenerBackgroundable(PsiTreeChangeListener, Disposable)} instead.
    *
    * @param listener         the listener instance

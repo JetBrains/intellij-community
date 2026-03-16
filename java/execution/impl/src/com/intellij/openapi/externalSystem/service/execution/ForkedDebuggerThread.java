@@ -8,7 +8,6 @@ import com.intellij.debugger.DefaultDebugEnvironment;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.engine.managerThread.DebuggerCommand;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.execution.ExecutionException;
@@ -49,7 +48,7 @@ import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Font;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
@@ -422,11 +421,10 @@ class ForkedDebuggerThread extends Thread {
       debugProcess.getManagerThread().invokeCommand(new DebuggerCommand() {
         @Override
         public void action() {
-          VirtualMachineProxy virtualMachineProxy = debugProcess.getVirtualMachineProxy();
-          if (virtualMachineProxy instanceof VirtualMachineProxyImpl &&
-              ((VirtualMachineProxyImpl)virtualMachineProxy).canBeModified()) {
+          VirtualMachineProxyImpl virtualMachineProxy = VirtualMachineProxyImpl.getCurrent();
+          if (virtualMachineProxy.canBeModified()) {
             // use success exit code here to avoid the main process interruption
-            ((VirtualMachineProxyImpl)virtualMachineProxy).exit(0);
+            virtualMachineProxy.exit(0);
           }
           else {
             debugProcess.stop(true);

@@ -8,7 +8,12 @@ import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelSource
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
-import com.intellij.python.community.execService.*
+import com.intellij.python.community.execService.Args
+import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.ProcessOutputTransformer
+import com.intellij.python.community.execService.ZeroCodeJsonParserTransformer
+import com.intellij.python.community.execService.execute
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.Result
 import com.jetbrains.python.getOrThrow

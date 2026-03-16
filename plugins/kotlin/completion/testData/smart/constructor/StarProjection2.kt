@@ -7,3 +7,5 @@ fun test() {
 fun bar(foo: X<*>) {}
 
 // EXIST: { lookupString:"X", itemText:"X", tailText:"(d: D) (<root>)" }
+
+// IGNORE_K2

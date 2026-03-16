@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process
 
+import com.intellij.execution.process.UnixSignal.Companion.EXIT_CODE_OFFSET
+
+
 /**
  * Signals used by Linux and DarwinBSD (Mac OS X).
  * Each signal has code, that might differ between Darwin [darwinCode] and x86/ARM Linux [linuxCode].

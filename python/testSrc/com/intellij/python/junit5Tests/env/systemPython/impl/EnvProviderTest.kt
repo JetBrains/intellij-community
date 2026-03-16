@@ -1,0 +1,63 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.junit5Tests.env.systemPython.impl
+
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.platform.eel.EelApi
+import com.intellij.python.community.services.systemPython.SystemPythonProvider
+import com.intellij.python.community.services.systemPython.SystemPythonService
+import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
+import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
+import com.intellij.python.venv.createVenv
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.registerExtension
+import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.Result
+import com.jetbrains.python.getOrThrow
+import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
+
+@PyEnvTestCase
+class EnvProviderTest {
+
+  @Test
+  fun testPythonProvider(@PythonBinaryPath python: PythonBinary): Unit = timeoutRunBlocking {
+    val systemPythons = SystemPythonService().findSystemPythons()
+    val systemPythonBinaries = systemPythons.map { it.pythonBinary }
+    assertThat("No env python registered", systemPythonBinaries, Matchers.hasItem(python))
+
+    if (systemPythons.size > 1) {
+      val best = systemPythons.first()
+      for (python in systemPythons.subList(1, systemPythonBinaries.size)) {
+        assertTrue(python.pythonInfo.languageLevel <= best.pythonInfo.languageLevel, "$best is the first, bust worse than $python")
+      }
+    }
+  }
+
+  @Test
+  fun testProviderWithUi(
+    @TestDisposable disposable: Disposable,
+    @PythonBinaryPath python: PythonBinary,
+    @TempDir venvDir: Path,
+  ): Unit = timeoutRunBlocking {
+    val venvPython = createVenv(python, venvDir).getOrThrow()
+    val ui = PyToolUIInfo("myui")
+    val provider = InlineTestProvider(setOf(venvPython), ui)
+    ApplicationManager.getApplication().registerExtension(SystemPythonProvider.EP, provider, disposable)
+    val python = SystemPythonService().findSystemPythons(forceRefresh = true).first { it.pythonBinary == venvPython }
+    assertTrue(ui == python.ui, "Wrong UI")
+  }
+
+  private class InlineTestProvider(
+    private val pythons: Set<PythonBinary>,
+    override val uiCustomization: PyToolUIInfo?,
+  ) : SystemPythonProvider {
+    override suspend fun findSystemPythons(eelApi: EelApi) = Result.success(pythons)
+  }
+}

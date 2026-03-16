@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.trustedProjects.TrustedProjects;
@@ -50,7 +50,7 @@ public class StartUseVcsAction extends DumbAwareAction {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || !TrustedProjects.isProjectTrusted(project)) return null;
     ProjectLevelVcsManagerImpl manager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
-    if (manager.haveVcses() && !manager.hasAnyMappings()) {
+    if (!manager.hasActiveVcss()) {
       VirtualFile targetDirectory = ProjectUtil.guessProjectDir(project);
       if (targetDirectory == null) {
         return null;

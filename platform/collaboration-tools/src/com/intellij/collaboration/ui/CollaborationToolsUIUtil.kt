@@ -24,7 +24,16 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.*
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.JBColor
+import com.intellij.ui.RoundedLineBorder
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.ScrollingUtil
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.panels.BackgroundRoundedPanel
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.components.panels.Wrapper
@@ -45,11 +54,26 @@ import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import java.awt.*
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Insets
+import java.awt.LayoutManager
+import java.awt.Rectangle
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.util.function.Supplier
-import javax.swing.*
+import javax.swing.ComboBoxModel
+import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.KeyStroke
+import javax.swing.ListModel
+import javax.swing.Scrollable
+import javax.swing.SwingConstants
 import javax.swing.event.DocumentEvent
 import kotlin.properties.Delegates
 
@@ -99,7 +123,7 @@ object CollaborationToolsUIUtil {
 
   private class ValidatorActivatable(
     private val errorValue: SingleValueModel<@Nls String?>,
-    private val component: JComponent
+    private val component: JComponent,
   ) : Activatable {
     private var validatorDisposable: Disposable? = null
     private var validator: ComponentValidator? = null
@@ -284,20 +308,35 @@ object CollaborationToolsUIUtil {
    * A text label with a rounded rectangle as a background
    * To be used for various tags and badges
    */
-  fun createTagLabel(text: @Nls String): JComponent = createTagLabel(SingleValueModel(text))
+  @JvmOverloads
+  fun createTagLabel(
+    text: @Nls String,
+    textColor: Color = CodeReviewColorUtil.Review.stateForeground,
+    backgroundColor: Color = CodeReviewColorUtil.Review.stateBackground,
+    compact: Boolean = true,
+  ): JComponent = createTagLabel(SingleValueModel(text), textColor, backgroundColor, compact)
 
-  fun createTagLabel(model: SingleValueModel<@Nls String?>): JComponent =
+  @JvmOverloads
+  fun createTagLabel(
+    model: SingleValueModel<@Nls String?>,
+    textColor: Color = CodeReviewColorUtil.Review.stateForeground,
+    backgroundColor: Color = CodeReviewColorUtil.Review.stateBackground,
+    compact: Boolean = true,
+  ): JComponent =
     JLabel(model.value).apply {
-      font = JBFont.small()
-      foreground = CodeReviewColorUtil.Review.stateForeground
+      if (compact) {
+        font = JBFont.small()
+      }
+      foreground = textColor
       border = JBUI.Borders.empty(0, 4)
       model.addListener {
         text = it
       }
     }.let {
       BackgroundRoundedPanel(4, SingleComponentCenteringLayout()).apply {
+        fillBorder = false
         border = JBUI.Borders.empty()
-        background = CodeReviewColorUtil.Review.stateBackground
+        background = backgroundColor
         add(it)
       }
     }
@@ -362,8 +401,10 @@ fun HorizontalListPanel(gap: Int = 0): JPanel =
   }
 
 @Suppress("FunctionName")
-fun ScrollablePanel(@MagicConstant(intValues = [SwingConstants.HORIZONTAL.toLong(), SwingConstants.VERTICAL.toLong()]) orientation: Int,
-                    layout: LayoutManager? = null): JPanel =
+fun ScrollablePanel(
+  @MagicConstant(intValues = [SwingConstants.HORIZONTAL.toLong(), SwingConstants.VERTICAL.toLong()]) orientation: Int,
+  layout: LayoutManager? = null,
+): JPanel =
   OrientableScrollablePanel(orientation, layout)
 
 private class OrientableScrollablePanel(private val orientation: Int, layout: LayoutManager?) : JPanel(layout), Scrollable {
@@ -401,6 +442,12 @@ private class OrientableScrollablePanel(private val orientation: Int, layout: La
 fun ClippingRoundedPanel(arcRadius: Int = 8, borderColor: Color = JBColor.border(), layoutManager: LayoutManager? = null): JPanel =
   ClippingRoundedPanel(arcRadius, layoutManager).apply {
     border = RoundedLineBorder(borderColor, (arcRadius + 1) * 2)
+  }
+
+@Suppress("FunctionName")
+fun FocusAwareClippingRoundedPanel(arcRadius: Int = 8, borderColor: Color = JBColor.border(), layoutManager: LayoutManager? = null): JPanel =
+  ClippingRoundedPanel(arcRadius, layoutManager).apply {
+    border = FocusAwareRoundedLineBorder(borderColor, (arcRadius + 1) * 2)
   }
 
 /**

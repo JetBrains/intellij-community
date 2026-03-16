@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class SearchEverywhereFiltersAction<T> extends ShowFilterAction {
   final PersistentSearchEverywhereContributorFilter<T> filter;

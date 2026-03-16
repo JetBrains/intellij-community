@@ -60,7 +60,9 @@ public interface PsiModificationTracker extends ModificationTracker {
    * and when Dumb Mode is entered or exited.
    * <p>
    * This means <i>literally every PSI change</i>, which may be too broad for your specific use case.
-   * If your computation is heavy enough, or it is not requested often enough, then such a cache won't improve performance.
+   * If your computation is not heavy enough, or it is not requested often enough,
+   * or its result becomes invalid almost immediately after it is computed,
+   * then such a cache won't improve performance.
    * An example of such a pointless cache is a {@link CachedValue} with this key as a dependency
    * and which {@link CachedValue#getValue() is queried} whenever the user edits some code.
    * <p>

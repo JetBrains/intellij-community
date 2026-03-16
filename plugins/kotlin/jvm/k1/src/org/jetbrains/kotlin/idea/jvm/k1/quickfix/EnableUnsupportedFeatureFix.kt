@@ -11,6 +11,7 @@ import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
 
+@K1Deprecation
 sealed class EnableUnsupportedFeatureFix(
     element: PsiElement,
     protected val feature: LanguageFeature,
@@ -118,7 +120,7 @@ sealed class EnableUnsupportedFeatureFix(
             val apiVersionOnly = sinceVersion <= languageFeatureSettings.languageVersion &&
                     feature.sinceApiVersion > languageFeatureSettings.apiVersion
 
-            if (!sinceVersion.isStableOrReadyForPreview() && !isApplicationInternalMode()) {
+            if (!sinceVersion.isStable && !isApplicationInternalMode()) {
                 return null
             }
 

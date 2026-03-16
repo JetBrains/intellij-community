@@ -1,15 +1,21 @@
 package com.intellij.cce.actions.simplified
 
-import com.intellij.cce.actions.*
+import com.intellij.cce.actions.Action
+import com.intellij.cce.actions.ActionArraySerializer
+import com.intellij.cce.actions.CallFeature
+import com.intellij.cce.actions.FileActions
+import com.intellij.cce.actions.MoveCaret
+import com.intellij.cce.actions.OpenFileInBackground
+import com.intellij.cce.actions.SelectRange
 import com.intellij.cce.actions.simplified.SimplifiedDatasetSerializer.parseLineRange
 import com.intellij.cce.core.SimpleTokenProperties
 import com.intellij.cce.core.SymbolLocation
 import com.intellij.cce.core.TypeProperty
-import com.intellij.cce.evaluable.PROMPT_PROPERTY
 import com.intellij.cce.evaluable.FILE_VALIDATIONS
+import com.intellij.cce.evaluable.PROMPT_PROPERTY
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.*
+import java.util.UUID
 
 fun main(args: Array<String>) {
   if (args.size < 3) {

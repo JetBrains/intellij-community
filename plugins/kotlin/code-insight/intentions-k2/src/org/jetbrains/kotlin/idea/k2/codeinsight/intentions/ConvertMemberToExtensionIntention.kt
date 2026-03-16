@@ -14,6 +14,7 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.hasExplicitBackingField
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFunInterface
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.unblockDocument
@@ -22,7 +23,18 @@ import org.jetbrains.kotlin.idea.quickfix.convertMemberToExtensionAndPrepareBody
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.liftToExpect
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassBody
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.hasBody
 import org.jetbrains.kotlin.psi.psiUtil.siblings
@@ -41,10 +53,9 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
         if (element.receiverTypeReference != null) return false
         if (element.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
         when (element) {
-            is KtProperty -> if (element.hasInitializer() || element.hasDelegate()) return false
+            is KtProperty -> if (element.hasExplicitBackingField() || element.hasInitializer() || element.hasDelegate()) return false
             is KtSecondaryConstructor -> return false
         }
-
         return true
     }
 

@@ -20,7 +20,16 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.ModuleSourceOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -131,8 +140,8 @@ public final class RootVisitorHost {
     Set<VirtualFile> allRoots = new LinkedHashSet<>();
     Collections.addAll(allRoots, entry.getFiles(OrderRootType.SOURCES));
     Collections.addAll(allRoots, entry.getFiles(OrderRootType.CLASSES));
-    Module module = entry instanceof ModuleOrderEntry ? ((ModuleOrderEntry) entry).getModule() : null;
-    Sdk sdk = entry instanceof JdkOrderEntry ? ((JdkOrderEntry) entry).getJdk() : null;
+    Module module = entry instanceof ModuleOrderEntry ? ((ModuleOrderEntry)entry).getModule() : null;
+    Sdk sdk = entry instanceof JdkOrderEntry ? ((JdkOrderEntry)entry).getJdk() : null;
     for (VirtualFile root : allRoots) {
       if (!visitor.visitRoot(root, module, sdk, false)) {
         return false;

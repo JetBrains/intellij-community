@@ -1,14 +1,29 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaDocumentedElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.LazyParseablePsiElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocToken;
@@ -39,6 +54,10 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     super(JavaDocElementType.DOC_COMMENT, text);
   }
 
+  public PsiDocCommentImpl(CharSequence text, boolean markdownComment) {
+    super(markdownComment ? DOC_MARKDOWN_COMMENT : DOC_COMMENT, text);
+  }
+
   @Override
   public PsiJavaDocumentedElement getOwner() {
     return PsiImplUtil.findDocCommentOwner(this);
@@ -64,7 +83,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
 
   @Override
   public PsiDocTag findTagByName(String name) {
-    if (getFirstChildNode().getElementType() == JavaDocElementType.DOC_COMMENT) {
+    if (DOC_COMMENT_TOKENS.contains(getFirstChildNode().getElementType())) {
       if (!getFirstChildNode().getText().contains(name)) return null;
     }
 
@@ -336,7 +355,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     if (i == DOC_TAG) {
       return ChildRole.DOC_TAG;
     }
-    else if (i == JavaDocElementType.DOC_COMMENT || i == DOC_INLINE_TAG) {
+    else if (DOC_COMMENT_TOKENS.contains(i) || i == DOC_INLINE_TAG) {
       return ChildRole.DOC_CONTENT;
     }
     else if (i == DOC_COMMENT_LEADING_ASTERISKS) {

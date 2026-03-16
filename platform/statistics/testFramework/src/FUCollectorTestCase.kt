@@ -62,9 +62,10 @@ object FUCollectorTestCase {
    */
   fun collectLogEvents(listenerPerRecorder: Map<String, Consumer<LogEvent>?>,
                        parentDisposable: Disposable,
+                       escapeChars: Boolean,
                        action: () -> Unit): Map<String, List<LogEvent>> {
     val mockProviderByRecorder: Map<String, TestStatisticsEventLoggerProvider> = listenerPerRecorder.entries.associate { (recorder, listener) ->
-      val mockLoggerProvider = TestStatisticsEventLoggerProvider(recorder, escapeChars = false)
+      val mockLoggerProvider = TestStatisticsEventLoggerProvider(recorder, escapeChars = escapeChars)
       mockLoggerProvider.logger.eventListener = listener
       recorder to mockLoggerProvider
     }

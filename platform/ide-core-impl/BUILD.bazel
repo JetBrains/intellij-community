@@ -30,7 +30,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/core-ui",
     "//jps/model-impl",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//platform/diagnostic",
@@ -38,6 +38,7 @@ jvm_library(
     "//libraries/hash4j",
     "//platform/workspace/storage",
     "//platform/backend/observation",
+    "//platform/projectModel-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.core.impl` end

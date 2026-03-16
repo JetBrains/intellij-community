@@ -14,6 +14,8 @@ import org.junit.Test
 import java.util.function.Consumer
 
 class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
+  override fun skipPluginResolution() = false
+
   private var myDataContext: DataContext? = null
   private var myProvider: MavenRunAnythingProvider? = null
 

@@ -12,19 +12,23 @@ import com.intellij.model.search.SearchRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolApiStatus.Companion.getMessage
 import com.intellij.polySymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
+import com.intellij.polySymbols.PolySymbolNameSegment
+import com.intellij.polySymbols.PolySymbolProperty
+import com.intellij.polySymbols.PolySymbolsBundle
 import com.intellij.polySymbols.highlighting.impl.getDefaultProblemMessage
 import com.intellij.polySymbols.inspections.PolySymbolProblemQuickFixProvider
 import com.intellij.polySymbols.inspections.impl.PolySymbolInspectionToolMappingEP
 import com.intellij.polySymbols.query.PolySymbolMatch
-import com.intellij.polySymbols.references.PsiPolySymbolReferenceProviderListener
 import com.intellij.polySymbols.references.PolySymbolReference
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKind
 import com.intellij.polySymbols.references.PsiPolySymbolReferenceCacheInfoProvider
 import com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider
+import com.intellij.polySymbols.references.PsiPolySymbolReferenceProviderListener
 import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.polySymbols.utils.hasOnlyExtensions
 import com.intellij.polySymbols.utils.nameSegments
@@ -36,7 +40,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.application
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.LinkedList
 import java.util.concurrent.ConcurrentHashMap
 
 internal val IJ_IGNORE_REFS: PolySymbolProperty<Boolean> = PolySymbolProperty["ij-no-psi-refs"]
@@ -208,7 +212,7 @@ private class NameSegmentReferenceWithProblem(
       .mapNotNull { segment ->
         val problemKind = segment.getProblemKind() ?: return@mapNotNull null
         val toolMapping = segment.symbolKinds.map {
-          PolySymbolInspectionToolMappingEP.get(it.namespace, it.kind, problemKind)
+          PolySymbolInspectionToolMappingEP.get(it.namespace, it.kindName, problemKind)
         }.firstOrNull()
         PolySymbolReferenceProblem.create(
           segment.symbolKinds,
@@ -227,9 +231,9 @@ private class NameSegmentReferenceWithProblem(
       val symbolTypes = nameSegments.flatMapTo(LinkedHashSet()) { it.symbolKinds }
       val toolMapping = symbolTypes.map {
         if (apiStatus is PolySymbolApiStatus.Obsolete)
-          PolySymbolInspectionToolMappingEP.get(it.namespace, it.kind, ProblemKind.ObsoleteSymbol)
+          PolySymbolInspectionToolMappingEP.get(it.namespace, it.kindName, ProblemKind.ObsoleteSymbol)
             ?.let { mapping -> return@map mapping }
-        PolySymbolInspectionToolMappingEP.get(it.namespace, it.kind, ProblemKind.DeprecatedSymbol)
+        PolySymbolInspectionToolMappingEP.get(it.namespace, it.kindName, ProblemKind.DeprecatedSymbol)
       }.firstOrNull()
 
       val cause = apiStatus?.getMessage()

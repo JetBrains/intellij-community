@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.util.List;
 
 public class CacheLoader extends Loader {

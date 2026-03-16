@@ -9,8 +9,15 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -18,7 +25,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.*;
+import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getContentOuterPadding;
+import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getDocPopupMaxHeight;
+import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getDocPopupMaxWidth;
+import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getDocPopupMinWidth;
+import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getSpaceAfterParagraph;
 import static com.intellij.lang.documentation.ide.ui.UiKt.FORCED_WIDTH;
 import static com.intellij.ui.scale.JBUIScale.scale;
 

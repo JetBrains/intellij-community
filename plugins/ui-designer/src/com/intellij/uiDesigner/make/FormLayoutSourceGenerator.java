@@ -12,7 +12,7 @@ import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.Insets;
 
 
 public class FormLayoutSourceGenerator extends LayoutSourceGenerator {
