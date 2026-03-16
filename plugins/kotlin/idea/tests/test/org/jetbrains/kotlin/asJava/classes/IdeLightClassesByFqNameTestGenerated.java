@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.asJava.classes;
 
@@ -753,6 +753,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
         @TestMetadata("EnumEntry.kt")
         public void testEnumEntry() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/EnumEntry.kt"));
+        }
+
+        @TestMetadata("enumEntryAndCompanionProperty.kt")
+        public void testEnumEntryAndCompanionProperty() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/enumEntryAndCompanionProperty.kt"));
         }
 
         @TestMetadata("ExtendingInterfaceWithDefaultImpls.kt")

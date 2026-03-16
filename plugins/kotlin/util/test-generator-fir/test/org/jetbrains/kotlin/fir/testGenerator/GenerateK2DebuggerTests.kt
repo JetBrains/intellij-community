@@ -2,8 +2,6 @@
 package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2ComposeDebuggerEvaluationTest
-import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2IdeK1CodeClassLambdaComposeSteppingTest
-import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2IdeK1CodeComposeSteppingTest
 import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2IdeK2CodeComposeSteppingTest
 import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentAutoImportTest
 import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentCompletionHandlerTest
@@ -14,15 +12,6 @@ import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractInlineScopesAndK
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2BreakpointApplicabilityTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2ClassNameCalculatorTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2FlowAsyncStackTraceTest
-import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK1CodeBreakpointHighlightingTest
-import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK1CodeContinuationStackTraceTest
-import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK1CodeCoroutineDumpTest
-import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK1CodeFileRankingTest
-import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK1CodeKotlinSteppingTest
-import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK1CodeKotlinVariablePrintingTest
-import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK1CodeSuspendStackTraceTest
-import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK1CodeXCoroutinesStackTraceTest
-import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK1CoroutineViewJobHierarchyTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeBreakpointHighlightingTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeContinuationStackTraceTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeCoroutineDumpTest
@@ -57,7 +46,6 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
     testGroup("jvm-debugger/test/k2", testDataPath = "../testData", category = DEBUGGER) {
 
         listOf(
-            AbstractK2IdeK1CodeKotlinSteppingTest::class,
             AbstractK2IdeK2CodeKotlinSteppingTest::class,
             AbstractK2IndyLambdaKotlinSteppingTest::class,
         ).forEach {
@@ -96,7 +84,7 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
             model("positionManager", isRecursive = false, pattern = Patterns.DIRECTORY, testClassName = "MultiFile")
         }
 
-        listOf(AbstractK2IdeK1CodeBreakpointHighlightingTest::class, AbstractK2IdeK2CodeBreakpointHighlightingTest::class).forEach {
+        listOf(AbstractK2IdeK2CodeBreakpointHighlightingTest::class).forEach {
             testClass(it) {
                 model("highlighting", isRecursive = false, pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
             }
@@ -114,13 +102,13 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
             model("breakpointApplicability")
         }
 
-        listOf(AbstractK2IdeK1CodeFileRankingTest::class, AbstractK2IdeK2CodeFileRankingTest::class,).forEach {
+        listOf(AbstractK2IdeK2CodeFileRankingTest::class,).forEach {
             testClass(it) {
                 model("fileRanking")
             }
         }
 
-        listOf(AbstractK2IdeK1CodeSuspendStackTraceTest::class, AbstractK2IdeK2CodeSuspendStackTraceTest::class).forEach {
+        listOf(AbstractK2IdeK2CodeSuspendStackTraceTest::class).forEach {
             testClass(it) {
                 model("suspendStackTrace")
             }
@@ -131,7 +119,6 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
         }
 
         listOf(
-            AbstractK2IdeK1CodeCoroutineDumpTest::class,
             AbstractK2IdeK2CodeCoroutineDumpTest::class,
         ).forEach {
             testClass(it) {
@@ -141,7 +128,6 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
 
         listOf(
             AbstractK2IdeK2CoroutineViewJobHierarchyTest::class,
-            AbstractK2IdeK1CoroutineViewJobHierarchyTest::class,
         ).forEach {
             testClass(it) {
                 model("coroutinesView")
@@ -157,7 +143,6 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
         //}
         //
         listOf(
-            AbstractK2IdeK1CodeContinuationStackTraceTest::class,
             AbstractK2IdeK2CodeContinuationStackTraceTest::class,
         ).forEach {
             testClass(it) {
@@ -165,14 +150,13 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
             }
         }
 
-        listOf(AbstractK2IdeK1CodeKotlinVariablePrintingTest::class, AbstractK2IdeK2CodeKotlinVariablePrintingTest::class,).forEach {
+        listOf(AbstractK2IdeK2CodeKotlinVariablePrintingTest::class,).forEach {
             testClass(it) {
                 model("variables", isRecursive = false)
             }
         }
 
         listOf(
-            AbstractK2IdeK1CodeXCoroutinesStackTraceTest::class,
             AbstractK2IdeK2CodeXCoroutinesStackTraceTest::class,
         ).forEach {
             testClass(it) {
@@ -218,13 +202,7 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
 
 internal fun MutableTWorkspace.generateK2DebuggerTestsWithCompilerPlugins() {
     testGroup("jvm-debugger/test/compose", testDataPath = "../testData", category = DEBUGGER) {
-        testClass<AbstractK2IdeK1CodeComposeSteppingTest> {
-            model("stepping/compose")
-        }
         testClass<AbstractK2IdeK2CodeComposeSteppingTest> {
-            model("stepping/compose")
-        }
-        testClass<AbstractK2IdeK1CodeClassLambdaComposeSteppingTest> {
             model("stepping/compose")
         }
         testClass<AbstractK2ComposeDebuggerEvaluationTest> {

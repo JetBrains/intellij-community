@@ -100,43 +100,14 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractK1CodeFragmentComplet
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractK1CodeFragmentHighlightingTest
 import org.jetbrains.kotlin.idea.debugger.test.AbstractBreakpointApplicabilityTest
 import org.jetbrains.kotlin.idea.debugger.test.AbstractClassNameCalculatorTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractContinuationStackTraceTest
 import org.jetbrains.kotlin.idea.debugger.test.AbstractCoroutineAsyncStackTraceTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractCoroutineDumpTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractCoroutineViewJobHierarchyTest
 import org.jetbrains.kotlin.idea.debugger.test.AbstractFlowAsyncStackTraceTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractIndyLambdaIrKotlinEvaluateExpressionTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractIndyLambdaIrKotlinSteppingTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractInlineScopesAndK1IdeK2CodeEvaluateExpressionTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractIrKotlinScriptEvaluateExpressionTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK1FileRankingTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK1IdeK2CodeBreakpointHighlightingTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK1IdeK2CodeContinuationStackTraceTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK1IdeK2CodeCoroutineDumpTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK1IdeK2CodeFileRankingTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK1IdeK2CodeKotlinEvaluateExpressionInMppTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK1IdeK2CodeKotlinEvaluateExpressionTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK1IdeK2CodeKotlinSteppingPacketsNumberTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK1IdeK2CodeKotlinSteppingTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK1IdeK2CodeKotlinVariablePrintingTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK1IdeK2CodeScriptEvaluateExpressionTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK1IdeK2CodeSuspendStackTraceTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK1IdeK2CodeXCoroutinesStackTraceTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK1IdeK2CoroutineViewTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK1IrBreakpointHighlightingTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK1IrKotlinEvaluateExpressionInMppTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK1IrKotlinEvaluateExpressionTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK1IrKotlinSteppingTest
 import org.jetbrains.kotlin.idea.debugger.test.AbstractK2CoroutineAsyncStackTraceTest
 import org.jetbrains.kotlin.idea.debugger.test.AbstractKotlinExceptionFilterTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractKotlinVariablePrintingTest
 import org.jetbrains.kotlin.idea.debugger.test.AbstractPositionManagerTest
 import org.jetbrains.kotlin.idea.debugger.test.AbstractSelectExpressionForDebuggerTestWithAnalysisApi
 import org.jetbrains.kotlin.idea.debugger.test.AbstractSelectExpressionForDebuggerTestWithLegacyImplementation
 import org.jetbrains.kotlin.idea.debugger.test.AbstractSmartStepIntoTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractSuspendStackTraceTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractXCoroutinesStackTraceTest
-import org.jetbrains.kotlin.idea.debugger.test.sequence.exec.AbstractIrSequenceTraceTestCase
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateJavaSourceToLibrarySourceTest
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateJavaSourceToLibraryTest
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateToDecompiledLibraryTest
@@ -255,7 +226,6 @@ import org.jetbrains.kotlin.psi.patternMatching.AbstractK1PsiUnifierTest
 import org.jetbrains.kotlin.search.AbstractAnnotatedMembersSearchTest
 import org.jetbrains.kotlin.search.AbstractInheritorsSearchTest
 import org.jetbrains.kotlin.shortenRefs.AbstractK1ShortenRefsTest
-import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.CODE_INSIGHT
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.COMPLETION
@@ -338,138 +308,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     }
 
     testGroup("jvm-debugger/test/kotlin.jvm-debugger.test.k1", category = DEBUGGER, testDataPath = "../testData") {
-        listOf(AbstractK1FileRankingTest::class, AbstractK1IdeK2CodeFileRankingTest::class).forEach {
-            testClass(it) {
-                model("fileRanking")
-            }
-        }
-
-        testClass<AbstractIrSequenceTraceTestCase> { // TODO: implement mapping logic for terminal operations
-            model("sequence/streams/sequence", excludedDirectories = listOf("terminal"))
-        }
-
-        listOf(
-            AbstractK1IrKotlinSteppingTest::class,
-            AbstractIndyLambdaIrKotlinSteppingTest::class,
-            AbstractK1IdeK2CodeKotlinSteppingTest::class,
-        ).forEach {
-            testClass(it) {
-                model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepInto")
-                model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doSmartStepIntoTest", testClassName = "SmartStepInto")
-                model("stepping/stepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepIntoOnly")
-                model("stepping/stepOut", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepOutTest")
-                model("stepping/stepOver", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepOverTest")
-                model("stepping/filters", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest")
-                model("stepping/custom", pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
-            }
-        }
-
-        listOf(
-            AbstractIndyLambdaIrKotlinEvaluateExpressionTest::class,
-            AbstractK1IrKotlinEvaluateExpressionTest::class,
-        ).forEach {
-            testClass(it) {
-                model(
-                    "evaluation/singleBreakpoint",
-                    testMethodName = "doSingleBreakpointTest",
-                    targetBackend = TargetBackend.JVM,
-                    excludedDirectories = listOf(
-                        "contextParameters",
-                    ),
-                )
-                model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
-                model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM)
-            }
-        }
-
-        listOf(
-            AbstractK1IdeK2CodeKotlinEvaluateExpressionTest::class,
-            AbstractInlineScopesAndK1IdeK2CodeEvaluateExpressionTest::class,
-        ).forEach {
-            testClass(it) {
-                model(
-                    "evaluation/singleBreakpoint",
-                    testMethodName = "doSingleBreakpointTest",
-                    targetBackend = TargetBackend.JVM,
-                    excludedDirectories = listOf(
-                        "contextParameters",
-                        "contextReceivers",
-                    ),
-                )
-                model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
-                model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM)
-            }
-        }
-
-
-        listOf(
-            AbstractIrKotlinScriptEvaluateExpressionTest::class,
-            AbstractK1IdeK2CodeScriptEvaluateExpressionTest::class,
-        ).forEach {
-            testClass(it) {
-                model("evaluation/scripts", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
-            }
-        }
-
-        testClass<AbstractK1IrKotlinEvaluateExpressionInMppTest>(generatedClassName = "org.jetbrains.kotlin.idea.debugger.test.IrKotlinEvaluateExpressionInMppTestGenerated") {
-            model(
-                "evaluation/singleBreakpoint",
-                testMethodName = "doSingleBreakpointTest",
-                targetBackend = TargetBackend.JVM,
-                excludedDirectories = listOf(
-                    "contextParameters",
-                ),
-            )
-            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
-            model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
-        }
-
-        testClass<AbstractK1IdeK2CodeKotlinEvaluateExpressionInMppTest> {
-            model(
-                "evaluation/singleBreakpoint",
-                testMethodName = "doSingleBreakpointTest",
-                targetBackend = TargetBackend.JVM,
-                excludedDirectories = listOf(
-                    "contextParameters",
-                    "contextReceivers",
-                ),
-            )
-            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
-            model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
-        }
-
-
         testClass<AbstractPositionManagerTest> {
             model("positionManager", isRecursive = false, pattern = KT, testClassName = "SingleFile")
             model("positionManager", isRecursive = false, pattern = DIRECTORY, testClassName = "MultiFile")
         }
-
-        listOf(AbstractK1IrBreakpointHighlightingTest::class,
-            AbstractK1IdeK2CodeBreakpointHighlightingTest::class).forEach {
-            testClass(it) {
-                model("highlighting", isRecursive = false, pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
-            }
-        }
-
-        testClass<AbstractK1IdeK2CodeKotlinSteppingPacketsNumberTest> {
-            model("stepping/packets", isRecursive = false, pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
-        }
-
-        testClass<AbstractFlowAsyncStackTraceTest> {
-            model("asyncStackTrace/flows")
-        }
-
-
-        testClass<AbstractCoroutineAsyncStackTraceTest> {
-            model("asyncStackTrace/coroutines")
-        }
-
-        listOf(AbstractCoroutineViewJobHierarchyTest::class, AbstractK1IdeK2CoroutineViewTest::class).forEach {
-            testClass(it) {
-                model("coroutinesView")
-            }
-        }
-
 
         testClass<AbstractSelectExpressionForDebuggerTestWithAnalysisApi> {
             model("selectExpression")
@@ -485,36 +327,6 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
 
         testClass<AbstractBreakpointApplicabilityTest> {
             model("breakpointApplicability", pattern = KT_OR_KTS)
-        }
-
-        listOf(AbstractSuspendStackTraceTest::class, AbstractK1IdeK2CodeSuspendStackTraceTest::class).forEach {
-            testClass(it) {
-                model("suspendStackTrace")
-            }
-        }
-
-        listOf(AbstractCoroutineDumpTest::class, AbstractK1IdeK2CodeCoroutineDumpTest::class).forEach {
-            testClass(it) {
-                model("coroutines")
-            }
-        }
-
-        listOf(AbstractContinuationStackTraceTest::class, AbstractK1IdeK2CodeContinuationStackTraceTest::class).forEach {
-            testClass(it) {
-                model("continuation")
-            }
-        }
-
-        listOf(AbstractKotlinVariablePrintingTest::class, AbstractK1IdeK2CodeKotlinVariablePrintingTest::class).forEach {
-            testClass(it) {
-                model("variables", isRecursive = false)
-            }
-        }
-
-        listOf(AbstractXCoroutinesStackTraceTest::class, AbstractK1IdeK2CodeXCoroutinesStackTraceTest::class).forEach {
-            testClass(it) {
-                model("xcoroutines")
-            }
         }
 
         testClass<AbstractClassNameCalculatorTest> {

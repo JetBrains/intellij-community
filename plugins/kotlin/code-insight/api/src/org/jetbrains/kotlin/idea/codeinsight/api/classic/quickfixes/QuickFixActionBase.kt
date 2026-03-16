@@ -15,8 +15,6 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ReflectionUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.psi.CREATE_BY_PATTERN_MAY_NOT_REFORMAT
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -36,19 +34,12 @@ abstract class QuickFixActionBase<out T : PsiElement>(element: T) : IntentionAct
     protected open fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile): Boolean = true
 
     final override fun isAvailable(project: Project, editor: Editor?, file: PsiFile): Boolean {
-        if (isUnitTestMode()) {
-            CREATE_BY_PATTERN_MAY_NOT_REFORMAT = true
-        }
-        try {
-            val element = element ?: return false
-            return element.isValid &&
-                    !element.project.isDisposed &&
-                    (file.manager.isInProject(file) || file is KtCodeFragment || (file is KtFile && file.isScript())) &&
-                    (file is KtFile || isCrossLanguageFix) &&
-                    isAvailableImpl(project, editor, file)
-        } finally {
-            CREATE_BY_PATTERN_MAY_NOT_REFORMAT = false
-        }
+        val element = element ?: return false
+        return element.isValid &&
+                !element.project.isDisposed &&
+                (file.manager.isInProject(file) || file is KtCodeFragment || (file is KtFile && file.isScript())) &&
+                (file is KtFile || isCrossLanguageFix) &&
+                isAvailableImpl(project, editor, file)
     }
 
     override fun startInWriteAction(): Boolean = true
