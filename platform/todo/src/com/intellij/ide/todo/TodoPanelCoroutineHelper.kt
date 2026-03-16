@@ -3,11 +3,13 @@ package com.intellij.ide.todo
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
+import com.intellij.ide.todo.nodes.TodoRemoteItemNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiManager
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
@@ -15,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlin.collections.emptyList
 
 internal class TodoPanelCoroutineHelper(private val panel: TodoPanel) : Disposable {
   private val scope = CoroutineScope(SupervisorJob())
@@ -32,7 +35,21 @@ internal class TodoPanelCoroutineHelper(private val panel: TodoPanel) : Disposab
       if (!panel.usagePreviewPanel.isVisible) return@launch
 
       val lastUserObject = TreeUtil.getLastUserObject(panel.tree.selectionPath)
-      val usageInfos = if (lastUserObject != null) {
+      if (lastUserObject == null) {
+        panel.usagePreviewPanel.updateLayout(panel.myProject, null)
+        return@launch
+      }
+
+      val usageInfos = if (shouldUseSplitTodo()) {
+        readAction {
+          val node = lastUserObject as? TodoRemoteItemNode ?: return@readAction emptyList()
+          val value = node.value ?: return@readAction emptyList()
+          val psiFile = PsiManager.getInstance(panel.myProject).findFile(value.file) ?: return@readAction emptyList()
+          val startOffset = value.navigationOffset
+          val endOffset = value.navigationOffset + value.length
+          listOf(UsageInfo(psiFile, startOffset, endOffset))
+        }
+      } else {
         readAction {
           val pointer = panel.treeBuilder.getFirstPointerForElement(lastUserObject)
 
@@ -60,9 +77,6 @@ internal class TodoPanelCoroutineHelper(private val panel: TodoPanel) : Disposab
             emptyList()
           }
         }
-      }
-      else {
-        emptyList()
       }
 
       panel.usagePreviewPanel.updateLayout(panel.myProject, usageInfos.ifEmpty { null })
