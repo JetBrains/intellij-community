@@ -158,21 +158,7 @@
 
     "Badge": {
       "greenOutlineForeground": "Green7",
-      "greenOutlineBorderColor": "Green5",
-      "blueSecondaryBackground": "#35538FCC",
-      "blueSecondaryForeground": "Blue12",
-      "blueBackground": "Blue8",
-      "blueForeground": "Gray1",
-      "greenSecondaryBackground": "#436946CC",
-      "greenSecondaryForeground": "Green12",
-      "greenBackground": "Green6",
-      "greenForeground": "Gray1",
-      "purpleSecondaryBackground": "#6C469CCC",
-      "purpleSecondaryForeground": "Purple12",
-      "graySecondaryBackground": "#B4B8BF33",
-      "graySecondaryForeground": "Gray10",
-      "disabledBackground": "#B4B8BF33",
-      "disabledForeground": "Gray8"
+      "greenOutlineBorderColor": "Green5"
     },
 
     "Bookmark": {
