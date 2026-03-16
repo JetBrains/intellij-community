@@ -67,4 +67,24 @@ fun TargetIdentifier.isWsl(): Boolean = current is WSL
 @Repeatable
 annotation class TargetDockerConfig(val dockerImage: String)
 
+/**
+ * Declares an extra bind-mount for Docker containers created by the test framework.
+ * Use `~` in [hostPath] to refer to the current user's home directory.
+ * Multiple annotations can be placed on the same test method or class.
+ *
+ * Example:
+ * ```
+ * @DockerMount(hostPath = "~/.m2/repository", containerPath = "/root/.m2/repository")
+ * ```
+ */
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+@Inherited
+@Repeatable
+annotation class DockerMount(
+  val hostPath: String,
+  val containerPath: String,
+  val readOnly: Boolean = false,
+)
+
 const val TARGET_DEFAULT_DOCKER_IMAGE = "registry.jetbrains.team/p/ij/docker-hub/ubuntu:22.04"
