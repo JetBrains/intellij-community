@@ -2,12 +2,14 @@
 package com.intellij.ide.todo.nodes
 
 import com.intellij.ide.projectView.PresentationData
+import com.intellij.ide.todo.HighlightedRegionProvider
 import com.intellij.ide.todo.TodoTreeBuilder
 import com.intellij.ide.ui.SerializableTextChunk
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.HighlightedRegion
 import com.intellij.usageView.UsageTreeColors
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
@@ -17,7 +19,7 @@ class TodoRemoteItemNode(
   project: Project,
   value: Value,
   builder: TodoTreeBuilder
-) : BaseToDoNode<TodoRemoteItemNode.Value>(project, value, builder) {
+) : BaseToDoNode<TodoRemoteItemNode.Value>(project, value, builder), HighlightedRegionProvider {
 
   data class Value(
     val file: VirtualFile,
@@ -28,6 +30,8 @@ class TodoRemoteItemNode(
   )
 
   override fun createPresentation(): PresentationData = TodoItemNodePresentationData()
+
+  override fun getHighlightedRegions(): List<HighlightedRegion> = (presentation as TodoItemNodePresentationData).highlightedRegions
 
   override fun getFileCount(`val`: Value?): Int { return 1 }
 
