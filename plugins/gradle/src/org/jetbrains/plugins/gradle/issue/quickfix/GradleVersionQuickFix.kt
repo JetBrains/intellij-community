@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.findDocument
 import com.intellij.openapi.vfs.refreshAndFindVirtualFile
@@ -143,7 +144,7 @@ class GradleVersionQuickFix(
       val wrapperPropertiesVirtualFile = wrapperPropertiesPath.refreshAndFindVirtualFile()
       val wrapperPropertiesDocument = readAction { wrapperPropertiesVirtualFile?.findDocument() }
       if (wrapperPropertiesDocument != null) {
-        val wrapperPropertiesText = GradleUtil.writeWrapperConfigurationToString(wrapperConfiguration)
+        val wrapperPropertiesText = convertLineSeparators(GradleUtil.writeWrapperConfigurationToString(wrapperConfiguration))
         withContext(Dispatchers.EDT) {
           DocumentUtil.writeInRunUndoTransparentAction {
             wrapperPropertiesDocument.setText(wrapperPropertiesText)
