@@ -53,13 +53,6 @@ exports_files([
 ### auto-generated section `iml intellij.platform.syntax.extensions` end
 
 ### auto-generated section `build intellij.platform.syntax.extensions.tests` start
-create_kotlinc_options(
-  name = "custom_extensions-tests",
-  jvm_target = "8",
-  x_no_call_assertions = True,
-  x_no_param_assertions = True
-)
-
 jvm_library(
   name = "extensions-tests",
   visibility = ["//visibility:public"],
@@ -70,7 +63,6 @@ jvm_library(
   name = "extensions-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_extensions-tests",
   associates = [
     "//platform/syntax/syntax-extensions:extensions",
     "//platform/syntax/syntax-extensions:extensions_test_lib",

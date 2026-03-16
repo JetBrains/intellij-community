@@ -40,7 +40,6 @@ jvm_library(
   name = "java-jshell-protocol-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testStrc/**/*.kt", "testStrc/**/*.java", "testStrc/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k11",
   associates = [
     "//plugins/jshell/protocol",
     "//plugins/jshell/protocol:protocol_test_lib",

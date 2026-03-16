@@ -67,7 +67,6 @@ jvm_library(
   name = "java-guiForms-compiler-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
   associates = [
     "//java/compiler/forms-compiler:java-guiForms-compiler",
     "//java/compiler/forms-compiler:java-guiForms-compiler_test_lib",

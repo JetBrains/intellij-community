@@ -58,7 +58,6 @@ jvm_library(
   name = "diagnostic-telemetry-agent-extension-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
   associates = [
     "//platform/diagnostic/telemetry/agent-extension:diagnostic-telemetry-agent-extension",
     "//platform/diagnostic/telemetry/agent-extension:diagnostic-telemetry-agent-extension_test_lib",

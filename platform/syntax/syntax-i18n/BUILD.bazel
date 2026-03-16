@@ -51,13 +51,6 @@ exports_files([
 ### auto-generated section `iml intellij.platform.syntax.i18n` end
 
 ### auto-generated section `build intellij.platform.syntax.i18n.tests` start
-create_kotlinc_options(
-  name = "custom_i18n-tests",
-  jvm_target = "8",
-  x_no_call_assertions = True,
-  x_no_param_assertions = True
-)
-
 jvm_library(
   name = "i18n-tests",
   visibility = ["//visibility:public"],
@@ -68,7 +61,6 @@ jvm_library(
   name = "i18n-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testJvm/**/*.kt", "testJvm/**/*.java", "testJvm/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_i18n-tests",
   associates = [
     "//platform/syntax/syntax-i18n:i18n",
     "//platform/syntax/syntax-i18n:i18n_test_lib",

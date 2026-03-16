@@ -52,7 +52,6 @@ jvm_library(
   name = "server-eventListener-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["src/test/java/**/*.kt", "src/test/java/**/*.java", "src/test/java/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
   associates = [
     "//plugins/maven/maven-event-listener:server-eventListener",
     "//plugins/maven/maven-event-listener:server-eventListener_test_lib",

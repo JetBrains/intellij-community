@@ -66,15 +66,6 @@ exports_files([
 ### auto-generated section `iml intellij.devkit.runtimeModuleRepository.jps` end
 
 ### auto-generated section `build intellij.devkit.runtimeModuleRepository.jps.tests` start
-create_kotlinc_options(
-  name = "custom_devkit-runtimeModuleRepository-jps-tests",
-  jvm_target = "11",
-  opt_in = [
-    "com.intellij.openapi.util.IntellijInternalApi",
-    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
-  ]
-)
-
 jvm_library(
   name = "devkit-runtimeModuleRepository-jps-tests",
   visibility = ["//visibility:public"],
@@ -85,7 +76,6 @@ jvm_library(
   name = "devkit-runtimeModuleRepository-jps-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_devkit-runtimeModuleRepository-jps-tests",
   associates = [
     "//plugins/devkit/runtimeModuleRepository/jps",
     "//plugins/devkit/runtimeModuleRepository/jps:jps_test_lib",

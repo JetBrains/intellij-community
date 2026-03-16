@@ -72,7 +72,6 @@ jvm_library(
   name = "jps-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k11",
   associates = [
     "//plugins/maven/jps-plugin:jps",
     "//plugins/maven/jps-plugin:jps_test_lib",

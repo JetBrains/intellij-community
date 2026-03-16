@@ -51,7 +51,6 @@ jvm_library(
   name = "tools-updater-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k11",
   associates = [
     "//updater",
     "//updater:updater_test_lib",

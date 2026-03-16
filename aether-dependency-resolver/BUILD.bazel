@@ -69,7 +69,6 @@ jvm_library(
   name = "java-aetherDependencyResolver-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k11",
   associates = [
     "//aether-dependency-resolver",
     "//aether-dependency-resolver:aether-dependency-resolver_test_lib",

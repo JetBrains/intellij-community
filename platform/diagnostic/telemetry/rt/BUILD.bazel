@@ -46,7 +46,6 @@ jvm_library(
   name = "diagnostic-telemetry-rt-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
   associates = [
     "//platform/diagnostic/telemetry/rt",
     "//platform/diagnostic/telemetry/rt:rt_test_lib",

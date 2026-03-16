@@ -40,7 +40,6 @@ jvm_library(
   name = "util-rt-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
   associates = [
     "//platform/util-rt",
     "//platform/util-rt:util-rt_test_lib",
