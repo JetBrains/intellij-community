@@ -1,5 +1,22 @@
 # Jewel Release Notes
 
+## v0.35 (2026-03-30)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2025.3.3, 2026.1.1         | 1.10.0                        |
+
+### New features
+
+* **JEWEL-1069** Added a new button variant called `SlimButton`, which has both `DefaultSlimButton` and `OutlinedSlimButton` styles ([#3360](https://github.com/JetBrains/intellij-community/pull/3360))
+
+### Bug fixes
+
+* **JEWEL-1223** [JEWEL-1223](https://youtrack.jetbrains.com/issue/JEWEL-1223) "java.lang.IllegalArgumentException: Header cannot be empty" when editing an HTML table ([#3382](https://github.com/JetBrains/intellij-community/pull/3382))
+* **JEWEL-1272** [JEWEL-1272](https://youtrack.jetbrains.com/issue/JEWEL-1272) Fix FencedCodeBlock Binary Compatibility Crash ([#3437](https://github.com/JetBrains/intellij-community/pull/3437))
+* **JEWEL-1280** [JEWEL-1280](https://youtrack.jetbrains.com/issue/JEWEL-1280) Jewel painter: catch Exception instead of RuntimeException in tryLoadingResource ([#3443](https://github.com/JetBrains/intellij-community/pull/3443))
+* **JEWEL-1284** Fixed `SelectableLazyColumn` selecting items on click and on initial focus even when `SelectionMode.None` was set ([#3446](https://github.com/JetBrains/intellij-community/pull/3446))
+
 ## v0.34 (2026-02-17)
 
 | Min supported IJP versions | Compose Multiplatform version |
