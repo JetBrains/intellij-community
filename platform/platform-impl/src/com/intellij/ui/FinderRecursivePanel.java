@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,8 +48,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -101,7 +103,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter
   protected final CollectionListModel<T> myListModel = new CollectionListModel<>();
   private List<ListItemPresentation> myPresentations = Collections.emptyList();
 
-  private final MergingUpdateQueue myMergingUpdateQueue = new MergingUpdateQueue("FinderRecursivePanel", 100, true, this, this);
+  private final UpdateQueue<Object> myMergingUpdateQueue;
   private volatile boolean isMergeListItemsRunning;
 
   private final AtomicBoolean myUpdateSelectedPathModeActive = new AtomicBoolean();
@@ -152,6 +154,12 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter
     myProject = project;
     myParent = parent;
     myGroupId = groupId;
+
+
+    myMergingUpdateQueue = DebouncedUpdates.forComponent(this, "FinderRecursivePanel", 100)
+      .withContext(CoroutinesKt.getEDT(Dispatchers.INSTANCE))
+      .runLatest(ignored -> performUpdate())
+      .cancelOnDispose(this);
 
     if (myParent != null) {
       Disposer.register(myParent, this);
@@ -442,7 +450,6 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter
   @Override
   public void dispose() {
     super.dispose();
-    myMergingUpdateQueue.cancelAllUpdates();
     myDisposed = true;
   }
 
@@ -475,17 +482,19 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter
     }
 
     myList.setPaintBusy(true);
-    myMergingUpdateQueue.queue(Update.create("update", () -> {
-      T oldValue = getSelectedValue();
-      int oldIndex = myList.getSelectedIndex();
+    myMergingUpdateQueue.queue(this);
+  }
 
-      if (myNonBlockingLoad) {
-        scheduleUpdateNonBlocking(oldValue, oldIndex);
-      }
-      else {
-        scheduleUpdateBlocking(oldValue, oldIndex);
-      }
-    }));
+  private void performUpdate() {
+    T oldValue = getSelectedValue();
+    int oldIndex = myList.getSelectedIndex();
+
+    if (myNonBlockingLoad) {
+      scheduleUpdateNonBlocking(oldValue, oldIndex);
+    }
+    else {
+      scheduleUpdateBlocking(oldValue, oldIndex);
+    }
   }
 
   private void scheduleUpdateBlocking(T oldSelectedValue, int oldSelectedIndex) {
