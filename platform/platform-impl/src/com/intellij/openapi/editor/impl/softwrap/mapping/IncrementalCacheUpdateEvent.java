@@ -52,6 +52,11 @@ public final class IncrementalCacheUpdateEvent {
     return myActualEndOffset;
   }
 
+  /**
+   * Called by soft-wrapping internals after {@link SoftWrapParsingListener#onRegionReparseStart(IncrementalCacheUpdateEvent)}
+   * and before {@link SoftWrapParsingListener#onRegionReparseEnd(IncrementalCacheUpdateEvent)}.
+   * @param actualEndOffset
+   */
   public void setActualEndOffset(int actualEndOffset) {
     myActualEndOffset = actualEndOffset;
   }
