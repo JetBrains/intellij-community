@@ -23,6 +23,7 @@ package org.jetbrains.intellij.build.classPath
 import com.intellij.openapi.util.JDOMUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jdom.CDATA
 import org.jdom.Element
 import org.jdom.Namespace
@@ -120,7 +121,8 @@ fun deprecatedResolveDescriptor(
   additionalSearchModules: Collection<String> = emptyList(),
 ) {
   val layoutPatcherIfNoScrambling: LayoutPatcher = { moduleOutputPatcher, platformLayout, context ->
-    context.findFileInModuleSources(clientModuleName, relativePath)?.let { file ->
+    val file = context.findFileInModuleSources(clientModuleName, relativePath)
+    if (file != null) {
       val xml = JDOMUtil.load(file)
 
       val descriptorCacheContainer = DescriptorCacheContainer()
@@ -139,8 +141,7 @@ fun deprecatedResolveDescriptor(
         context = context
       )
 
-      @Suppress("RAW_RUN_BLOCKING")
-      runBlocking(Dispatchers.IO) {
+      withContext(Dispatchers.IO) {
         resolveIncludes(element = xml, elementResolver = xIncludeResolver)
 
         for (contentElement in xml.getChildren("content")) {

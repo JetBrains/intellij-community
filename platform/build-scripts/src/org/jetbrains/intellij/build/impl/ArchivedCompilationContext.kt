@@ -29,7 +29,7 @@ class ArchivedCompilationContext internal constructor(
   val archivesLocation: Path
     get() = storage.archivedOutputDirectory
 
-  private val originalModuleRepository = asyncLazy("Build original module repository") {
+  private val originalModuleRepository = suspendingLazy("Build original module repository") {
     buildOriginalModuleRepository(this@ArchivedCompilationContext)
   }
 

@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -589,7 +590,7 @@ internal suspend fun layoutDistribution(
     }
 
     tasks
-  }.flatMap { it.getCompleted() }
+  }.awaitAll().flatten()
 
   return entries to targetDir
 }

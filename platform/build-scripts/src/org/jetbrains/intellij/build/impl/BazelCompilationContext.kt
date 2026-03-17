@@ -70,7 +70,7 @@ class BazelCompilationContext(
   override val classesOutputDirectory: Path
     get() = delegate.classesOutputDirectory
 
-  private val originalModuleRepository = asyncLazy("Build original module repository") {
+  private val originalModuleRepository = suspendingLazy("Build original module repository") {
     buildOriginalModuleRepository(this@BazelCompilationContext)
   }
 

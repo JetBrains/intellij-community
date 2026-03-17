@@ -1,0 +1,72 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.impl
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.Test
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.milliseconds
+
+class SuspendingLazyTest {
+  @Test
+  fun computesValueOnceForConcurrentAwaiters() {
+    val invocationCount = AtomicInteger()
+    val lazyValue = suspendingLazy("test value") {
+      invocationCount.incrementAndGet()
+      delay(20.milliseconds)
+      42
+    }
+
+    val values = runBlocking(Dispatchers.Default) {
+      List(8) {
+        async {
+          lazyValue.await()
+        }
+      }.awaitAll()
+    }
+
+    assertThat(values).containsOnly(42)
+    assertThat(invocationCount.get()).isEqualTo(1)
+  }
+
+  @Test
+  fun reusesInitializerFailure() {
+    val invocationCount = AtomicInteger()
+    val lazyValue = suspendingLazy<Int>("failing value") {
+      invocationCount.incrementAndGet()
+      error("boom")
+    }
+
+    repeat(2) {
+      assertThatThrownBy {
+        runBlocking {
+          lazyValue.await()
+        }
+      }
+        .isInstanceOf(IllegalStateException::class.java)
+        .hasMessageContaining("boom")
+    }
+    assertThat(invocationCount.get()).isEqualTo(1)
+  }
+
+  @Test
+  fun failsFastOnRecursiveAwait() {
+    lateinit var lazyValue: SuspendingLazy<Int>
+    lazyValue = suspendingLazy("recursive value") {
+      lazyValue.await()
+    }
+
+    assertThatThrownBy {
+      runBlocking(Dispatchers.Default) {
+        lazyValue.await()
+      }
+    }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("Recursive await")
+  }
+}

@@ -4,16 +4,16 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.system.OS
 import io.opentelemetry.api.trace.SpanBuilder
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.OsFamily
@@ -66,10 +66,76 @@ internal fun getCommandLineArgumentsForOpenPackages(context: CompilationContext,
   return JavaModuleOptions.readOptions(file, os)
 }
 
+interface SuspendingLazy<T> {
+  suspend fun await(): T
+}
+
 /**
- * [GlobalScope] is required not to hang a caller, see [CoroutineStart.LAZY]
+ * Computes a value on the first `await()` and shares the result with all concurrent awaiters.
+ *
+ * The first caller computes the value in its own coroutine instead of starting a detached global job. This keeps failures and
+ * cancellation inside the owning build flow and turns recursive waits into an immediate error instead of a hang.
  */
-@OptIn(DelicateCoroutinesApi::class)
-internal fun <T> asyncLazy(coroutineName: String, initializer: suspend CoroutineScope.() -> T): Deferred<T> {
-  return GlobalScope.async(Dispatchers.Unconfined + CoroutineName(coroutineName), CoroutineStart.LAZY, initializer)
+fun <T> suspendingLazy(coroutineName: String, initializer: suspend CoroutineScope.() -> T): SuspendingLazy<T> {
+  return SuspendingLazyImpl(coroutineName = coroutineName, initializer = initializer)
+}
+
+private class SuspendingLazyImpl<T>(
+  private val coroutineName: String,
+  private val initializer: suspend CoroutineScope.() -> T,
+) : SuspendingLazy<T> {
+  private val lock = Mutex()
+
+  @Volatile
+  private var deferred: CompletableDeferred<T>? = null
+
+  @Volatile
+  private var ownerJob: Job? = null
+
+  override suspend fun await(): T {
+    val currentJob = currentCoroutineContext()[Job]
+    deferred?.let {
+      checkRecursiveAwait(currentJob, it)
+      return it.await()
+    }
+
+    val (actualDeferred, isOwner) = lock.withLock {
+      deferred?.let {
+        return@withLock it to false
+      }
+
+      val created = CompletableDeferred<T>()
+      deferred = created
+      ownerJob = currentJob
+      created to true
+    }
+
+    if (!isOwner) {
+      checkRecursiveAwait(currentJob, actualDeferred)
+      return actualDeferred.await()
+    }
+
+    try {
+      actualDeferred.complete(
+        withContext(CoroutineName(coroutineName)) {
+          coroutineScope {
+            initializer(this)
+          }
+        }
+      )
+    }
+    catch (t: Throwable) {
+      actualDeferred.completeExceptionally(t)
+    }
+    finally {
+      ownerJob = null
+    }
+    return actualDeferred.await()
+  }
+
+  private fun checkRecursiveAwait(currentJob: Job?, deferred: CompletableDeferred<T>) {
+    check(currentJob == null || ownerJob !== currentJob || deferred.isCompleted) {
+      "Recursive await of '$coroutineName' detected"
+    }
+  }
 }

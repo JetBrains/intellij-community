@@ -5,11 +5,14 @@ package org.jetbrains.intellij.build.impl.support
 
 import com.intellij.openapi.util.SystemInfoRt
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions.Companion.REPAIR_UTILITY_BUNDLE_STEP
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -20,7 +23,6 @@ import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.impl.Docker
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder
-import org.jetbrains.intellij.build.impl.asyncLazy
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -63,7 +65,7 @@ class RepairUtilityBuilder {
           return@executeStep
         }
 
-        val cache = getBinaryCache(context).await()
+        val cache = getBinaryCache(context)
         val binary = findBinary(os, arch)
         val path = cache.get(binary)
         checkNotNull(path) {
@@ -79,13 +81,15 @@ class RepairUtilityBuilder {
     }
 
     suspend fun generateManifest(unpackedDistribution: Path, os: OsFamily, arch: JvmArchitecture, context: BuildContext) {
-      context.executeStep(spanBuilder("generate installation integrity manifest")
-                            .setAttribute("dir", unpackedDistribution.toString()), REPAIR_UTILITY_BUNDLE_STEP) {
+      context.executeStep(
+        spanBuilder("generate installation integrity manifest")
+          .setAttribute("dir", unpackedDistribution.toString()), REPAIR_UTILITY_BUNDLE_STEP
+      ) {
         check(Files.exists(unpackedDistribution)) {
           "$unpackedDistribution doesn't exist"
         }
         if (!canBinariesBeBuilt(context)) return@executeStep
-        check(getBinaryCache(context).await().isNotEmpty())
+        check(getBinaryCache(context).isNotEmpty())
         val manifestGenerator = findBinary(currentOs, currentJvmArch)
         val distributionBinary = findBinary(os, arch)
         val binaryPath = repairUtilityProjectHome(context)?.resolve(manifestGenerator.relativeSourcePath)
@@ -94,8 +98,10 @@ class RepairUtilityBuilder {
         withContext(Dispatchers.IO) {
           Files.createDirectories(tmpDir)
           try {
-            runProcess(args = listOf(binaryPath.toString(), "hashes", "-g", "--path", unpackedDistribution.toString()),
-                       workingDir = tmpDir)
+            runProcess(
+              args = listOf(binaryPath.toString(), "hashes", "-g", "--path", unpackedDistribution.toString()),
+              workingDir = tmpDir,
+            )
           }
           catch (e: Throwable) {
             context.messages.warning("Manifest generation failed, listing unpacked distribution content for debug:")
@@ -125,18 +131,14 @@ class RepairUtilityBuilder {
       return binary
     }
 
-    private val binaryCache = WeakHashMap<BuildContext, Deferred<Map<Binary, Path>>>()
+    // AsyncCache is not a fit here: this cache must not keep BuildContext instances alive,
+    // and the build must stay attached to the caller coroutine instead of a detached cache scope.
+    private val binaryCache = BuildContextSingleFlightCache(
+      operationName = "build repair-utility",
+      loader = ::buildBinaries,
+    )
 
-    private fun getBinaryCache(context: BuildContext): Deferred<Map<Binary, Path>> {
-      synchronized(binaryCache) {
-        binaryCache.get(context)?.let {
-          return it
-        }
-        val deferred = asyncLazy("build repair-utility") { buildBinaries(context) }
-        binaryCache.put(context, deferred)
-        return deferred
-      }
-    }
+    private suspend fun getBinaryCache(context: BuildContext): Map<Binary, Path> = binaryCache.getOrLoad(context)
 
     private fun canBinariesBeBuilt(context: BuildContext): Boolean {
       return !SystemInfoRt.isWindows &&
@@ -164,7 +166,7 @@ class RepairUtilityBuilder {
       return spanBuilder("build repair-utility").use {
         val projectHome = repairUtilityProjectHome(context) ?: return@use emptyMap()
         try {
-          val baseUrl = context.productProperties.baseDownloadUrl?.removeSuffix("/") 
+          val baseUrl = context.productProperties.baseDownloadUrl?.removeSuffix("/")
                         ?: error("'baseDownloadUrl' is not specified in ${context.productProperties.javaClass.name}")
           val baseName = baseArtifactName(context)
           val distributionUrls = BINARIES.associate {
@@ -223,7 +225,7 @@ class RepairUtilityBuilder {
       @JvmField val arch: JvmArchitecture,
       @JvmField val relativeSourcePath: String,
       @JvmField val relativeTargetPath: String,
-      @JvmField val distributionUrlVariable: String
+      @JvmField val distributionUrlVariable: String,
     ) {
       val distributionSuffix: String
         get() = OsSpecificDistributionBuilder.suffix(arch) + "." + when (os) {
@@ -236,5 +238,57 @@ class RepairUtilityBuilder {
     fun executableFilesPatterns(context: BuildContext): Sequence<String> {
       return if (canBinariesBeBuilt(context)) sequenceOf("bin/repair") else emptySequence()
     }
+  }
+
+  @ApiStatus.Internal
+  class BuildContextSingleFlightCache<V>(
+    private val operationName: String,
+    private val loader: suspend (BuildContext) -> V,
+  ) {
+    private val lock = Mutex()
+    private val cache = WeakHashMap<BuildContext, CacheEntry<V>>()
+
+    suspend fun getOrLoad(context: BuildContext): V {
+      val currentJob = currentCoroutineContext()[Job]
+      val (entry, isOwner) = lock.withLock {
+        cache.get(context)?.let {
+          return@withLock it to false
+        }
+
+        val created = CacheEntry(
+          result = CompletableDeferred<V>(),
+          ownerJob = currentJob,
+        )
+        cache.put(context, created)
+        created to true
+      }
+
+      if (!isOwner) {
+        checkRecursiveAwait(currentJob, entry)
+        return entry.result.await()
+      }
+
+      try {
+        entry.result.complete(loader(context))
+      }
+      catch (t: Throwable) {
+        entry.result.completeExceptionally(t)
+      }
+      finally {
+        entry.ownerJob = null
+      }
+      return entry.result.await()
+    }
+
+    private fun checkRecursiveAwait(currentJob: Job?, entry: CacheEntry<V>) {
+      check(currentJob == null || entry.ownerJob !== currentJob || entry.result.isCompleted) {
+        "Recursive await of '$operationName' detected"
+      }
+    }
+
+    private class CacheEntry<V>(
+      val result: CompletableDeferred<V>,
+      @Volatile var ownerJob: Job?,
+    )
   }
 }

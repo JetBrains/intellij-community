@@ -110,7 +110,7 @@ private suspend fun buildOsSpecificBundledPlugins(
     .setAttribute("isUpdateFromSources", isUpdateFromSources)
     .setAttribute(AttributeKey.stringArrayKey("pluginDirectoriesToSkip"), context.options.bundledPluginDirectoriesToSkip.toList())
     .use {
-      pluginDirs.mapNotNull { (dist, targetDir) ->
+      val tasks = pluginDirs.mapNotNull { (dist, targetDir) ->
         val (os, arch) = dist
         if (!context.shouldBuildDistributionForOS(os, arch)) {
           return@mapNotNull null
@@ -140,12 +140,14 @@ private suspend fun buildOsSpecificBundledPlugins(
                 searchableOptionSet = searchableOptionSet,
                 descriptorCacheContainer = descriptorCacheContainer,
                 context = context,
-              )
+                )
             }
         }
       }
+      tasks.associate { (dist, deferred) ->
+        dist to deferred.await()
+      }
     }
-    .associateBy(keySelector = { it.first }, valueTransform = { it.second.getCompleted() })
 }
 
 internal suspend fun buildBundledPlugins(
