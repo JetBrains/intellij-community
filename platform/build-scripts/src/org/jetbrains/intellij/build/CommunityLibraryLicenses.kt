@@ -1440,7 +1440,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("find-file-model"),
     jetbrainsLibrary("find-file-model-experimental"),
     jetbrainsLibrary("git-learning-project"),
-    jetbrainsLibrary("jetbrains.app.daemon.client"),
     jetbrainsLibrary("jetbrains.compose.components.ui.tooling.preview.desktop"),
     jetbrainsLibrary("jetbrains.compose.hot.reload.devtools.api"),
     jetbrainsLibrary("jetbrains.compose.hot.reload.gradle.idea"),
