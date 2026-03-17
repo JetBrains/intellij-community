@@ -17,7 +17,6 @@ public interface UsageFilteringRuleProvider {
   @Internal
   ExtensionPointName<UsageFilteringRuleProvider> EP_NAME = new ExtensionPointName<>("com.intellij.usageFilteringRuleProvider");
 
-  @Internal
   @Topic.ProjectLevel
   Topic<Runnable> RULES_CHANGED = new Topic<>("usage view rules changed", Runnable.class);
 
