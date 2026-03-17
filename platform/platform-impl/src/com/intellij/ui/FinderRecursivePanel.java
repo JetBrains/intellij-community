@@ -50,6 +50,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.DebouncedUpdates;
 import com.intellij.util.ui.update.UpdateQueue;
+import kotlin.Unit;
 import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -103,7 +104,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter
   protected final CollectionListModel<T> myListModel = new CollectionListModel<>();
   private List<ListItemPresentation> myPresentations = Collections.emptyList();
 
-  private final UpdateQueue<Object> myMergingUpdateQueue;
+  private final UpdateQueue<Unit> myMergingUpdateQueue;
   private volatile boolean isMergeListItemsRunning;
 
   private final AtomicBoolean myUpdateSelectedPathModeActive = new AtomicBoolean();
@@ -156,7 +157,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter
     myGroupId = groupId;
 
 
-    myMergingUpdateQueue = DebouncedUpdates.forComponent(this, "FinderRecursivePanel", 100)
+    myMergingUpdateQueue = DebouncedUpdates.<Unit>forComponent(this, "FinderRecursivePanel", 100)
       .withContext(CoroutinesKt.getEDT(Dispatchers.INSTANCE))
       .runLatest(ignored -> performUpdate())
       .cancelOnDispose(this);
@@ -482,7 +483,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter
     }
 
     myList.setPaintBusy(true);
-    myMergingUpdateQueue.queue(this);
+    myMergingUpdateQueue.queue(Unit.INSTANCE);
   }
 
   private void performUpdate() {

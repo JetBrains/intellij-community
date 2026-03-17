@@ -31,6 +31,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.DebouncedUpdates;
 import com.intellij.util.ui.update.UpdateQueue;
+import kotlin.Unit;
 import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -73,10 +74,10 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private ActionMap myActionMap;
   private InputMap myInputMap;
   private @NlsContexts.PopupAdvertisement String myAdText;
-  private final UpdateQueue<Object> myRepaintQueue = DebouncedUpdates.forComponent(myList, "ChooseByNamePopup repaint", 50)
+  private final UpdateQueue<Unit> myRepaintQueue = DebouncedUpdates.<Unit>forComponent(myList, "ChooseByNamePopup repaint", 50)
     .withContext(CoroutinesKt.getUI(Dispatchers.INSTANCE))
     .restartTimerOnAdd(true)
-    .runLatest(update -> repaintListImmediate())
+    .runLatest(ignored -> repaintListImmediate())
     .cancelOnDispose(this);
 
   protected ChooseByNamePopup(final @Nullable Project project,
@@ -484,7 +485,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   public void repaintList() {
-    myRepaintQueue.queue(this);
+    myRepaintQueue.queue(Unit.INSTANCE);
   }
 
   public void repaintListImmediate() {
