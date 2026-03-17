@@ -89,6 +89,7 @@ class ToggleAmendCommitModeAction : CheckboxAction(), DumbAware {
       val spaceWidth = checkBox.getFontMetrics(checkBox.font).charWidth(' ')
       checkBox.border = JBUI.Borders.emptyRight(spaceWidth)
       linkLabel.border = JBUI.Borders.emptyRight(4)
+      isOpaque = false
 
       add(checkBox)
       add(linkLabel)
