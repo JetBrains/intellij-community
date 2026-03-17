@@ -346,11 +346,11 @@ public class HighlightInfo implements Segment {
     RangeHighlighterEx myHighlighter = store.highlighter();
     if (myFixMarker == null) {
       if (myHighlighter != null && myHighlighter.isValid()) {
-        return TextRangeScalarUtil.toScalarRange(myHighlighter);
+        return TextRangeScalarUtil.toScalarRange(myHighlighter.getTextRange());
       }
     }
     else if (myFixMarker.isValid()) {
-      return TextRangeScalarUtil.toScalarRange(myFixMarker);
+      return TextRangeScalarUtil.toScalarRange(myFixMarker.getTextRange());
     }
     return fixRange;
   }
@@ -1220,7 +1220,7 @@ public class HighlightInfo implements Segment {
       newFixRange = TextRangeScalarUtil.coerceRange(newFixRange, 0, document.getTextLength());
       Long2ObjectMap<RangeMarker> cache = getRangeMarkerCache(oldStore);
       newDescriptors = toRangeMarkerFixRanges(oldStore.intentionActionDescriptors(), document, cache, newFixRange);
-      long highlighterRange = highlighter != null && highlighter.isValid() ? TextRangeScalarUtil.toScalarRange(highlighter) : newFixRange;
+      long highlighterRange = highlighter != null && highlighter.isValid() ? TextRangeScalarUtil.toScalarRange(highlighter.getTextRange()) : newFixRange;
       newFixMarker = updateFixMarker(document, cache, newFixRange, highlighterRange);
     }
     return oldStore.withIntentionDescriptorsAndFixMarker(newDescriptors, newFixMarker);
@@ -1232,13 +1232,13 @@ public class HighlightInfo implements Segment {
     for (IntentionActionDescriptor pair : getIntentionActionDescriptors(store)) {
       Segment fixRange = pair.myFixRange;
       if (fixRange instanceof RangeMarker marker && marker.isValid()) {
-        cache.put(TextRangeScalarUtil.toScalarRange(marker), marker);
+        cache.put(TextRangeScalarUtil.toScalarRange(marker.getTextRange()), marker);
         break;
       }
     }
     RangeHighlighterEx highlighter = store.highlighter();
     if (highlighter != null && highlighter.isValid()) {
-      cache.putIfAbsent(TextRangeScalarUtil.toScalarRange(highlighter), highlighter);
+      cache.putIfAbsent(TextRangeScalarUtil.toScalarRange(highlighter.getTextRange()), highlighter);
     }
     return cache;
   }
