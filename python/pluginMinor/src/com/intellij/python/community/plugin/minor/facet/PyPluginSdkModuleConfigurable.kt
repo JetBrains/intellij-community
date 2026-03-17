@@ -23,7 +23,7 @@ internal class PyPluginSdkModuleConfigurable(project: Project?) : PyActiveSdkMod
       }
 
       override fun getSdk(): Sdk? {
-        return PyModuleService.getInstance().findPythonSdk(module)
+        return PyModuleService.getInstance(module.project).findPythonSdk(module)
       }
     }
   }
