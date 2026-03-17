@@ -291,7 +291,7 @@ internal class AgentPromptPaletteContextController(
       AgentPromptPaletteExtensionTab(
         extension = extension,
         tabPanel = panel,
-        taskKey = key,
+        taskKeyPrefix = key,
       )
     )
   }
@@ -302,7 +302,7 @@ internal class AgentPromptPaletteContextController(
       view.tabbedPane.removeTabAt(index)
     }
     state.activeExtensionTabs = state.activeExtensionTabs.filter { it !== entry }
-    onExtensionTabRemoved(entry.taskKey)
+    onExtensionTabRemoved(entry.taskKeyPrefix)
     if (state.activeExtensionTab === entry) {
       state.activeExtensionTab = null
       setTargetMode(PromptTargetMode.NEW_TASK)

@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.vcs.context
 
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayloadValue
-import com.intellij.agent.workbench.sessions.core.prompt.array
-import com.intellij.agent.workbench.sessions.core.prompt.objOrNull
+import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
+import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
+import com.intellij.agent.workbench.prompt.core.array
+import com.intellij.agent.workbench.prompt.core.objOrNull
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.ProjectManager

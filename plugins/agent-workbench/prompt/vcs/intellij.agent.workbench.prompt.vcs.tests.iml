@@ -40,6 +40,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.log" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />

@@ -11,15 +11,22 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayload
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
 import com.intellij.agent.workbench.prompt.vcs.AgentPromptVcsBundle
+import com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsIssueUrls.buildVcsCommitPayloadEntry
+import com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsIssueUrls.resolveIssueUrls
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
+import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.VcsLogDataKeys
+import com.intellij.vcs.log.data.LoadingDetails
 
 private const val MAX_INCLUDED_SELECTION_COMMITS = 20
 
 private data class SelectedCommit(
   @JvmField val hash: String,
   @JvmField val rootPath: String?,
+  @JvmField val selection: VcsLogCommitSelection? = null,
+  @JvmField val selectionIndex: Int? = null,
 )
 
 internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContextContributorBridge {
@@ -41,13 +48,7 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
     }
 
     val payloadEntries = included.map { commit ->
-      val fields = linkedMapOf<String, AgentPromptPayloadValue>(
-        "hash" to AgentPromptPayload.str(commit.hash),
-      )
-      commit.rootPath?.let { rootPath ->
-        fields["rootPath"] = AgentPromptPayload.str(rootPath)
-      }
-      AgentPromptPayloadValue.Obj(fields)
+      buildVcsCommitPayloadEntry(commit.hash, commit.rootPath, commit.resolveIssueUrls(invocationData.project))
     }
     val payload = AgentPromptPayload.obj(
       "entries" to AgentPromptPayloadValue.Arr(payloadEntries),
@@ -81,8 +82,16 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
     val dataContext = invocationData.dataContextOrNull() ?: return emptyList()
     val fromCommitSelection = VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION
       .getData(dataContext)
-      ?.commits
-      ?.map { commit -> SelectedCommit(hash = commit.hash.asString(), rootPath = commit.root.path) }
+      ?.let { selection ->
+        selection.commits.mapIndexed { index, commit ->
+          SelectedCommit(
+            hash = commit.hash.asString(),
+            rootPath = commit.root.path,
+            selection = selection,
+            selectionIndex = index,
+          )
+        }
+      }
       .orEmpty()
     if (fromCommitSelection.isNotEmpty()) {
       return normalizeSelectedCommits(fromCommitSelection)
@@ -134,8 +143,39 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
       if (previous != null && previous.rootPath == null && normalized.rootPath != null) {
         unique[normalized.hash] = normalized
       }
+      if (previous != null && !previous.hasSelection() && normalized.hasSelection()) {
+        unique[normalized.hash] = normalized
+      }
     }
     return unique.values.toList()
   }
-}
 
+  private fun SelectedCommit.hasSelection(): Boolean {
+    return selection != null && selectionIndex != null
+  }
+
+  private fun SelectedCommit.resolveIssueUrls(project: Project): List<String> {
+    val commitSelection = selection ?: return emptyList()
+    val index = selectionIndex ?: return emptyList()
+    return resolveIssueUrls(project, extractCommitText(commitSelection, index))
+  }
+
+  private fun extractCommitText(selection: VcsLogCommitSelection, index: Int): String {
+    val fullMessage = selection.cachedFullDetails
+      .getOrNull(index)
+      ?.takeUnless { details -> details is LoadingDetails }
+      ?.fullMessage
+      ?.trim()
+      .orEmpty()
+    if (fullMessage.isNotEmpty()) {
+      return fullMessage
+    }
+
+    return selection.cachedMetadata
+      .getOrNull(index)
+      ?.takeUnless { metadata -> metadata is LoadingDetails }
+      ?.subject
+      ?.trim()
+      .orEmpty()
+  }
+}

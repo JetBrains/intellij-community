@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptPaletteExtension
+import com.intellij.agent.workbench.prompt.core.AgentPromptPaletteInitialPrompt
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
@@ -22,7 +23,7 @@ class AgentPromptPaletteDraftControllerTest {
         AgentPromptPaletteExtensionTab(
           extension = extension(),
           tabPanel = JPanel(),
-          taskKey = "extension:test",
+          taskKeyPrefix = "extension:test",
         )
       )
 
@@ -133,7 +134,7 @@ class AgentPromptPaletteDraftControllerTest {
 
       override fun getTabTitle(): String = "Extension"
 
-      override fun getInitialPromptText(project: com.intellij.openapi.project.Project): String = "extension prompt"
+      override fun getInitialPrompt(project: com.intellij.openapi.project.Project): AgentPromptPaletteInitialPrompt = AgentPromptPaletteInitialPrompt(content = "extension prompt")
 
       override fun getSubmitActionId(): String? = null
 

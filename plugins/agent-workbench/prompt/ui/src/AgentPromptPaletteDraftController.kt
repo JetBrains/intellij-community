@@ -6,6 +6,7 @@ package com.intellij.agent.workbench.prompt.ui
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
+import com.intellij.agent.workbench.prompt.core.AgentPromptPaletteExtensionContext
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.ui.EditorTextField
 import javax.swing.JPanel
@@ -34,7 +35,7 @@ internal class AgentPromptPaletteDraftController(
     val contextRestoreSnapshot = uiStateService.loadContextRestoreSnapshot()
     val launcher = launcherProvider()
 
-    setPromptAreaText(draft.promptText)
+    setPromptAreaTextProgrammatically(draft.promptText)
     val effectiveProviderOptions = providerPrefs.providerOptionsByProviderId.ifEmpty { draft.providerOptionsByProviderId }
     providerSelector.restoreProviderOptionSelections(effectiveProviderOptions)
     val persistedProvider = resolveRestoredPromptProvider(
@@ -88,14 +89,18 @@ internal class AgentPromptPaletteDraftController(
     savedDrafts[existingTaskKey]?.let { draftState.taskPromptStates[existingTaskKey] = restoredTaskPromptDraftState(it) }
 
     for (entry in contextState.activeExtensionTabs) {
-      val savedText = savedDrafts[entry.taskKey]
-      if (!savedText.isNullOrBlank()) {
-        draftState.taskPromptStates[entry.taskKey] = restoredTaskPromptDraftState(savedText)
+      var foundSavedDraft = false
+      savedDrafts.forEach { (taskKey, savedText) ->
+        if (AgentPromptExtensionDraftDecisions.matchesTaskKey(entry.taskKeyPrefix, taskKey)) {
+          draftState.taskPromptStates[taskKey] = restoredTaskPromptDraftState(savedText)
+          foundSavedDraft = true
+        }
       }
-      else {
-        val initialText = entry.extension.getInitialPromptText(invocationData.project)
-        if (!initialText.isNullOrBlank()) {
-          draftState.taskPromptStates[entry.taskKey] = restoredTaskPromptDraftState(initialText)
+      if (!foundSavedDraft) {
+        val initialPrompt = entry.extension.getInitialPrompt(invocationData.project)
+        if (initialPrompt != null && initialPrompt.content.isNotBlank()) {
+          val taskKey = AgentPromptExtensionDraftDecisions.taskKey(entry.taskKeyPrefix, initialPrompt.kind)
+          draftState.taskPromptStates[taskKey] = restoredTaskPromptDraftState(initialPrompt.content)
         }
       }
     }
@@ -123,7 +128,23 @@ internal class AgentPromptPaletteDraftController(
 
     val allTaskDrafts = LinkedHashMap<String, String>(draftState.taskPromptStates.size)
     draftState.taskPromptStates.forEach { (taskKey, state) ->
+      if (contextState.activeExtensionTabs.any { entry ->
+          AgentPromptExtensionDraftDecisions.matchesTaskKey(entry.taskKeyPrefix, taskKey)
+        }) {
+        return@forEach
+      }
       allTaskDrafts[taskKey] = state.persistedUserText
+    }
+    val contextItems = contextState.contextEntries.map(ContextEntry::item)
+    for (entry in contextState.activeExtensionTabs) {
+      val extensionDrafts = AgentPromptPaletteExtensionContext.withContextItems(invocationData.project, contextItems) {
+        AgentPromptExtensionDraftDecisions.persistTaskDrafts(
+          taskKeyPrefix = entry.taskKeyPrefix,
+          taskStates = draftState.taskPromptStates,
+          classifyPromptDraftKind = { promptText -> entry.extension.classifyPromptDraftKind(invocationData.project, promptText) },
+        )
+      }
+      allTaskDrafts.putAll(extensionDrafts)
     }
 
     uiStateService.saveDraft(
@@ -160,7 +181,7 @@ internal class AgentPromptPaletteDraftController(
   fun loadPromptTextForSelectedTab() {
     val newPanel = tabbedPane.selectedComponent as? JPanel
     draftState.activeTaskKey = resolveTaskKey(newPanel)
-    setPromptAreaText(draftState.activeTaskKey?.let { draftState.taskPromptStates[it]?.liveText } ?: "")
+    setPromptAreaTextProgrammatically(draftState.activeTaskKey?.let { draftState.taskPromptStates[it]?.liveText } ?: "")
   }
 
   fun onPromptChanged() {
@@ -178,7 +199,7 @@ internal class AgentPromptPaletteDraftController(
     updateActiveTaskPromptState { state ->
       applySuggestedPromptToDraftState(state, promptText)
     }
-    setPromptAreaText(promptText)
+    setPromptAreaTextProgrammatically(promptText)
   }
 
   fun removeTaskDraft(taskKey: String) {
@@ -197,7 +218,7 @@ internal class AgentPromptPaletteDraftController(
     draftState.taskPromptStates[taskKey] = update(currentState)
   }
 
-  private fun setPromptAreaText(promptText: String) {
+  fun setPromptAreaTextProgrammatically(promptText: String) {
     draftState.isProgrammaticPromptUpdate = true
     try {
       promptArea.text = promptText
