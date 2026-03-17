@@ -81,7 +81,6 @@ import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.ReadOnlyLightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.AstLoadingFilter;
@@ -239,7 +238,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected void assertReadAccessAllowed() {
     VirtualFile virtualFile = myViewProvider.getVirtualFile();
     if (virtualFile instanceof ReadOnlyLightVirtualFile) return;
-    if (isInElfScope(virtualFile)) return;
+    if (!EditorLockFreeTyping.isReadAccessNeeded(virtualFile)) return;
     ApplicationManager.getApplication().assertReadAccessAllowed();
   }
 
@@ -1197,18 +1196,5 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @ApiStatus.Internal
   public boolean isIndexingFileCopy() {
     return getUserData(IndexingDataKeys.VIRTUAL_FILE) != null;
-  }
-
-  private static boolean isInElfScope(VirtualFile virtualFile) {
-    if (EditorLockFreeTyping.isEnabled()) {
-      if (EditorLockFreeTyping.isInElfScope(virtualFile)) {
-        return true;
-      }
-      if (virtualFile instanceof LightVirtualFile) {
-        VirtualFile originalFile = ((LightVirtualFile)virtualFile).getOriginalFile();
-        return EditorLockFreeTyping.isInElfScope(originalFile);
-      }
-    }
-    return false;
   }
 }

@@ -127,7 +127,7 @@ class CodeInsightContextManagerImpl(
 
     // FIXME: the assert had never worked due to IJPL-221633, but when it is enabled some tests fail
     // ThreadingAssertions.softAssertBackgroundThread()
-    if (!EditorLockFreeTyping.isInElfScope(file)) {
+    if (EditorLockFreeTyping.isReadAccessNeeded(file)) {
       ThreadingAssertions.softAssertReadAccess()
     }
 

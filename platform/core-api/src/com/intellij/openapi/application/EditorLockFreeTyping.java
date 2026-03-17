@@ -6,6 +6,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EDT;
@@ -48,12 +49,23 @@ public final class EditorLockFreeTyping {
   }
 
   public static void assertReadAccess(@NotNull VirtualFile virtualFile) {
-    if (isEnabled()) {
-      if (!isInElfScope(virtualFile)) {
-        ThreadingAssertions.assertReadAccess();
-      }
-    } else {
+    if (isReadAccessNeeded(virtualFile)) {
       ThreadingAssertions.assertReadAccess();
     }
+  }
+
+  public static boolean isReadAccessNeeded(@Nullable VirtualFile virtualFile) {
+    if (isEnabled()) {
+      if (isInElfScope(virtualFile)) {
+        return false;
+      }
+      if (virtualFile instanceof LightVirtualFile) {
+        VirtualFile originalFile = ((LightVirtualFile)virtualFile).getOriginalFile();
+        if (isInElfScope(originalFile)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }
