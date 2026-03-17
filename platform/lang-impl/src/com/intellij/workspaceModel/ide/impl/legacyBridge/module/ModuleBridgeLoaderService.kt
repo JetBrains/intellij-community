@@ -3,6 +3,8 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -11,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.platform.PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
@@ -54,8 +55,9 @@ private fun setupOpenTelemetryReporting(meter: Meter) {
 }
 
 @ApiStatus.Internal
-class ModuleBridgeLoaderService : InitProjectActivity {
-  override suspend fun run(project: Project) {
+@Service(Level.PROJECT)
+class ModuleBridgeLoaderService {
+  suspend fun loadForProject(project: Project) {
     coroutineScope {
       project.serviceAsync<DumpWorkspaceEntitiesWsmChangeListener>()
       val projectModelSynchronizer = project.serviceAsync<JpsProjectModelSynchronizer>()

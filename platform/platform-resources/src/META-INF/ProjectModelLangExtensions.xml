@@ -9,8 +9,8 @@
                     overrides="true"/>
 
     <projectPreInit
-      id="moduleBridgeLoaderService"
-      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeLoaderService"
+      id="initialProjectSynchronizer"
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.InitialProjectSynchronizer"
       order="before workspaceFileIndexInitializer"/>
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer"/>
     <projectService serviceInterface="com.intellij.openapi.module.AutomaticModuleUnloader"
