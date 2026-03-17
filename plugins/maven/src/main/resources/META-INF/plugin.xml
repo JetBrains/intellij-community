@@ -68,10 +68,13 @@
   </extensionPoints>
 
   <dependencies>
-    <module name="intellij.properties.backend"/>
     <module name="intellij.java.backend"/>
     <plugin id="org.jetbrains.idea.reposearch"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.aetherDependencyResolver"/>
+    <module name="intellij.properties.backend"/>
+    <module name="intellij.repository.search.common"/>
+    <!-- endregion -->
   </dependencies>
 
   <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
