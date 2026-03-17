@@ -7,12 +7,9 @@ import com.intellij.python.sdk.ui.evolution.ui.EvoSelectSdkProvider
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLazyNodeElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLeafElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeSection
-import com.intellij.util.SlowOperations
 import com.jetbrains.python.Result
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.collectAddInterpreterActions
-import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.switchToSdk
 
 
 internal class AdvancedSelectSdkProvider() : EvoSelectSdkProvider {
@@ -21,11 +18,7 @@ internal class AdvancedSelectSdkProvider() : EvoSelectSdkProvider {
     icon = AllIcons.Toolwindows.ToolWindowInternal
   ) {
 
-    val baseIdeActions = collectAddInterpreterActions(ModuleOrProject.ModuleAndProject(evoModuleSdk.module)) { sdk ->
-      SlowOperations.knownIssue("PY-76167").use {
-        switchToSdk(evoModuleSdk.module, sdk, evoModuleSdk.module.pythonSdk)
-      }
-    }
+    val baseIdeActions = collectAddInterpreterActions(ModuleOrProject.ModuleAndProject(evoModuleSdk.module)) { }
 
     val section = EvoTreeSection(
       label = null,
