@@ -18,9 +18,10 @@ class ClassResultObjectBuilder(private val pojoClass: PsiClass): ResultObjectBui
     }
 
     private fun createPojoClass(variables: List<PsiVariable>): PsiClass {
-      val project = variables.first().project
+      val context = variables.first()
+      val project = context.project
       val factory = PsiElementFactory.getInstance(project)
-      val pojoClass = factory.createClass("Result")
+      val pojoClass = factory.createClass(ResultObjectBuilder.findSafeName(context))
       variables.forEach { variable ->
         val field = factory.createField(variable.name!!, variable.type)
         field.modifierList?.setModifierProperty(PsiModifier.PUBLIC, true)

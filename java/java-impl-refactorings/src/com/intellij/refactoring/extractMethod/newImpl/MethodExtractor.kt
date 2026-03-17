@@ -206,23 +206,6 @@ class MethodExtractor {
     inplaceExtractor.extractAndRunTemplate(suggestedNames)
   }
 
-  private fun suggestSafeMethodNames(options: ExtractOptions): List<String> {
-    val unsafeNames = guessMethodName(options)
-    val method = createMethodSignature(options)
-    fun hasConflicts(name: String): Boolean {
-      method.name = name
-      val conflicts = MultiMap<PsiElement, String>()
-      ConflictsUtil.checkMethodConflicts(options.targetClass, null, method, conflicts)
-      return ! conflicts.isEmpty
-    }
-    val safeNames = unsafeNames.filterNot { name -> hasConflicts(name) }
-    if (safeNames.isNotEmpty()) return safeNames
-
-    val baseName = unsafeNames.firstOrNull() ?: "extracted"
-    val generatedNames = sequenceOf(baseName) + generateSequence(1) { seed -> seed + 1 }.map { number -> "$baseName$number" }
-    return generatedNames.filterNot { name -> hasConflicts(name) }.take(1).toList()
-  }
-
   private fun createInplaceSettingsPopup(options: ExtractOptions): ExtractMethodPopupProvider {
     val analyzer = CodeFragmentAnalyzer(options.elements)
     val optionsWithStatic = ExtractMethodPipeline.withForcedStatic(analyzer, options)
@@ -323,22 +306,6 @@ class MethodExtractor {
     return ExtractedElements(callElements, method)
   }
 
-  private fun createMethodSignature(dependencies: ExtractOptions): PsiMethod {
-    return SignatureBuilder(dependencies.project)
-      .build(
-        dependencies.targetClass,
-        dependencies.elements,
-        dependencies.isStatic,
-        dependencies.visibility,
-        dependencies.typeParameters,
-        dependencies.dataOutput.type.takeIf { !dependencies.isConstructor },
-        dependencies.methodName,
-        dependencies.inputParameters,
-        dependencies.dataOutput.annotations,
-        dependencies.thrownExceptions
-      )
-  }
-
   private fun needsNullabilityAnnotations(project: Project): Boolean {
     return PropertiesComponent.getInstance(project).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, true)
   }
@@ -363,6 +330,40 @@ class MethodExtractor {
       data.addElements(elements)
       val publisher = project.messageBus.syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
       publisher.refactoringStarted(refactoringId, data)
+    }
+
+    fun suggestSafeMethodNames(options: ExtractOptions): List<String> {
+      val unsafeNames = guessMethodName(options)
+      val method = createMethodSignature(options)
+      fun hasConflicts(name: String): Boolean {
+        method.name = name
+        val conflicts = MultiMap<PsiElement, String>()
+        ConflictsUtil.checkMethodConflicts(options.targetClass, null, method, conflicts)
+        return !conflicts.isEmpty
+      }
+
+      val safeNames = unsafeNames.filterNot { name -> hasConflicts(name) }
+      if (safeNames.isNotEmpty()) return safeNames
+
+      val baseName = unsafeNames.firstOrNull() ?: "extracted"
+      val generatedNames = sequenceOf(baseName) + generateSequence(1) { seed -> seed + 1 }.map { number -> "$baseName$number" }
+      return generatedNames.filterNot { name -> hasConflicts(name) }.take(1).toList()
+    }
+
+    private fun createMethodSignature(dependencies: ExtractOptions): PsiMethod {
+      return SignatureBuilder(dependencies.project)
+        .build(
+          dependencies.targetClass,
+          dependencies.elements,
+          dependencies.isStatic,
+          dependencies.visibility,
+          dependencies.typeParameters,
+          dependencies.dataOutput.type.takeIf { !dependencies.isConstructor },
+          dependencies.methodName,
+          dependencies.inputParameters,
+          dependencies.dataOutput.annotations,
+          dependencies.thrownExceptions
+        )
     }
   }
 }
