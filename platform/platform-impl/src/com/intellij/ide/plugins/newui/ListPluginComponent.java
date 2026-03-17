@@ -337,9 +337,7 @@ public final class ListPluginComponent extends JPanel {
     else {
       if (myPlugin.isDeleted()) {
         if (installationState.getStatus() == PluginStatus.UNINSTALLED_WITHOUT_RESTART) {
-          myLayout.addButtonComponent(myInstallButton = createInstallButton());
-          myInstallButton.setVisible(true);
-          myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
+          addInstalledStatusButton("plugins.configurable.uninstalled");
           myAfterUpdate = true;
         }
         else {
@@ -352,6 +350,9 @@ public final class ListPluginComponent extends JPanel {
         if (installationState.getStatus() == PluginStatus.INSTALLED_AND_REQUIRED_RESTART ||
             installationState.getStatus() == PluginStatus.UPDATED_WITH_RESTART) {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myModelFacade));
+        }
+        else if (installedModel == null && installationState.getStatus() == PluginStatus.INSTALLED_WITHOUT_RESTART) {
+          addInstalledStatusButton("plugins.configurable.installed");
         }
         else {
           createEnableDisableButton(this::getPluginModel);
@@ -861,6 +862,9 @@ public final class ListPluginComponent extends JPanel {
           myUpdateButton.setText(IdeBundle.message("plugin.status.installed"));
           myAfterUpdate = true;
         }
+        if (myInstallButton == null && myUpdateButton == null) {
+          addInstalledStatusButton("plugins.configurable.installed");
+        }
         if (myEnableDisableButton != null) {
           myLayout.removeButtonComponent(myEnableDisableButton);
           myEnableDisableButton = null;
@@ -873,6 +877,15 @@ public final class ListPluginComponent extends JPanel {
     }
 
     fullRepaint();
+  }
+
+  private void addInstalledStatusButton(String key) {
+    if (myRestartButton != null && myRestartButton.isVisible()) {
+      return;
+    }
+    myLayout.addButtonComponent(myInstallButton = createInstallButton());
+    myInstallButton.setVisible(true);
+    myInstallButton.setEnabled(false, IdeBundle.message(key));
   }
 
   public void clearProgress() {
@@ -965,7 +978,9 @@ public final class ListPluginComponent extends JPanel {
     updateColors(mySelection);
     removeButtons(needRestartForUninstall);
 
-    if (!needRestartForUninstall && pluginInstallationState.getStatus() == PluginStatus.UNINSTALLED_WITHOUT_RESTART && !myRestartButton.isVisible()) {
+    if (!needRestartForUninstall &&
+        pluginInstallationState.getStatus() == PluginStatus.UNINSTALLED_WITHOUT_RESTART &&
+        (myRestartButton == null || !myRestartButton.isVisible())) {
       myLayout.addButtonComponent(myInstallButton = createInstallButton());
       myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
     }
