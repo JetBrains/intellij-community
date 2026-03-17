@@ -73,6 +73,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.Callable
@@ -552,6 +553,7 @@ class PlatformUtilitiesTest {
 
   @Test
   fun `JobLauncher can be canceled on termination of the context job`(): Unit = concurrencyTest {
+    ProgressManager.getInstance()
     val j1 = Job(coroutineContext.job)
     val j2 = Job(coroutineContext.job)
     val job = launch(Dispatchers.Default) {
@@ -561,7 +563,10 @@ class PlatformUtilitiesTest {
           j2.asCompletableFuture().join()
         }
         if (num == 2) {
-          fail<Nothing>("should not be reached")
+          j2.asCompletableFuture().join()
+          // checkCanceled might not throw here,
+          // as cancellation machinery on another thread can work in parallel to the processing of this element.
+          // but the indicator should be canceled here anyway, so we assert exactly thatc          assertThat { ProgressManager.getGlobalProgressIndicator().isCanceled }
         }
         true
       })
