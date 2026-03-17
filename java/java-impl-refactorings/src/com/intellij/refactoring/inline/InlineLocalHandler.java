@@ -580,7 +580,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
            : RefactoringBundle.message("inline.variable.title");
   }
 
-  private static class InlineLocalStep implements ModCommandAction {
+  public static class InlineLocalStep implements ModCommandAction {
     private final @NotNull PsiVariable myVariable;
     private final @Nullable PsiReferenceExpression myRefExpr;
     private final @NotNull InlineMode myMode;
@@ -611,6 +611,10 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
         .withHighlighting(
           myMode == InlineMode.INLINE_ONE ? new TextRange[]{Objects.requireNonNull(myRefExpr).getTextRange()} :
           ContainerUtil.map2Array(myAllRefs, TextRange.EMPTY_ARRAY, PsiElement::getTextRange));
+    }
+
+    public @NotNull InlineMode getMode() {
+      return myMode;
     }
 
     @Override
