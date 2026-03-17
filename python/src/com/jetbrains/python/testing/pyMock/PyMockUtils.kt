@@ -42,21 +42,36 @@ internal fun isPatchCall(callExpr: PyCallExpression, context: TypeEvalContext): 
 }
 
 /**
- * Returns `true` if [callExpr] is a call to `unittest.mock.patch.object`.
- *
- * Since `patch` is an instance of the `_patcher` class, `patch.object` resolves as
- * `_patcher.object`. We check the callee's qualifier resolves to `unittest.mock.patch`.
+ * Returns `true` if [callExpr] is a call to `patch.<methodName>` where the qualifier
+ * resolves to `unittest.mock.patch`.
  */
-internal fun isPatchObjectCall(callExpr: PyCallExpression, context: TypeEvalContext): Boolean {
+private fun isPatchMethodCall(callExpr: PyCallExpression, methodName: String, context: TypeEvalContext): Boolean {
   val callee = callExpr.callee ?: return false
-  if (callee.name != "object") return false
+  if (callee.name != methodName) return false
 
-  // The callee is `patch.object` — check that `patch` resolves to unittest.mock.patch
   val qualifier = (callee as? PyQualifiedExpression)?.qualifier ?: return false
   return PyUtil.multiResolveTopPriority(qualifier, PyResolveContext.defaultContext(context))
     .filterIsInstance<PyQualifiedNameOwner>()
     .any { it.qualifiedName == MOCK_PATCH_FQN }
 }
+
+/**
+ * Returns `true` if [callExpr] is a call to `unittest.mock.patch.object`.
+ */
+internal fun isPatchObjectCall(callExpr: PyCallExpression, context: TypeEvalContext): Boolean =
+  isPatchMethodCall(callExpr, "object", context)
+
+/**
+ * Returns `true` if [callExpr] is a call to `unittest.mock.patch.dict`.
+ */
+internal fun isPatchDictCall(callExpr: PyCallExpression, context: TypeEvalContext): Boolean =
+  isPatchMethodCall(callExpr, "dict", context)
+
+/**
+ * Returns `true` if [callExpr] is a call to `unittest.mock.patch.multiple`.
+ */
+internal fun isPatchMultipleCall(callExpr: PyCallExpression, context: TypeEvalContext): Boolean =
+  isPatchMethodCall(callExpr, "multiple", context)
 
 /**
  * Returns `true` if [callExpr] is a call to either `unittest.mock.patch` or `unittest.mock.patch.object`.

@@ -14,19 +14,20 @@ import com.jetbrains.python.psi.PyWithItem
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
- * Provides references for the target string in `@patch("module.Class.attr")` decorator calls
- * and `with patch("module.Class.attr") as mock:` context managers.
+ * Provides references for the target string in `@patch("module.Class.attr")` and related
+ * decorator calls and context managers.
  *
- * Detects:
- * - `@patch("target")` / `with patch("target")` — first positional argument
- * - `@patch(target="target")` / `with patch(target="target")` — keyword argument named `target`
+ * Supported calls:
+ * - `patch("target")` / `patch(target="target")` — dotted path to attribute being patched
+ * - `patch.dict("target", ...)` / `patch.dict(in_dict="target", ...)` — dotted path to dict
+ * - `patch.multiple("target", ...)` / `patch.multiple(target="target", ...)` — dotted path to module/class
  *
  * When `create=True` is present, references are marked soft (no unresolved error).
  */
 class PyMockPatchReferenceProvider : PsiReferenceProvider() {
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val str = element as? PyStringLiteralExpression ?: return emptyArray()
-    val callExpr = getPatchCall(str) ?: return emptyArray()
+    val callExpr = getPatchTargetCall(str) ?: return emptyArray()
 
     val createAllowed = isCreateAllowed(callExpr)
     return PyMockPatchTargetReferenceSet(str, createAllowed).createReferences()
@@ -39,23 +40,17 @@ class PyMockPatchReferenceProvider : PsiReferenceProvider() {
 }
 
 /**
- * Returns the `patch(...)` call expression if [str] is the patch target argument
- * (either the first positional arg or the `target=` keyword arg), or null otherwise.
+ * Returns the `patch(...)`, `patch.dict(...)`, or `patch.multiple(...)` call expression
+ * if [str] is the string target argument, or null otherwise.
  *
- * Supports two usage styles:
- * - `@patch("target")` / `@patch(target="target")` — decorator
- * - `with patch("target") as mock:` / `with patch(target="target") as mock:` — context manager
- *
- * PSI parent chain for positional arg:
- *   `PyStringLiteralExpression → PyArgumentList → PyCallExpression → PyDecorator/PyWithItem`
- *
- * PSI parent chain for `target=` kwarg:
- *   `PyStringLiteralExpression → PyKeywordArgument → PyArgumentList → PyCallExpression → PyDecorator/PyWithItem`
- *
- * Note: `PyDecorator.getArgumentList()` delegates to a child `PyCallExpression`, so the
- * `PyArgumentList` is a grandchild of `PyDecorator`, not a direct child.
+ * For `patch()` and `patch.multiple()`, the keyword form is `target=`.
+ * For `patch.dict()`, the keyword form is `in_dict=`.
  */
-fun getPatchCall(str: PyStringLiteralExpression): PyCallExpression? {
+fun getPatchCall(str: PyStringLiteralExpression): PyCallExpression? =
+  getPatchTargetCall(str)
+
+private fun getPatchTargetCall(str: PyStringLiteralExpression): PyCallExpression? {
+  val keyword = (str.parent as? PyKeywordArgument)
   val argList = when (val parent = str.parent) {
     is PyArgumentList -> parent
     is PyKeywordArgument -> parent.parent as? PyArgumentList ?: return null
@@ -64,10 +59,7 @@ fun getPatchCall(str: PyStringLiteralExpression): PyCallExpression? {
 
   val callExpr = argList.parent as? PyCallExpression ?: return null
 
-  // Determine the effective patch call and verify it is in a recognised context.
-  // For @patch decorators, getArgumentList() delegates to a child PyCallExpression,
-  // so callExpr may be the inner call — the PyDecorator is then its parent.
-  val patchCall: PyCallExpression = when {
+  val effectiveCall: PyCallExpression = when {
     callExpr is PyDecorator -> callExpr
     callExpr.parent is PyDecorator -> callExpr.parent as PyDecorator
     callExpr.parent is PyWithItem -> callExpr
@@ -75,13 +67,38 @@ fun getPatchCall(str: PyStringLiteralExpression): PyCallExpression? {
   }
 
   val typeContext = TypeEvalContext.codeAnalysis(str.project, str.containingFile)
-  if (!isPatchCall(patchCall, typeContext)) return null
 
-  // Accept only the first positional arg or the "target" keyword arg
-  if (argList.arguments.firstOrNull() == str) return patchCall
+  // Check which patch variant this is and validate the argument position
+  return when {
+    isPatchCall(effectiveCall, typeContext) ->
+      validateTargetArg(str, keyword, argList, effectiveCall, "target")
 
-  val targetKeyword = patchCall.getKeywordArgument("target")
-  if (targetKeyword == str) return patchCall
+    isPatchDictCall(effectiveCall, typeContext) ->
+      validateTargetArg(str, keyword, argList, effectiveCall, "in_dict")
+
+    isPatchMultipleCall(effectiveCall, typeContext) ->
+      validateTargetArg(str, keyword, argList, effectiveCall, "target")
+
+    else -> null
+  }
+}
+
+/**
+ * Returns [effectiveCall] if [str] is the first positional argument or the named [keywordName]
+ * argument, null otherwise.
+ */
+private fun validateTargetArg(
+  str: PyStringLiteralExpression,
+  keyword: PyKeywordArgument?,
+  argList: PyArgumentList,
+  effectiveCall: PyCallExpression,
+  keywordName: String,
+): PyCallExpression? {
+  // First positional argument
+  if (keyword == null && argList.arguments.firstOrNull() == str) return effectiveCall
+
+  // Named keyword argument
+  if (keyword != null && keyword.keyword == keywordName) return effectiveCall
 
   return null
 }

@@ -344,6 +344,96 @@ class PyMockTest : PyTestCase() {
     myFixture.checkHighlighting(true, false, true)
   }
 
+  // --- patch.dict() ---
+
+  fun testPatchDictPositionalTarget() {
+    myFixture.configureByFile("test_patch_dict/test.py")
+    val file = myFixture.file as PyFile
+    val testClass = file.findTopLevelClass("TestPatchDict")!!
+    val method = testClass.findMethodByName("test_patch_dict_positional", false, null)!!
+    val decorator = method.decoratorList!!.decorators.first()
+    val strArg = decorator.argumentList!!.arguments.first() as PyStringLiteralExpression
+
+    val callExpr = getPatchCall(strArg)
+    assertNotNull("getPatchCall should recognize @patch.dict string target", callExpr)
+
+    val refs = PyMockPatchTargetReferenceSet(strArg, false).createReferences()
+    assertEquals("example_module.TOP_LEVEL_VAR should produce 2 references", 2, refs.size)
+  }
+
+  fun testPatchDictKeywordTarget() {
+    myFixture.configureByFile("test_patch_dict/test.py")
+    val file = myFixture.file as PyFile
+    val testClass = file.findTopLevelClass("TestPatchDict")!!
+    val method = testClass.findMethodByName("test_patch_dict_keyword", false, null)!!
+    val decorator = method.decoratorList!!.decorators.first()
+    val kwArg = decorator.argumentList!!.arguments.first() as? PyKeywordArgument
+    assertNotNull("Expected keyword argument", kwArg)
+    val strArg = kwArg!!.valueExpression as? PyStringLiteralExpression
+    assertNotNull("Expected string literal as in_dict= value", strArg)
+
+    val callExpr = getPatchCall(strArg!!)
+    assertNotNull("getPatchCall should recognize in_dict= keyword argument", callExpr)
+  }
+
+  fun testWithPatchDict() {
+    myFixture.configureByFile("test_patch_dict/test.py")
+    val file = myFixture.file as PyFile
+    val testClass = file.findTopLevelClass("TestPatchDict")!!
+    val method = testClass.findMethodByName("test_with_patch_dict", false, null)!!
+
+    val strArg = withPatchStringArg(method)
+    assertNotNull("Expected string literal in with patch.dict()", strArg)
+
+    val callExpr = getPatchCall(strArg!!)
+    assertNotNull("getPatchCall should recognize with patch.dict() usage", callExpr)
+  }
+
+  // --- patch.multiple() ---
+
+  fun testPatchMultiplePositionalTarget() {
+    myFixture.configureByFile("test_patch_multiple/test.py")
+    val file = myFixture.file as PyFile
+    val testClass = file.findTopLevelClass("TestPatchMultiple")!!
+    val method = testClass.findMethodByName("test_patch_multiple_positional", false, null)!!
+    val decorator = method.decoratorList!!.decorators.first()
+    val strArg = decorator.argumentList!!.arguments.first() as PyStringLiteralExpression
+
+    val callExpr = getPatchCall(strArg)
+    assertNotNull("getPatchCall should recognize @patch.multiple string target", callExpr)
+
+    val refs = PyMockPatchTargetReferenceSet(strArg, false).createReferences()
+    assertEquals("example_module should produce 1 reference", 1, refs.size)
+  }
+
+  fun testPatchMultipleKeywordTarget() {
+    myFixture.configureByFile("test_patch_multiple/test.py")
+    val file = myFixture.file as PyFile
+    val testClass = file.findTopLevelClass("TestPatchMultiple")!!
+    val method = testClass.findMethodByName("test_patch_multiple_keyword", false, null)!!
+    val decorator = method.decoratorList!!.decorators.first()
+    val kwArg = decorator.argumentList!!.arguments.first() as? PyKeywordArgument
+    assertNotNull("Expected keyword argument", kwArg)
+    val strArg = kwArg!!.valueExpression as? PyStringLiteralExpression
+    assertNotNull("Expected string literal as target= value", strArg)
+
+    val callExpr = getPatchCall(strArg!!)
+    assertNotNull("getPatchCall should recognize target= keyword argument for patch.multiple", callExpr)
+  }
+
+  fun testWithPatchMultiple() {
+    myFixture.configureByFile("test_patch_multiple/test.py")
+    val file = myFixture.file as PyFile
+    val testClass = file.findTopLevelClass("TestPatchMultiple")!!
+    val method = testClass.findMethodByName("test_with_patch_multiple", false, null)!!
+
+    val strArg = withPatchStringArg(method)
+    assertNotNull("Expected string literal in with patch.multiple()", strArg)
+
+    val callExpr = getPatchCall(strArg!!)
+    assertNotNull("getPatchCall should recognize with patch.multiple() usage", callExpr)
+  }
+
   // --- Reference Count ---
 
   fun testReferenceSetCreatesCorrectCount() {
