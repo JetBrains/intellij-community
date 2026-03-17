@@ -151,7 +151,7 @@ interface BuildContext : CompilationContext {
     proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
   }
 
-  fun getFrontendModuleFilter(): FrontendModuleFilter
+  suspend fun getFrontendModuleFilter(): FrontendModuleFilter
   
   fun getContentModuleFilter(): ContentModuleFilter
 

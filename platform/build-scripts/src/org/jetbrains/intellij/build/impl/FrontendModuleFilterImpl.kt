@@ -4,8 +4,6 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.serialization.RawProductModules
 import com.intellij.util.xml.dom.readXmlAsModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
@@ -25,7 +23,7 @@ internal class FrontendModuleFilterImpl private constructor(
   private val includedProjectLibraryNames: Set<String>,
 ): FrontendModuleFilter {
   companion object {
-    fun createFrontendModuleFilter(
+    suspend fun createFrontendModuleFilter(
       project: JpsProject,
       productModules: RawProductModules,
       outputProvider: ModuleOutputProvider,
@@ -48,10 +46,7 @@ internal class FrontendModuleFilterImpl private constructor(
         val module = project.findModuleByName(mainModuleId.name) ?: continue
         if (frontendModeMatcher.matches(module)) {
           includedModuleNames.add(module.name)
-          @Suppress("RAW_RUN_BLOCKING")
-          val pluginDescriptor = readXmlAsModel(runBlocking(Dispatchers.IO) {
-            getUnprocessedPluginXmlContent(module = module, outputProvider = outputProvider)
-          })
+          val pluginDescriptor = readXmlAsModel(getUnprocessedPluginXmlContent(module = module, outputProvider = outputProvider))
           readPluginContentFromDescriptor(pluginDescriptor)
             .mapNotNull { project.findModuleByName(it.first) }
             .filter { frontendModeMatcher.matches(it) }

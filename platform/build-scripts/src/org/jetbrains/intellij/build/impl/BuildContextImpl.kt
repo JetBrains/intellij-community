@@ -316,7 +316,7 @@ class BuildContextImpl internal constructor(
     compilationContext.notifyArtifactBuilt(artifactPath)
   }
 
-  private val _frontendModuleFilter by lazy {
+  private val _frontendModuleFilter = suspendingLazy("frontend module filter") {
     val rootModule = productProperties.embeddedFrontendRootModule
     if (rootModule != null && options.enableEmbeddedFrontend) {
       val productModules = loadRawProductModules(rootModule, ProductMode.FRONTEND)
@@ -327,7 +327,7 @@ class BuildContextImpl internal constructor(
     }
   }
 
-  override fun getFrontendModuleFilter(): FrontendModuleFilter = _frontendModuleFilter
+  override suspend fun getFrontendModuleFilter(): FrontendModuleFilter = _frontendModuleFilter.await()
 
   private val _contentModuleFilter by lazy { computeContentModuleFilter() }
 

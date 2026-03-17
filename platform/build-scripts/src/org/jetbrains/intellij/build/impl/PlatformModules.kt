@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.UTIL_8_JAR
@@ -224,8 +225,8 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
       )
     )
   }
-  explicit.addAll(toModuleItemSequence(list = PLATFORM_CORE_MODULES, productLayout = productLayout, reason = "PLATFORM_CORE_MODULES", context = context))
-  explicit.addAll(toModuleItemSequence(list = productLayout.productApiModules, productLayout = productLayout, reason = "productApiModules", context = context))
+  explicit.addAll(toModuleItemSequence(list = PLATFORM_CORE_MODULES, productLayout = productLayout, reason = "PLATFORM_CORE_MODULES", frontendModuleFilter = frontendModuleFilter))
+  explicit.addAll(toModuleItemSequence(list = productLayout.productApiModules, productLayout = productLayout, reason = "productApiModules", frontendModuleFilter = frontendModuleFilter))
 
   val explicitModuleNames = explicit.map { it.moduleName }.toList()
 
@@ -448,8 +449,12 @@ fun getEnabledPluginModules(pluginsToPublish: Set<PluginLayout>, context: BuildC
   return result
 }
 
-private fun toModuleItemSequence(list: Collection<String>, productLayout: ProductModulesLayout, reason: String, context: BuildContext): Sequence<ModuleItem> {
-  val frontendModuleFilter = context.getFrontendModuleFilter()
+private fun toModuleItemSequence(
+  list: Collection<String>,
+  productLayout: ProductModulesLayout,
+  reason: String,
+  frontendModuleFilter: FrontendModuleFilter,
+): Sequence<ModuleItem> {
   return list.asSequence()
     .filter { !productLayout.excludedModuleNames.contains(it) }
     .map { ModuleItem(moduleName = it, relativeOutputFile = PlatformJarNames.getPlatformModuleJarName(it, frontendModuleFilter), reason = reason) }
