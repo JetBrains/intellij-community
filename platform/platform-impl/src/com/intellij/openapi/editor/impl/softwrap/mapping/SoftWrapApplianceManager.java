@@ -11,12 +11,14 @@ import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LanguageLineWrapPositionStrategy;
 import com.intellij.openapi.editor.LineWrapPositionStrategy;
+import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapEngine;
+import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapChangeNotifier;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
@@ -178,8 +180,8 @@ public final class SoftWrapApplianceManager implements Dumpable {
       for (Segment range : ranges) {
         int lastOffset = lastRecalculatedOffset[0];
         if (range.getEndOffset() > lastOffset) {
-          recalculateSoftWraps(IncrementalCacheUpdateEvent.forVisualChange(Math.max(range.getStartOffset(), lastOffset),
-                                                                           range.getEndOffset(), myEditor));
+          recalculateSoftWraps(createEventForVisualChange(Math.max(range.getStartOffset(), lastOffset),
+                                                          range.getEndOffset(), myEditor));
         }
       }
     }
@@ -444,7 +446,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
 
   @ApiStatus.Internal
   public void beforeDocumentChange(DocumentEvent event) {
-    myDocumentChangedEvent = IncrementalCacheUpdateEvent.forDocumentChange(event, myEditor);
+    myDocumentChangedEvent = createEventForDocumentChange(event, myEditor);
   }
 
   @ApiStatus.Internal
@@ -454,7 +456,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     if (processAlsoLineEnd) {
       int lineEndOffset = DocumentUtil.getLineEndOffset(myDocumentChangedEvent.getMandatoryEndOffset(), event.getDocument());
       if (lineEndOffset > myDocumentChangedEvent.getActualEndOffset()) {
-        recalculate(IncrementalCacheUpdateEvent.forVisualChange(lineEndOffset, lineEndOffset, myEditor));
+        recalculate(createEventForVisualChange(lineEndOffset, lineEndOffset, myEditor));
       }
     }
     myDocumentChangedEvent = null;
@@ -561,6 +563,82 @@ public final class SoftWrapApplianceManager implements Dumpable {
         if (rightMargin > 0) width = Math.min(width, rightMargin * EditorUtil.getPlainSpaceWidth(myEditor));
       }
       return width;
+    }
+  }
+
+  /**
+   * Creates new {@code IncrementalCacheUpdateEvent} object on the basis on the given event object that describes
+   * document change that caused cache update.
+   * <p/>
+   * This constructor is assumed to be used <b>before</b> the document change.
+   *
+   * @param event object that describes document change that caused cache update
+   */
+  private static IncrementalCacheUpdateEvent createEventForDocumentChange(@NotNull DocumentEvent event, @NotNull EditorImpl editor) {
+    return createIncrementalUpdateEvent(event.getOffset(),
+                                        event.getOffset() + event.getOldLength(),
+                                        event.getOffset() + event.getNewLength(),
+                                        editor);
+  }
+
+  /**
+   * Creates new {@code IncrementalCacheUpdateEvent} object for the event not changing document length
+   * (like expansion of folded region).
+   */
+  private static IncrementalCacheUpdateEvent createEventForVisualChange(int startOffset, int endOffset, @NotNull EditorImpl editor) {
+    return createIncrementalUpdateEvent(startOffset, endOffset, endOffset, editor);
+  }
+
+  private static IncrementalCacheUpdateEvent createIncrementalUpdateEvent(int startOffset,
+                                                                          int oldEndOffset,
+                                                                          int newEndOffset,
+                                                                          @NotNull EditorImpl editor) {
+    return new IncrementalCacheUpdateEvent(
+      getIncrementalUpdateStartOffset(editor, startOffset),
+      newEndOffset,
+      newEndOffset - oldEndOffset
+    );
+  }
+
+  private static int getIncrementalUpdateStartOffset(@NotNull EditorImpl editor, int eventStartOffset) {
+    VisualLineInfo info = getVisualLineInfo(editor, eventStartOffset, false);
+    if (info.startsWithSoftWrap) {
+      info = getVisualLineInfo(editor, info.startOffset, true);
+    }
+    return info.startOffset;
+  }
+
+  private static VisualLineInfo getVisualLineInfo(@NotNull EditorImpl editor, int offset, boolean beforeSoftWrap) {
+    Document document = editor.getElfDocument();
+    int textLength = document.getTextLength();
+    if (offset <= 0 || textLength == 0) return new VisualLineInfo(0, false);
+    offset = Math.min(offset, textLength);
+
+    // if the startOffset of the logical line is folded, then we find the startOffset corresponding to the start of that folding, recursively
+    int startOffset = EditorUtil.getNotFoldedLineStartOffset(editor, offset);
+
+    SoftWrapModelImpl softWrapModel = editor.getSoftWrapModel();
+    int wrapIndex = softWrapModel.getSoftWrapIndex(offset);
+
+    int prevSoftWrapIndex = wrapIndex < 0 ?
+                            // if not found: the one closest to offset backwards
+                            -wrapIndex - 2 :
+                            // if soft-wrap at startOffset: beforeSoftWrap decides if to consider this one or the previous one, tie-braker
+                            wrapIndex - (beforeSoftWrap ? 1 : 0);
+    SoftWrap prevSoftWrap = prevSoftWrapIndex < 0 ? null : softWrapModel.getRegisteredSoftWraps().get(prevSoftWrapIndex);
+
+    // the start of the visual line is then whichever is closer to the offset: some soft-wrap or the logical start of the line
+    int visualLineStartOffset = prevSoftWrap == null ? startOffset : Math.max(startOffset, prevSoftWrap.getStart());
+    return new VisualLineInfo(visualLineStartOffset, prevSoftWrap != null && prevSoftWrap.getStart() == visualLineStartOffset);
+  }
+
+  private static final class VisualLineInfo {
+    private final int startOffset;
+    private final boolean startsWithSoftWrap;
+
+    private VisualLineInfo(int startOffset, boolean wrap) {
+      this.startOffset = startOffset;
+      startsWithSoftWrap = wrap;
     }
   }
 }
